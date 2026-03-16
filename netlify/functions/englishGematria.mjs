@@ -20,11 +20,11 @@ export function englishGematria(input) {
   for (const char of input.toUpperCase()) {
     const code = char.charCodeAt(0);
     if (code >= 65 && code <= 90) {
-      total += code - 64;
+      total += (code - 64) * 6;
     }
   }
 
-  return total.toString(6);
+  return total.toString();
 }
 
 /**

@@ -28,6 +28,39 @@ export function englishGematria(input) {
 }
 
 /**
+ * Calculate the digital root for a positive integer.
+ *
+ * @param {number} value - Value to reduce.
+ * @returns {number} Single-digit digital root.
+ */
+export function digitalRoot(value) {
+  let root = Math.abs(Math.trunc(value));
+
+  while (root >= 10) {
+    root = String(root)
+      .split('')
+      .reduce((sum, digit) => sum + Number(digit), 0);
+  }
+
+  return root;
+}
+
+/**
+ * Calculate English gematria details for a word or phrase.
+ *
+ * @param {string} input - Word or phrase to evaluate.
+ * @returns {{ total: string, digitalRoot: number }} Total and digital root values.
+ */
+export function englishGematriaWithDigitalRoot(input) {
+  const total = Number(englishGematria(input));
+
+  return {
+    total: total.toString(),
+    digitalRoot: digitalRoot(total),
+  };
+}
+
+/**
  * HTTP handler for gematria requests.
  *
  * Expected query parameter: ?word=<text>
@@ -49,7 +82,7 @@ export function handler(request) {
     );
   }
 
-  const gematria = englishGematria(word);
+  const gematria = englishGematriaWithDigitalRoot(word);
 
   return new Response(JSON.stringify({ word, gematria }), {
     status: 200,

@@ -1,4 +1,4 @@
-import { englishGematria } from '.netlify/functions/englishGematria.mjs';
+import { englishGematria } from 'https://endtimes.today/netlify/functions/englishGematria.mjs';
 
 const form = document.querySelector('#gematria-form');
 const wordInput = document.querySelector('#word-input');

@@ -2,6 +2,10 @@
   "name": "endtimes-neon-app",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "check": "node --test",
+    "start": "netlify dev"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0"
   }

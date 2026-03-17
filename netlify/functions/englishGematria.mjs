@@ -67,8 +67,8 @@ export function englishGematriaWithDigitalRoot(input) {
  *
  * Expected query parameter: ?word=<text>
  *
- * @param {Request} request
- * @returns {Response}
+ * @param {{ queryStringParameters?: Record<string, string>, rawUrl?: string } | Request} event
+ * @returns {{ statusCode: number, headers: Record<string, string>, body: string }}
  */
 function isBaseRootValue(gematriaTotal) {
   return Number(gematriaTotal) % 54 === 0;
@@ -79,13 +79,7 @@ export async function handler(request) {
   const word = url.searchParams.get('word');
 
   if (!word) {
-    return new Response(
-      JSON.stringify({ error: 'Missing required query parameter: word' }),
-      {
-        status: 400,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
-      },
-    );
+    return jsonResponse(400, { error: 'Missing required query parameter: word' });
   }
 
   try {

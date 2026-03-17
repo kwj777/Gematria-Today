@@ -67,29 +67,14 @@ export function englishGematriaWithDigitalRoot(input) {
  *
  * Expected query parameter: ?word=<text>
  *
-<<<<<<< codex/implement-search-and-insert-logic-tlven3
- * @param {Request} request
- * @returns {Promise<Response>}
-=======
  * @param {{ queryStringParameters?: Record<string, string>, rawUrl?: string } | Request} event
  * @returns {{ statusCode: number, headers: Record<string, string>, body: string }}
->>>>>>> main
  */
 function isBaseRootValue(gematriaTotal) {
   return Number(gematriaTotal) % 54 === 0;
 }
 
 function jsonResponse(statusCode, payload) {
-<<<<<<< codex/implement-search-and-insert-logic-tlven3
-  return new Response(JSON.stringify(payload), {
-    status: statusCode,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  });
-}
-
-export async function handler(request) {
-  const word = new URL(request.url).searchParams.get('word');
-=======
   return {
     statusCode,
     headers: { 'content-type': 'application/json; charset=utf-8' },
@@ -117,7 +102,6 @@ function extractWord(event) {
 
 export async function handler(event) {
   const word = extractWord(event);
->>>>>>> main
 
   if (!word) {
     return jsonResponse(400, { error: 'Missing required query parameter: word' });

@@ -62,11 +62,107 @@ export function englishGematriaWithDigitalRoot(input) {
   };
 }
 
+function isBaseRootValue(gematriaTotal) {
+  return Number(gematriaTotal) % 54 === 0;
+}
+
+async function processWord(word) {
+  const sql = neon(process.env.DATABASE_URL);
+  const trimmedWord = word.trim();
+  const normalizedWord = trimmedWord.toLowerCase();
+  const gematria = englishGematriaWithDigitalRoot(trimmedWord);
+  const digitalRootValue = Number(gematria.digitalRoot);
+  const gematriaTotal = Number(gematria.total);
+  const isBaseRoot = isBaseRootValue(gematriaTotal);
+
+  const result = await sql`
+    WITH updated AS (
+      UPDATE words
+      SET search_count = search_count + 1
+      WHERE LOWER(word) = ${normalizedWord}
+      RETURNING word, gematria_value, digital_root, is_base_root, search_count
+    ),
+    inserted AS (
+      INSERT INTO words (word, gematria_value, digital_root, is_base_root, search_count)
+      SELECT ${trimmedWord}, ${gematriaTotal}, ${digitalRootValue}, ${isBaseRoot}, 1
+      WHERE NOT EXISTS (SELECT 1 FROM updated)
+      RETURNING word, gematria_value, digital_root, is_base_root, search_count
+    )
+    SELECT word, gematria_value, digital_root, is_base_root, search_count, 'database' AS source
+    FROM updated
+    UNION ALL
+    SELECT word, gematria_value, digital_root, is_base_root, search_count, 'calculated' AS source
+    FROM inserted
+    LIMIT 1
+  `;
+
+  if (result.length === 0) {
+    throw new Error('Failed to retrieve or insert word.');
+  }
+
+  const row = result[0];
+
+  return {
+    word: row.word,
+    gematria: {
+      total: String(row.gematria_value),
+      digitalRoot: Number(row.digital_root),
+    },
+    isBaseRoot: isBaseRootValue(row.gematria_value),
+    searchCount: Number(row.search_count),
+    source: row.source,
+  };
+}
+
+function toResponse(statusCode, payload) {
+  return new Response(JSON.stringify(payload), {
+    status: statusCode,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+  });
+}
+
+function toNetlifyResponse(statusCode, payload) {
+  return {
+    statusCode,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+    body: JSON.stringify(payload),
+  };
+}
+
+function extractWordFromEvent(event) {
+  if (!event || typeof event !== 'object') {
+    return null;
+  }
+
+  if ('queryStringParameters' in event) {
+    return event.queryStringParameters?.word ?? null;
+  }
+
+  if ('rawUrl' in event && typeof event.rawUrl === 'string') {
+    return new URL(event.rawUrl).searchParams.get('word');
+  }
+
+  return null;
+}
+
 /**
- * HTTP handler for gematria requests.
+ * Handler for Netlify Functions v2 / edge-style runtimes.
  *
- * Expected query parameter: ?word=<text>
- *
+ * @param {Request} request
+ * @returns {Promise<Response>}
+ */
+export default async function onRequest(request) {
+  const word = new URL(request.url).searchParams.get('word');
+
+  if (!word) {
+    return toResponse(400, { error: 'Missing required query parameter: word' });
+  }
+
+  try {
+    const payload = await processWord(word);
+    return toResponse(200, payload);
+  } catch (error) {
+    return toResponse(500, { error: error.message });
  * @param {{ queryStringParameters?: Record<string, string>, rawUrl?: string } | Request} event
  * @returns {{ statusCode: number, headers: Record<string, string>, body: string }}
  */
@@ -158,4 +254,23 @@ export async function handler(event) {
   }
 }
 
-export default handler;
+/**
+ * Backward-compatible Netlify Functions v1 handler.
+ *
+ * @param {{ queryStringParameters?: Record<string, string>, rawUrl?: string }} event
+ * @returns {Promise<{ statusCode: number, headers: Record<string, string>, body: string }>}
+ */
+export async function handler(event) {
+  const word = extractWordFromEvent(event);
+
+  if (!word) {
+    return toNetlifyResponse(400, { error: 'Missing required query parameter: word' });
+  }
+
+  try {
+    const payload = await processWord(word);
+    return toNetlifyResponse(200, payload);
+  } catch (error) {
+    return toNetlifyResponse(500, { error: error.message });
+  }
+}

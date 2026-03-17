@@ -34,14 +34,33 @@
 
     <p id="gematria-result"></p>
 
-    <script type="module">
-      import { englishGematriaWithDigitalRoot } from './netlify/functions/englishGematria.mjs';
-
+    <script>
       const form = document.querySelector('#gematria-form');
       const wordInput = document.querySelector('#word-input');
       const result = document.querySelector('#gematria-result');
 
-      form.addEventListener('submit', (event) => {
+      async function requestGematria(word) {
+        const endpoint = 'https://endtimes.today/.netlify/functions/englishGematria';
+
+        const response = await fetch(`${endpoint}?word=${encodeURIComponent(word)}`);
+        const rawBody = await response.text();
+
+        let payload = null;
+        try {
+          payload = JSON.parse(rawBody);
+        } catch {
+          payload = { error: rawBody || 'Non-JSON response from server.' };
+        }
+
+        if (!response.ok) {
+          const message = payload.error || payload.message || payload.errorMessage || `HTTP ${response.status}`;
+          throw new Error(message);
+        }
+
+        return payload;
+      }
+
+      form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const word = wordInput.value.trim();
@@ -51,8 +70,14 @@
           return;
         }
 
-        const gematriaValue = englishGematriaWithDigitalRoot(word);
-        result.textContent = `Base-6 English Gematria for "${word}": ${gematriaValue.total} (Digital Root: ${gematriaValue.digitalRoot})`;
+        result.textContent = 'Searching...';
+
+        try {
+          const payload = await requestGematria(word);
+          result.textContent = `Base-6 English Gematria for "${payload.word}": ${payload.gematria.total} (Digital Root: ${payload.gematria.digitalRoot}) | Searches: ${payload.searchCount}`;
+        } catch (error) {
+          result.textContent = error.message || 'Unable to calculate gematria.';
+        }
       });
     </script>
   </body>

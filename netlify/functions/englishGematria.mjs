@@ -1,3 +1,5 @@
+import { neon } from '@neondatabase/serverless';
+
 /**
  * Calculate base-6 English gematria for a word or phrase.
  *
@@ -65,29 +67,99 @@ export function englishGematriaWithDigitalRoot(input) {
  *
  * Expected query parameter: ?word=<text>
  *
- * @param {Request} request
- * @returns {Response}
+ * @param {{ queryStringParameters?: Record<string, string>, rawUrl?: string } | Request} event
+ * @returns {{ statusCode: number, headers: Record<string, string>, body: string }}
  */
-export function handler(request) {
-  const url = new URL(request.url);
-  const word = url.searchParams.get('word');
+function isBaseRootValue(gematriaTotal) {
+  return Number(gematriaTotal) % 54 === 0;
+}
 
-  if (!word) {
-    return new Response(
-      JSON.stringify({ error: 'Missing required query parameter: word' }),
-      {
-        status: 400,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
-      },
-    );
+function jsonResponse(statusCode, payload) {
+  return {
+    statusCode,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+    body: JSON.stringify(payload),
+  };
+}
+
+function extractWord(event) {
+  if (event && typeof event === 'object') {
+    if ('queryStringParameters' in event && event.queryStringParameters?.word) {
+      return event.queryStringParameters.word;
+    }
+
+    if ('rawUrl' in event && typeof event.rawUrl === 'string') {
+      return new URL(event.rawUrl).searchParams.get('word');
+    }
+
+    if ('url' in event && typeof event.url === 'string') {
+      return new URL(event.url).searchParams.get('word');
+    }
   }
 
-  const gematria = englishGematriaWithDigitalRoot(word);
+  return null;
+}
 
-  return new Response(JSON.stringify({ word, gematria }), {
-    status: 200,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  });
+export async function handler(event) {
+  const word = extractWord(event);
+
+  if (!word) {
+    return jsonResponse(400, { error: 'Missing required query parameter: word' });
+  }
+
+  try {
+    const sql = neon(process.env.DATABASE_URL);
+    const normalizedWord = word.trim().toLowerCase();
+
+    const existing = await sql`
+      SELECT word, gematria_value, digital_root, is_base_root, search_count
+      FROM words
+      WHERE LOWER(word) = ${normalizedWord}
+      LIMIT 1
+    `;
+
+    if (existing.length > 0) {
+      const row = existing[0];
+
+      const updated = await sql`
+        UPDATE words
+        SET search_count = search_count + 1
+        WHERE LOWER(word) = ${normalizedWord}
+        RETURNING search_count
+      `;
+
+      return jsonResponse(200, {
+        word: row.word,
+        gematria: {
+          total: String(row.gematria_value),
+          digitalRoot: Number(row.digital_root),
+        },
+        isBaseRoot: isBaseRootValue(row.gematria_value),
+        searchCount: Number(updated[0].search_count),
+        source: 'database',
+      });
+    }
+
+    const gematria = englishGematriaWithDigitalRoot(word);
+    const digitalRootValue = Number(gematria.digitalRoot);
+    const isBaseRoot = isBaseRootValue(gematria.total);
+
+    const inserted = await sql`
+      INSERT INTO words (word, gematria_value, digital_root, is_base_root, search_count)
+      VALUES (${word}, ${Number(gematria.total)}, ${digitalRootValue}, ${isBaseRoot}, 1)
+      RETURNING search_count
+    `;
+
+    return jsonResponse(200, {
+      word,
+      gematria,
+      isBaseRoot,
+      searchCount: Number(inserted[0].search_count),
+      source: 'calculated',
+    });
+  } catch (error) {
+    return jsonResponse(500, { error: error.message });
+  }
 }
 
 export default handler;

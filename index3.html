@@ -48,13 +48,11 @@ async function loadWords() {
   data.forEach(row => {
     const tr = document.createElement("tr");
 
-    tr.innerHTML = `
-      <td>${row.word}</td>
-      <td>${row.gematria_value}</td>
-      <td>${row.digital_root}</td>
-      <td>${row.is_base_root}</td>
-      <td>${row.search_count}</td>
-    `;
+    ['word', 'gematria_value', 'digital_root', 'is_base_root', 'search_count'].forEach(col => {
+      const td = document.createElement('td');
+      td.textContent = row[col];
+      tr.appendChild(td);
+    });
 
     tbody.appendChild(tr);
   });

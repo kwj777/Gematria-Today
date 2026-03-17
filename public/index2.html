@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>English Gematria (Base-6)</title>
+    <style>
+      body {
+        font-family: Helvetica, Arial, sans-serif;
+        max-width: 640px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+
+      form {
+        display: flex;
+        gap: 0.5rem;
+        margin: 1rem 0;
+      }
+
+      input {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>English Gematria Calculator (Base-6)</h1>
+
+    <form id="gematria-form">
+      <label for="word-input">Enter a word:</label>
+      <input id="word-input" name="word" type="text" required />
+      <button type="submit">Calculate</button>
+    </form>
+
+    <p id="gematria-result"></p>
+
+    <script type="module">
+      import { englishGematriaWithDigitalRoot } from './netlify/functions/englishGematria.mjs';
+
+      const form = document.querySelector('#gematria-form');
+      const wordInput = document.querySelector('#word-input');
+      const result = document.querySelector('#gematria-result');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const word = wordInput.value.trim();
+
+        if (!word) {
+          result.textContent = 'Please enter a word.';
+          return;
+        }
+
+        const gematriaValue = englishGematriaWithDigitalRoot(word);
+        result.textContent = `Base-6 English Gematria for "${word}": ${gematriaValue.total} (Digital Root: ${gematriaValue.digitalRoot})`;
+      });
+    </script>
+  </body>
+</html>

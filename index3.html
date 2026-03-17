@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EndTimes Database</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+
+<h1>EndTimes Word Database</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Word</th>
+      <th>Gematria</th>
+      <th>Digital Root</th>
+      <th>Base Root?</th>
+      <th>Search Count</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<script>
+async function loadWords() {
+  const res = await fetch("/api/getWords");
+  const data = await res.json();
+
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${row.word}</td>
+      <td>${row.gematria_value}</td>
+      <td>${row.digital_root}</td>
+      <td>${row.is_base_root}</td>
+      <td>${row.search_count}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+loadWords();
+</script>
+
+</body>
+</html>

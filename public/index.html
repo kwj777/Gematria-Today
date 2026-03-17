@@ -1,19 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Site Under Construction</title>
-    <style>
-        body { text-align: center; padding: 50px; font-family: Helvetica, sans-serif; }
-        h1 { font-size: 50px; }
-        body { font: 20px Georgia, serif; color: #999; line-height: 1.6; }
-        .container { margin: 0 auto; max-width: 600px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Endtimes Starter API</title>
+  <style>
+    body { font-family: Inter, Arial, sans-serif; margin: 2rem; max-width: 880px; }
+    h1 { margin-bottom: 0.3rem; }
+    .row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    input, button { padding: 0.55rem 0.7rem; font-size: 1rem; }
+    input { flex: 1; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { text-align: left; border-bottom: 1px solid #ddd; padding: 0.45rem 0.2rem; }
+    .muted { color: #666; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>We'll be here soon!</h1>
-        <p>Sorry for the inconvenience, but we're building something great at the moment.</p>
-        <p>— The Team</p>
-    </div>
+  <h1>Endtimes Word Database</h1>
+  <p class="muted">Starter UI for Netlify Functions + Neon database.</p>
+
+  <div class="row">
+    <input id="wordInput" placeholder="Enter word (e.g. Babylon)" />
+    <button id="saveBtn">Save / Increment</button>
+  </div>
+
+  <div class="row">
+    <input id="searchInput" placeholder="Search words" />
+    <button id="refreshBtn">Refresh</button>
+  </div>
+
+  <div id="status" class="muted"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Word</th>
+        <th>Gematria</th>
+        <th>Digital Root</th>
+        <th>Base Root</th>
+        <th>Search Count</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script>
+    const rows = document.getElementById('rows');
+    const status = document.getElementById('status');
+    const wordInput = document.getElementById('wordInput');
+    const searchInput = document.getElementById('searchInput');
+
+    async function loadWords() {
+      const q = encodeURIComponent(searchInput.value.trim());
+      const res = await fetch(`/api/words${q ? `?q=${q}` : ''}`);
+      const data = await res.json();
+
+      rows.innerHTML = (data.items || []).map((item) => `
+        <tr>
+          <td>${item.word}</td>
+          <td>${item.gematria_value}</td>
+          <td>${item.digital_root}</td>
+          <td>${item.is_base_root ? 'yes' : 'no'}</td>
+          <td>${item.search_count}</td>
+        </tr>
+      `).join('');
+
+      status.textContent = `Loaded ${data.count || 0} records`;
+    }
+
+    async function saveWord() {
+      const word = wordInput.value.trim();
+      if (!word) {
+        status.textContent = 'Enter a word first.';
+        return;
+      }
+
+      const res = await fetch('/api/words', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ word }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        status.textContent = data.error || 'Save failed';
+        return;
+      }
+
+      status.textContent = `Saved: ${data.item.word} (count=${data.item.search_count})`;
+      wordInput.value = '';
+      await loadWords();
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', saveWord);
+    document.getElementById('refreshBtn').addEventListener('click', loadWords);
+    searchInput.addEventListener('input', () => loadWords().catch(() => {
+      status.textContent = 'Could not load words. Did you run initDatabase?';
+    }));
+
+    loadWords().catch(() => {
+      status.textContent = 'Could not load words. Make sure DATABASE_URL is set and schema is initialized.';
+    });
+  </script>
 </body>
 </html>

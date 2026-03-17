@@ -74,6 +74,7 @@ function isBaseRootValue(gematriaTotal) {
   return Number(gematriaTotal) % 54 === 0;
 }
 
+<<<<<<< codex/implement-search-and-insert-logic-2tmccw
 function jsonResponse(statusCode, payload) {
   return {
     statusCode,
@@ -156,6 +157,84 @@ export async function handler(event) {
   } catch (error) {
     return jsonResponse(500, { error: error.message });
   }
+=======
+export async function handler(request) {
+  const url = new URL(request.url);
+  const word = url.searchParams.get('word');
+
+  if (!word) {
+    return jsonResponse(400, { error: 'Missing required query parameter: word' });
+  }
+
+  try {
+    const sql = neon(process.env.DATABASE_URL);
+    const normalizedWord = word.trim().toLowerCase();
+
+    const existing = await sql`
+      SELECT word, gematria_value, digital_root, is_base_root, search_count
+      FROM words
+      WHERE LOWER(word) = ${normalizedWord}
+      LIMIT 1
+    `;
+
+    if (existing.length > 0) {
+      const row = existing[0];
+
+      const updated = await sql`
+        UPDATE words
+        SET search_count = search_count + 1
+        WHERE LOWER(word) = ${normalizedWord}
+        RETURNING search_count
+      `;
+
+      return new Response(
+        JSON.stringify({
+          word: row.word,
+          gematria: {
+            total: String(row.gematria_value),
+            digitalRoot: Number(row.digital_root),
+          },
+          isBaseRoot: isBaseRootValue(row.gematria_value),
+          searchCount: Number(updated[0].search_count),
+          source: 'database',
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json; charset=utf-8' },
+        },
+      );
+    }
+
+    const gematria = englishGematriaWithDigitalRoot(word);
+    const digitalRootValue = Number(gematria.digitalRoot);
+    const isBaseRoot = isBaseRootValue(gematria.total);
+
+    const inserted = await sql`
+      INSERT INTO words (word, gematria_value, digital_root, is_base_root, search_count)
+      VALUES (${word}, ${Number(gematria.total)}, ${digitalRootValue}, ${isBaseRoot}, 1)
+      RETURNING search_count
+    `;
+
+    return new Response(
+      JSON.stringify({
+        word,
+        gematria,
+        isBaseRoot,
+        searchCount: Number(inserted[0].search_count),
+        source: 'calculated',
+      }),
+      {
+        status: 200,
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+      },
+    );
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'content-type': 'application/json; charset=utf-8' },
+    });
+  }
+>>>>>>> main
 }
 
 export default handler;

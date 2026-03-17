@@ -28,7 +28,7 @@
 
     <form id="gematria-form">
       <label for="word-input">Enter a word:</label>
-      <input id="word-input" name="word" type="text" required />
+      <input id="word-input" name="word" type="text" pattern="[A-Za-z]+" required />
       <button type="submit">Calculate</button>
     </form>
 
@@ -38,6 +38,11 @@
       const form = document.querySelector('#gematria-form');
       const wordInput = document.querySelector('#word-input');
       const result = document.querySelector('#gematria-result');
+      const lettersOnlyRegex = /^[A-Za-z]+$/;
+
+      wordInput.addEventListener('input', () => {
+        wordInput.value = wordInput.value.replace(/[^A-Za-z]/g, '');
+      });
 
       async function requestGematria(word) {
         const endpoint = 'https://endtimes.today/.netlify/functions/englishGematria';
@@ -67,6 +72,11 @@
 
         if (!word) {
           result.textContent = 'Please enter a word.';
+          return;
+        }
+
+        if (!lettersOnlyRegex.test(word)) {
+          result.textContent = 'Please enter letters only.';
           return;
         }
 

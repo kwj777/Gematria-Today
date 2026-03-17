@@ -1,3 +1,5 @@
+import { neon } from '@neondatabase/serverless';
+
 /**
  * Calculate base-6 English gematria for a word or phrase.
  *
@@ -60,23 +62,12 @@ export function englishGematriaWithDigitalRoot(input) {
   };
 }
 
-let neonFactory;
-
-async function getSqlClient() {
-  if (!neonFactory) {
-    const neonModule = await import('@neondatabase/serverless');
-    neonFactory = neonModule.neon;
-  }
-
-  return neonFactory(process.env.DATABASE_URL);
-}
-
 function isBaseRootValue(gematriaTotal) {
-  return Number(gematriaTotal) % 54 === 0;
+  return Number(gematriaTotal - 6) % 54 === 0;
 }
 
 async function processWord(word) {
-  const sql = await getSqlClient();
+  const sql = neon(process.env.DATABASE_URL);
   const trimmedWord = word.trim();
   const normalizedWord = trimmedWord.toLowerCase();
   const gematria = englishGematriaWithDigitalRoot(trimmedWord);

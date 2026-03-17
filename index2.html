@@ -52,7 +52,7 @@
         result.textContent = 'Searching...';
 
         try {
-          const response = await fetch(`/api/englishGematria?word=${encodeURIComponent(word)}`);
+          const response = await fetch(`https://endtimes.today/.netlify/functions/englishGematria?word=${encodeURIComponent(word)}`);
           const payload = await response.json();
 
           if (!response.ok) {

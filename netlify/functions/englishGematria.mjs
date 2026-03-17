@@ -74,34 +74,9 @@ function isBaseRootValue(gematriaTotal) {
   return Number(gematriaTotal) % 54 === 0;
 }
 
-function jsonResponse(statusCode, payload) {
-  return {
-    statusCode,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-    body: JSON.stringify(payload),
-  };
-}
-
-function extractWord(event) {
-  if (event && typeof event === 'object') {
-    if ('queryStringParameters' in event && event.queryStringParameters?.word) {
-      return event.queryStringParameters.word;
-    }
-
-    if ('rawUrl' in event && typeof event.rawUrl === 'string') {
-      return new URL(event.rawUrl).searchParams.get('word');
-    }
-
-    if ('url' in event && typeof event.url === 'string') {
-      return new URL(event.url).searchParams.get('word');
-    }
-  }
-
-  return null;
-}
-
-export async function handler(event) {
-  const word = extractWord(event);
+export async function handler(request) {
+  const url = new URL(request.url);
+  const word = url.searchParams.get('word');
 
   if (!word) {
     return jsonResponse(400, { error: 'Missing required query parameter: word' });
@@ -128,16 +103,22 @@ export async function handler(event) {
         RETURNING search_count
       `;
 
-      return jsonResponse(200, {
-        word: row.word,
-        gematria: {
-          total: String(row.gematria_value),
-          digitalRoot: Number(row.digital_root),
+      return new Response(
+        JSON.stringify({
+          word: row.word,
+          gematria: {
+            total: String(row.gematria_value),
+            digitalRoot: Number(row.digital_root),
+          },
+          isBaseRoot: isBaseRootValue(row.gematria_value),
+          searchCount: Number(updated[0].search_count),
+          source: 'database',
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json; charset=utf-8' },
         },
-        isBaseRoot: isBaseRootValue(row.gematria_value),
-        searchCount: Number(updated[0].search_count),
-        source: 'database',
-      });
+      );
     }
 
     const gematria = englishGematriaWithDigitalRoot(word);
@@ -150,15 +131,24 @@ export async function handler(event) {
       RETURNING search_count
     `;
 
-    return jsonResponse(200, {
-      word,
-      gematria,
-      isBaseRoot,
-      searchCount: Number(inserted[0].search_count),
-      source: 'calculated',
-    });
+    return new Response(
+      JSON.stringify({
+        word,
+        gematria,
+        isBaseRoot,
+        searchCount: Number(inserted[0].search_count),
+        source: 'calculated',
+      }),
+      {
+        status: 200,
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+      },
+    );
   } catch (error) {
-    return jsonResponse(500, { error: error.message });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'content-type': 'application/json; charset=utf-8' },
+    });
   }
 }
 

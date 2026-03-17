@@ -74,7 +74,7 @@
 
         try {
           const payload = await requestGematria(word);
-          result.textContent = `Base-6 English Gematria for "${payload.word}": ${payload.gematria.total} (Digital Root: ${payload.gematria.digitalRoot}) | Searches: ${payload.searchCount}`;
+          result.textContent = `Base-6 English Gematria for "${payload.word}": ${payload.gematria.total} (Digital Root: ${payload.gematria.digitalRoot}) | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`;
         } catch (error) {
           result.textContent = error.message || 'Unable to calculate gematria.';
         }

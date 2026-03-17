@@ -34,14 +34,12 @@
 
     <p id="gematria-result"></p>
 
-    <script type="module">
-      import { englishGematriaWithDigitalRoot } from './netlify/functions/englishGematria.mjs';
-
+    <script>
       const form = document.querySelector('#gematria-form');
       const wordInput = document.querySelector('#word-input');
       const result = document.querySelector('#gematria-result');
 
-      form.addEventListener('submit', (event) => {
+      form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         const word = wordInput.value.trim();
@@ -51,8 +49,21 @@
           return;
         }
 
-        const gematriaValue = englishGematriaWithDigitalRoot(word);
-        result.textContent = `Base-6 English Gematria for "${word}": ${gematriaValue.total} (Digital Root: ${gematriaValue.digitalRoot})`;
+        result.textContent = 'Searching...';
+
+        try {
+          const response = await fetch(`/api/englishGematria?word=${encodeURIComponent(word)}`);
+          const payload = await response.json();
+
+          if (!response.ok) {
+            result.textContent = payload.error || 'Unable to calculate gematria.';
+            return;
+          }
+
+          result.textContent = `Base-6 English Gematria for "${payload.word}": ${payload.gematria.total} (Digital Root: ${payload.gematria.digitalRoot}) | Searches: ${payload.searchCount}`;
+        } catch (error) {
+          result.textContent = 'Network error while calculating gematria.';
+        }
       });
     </script>
   </body>

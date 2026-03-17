@@ -163,6 +163,7 @@ export default async function onRequest(request) {
     return toResponse(200, payload);
   } catch (error) {
     return toResponse(500, { error: error.message });
+  }
 /**
     * @param {{ queryStringParameters?: Record<string, string>, rawUrl?: string } | Request} event
    * @returns {{ statusCode: number, headers: Record<string, string>, body: string }}

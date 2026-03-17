@@ -39,37 +39,6 @@
       const wordInput = document.querySelector('#word-input');
       const result = document.querySelector('#gematria-result');
 
-      async function requestGematria(word) {
-        const endpoints = ['/api/englishGematria', '/.netlify/functions/englishGematria'];
-        let lastError = null;
-
-        for (const endpoint of endpoints) {
-          try {
-            const response = await fetch(`${endpoint}?word=${encodeURIComponent(word)}`);
-            const rawBody = await response.text();
-            let payload = null;
-
-            try {
-              payload = JSON.parse(rawBody);
-            } catch {
-              payload = { error: rawBody || 'Non-JSON response from server.' };
-            }
-
-            if (!response.ok) {
-              const message = payload.error || payload.message || payload.errorMessage || `HTTP ${response.status}`;
-              lastError = new Error(message);
-              continue;
-            }
-
-            return payload;
-          } catch (error) {
-            lastError = error;
-          }
-        }
-
-        throw lastError || new Error('Unable to calculate gematria.');
-      }
-
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -83,10 +52,17 @@
         result.textContent = 'Searching...';
 
         try {
-          const payload = await requestGematria(word);
+          const response = await fetch(`/api/englishGematria?word=${encodeURIComponent(word)}`);
+          const payload = await response.json();
+
+          if (!response.ok) {
+            result.textContent = payload.error || 'Unable to calculate gematria.';
+            return;
+          }
+
           result.textContent = `Base-6 English Gematria for "${payload.word}": ${payload.gematria.total} (Digital Root: ${payload.gematria.digitalRoot}) | Searches: ${payload.searchCount}`;
         } catch (error) {
-          result.textContent = error.message || 'Unable to calculate gematria.';
+          result.textContent = 'Network error while calculating gematria.';
         }
       });
     </script>

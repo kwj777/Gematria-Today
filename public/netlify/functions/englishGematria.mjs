@@ -61,6 +61,18 @@ export function englishGematriaWithDigitalRoot(input) {
 }
 
 /**
+ * Determine whether a gematria total is a base-root value.
+ *
+ * A value is considered a base root when it is evenly divisible by 54.
+ *
+ * @param {number|string} gematriaTotal - Gematria total to check.
+ * @returns {boolean} True when the total is a base-root value.
+ */
+export function isBaseRootValue(gematriaTotal) {
+  return Number(gematriaTotal) % 54 === 0;
+}
+
+/**
  * HTTP handler for gematria requests.
  *
  * Expected query parameter: ?word=<text>
@@ -84,10 +96,13 @@ export function handler(request) {
 
   const gematria = englishGematriaWithDigitalRoot(word);
 
-  return new Response(JSON.stringify({ word, gematria }), {
-    status: 200,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  });
+  return new Response(
+    JSON.stringify({ word, gematria, isBaseRoot: isBaseRootValue(gematria.total) }),
+    {
+      status: 200,
+      headers: { 'content-type': 'application/json; charset=utf-8' },
+    },
+  );
 }
 
 export default handler;

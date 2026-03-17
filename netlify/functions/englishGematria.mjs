@@ -63,7 +63,7 @@ export function englishGematriaWithDigitalRoot(input) {
 }
 
 function isBaseRootValue(gematriaTotal) {
-  return Number(gematriaTotal + 6) % 54 === 0;
+  return Number(gematriaTotal - 6) % 54 === 0;
 }
 
 async function processWord(word) {

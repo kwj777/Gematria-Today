@@ -2,7 +2,7 @@ import { neon } from "@neondatabase/serverless";
 
 export async function handler(event) {
   try {
-    const sql = neon(DATABASE_URL);
+    const sql = neon(process.env.DATABASE_URL);
 
     const words = await sql`
       SELECT 

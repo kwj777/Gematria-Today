@@ -89,10 +89,31 @@
         color: #7a4e00;
       }
 
+      .form-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .secondary-button {
+        background: transparent;
+        border: 1px solid #d0d7de;
+      }
+
       .gematria-detail {
         margin-top: 0.2rem;
         color: #57606a;
         font-size: 0.95rem;
+      }
+
+      .word-link {
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        font-weight: inherit;
+        text-decoration: underline;
       }
     </style>
   </head>
@@ -113,7 +134,10 @@
             <input id="related-limit-input" name="limit" type="number" min="1" step="1" value="10" required />
           </label>
         </div>
-        <button type="submit">Calculate and Find Related Words</button>
+        <div class="form-actions">
+          <button type="submit">Calculate and Find Related Words</button>
+          <button id="clear-search-button" class="secondary-button" type="button">Clear last term</button>
+        </div>
       </form>
 
       <p id="lookup-status" class="status muted"></p>
@@ -125,6 +149,7 @@
       const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');
       const relatedLimitInput = document.querySelector('#related-limit-input');
+      const clearSearchButton = document.querySelector('#clear-search-button');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
@@ -193,12 +218,52 @@
         );
       }
 
+      function runSearch(term, limit, { refreshPage = false } = {}) {
+        const normalizedTerm = String(term || '').trim();
+        const normalizedLimit = String(limit || '').trim();
+
+        if (refreshPage) {
+          const searchParams = new URLSearchParams();
+
+          if (normalizedTerm) {
+            searchParams.set('query', normalizedTerm);
+          }
+
+          if (normalizedLimit) {
+            searchParams.set('limit', normalizedLimit);
+          }
+
+          window.location.search = searchParams.toString();
+          return;
+        }
+
+        lookupInput.value = normalizedTerm;
+        if (normalizedLimit) {
+          relatedLimitInput.value = normalizedLimit;
+        }
+        lookupForm.requestSubmit();
+      }
+
+      function clearSearch() {
+        lookupInput.value = '';
+        lookupStatus.textContent = '';
+        gematriaResult.textContent = '';
+        relatedWordsResult.innerHTML = '';
+        const url = new URL(window.location.href);
+        url.search = '';
+        window.history.replaceState({}, '', url);
+      }
+
       function createWordListItem(wordResult, searchTotal) {
         const item = document.createElement('li');
-        const wordLabel = document.createElement('div');
+        const wordLabel = document.createElement('button');
         const hasMatchingGematria = Boolean(wordResult.gematria) && wordResult.gematria.gematria.total === searchTotal;
-        wordLabel.className = hasMatchingGematria ? 'related-word matching-word' : 'related-word';
+        wordLabel.type = 'button';
+        wordLabel.className = hasMatchingGematria ? 'related-word matching-word word-link' : 'related-word word-link';
         wordLabel.textContent = wordResult.word;
+        wordLabel.addEventListener('click', () => {
+          runSearch(wordResult.word, relatedLimitInput.value, { refreshPage: true });
+        });
         item.appendChild(wordLabel);
 
         const gematriaDetail = document.createElement('div');
@@ -322,6 +387,20 @@
           lookupStatus.textContent = error.message || 'Unable to load gematria and related words.';
           gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
+        }
+      });
+
+      clearSearchButton.addEventListener('click', () => {
+        clearSearch();
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const query = searchParams.get('query') || '';
+        const limit = searchParams.get('limit') || relatedLimitInput.value;
+
+        if (query) {
+          runSearch(query, limit);
         }
       });
     </script>

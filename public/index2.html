@@ -237,7 +237,7 @@
             });
 
             return {
-              relationshipType: relationship.relationshipType || 'Related words',
+              relationshipType: relationship.relationshipType === 'synonym' ? 'Related Words (per Wordnik)' : (relationship.relationshipType || 'Related words'),
               words: sortedWords,
             };
           })
@@ -297,7 +297,7 @@
 
           const disclaimer = document.createElement('p');
           disclaimer.className = 'muted disclaimer';
-          disclaimer.textContent = '* the words that match the gematria value are limited to the words currently in our database.';
+          disclaimer.textContent = '*  Gematria value matches are limited to the words currently in our database.';
           wrapper.appendChild(disclaimer);
 
           if (payload.count === 0) {
@@ -400,7 +400,9 @@
         gematriaResult.append(
           `Base-6 English Gematria for "${searchGematria.word}": `,
           createGematriaSearchButton(searchGematria.gematria.total),
-          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${formatBaseRootLabel(searchGematria.isBaseRoot)} | Searches: ${searchGematria.searchCount}`
+          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${formatBaseRootLabel(searchGematria.isBaseRoot)} | Searches: ${searchGematria.searchCount}`,
+          document.createElement('br'),
+          document.createElement('br')
         );
       }
 
@@ -435,7 +437,7 @@
 
         const disclaimer = document.createElement('p');
         disclaimer.className = 'muted disclaimer';
-        disclaimer.textContent = '* the words that match the gematria value are limited to the words currently in our database.';
+        disclaimer.textContent = '*  Gematria value matches are limited to the words currently in our database.';
         relatedWordsResult.appendChild(disclaimer);
 
         if (totalWords === 0) {

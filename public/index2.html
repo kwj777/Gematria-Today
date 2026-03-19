@@ -69,8 +69,22 @@
         padding-left: 1.25rem;
       }
 
+      li + li {
+        margin-top: 0.75rem;
+      }
+
       .result-meta {
         margin-bottom: 0.75rem;
+      }
+
+      .related-word {
+        font-weight: 700;
+      }
+
+      .gematria-detail {
+        margin-top: 0.2rem;
+        color: #57606a;
+        font-size: 0.95rem;
       }
     </style>
   </head>
@@ -157,35 +171,89 @@
         return requestJson('/.netlify/functions/wordnikRelatedWords', searchParams);
       }
 
-      function renderRelatedWords(payload) {
-        const relationships = Array.isArray(payload.data) ? payload.data : [];
+      async function enrichRelationshipWords(relationships) {
+        return Promise.all(
+          relationships.map(async (relationship) => {
+            const words = Array.isArray(relationship.words) ? relationship.words : [];
+
+            const wordsWithGematria = await Promise.all(
+              words.map(async (word) => {
+                try {
+                  const gematria = await requestGematria(word);
+                  return { word, gematria };
+                } catch (error) {
+                  return { word, gematriaError: error.message || 'Unable to calculate gematria.' };
+                }
+              })
+            );
+
+            return {
+              relationshipType: relationship.relationshipType || 'Related words',
+              words: wordsWithGematria,
+            };
+          })
+        );
+      }
+
+      function createWordListItem(wordResult) {
+        const item = document.createElement('li');
+        const wordLabel = document.createElement('div');
+        wordLabel.className = 'related-word';
+        wordLabel.textContent = wordResult.word;
+        item.appendChild(wordLabel);
+
+        const gematriaDetail = document.createElement('div');
+        gematriaDetail.className = 'gematria-detail';
+
+        if (wordResult.gematria) {
+          const payload = wordResult.gematria;
+          gematriaDetail.textContent = `Gematria: ${payload.gematria.total} | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`;
+        } else {
+          gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
+        }
+
+        item.appendChild(gematriaDetail);
+        return item;
+      }
+
+      function renderRelatedWords(payload, relationships) {
+        relatedWordsResult.innerHTML = '';
+
+        const meta = document.createElement('div');
+        meta.className = 'result-meta';
+        meta.innerHTML = `
+          <strong>Results for:</strong> ${payload.query}<br />
+          <strong>Limit used:</strong> ${payload.limit}
+        `;
+        relatedWordsResult.appendChild(meta);
 
         if (relationships.length === 0) {
-          relatedWordsResult.innerHTML = '<p>No related words were returned.</p>';
+          const emptyState = document.createElement('p');
+          emptyState.textContent = 'No related words were returned.';
+          relatedWordsResult.appendChild(emptyState);
           return;
         }
 
-        const sections = relationships
-          .map((relationship) => {
-            const words = Array.isArray(relationship.words) ? relationship.words : [];
-            const items = words.map((word) => `<li>${word}</li>`).join('');
+        relationships.forEach((relationship) => {
+          const section = document.createElement('section');
+          const heading = document.createElement('h3');
+          heading.textContent = relationship.relationshipType;
+          section.appendChild(heading);
 
-            return `
-              <section>
-                <h3>${relationship.relationshipType || 'Related words'}</h3>
-                ${items ? `<ul>${items}</ul>` : '<p>No words returned for this relationship.</p>'}
-              </section>
-            `;
-          })
-          .join('');
+          if (relationship.words.length === 0) {
+            const emptyWords = document.createElement('p');
+            emptyWords.textContent = 'No words returned for this relationship.';
+            section.appendChild(emptyWords);
+          } else {
+            const list = document.createElement('ul');
+            relationship.words.forEach((wordResult) => {
+              list.appendChild(createWordListItem(wordResult));
+            });
+            section.appendChild(list);
+          }
 
-        relatedWordsResult.innerHTML = `
-          <div class="result-meta">
-            <strong>Results for:</strong> ${payload.query}<br />
-            <strong>Limit used:</strong> ${payload.limit}
-          </div>
-          ${sections}
-        `;
+          relatedWordsResult.appendChild(section);
+        });
       }
 
       gematriaForm.addEventListener('submit', async (event) => {
@@ -231,13 +299,15 @@
           return;
         }
 
-        relatedWordsStatus.textContent = 'Searching for related words...';
+        relatedWordsStatus.textContent = 'Searching for related words and gematria values...';
         relatedWordsResult.innerHTML = '';
 
         try {
           const payload = await requestRelatedWords(term, limit);
+          const relationships = Array.isArray(payload.data) ? payload.data : [];
+          const enrichedRelationships = await enrichRelationshipWords(relationships);
           relatedWordsStatus.textContent = '';
-          renderRelatedWords(payload);
+          renderRelatedWords(payload, enrichedRelationships);
         } catch (error) {
           relatedWordsStatus.textContent = error.message || 'Unable to load related words.';
           relatedWordsResult.innerHTML = '';

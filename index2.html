@@ -322,6 +322,10 @@
           lookupStatus.textContent = error.message || 'Unable to load gematria and related words.';
           gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
+        } finally {
+          lookupForm.reset();
+          relatedLimitInput.value = '10';
+          lookupInput.focus();
         }
       });
     </script>

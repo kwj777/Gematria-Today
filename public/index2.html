@@ -144,8 +144,8 @@
           </label>
 
           <label class="field" for="related-limit-input">
-            <span>Related Words Limit:</span>
-            <input id="related-limit-input" name="limit" type="number" min="1" step="1" value="10" required />
+            <span>Related Words Limit (1000 max):</span>
+            <input id="related-limit-input" name="limit" type="number" min="1" max="1000" step="1" value="10" required />
           </label>
         </div>
         <div class="form-actions">
@@ -474,6 +474,7 @@
 
         const term = lookupInput.value.trim();
         const limit = relatedLimitInput.value.trim();
+        const limitValue = Number(limit);
 
         if (!term) {
           lookupStatus.textContent = 'Please enter a word or phrase.';
@@ -482,8 +483,15 @@
           return;
         }
 
-        if (!limit || Number(limit) <= 0 || !Number.isInteger(Number(limit))) {
+        if (!limit || !Number.isInteger(limitValue) || limitValue <= 0) {
           lookupStatus.textContent = 'Please enter a positive whole number for the limit.';
+          gematriaResult.textContent = '';
+          relatedWordsResult.innerHTML = '';
+          return;
+        }
+
+        if (limitValue > 1000) {
+          lookupStatus.textContent = 'Related words limit cannot be greater than 1000.';
           gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
           return;

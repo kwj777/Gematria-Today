@@ -274,11 +274,16 @@
           const searchGematria = await requestGematria(term);
           gematriaResult.textContent = `Base-6 English Gematria for "${searchGematria.word}": ${searchGematria.gematria.total} (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${searchGematria.isBaseRoot} | Searches: ${searchGematria.searchCount}`;
 
-          const relatedWordsPayload = await requestRelatedWords(term, limit);
-          const relationships = Array.isArray(relatedWordsPayload.data) ? relatedWordsPayload.data : [];
-          const enrichedRelationships = await enrichRelationshipWords(relationships);
-          lookupStatus.textContent = '';
-          renderRelatedWords(relatedWordsPayload, enrichedRelationships, searchGematria);
+          try {
+            const relatedWordsPayload = await requestRelatedWords(term, limit);
+            const relationships = Array.isArray(relatedWordsPayload.data) ? relatedWordsPayload.data : [];
+            const enrichedRelationships = await enrichRelationshipWords(relationships);
+            lookupStatus.textContent = '';
+            renderRelatedWords(relatedWordsPayload, enrichedRelationships, searchGematria);
+          } catch {
+            lookupStatus.textContent = '';
+            relatedWordsResult.innerHTML = '<p>Wordnik did not provide any related terms</p>';
+          }
         } catch (error) {
           lookupStatus.textContent = error.message || 'Unable to load gematria and related words.';
           gematriaResult.textContent = '';

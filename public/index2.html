@@ -81,6 +81,14 @@
         font-weight: 700;
       }
 
+      .matching-word {
+        display: inline-block;
+        padding: 0.1rem 0.35rem;
+        border-radius: 999px;
+        background: #fff8c5;
+        color: #7a4e00;
+      }
+
       .gematria-detail {
         margin-top: 0.2rem;
         color: #57606a;
@@ -92,27 +100,12 @@
     <h1>English Gematria Calculator (Base-6)</h1>
 
     <section class="panel">
-      <h2>Gematria Lookup</h2>
-      <form id="gematria-form">
+      <h2>Gematria Lookup + Related Words</h2>
+      <form id="lookup-form">
         <div class="field-row">
-          <label class="field" for="word-input">
-            <span>Enter a word</span>
-            <input id="word-input" name="word" type="text" pattern="[A-Za-z]+" required />
-          </label>
-        </div>
-        <button type="submit">Calculate</button>
-      </form>
-
-      <p id="gematria-result" class="status"></p>
-    </section>
-
-    <section class="panel">
-      <h2>Related Words</h2>
-      <form id="related-words-form">
-        <div class="field-row">
-          <label class="field" for="related-word-input">
+          <label class="field" for="lookup-input">
             <span>Enter a word or phrase</span>
-            <input id="related-word-input" name="phrase" type="text" required />
+            <input id="lookup-input" name="query" type="text" required />
           </label>
 
           <label class="field" for="related-limit-input">
@@ -120,27 +113,21 @@
             <input id="related-limit-input" name="limit" type="number" min="1" step="1" value="10" required />
           </label>
         </div>
-        <button type="submit">Find Related Words</button>
+        <button type="submit">Calculate and Find Related Words</button>
       </form>
 
-      <p id="related-words-status" class="status muted"></p>
+      <p id="lookup-status" class="status muted"></p>
+      <p id="gematria-result" class="status"></p>
       <div id="related-words-result"></div>
     </section>
 
     <script>
-      const gematriaForm = document.querySelector('#gematria-form');
-      const gematriaWordInput = document.querySelector('#word-input');
-      const gematriaResult = document.querySelector('#gematria-result');
-      const relatedWordsForm = document.querySelector('#related-words-form');
-      const relatedWordInput = document.querySelector('#related-word-input');
+      const lookupForm = document.querySelector('#lookup-form');
+      const lookupInput = document.querySelector('#lookup-input');
       const relatedLimitInput = document.querySelector('#related-limit-input');
-      const relatedWordsStatus = document.querySelector('#related-words-status');
+      const lookupStatus = document.querySelector('#lookup-status');
+      const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
-      const lettersOnlyRegex = /^[A-Za-z]+$/;
-
-      gematriaWordInput.addEventListener('input', () => {
-        gematriaWordInput.value = gematriaWordInput.value.replace(/[^A-Za-z]/g, '');
-      });
 
       async function requestJson(endpoint, searchParams) {
         const response = await fetch(`${endpoint}?${searchParams.toString()}`);
@@ -195,10 +182,11 @@
         );
       }
 
-      function createWordListItem(wordResult) {
+      function createWordListItem(wordResult, searchTotal) {
         const item = document.createElement('li');
         const wordLabel = document.createElement('div');
-        wordLabel.className = 'related-word';
+        const hasMatchingGematria = Boolean(wordResult.gematria) && wordResult.gematria.gematria.total === searchTotal;
+        wordLabel.className = hasMatchingGematria ? 'related-word matching-word' : 'related-word';
         wordLabel.textContent = wordResult.word;
         item.appendChild(wordLabel);
 
@@ -207,7 +195,8 @@
 
         if (wordResult.gematria) {
           const payload = wordResult.gematria;
-          gematriaDetail.textContent = `Gematria: ${payload.gematria.total} | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`;
+          const matchPrefix = hasMatchingGematria ? 'Gematria match! ' : '';
+          gematriaDetail.textContent = `${matchPrefix}Gematria: ${payload.gematria.total} | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`;
         } else {
           gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
         }
@@ -216,14 +205,15 @@
         return item;
       }
 
-      function renderRelatedWords(payload, relationships) {
+      function renderRelatedWords(payload, relationships, searchGematria) {
         relatedWordsResult.innerHTML = '';
 
         const meta = document.createElement('div');
         meta.className = 'result-meta';
         meta.innerHTML = `
           <strong>Results for:</strong> ${payload.query}<br />
-          <strong>Limit used:</strong> ${payload.limit}
+          <strong>Limit used:</strong> ${payload.limit}<br />
+          <strong>Search gematria:</strong> ${searchGematria.gematria.total}
         `;
         relatedWordsResult.appendChild(meta);
 
@@ -247,7 +237,7 @@
           } else {
             const list = document.createElement('ul');
             relationship.words.forEach((wordResult) => {
-              list.appendChild(createWordListItem(wordResult));
+              list.appendChild(createWordListItem(wordResult, searchGematria.gematria.total));
             });
             section.appendChild(list);
           }
@@ -256,60 +246,42 @@
         });
       }
 
-      gematriaForm.addEventListener('submit', async (event) => {
+      lookupForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const word = gematriaWordInput.value.trim();
-
-        if (!word) {
-          gematriaResult.textContent = 'Please enter a word.';
-          return;
-        }
-
-        if (!lettersOnlyRegex.test(word)) {
-          gematriaResult.textContent = 'Please enter letters only.';
-          return;
-        }
-
-        gematriaResult.textContent = 'Searching...';
-
-        try {
-          const payload = await requestGematria(word);
-          gematriaResult.textContent = `Base-6 English Gematria for "${payload.word}": ${payload.gematria.total} (Digital Root: ${payload.gematria.digitalRoot}) | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`;
-        } catch (error) {
-          gematriaResult.textContent = error.message || 'Unable to calculate gematria.';
-        }
-      });
-
-      relatedWordsForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const term = relatedWordInput.value.trim();
+        const term = lookupInput.value.trim();
         const limit = relatedLimitInput.value.trim();
 
         if (!term) {
-          relatedWordsStatus.textContent = 'Please enter a word or phrase.';
+          lookupStatus.textContent = 'Please enter a word or phrase.';
+          gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
           return;
         }
 
         if (!limit || Number(limit) <= 0 || !Number.isInteger(Number(limit))) {
-          relatedWordsStatus.textContent = 'Please enter a positive whole number for the limit.';
+          lookupStatus.textContent = 'Please enter a positive whole number for the limit.';
+          gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
           return;
         }
 
-        relatedWordsStatus.textContent = 'Searching for related words and gematria values...';
+        lookupStatus.textContent = 'Searching for gematria and related words...';
+        gematriaResult.textContent = '';
         relatedWordsResult.innerHTML = '';
 
         try {
-          const payload = await requestRelatedWords(term, limit);
-          const relationships = Array.isArray(payload.data) ? payload.data : [];
+          const searchGematria = await requestGematria(term);
+          gematriaResult.textContent = `Base-6 English Gematria for "${searchGematria.word}": ${searchGematria.gematria.total} (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${searchGematria.isBaseRoot} | Searches: ${searchGematria.searchCount}`;
+
+          const relatedWordsPayload = await requestRelatedWords(term, limit);
+          const relationships = Array.isArray(relatedWordsPayload.data) ? relatedWordsPayload.data : [];
           const enrichedRelationships = await enrichRelationshipWords(relationships);
-          relatedWordsStatus.textContent = '';
-          renderRelatedWords(payload, enrichedRelationships);
+          lookupStatus.textContent = '';
+          renderRelatedWords(relatedWordsPayload, enrichedRelationships, searchGematria);
         } catch (error) {
-          relatedWordsStatus.textContent = error.message || 'Unable to load related words.';
+          lookupStatus.textContent = error.message || 'Unable to load gematria and related words.';
+          gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
         }
       });

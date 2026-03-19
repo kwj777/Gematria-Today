@@ -216,8 +216,31 @@
         return item;
       }
 
+      function dedupeRelatedWords(relationships) {
+        const seenWords = new Set();
+
+        return relationships.map((relationship) => ({
+          ...relationship,
+          words: relationship.words.filter((wordResult) => {
+            const normalizedWord = String(wordResult.word || '')
+              .trim()
+              .toLowerCase();
+
+            if (!normalizedWord || seenWords.has(normalizedWord)) {
+              return false;
+            }
+
+            seenWords.add(normalizedWord);
+            return true;
+          }),
+        }));
+      }
+
       function renderRelatedWords(payload, relationships, searchGematria) {
         relatedWordsResult.innerHTML = '';
+
+        const dedupedRelationships = dedupeRelatedWords(relationships);
+        const totalWords = dedupedRelationships.reduce((count, relationship) => count + relationship.words.length, 0);
 
         const meta = document.createElement('div');
         meta.className = 'result-meta';
@@ -228,14 +251,14 @@
         `;
         relatedWordsResult.appendChild(meta);
 
-        if (relationships.length === 0) {
+        if (totalWords === 0) {
           const emptyState = document.createElement('p');
           emptyState.textContent = 'There are no related words found.';
           relatedWordsResult.appendChild(emptyState);
           return;
         }
 
-        relationships.forEach((relationship) => {
+        dedupedRelationships.forEach((relationship) => {
           const section = document.createElement('section');
           const heading = document.createElement('h3');
           heading.textContent = relationship.relationshipType;

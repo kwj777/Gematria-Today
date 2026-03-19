@@ -345,7 +345,7 @@
             renderGematriaMatches(payload.gematria.total);
           });
           const detailSuffix = document.createTextNode(
-            ` | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`
+            ` | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${formatBaseRootLabel(payload.isBaseRoot)} | Searches: ${payload.searchCount}`
           );
 
           gematriaDetail.append(detailPrefix, gematriaButton, detailSuffix);
@@ -388,12 +388,16 @@
         return gematriaButton;
       }
 
+      function formatBaseRootLabel(isBaseRoot) {
+        return isBaseRoot ? 'Yes' : 'No';
+      }
+
       function renderSearchGematriaSummary(searchGematria) {
         gematriaResult.textContent = '';
         gematriaResult.append(
           `Base-6 English Gematria for "${searchGematria.word}": `,
           createGematriaSearchButton(searchGematria.gematria.total),
-          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${searchGematria.isBaseRoot} | Searches: ${searchGematria.searchCount}`
+          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${formatBaseRootLabel(searchGematria.isBaseRoot)} | Searches: ${searchGematria.searchCount}`
         );
       }
 

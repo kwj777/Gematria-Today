@@ -377,6 +377,26 @@
         }));
       }
 
+      function createGematriaSearchButton(gematriaValue) {
+        const gematriaButton = document.createElement('button');
+        gematriaButton.type = 'button';
+        gematriaButton.className = 'inline-button';
+        gematriaButton.textContent = gematriaValue;
+        gematriaButton.addEventListener('click', () => {
+          renderGematriaMatches(gematriaValue);
+        });
+        return gematriaButton;
+      }
+
+      function renderSearchGematriaSummary(searchGematria) {
+        gematriaResult.textContent = '';
+        gematriaResult.append(
+          `Base-6 English Gematria for "${searchGematria.word}": `,
+          createGematriaSearchButton(searchGematria.gematria.total),
+          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${searchGematria.isBaseRoot} | Searches: ${searchGematria.searchCount}`
+        );
+      }
+
       function renderRelatedWords(payload, relationships, searchGematria) {
         relatedWordsResult.innerHTML = '';
 
@@ -385,11 +405,25 @@
 
         const meta = document.createElement('div');
         meta.className = 'result-meta';
-        meta.innerHTML = `
-          <strong>Results for:</strong> ${payload.query}<br />
-          <strong>Limit used:</strong> ${payload.limit}<br />
-          <strong>Search gematria:</strong> ${searchGematria.gematria.total}
-        `;
+
+        const resultsLabel = document.createElement('strong');
+        resultsLabel.textContent = 'Results for:';
+        const limitLabel = document.createElement('strong');
+        limitLabel.textContent = 'Limit used:';
+        const searchGematriaLabel = document.createElement('strong');
+        searchGematriaLabel.textContent = 'Search gematria:';
+
+        meta.append(
+          resultsLabel,
+          ` ${payload.query}`,
+          document.createElement('br'),
+          limitLabel,
+          ` ${payload.limit}`,
+          document.createElement('br'),
+          searchGematriaLabel,
+          ' ',
+          createGematriaSearchButton(searchGematria.gematria.total)
+        );
         relatedWordsResult.appendChild(meta);
 
         const disclaimer = document.createElement('p');
@@ -452,7 +486,7 @@
 
         try {
           const searchGematria = await requestGematria(term);
-          gematriaResult.textContent = `Base-6 English Gematria for "${searchGematria.word}": ${searchGematria.gematria.total} (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${searchGematria.isBaseRoot} | Searches: ${searchGematria.searchCount}`;
+          renderSearchGematriaSummary(searchGematria);
 
           try {
             const relatedWordsPayload = await requestRelatedWords(term, limit);

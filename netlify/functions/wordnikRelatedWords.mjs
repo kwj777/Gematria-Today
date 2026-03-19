@@ -1,5 +1,6 @@
 const WORDNIK_RELATIONSHIP_TYPES = 'synonym';
 const DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE = 10;
+const MAX_LIMIT_PER_RELATIONSHIP_TYPE = 1000;
 
 function toResponse(statusCode, payload) {
   return new Response(JSON.stringify(payload), {
@@ -50,6 +51,10 @@ function parseLimit(limit) {
     throw new Error('Query parameter "limit" must be a positive integer');
   }
 
+  if (parsedLimit > MAX_LIMIT_PER_RELATIONSHIP_TYPE) {
+    throw new Error(`Query parameter "limit" must not exceed ${MAX_LIMIT_PER_RELATIONSHIP_TYPE}`);
+  }
+
   return parsedLimit;
 }
 
@@ -74,6 +79,18 @@ function buildWordnikUrl(term, limit) {
   wordnikUrl.searchParams.set('api_key', apiKey);
 
   return wordnikUrl;
+}
+
+function getErrorStatusCode(error) {
+  if (error.message?.startsWith('Missing required query parameter: word')) {
+    return 400;
+  }
+
+  if (error.message?.startsWith('Query parameter "limit"')) {
+    return 400;
+  }
+
+  return 500;
 }
 
 async function fetchRelatedWords(term, limit) {
@@ -115,7 +132,7 @@ export default async function onRequest(request) {
     const payload = await fetchRelatedWords(term, limit);
     return toResponse(200, payload);
   } catch (error) {
-    return toResponse(500, { error: error.message });
+    return toResponse(getErrorStatusCode(error), { error: error.message });
   }
 }
 
@@ -130,6 +147,6 @@ export async function handler(event) {
     const payload = await fetchRelatedWords(term, limit);
     return toNetlifyResponse(200, payload);
   } catch (error) {
-    return toNetlifyResponse(500, { error: error.message });
+    return toNetlifyResponse(getErrorStatusCode(error), { error: error.message });
   }
 }

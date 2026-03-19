@@ -158,7 +158,7 @@
         return requestJson('/.netlify/functions/wordnikRelatedWords', searchParams);
       }
 
-      async function enrichRelationshipWords(relationships) {
+      async function enrichRelationshipWords(relationships, searchTotal) {
         return Promise.all(
           relationships.map(async (relationship) => {
             const words = Array.isArray(relationship.words) ? relationship.words : [];
@@ -174,9 +174,20 @@
               })
             );
 
+            const sortedWords = [...wordsWithGematria].sort((left, right) => {
+              const leftMatches = Boolean(left.gematria) && left.gematria.gematria.total === searchTotal;
+              const rightMatches = Boolean(right.gematria) && right.gematria.gematria.total === searchTotal;
+
+              if (leftMatches === rightMatches) {
+                return 0;
+              }
+
+              return leftMatches ? -1 : 1;
+            });
+
             return {
               relationshipType: relationship.relationshipType || 'Related words',
-              words: wordsWithGematria,
+              words: sortedWords,
             };
           })
         );
@@ -277,7 +288,7 @@
           try {
             const relatedWordsPayload = await requestRelatedWords(term, limit);
             const relationships = Array.isArray(relatedWordsPayload.data) ? relatedWordsPayload.data : [];
-            const enrichedRelationships = await enrichRelationshipWords(relationships);
+            const enrichedRelationships = await enrichRelationshipWords(relationships, searchGematria.gematria.total);
             lookupStatus.textContent = '';
             renderRelatedWords(relatedWordsPayload, enrichedRelationships, searchGematria);
           } catch {

@@ -115,6 +115,20 @@
         font-weight: inherit;
         text-decoration: underline;
       }
+
+      .inline-button {
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: #0969da;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .disclaimer {
+        margin-top: 1rem;
+        font-size: 0.95rem;
+      }
     </style>
   </head>
   <body>
@@ -183,6 +197,11 @@
         return requestJson('/.netlify/functions/wordnikRelatedWords', searchParams);
       }
 
+      async function requestWordsByGematria(gematriaValue) {
+        const searchParams = new URLSearchParams({ gematria: String(gematriaValue) });
+        return requestJson('/.netlify/functions/searchByGematria', searchParams);
+      }
+
       async function enrichRelationshipWords(relationships, searchTotal) {
         return Promise.all(
           relationships.map(async (relationship) => {
@@ -203,11 +222,18 @@
               const leftMatches = Boolean(left.gematria) && left.gematria.gematria.total === searchTotal;
               const rightMatches = Boolean(right.gematria) && right.gematria.gematria.total === searchTotal;
 
-              if (leftMatches === rightMatches) {
-                return 0;
+              if (leftMatches !== rightMatches) {
+                return leftMatches ? -1 : 1;
               }
 
-              return leftMatches ? -1 : 1;
+              const leftTotal = Number(left.gematria?.gematria?.total ?? Number.POSITIVE_INFINITY);
+              const rightTotal = Number(right.gematria?.gematria?.total ?? Number.POSITIVE_INFINITY);
+
+              if (leftTotal !== rightTotal) {
+                return leftTotal - rightTotal;
+              }
+
+              return left.word.localeCompare(right.word);
             });
 
             return {
@@ -254,6 +280,44 @@
         window.history.replaceState({}, '', url);
       }
 
+      async function renderGematriaMatches(gematriaValue) {
+        lookupStatus.textContent = `Searching for words with gematria ${gematriaValue}...`;
+        gematriaResult.textContent = '';
+        relatedWordsResult.innerHTML = '';
+
+        try {
+          const payload = await requestWordsByGematria(gematriaValue);
+          lookupStatus.textContent = '';
+          gematriaResult.textContent = `Words in the database with gematria ${payload.gematria}: ${payload.count}`;
+
+          const wrapper = document.createElement('section');
+          const heading = document.createElement('h3');
+          heading.textContent = `Words matching gematria ${payload.gematria}`;
+          wrapper.appendChild(heading);
+
+          const disclaimer = document.createElement('p');
+          disclaimer.className = 'muted disclaimer';
+          disclaimer.textContent = '* the words that match the gematria value are limited to the words currently in our database.';
+          wrapper.appendChild(disclaimer);
+
+          if (payload.count === 0) {
+            const emptyState = document.createElement('p');
+            emptyState.textContent = 'No words in the database currently match this gematria value.';
+            wrapper.appendChild(emptyState);
+          } else {
+            const list = document.createElement('ul');
+            payload.words.forEach((wordResult) => {
+              list.appendChild(createWordListItem({ word: wordResult.word, gematria: wordResult }, payload.gematria));
+            });
+            wrapper.appendChild(list);
+          }
+
+          relatedWordsResult.appendChild(wrapper);
+        } catch (error) {
+          lookupStatus.textContent = error.message || 'Unable to search by gematria value.';
+        }
+      }
+
       function createWordListItem(wordResult, searchTotal) {
         const item = document.createElement('li');
         const wordLabel = document.createElement('button');
@@ -272,7 +336,19 @@
         if (wordResult.gematria) {
           const payload = wordResult.gematria;
           const matchPrefix = hasMatchingGematria ? 'Gematria match! ' : '';
-          gematriaDetail.textContent = `${matchPrefix}Gematria: ${payload.gematria.total} | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`;
+          const detailPrefix = document.createTextNode(`${matchPrefix}Gematria: `);
+          const gematriaButton = document.createElement('button');
+          gematriaButton.type = 'button';
+          gematriaButton.className = 'inline-button';
+          gematriaButton.textContent = payload.gematria.total;
+          gematriaButton.addEventListener('click', () => {
+            renderGematriaMatches(payload.gematria.total);
+          });
+          const detailSuffix = document.createTextNode(
+            ` | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${payload.isBaseRoot} | Searches: ${payload.searchCount}`
+          );
+
+          gematriaDetail.append(detailPrefix, gematriaButton, detailSuffix);
         } else {
           gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
         }
@@ -315,6 +391,11 @@
           <strong>Search gematria:</strong> ${searchGematria.gematria.total}
         `;
         relatedWordsResult.appendChild(meta);
+
+        const disclaimer = document.createElement('p');
+        disclaimer.className = 'muted disclaimer';
+        disclaimer.textContent = '* the words that match the gematria value are limited to the words currently in our database.';
+        relatedWordsResult.appendChild(disclaimer);
 
         if (totalWords === 0) {
           const emptyState = document.createElement('p');

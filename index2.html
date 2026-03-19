@@ -357,8 +357,11 @@
         return item;
       }
 
-      function dedupeRelatedWords(relationships) {
+      function dedupeRelatedWords(relationships, searchTerm) {
         const seenWords = new Set();
+        const normalizedSearchTerm = String(searchTerm || '')
+          .trim()
+          .toLowerCase();
 
         return relationships.map((relationship) => ({
           ...relationship,
@@ -367,7 +370,7 @@
               .trim()
               .toLowerCase();
 
-            if (!normalizedWord || seenWords.has(normalizedWord)) {
+            if (!normalizedWord || normalizedWord === normalizedSearchTerm || seenWords.has(normalizedWord)) {
               return false;
             }
 
@@ -404,7 +407,7 @@
       function renderRelatedWords(payload, relationships, searchGematria) {
         relatedWordsResult.innerHTML = '';
 
-        const dedupedRelationships = dedupeRelatedWords(relationships);
+        const dedupedRelationships = dedupeRelatedWords(relationships, payload.query);
         const totalWords = dedupedRelationships.reduce((count, relationship) => count + relationship.words.length, 0);
 
         const meta = document.createElement('div');

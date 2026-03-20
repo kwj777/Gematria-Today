@@ -442,7 +442,8 @@
 
         meta.append(
           resultsLabel,
-          ` ${payload.query}`,
+          ` ${payload.query} `,
+          createDefinitionLink(payload.query),
           document.createElement('br'),
           limitLabel,
           ` ${payload.limit}`,

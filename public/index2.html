@@ -206,7 +206,8 @@
       }
 
       async function requestRelatedWords(term, limit) {
-        const searchParams = new URLSearchParams({ word: term, limit: String(limit) });
+        const normalizedTerm = String(term || '').toLowerCase();
+        const searchParams = new URLSearchParams({ word: normalizedTerm, limit: String(limit) });
         return requestJson('/.netlify/functions/wordnikRelatedWords', searchParams);
       }
 

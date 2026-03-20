@@ -95,13 +95,14 @@ function getErrorStatusCode(error) {
 
 async function fetchRelatedWords(term, limit) {
   const trimmedTerm = term.trim();
+  const normalizedTerm = trimmedTerm.toLowerCase();
 
-  if (!trimmedTerm) {
+  if (!normalizedTerm) {
     throw new Error('Missing required query parameter: word');
   }
 
   const parsedLimit = parseLimit(limit);
-  const url = buildWordnikUrl(trimmedTerm, parsedLimit);
+  const url = buildWordnikUrl(normalizedTerm, parsedLimit);
   const response = await fetch(url);
 
   if (!response.ok) {

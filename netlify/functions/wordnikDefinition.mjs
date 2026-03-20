@@ -1,7 +1,8 @@
-function toResponse(statusCode, payload) {
-  return new Response(JSON.stringify(payload), {
+function toResponse(statusCode, payload, contentType = "application/json; charset=utf-8") {
+  const body = contentType.startsWith("application/json") ? JSON.stringify(payload) : payload;
+  return new Response(body, {
     status: statusCode,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
+    headers: { 'content-type': contentType },
   });
 }
 
@@ -64,6 +65,198 @@ function getStatusCode(error) {
   return 500;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function isHtmlRequest(request) {
+  const acceptHeader = request.headers.get('accept') ?? '';
+  return acceptHeader.includes('text/html');
+}
+
+function createDefinitionMeta(definition) {
+  const details = [];
+
+  if (definition.partOfSpeech) {
+    details.push(`<span class="chip">${escapeHtml(definition.partOfSpeech)}</span>`);
+  }
+
+  if (definition.attributionText) {
+    details.push(`<span class="chip muted">${escapeHtml(definition.attributionText)}</span>`);
+  }
+
+  return details.length > 0 ? `<div class="definition-meta">${details.join('')}</div>` : '';
+}
+
+function createExamples(definition) {
+  const examples = [];
+
+  if (definition.exampleUses?.length) {
+    examples.push(...definition.exampleUses.map((example) => example.text).filter(Boolean));
+  }
+
+  if (definition.citations?.length) {
+    examples.push(...definition.citations.map((citation) => citation.cite).filter(Boolean));
+  }
+
+  const uniqueExamples = [...new Set(examples.map((value) => String(value).trim()).filter(Boolean))].slice(0, 3);
+
+  if (uniqueExamples.length === 0) {
+    return '';
+  }
+
+  const items = uniqueExamples.map((example) => `<li>${escapeHtml(example)}</li>`).join('');
+  return `<div class="examples"><h3>Examples</h3><ul>${items}</ul></div>`;
+}
+
+function renderDefinitionPage(payload) {
+  const definitions = Array.isArray(payload.definitions) ? payload.definitions : [];
+  const definitionItems = definitions
+    .map((definition, index) => {
+      const text = definition.text ? `<p class="definition-text">${escapeHtml(definition.text)}</p>` : '<p class="definition-text muted">Definition text unavailable.</p>';
+      return `
+        <article class="definition-card">
+          <div class="definition-number">${index + 1}</div>
+          <div class="definition-content">
+            ${createDefinitionMeta(definition)}
+            ${text}
+            ${createExamples(definition)}
+          </div>
+        </article>`;
+    })
+    .join('');
+
+  const body = definitions.length > 0
+    ? definitionItems
+    : '<p class="empty-state">No definitions were returned for this word.</p>';
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Definition: ${escapeHtml(payload.word)}</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        font-family: Georgia, "Times New Roman", serif;
+        margin: 0;
+        background: #f6f8fa;
+        color: #1f2328;
+      }
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2.5rem 1rem 4rem;
+      }
+      .page-header {
+        background: white;
+        border: 1px solid #d0d7de;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(31, 35, 40, 0.06);
+      }
+      h1 {
+        font-size: clamp(2rem, 4vw, 3rem);
+        margin: 0;
+        text-transform: capitalize;
+      }
+      .subtitle {
+        margin-top: 0.75rem;
+        color: #57606a;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+      .definitions {
+        margin-top: 1.5rem;
+        display: grid;
+        gap: 1rem;
+      }
+      .definition-card {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 1rem;
+        background: white;
+        border: 1px solid #d0d7de;
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 10px 30px rgba(31, 35, 40, 0.04);
+      }
+      .definition-number {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: #ddf4ff;
+        color: #0550ae;
+        font: 700 1rem/1 Helvetica, Arial, sans-serif;
+      }
+      .definition-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+      .chip {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: #eaeef2;
+        font-size: 0.9rem;
+      }
+      .chip.muted, .muted { color: #57606a; }
+      .definition-text {
+        margin: 0;
+        font-size: 1.1rem;
+        line-height: 1.65;
+      }
+      .examples {
+        margin-top: 1rem;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+      .examples h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1rem;
+      }
+      .examples ul {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+      .empty-state {
+        margin-top: 1.5rem;
+        padding: 1.25rem;
+        background: white;
+        border: 1px solid #d0d7de;
+        border-radius: 16px;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+      .source-link {
+        display: inline-block;
+        margin-top: 1rem;
+        font-family: Helvetica, Arial, sans-serif;
+        color: #0969da;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="page-header">
+        <h1>${escapeHtml(payload.word)}</h1>
+        <p class="subtitle">Dictionary-style definitions sourced from Wordnik.</p>
+        <a class="source-link" href="${escapeHtml(payload.url)}">View Wordnik API request</a>
+      </section>
+      <section class="definitions">${body}</section>
+    </main>
+  </body>
+</html>`;
+}
+
 async function fetchDefinition(word) {
   const trimmedWord = String(word ?? '').trim();
 
@@ -90,14 +283,22 @@ export default async function onRequest(request) {
   const word = new URL(request.url).searchParams.get('word');
 
   if (!word?.trim()) {
-    return toResponse(400, { error: 'Missing required query parameter: word' });
+    const payload = { error: 'Missing required query parameter: word' };
+    return isHtmlRequest(request)
+      ? toResponse(400, '<!doctype html><title>Error</title><p>Missing required query parameter: word</p>', 'text/html; charset=utf-8')
+      : toResponse(400, payload);
   }
 
   try {
     const payload = await fetchDefinition(word);
-    return toResponse(200, payload);
+    return isHtmlRequest(request)
+      ? toResponse(200, renderDefinitionPage(payload), 'text/html; charset=utf-8')
+      : toResponse(200, payload);
   } catch (error) {
-    return toResponse(getStatusCode(error), { error: error.message });
+    const statusCode = getStatusCode(error);
+    return isHtmlRequest(request)
+      ? toResponse(statusCode, `<!doctype html><title>Error</title><p>${escapeHtml(error.message)}</p>`, 'text/html; charset=utf-8')
+      : toResponse(statusCode, { error: error.message });
   }
 }
 

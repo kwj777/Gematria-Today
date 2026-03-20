@@ -30,11 +30,11 @@ function extractWordFromEvent(event) {
 }
 
 function buildWordnikDefinitionUrl(word) {
-  const baseUrl = process.env.WORDNIK_URL_BASE;
+  const baseUrl = process.env.WORDNIK_BASE_URL ?? process.env.WORDNIK_URL_BASE;
   const apiKey = process.env.WORDNIK_API_KEY;
 
   if (!baseUrl) {
-    throw new Error('Missing WORDNIK_URL_BASE environment variable');
+    throw new Error('Missing WORDNIK_BASE_URL environment variable');
   }
 
   if (!apiKey) {

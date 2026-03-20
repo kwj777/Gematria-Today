@@ -179,7 +179,7 @@
     <main>
       <section class="intro">
         <h1>Name Calculator</h1>
-        <p>Enter up to three personal names. On larger screens, each name appears in its own results column. On mobile devices, tapping <strong>Calculate</strong> opens each name's results in a separate tab.</p>
+        <p>Enter up to three personal names. On larger screens, each name appears in its own results column. On mobile devices, the results stack into a single column below.</p>
 
         <form id="name-form">
           <div class="field-grid">
@@ -390,21 +390,6 @@
         statusNode.textContent = '';
       }
 
-      function openMobileTabs(names) {
-        const baseUrl = new URL(window.location.href);
-        baseUrl.search = '';
-        const opened = names.map((name) => {
-          const url = new URL(baseUrl);
-          url.searchParams.set('single', name);
-          return window.open(url.toString(), '_blank', 'noopener');
-        });
-
-        const blockedCount = opened.filter((tab) => !tab).length;
-        mobileNoteNode.textContent = blockedCount
-          ? `Opened ${names.length - blockedCount} tab(s). ${blockedCount} tab(s) may have been blocked by your browser.`
-          : `Opened ${names.length} mobile result tab(s).`;
-      }
-
       async function maybeRenderSingleResultFromQuery() {
         const searchParams = new URLSearchParams(window.location.search);
         const singleName = String(searchParams.get('single') || '').trim();
@@ -429,14 +414,6 @@
           return;
         }
 
-        if (isMobileDevice()) {
-          statusNode.textContent = 'Opening each name in its own tab...';
-          resultsShell.hidden = true;
-          openMobileTabs(names);
-          statusNode.textContent = '';
-          return;
-        }
-
         await renderResults(names);
       });
 
@@ -444,7 +421,7 @@
         const renderedSingle = await maybeRenderSingleResultFromQuery();
         if (!renderedSingle) {
           mobileNoteNode.textContent = isMobileDevice()
-            ? 'Mobile mode is active: Calculate opens each name in a separate tab.'
+            ? 'Mobile mode is active: results will appear below in a single column.'
             : 'Desktop mode is active: results will appear below in three columns.';
         }
       });

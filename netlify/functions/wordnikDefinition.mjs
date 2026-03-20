@@ -164,6 +164,7 @@ function renderDefinitionPage(payload) {
     ? definitionItems
     : '<p class="empty-state">No definitions were returned for this word.</p>';
   const canonicalPath = `/definition?word=${encodeURIComponent(payload.word)}`;
+  const calculatorPath = '/calculator.html';
 
   return `<!doctype html>
 <html lang="en">
@@ -206,6 +207,18 @@ function renderDefinitionPage(payload) {
         margin-top: 0.75rem;
         color: #57606a;
         font-family: Helvetica, Arial, sans-serif;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+        color: #0969da;
+        font: 600 0.95rem/1 Helvetica, Arial, sans-serif;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
       }
       .definitions {
         margin-top: 1.5rem;
@@ -276,6 +289,7 @@ function renderDefinitionPage(payload) {
   </head>
   <body>
     <main>
+      <a class="back-link" href="${calculatorPath}" aria-label="Return to the calculator page">← Back to calculator</a>
       <section class="page-header">
         <h1>${escapeHtml(payload.word)}</h1>
         <p class="subtitle">Dictionary-style definitions sourced from Wordnik.</p>

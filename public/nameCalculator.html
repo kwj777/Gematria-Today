@@ -366,6 +366,10 @@
           .filter((entry) => entry.words.length > 0);
       }
 
+      function getEnglishGematriaSearchUrl(word) {
+        return `/calculator.html?query=${encodeURIComponent(String(word || '').trim())}`;
+      }
+
       function openFullRelatedWordsWindow(name, result, relationships) {
         const popup = window.open('', '_blank');
         if (!popup) {
@@ -375,7 +379,7 @@
         const sections = relationships.map((entry) => `
           <section>
             <h2>${escapeHtml(entry.relationshipType)}</h2>
-            <ul>${entry.words.map((word) => `<li>${escapeHtml(word)}</li>`).join('')}</ul>
+            <ul>${entry.words.map((word) => `<li><a href="${escapeHtml(getEnglishGematriaSearchUrl(word))}">${escapeHtml(word)}</a></li>`).join('')}</ul>
           </section>
         `).join('');
 
@@ -393,12 +397,14 @@
       section + section { margin-top: 1.5rem; }
       ul { padding-left: 1.2rem; }
       li + li { margin-top: 0.35rem; }
+      a { color: #0969da; text-decoration: underline; }
     </style>
   </head>
   <body>
     <main>
       <h1>${escapeHtml(name)}</h1>
       <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))} | Base Root: ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}</p>
+      <p class="meta">Click any related word below to open an English Gematria search for that word.</p>
       ${sections || '<p>No related words found.</p>'}
     </main>
   </body>

@@ -222,8 +222,8 @@
         definitionLink.href = `/definition?word=${encodeURIComponent(word)}`;
         definitionLink.target = '_blank';
         definitionLink.rel = 'noopener noreferrer';
-        definitionLink.textContent = 'See definition';
-        definitionLink.setAttribute('aria-label', `See definition for ${word}`);
+        definitionLink.textContent = '(definition)';
+        definitionLink.setAttribute('aria-label', `Definition for ${word}`);
         return definitionLink;
       }
 

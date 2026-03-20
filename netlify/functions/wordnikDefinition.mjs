@@ -160,6 +160,7 @@ function renderDefinitionPage(payload) {
   const body = definitions.length > 0
     ? definitionItems
     : '<p class="empty-state">No definitions were returned for this word.</p>';
+  const canonicalPath = `/definition?word=${encodeURIComponent(payload.word)}`;
 
   return `<!doctype html>
 <html lang="en">
@@ -167,6 +168,12 @@ function renderDefinitionPage(payload) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Definition: ${escapeHtml(payload.word)}</title>
+    <link rel="canonical" href="${canonicalPath}" />
+    <script>
+      if (window.location.pathname.startsWith('/.netlify/functions/wordnikDefinition')) {
+        window.history.replaceState({}, '', ${JSON.stringify(canonicalPath)});
+      }
+    </script>
     <style>
       :root { color-scheme: light; }
       body {

@@ -327,11 +327,12 @@
 
       function createDefinitionLink(word) {
         const definitionLink = document.createElement('a');
+        const searchParams = new URLSearchParams({ word });
         definitionLink.className = 'definition-link';
-        definitionLink.href = `https://www.wordnik.com/words/${encodeURIComponent(word)}`;
+        definitionLink.href = `/.netlify/functions/wordnikDefinition?${searchParams.toString()}`;
         definitionLink.target = '_blank';
         definitionLink.rel = 'noopener noreferrer';
-        definitionLink.textContent = 'Definition';
+        definitionLink.textContent = '(see definition)';
         return definitionLink;
       }
 

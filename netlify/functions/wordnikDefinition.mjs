@@ -141,23 +141,26 @@ function createExamples(definition) {
 
 function renderDefinitionPage(payload) {
   const definitions = Array.isArray(payload.definitions) ? payload.definitions : [];
-  const definitionItems = definitions
-    .map((definition, index) => {
-      const sanitizedText = sanitizeInlineHtml(definition.text);
-      const text = sanitizedText ? `<p class="definition-text">${sanitizedText}</p>` : '<p class="definition-text muted">Definition text unavailable.</p>';
-      return `
+  const visibleDefinitions = definitions
+    .map((definition) => ({
+      definition,
+      sanitizedText: sanitizeInlineHtml(definition.text),
+    }))
+    .filter(({ sanitizedText }) => Boolean(sanitizedText));
+
+  const definitionItems = visibleDefinitions
+    .map(({ definition, sanitizedText }, index) => `
         <article class="definition-card">
           <div class="definition-number">${index + 1}</div>
           <div class="definition-content">
             ${createDefinitionMeta(definition)}
-            ${text}
+            <p class="definition-text">${sanitizedText}</p>
             ${createExamples(definition)}
           </div>
-        </article>`;
-    })
+        </article>`)
     .join('');
 
-  const body = definitions.length > 0
+  const body = visibleDefinitions.length > 0
     ? definitionItems
     : '<p class="empty-state">No definitions were returned for this word.</p>';
   const canonicalPath = `/definition?word=${encodeURIComponent(payload.word)}`;

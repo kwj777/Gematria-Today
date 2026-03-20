@@ -74,6 +74,13 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function stripHtmlTags(value) {
+  return String(value ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function isHtmlRequest(request) {
   const acceptHeader = request.headers.get('accept') ?? '';
   return acceptHeader.includes('text/html');
@@ -97,14 +104,14 @@ function createExamples(definition) {
   const examples = [];
 
   if (definition.exampleUses?.length) {
-    examples.push(...definition.exampleUses.map((example) => example.text).filter(Boolean));
+    examples.push(...definition.exampleUses.map((example) => stripHtmlTags(example.text)).filter(Boolean));
   }
 
   if (definition.citations?.length) {
-    examples.push(...definition.citations.map((citation) => citation.cite).filter(Boolean));
+    examples.push(...definition.citations.map((citation) => stripHtmlTags(citation.cite)).filter(Boolean));
   }
 
-  const uniqueExamples = [...new Set(examples.map((value) => String(value).trim()).filter(Boolean))].slice(0, 3);
+  const uniqueExamples = [...new Set(examples.map((value) => stripHtmlTags(value)).filter(Boolean))].slice(0, 3);
 
   if (uniqueExamples.length === 0) {
     return '';
@@ -118,7 +125,8 @@ function renderDefinitionPage(payload) {
   const definitions = Array.isArray(payload.definitions) ? payload.definitions : [];
   const definitionItems = definitions
     .map((definition, index) => {
-      const text = definition.text ? `<p class="definition-text">${escapeHtml(definition.text)}</p>` : '<p class="definition-text muted">Definition text unavailable.</p>';
+      const cleanedText = stripHtmlTags(definition.text);
+      const text = cleanedText ? `<p class="definition-text">${escapeHtml(cleanedText)}</p>` : '<p class="definition-text muted">Definition text unavailable.</p>';
       return `
         <article class="definition-card">
           <div class="definition-number">${index + 1}</div>
@@ -236,12 +244,6 @@ function renderDefinitionPage(payload) {
         border-radius: 16px;
         font-family: Helvetica, Arial, sans-serif;
       }
-      .source-link {
-        display: inline-block;
-        margin-top: 1rem;
-        font-family: Helvetica, Arial, sans-serif;
-        color: #0969da;
-      }
     </style>
   </head>
   <body>
@@ -249,7 +251,6 @@ function renderDefinitionPage(payload) {
       <section class="page-header">
         <h1>${escapeHtml(payload.word)}</h1>
         <p class="subtitle">Dictionary-style definitions sourced from Wordnik.</p>
-        <a class="source-link" href="${escapeHtml(payload.url)}">View Wordnik API request</a>
       </section>
       <section class="definitions">${body}</section>
     </main>
@@ -274,7 +275,6 @@ async function fetchDefinition(word) {
 
   return {
     word: trimmedWord,
-    url: url.toString(),
     definitions: await response.json(),
   };
 }

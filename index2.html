@@ -125,13 +125,6 @@
         cursor: pointer;
       }
 
-      .definition-link {
-        margin-left: 0.5rem;
-        font-size: 0.95rem;
-        font-weight: 400;
-        color: #0969da;
-      }
-
       .disclaimer {
         margin-top: 1rem;
         font-size: 0.95rem;
@@ -325,17 +318,6 @@
         }
       }
 
-      function createDefinitionLink(word) {
-        const definitionLink = document.createElement('a');
-        const searchParams = new URLSearchParams({ word });
-        definitionLink.className = 'definition-link';
-        definitionLink.href = `/.netlify/functions/wordnikDefinition?${searchParams.toString()}`;
-        definitionLink.target = '_blank';
-        definitionLink.rel = 'noopener noreferrer';
-        definitionLink.textContent = '(see definition)';
-        return definitionLink;
-      }
-
       function createWordListItem(wordResult, searchTotal) {
         const item = document.createElement('li');
         const wordLabel = document.createElement('button');
@@ -346,7 +328,7 @@
         wordLabel.addEventListener('click', () => {
           runSearch(wordResult.word, relatedLimitInput.value, { refreshPage: true });
         });
-        item.append(wordLabel, createDefinitionLink(wordResult.word));
+        item.appendChild(wordLabel);
 
         const gematriaDetail = document.createElement('div');
         gematriaDetail.className = 'gematria-detail';

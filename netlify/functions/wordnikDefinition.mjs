@@ -81,6 +81,24 @@ function stripHtmlTags(value) {
     .trim();
 }
 
+function sanitizeInlineHtml(value) {
+  return String(value ?? '')
+    .replace(/<a\s+([^>]*?)href=(['"])(.*?)\2([^>]*)>(.*?)<\/a>/gi, (_match, beforeHref, _quote, href, afterHref, textContent) => {
+      const hrefValue = escapeHtml(href);
+      const label = escapeHtml(stripHtmlTags(textContent));
+      const extraAttributes = `${beforeHref} ${afterHref}`;
+      const targetBlank = /target\s*=\s*(['"])_blank\1/i.test(extraAttributes);
+      const relValueMatch = extraAttributes.match(/rel\s*=\s*(['"])(.*?)\1/i);
+      const relValue = relValueMatch ? escapeHtml(relValueMatch[2]) : 'noopener noreferrer';
+      const targetAttribute = targetBlank ? ' target="_blank"' : '';
+      return `<a href="${hrefValue}"${targetAttribute} rel="${relValue}">${label}</a>`;
+    })
+    .replace(/<(?!\/?a\b)[^>]*>/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/>\s+</g, '><')
+    .trim();
+}
+
 function isHtmlRequest(request) {
   const acceptHeader = request.headers.get('accept') ?? '';
   return acceptHeader.includes('text/html');
@@ -125,8 +143,8 @@ function renderDefinitionPage(payload) {
   const definitions = Array.isArray(payload.definitions) ? payload.definitions : [];
   const definitionItems = definitions
     .map((definition, index) => {
-      const cleanedText = stripHtmlTags(definition.text);
-      const text = cleanedText ? `<p class="definition-text">${escapeHtml(cleanedText)}</p>` : '<p class="definition-text muted">Definition text unavailable.</p>';
+      const sanitizedText = sanitizeInlineHtml(definition.text);
+      const text = sanitizedText ? `<p class="definition-text">${sanitizedText}</p>` : '<p class="definition-text muted">Definition text unavailable.</p>';
       return `
         <article class="definition-card">
           <div class="definition-number">${index + 1}</div>

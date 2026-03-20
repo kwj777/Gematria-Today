@@ -322,7 +322,7 @@
         if (!relationships.length) {
           const empty = document.createElement('p');
           empty.className = 'empty';
-          empty.textContent = 'No related words were returned.';
+          empty.textContent = 'No related words found.';
           relatedSection.appendChild(empty);
         } else {
           const list = document.createElement('ul');
@@ -348,7 +348,7 @@
           if (!list.children.length) {
             const empty = document.createElement('p');
             empty.className = 'empty';
-            empty.textContent = 'No unique related words were returned.';
+            empty.textContent = 'No related words found.';
             relatedSection.appendChild(empty);
           } else {
             relatedSection.appendChild(list);
@@ -361,11 +361,17 @@
 
       async function fetchNameResult(name) {
         try {
-          const [gematria, related] = await Promise.all([
-            requestGematria(name),
-            requestRelatedWords(name.toLowerCase()),
-          ]);
-          return { gematria, related };
+          const gematria = await requestGematria(name);
+
+          try {
+            const related = await requestRelatedWords(name.toLowerCase());
+            return { gematria, related };
+          } catch (error) {
+            return {
+              gematria,
+              related: { data: [] },
+            };
+          }
         } catch (error) {
           return { error: error.message || 'Unable to load this name.' };
         }

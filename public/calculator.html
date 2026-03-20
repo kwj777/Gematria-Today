@@ -156,10 +156,6 @@
             <input id="lookup-input" name="query" type="text" required />
           </label>
 
-          <label class="field" for="related-limit-input">
-            <span>Related Words Limit (1000 max):</span>
-            <input id="related-limit-input" name="limit" type="number" min="1" max="1000" step="1" value="10" required />
-          </label>
         </div>
         <div class="form-actions">
           <button type="submit">Calculate and Find Related Words</button>
@@ -175,7 +171,7 @@
     <script>
       const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');
-      const relatedLimitInput = document.querySelector('#related-limit-input');
+      const DEFAULT_RELATED_WORD_LIMIT = 1000;
       const clearSearchButton = document.querySelector('#clear-search-button');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
@@ -205,7 +201,7 @@
         return requestJson('/.netlify/functions/englishGematria', searchParams);
       }
 
-      async function requestRelatedWords(term, limit) {
+      async function requestRelatedWords(term, limit = DEFAULT_RELATED_WORD_LIMIT) {
         const normalizedTerm = String(term || '').toLowerCase();
         const searchParams = new URLSearchParams({ word: normalizedTerm, limit: String(limit) });
         return requestJson('/.netlify/functions/wordnikRelatedWords', searchParams);
@@ -269,9 +265,8 @@
         );
       }
 
-      function runSearch(term, limit, { refreshPage = false } = {}) {
+      function runSearch(term, { refreshPage = false } = {}) {
         const normalizedTerm = String(term || '').trim();
-        const normalizedLimit = String(limit || '').trim();
 
         if (refreshPage) {
           const searchParams = new URLSearchParams();
@@ -280,18 +275,11 @@
             searchParams.set('query', normalizedTerm);
           }
 
-          if (normalizedLimit) {
-            searchParams.set('limit', normalizedLimit);
-          }
-
           window.location.search = searchParams.toString();
           return;
         }
 
         lookupInput.value = normalizedTerm;
-        if (normalizedLimit) {
-          relatedLimitInput.value = normalizedLimit;
-        }
         lookupForm.requestSubmit();
       }
 
@@ -354,7 +342,7 @@
         wordLabel.className = hasMatchingGematria ? 'related-word matching-word word-link' : 'related-word word-link';
         wordLabel.textContent = wordResult.word;
         wordLabel.addEventListener('click', () => {
-          runSearch(wordResult.word, relatedLimitInput.value, { refreshPage: true });
+          runSearch(wordResult.word, { refreshPage: true });
         });
 
         wordActions.append(wordLabel, createDefinitionLink(wordResult.word));
@@ -503,25 +491,8 @@
         event.preventDefault();
 
         const term = lookupInput.value.trim();
-        const limit = relatedLimitInput.value.trim();
-        const limitValue = Number(limit);
-
         if (!term) {
           lookupStatus.textContent = 'Please enter a word or phrase.';
-          gematriaResult.textContent = '';
-          relatedWordsResult.innerHTML = '';
-          return;
-        }
-
-        if (!limit || !Number.isInteger(limitValue) || limitValue <= 0) {
-          lookupStatus.textContent = 'Please enter a positive whole number for the limit.';
-          gematriaResult.textContent = '';
-          relatedWordsResult.innerHTML = '';
-          return;
-        }
-
-        if (limitValue > 1000) {
-          lookupStatus.textContent = 'Related words limit cannot be greater than 1000.';
           gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
           return;
@@ -536,7 +507,7 @@
           renderSearchGematriaSummary(searchGematria);
 
           try {
-            const relatedWordsPayload = await requestRelatedWords(term, limit);
+            const relatedWordsPayload = await requestRelatedWords(term);
             const relationships = Array.isArray(relatedWordsPayload.data) ? relatedWordsPayload.data : [];
             const enrichedRelationships = await enrichRelationshipWords(relationships, searchGematria.gematria.total);
             lookupStatus.textContent = '';
@@ -559,10 +530,8 @@
       window.addEventListener('DOMContentLoaded', () => {
         const searchParams = new URLSearchParams(window.location.search);
         const query = searchParams.get('query') || '';
-        const limit = searchParams.get('limit') || relatedLimitInput.value;
-
         if (query) {
-          runSearch(query, limit);
+          runSearch(query);
         }
       });
     </script>

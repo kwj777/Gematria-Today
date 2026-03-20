@@ -299,16 +299,6 @@
         resultsShell.hidden = true;
       }
 
-      async function showSingleNameResult(name) {
-        const singleName = String(name || '').trim();
-        if (!singleName) {
-          return;
-        }
-
-        mobileNoteNode.textContent = `Showing single-name results for ${singleName}.`;
-        await renderResults([singleName]);
-      }
-
       function escapeHtml(value) {
         return String(value ?? '')
           .replaceAll('&', '&amp;')
@@ -330,19 +320,14 @@
       }
 
       function createRelatedWordButton(word) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'word-button';
-        button.textContent = word;
-        button.addEventListener('click', async () => {
-          button.disabled = true;
-          try {
-            await showSingleNameResult(word);
-          } finally {
-            button.disabled = false;
-          }
-        });
-        return button;
+        const link = document.createElement('a');
+        link.className = 'word-button';
+        link.href = getEnglishGematriaSearchUrl(word);
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = word;
+        link.setAttribute('aria-label', `Open English Gematria results for ${word}`);
+        return link;
       }
 
       function dedupeRelatedWords(name, relationships) {
@@ -521,18 +506,6 @@
         statusNode.textContent = '';
       }
 
-      async function maybeRenderSingleResultFromQuery() {
-        const searchParams = new URLSearchParams(window.location.search);
-        const singleName = String(searchParams.get('single') || '').trim();
-        if (!singleName) {
-          return false;
-        }
-
-        document.title = `${singleName} | Name Calculator`;
-        await showSingleNameResult(singleName);
-        return true;
-      }
-
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         mobileNoteNode.textContent = '';
@@ -555,11 +528,8 @@
         resetResultsView();
       });
 
-      window.addEventListener('DOMContentLoaded', async () => {
-        const renderedSingle = await maybeRenderSingleResultFromQuery();
-        if (!renderedSingle) {
-          mobileNoteNode.textContent = getDefaultMobileNote();
-        }
+      window.addEventListener('DOMContentLoaded', () => {
+        mobileNoteNode.textContent = getDefaultMobileNote();
       });
     </script>
   </body>

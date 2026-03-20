@@ -13,6 +13,8 @@
         --text: #1f2328;
         --muted: #57606a;
         --accent: #0969da;
+        --highlight: #fff3a3;
+        --highlight-text: #6b5200;
       }
 
       * { box-sizing: border-box; }
@@ -136,6 +138,16 @@
         font-size: 0.95rem;
         color: var(--muted);
         margin-bottom: 1rem;
+      }
+
+      .meta-highlight {
+        display: inline-block;
+        padding: 0.1rem 0.45rem;
+        margin: 0 0.15rem;
+        border-radius: 999px;
+        background: var(--highlight);
+        color: var(--highlight-text);
+        font-weight: 700;
       }
 
       .section + .section {
@@ -433,7 +445,17 @@
           createTextNode(result.related?.query || name),
           createTextNode(' | Gematria: '),
           createGematriaButton(result.gematria.gematria.total),
-          createTextNode(` | Digital Root: ${result.gematria.gematria.digitalRoot} | Base Root: ${result.gematria.isBaseRoot ? 'Yes' : 'No'} | Searches: ${result.gematria.searchCount}`)
+          createTextNode(' | Digital Root: '),
+          Object.assign(document.createElement('span'), {
+            className: 'meta-highlight',
+            textContent: String(result.gematria.gematria.digitalRoot),
+          }),
+          createTextNode(' | Base Root: '),
+          Object.assign(document.createElement('span'), {
+            className: 'meta-highlight',
+            textContent: result.gematria.isBaseRoot ? 'Yes' : 'No',
+          }),
+          createTextNode(` | Searches: ${result.gematria.searchCount}`)
         );
         article.appendChild(meta);
 

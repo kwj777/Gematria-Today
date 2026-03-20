@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gematria Matches</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --border: #d0d7de;
+        --bg: #f6f8fa;
+        --card: #ffffff;
+        --text: #1f2328;
+        --muted: #57606a;
+        --accent: #0969da;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: Helvetica, Arial, sans-serif;
+        color: var(--text);
+        background: linear-gradient(180deg, #ffffff 0%, #f6f8fa 100%);
+      }
+
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+      }
+
+      .shell {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 18px 50px rgba(31, 35, 40, 0.08);
+        padding: 1.5rem;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      .toolbar {
+        display: grid;
+        gap: 1rem;
+        margin: 1.25rem 0 1.5rem;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font: inherit;
+      }
+
+      .meta {
+        color: var(--muted);
+      }
+
+      .status,
+      .empty {
+        color: var(--muted);
+      }
+
+      .word-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .word-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: baseline;
+        padding: 0.95rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--bg);
+      }
+
+      .word-link,
+      .definition-link,
+      .back-link {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+
+      .word-link {
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+
+      .definition-link {
+        white-space: nowrap;
+      }
+
+      .word-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 640px) {
+        .word-item {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="shell">
+        <a class="back-link" href="/nameCalculator.html">← Back to Name Calculator</a>
+        <h1 id="page-title">Gematria matches</h1>
+        <p id="page-meta" class="meta"></p>
+
+        <div class="toolbar">
+          <label for="word-search">Search these words</label>
+          <input id="word-search" class="search-input" type="search" placeholder="Type to filter matching words" />
+        </div>
+
+        <p id="status" class="status">Loading words…</p>
+        <ul id="word-list" class="word-list" hidden></ul>
+        <p id="empty" class="empty" hidden>No matching words found.</p>
+      </section>
+    </main>
+
+    <script>
+      const titleNode = document.querySelector('#page-title');
+      const metaNode = document.querySelector('#page-meta');
+      const statusNode = document.querySelector('#status');
+      const searchNode = document.querySelector('#word-search');
+      const listNode = document.querySelector('#word-list');
+      const emptyNode = document.querySelector('#empty');
+      const params = new URLSearchParams(window.location.search);
+      const gematria = String(params.get('gematria') || '').trim();
+      let allWords = [];
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      async function requestWordsByGematria(total) {
+        const response = await fetch(`/.netlify/functions/searchByGematria?gematria=${encodeURIComponent(total)}`);
+        const rawBody = await response.text();
+        let payload;
+
+        try {
+          payload = JSON.parse(rawBody);
+        } catch {
+          payload = { error: rawBody || 'Non-JSON response from server.' };
+        }
+
+        if (!response.ok) {
+          throw new Error(payload.error || payload.message || `HTTP ${response.status}`);
+        }
+
+        return payload;
+      }
+
+      function createWordItem(entry) {
+        const item = document.createElement('li');
+        item.className = 'word-item';
+        item.innerHTML = `
+          <a class="word-link" href="/calculator.html?query=${encodeURIComponent(entry.word)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.word)}</a>
+          <div class="word-actions">
+            <span>Root ${escapeHtml(String(entry.gematria.digitalRoot))}</span>
+            <a class="definition-link" href="/definition?word=${encodeURIComponent(entry.word)}" target="_blank" rel="noopener noreferrer">(definition)</a>
+          </div>
+        `;
+        return item;
+      }
+
+      function renderList(words) {
+        listNode.innerHTML = '';
+
+        if (!words.length) {
+          listNode.hidden = true;
+          emptyNode.hidden = false;
+          statusNode.textContent = allWords.length ? 'No words match your search.' : '';
+          return;
+        }
+
+        emptyNode.hidden = true;
+        listNode.hidden = false;
+        statusNode.textContent = `${words.length} word${words.length === 1 ? '' : 's'} shown`;
+        words.forEach((entry) => listNode.appendChild(createWordItem(entry)));
+      }
+
+      function applySearch() {
+        const query = searchNode.value.trim().toLowerCase();
+        const filtered = !query
+          ? allWords
+          : allWords.filter((entry) => entry.word.toLowerCase().includes(query));
+        renderList(filtered);
+      }
+
+      async function init() {
+        if (!gematria) {
+          titleNode.textContent = 'Gematria matches';
+          statusNode.textContent = 'Missing gematria value in the page URL.';
+          searchNode.disabled = true;
+          return;
+        }
+
+        titleNode.textContent = `Gematria ${gematria} matches`;
+        document.title = `Gematria ${gematria} Matches`;
+
+        try {
+          const payload = await requestWordsByGematria(gematria);
+          allWords = Array.isArray(payload.words) ? payload.words : [];
+          metaNode.textContent = `${payload.count || allWords.length} total word${(payload.count || allWords.length) === 1 ? '' : 's'} with gematria ${gematria}.`;
+          statusNode.textContent = '';
+          applySearch();
+        } catch (error) {
+          statusNode.textContent = error.message || 'Unable to load matching words.';
+          searchNode.disabled = true;
+        }
+      }
+
+      searchNode.addEventListener('input', applySearch);
+      window.addEventListener('DOMContentLoaded', init);
+    </script>
+  </body>
+</html>

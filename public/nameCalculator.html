@@ -319,27 +319,14 @@
       }
 
       function createGematriaButton(total) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'inline-button';
-        button.textContent = String(total);
-        button.addEventListener('click', async () => {
-          button.disabled = true;
-          const originalText = button.textContent;
-          button.textContent = `${originalText}…`;
-          try {
-            const payload = await requestWordsByGematria(total);
-            const words = (payload.words || []).slice(0, 20).map((entry) => entry.word).join(', ');
-            const suffix = payload.count > 20 ? '…' : '';
-            window.alert(words ? `Words with gematria ${total}: ${words}${suffix}` : `No words found with gematria ${total}.`);
-          } catch (error) {
-            window.alert(error.message || 'Unable to load matching gematria words.');
-          } finally {
-            button.disabled = false;
-            button.textContent = originalText;
-          }
-        });
-        return button;
+        const link = document.createElement('a');
+        link.className = 'inline-button';
+        link.href = `/gematria-results.html?gematria=${encodeURIComponent(String(total))}`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = String(total);
+        link.setAttribute('aria-label', `Open words with gematria ${total}`);
+        return link;
       }
 
       function createRelatedWordButton(word) {

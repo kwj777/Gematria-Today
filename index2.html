@@ -218,7 +218,7 @@
       function createDefinitionLink(word) {
         const definitionLink = document.createElement('a');
         definitionLink.className = 'definition-link';
-        definitionLink.href = `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(word)}`;
+        definitionLink.href = `/definition?word=${encodeURIComponent(word)}`;
         definitionLink.target = '_blank';
         definitionLink.rel = 'noopener noreferrer';
         definitionLink.textContent = 'See definition';

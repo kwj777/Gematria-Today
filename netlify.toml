@@ -6,3 +6,8 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+[[redirects]]
+  from = "/definition"
+  to = "/.netlify/functions/wordnikDefinition"
+  status = 200

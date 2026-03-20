@@ -367,7 +367,7 @@
       }
 
       function openFullRelatedWordsWindow(name, result, relationships) {
-        const popup = window.open('', '_blank', 'noopener');
+        const popup = window.open('', '_blank');
         if (!popup) {
           return;
         }
@@ -404,6 +404,7 @@
   </body>
 </html>`);
         popup.document.close();
+        popup.focus();
       }
 
       function createResultCard(name, result) {
@@ -459,6 +460,8 @@
               list.appendChild(item);
             });
             relatedSection.appendChild(list);
+
+            relatedSection.appendChild(document.createElement('br'));
 
             const fullListLink = document.createElement('a');
             fullListLink.href = '#';

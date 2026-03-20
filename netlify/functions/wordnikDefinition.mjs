@@ -99,6 +99,30 @@ function sanitizeInlineHtml(value) {
     .trim();
 }
 
+function createCalculatorSearchLink(word) {
+  const trimmedWord = String(word ?? '').trim();
+
+  if (!trimmedWord) {
+    return '';
+  }
+
+  const searchPath = `/calculator.html?query=${encodeURIComponent(trimmedWord)}`;
+  return `<a class="calculator-word-link" href="${searchPath}" target="_blank" rel="noopener noreferrer">${escapeHtml(trimmedWord)}</a>`;
+}
+
+function linkifySearchWords(html) {
+  return String(html ?? '')
+    .split(/(<a\b[^>]*>.*?<\/a>)/gi)
+    .map((segment) => {
+      if (/^<a\b/i.test(segment)) {
+        return segment;
+      }
+
+      return segment.replace(/\b([A-Za-z]{5,})\b/g, (_match, word) => createCalculatorSearchLink(word));
+    })
+    .join('');
+}
+
 function isHtmlRequest(request) {
   const acceptHeader = request.headers.get('accept') ?? '';
   return acceptHeader.includes('text/html');
@@ -135,7 +159,7 @@ function createExamples(definition) {
     return '';
   }
 
-  const items = uniqueExamples.map((example) => `<li>${escapeHtml(example)}</li>`).join('');
+  const items = uniqueExamples.map((example) => `<li>${linkifySearchWords(escapeHtml(example))}</li>`).join('');
   return `<div class="examples"><h3>Examples</h3><ul>${items}</ul></div>`;
 }
 
@@ -144,7 +168,7 @@ function renderDefinitionPage(payload) {
   const visibleDefinitions = definitions
     .map((definition) => ({
       definition,
-      sanitizedText: sanitizeInlineHtml(definition.text),
+      sanitizedText: linkifySearchWords(sanitizeInlineHtml(definition.text)),
     }))
     .filter(({ sanitizedText }) => Boolean(sanitizedText));
 
@@ -264,6 +288,14 @@ function renderDefinitionPage(payload) {
         margin: 0;
         font-size: 1.1rem;
         line-height: 1.65;
+      }
+      .calculator-word-link {
+        color: #0969da;
+        text-decoration: underline;
+        text-underline-offset: 0.14em;
+      }
+      .calculator-word-link:hover {
+        color: #0550ae;
       }
       .examples {
         margin-top: 1rem;

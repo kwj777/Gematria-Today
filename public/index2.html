@@ -116,6 +116,19 @@
         text-decoration: underline;
       }
 
+      .word-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.5rem;
+      }
+
+      .definition-link {
+        color: #0969da;
+        font-size: 0.95rem;
+        text-decoration: underline;
+      }
+
       .inline-button {
         border: 0;
         padding: 0;
@@ -200,6 +213,17 @@
       async function requestWordsByGematria(gematriaValue) {
         const searchParams = new URLSearchParams({ gematria: String(gematriaValue) });
         return requestJson('/.netlify/functions/searchByGematria', searchParams);
+      }
+
+      function createDefinitionLink(word) {
+        const definitionLink = document.createElement('a');
+        definitionLink.className = 'definition-link';
+        definitionLink.href = `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(word)}`;
+        definitionLink.target = '_blank';
+        definitionLink.rel = 'noopener noreferrer';
+        definitionLink.textContent = 'See definition';
+        definitionLink.setAttribute('aria-label', `See definition for ${word}`);
+        return definitionLink;
       }
 
       async function enrichRelationshipWords(relationships, searchTotal) {
@@ -320,6 +344,9 @@
 
       function createWordListItem(wordResult, searchTotal) {
         const item = document.createElement('li');
+        const wordActions = document.createElement('div');
+        wordActions.className = 'word-actions';
+
         const wordLabel = document.createElement('button');
         const hasMatchingGematria = Boolean(wordResult.gematria) && wordResult.gematria.gematria.total === searchTotal;
         wordLabel.type = 'button';
@@ -328,7 +355,9 @@
         wordLabel.addEventListener('click', () => {
           runSearch(wordResult.word, relatedLimitInput.value, { refreshPage: true });
         });
-        item.appendChild(wordLabel);
+
+        wordActions.append(wordLabel, createDefinitionLink(wordResult.word));
+        item.appendChild(wordActions);
 
         const gematriaDetail = document.createElement('div');
         gematriaDetail.className = 'gematria-detail';

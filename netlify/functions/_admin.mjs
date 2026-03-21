@@ -5,6 +5,14 @@ import { neon } from '@neondatabase/serverless';
 const scrypt = promisify(crypto.scrypt);
 const SESSION_COOKIE = 'endtimes_admin_session';
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+const SEEDED_ADMIN_USERS = [
+  {
+    id: 'kevandmel',
+    username: 'kevandmel',
+    passwordHash: 'scrypt$b1c4f2285150fe8d4b7c4db52a0c8d13$228c63f1b83b3d27bb4a6deec2c8d51dac6f85f9c982c7fd91ed0a7a68a87fd96f004f1163120aaafc3b3be560ce4efded49a00b9f6e47b964f0cc0acd5a1192',
+    role: 'admin',
+  },
+];
 
 export function getSqlClient() {
   if (!process.env.DATABASE_URL) {
@@ -112,6 +120,15 @@ export function slugify(value) {
 }
 
 export async function syncBootstrapAdminUser(sql) {
+  for (const seededUser of SEEDED_ADMIN_USERS) {
+    await sql`
+      INSERT INTO users (id, username, password_hash, role)
+      VALUES (${seededUser.id}, ${seededUser.username}, ${seededUser.passwordHash}, ${seededUser.role})
+      ON CONFLICT (username)
+      DO UPDATE SET id = EXCLUDED.id, password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, updated_at = NOW()
+    `;
+  }
+
   const username = process.env.ADMIN_USERNAME;
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;
   const password = process.env.ADMIN_PASSWORD;

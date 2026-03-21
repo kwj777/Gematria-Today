@@ -97,19 +97,37 @@
           name: 'Primary Feed',
           url: 'https://example.com/main-feed.xml',
           category: 'Featured',
-          notes: 'Use this slot for your highest-priority RSS source while the admin feed list is still empty.'
+          notes: 'Use this slot for your highest-priority RSS source while the admin feed list is still empty.',
+          latestArticle: {
+            title: 'Latest featured article preview',
+            excerpt: 'When live feed parsing is unavailable, this fallback shows the expected latest-article layout with an excerpt and a direct article link.',
+            link: 'https://example.com/main-article',
+            publishedAtLabel: 'Awaiting live feed data'
+          }
         },
         {
           name: 'Feed A',
           url: 'https://example.com/feed-a.xml',
           category: 'World',
-          notes: 'Example editorial note for a secondary source.'
+          notes: 'Example editorial note for a secondary source.',
+          latestArticle: {
+            title: 'Secondary feed article preview',
+            excerpt: 'Each feed card should surface the newest article title, a short excerpt, and a link out to the full story.',
+            link: 'https://example.com/article-1',
+            publishedAtLabel: 'Sample article'
+          }
         },
         {
           name: 'Feed B',
           url: 'https://example.com/feed-b.xml',
           category: 'Alerts',
-          notes: 'Use for urgent updates or time-sensitive stories.'
+          notes: 'Use for urgent updates or time-sensitive stories.',
+          latestArticle: {
+            title: 'Alert feed article preview',
+            excerpt: 'Feed cards stay readable even before real RSS data loads from the configured endpoint.',
+            link: 'https://example.com/article-2',
+            publishedAtLabel: 'Sample article'
+          }
         }
       ];
       const escapeHtml = (value = '') => String(value)
@@ -121,8 +139,12 @@
 
       function renderFeeds(feeds) {
         const featured = feeds[0];
-        document.getElementById('featuredFeed').innerHTML = `<div class="row g-4 align-items-start"><div class="col-lg-8"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-warning">Featured</span><span class="badge news-source-badge">${escapeHtml(featured.category || 'RSS Feed')}</span><span class="text-muted small align-self-center">Configured source</span></div><h3 class="display-6 fw-semibold mb-3">${escapeHtml(featured.name)}</h3><p class="mb-4">${escapeHtml(featured.notes || 'Use the admin page to add notes for this source.')}</p><div class="d-flex flex-wrap gap-3 align-items-center"><a class="btn btn-primary" href="${escapeHtml(featured.url)}" target="_blank" rel="noopener noreferrer">Open feed URL</a><span class="text-muted small">Opens in a new window.</span></div></div><div class="col-lg-4"><div class="news-feature-meta content-panel p-4 h-100"><h4 class="h6 text-uppercase text-muted mb-3">Mapped fields</h4><dl class="mb-0 small news-meta-list"><div><dt>Feed name</dt><dd>${escapeHtml(featured.name)}</dd></div><div><dt>RSS URL</dt><dd>${escapeHtml(featured.url)}</dd></div><div><dt>Category</dt><dd>${escapeHtml(featured.category || 'Not set')}</dd></div><div><dt>Notes</dt><dd>${escapeHtml(featured.notes || 'No notes')}</dd></div></dl></div></div></div>`;
-        document.getElementById('feedGrid').innerHTML = feeds.map((feed, index) => `<div class="col-md-6 col-xl-4"><article class="news-preview-card h-100 p-4"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-info">${escapeHtml(feed.category || 'RSS Feed')}</span><span class="badge news-source-badge">Feed ${index + 1}</span></div><h3 class="h5 mb-3">${escapeHtml(feed.name)}</h3><p class="text-muted mb-4">${escapeHtml(feed.notes || 'No editorial notes added yet.')}</p><div class="mt-auto d-flex justify-content-between align-items-center gap-3"><span class="small text-muted">Configured source</span><a class="news-inline-link" href="${escapeHtml(feed.url)}" target="_blank" rel="noopener noreferrer">Open feed</a></div></article></div>`).join('');
+        const featuredArticle = featured.latestArticle || {};
+        document.getElementById('featuredFeed').innerHTML = `<div class="row g-4 align-items-start"><div class="col-lg-8"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-warning">Featured</span><span class="badge news-source-badge">${escapeHtml(featured.category || 'RSS Feed')}</span><span class="text-muted small align-self-center">${escapeHtml(featuredArticle.publishedAtLabel || 'Latest article')}</span></div><h3 class="display-6 fw-semibold mb-3">${escapeHtml(featuredArticle.title || featured.name)}</h3><p class="mb-3">${escapeHtml(featuredArticle.excerpt || featured.notes || 'Use the admin page to add notes for this source.')}</p>${featured.notes ? `<p class="text-muted small mb-4">Feed notes: ${escapeHtml(featured.notes)}</p>` : '<div class="mb-4"></div>'}<div class="d-flex flex-wrap gap-3 align-items-center"><a class="btn btn-primary" href="${escapeHtml(featuredArticle.link || featured.url)}" target="_blank" rel="noopener noreferrer">Read full article</a><a class="news-inline-link" href="${escapeHtml(featured.url)}" target="_blank" rel="noopener noreferrer">Open feed URL</a></div>${featured.latestArticleError ? `<p class="text-muted small mt-3 mb-0">Latest article unavailable: ${escapeHtml(featured.latestArticleError)}</p>` : '<p class="text-muted small mt-3 mb-0">Opens in a new window.</p>'}</div><div class="col-lg-4"><div class="news-feature-meta content-panel p-4 h-100"><h4 class="h6 text-uppercase text-muted mb-3">Latest article details</h4><dl class="mb-0 small news-meta-list"><div><dt>Feed name</dt><dd>${escapeHtml(featured.name)}</dd></div><div><dt>RSS URL</dt><dd>${escapeHtml(featured.url)}</dd></div><div><dt>Category</dt><dd>${escapeHtml(featured.category || 'Not set')}</dd></div><div><dt>Article link</dt><dd>${escapeHtml(featuredArticle.link || featured.url)}</dd></div></dl></div></div></div>`;
+        document.getElementById('feedGrid').innerHTML = feeds.map((feed, index) => {
+          const article = feed.latestArticle || {};
+          return `<div class="col-md-6 col-xl-4"><article class="news-preview-card h-100 p-4 d-flex flex-column"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-info">${escapeHtml(feed.category || 'RSS Feed')}</span><span class="badge news-source-badge">Feed ${index + 1}</span></div><p class="text-muted small mb-2">${escapeHtml(feed.name)}</p><h3 class="h5 mb-3">${escapeHtml(article.title || `${feed.name} latest article unavailable`)}</h3><p class="text-muted mb-3">${escapeHtml(article.excerpt || feed.notes || 'No article excerpt was available from this feed.')}</p>${feed.notes ? `<p class="small text-muted mb-4">Feed notes: ${escapeHtml(feed.notes)}</p>` : '<div class="mb-4"></div>'}<div class="mt-auto d-flex justify-content-between align-items-center gap-3"><span class="small text-muted">${escapeHtml(article.publishedAtLabel || 'Latest article')}</span><a class="news-inline-link" href="${escapeHtml(article.link || feed.url)}" target="_blank" rel="noopener noreferrer">Open article</a></div>${feed.latestArticleError ? `<p class="text-muted small mt-3 mb-0">${escapeHtml(feed.latestArticleError)}</p>` : ''}</article></div>`;
+        }).join('');
       }
 
       fetch('/api/public-feeds')

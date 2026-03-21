@@ -214,3 +214,21 @@ footer.site-footer {
 .news-placeholder-panel {
   padding: 1.25rem;
 }
+
+
+.admin-auth-card {
+  max-width: 38rem;
+  margin: 0 auto;
+}
+
+.admin-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-item-card {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(53, 65, 79, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
+}

@@ -22,6 +22,7 @@
             <li class="nav-item"><a class="nav-link" href="/calculator.html">Calculator</a></li>
             <li class="nav-item"><a class="nav-link" href="/nameCalculator.html">Name Lookup</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin</a></li>
           </ul>
         </div>
       </div>
@@ -32,17 +33,17 @@
           <p class="section-kicker mb-3">News Feed</p>
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
-              <h1 class="display-5 fw-bold mb-3">Latest headlines from your connected RSS sources.</h1>
-              <p class="lead mb-0">This page is structured for RSS-fed content, with reusable article preview slots, clear source labeling, and outbound article links that open in a new window for full reading.</p>
+              <h1 class="display-5 fw-bold mb-3">Latest headlines from your configured RSS sources.</h1>
+              <p class="lead mb-0">This page now reads active feed sources from the server so the same editorial source list is visible to every visitor.</p>
             </div>
             <div class="col-lg-4">
               <div class="content-panel p-4 text-dark h-100 news-summary-card">
                 <h2 class="h5 mb-3">Feed-ready layout</h2>
                 <ul class="list-unstyled mb-0 d-grid gap-2 small">
-                  <li>• Hero story area for the lead item</li>
-                  <li>• Multiple preview cards for incoming articles</li>
-                  <li>• Dedicated links using <code>target="_blank"</code></li>
-                  <li>• Ready for dynamic population from RSS parsing</li>
+                  <li>• Lead source summary at the top</li>
+                  <li>• Grid of configured feed cards below</li>
+                  <li>• Notes field for editorial context</li>
+                  <li>• Direct links to each RSS endpoint</li>
                 </ul>
               </div>
             </div>
@@ -52,176 +53,24 @@
         <section class="mb-5">
           <div class="news-section-header d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
             <div>
-              <p class="section-kicker mb-2">Lead Story</p>
-              <h2 class="h3 mb-0">Featured article preview</h2>
+              <p class="section-kicker mb-2">Lead Feed</p>
+              <h2 class="h3 mb-0">Featured source preview</h2>
             </div>
-            <span class="text-muted small">Replace this content with the latest headline from your primary RSS feed.</span>
+            <span class="text-muted small">Update feed sources from the admin dashboard.</span>
           </div>
-          <article class="news-feature-card p-4 p-lg-5">
-            <div class="row g-4 align-items-start">
-              <div class="col-lg-8">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <span class="badge text-bg-warning">Featured</span>
-                  <span class="badge news-source-badge">Primary Feed</span>
-                  <span class="text-muted small align-self-center">Published date placeholder</span>
-                </div>
-                <h3 class="display-6 fw-semibold mb-3">Headline preview title goes here for the main RSS article.</h3>
-                <p class="mb-4">Use this larger slot for the top story summary. It can display the headline, source, short excerpt, publication time, and any relevant category labels pulled from the RSS item.</p>
-                <div class="d-flex flex-wrap gap-3 align-items-center">
-                  <a class="btn btn-primary" href="https://example.com/main-article" target="_blank" rel="noopener noreferrer">Read full article</a>
-                  <span class="text-muted small">Opens in a new window.</span>
-                </div>
-              </div>
-              <div class="col-lg-4">
-                <div class="news-feature-meta content-panel p-4 h-100">
-                  <h4 class="h6 text-uppercase text-muted mb-3">Suggested mapped fields</h4>
-                  <dl class="mb-0 small news-meta-list">
-                    <div>
-                      <dt>Title</dt>
-                      <dd>rssItem.title</dd>
-                    </div>
-                    <div>
-                      <dt>Summary</dt>
-                      <dd>rssItem.description</dd>
-                    </div>
-                    <div>
-                      <dt>Source</dt>
-                      <dd>rssFeed.name</dd>
-                    </div>
-                    <div>
-                      <dt>Link</dt>
-                      <dd>rssItem.link</dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </article>
+          <article id="featuredFeed" class="news-feature-card p-4 p-lg-5"></article>
         </section>
 
         <section class="mb-5">
           <div class="news-section-header d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
             <div>
-              <p class="section-kicker mb-2">More Headlines</p>
-              <h2 class="h3 mb-0">Article preview slots</h2>
+              <p class="section-kicker mb-2">More Sources</p>
+              <h2 class="h3 mb-0">Configured RSS feeds</h2>
             </div>
-            <span class="text-muted small">Use these cards for recent items across one or multiple RSS feeds.</span>
+            <span class="text-muted small">Each saved feed is displayed below for editorial review.</span>
           </div>
 
-          <div class="row g-4">
-            <div class="col-md-6 col-xl-4">
-              <article class="news-preview-card h-100 p-4">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <span class="badge text-bg-info">World</span>
-                  <span class="badge news-source-badge">Feed A</span>
-                </div>
-                <h3 class="h5 mb-3">Article preview headline placeholder</h3>
-                <p class="text-muted mb-4">Short summary text for an RSS-fed article. Keep this trimmed so visitors can scan quickly.</p>
-                <div class="mt-auto d-flex justify-content-between align-items-center gap-3">
-                  <span class="small text-muted">Timestamp</span>
-                  <a class="news-inline-link" href="https://example.com/article-1" target="_blank" rel="noopener noreferrer">Open article</a>
-                </div>
-              </article>
-            </div>
-
-            <div class="col-md-6 col-xl-4">
-              <article class="news-preview-card h-100 p-4">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <span class="badge text-bg-danger">Alerts</span>
-                  <span class="badge news-source-badge">Feed B</span>
-                </div>
-                <h3 class="h5 mb-3">Another article slot for RSS content</h3>
-                <p class="text-muted mb-4">This placeholder can hold another article excerpt, source tag, and direct link to the full story.</p>
-                <div class="mt-auto d-flex justify-content-between align-items-center gap-3">
-                  <span class="small text-muted">Timestamp</span>
-                  <a class="news-inline-link" href="https://example.com/article-2" target="_blank" rel="noopener noreferrer">Open article</a>
-                </div>
-              </article>
-            </div>
-
-            <div class="col-md-6 col-xl-4">
-              <article class="news-preview-card h-100 p-4">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <span class="badge text-bg-success">Analysis</span>
-                  <span class="badge news-source-badge">Feed C</span>
-                </div>
-                <h3 class="h5 mb-3">Additional preview position for fresh stories</h3>
-                <p class="text-muted mb-4">Use as many of these preview cards as needed. The grid will wrap nicely across desktop and mobile layouts.</p>
-                <div class="mt-auto d-flex justify-content-between align-items-center gap-3">
-                  <span class="small text-muted">Timestamp</span>
-                  <a class="news-inline-link" href="https://example.com/article-3" target="_blank" rel="noopener noreferrer">Open article</a>
-                </div>
-              </article>
-            </div>
-
-            <div class="col-md-6 col-xl-4">
-              <article class="news-preview-card h-100 p-4">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <span class="badge text-bg-primary">Politics</span>
-                  <span class="badge news-source-badge">Feed D</span>
-                </div>
-                <h3 class="h5 mb-3">Preview slot with source and category</h3>
-                <p class="text-muted mb-4">This card is intended for automated feed content, but it remains readable with placeholder text during setup.</p>
-                <div class="mt-auto d-flex justify-content-between align-items-center gap-3">
-                  <span class="small text-muted">Timestamp</span>
-                  <a class="news-inline-link" href="https://example.com/article-4" target="_blank" rel="noopener noreferrer">Open article</a>
-                </div>
-              </article>
-            </div>
-
-            <div class="col-md-6 col-xl-4">
-              <article class="news-preview-card h-100 p-4">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <span class="badge text-bg-secondary">Culture</span>
-                  <span class="badge news-source-badge">Feed E</span>
-                </div>
-                <h3 class="h5 mb-3">Compact article summary block</h3>
-                <p class="text-muted mb-4">Use this for secondary content, related headlines, or stories from a separate feed category.</p>
-                <div class="mt-auto d-flex justify-content-between align-items-center gap-3">
-                  <span class="small text-muted">Timestamp</span>
-                  <a class="news-inline-link" href="https://example.com/article-5" target="_blank" rel="noopener noreferrer">Open article</a>
-                </div>
-              </article>
-            </div>
-
-            <div class="col-md-6 col-xl-4">
-              <article class="news-preview-card h-100 p-4">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <span class="badge text-bg-dark">Opinion</span>
-                  <span class="badge news-source-badge">Feed F</span>
-                </div>
-                <h3 class="h5 mb-3">Last preview slot in the starter layout</h3>
-                <p class="text-muted mb-4">Duplicate or generate cards like this one to support however many RSS articles you want to show.</p>
-                <div class="mt-auto d-flex justify-content-between align-items-center gap-3">
-                  <span class="small text-muted">Timestamp</span>
-                  <a class="news-inline-link" href="https://example.com/article-6" target="_blank" rel="noopener noreferrer">Open article</a>
-                </div>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="content-panel p-4 p-lg-5">
-          <div class="row g-4">
-            <div class="col-lg-7">
-              <p class="section-kicker mb-2">Implementation Notes</p>
-              <h2 class="h3 mb-3">Recommended RSS rendering behavior</h2>
-              <p class="mb-0">When you wire up the feed data, render article titles, excerpts, sources, dates, and links into these sections. Keep the headline text and summaries trimmed to avoid uneven card heights, and preserve <code>target="_blank"</code> plus <code>rel="noopener noreferrer"</code> on outbound article links.</p>
-            </div>
-            <div class="col-lg-5">
-              <div class="news-placeholder-panel h-100">
-                <h3 class="h5 mb-3">Good feed fields to include</h3>
-                <ul class="mb-0 text-muted small d-grid gap-2">
-                  <li>Article title</li>
-                  <li>Article description or excerpt</li>
-                  <li>Source / feed name</li>
-                  <li>Publish date</li>
-                  <li>Category or tag</li>
-                  <li>Canonical article URL</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          <div id="feedGrid" class="row g-4"></div>
         </section>
       </div>
     </main>
@@ -229,10 +78,49 @@
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column flex-lg-row justify-content-between gap-2 small text-muted">
         <span>EndTimes.Today — a Bootstrap-powered research workspace.</span>
-        <span>Browse feed-driven headlines and open full articles in a new window.</span>
+        <span>Browse feed-driven sources and continue setup from the admin back-office.</span>
       </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+      const fallbackFeeds = [
+        {
+          name: 'Primary Feed',
+          url: 'https://example.com/main-feed.xml',
+          category: 'Featured',
+          notes: 'Use this slot for your highest-priority RSS source while the admin feed list is still empty.'
+        },
+        {
+          name: 'Feed A',
+          url: 'https://example.com/feed-a.xml',
+          category: 'World',
+          notes: 'Example editorial note for a secondary source.'
+        },
+        {
+          name: 'Feed B',
+          url: 'https://example.com/feed-b.xml',
+          category: 'Alerts',
+          notes: 'Use for urgent updates or time-sensitive stories.'
+        }
+      ];
+      const escapeHtml = (value = '') => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+
+      function renderFeeds(feeds) {
+        const featured = feeds[0];
+        document.getElementById('featuredFeed').innerHTML = `<div class="row g-4 align-items-start"><div class="col-lg-8"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-warning">Featured</span><span class="badge news-source-badge">${escapeHtml(featured.category || 'RSS Feed')}</span><span class="text-muted small align-self-center">Configured source</span></div><h3 class="display-6 fw-semibold mb-3">${escapeHtml(featured.name)}</h3><p class="mb-4">${escapeHtml(featured.notes || 'Use the admin page to add notes for this source.')}</p><div class="d-flex flex-wrap gap-3 align-items-center"><a class="btn btn-primary" href="${escapeHtml(featured.url)}" target="_blank" rel="noopener noreferrer">Open feed URL</a><span class="text-muted small">Opens in a new window.</span></div></div><div class="col-lg-4"><div class="news-feature-meta content-panel p-4 h-100"><h4 class="h6 text-uppercase text-muted mb-3">Mapped fields</h4><dl class="mb-0 small news-meta-list"><div><dt>Feed name</dt><dd>${escapeHtml(featured.name)}</dd></div><div><dt>RSS URL</dt><dd>${escapeHtml(featured.url)}</dd></div><div><dt>Category</dt><dd>${escapeHtml(featured.category || 'Not set')}</dd></div><div><dt>Notes</dt><dd>${escapeHtml(featured.notes || 'No notes')}</dd></div></dl></div></div></div>`;
+        document.getElementById('feedGrid').innerHTML = feeds.map((feed, index) => `<div class="col-md-6 col-xl-4"><article class="news-preview-card h-100 p-4"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-info">${escapeHtml(feed.category || 'RSS Feed')}</span><span class="badge news-source-badge">Feed ${index + 1}</span></div><h3 class="h5 mb-3">${escapeHtml(feed.name)}</h3><p class="text-muted mb-4">${escapeHtml(feed.notes || 'No editorial notes added yet.')}</p><div class="mt-auto d-flex justify-content-between align-items-center gap-3"><span class="small text-muted">Configured source</span><a class="news-inline-link" href="${escapeHtml(feed.url)}" target="_blank" rel="noopener noreferrer">Open feed</a></div></article></div>`).join('');
+      }
+
+      fetch('/api/public-feeds')
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load feeds')))
+        .then((payload) => renderFeeds(payload.items?.length ? payload.items : fallbackFeeds))
+        .catch(() => renderFeeds(fallbackFeeds));
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></script>
   </body>
 </html>

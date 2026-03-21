@@ -232,3 +232,24 @@ footer.site-footer {
   border-radius: 1rem;
   box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
 }
+
+
+.site-legal-links a {
+  color: var(--bs-primary);
+  text-decoration: none;
+}
+
+.site-legal-links a:hover,
+.site-legal-links a:focus {
+  color: #21496f;
+  text-decoration: underline;
+}
+
+.legal-copy h2 {
+  margin-bottom: 0.9rem;
+}
+
+.legal-copy p:last-child,
+.legal-copy ul:last-child {
+  margin-bottom: 0;
+}

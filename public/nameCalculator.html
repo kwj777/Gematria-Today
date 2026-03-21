@@ -4,236 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Name Calculator</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --border: #d0d7de;
-        --bg: #f6f8fa;
-        --card: #ffffff;
-        --text: #1f2328;
-        --muted: #57606a;
-        --accent: #0969da;
-        --highlight: #fff3a3;
-        --highlight-text: #6b5200;
-      }
-
-      * { box-sizing: border-box; }
-
-      body {
-        margin: 0;
-        font-family: Helvetica, Arial, sans-serif;
-        color: var(--text);
-        background: linear-gradient(180deg, #ffffff 0%, #f6f8fa 100%);
-      }
-
-      main {
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: 2rem 1rem 3rem;
-      }
-
-      h1,
-      h2,
-      h3,
-      p { margin-top: 0; }
-
-      .intro,
-      .results-shell {
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 18px 50px rgba(31, 35, 40, 0.08);
-      }
-
-      .intro {
-        padding: 1.5rem;
-      }
-
-      form {
-        display: grid;
-        gap: 1rem;
-      }
-
-      .field-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
-      }
-
-      .field {
-        display: grid;
-        gap: 0.45rem;
-      }
-
-      label {
-        font-weight: 700;
-      }
-
-      input,
-      button {
-        font: inherit;
-      }
-
-      input {
-        width: 100%;
-        padding: 0.75rem 0.9rem;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-      }
-
-      button {
-        width: fit-content;
-        padding: 0.8rem 1.15rem;
-        border: 0;
-        border-radius: 999px;
-        background: var(--accent);
-        color: #fff;
-        cursor: pointer;
-        font-weight: 700;
-      }
-
-      button:hover { filter: brightness(0.96); }
-
-      .button-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-      }
-
-      .secondary-button {
-        background: #dbeafe;
-        color: var(--accent);
-      }
-
-      .status {
-        min-height: 1.5rem;
-        color: var(--muted);
-      }
-
-      .results-shell {
-        margin-top: 1.5rem;
-        padding: 1.25rem;
-      }
-
-      .results-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
-      }
-
-      .result-card {
-        min-width: 0;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        background: var(--bg);
-        padding: 1rem;
-      }
-
-      .result-card h3 {
-        word-break: break-word;
-        margin-bottom: 0.5rem;
-      }
-
-      .meta {
-        font-size: 0.95rem;
-        color: var(--muted);
-        margin-bottom: 1rem;
-      }
-
-      .meta-highlight {
-        display: inline-block;
-        padding: 0.1rem 0.45rem;
-        margin: 0 0.15rem;
-        border-radius: 999px;
-        background: var(--highlight);
-        color: var(--highlight-text);
-        font-weight: 700;
-      }
-
-      .section + .section {
-        margin-top: 1rem;
-      }
-
-      .inline-button,
-      .word-button {
-        border: 0;
-        padding: 0;
-        color: var(--accent);
-        background: transparent;
-        text-decoration: underline;
-        cursor: pointer;
-      }
-
-      .word-list {
-        margin: 0;
-        padding-left: 1.15rem;
-      }
-
-      .word-list li + li {
-        margin-top: 0.6rem;
-      }
-
-      .word-list small {
-        color: var(--muted);
-      }
-
-      .empty,
-      .error {
-        color: var(--muted);
-      }
-
-      .error { color: #b42318; }
-
-      .mobile-note {
-        margin-top: 0.75rem;
-        font-size: 0.95rem;
-        color: var(--muted);
-      }
-
-      @media (max-width: 820px) {
-        .field-grid,
-        .results-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/theme.css" />
   </head>
   <body>
-    <main>
-      <section class="intro">
-        <h1>Name Calculator</h1>
-        <p>Enter up to three personal names. On larger screens, each name appears in its own results column. On mobile devices, the results stack into a single column below.</p>
-
-        <form id="name-form">
-          <div class="field-grid">
-            <div class="field">
-              <input id="name-1" name="name1" type="text" placeholder="First name" aria-label="First name" />
-            </div>
-            <div class="field">
-              <input id="name-2" name="name2" type="text" placeholder="Second name" aria-label="Second name" />
-            </div>
-            <div class="field">
-              <input id="name-3" name="name3" type="text" placeholder="Third name" aria-label="Third name" />
-            </div>
-          </div>
-          <div class="button-row">
-            <button type="submit">Calculate</button>
-            <button type="button" id="clear-names" class="secondary-button">Clear Names</button>
-          </div>
-        </form>
-
-        <p id="status" class="status"></p>
-        <p id="mobile-note" class="mobile-note"></p>
-      </section>
-
-      <section id="results-shell" class="results-shell" hidden>
-        <h2>Results</h2>
-        <div id="results-grid" class="results-grid"></div>
-      </section>
-    </main>
-
-    <script>
-      const form = document.querySelector('#name-form');
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index2.html">Gematria Atlas</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/index2.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/calculator.html">Calculator</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/nameCalculator.html">Name Lookup</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index3.html">Database</a></li>
+            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <main class="py-5">
+      <div class="container"><section class="content-panel p-4 p-lg-5 form-shell"><p class="section-kicker mb-2">Name Lookup</p><h1 class="mb-3">Name Calculator</h1><p class="text-muted mb-4">Enter up to three names and compare their gematria-based matches side by side in a shared Bootstrap layout.</p><section class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><form id="name-form" class="row g-3"><div class="col-lg-4"><input id="name-1" name="name1" type="text" class="form-control form-control-lg" placeholder="First name" aria-label="First name" /></div><div class="col-lg-4"><input id="name-2" name="name2" type="text" class="form-control form-control-lg" placeholder="Second name" aria-label="Second name" /></div><div class="col-lg-4"><input id="name-3" name="name3" type="text" class="form-control form-control-lg" placeholder="Third name" aria-label="Third name" /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Calculate</button><button id="clear-names" type="button" class="btn btn-outline-secondary">Clear</button></div></form><p id="status" class="small text-muted mt-3 mb-2"></p><p id="mobile-note" class="small text-muted mb-0"></p></div></section><section id="results-shell" class="content-panel p-3 p-lg-4" hidden><h2 class="h4 mb-3">Results</h2><div id="results-grid" class="results-grid"></div></section></section></div>
+      <script>
+const form = document.querySelector('#name-form');
       const statusNode = document.querySelector('#status');
       const mobileNoteNode = document.querySelector('#mobile-note');
       const resultsShell = document.querySelector('#results-shell');
@@ -531,6 +326,14 @@
       window.addEventListener('DOMContentLoaded', () => {
         mobileNoteNode.textContent = getDefaultMobileNote();
       });
-    </script>
+      </script>
+    </main>
+    <footer class="site-footer py-4 mt-5">
+      <div class="container d-flex flex-column flex-lg-row justify-content-between gap-2 small text-muted">
+        <span>Gematria Atlas — a Bootstrap-powered research workspace.</span>
+        <span>Shared UI theme applied across every page in this project.</span>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>

@@ -17,8 +17,29 @@ function decodeXml(value = '') {
     .replace(/&amp;/g, '&');
 }
 
+function decodeXmlRecursively(value = '', maxPasses = 3) {
+  let decoded = String(value);
+
+  for (let index = 0; index < maxPasses; index += 1) {
+    const nextValue = decodeXml(decoded);
+    if (nextValue === decoded) {
+      break;
+    }
+    decoded = nextValue;
+  }
+
+  return decoded;
+}
+
 function stripHtml(value = '') {
-  return decodeXml(String(value).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+  return decodeXmlRecursively(value)
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<br\s*\/?\s*>/gi, ' ')
+    .replace(/<img[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function excerptText(value, maxLength = 180) {

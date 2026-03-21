@@ -53,3 +53,18 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+
+INSERT INTO users (id, username, password_hash, role)
+VALUES (
+  'kevandmel',
+  'kevandmel',
+  'scrypt$b1c4f2285150fe8d4b7c4db52a0c8d13$228c63f1b83b3d27bb4a6deec2c8d51dac6f85f9c982c7fd91ed0a7a68a87fd96f004f1163120aaafc3b3be560ce4efded49a00b9f6e47b964f0cc0acd5a1192',
+  'admin'
+)
+ON CONFLICT (username)
+DO UPDATE SET
+  id = EXCLUDED.id,
+  password_hash = EXCLUDED.password_hash,
+  role = EXCLUDED.role,
+  updated_at = NOW();

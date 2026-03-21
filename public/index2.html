@@ -17,6 +17,7 @@
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link active" href="/index2.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item"><a class="nav-link" href="/calculator.html">Calculator</a></li>
             <li class="nav-item"><a class="nav-link" href="/nameCalculator.html">Name Lookup</a></li>
             <li class="nav-item"><a class="nav-link" href="/index3.html">Database</a></li>
@@ -32,42 +33,112 @@
             <div class="col-lg-7">
               <p class="section-kicker mb-3">Bootstrap UI Theme</p>
               <h1 class="display-4 fw-bold mb-3">Explore words, names, and number patterns in one unified workspace.</h1>
-              <p class="lead mb-4">This home page uses the same themed Bootstrap framework as the calculator, name lookup, FAQ, database, and results pages, creating a single visual system across the entire project.</p>
+              <p class="lead mb-4">This home page now highlights new blog content alongside the calculator, name lookup, FAQ, database, and results pages so readers can move from articles into hands-on research.</p>
               <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-warning btn-lg" href="/calculator.html">Open Calculator</a>
-                <a class="btn btn-outline-light btn-lg" href="/faq.html">Read FAQs</a>
+                <a class="btn btn-warning btn-lg" href="/blog.html">Read the blog</a>
+                <a class="btn btn-outline-light btn-lg" href="/calculator.html">Open Calculator</a>
               </div>
             </div>
             <div class="col-lg-5">
               <div class="content-panel p-4 text-dark h-100">
                 <h2 class="h4">What you can do here</h2>
                 <ul class="list-group list-group-flush">
+                  <li class="list-group-item px-0 bg-transparent">Read featured blog posts with practical research tips.</li>
                   <li class="list-group-item px-0 bg-transparent">Calculate gematria values for words and phrases.</li>
                   <li class="list-group-item px-0 bg-transparent">Compare up to three names side-by-side.</li>
                   <li class="list-group-item px-0 bg-transparent">Browse stored word records in a themed data table.</li>
-                  <li class="list-group-item px-0 bg-transparent">Jump into FAQs for guidance and workflow tips.</li>
                 </ul>
               </div>
             </div>
           </div>
         </section>
+
+        <section class="content-panel p-4 p-lg-5 mb-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Selected Blog Posts</p>
+              <h2 class="mb-1">Featured insights from the blog</h2>
+              <p class="text-muted mb-0">Use the slider to preview key posts, then open the full blog page to keep reading.</p>
+            </div>
+            <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
+          </div>
+
+          <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-ride="carousel">
+            <div class="carousel-indicators blog-carousel-indicators position-static mb-4">
+              <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+              <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+              <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+            </div>
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <article class="blog-slide-card p-4 p-lg-5">
+                  <span class="badge text-bg-warning mb-3">Research Workflow</span>
+                  <h3 class="mb-3">How to spot repeating number themes across related words</h3>
+                  <p class="text-muted mb-4">A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.</p>
+                  <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="word-chip">Pattern Study</span>
+                    <span class="word-chip">Related Terms</span>
+                    <span class="word-chip">Workflow</span>
+                  </div>
+                  <a class="btn btn-primary" href="/blog.html#post-patterns">Read this post</a>
+                </article>
+              </div>
+              <div class="carousel-item">
+                <article class="blog-slide-card p-4 p-lg-5">
+                  <span class="badge text-bg-info mb-3">Name Analysis</span>
+                  <h3 class="mb-3">What to compare when two names share the same gematria value</h3>
+                  <p class="text-muted mb-4">Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.</p>
+                  <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="word-chip">Names</span>
+                    <span class="word-chip">Comparison</span>
+                    <span class="word-chip">Interpretation</span>
+                  </div>
+                  <a class="btn btn-primary" href="/blog.html#post-names">Read this post</a>
+                </article>
+              </div>
+              <div class="carousel-item">
+                <article class="blog-slide-card p-4 p-lg-5">
+                  <span class="badge text-bg-success mb-3">Database Tips</span>
+                  <h3 class="mb-3">Turning your database search results into a repeatable study session</h3>
+                  <p class="text-muted mb-4">Organize findings from the database, save promising leads, and build a consistent routine for reviewing matches over time.</p>
+                  <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="word-chip">Database</span>
+                    <span class="word-chip">Review</span>
+                    <span class="word-chip">Study Notes</span>
+                  </div>
+                  <a class="btn btn-primary" href="/blog.html#post-database">Read this post</a>
+                </article>
+              </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#blogPostsCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#blogPostsCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+        </section>
+
         <section class="row g-4 mb-5">
           <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Research</div><div class="metric-value text-primary">Words</div><p class="mb-0 text-muted">Use the calculator and database to inspect related terms, roots, and definitions.</p></div></div>
           <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Compare</div><div class="metric-value text-success">Names</div><p class="mb-0 text-muted">Test multiple names in parallel and follow links to matching result pages.</p></div></div>
           <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Navigate</div><div class="metric-value text-info">Fast</div><p class="mb-0 text-muted">Every page shares one navbar, color system, typography scale, and Bootstrap component set.</p></div></div>
         </section>
+
         <section class="content-panel p-4 p-lg-5 mb-5">
           <div class="row g-4 align-items-center">
             <div class="col-lg-6">
               <h2 class="mb-3">Featured pathways</h2>
               <p class="text-muted">The home page is designed as a launchpad for the rest of the app, using cards, buttons, badges, and layout patterns inspired by the attached Bootstrap UI theme.</p>
               <div>
-                <span class="word-chip">Calculator</span><span class="word-chip">FAQ</span><span class="word-chip">Word Database</span><span class="word-chip">Name Lookup</span><span class="word-chip">Shared Bootstrap Styling</span>
+                <span class="word-chip">Blog</span><span class="word-chip">Calculator</span><span class="word-chip">FAQ</span><span class="word-chip">Word Database</span><span class="word-chip">Name Lookup</span>
               </div>
             </div>
             <div class="col-lg-6">
               <div class="row g-3">
-                <div class="col-sm-6"><div class="feature-card p-3 h-100"><span class="badge text-bg-warning mb-2">Start</span><h3 class="h5">Search a word</h3><p class="small text-muted mb-3">Calculate a term and uncover related matches.</p><a class="btn btn-sm btn-primary" href="/calculator.html">Go to calculator</a></div></div>
+                <div class="col-sm-6"><div class="feature-card p-3 h-100"><span class="badge text-bg-warning mb-2">Read</span><h3 class="h5">Visit the blog</h3><p class="small text-muted mb-3">Browse featured articles and selected post highlights.</p><a class="btn btn-sm btn-primary" href="/blog.html">Open blog</a></div></div>
                 <div class="col-sm-6"><div class="feature-card p-3 h-100"><span class="badge text-bg-info mb-2">Browse</span><h3 class="h5">Open the database</h3><p class="small text-muted mb-3">Review stored records in a clean table layout.</p><a class="btn btn-sm btn-primary" href="/index3.html">View records</a></div></div>
                 <div class="col-sm-6"><div class="feature-card p-3 h-100"><span class="badge text-bg-success mb-2">Compare</span><h3 class="h5">Check names</h3><p class="small text-muted mb-3">See multiple names and matching word groups.</p><a class="btn btn-sm btn-primary" href="/nameCalculator.html">Compare names</a></div></div>
                 <div class="col-sm-6"><div class="feature-card p-3 h-100"><span class="badge text-bg-secondary mb-2">Learn</span><h3 class="h5">Read the FAQ</h3><p class="small text-muted mb-3">Find answers about the workflow and page structure.</p><a class="btn btn-sm btn-primary" href="/faq.html">Open FAQ</a></div></div>

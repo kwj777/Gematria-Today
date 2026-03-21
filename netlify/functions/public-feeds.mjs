@@ -36,7 +36,7 @@ function excerptText(value, maxLength = 180) {
 
 function getTagValue(block, tagNames) {
   for (const tagName of tagNames) {
-    const directPattern = new RegExp(`<${tagName}[^>]*>([\s\S]*?)</${tagName}>`, 'i');
+    const directPattern = new RegExp(`<${tagName}[^>]*>([\\s\\S]*?)</${tagName}>`, 'i');
     const directMatch = block.match(directPattern);
     if (directMatch?.[1]) {
       return directMatch[1].trim();

@@ -85,6 +85,19 @@ export async function ensureAdminSchema(sql) {
   )`;
 
   await sql`CREATE INDEX IF NOT EXISTS tasks_status_due_date_idx ON tasks(status, due_date ASC NULLS LAST)`;
+
+  await sql`CREATE TABLE IF NOT EXISTS faqs (
+    id TEXT PRIMARY KEY,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_published BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+
+  await sql`CREATE INDEX IF NOT EXISTS faqs_is_published_sort_order_idx ON faqs(is_published, sort_order ASC, created_at ASC)`;
 }
 
 async function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
@@ -301,5 +314,18 @@ export function formatTask(row) {
     notes: row.notes,
     status: row.status,
     createdAt: row.created_at,
+  };
+}
+
+
+export function formatFaq(row) {
+  return {
+    id: row.id,
+    question: row.question,
+    answer: row.answer,
+    sortOrder: row.sort_order,
+    isPublished: row.is_published,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }

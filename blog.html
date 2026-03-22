@@ -112,6 +112,21 @@
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
+
+      const normalizePostBodyHtml = (value = '') => {
+        const raw = String(value || '').trim();
+        if (!raw) {
+          return '<p></p>';
+        }
+        const containsHtml = /<\/?[a-z][\s\S]*>/i.test(raw);
+        if (containsHtml) {
+          return raw;
+        }
+        return raw
+          .split(/\n\s*\n/)
+          .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
+          .join('');
+      };
       const createPostSlug = (post, index) => {
         const rawSlug = String(post.slug || '').trim();
         if (rawSlug) {
@@ -159,9 +174,9 @@
           </a>`).join('');
 
         document.getElementById('blogPosts').innerHTML = normalizedPosts.map((post) => {
-          const paragraphs = String(post.body || '').split(/\n\s*\n/).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('');
+          const bodyHtml = normalizePostBodyHtml(post.body || '');
           const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="badge text-bg-warning">${escapeHtml(post.tag || 'Blog Post')}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p>${paragraphs}<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p><a class="small fw-semibold" href="${postUrl}">Link to this post</a></div></article>`;
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="badge text-bg-warning">${escapeHtml(post.tag || 'Blog Post')}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p><a class="small fw-semibold" href="${postUrl}">Link to this post</a></div></article>`;
         }).join('');
 
         focusLinkedPost(getRequestedPostSlug());

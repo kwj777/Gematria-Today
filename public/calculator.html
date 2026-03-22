@@ -315,11 +315,12 @@ const lookupForm = document.querySelector('#lookup-form');
           gematriaButton.addEventListener('click', () => {
             renderGematriaMatches(payload.gematria.total);
           });
-          const detailSuffix = document.createTextNode(
-            ` | Digital Root: ${payload.gematria.digitalRoot} | Base Root: ${formatBaseRootLabel(payload.isBaseRoot)} | Searches: ${payload.searchCount}`
+          const detailMiddle = document.createTextNode(
+            ` | Digital Root: ${payload.gematria.digitalRoot} | `
           );
+          const baseRootValue = document.createTextNode(`: ${formatBaseRootLabel(payload.isBaseRoot)} | Searches: ${payload.searchCount}`);
 
-          gematriaDetail.append(detailPrefix, gematriaButton, detailSuffix);
+          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddle, createBaseRootLink(), baseRootValue);
         } else {
           gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
         }
@@ -362,6 +363,15 @@ const lookupForm = document.querySelector('#lookup-form');
         return gematriaButton;
       }
 
+      function createBaseRootLink() {
+        const link = document.createElement('a');
+        link.href = 'https://endtimes.today/blog.html?post=what-is-a-base-root-word#what-is-a-base-root-word';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Base Root';
+        return link;
+      }
+
       function formatBaseRootLabel(isBaseRoot) {
         return isBaseRoot ? 'Yes' : 'No';
       }
@@ -371,7 +381,9 @@ const lookupForm = document.querySelector('#lookup-form');
         gematriaResult.append(
           `Base-6 English Gematria for "${searchGematria.word}": `,
           createGematriaSearchButton(searchGematria.gematria.total),
-          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | Base Root: ${formatBaseRootLabel(searchGematria.isBaseRoot)} | Searches: ${searchGematria.searchCount}`,
+          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | `,
+          createBaseRootLink(),
+          `: ${formatBaseRootLabel(searchGematria.isBaseRoot)} | Searches: ${searchGematria.searchCount}`,
           document.createElement('br'),
           document.createElement('br')
         );

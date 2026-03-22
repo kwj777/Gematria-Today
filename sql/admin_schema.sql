@@ -89,3 +89,46 @@ DO UPDATE SET
   password_hash = EXCLUDED.password_hash,
   role = EXCLUDED.role,
   updated_at = NOW();
+
+
+CREATE TABLE IF NOT EXISTS request_rate_limits (
+  scope TEXT NOT NULL,
+  key TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  blocked_until TIMESTAMPTZ,
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (scope, key)
+);
+
+CREATE INDEX IF NOT EXISTS request_rate_limits_blocked_until_idx
+  ON request_rate_limits (blocked_until);
+
+CREATE TABLE IF NOT EXISTS function_response_cache (
+  cache_key TEXT PRIMARY KEY,
+  route TEXT NOT NULL,
+  status_code INTEGER NOT NULL,
+  payload JSONB NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS function_response_cache_route_expires_idx
+  ON function_response_cache (route, expires_at DESC);
+
+CREATE TABLE IF NOT EXISTS request_audit_log (
+  id TEXT PRIMARY KEY,
+  route TEXT NOT NULL,
+  ip_address TEXT,
+  request_fingerprint TEXT NOT NULL,
+  action TEXT NOT NULL,
+  outcome TEXT NOT NULL,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS request_audit_log_route_created_at_idx
+  ON request_audit_log (route, created_at DESC);

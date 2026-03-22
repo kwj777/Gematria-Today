@@ -11,12 +11,14 @@ import {
   parseBody,
   verifyPassword,
 } from './_auth.mjs';
+import { ensureSecuritySchema } from './_security.mjs';
 import { ensureAdminSchema } from './_admin.mjs';
 
 export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getSqlClient, hashPassword, jsonResponse, parseBody };
 
 export async function ensureMemberSchema(sql) {
   await ensureAdminSchema(sql);
+  await ensureSecuritySchema(sql);
 
   await sql`ALTER TABLE users
     ADD COLUMN IF NOT EXISTS email TEXT,

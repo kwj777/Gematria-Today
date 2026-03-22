@@ -215,3 +215,64 @@ footer.site-footer {
 .news-placeholder-panel {
   padding: 1.25rem;
 }
+
+
+.admin-auth-card {
+  max-width: 38rem;
+  margin: 0 auto;
+}
+
+.admin-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-item-card {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(53, 65, 79, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
+}
+
+
+.site-legal-links a {
+  color: var(--bs-primary);
+  text-decoration: none;
+}
+
+.site-legal-links a:hover,
+.site-legal-links a:focus {
+  color: #21496f;
+  text-decoration: underline;
+}
+
+.legal-copy h2 {
+  margin-bottom: 0.9rem;
+}
+
+.legal-copy p:last-child,
+.legal-copy ul:last-child {
+  margin-bottom: 0;
+}
+
+.membership-payment-form {
+  background: linear-gradient(180deg, rgba(53, 95, 140, 0.06), rgba(51, 161, 214, 0.02));
+  border: 1px solid rgba(var(--bs-primary-rgb), 0.12);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.membership-price-badge {
+  align-self: flex-start;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(var(--bs-warning-rgb), 0.16);
+  color: #7a4e00;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.membership-upgrade-note {
+  color: var(--app-muted);
+  font-size: 0.95rem;
+}

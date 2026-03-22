@@ -375,6 +375,13 @@ const lookupForm = document.querySelector('#lookup-form');
         return isBaseRoot ? 'Yes' : 'No';
       }
 
+      function createBaseRootValueNode(isBaseRoot) {
+        return Object.assign(document.createElement('span'), {
+          className: isBaseRoot ? 'meta-highlight' : '',
+          textContent: formatBaseRootLabel(isBaseRoot),
+        });
+      }
+
       function renderSearchGematriaSummary(searchGematria) {
         gematriaResult.textContent = '';
         gematriaResult.append(
@@ -382,7 +389,9 @@ const lookupForm = document.querySelector('#lookup-form');
           createGematriaSearchButton(searchGematria.gematria.total),
           ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | `,
           createBaseRootLink(),
-          `: ${formatBaseRootLabel(searchGematria.isBaseRoot)} | Searches: ${searchGematria.searchCount}`,
+          ': ',
+          createBaseRootValueNode(searchGematria.isBaseRoot),
+          ` | Searches: ${searchGematria.searchCount}`,
           document.createElement('br'),
           document.createElement('br')
         );

@@ -8,6 +8,7 @@ import {
   getSqlClient,
   jsonResponse,
   parseBody,
+  verifyTurnstileToken,
 } from './_member.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -43,9 +44,7 @@ export async function handler(event) {
       });
     }
 
-    if (process.env.TURNSTILE_SECRET_KEY && !String(challengeToken || '').trim()) {
-      return jsonResponse(400, { error: 'Missing anti-bot challenge token' });
-    }
+    await verifyTurnstileToken(event, challengeToken);
 
     const member = await authenticateMemberCredentials(sql, identifier, password);
 

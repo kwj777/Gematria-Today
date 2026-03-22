@@ -2,6 +2,7 @@ import {
   AUTH_COOKIES,
   createSession,
   createSessionCookie,
+  getOptionalAuthenticatedSession,
   getSqlClient,
   jsonResponse,
   parseBody,
@@ -20,16 +21,19 @@ export async function handler(event) {
     const body = parseBody(event);
     const normalizedUsername = String(body.username || '').trim().toLowerCase();
     const normalizedEmail = String(body.email || '').trim().toLowerCase();
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
 
-    await applyRateLimit(sql, event, {
-      scope: 'member-register-ip',
-      key: getClientIp(event),
-      limit: 4,
-      windowMs: 10 * 60_000,
-      blockMs: 60 * 60_000,
-      message: 'Too many registration attempts from this IP address.',
-      auditMetadata: { username: normalizedUsername, email: normalizedEmail },
-    });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'member-register-ip',
+        key: getClientIp(event),
+        limit: 4,
+        windowMs: 10 * 60_000,
+        blockMs: 60 * 60_000,
+        message: 'Too many registration attempts from this IP address.',
+        auditMetadata: { username: normalizedUsername, email: normalizedEmail },
+      });
+    }
 
     await verifyTurnstileToken(event, body.challengeToken);
 

@@ -37,7 +37,9 @@ export function parseBody(event) {
 }
 
 export function parseCookies(event) {
-  const rawCookies = event.headers?.cookie || event.headers?.Cookie || '';
+  const rawCookies = typeof event?.headers?.get === 'function'
+    ? (event.headers.get('cookie') || '')
+    : (event.headers?.cookie || event.headers?.Cookie || '');
   return rawCookies.split(';').reduce((cookies, chunk) => {
     const [key, ...rest] = chunk.trim().split('=');
     if (!key) {
@@ -68,6 +70,39 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+async function findAuthenticatedSession(event, sql, cookieName) {
+  const cookies = parseCookies(event);
+  const sessionToken = cookies[cookieName];
+
+  if (!sessionToken) {
+    return null;
+  }
+
+  const rows = await sql`
+    SELECT users.id, users.username, users.role, sessions.expires_at
+    FROM sessions
+    JOIN users ON users.id = sessions.user_id
+    WHERE sessions.token_hash = ${hashToken(sessionToken)}
+      AND sessions.expires_at > NOW()
+    LIMIT 1
+  `;
+
+  if (!rows.length) {
+    await deleteSession(sql, sessionToken);
+    return null;
+  }
+
+  return {
+    sessionToken,
+    user: {
+      id: rows[0].id,
+      username: rows[0].username,
+      role: rows[0].role,
+      expiresAt: rows[0].expires_at,
+    },
+  };
+}
+
 export function createSessionCookie(token, expiresAt, cookieName = AUTH_COOKIES.admin) {
   return `${cookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
@@ -87,6 +122,21 @@ export async function createSession(sql, userId) {
   `;
 
   return { token, expiresAt };
+}
+
+export async function getOptionalAuthenticatedSession(event, { sql } = {}) {
+  const effectiveSql = sql || getSqlClient();
+  const adminSession = await findAuthenticatedSession(event, effectiveSql, AUTH_COOKIES.admin);
+  if (adminSession) {
+    return { sql: effectiveSql, ...adminSession };
+  }
+
+  const memberSession = await findAuthenticatedSession(event, effectiveSql, AUTH_COOKIES.member);
+  if (memberSession) {
+    return { sql: effectiveSql, ...memberSession };
+  }
+
+  return { sql: effectiveSql, sessionToken: null, user: null };
 }
 
 export async function deleteSession(sql, token) {

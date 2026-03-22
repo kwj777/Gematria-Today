@@ -5,6 +5,7 @@ import {
   createSession,
   createSessionCookie,
   ensureMemberProfile,
+  getOptionalAuthenticatedSession,
   getSqlClient,
   jsonResponse,
   parseBody,
@@ -22,26 +23,29 @@ export async function handler(event) {
     const { identifier = '', password = '', challengeToken = '' } = parseBody(event);
     const normalizedIdentifier = String(identifier).trim().toLowerCase();
     const clientIp = getClientIp(event);
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
 
-    await applyRateLimit(sql, event, {
-      scope: 'member-login-ip',
-      key: clientIp,
-      limit: 8,
-      windowMs: 60_000,
-      blockMs: 15 * 60_000,
-      message: 'Too many member login attempts from this IP address.',
-      auditMetadata: { identifier: normalizedIdentifier },
-    });
-
-    if (normalizedIdentifier) {
+    if (!user) {
       await applyRateLimit(sql, event, {
-        scope: 'member-login-identifier',
-        key: normalizedIdentifier,
-        limit: 5,
-        windowMs: 10 * 60_000,
-        blockMs: 30 * 60_000,
-        message: 'Too many login attempts for this account identifier.',
+        scope: 'member-login-ip',
+        key: clientIp,
+        limit: 8,
+        windowMs: 60_000,
+        blockMs: 15 * 60_000,
+        message: 'Too many member login attempts from this IP address.',
+        auditMetadata: { identifier: normalizedIdentifier },
       });
+
+      if (normalizedIdentifier) {
+        await applyRateLimit(sql, event, {
+          scope: 'member-login-identifier',
+          key: normalizedIdentifier,
+          limit: 5,
+          windowMs: 10 * 60_000,
+          blockMs: 30 * 60_000,
+          message: 'Too many login attempts for this account identifier.',
+        });
+      }
     }
 
     await verifyTurnstileToken(event, challengeToken);

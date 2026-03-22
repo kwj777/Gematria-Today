@@ -4,6 +4,7 @@ import {
   clearSessionCookie,
   createSession,
   createSessionCookie,
+  getOptionalAuthenticatedSession,
   getAuthenticatedUser as getAuthenticatedUserShared,
   getSqlClient,
   hashPassword,
@@ -15,7 +16,7 @@ import {
 import { ensureSecuritySchema } from './_security.mjs';
 import { ensureAdminSchema } from './_admin.mjs';
 
-export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getSqlClient, hashPassword, jsonResponse, parseBody, verifyTurnstileToken };
+export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, getSqlClient, hashPassword, jsonResponse, parseBody, verifyTurnstileToken };
 
 export async function ensureMemberSchema(sql) {
   await ensureAdminSchema(sql);

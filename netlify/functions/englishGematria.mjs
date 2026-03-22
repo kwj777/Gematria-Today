@@ -1,4 +1,4 @@
-import { getSqlClient, jsonResponse } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 
 export function englishGematria(input) {
@@ -94,14 +94,17 @@ export default async function onRequest(request) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'englishGematria' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, request, {
-      scope: 'englishGematria-ip',
-      key: getClientIp(request),
-      limit: 45,
-      windowMs: 60_000,
-      blockMs: 5 * 60_000,
-      message: 'Too many calculator requests.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(request, { sql });
+    if (!user) {
+      await applyRateLimit(sql, request, {
+        scope: 'englishGematria-ip',
+        key: getClientIp(request),
+        limit: 45,
+        windowMs: 60_000,
+        blockMs: 5 * 60_000,
+        message: 'Too many calculator requests.',
+      });
+    }
     const cacheResult = await processWord(sql, word);
     await logRequestAudit(sql, request, {
       route: 'englishGematria',
@@ -130,14 +133,17 @@ export async function handler(event) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'englishGematria' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, event, {
-      scope: 'englishGematria-ip',
-      key: getClientIp(event),
-      limit: 45,
-      windowMs: 60_000,
-      blockMs: 5 * 60_000,
-      message: 'Too many calculator requests.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'englishGematria-ip',
+        key: getClientIp(event),
+        limit: 45,
+        windowMs: 60_000,
+        blockMs: 5 * 60_000,
+        message: 'Too many calculator requests.',
+      });
+    }
     const cacheResult = await processWord(sql, word);
     await logRequestAudit(sql, event, {
       route: 'englishGematria',

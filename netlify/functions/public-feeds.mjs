@@ -1,4 +1,5 @@
 import { ensureAdminSchema, formatFeed, getSqlClient, jsonResponse, syncBootstrapAdminUser } from './_admin.mjs';
+import { getOptionalAuthenticatedSession } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
 
 const TAG_PATTERNS = {
@@ -116,14 +117,17 @@ export async function handler(event) {
     const sql = getSqlClient();
     await ensureAdminSchema(sql);
     await syncBootstrapAdminUser(sql);
-    await applyRateLimit(sql, event, {
-      scope: 'public-feeds-ip',
-      key: getClientIp(event),
-      limit: 20,
-      windowMs: 60_000,
-      blockMs: 10 * 60_000,
-      message: 'Too many feed refresh requests.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'public-feeds-ip',
+        key: getClientIp(event),
+        limit: 20,
+        windowMs: 60_000,
+        blockMs: 10 * 60_000,
+        message: 'Too many feed refresh requests.',
+      });
+    }
 
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'public-feeds' }),

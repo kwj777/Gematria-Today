@@ -1,4 +1,4 @@
-import { getSqlClient, jsonResponse as secureJsonResponse } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse as secureJsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
 function toResponse(statusCode, payload, contentType = "application/json; charset=utf-8") {
   const body = contentType.startsWith("application/json") ? JSON.stringify(payload) : payload;
@@ -377,14 +377,17 @@ export default async function onRequest(request) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikDefinition' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, request, {
-      scope: 'wordnikDefinition-ip',
-      key: getClientIp(request),
-      limit: 20,
-      windowMs: 60_000,
-      blockMs: 10 * 60_000,
-      message: 'Too many definition lookups.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(request, { sql });
+    if (!user) {
+      await applyRateLimit(sql, request, {
+        scope: 'wordnikDefinition-ip',
+        key: getClientIp(request),
+        limit: 20,
+        windowMs: 60_000,
+        blockMs: 10 * 60_000,
+        message: 'Too many definition lookups.',
+      });
+    }
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'wordnikDefinition', word: String(word).trim().toLowerCase() }),
       route: 'wordnikDefinition',
@@ -413,14 +416,17 @@ export async function handler(event) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikDefinition' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, event, {
-      scope: 'wordnikDefinition-ip',
-      key: getClientIp(event),
-      limit: 20,
-      windowMs: 60_000,
-      blockMs: 10 * 60_000,
-      message: 'Too many definition lookups.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'wordnikDefinition-ip',
+        key: getClientIp(event),
+        limit: 20,
+        windowMs: 60_000,
+        blockMs: 10 * 60_000,
+        message: 'Too many definition lookups.',
+      });
+    }
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'wordnikDefinition', word: String(word).trim().toLowerCase() }),
       route: 'wordnikDefinition',

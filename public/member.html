@@ -188,6 +188,33 @@
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
       }
 
+
+      function getHistoryReopenUrl(item) {
+        if (item.calculatorSource === 'name-calculator') {
+          const names = Array.isArray(item.resultPayload?.names) ? item.resultPayload.names.filter(Boolean) : [];
+          const url = new URL('/nameCalculator.html', window.location.origin);
+          names.slice(0, 3).forEach((name, index) => {
+            url.searchParams.set(`name${index + 1}`, name);
+          });
+          return `${url.pathname}${url.search}`;
+        }
+
+        const queryText = String(item.queryText || '').trim();
+        return `/calculator.html?query=${encodeURIComponent(queryText)}`;
+      }
+
+      function formatHistorySummary(item) {
+        if (item.calculatorSource === 'name-calculator') {
+          const names = Array.isArray(item.resultPayload?.names) ? item.resultPayload.names.filter(Boolean) : [];
+          const successfulCount = Array.isArray(item.resultPayload?.results)
+            ? item.resultPayload.results.filter((result) => !result?.error && result?.gematria).length
+            : 0;
+          return `Names: ${names.join(', ') || '—'} · Successful results: ${successfulCount}`;
+        }
+
+        return `Gematria: ${item.gematriaTotal ?? '—'} · Digital Root: ${item.digitalRoot ?? '—'} · Base Root: ${item.isBaseRoot === null ? '—' : (item.isBaseRoot ? 'Yes' : 'No')}`;
+      }
+
       function renderHistory() {
         historyCount.textContent = String(historyItems.length);
         historyList.innerHTML = historyItems.length ? historyItems.map((item) => `
@@ -196,15 +223,15 @@
               <div>
                 <h4 class="h6 mb-1">${item.queryText}</h4>
                 <p class="small text-muted mb-1">${item.calculatorSource} · ${item.queryType} · Saved ${new Date(item.createdAt).toLocaleString()}</p>
-                <p class="small mb-0">Gematria: ${item.gematriaTotal ?? '—'} · Digital Root: ${item.digitalRoot ?? '—'} · Base Root: ${item.isBaseRoot === null ? '—' : (item.isBaseRoot ? 'Yes' : 'No')}</p>
+                <p class="small mb-0">${formatHistorySummary(item)}</p>
               </div>
               <div class="d-flex gap-2">
-                <a class="btn btn-outline-primary btn-sm" href="/calculator.html?query=${encodeURIComponent(item.queryText)}">Reopen</a>
+                <a class="btn btn-outline-primary btn-sm" href="${getHistoryReopenUrl(item)}">Reopen</a>
                 <button class="btn btn-outline-danger btn-sm" type="button" data-delete-id="${item.id}">Delete</button>
               </div>
             </div>
           </article>
-        `).join('') : '<p class="text-muted mb-0">No saved calculations yet. Run a lookup on the calculator page and click <strong>Save result</strong>.</p>';
+        `).join('') : '<p class="text-muted mb-0">No saved calculations yet. Run a lookup on the calculator or name calculator page and click <strong>Save result</strong>.</p>';
 
         historyList.querySelectorAll('[data-delete-id]').forEach((button) => {
           button.addEventListener('click', async () => {

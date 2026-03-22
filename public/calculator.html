@@ -33,6 +33,7 @@
 const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');
       const DEFAULT_RELATED_WORD_LIMIT = 250;
+      const AUTHENTICATED_RELATED_WORD_LIMIT = 1000;
       const clearSearchButton = document.querySelector('#clear-search-button');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
@@ -123,6 +124,11 @@ const lookupForm = document.querySelector('#lookup-form');
         memberSaveMeta.textContent = currentSearchPayload
           ? `Signed in as ${memberName}. Save this result to history.${freeTierSuffix}`
           : `Signed in as ${memberName}. Run a lookup to save it.${freeTierSuffix}`;
+      }
+
+
+      function getRelatedWordLimit() {
+        return memberSession?.authenticated ? AUTHENTICATED_RELATED_WORD_LIMIT : DEFAULT_RELATED_WORD_LIMIT;
       }
 
       async function requestGematria(word) {
@@ -439,7 +445,7 @@ const lookupForm = document.querySelector('#lookup-form');
           renderSearchGematriaSummary(searchGematria);
 
           try {
-            const relatedWordsPayload = await requestRelatedWords(term);
+            const relatedWordsPayload = await requestRelatedWords(term, getRelatedWordLimit());
             const relationships = Array.isArray(relatedWordsPayload.data) ? relatedWordsPayload.data : [];
             const enrichedRelationships = await enrichRelationshipWords(relationships, searchGematria.gematria.total);
             lookupStatus.textContent = '';

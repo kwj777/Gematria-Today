@@ -40,6 +40,7 @@ const form = document.querySelector('#name-form');
       const MOBILE_QUERY = '(max-width: 820px), (pointer: coarse)';
       const DISPLAY_RELATED_WORD_LIMIT = 10;
       const FULL_RELATED_WORD_LIMIT = 250;
+      const AUTHENTICATED_RELATED_WORD_LIMIT = 1000;
       let currentSearchPayload = null;
       let memberSession = null;
 
@@ -52,6 +53,11 @@ const form = document.querySelector('#name-form');
         return ['name1', 'name2', 'name3']
           .map((key) => String(formData.get(key) || '').trim())
           .filter(Boolean);
+      }
+
+
+      function getFullRelatedWordLimit() {
+        return memberSession?.authenticated ? AUTHENTICATED_RELATED_WORD_LIMIT : FULL_RELATED_WORD_LIMIT;
       }
 
       async function requestMemberSession() {
@@ -338,7 +344,7 @@ const form = document.querySelector('#name-form');
           const gematria = await requestGematria(name);
 
           try {
-            const related = await requestRelatedWords(name.toLowerCase(), FULL_RELATED_WORD_LIMIT);
+            const related = await requestRelatedWords(name.toLowerCase(), getFullRelatedWordLimit());
             return { gematria, related };
           } catch (error) {
             return {

@@ -4,6 +4,7 @@ import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout,
 const WORDNIK_RELATIONSHIP_TYPES = 'synonym';
 const DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE = 250;
 const MAX_LIMIT_PER_RELATIONSHIP_TYPE = 250;
+const AUTHENTICATED_MAX_LIMIT_PER_RELATIONSHIP_TYPE = 1000;
 
 function toResponse(statusCode, payload, extraHeaders = {}) {
   return new Response(JSON.stringify(payload), {
@@ -27,11 +28,12 @@ function extractRequestOptionsFromEvent(event) {
   return { term: null, limit: null };
 }
 
-function parseLimit(limit) {
+function parseLimit(limit, { isAuthenticated = false } = {}) {
   if (limit == null || limit === '') return DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE;
   const parsedLimit = Number.parseInt(limit, 10);
+  const maxLimit = isAuthenticated ? AUTHENTICATED_MAX_LIMIT_PER_RELATIONSHIP_TYPE : MAX_LIMIT_PER_RELATIONSHIP_TYPE;
   if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) throw new Error('Query parameter "limit" must be a positive integer');
-  if (parsedLimit > MAX_LIMIT_PER_RELATIONSHIP_TYPE) throw new Error(`Query parameter "limit" must not exceed ${MAX_LIMIT_PER_RELATIONSHIP_TYPE}`);
+  if (parsedLimit > maxLimit) throw new Error(`Query parameter "limit" must not exceed ${maxLimit}`);
   return parsedLimit;
 }
 
@@ -56,11 +58,11 @@ function getErrorStatusCode(error) {
   return error.statusCode || 500;
 }
 
-async function fetchRelatedWords(sql, source, term, limit) {
+async function fetchRelatedWords(sql, source, term, limit, { isAuthenticated = false } = {}) {
   const trimmedTerm = term.trim();
   const normalizedTerm = trimmedTerm.toLowerCase();
   if (!normalizedTerm) throw new Error('Missing required query parameter: word');
-  const parsedLimit = parseLimit(limit);
+  const parsedLimit = parseLimit(limit, { isAuthenticated });
 
   const cacheResult = await withCachedJson(sql, {
     cacheKey: buildCacheKey({ route: 'wordnikRelatedWords', term: normalizedTerm, limit: parsedLimit }),
@@ -108,7 +110,7 @@ export default async function onRequest(request) {
         message: 'Too many related-word lookups.',
       });
     }
-    const cacheResult = await fetchRelatedWords(sql, request, term, limit);
+    const cacheResult = await fetchRelatedWords(sql, request, term, limit, { isAuthenticated: Boolean(user) });
     return toResponse(200, cacheResult.payload, {
       'cache-control': 'public, max-age=600, stale-while-revalidate=120',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
@@ -136,7 +138,7 @@ export async function handler(event) {
         message: 'Too many related-word lookups.',
       });
     }
-    const cacheResult = await fetchRelatedWords(sql, event, term, limit);
+    const cacheResult = await fetchRelatedWords(sql, event, term, limit, { isAuthenticated: Boolean(user) });
     return jsonResponse(200, cacheResult.payload, {
       'cache-control': 'public, max-age=600, stale-while-revalidate=120',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',

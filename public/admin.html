@@ -129,12 +129,16 @@
                   <span class="badge text-bg-warning">Blog</span>
                 </div>
                 <form id="postForm" class="row g-3">
+                  <input id="postId" type="hidden" />
                   <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
                   <div class="col-md-6"><label class="form-label" for="postTag">Tag</label><input id="postTag" class="form-control" placeholder="Research Workflow" /></div>
                   <div class="col-md-6"><label class="form-label" for="postReadTime">Read time</label><input id="postReadTime" class="form-control" placeholder="5 minute read" /></div>
                   <div class="col-12"><label class="form-label" for="postSummary">Summary</label><textarea id="postSummary" class="form-control" rows="2" required></textarea></div>
                   <div class="col-12"><label class="form-label" for="postBody">Body</label><textarea id="postBody" class="form-control" rows="7" placeholder="Use blank lines to split paragraphs." required></textarea></div>
-                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Publish blog post</button></div>
+                  <div class="col-12 d-flex flex-column flex-sm-row gap-2">
+                    <button id="postSubmitButton" class="btn btn-primary flex-fill" type="submit">Publish blog post</button>
+                    <button id="postCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
+                  </div>
                 </form>
                 <div id="postList" class="admin-list mt-4"></div>
               </section>
@@ -246,7 +250,7 @@
       const faqCount = document.getElementById('faqCount');
       const sessionMeta = document.getElementById('sessionMeta');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, editingFaqId: null };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, editingPostId: null, editingFaqId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -317,9 +321,34 @@
                 <p class="small text-muted mb-2">${escapeHtml(post.summary)}</p>
                 <p class="small mb-0">Status: ${escapeHtml(post.status)} · Published ${escapeHtml(post.publishedAt || post.createdAt || '')}</p>
               </div>
-              <button class="btn btn-sm btn-outline-danger" type="button" data-delete-post="${post.id}">Delete</button>
+              <div class="d-flex flex-column gap-2">
+                <button class="btn btn-sm btn-outline-primary" type="button" data-edit-post="${post.id}">Edit</button>
+                <button class="btn btn-sm btn-outline-danger" type="button" data-delete-post="${post.id}">Delete</button>
+              </div>
             </div>
           </article>`).join('') : '<p class="text-muted small mb-0">No blog posts published yet.</p>';
+      }
+
+      function resetPostForm() {
+        state.editingPostId = null;
+        document.getElementById('postForm').reset();
+        document.getElementById('postId').value = '';
+        document.getElementById('postSubmitButton').textContent = 'Publish blog post';
+        document.getElementById('postCancelButton').classList.add('d-none');
+      }
+
+      function startPostEdit(postId) {
+        const post = state.posts.find((item) => item.id === postId);
+        if (!post) return;
+        state.editingPostId = post.id;
+        document.getElementById('postId').value = post.id;
+        document.getElementById('postTitle').value = post.title || '';
+        document.getElementById('postTag').value = post.tag || '';
+        document.getElementById('postReadTime').value = post.readTime || '';
+        document.getElementById('postSummary').value = post.summary || '';
+        document.getElementById('postBody').value = post.body || '';
+        document.getElementById('postSubmitButton').textContent = 'Update blog post';
+        document.getElementById('postCancelButton').classList.remove('d-none');
       }
 
       function renderFaqs() {
@@ -485,9 +514,11 @@
         event.preventDefault();
         clearMessage(errorMessage);
         try {
+          const postId = document.getElementById('postId').value;
           await request('/api/admin-posts', {
-            method: 'POST',
+            method: postId ? 'PUT' : 'POST',
             body: JSON.stringify({
+              id: postId || undefined,
               title: document.getElementById('postTitle').value,
               tag: document.getElementById('postTag').value,
               readTime: document.getElementById('postReadTime').value,
@@ -496,12 +527,16 @@
               status: 'published'
             })
           });
-          event.target.reset();
-          showMessage(saveMessage, 'Blog post published.');
+          resetPostForm();
+          showMessage(saveMessage, postId ? 'Blog post updated.' : 'Blog post published.');
           await refreshDashboard();
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
+      });
+
+      document.getElementById('postCancelButton').addEventListener('click', () => {
+        resetPostForm();
       });
 
       document.getElementById('faqForm').addEventListener('submit', async (event) => {
@@ -590,12 +625,16 @@
       });
 
       document.addEventListener('click', async (event) => {
-        const { deleteFeed, deletePost, deleteFaq, editFaq, deleteTask } = event.target.dataset;
-        if (!deleteFeed && !deletePost && !deleteFaq && !editFaq && !deleteTask) {
+        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask } = event.target.dataset;
+        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask) {
           return;
         }
         clearMessage(errorMessage);
         try {
+          if (editPost) {
+            startPostEdit(editPost);
+            return;
+          }
           if (editFaq) {
             startFaqEdit(editFaq);
             return;
@@ -606,6 +645,9 @@
           }
           if (deletePost) {
             await request(`/api/admin-posts?id=${encodeURIComponent(deletePost)}`, { method: 'DELETE' });
+            if (state.editingPostId === deletePost) {
+              resetPostForm();
+            }
             showMessage(saveMessage, 'Blog post removed.');
           }
           if (deleteFaq) {
@@ -625,6 +667,7 @@
         }
       });
 
+      resetPostForm();
       resetFaqForm();
       loadSession();
     </script>

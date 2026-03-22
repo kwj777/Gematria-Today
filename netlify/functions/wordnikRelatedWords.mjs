@@ -33,7 +33,6 @@ function parseLimit(limit, { isAuthenticated = false } = {}) {
   const maxLimit = isAuthenticated ? MAX_LIMIT_PER_RELATIONSHIP_TYPE : ANONYMOUS_LIMIT_PER_RELATIONSHIP_TYPE;
   if (limit == null || limit === '') return defaultLimit;
   const parsedLimit = Number.parseInt(limit, 10);
-  const maxLimit = isAuthenticated ? AUTHENTICATED_MAX_LIMIT_PER_RELATIONSHIP_TYPE : MAX_LIMIT_PER_RELATIONSHIP_TYPE;
   if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) throw new Error('Query parameter "limit" must be a positive integer');
   if (parsedLimit > maxLimit) throw new Error(`Query parameter "limit" must not exceed ${maxLimit}`);
   return parsedLimit;
@@ -75,6 +74,9 @@ async function fetchRelatedWords(sql, source, term, limit, { isAuthenticated = f
       const response = await fetchWithTimeout(url, {}, getProtectionConfig().wordnikTimeoutMs);
       if (!response.ok) {
         const errorText = await response.text();
+        if (response.status === 404) {
+          throw Object.assign(new Error("Wordnik's search came up empty."), { statusCode: 404 });
+        }
         throw new Error(`Wordnik request failed with ${response.status}: ${errorText || response.statusText}`);
       }
       const data = await response.json();

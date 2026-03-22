@@ -31,7 +31,7 @@
       <script>
 const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');
-      const DEFAULT_RELATED_WORD_LIMIT = 1000;
+      const DEFAULT_RELATED_WORD_LIMIT = 250;
       const clearSearchButton = document.querySelector('#clear-search-button');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
@@ -373,9 +373,9 @@ const lookupForm = document.querySelector('#lookup-form');
             const enrichedRelationships = await enrichRelationshipWords(relationships, searchGematria.gematria.total);
             lookupStatus.textContent = '';
             renderRelatedWords(relatedWordsPayload, enrichedRelationships, searchGematria);
-          } catch {
-            lookupStatus.textContent = '';
-            relatedWordsResult.innerHTML = '<p>Wordnik did not provide any related terms</p>';
+          } catch (error) {
+            lookupStatus.textContent = error.message || 'Unable to load related words.';
+            relatedWordsResult.innerHTML = '';
           }
         } catch (error) {
           lookupStatus.textContent = error.message || 'Unable to load gematria and related words.';

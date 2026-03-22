@@ -1,19 +1,21 @@
-import { getSqlClient, jsonResponse } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 
 export async function handler(event) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'getWords' });
     const sql = getSqlClient();
-
-    await applyRateLimit(sql, event, {
-      scope: 'public-getWords-ip',
-      key: getClientIp(event),
-      limit: 60,
-      windowMs: 60_000,
-      blockMs: 5 * 60_000,
-      message: 'Too many requests for the popular words endpoint.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'public-getWords-ip',
+        key: getClientIp(event),
+        limit: 60,
+        windowMs: 60_000,
+        blockMs: 5 * 60_000,
+        message: 'Too many requests for the popular words endpoint.',
+      });
+    }
 
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'getWords', top: 20 }),

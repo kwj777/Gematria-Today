@@ -1,4 +1,5 @@
 import { ensureAdminSchema, formatPost, getSqlClient, jsonResponse, syncBootstrapAdminUser } from './_admin.mjs';
+import { getOptionalAuthenticatedSession } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 
 export async function handler(event) {
@@ -11,14 +12,17 @@ export async function handler(event) {
     const sql = getSqlClient();
     await ensureAdminSchema(sql);
     await syncBootstrapAdminUser(sql);
-    await applyRateLimit(sql, event, {
-      scope: 'public-posts-ip',
-      key: getClientIp(event),
-      limit: 60,
-      windowMs: 60_000,
-      blockMs: 5 * 60_000,
-      message: 'Too many requests for published posts.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'public-posts-ip',
+        key: getClientIp(event),
+        limit: 60,
+        windowMs: 60_000,
+        blockMs: 5 * 60_000,
+        message: 'Too many requests for published posts.',
+      });
+    }
 
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'public-posts' }),

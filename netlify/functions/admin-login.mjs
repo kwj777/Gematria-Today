@@ -3,6 +3,7 @@ import {
   clearSessionCookie,
   createSession,
   createSessionCookie,
+  getOptionalAuthenticatedSession,
   jsonResponse,
   parseBody,
   verifyTurnstileToken,
@@ -19,26 +20,29 @@ export async function handler(event) {
     const sql = getSqlClient();
     const { username = '', password = '', challengeToken = '' } = parseBody(event);
     const normalizedUsername = String(username).trim().toLowerCase();
+    const { user: authenticatedUser } = await getOptionalAuthenticatedSession(event, { sql });
 
-    await applyRateLimit(sql, event, {
-      scope: 'admin-login-ip',
-      key: getClientIp(event),
-      limit: 5,
-      windowMs: 60_000,
-      blockMs: 30 * 60_000,
-      message: 'Too many admin login attempts from this IP address.',
-      auditMetadata: { username: normalizedUsername },
-    });
-
-    if (normalizedUsername) {
+    if (!authenticatedUser) {
       await applyRateLimit(sql, event, {
-        scope: 'admin-login-username',
-        key: normalizedUsername,
-        limit: 4,
-        windowMs: 10 * 60_000,
-        blockMs: 60 * 60_000,
-        message: 'Too many admin login attempts for this account.',
+        scope: 'admin-login-ip',
+        key: getClientIp(event),
+        limit: 5,
+        windowMs: 60_000,
+        blockMs: 30 * 60_000,
+        message: 'Too many admin login attempts from this IP address.',
+        auditMetadata: { username: normalizedUsername },
       });
+
+      if (normalizedUsername) {
+        await applyRateLimit(sql, event, {
+          scope: 'admin-login-username',
+          key: normalizedUsername,
+          limit: 4,
+          windowMs: 10 * 60_000,
+          blockMs: 60 * 60_000,
+          message: 'Too many admin login attempts for this account.',
+        });
+      }
     }
 
     await verifyTurnstileToken(event, challengeToken);

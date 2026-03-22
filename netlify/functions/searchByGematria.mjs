@@ -1,4 +1,4 @@
-import { getSqlClient, jsonResponse } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 
 function extractGematriaValue(source) {
@@ -48,14 +48,17 @@ export default async function onRequest(request) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'searchByGematria' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, request, {
-      scope: 'searchByGematria-ip',
-      key: getClientIp(request),
-      limit: 60,
-      windowMs: 60_000,
-      blockMs: 5 * 60_000,
-      message: 'Too many gematria search requests.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(request, { sql });
+    if (!user) {
+      await applyRateLimit(sql, request, {
+        scope: 'searchByGematria-ip',
+        key: getClientIp(request),
+        limit: 60,
+        windowMs: 60_000,
+        blockMs: 5 * 60_000,
+        message: 'Too many gematria search requests.',
+      });
+    }
     const cacheResult = await searchByGematria(sql, new URL(request.url).searchParams.get('gematria'));
     await logRequestAudit(sql, request, {
       route: 'searchByGematria',
@@ -83,14 +86,17 @@ export async function handler(event) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'searchByGematria' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, event, {
-      scope: 'searchByGematria-ip',
-      key: getClientIp(event),
-      limit: 60,
-      windowMs: 60_000,
-      blockMs: 5 * 60_000,
-      message: 'Too many gematria search requests.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'searchByGematria-ip',
+        key: getClientIp(event),
+        limit: 60,
+        windowMs: 60_000,
+        blockMs: 5 * 60_000,
+        message: 'Too many gematria search requests.',
+      });
+    }
     const cacheResult = await searchByGematria(sql, extractGematriaValue(event));
     await logRequestAudit(sql, event, {
       route: 'searchByGematria',

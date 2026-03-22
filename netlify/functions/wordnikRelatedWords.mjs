@@ -1,4 +1,4 @@
-import { getSqlClient, jsonResponse } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
 
 const WORDNIK_RELATIONSHIP_TYPES = 'synonym';
@@ -97,14 +97,17 @@ export default async function onRequest(request) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikRelatedWords' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, request, {
-      scope: 'wordnikRelatedWords-ip',
-      key: getClientIp(request),
-      limit: 20,
-      windowMs: 60_000,
-      blockMs: 10 * 60_000,
-      message: 'Too many related-word lookups.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(request, { sql });
+    if (!user) {
+      await applyRateLimit(sql, request, {
+        scope: 'wordnikRelatedWords-ip',
+        key: getClientIp(request),
+        limit: 20,
+        windowMs: 60_000,
+        blockMs: 10 * 60_000,
+        message: 'Too many related-word lookups.',
+      });
+    }
     const cacheResult = await fetchRelatedWords(sql, request, term, limit);
     return toResponse(200, cacheResult.payload, {
       'cache-control': 'public, max-age=600, stale-while-revalidate=120',
@@ -122,14 +125,17 @@ export async function handler(event) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikRelatedWords' });
     const sql = getSqlClient();
-    await applyRateLimit(sql, event, {
-      scope: 'wordnikRelatedWords-ip',
-      key: getClientIp(event),
-      limit: 20,
-      windowMs: 60_000,
-      blockMs: 10 * 60_000,
-      message: 'Too many related-word lookups.',
-    });
+    const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (!user) {
+      await applyRateLimit(sql, event, {
+        scope: 'wordnikRelatedWords-ip',
+        key: getClientIp(event),
+        limit: 20,
+        windowMs: 60_000,
+        blockMs: 10 * 60_000,
+        message: 'Too many related-word lookups.',
+      });
+    }
     const cacheResult = await fetchRelatedWords(sql, event, term, limit);
     return jsonResponse(200, cacheResult.payload, {
       'cache-control': 'public, max-age=600, stale-while-revalidate=120',

@@ -38,6 +38,42 @@ export async function handler(event) {
       return jsonResponse(201, { item: formatPost(rows[0]) });
     }
 
+    if (event.httpMethod === 'PUT') {
+      const body = parseBody(event);
+      const id = String(body.id ?? '').trim();
+      const title = String(body.title ?? '').trim();
+      if (!id) {
+        return jsonResponse(400, { error: 'Post id is required' });
+      }
+      if (!title) {
+        return jsonResponse(400, { error: 'Title is required' });
+      }
+      const slug = slugify(body.slug || title);
+      const status = body.status === 'draft' ? 'draft' : 'published';
+      const rows = await sql`
+        UPDATE posts
+        SET
+          title = ${title},
+          slug = ${slug},
+          tag = ${String(body.tag ?? '').trim() || null},
+          summary = ${String(body.summary ?? '').trim()},
+          body = ${String(body.body ?? '').trim()},
+          read_time = ${String(body.readTime ?? '').trim() || null},
+          status = ${status},
+          published_at = CASE
+            WHEN ${status} = 'published' THEN COALESCE(published_at, NOW())
+            ELSE NULL
+          END,
+          updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *
+      `;
+      if (!rows.length) {
+        return jsonResponse(404, { error: 'Post not found' });
+      }
+      return jsonResponse(200, { item: formatPost(rows[0]) });
+    }
+
     if (event.httpMethod === 'DELETE') {
       const id = event.queryStringParameters?.id;
       if (!id) {

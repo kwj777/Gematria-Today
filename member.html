@@ -192,6 +192,7 @@
 
       let session = null;
       let historyItems = [];
+      let favoriteHistoryIds = new Set();
       let paymentConfirmationInFlight = false;
 
       function showAlert(message, tone = 'danger') {
@@ -289,6 +290,51 @@
         return `Gematria: ${item.gematriaTotal ?? '—'} · Digital Root: ${item.digitalRoot ?? '—'} · Base Root: ${item.isBaseRoot === null ? '—' : (item.isBaseRoot ? 'Yes' : 'No')}`;
       }
 
+      function getFavoriteStorageKey() {
+        const memberId = session?.member?.id ?? 'guest';
+        return `member-history-favorites:${memberId}`;
+      }
+
+      function loadFavoriteHistoryIds() {
+        try {
+          const saved = window.localStorage.getItem(getFavoriteStorageKey());
+          const parsed = JSON.parse(saved || '[]');
+          favoriteHistoryIds = new Set(Array.isArray(parsed) ? parsed.map((value) => String(value)) : []);
+        } catch {
+          favoriteHistoryIds = new Set();
+        }
+      }
+
+      function persistFavoriteHistoryIds() {
+        window.localStorage.setItem(getFavoriteStorageKey(), JSON.stringify(Array.from(favoriteHistoryIds)));
+      }
+
+      function isFavorited(item) {
+        return favoriteHistoryIds.has(String(item.id));
+      }
+
+      function sortHistoryItems(items) {
+        return [...items].sort((left, right) => {
+          const favoriteDelta = Number(isFavorited(right)) - Number(isFavorited(left));
+          if (favoriteDelta !== 0) {
+            return favoriteDelta;
+          }
+
+          return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+        });
+      }
+
+      function toggleFavoriteHistory(id) {
+        const key = String(id);
+        if (favoriteHistoryIds.has(key)) {
+          favoriteHistoryIds.delete(key);
+        } else {
+          favoriteHistoryIds.add(key);
+        }
+        persistFavoriteHistoryIds();
+        renderHistory();
+      }
+
       function renderHistory() {
         historyCount.textContent = String(historyItems.length);
         if (session?.member?.membershipLevel === 'free') {
@@ -296,13 +342,27 @@
         } else {
           historyCountMeta.textContent = 'Calculation history items currently stored.';
         }
-        historyList.innerHTML = historyItems.length ? historyItems.map((item) => `
-          <article class="admin-item-card mb-3 p-3">
+
+        const visibleHistoryItems = sortHistoryItems(historyItems);
+        historyList.innerHTML = visibleHistoryItems.length ? visibleHistoryItems.map((item) => {
+          const favorited = isFavorited(item);
+          return `
+          <article class="admin-item-card member-history-card mb-3 p-3${favorited ? ' is-favorited' : ''}">
             <div class="d-flex justify-content-between flex-wrap gap-3">
-              <div>
-                <h4 class="h6 mb-1">${item.queryText}</h4>
-                <p class="small text-muted mb-1">${item.calculatorSource} · ${item.queryType} · Saved ${new Date(item.createdAt).toLocaleString()}</p>
-                <p class="small mb-0">${formatHistorySummary(item)}</p>
+              <div class="d-flex align-items-start gap-3 flex-grow-1">
+                <button
+                  class="history-favorite-button${favorited ? ' is-favorited' : ''}"
+                  type="button"
+                  data-favorite-id="${item.id}"
+                  aria-label="${favorited ? 'Remove from favorites' : 'Add to favorites'}"
+                  aria-pressed="${favorited ? 'true' : 'false'}"
+                  title="${favorited ? 'Favorited search' : 'Favorite this search'}"
+                >★</button>
+                <div>
+                  <h4 class="h6 mb-1">${item.queryText}</h4>
+                  <p class="small text-muted mb-1">${item.calculatorSource} · ${item.queryType} · Saved ${new Date(item.createdAt).toLocaleString()}</p>
+                  <p class="small mb-0">${formatHistorySummary(item)}</p>
+                </div>
               </div>
               <div class="d-flex gap-2">
                 <a class="btn btn-outline-primary btn-sm" href="${getHistoryReopenUrl(item)}">Reopen</a>
@@ -310,7 +370,14 @@
               </div>
             </div>
           </article>
-        `).join('') : '<p class="text-muted mb-0">No saved calculations yet. Run a lookup on the calculator or name calculator page and click <strong>Save result</strong>.</p>';
+        `;
+        }).join('') : '<p class="text-muted mb-0">No saved calculations yet. Run a lookup on the calculator or name calculator page and click <strong>Save result</strong>.</p>';
+
+        historyList.querySelectorAll('[data-favorite-id]').forEach((button) => {
+          button.addEventListener('click', () => {
+            toggleFavoriteHistory(button.dataset.favoriteId);
+          });
+        });
 
         historyList.querySelectorAll('[data-delete-id]').forEach((button) => {
           button.addEventListener('click', async () => {
@@ -319,6 +386,8 @@
                 method: 'DELETE',
                 body: JSON.stringify({ id: button.dataset.deleteId }),
               });
+              favoriteHistoryIds.delete(String(button.dataset.deleteId));
+              persistFavoriteHistoryIds();
               showAlert('History entry deleted.', 'success');
               await loadHistory();
             } catch (error) {
@@ -346,6 +415,12 @@
       async function loadHistory() {
         const payload = await request('/api/member-history');
         historyItems = Array.isArray(payload.history) ? payload.history : [];
+        favoriteHistoryIds.forEach((id) => {
+          if (!historyItems.some((item) => String(item.id) === id)) {
+            favoriteHistoryIds.delete(id);
+          }
+        });
+        persistFavoriteHistoryIds();
         renderHistory();
       }
 
@@ -356,6 +431,7 @@
 
         try {
           session = await request('/api/member-session', { method: 'GET' });
+          loadFavoriteHistoryIds();
           setLoggedIn(true);
           populateProfile(session.member, session.profile);
           await loadHistory();
@@ -367,6 +443,7 @@
           }
         } catch {
           session = null;
+          favoriteHistoryIds = new Set();
           setLoggedIn(false);
           historyItems = [];
           renderHistory();
@@ -388,6 +465,7 @@
 
         try {
           session = await request('/api/member-register', { method: 'POST', body: JSON.stringify(payload) });
+          loadFavoriteHistoryIds();
           showAlert('Membership account created. You are now signed in.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile);
@@ -409,6 +487,7 @@
               password: document.getElementById('loginPassword').value,
             }),
           });
+          loadFavoriteHistoryIds();
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile);
@@ -448,6 +527,7 @@
           showAlert(error.message || 'Unable to sign out.');
         } finally {
           session = null;
+          favoriteHistoryIds = new Set();
           setLoggedIn(false);
         }
       });

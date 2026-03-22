@@ -91,7 +91,8 @@ Set these in Netlify to tune protection behavior:
 - `DISABLE_EXPENSIVE_PUBLIC_ENDPOINTS=true` to disable expensive anonymous endpoints
 - `WORDNIK_TIMEOUT_MS=5000` to control Wordnik fetch timeouts
 - `STRIPE_TIMEOUT_MS=5000` to control Stripe fetch timeouts
-- `TURNSTILE_SECRET_KEY=...` if you want auth flows to require a client-side anti-bot challenge token
+- `TURNSTILE_SECRET_KEY=...` if you want auth flows to require and verify a client-side anti-bot challenge token against Cloudflare Turnstile
+- `TURNSTILE_EXPECTED_HOSTNAME=...` to pin Turnstile verification to a specific hostname instead of deriving it from the incoming request host header
 
 ### Edge protection still required
 

@@ -5,6 +5,7 @@ import {
   createSessionCookie,
   jsonResponse,
   parseBody,
+  verifyTurnstileToken,
 } from './_auth.mjs';
 import { authenticateCredentials, getSqlClient } from './_admin.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
@@ -40,9 +41,7 @@ export async function handler(event) {
       });
     }
 
-    if (process.env.TURNSTILE_SECRET_KEY && !String(challengeToken || '').trim()) {
-      return jsonResponse(400, { error: 'Missing anti-bot challenge token' });
-    }
+    await verifyTurnstileToken(event, challengeToken);
 
     const user = await authenticateCredentials(sql, username.trim(), password);
 

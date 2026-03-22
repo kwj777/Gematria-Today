@@ -9,12 +9,13 @@ import {
   hashPassword,
   jsonResponse,
   parseBody,
+  verifyTurnstileToken,
   verifyPassword,
 } from './_auth.mjs';
 import { ensureSecuritySchema } from './_security.mjs';
 import { ensureAdminSchema } from './_admin.mjs';
 
-export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getSqlClient, hashPassword, jsonResponse, parseBody };
+export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getSqlClient, hashPassword, jsonResponse, parseBody, verifyTurnstileToken };
 
 export async function ensureMemberSchema(sql) {
   await ensureAdminSchema(sql);

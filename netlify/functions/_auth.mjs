@@ -1,7 +1,12 @@
 import crypto from 'node:crypto';
 import { promisify } from 'node:util';
 import { neon } from '@neondatabase/serverless';
-import { jsonResponse as secureJsonResponse } from './_security.mjs';
+import {
+  fetchWithTimeout,
+  getClientIp,
+  getRequestHeaders,
+  jsonResponse as secureJsonResponse,
+} from './_security.mjs';
 
 const scrypt = promisify(crypto.scrypt);
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -117,6 +122,79 @@ export async function authenticateCredentials(sql, identifier, password, { role 
 
   const isValid = await verifyPassword(password, user.password_hash);
   return isValid ? user : null;
+}
+
+function getTurnstileExpectedHostname(event) {
+  const configuredHostname = String(process.env.TURNSTILE_EXPECTED_HOSTNAME || '').trim().toLowerCase();
+  if (configuredHostname) {
+    return configuredHostname;
+  }
+
+  const headers = getRequestHeaders(event);
+  return String(headers.host || headers['x-forwarded-host'] || '').trim().toLowerCase() || null;
+}
+
+export async function verifyTurnstileToken(event, challengeToken, { timeoutMs = 5000 } = {}) {
+  const secretKey = String(process.env.TURNSTILE_SECRET_KEY || '').trim();
+  if (!secretKey) {
+    return { enforced: false, success: true };
+  }
+
+  const normalizedToken = String(challengeToken || '').trim();
+  if (!normalizedToken) {
+    throw Object.assign(new Error('Missing anti-bot challenge token'), { statusCode: 400 });
+  }
+
+  const requestBody = new URLSearchParams({
+    secret: secretKey,
+    response: normalizedToken,
+  });
+
+  const clientIp = String(getClientIp(event) || '').trim();
+  if (clientIp && clientIp !== 'unknown') {
+    requestBody.set('remoteip', clientIp);
+  }
+
+  const verificationResponse = await fetchWithTimeout(
+    'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+      },
+      body: requestBody.toString(),
+    },
+    timeoutMs,
+  );
+
+  if (!verificationResponse.ok) {
+    throw Object.assign(new Error('Anti-bot challenge verification failed'), { statusCode: 502 });
+  }
+
+  const verificationResult = await verificationResponse.json();
+  if (!verificationResult?.success) {
+    throw Object.assign(new Error('Anti-bot challenge failed'), {
+      statusCode: 403,
+      turnstile: verificationResult,
+    });
+  }
+
+  const expectedHostname = getTurnstileExpectedHostname(event);
+  const actualHostname = String(verificationResult.hostname || '').trim().toLowerCase();
+  if (expectedHostname && actualHostname && actualHostname !== expectedHostname) {
+    throw Object.assign(new Error('Anti-bot challenge hostname mismatch'), {
+      statusCode: 403,
+      turnstile: verificationResult,
+    });
+  }
+
+  return {
+    enforced: true,
+    success: true,
+    hostname: verificationResult.hostname || null,
+    action: verificationResult.action || null,
+    challengeTs: verificationResult.challenge_ts || null,
+  };
 }
 
 export async function getAuthenticatedUser(event, {

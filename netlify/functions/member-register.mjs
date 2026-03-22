@@ -6,6 +6,7 @@ import {
   jsonResponse,
   parseBody,
   registerMember,
+  verifyTurnstileToken,
 } from './_member.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -30,9 +31,7 @@ export async function handler(event) {
       auditMetadata: { username: normalizedUsername, email: normalizedEmail },
     });
 
-    if (process.env.TURNSTILE_SECRET_KEY && !String(body.challengeToken || '').trim()) {
-      return jsonResponse(400, { error: 'Missing anti-bot challenge token' });
-    }
+    await verifyTurnstileToken(event, body.challengeToken);
 
     const registration = await registerMember(sql, body);
     const { token, expiresAt } = await createSession(sql, registration.member.id);

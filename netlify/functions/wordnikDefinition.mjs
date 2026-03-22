@@ -1,3 +1,5 @@
+import { getSqlClient, jsonResponse as secureJsonResponse } from './_auth.mjs';
+import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
 function toResponse(statusCode, payload, contentType = "application/json; charset=utf-8") {
   const body = contentType.startsWith("application/json") ? JSON.stringify(payload) : payload;
   return new Response(body, {
@@ -332,7 +334,7 @@ function renderDefinitionPage(payload) {
 </html>`;
 }
 
-async function fetchDefinition(word) {
+async function fetchDefinition(sql, source, word) {
   const trimmedWord = String(word ?? '').trim();
 
   if (!trimmedWord) {
@@ -340,17 +342,26 @@ async function fetchDefinition(word) {
   }
 
   const url = buildWordnikDefinitionUrl(trimmedWord);
-  const response = await fetch(url);
+  const response = await fetchWithTimeout(url, {}, getProtectionConfig().wordnikTimeoutMs);
 
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Wordnik request failed with ${response.status}: ${errorText || response.statusText}`);
   }
 
-  return {
+  const payload = {
     word: trimmedWord,
     definitions: await response.json(),
   };
+
+  await logRequestAudit(sql, source, {
+    route: 'wordnikDefinition',
+    action: 'lookup',
+    outcome: 'origin_hit',
+    metadata: { word: trimmedWord.toLowerCase() },
+  });
+
+  return payload;
 }
 
 export default async function onRequest(request) {
@@ -364,10 +375,26 @@ export default async function onRequest(request) {
   }
 
   try {
-    const payload = await fetchDefinition(word);
+    assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikDefinition' });
+    const sql = getSqlClient();
+    await applyRateLimit(sql, request, {
+      scope: 'wordnikDefinition-ip',
+      key: getClientIp(request),
+      limit: 20,
+      windowMs: 60_000,
+      blockMs: 10 * 60_000,
+      message: 'Too many definition lookups.',
+    });
+    const cacheResult = await withCachedJson(sql, {
+      cacheKey: buildCacheKey({ route: 'wordnikDefinition', word: String(word).trim().toLowerCase() }),
+      route: 'wordnikDefinition',
+      ttlSeconds: 600,
+      compute: () => fetchDefinition(sql, request, word),
+    });
+    const payload = cacheResult.payload;
     return isHtmlRequest(request)
       ? toResponse(200, renderDefinitionPage(payload), 'text/html; charset=utf-8')
-      : toResponse(200, payload);
+      : toResponse(200, payload, 'application/json; charset=utf-8');
   } catch (error) {
     const statusCode = getStatusCode(error);
     return isHtmlRequest(request)
@@ -384,9 +411,28 @@ export async function handler(event) {
   }
 
   try {
-    const payload = await fetchDefinition(word);
-    return toNetlifyResponse(200, payload);
+    assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikDefinition' });
+    const sql = getSqlClient();
+    await applyRateLimit(sql, event, {
+      scope: 'wordnikDefinition-ip',
+      key: getClientIp(event),
+      limit: 20,
+      windowMs: 60_000,
+      blockMs: 10 * 60_000,
+      message: 'Too many definition lookups.',
+    });
+    const cacheResult = await withCachedJson(sql, {
+      cacheKey: buildCacheKey({ route: 'wordnikDefinition', word: String(word).trim().toLowerCase() }),
+      route: 'wordnikDefinition',
+      ttlSeconds: 600,
+      compute: () => fetchDefinition(sql, event, word),
+    });
+    const payload = cacheResult.payload;
+    return secureJsonResponse(200, payload, {
+      'cache-control': 'public, max-age=600, stale-while-revalidate=120',
+      'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
+    });
   } catch (error) {
-    return toNetlifyResponse(getStatusCode(error), { error: error.message });
+    return secureJsonResponse(getStatusCode(error), { error: error.message }, error.headers || {});
   }
 }

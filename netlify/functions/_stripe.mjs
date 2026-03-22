@@ -1,4 +1,5 @@
 import { ensureAdminSchema } from './_admin.mjs';
+import { fetchWithTimeout, getProtectionConfig } from './_security.mjs';
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 const YEARLY_MEMBERSHIP_PRICE_CENTS = 555;
@@ -45,11 +46,11 @@ async function stripeRequest(path, { sql = null, method = 'POST', body = null } 
     headers['Stripe-Account'] = stripeConfig.accountId;
   }
 
-  const response = await fetch(`${STRIPE_API_BASE}${path}`, {
+  const response = await fetchWithTimeout(`${STRIPE_API_BASE}${path}`, {
     method,
     headers,
     body: body ? body.toString() : undefined,
-  });
+  }, getProtectionConfig().stripeTimeoutMs);
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {

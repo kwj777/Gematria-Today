@@ -12,6 +12,7 @@ import {
   jsonResponse,
   parseBody,
 } from './_auth.mjs';
+import { ensureSecuritySchema } from './_security.mjs';
 
 const SEEDED_ADMIN_USERS = [
   {
@@ -25,6 +26,7 @@ const SEEDED_ADMIN_USERS = [
 export { clearSessionCookie, createSession, createSessionCookie, deleteSession, getSqlClient, jsonResponse, parseBody };
 
 export async function ensureAdminSchema(sql) {
+  await ensureSecuritySchema(sql);
   await sql`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,

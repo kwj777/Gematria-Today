@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { promisify } from 'node:util';
 import { neon } from '@neondatabase/serverless';
+import { jsonResponse as secureJsonResponse } from './_security.mjs';
 
 const scrypt = promisify(crypto.scrypt);
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -19,14 +20,7 @@ export function getSqlClient() {
 }
 
 export function jsonResponse(statusCode, payload, extraHeaders = {}) {
-  return {
-    statusCode,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      ...extraHeaders,
-    },
-    body: JSON.stringify(payload),
-  };
+  return secureJsonResponse(statusCode, payload, extraHeaders);
 }
 
 export function parseBody(event) {

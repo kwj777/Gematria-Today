@@ -84,6 +84,8 @@ footer.site-footer {
 
 #related-words-result .panel, #results .result-card { margin-top: 1rem; }
 #related-words-result .matching-word, #results .meta-highlight { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: rgba(var(--bs-warning-rgb), .18); color: #7a4e00; font-weight: 600; }
+#results .meta-highlight a { color: inherit; font-weight: inherit; text-decoration: none; }
+#results .meta-highlight a:hover, #results .meta-highlight a:focus { text-decoration: underline; }
 #related-words-result .word-link, #related-words-result .definition-link, #related-words-result .inline-button, #results .inline-button, #results .word-button, #word-list a { color: var(--bs-primary); }
 #related-words-result .related-word { word-spacing: 6px; }
 #related-words-result li { padding-bottom: 12px; }

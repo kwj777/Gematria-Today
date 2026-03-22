@@ -48,6 +48,30 @@ const titleNode = document.querySelector('#page-title');
           .replaceAll("'", '&#39;');
       }
 
+      function createMembershipLimitMessageFragment(message) {
+        const fragment = document.createDocumentFragment();
+        const normalizedMessage = String(message || '');
+
+        if (!/out of memory/i.test(normalizedMessage)) {
+          fragment.append(normalizedMessage || 'Unable to load results.');
+          return fragment;
+        }
+
+        fragment.append('Non-member guests have limits on searches. Try again in a few minutes or sign up for a ');
+        const membershipLink = document.createElement('a');
+        membershipLink.href = '/member.html#registerForm';
+        membershipLink.textContent = 'free membership';
+        membershipLink.addEventListener('click', () => {
+          window.location.assign('/member.html#registerForm');
+        });
+        fragment.append(membershipLink, '.');
+        return fragment;
+      }
+
+      function setStatusMessage(node, message) {
+        node.replaceChildren(createMembershipLimitMessageFragment(message));
+      }
+
       async function requestWordsByGematria(total) {
         const response = await fetch(`/.netlify/functions/searchByGematria?gematria=${encodeURIComponent(total)}`);
         const rawBody = await response.text();
@@ -121,7 +145,7 @@ const titleNode = document.querySelector('#page-title');
           statusNode.textContent = '';
           applySearch();
         } catch (error) {
-          statusNode.textContent = error.message || 'Unable to load matching words.';
+          setStatusMessage(statusNode, error.message || 'Unable to load matching words.');
           searchNode.disabled = true;
         }
       }

@@ -106,19 +106,73 @@
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
+      const createPostSlug = (post, index) => {
+        const rawSlug = String(post.slug || '').trim();
+        if (rawSlug) {
+          return rawSlug;
+        }
+        const rawTitle = String(post.title || '').trim().toLowerCase();
+        const slugFromTitle = rawTitle
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        return slugFromTitle || `post-${index}`;
+      };
+      const getRequestedPostSlug = () => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('post') || window.location.hash.slice(1);
+      };
+      const syncBlogLocation = (slug) => {
+        if (!slug) {
+          return;
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('post', slug);
+        url.hash = slug;
+        window.history.replaceState({}, '', url);
+      };
+      const focusLinkedPost = (slug) => {
+        if (!slug) {
+          return;
+        }
+        const post = document.getElementById(slug);
+        if (!post) {
+          return;
+        }
+        document.querySelectorAll('.blog-post-card').forEach((card) => card.classList.remove('border-primary', 'border-2'));
+        post.classList.add('border-primary', 'border-2');
+        post.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        syncBlogLocation(slug);
+      };
 
       function renderPosts(posts) {
-        document.getElementById('blogSidebarLinks').innerHTML = posts.map((post) => `
-          <a class="blog-mini-link text-decoration-none" href="#${escapeHtml(post.slug)}">
+        const normalizedPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
+        document.getElementById('blogSidebarLinks').innerHTML = normalizedPosts.map((post) => `
+          <a class="blog-mini-link text-decoration-none" href="/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}">
             <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
             <span class="text-muted small">${escapeHtml(post.summary)}</span>
           </a>`).join('');
 
-        document.getElementById('blogPosts').innerHTML = posts.map((post, index) => {
+        document.getElementById('blogPosts').innerHTML = normalizedPosts.map((post) => {
           const paragraphs = String(post.body || '').split(/\n\s*\n/).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('');
-          return `<article id="${escapeHtml(post.slug || `post-${index}`)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="badge text-bg-warning">${escapeHtml(post.tag || 'Blog Post')}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3">${escapeHtml(post.title)}</h2><p class="text-muted">${escapeHtml(post.summary)}</p>${paragraphs}<p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p></article>`;
+          const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="badge text-bg-warning">${escapeHtml(post.tag || 'Blog Post')}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p>${paragraphs}<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p><a class="small fw-semibold" href="${postUrl}">Link to this post</a></div></article>`;
         }).join('');
+
+        focusLinkedPost(getRequestedPostSlug());
       }
+
+      window.addEventListener('hashchange', () => focusLinkedPost(getRequestedPostSlug()));
+      document.addEventListener('click', (event) => {
+        const postLink = event.target.closest('a[href*="/blog.html?post="], a[href^="#"]');
+        if (!postLink) {
+          return;
+        }
+        const url = new URL(postLink.href, window.location.origin);
+        if (url.pathname !== '/blog.html') {
+          return;
+        }
+        window.setTimeout(() => focusLinkedPost(url.searchParams.get('post') || url.hash.slice(1)), 0);
+      });
 
       fetch('/api/public-posts')
         .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load published posts')))

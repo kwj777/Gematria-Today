@@ -43,7 +43,7 @@
                 <ul class="list-unstyled mb-0 d-grid gap-2 small">
                   <li>• Email or username sign-in</li>
                   <li>• Profile preferences and timezone</li>
-                  <li>• Saved calculator history</li>
+                  <li>• Free memberships can save up to 5 calculations</li>
                 </ul>
               </div>
             </div>
@@ -96,7 +96,7 @@
           <div class="row g-4 mb-4">
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p class="mb-0 text-muted">Current membership tier.</p></div></div>
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Status</div><div id="membershipStatus" class="metric-value text-success">active</div><p class="mb-0 text-muted">Account state for sign-in access.</p></div></div>
-            <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Saved Searches</div><div id="historyCount" class="metric-value text-info">0</div><p class="mb-0 text-muted">Calculation history items currently stored.</p></div></div>
+            <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Saved Searches</div><div id="historyCount" class="metric-value text-info">0</div><p id="historyCountMeta" class="mb-0 text-muted">Calculation history items currently stored.</p></div></div>
           </div>
 
           <div class="row g-4">
@@ -154,7 +154,9 @@
       const memberMeta = document.getElementById('memberMeta');
       const membershipLevel = document.getElementById('membershipLevel');
       const membershipStatus = document.getElementById('membershipStatus');
+      const FREE_MEMBERSHIP_SAVE_LIMIT = 5;
       const historyCount = document.getElementById('historyCount');
+      const historyCountMeta = document.getElementById('historyCountMeta');
       const historyList = document.getElementById('historyList');
 
       let session = null;
@@ -217,6 +219,11 @@
 
       function renderHistory() {
         historyCount.textContent = String(historyItems.length);
+        if (session?.member?.membershipLevel === 'free') {
+          historyCountMeta.textContent = `Calculation history items currently stored (${historyItems.length}/${FREE_MEMBERSHIP_SAVE_LIMIT} free saves used).`;
+        } else {
+          historyCountMeta.textContent = 'Calculation history items currently stored.';
+        }
         historyList.innerHTML = historyItems.length ? historyItems.map((item) => `
           <article class="admin-item-card mb-3 p-3">
             <div class="d-flex justify-content-between flex-wrap gap-3">
@@ -253,6 +260,9 @@
         memberMeta.textContent = `Signed in as ${member.displayName || member.username} (${member.email})`;
         membershipLevel.textContent = member.membershipLevel;
         membershipStatus.textContent = member.status;
+        historyCountMeta.textContent = member.membershipLevel === 'free'
+          ? `Calculation history items currently stored (${historyItems.length}/${FREE_MEMBERSHIP_SAVE_LIMIT} free saves used).`
+          : 'Calculation history items currently stored.';
         document.getElementById('profileDisplayName').value = member.displayName || '';
         document.getElementById('profileFavoriteCipher').value = profile?.favoriteCipher || '';
         document.getElementById('profileTimezone').value = profile?.timezone || '';

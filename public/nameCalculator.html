@@ -47,6 +47,8 @@ const form = document.querySelector('#name-form');
       function getFullRelatedWordLimit() {
         return memberSession?.authenticated ? AUTHENTICATED_RELATED_WORD_LIMIT : FULL_RELATED_WORD_LIMIT;
       }
+
+      function isMobileDevice() {
         return window.matchMedia(MOBILE_QUERY).matches;
       }
 

@@ -25,7 +25,8 @@ A web-based Gematria calculator application built with HTML, CSS, JavaScript, an
 ├── netlify/
 │   └── functions/                 # Netlify serverless functions (Node.js / .mjs)
 ├── sql/
-│   └── admin_schema.sql           # Database schema
+│   ├── admin_schema.sql           # Admin/auth/content schema
+│   └── member_schema.sql          # Member profile/history schema
 ├── netlify.toml                   # Netlify configuration
 ├── package.json
 └── use-gematria.js
@@ -49,6 +50,15 @@ npm run count-lines
    ```
 
 2. Deploy to [Netlify](https://netlify.com) or run locally with the [Netlify CLI](https://docs.netlify.com/cli/get-started/).
+
+## Database Migrations
+
+Apply the SQL files in order when bootstrapping a database:
+
+1. `sql/admin_schema.sql`
+2. `sql/member_schema.sql`
+
+`member_schema.sql` is the Phase 2 migration that adds member account fields, profile records, and saved calculation history on top of the shared `users` table.
 
 ## License
 

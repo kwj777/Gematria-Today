@@ -39,6 +39,7 @@ const lookupForm = document.querySelector('#lookup-form');
       const relatedWordsResult = document.querySelector('#related-words-result');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
+      const FREE_MEMBERSHIP_SAVE_LIMIT = 5;
       let currentSearchPayload = null;
       let memberSession = null;
 
@@ -99,7 +100,9 @@ const lookupForm = document.querySelector('#lookup-form');
           throw new Error(payload.error || 'Unable to save search history.');
         }
 
-        memberSaveMeta.textContent = 'Saved to your account history.';
+        memberSaveMeta.textContent = memberSession?.member?.membershipLevel === 'free'
+          ? `Saved to your account history. Free memberships can store up to ${FREE_MEMBERSHIP_SAVE_LIMIT} saved searches.`
+          : 'Saved to your account history.';
         saveHistoryButton.disabled = false;
       }
 
@@ -113,9 +116,13 @@ const lookupForm = document.querySelector('#lookup-form');
         }
 
         saveHistoryButton.disabled = !currentSearchPayload;
+        const memberName = memberSession.member.displayName || memberSession.member.username;
+        const freeTierSuffix = memberSession.member.membershipLevel === 'free'
+          ? ` Free memberships can save up to ${FREE_MEMBERSHIP_SAVE_LIMIT} searches.`
+          : '';
         memberSaveMeta.textContent = currentSearchPayload
-          ? `Signed in as ${memberSession.member.displayName || memberSession.member.username}. Save this result to history.`
-          : `Signed in as ${memberSession.member.displayName || memberSession.member.username}. Run a lookup to save it.`;
+          ? `Signed in as ${memberName}. Save this result to history.${freeTierSuffix}`
+          : `Signed in as ${memberName}. Run a lookup to save it.${freeTierSuffix}`;
       }
 
       async function requestGematria(word) {

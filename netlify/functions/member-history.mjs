@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { formatCalculationHistory, getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
 
 const MAX_HISTORY_ITEMS = 100;
+const FREE_MEMBERSHIP_SAVE_LIMIT = 5;
 
 export async function handler(event) {
   try {
@@ -29,6 +30,22 @@ export async function handler(event) {
 
       if (!queryText || !resultPayload) {
         return jsonResponse(400, { error: 'queryText and resultPayload are required' });
+      }
+
+      if (member.membershipLevel === 'free') {
+        const [{ count }] = await sql`
+          SELECT COUNT(*)::int AS count
+          FROM calculation_history
+          WHERE user_id = ${member.id}
+        `;
+
+        if (count >= FREE_MEMBERSHIP_SAVE_LIMIT) {
+          return jsonResponse(403, {
+            error: `Free memberships can save up to ${FREE_MEMBERSHIP_SAVE_LIMIT} calculations. Delete an older saved search to add a new one.`,
+            code: 'FREE_SAVE_LIMIT_REACHED',
+            limit: FREE_MEMBERSHIP_SAVE_LIMIT,
+          });
+        }
       }
 
       const rows = await sql`

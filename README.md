@@ -60,6 +60,8 @@ Apply the SQL files in order when bootstrapping a database:
 
 `member_schema.sql` is the Phase 2 migration that adds member account fields, profile records, and saved calculation history on top of the shared `users` table.
 
+The membership implementation now exposes member auth/profile/history endpoints (`member-register`, `member-login`, `member-session`, `member-profile`, and `member-history`) plus a published `/member.html` dashboard for registration, profile editing, and saved searches.
+
 ## License
 
 See [LICENSE](./LICENSE) for details.

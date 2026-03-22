@@ -1,4 +1,5 @@
-import { clearSessionCookie, deleteSession, getAuthenticatedUser, jsonResponse } from './_admin.mjs';
+import { AUTH_COOKIES, clearSessionCookie, deleteSession, jsonResponse } from './_auth.mjs';
+import { getAuthenticatedUser } from './_admin.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -10,8 +11,8 @@ export async function handler(event) {
     if (sql && sessionToken) {
       await deleteSession(sql, sessionToken);
     }
-    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie() });
+    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
   } catch (error) {
-    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie() });
+    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
   }
 }

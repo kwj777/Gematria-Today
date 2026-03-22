@@ -1,0 +1,32 @@
+-- Phase 1 scaffold for future member auth/history support.
+-- Full member-facing tables and migrations will be added in Phase 2.
+
+-- Planned user-table extensions:
+-- ALTER TABLE users
+--   ADD COLUMN IF NOT EXISTS email TEXT UNIQUE,
+--   ADD COLUMN IF NOT EXISTS display_name TEXT,
+--   ADD COLUMN IF NOT EXISTS membership_level TEXT NOT NULL DEFAULT 'free',
+--   ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active',
+--   ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Planned member profile table:
+-- CREATE TABLE IF NOT EXISTS member_profiles (
+--   user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+--   preferences JSONB,
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+
+-- Planned saved history table:
+-- CREATE TABLE IF NOT EXISTS calculation_history (
+--   id TEXT PRIMARY KEY,
+--   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+--   query_text TEXT NOT NULL,
+--   query_type TEXT NOT NULL,
+--   calculator_source TEXT NOT NULL,
+--   gematria_total INTEGER,
+--   digital_root INTEGER,
+--   is_base_root BOOLEAN,
+--   result_payload JSONB NOT NULL,
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );

@@ -33,14 +33,15 @@
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
               <h1 class="display-5 fw-bold mb-3">Insights, workflows, and study ideas for gematria research.</h1>
-              <p class="lead mb-0">This blog page collects practical posts that help visitors move from a quick calculation to a more thoughtful review of names, words, and recurring patterns.</p>
+              <p class="lead mb-0">Published blog posts are now loaded from the server so visitors see the same content across browsers and devices.</p>
             </div>
             <div class="col-lg-4">
               <div class="content-panel p-4 text-dark h-100">
-                <h2 class="h5 mb-3">On this page</h2>
+                <h2 class="h5 mb-3">Publishing flow</h2>
                 <ul class="list-unstyled mb-0 d-grid gap-2">
-                  <li><a class="text-decoration-none" href="#post-patterns">Repeating number themes</a></li>
-                  <li><a class="text-decoration-none" href="#post-names">Comparing matching names</a></li>
+                  <li>1. Sign in on the admin page</li>
+                  <li>2. Publish a new blog post</li>
+                  <li>3. Refresh here to review it live</li>
                 </ul>
               </div>
             </div>
@@ -52,54 +53,78 @@
             <aside class="content-panel p-4 sticky-top blog-sidebar">
               <p class="section-kicker mb-2">Selected Posts</p>
               <h2 class="h4 mb-3">Start with these reads</h2>
-              <div class="d-grid gap-3">
-                <a class="blog-mini-link text-decoration-none" href="#post-patterns">
-                  <strong class="d-block mb-1">Repeating number themes</strong>
-                  <span class="text-muted small">Group words by idea, then compare totals with purpose.</span>
-                </a>
-                <a class="blog-mini-link text-decoration-none" href="#post-names">
-                  <strong class="d-block mb-1">Matching names</strong>
-                  <span class="text-muted small">Look at spelling, context, and nearby patterns before drawing conclusions.</span>
-                </a>
-              </div>
+              <div id="blogSidebarLinks" class="d-grid gap-3"></div>
+              <a class="btn btn-outline-primary mt-4" href="/admin.html">Open admin dashboard</a>
             </aside>
           </div>
           <div class="col-lg-8">
-            <div class="d-grid gap-4">
-              <article id="post-patterns" class="content-panel p-4 p-lg-5 blog-post-card">
-                <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
-                  <span class="badge text-bg-warning">Research Workflow</span>
-                  <span class="text-muted small">5 minute read</span>
-                </div>
-                <h2 class="mb-3">How to spot repeating number themes across related words</h2>
-                <p>One strong way to use gematria is to avoid treating every isolated match as equally meaningful. Start by gathering words that share a root concept, a scriptural topic, or a repeated symbol. Once those terms sit beside each other, the totals become easier to interpret because you can see whether a pattern repeats inside a real theme instead of appearing once by chance.</p>
-                <p>After that first pass, note which totals recur across categories. Ask whether the same number appears in action words, names, or descriptive terms. A repeated total can be useful, but the surrounding idea matters just as much. When several related words cluster around one value, you have a better basis for further study than you would from a single surprising result.</p>
-                <p class="mb-0">A practical workflow is simple: calculate a lead term, open the database, collect related words, and then write short notes about why each result belongs in the group. That turns a quick lookup into a reusable research trail.</p>
-              </article>
-
-              <article id="post-names" class="content-panel p-4 p-lg-5 blog-post-card">
-                <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
-                  <span class="badge text-bg-info">Name Analysis</span>
-                  <span class="text-muted small">4 minute read</span>
-                </div>
-                <h2 class="mb-3">What to compare when two names share the same gematria value</h2>
-                <p>Matching values can be interesting, but the next step should always be comparison rather than conclusion. Check alternate spellings, abbreviations, or transliterations first. Two names may land on the same total while coming from very different structures, which means the shared number is only the beginning of the conversation.</p>
-                <p>It also helps to compare the names with the words that sit around them. If a name shares a value with a cluster of related ideas, titles, or traits, that broader field may tell you more than the raw number alone. In contrast, if the match stands by itself with no supporting context, it may be less useful for interpretation.</p>
-                <p class="mb-0">The most reliable approach is to use the name lookup page for quick comparisons and then record the strongest companion words you find. That creates a balanced view built from value, structure, and context.</p>
-              </article>
-
-
-            </div>
+            <div id="blogPosts" class="d-grid gap-4"></div>
           </div>
         </section>
       </div>
     </main>
     <footer class="site-footer py-4 mt-5">
-      <div class="container d-flex flex-column flex-lg-row justify-content-between gap-2 small text-muted">
-        <span>EndTimes.Today — a research workspace.</span>
-        <span>Read articles, calculate values, and continue exploring across the site.</span>
+      <div class="container d-flex flex-column gap-3 small text-muted">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
+          <span>EndTimes.Today — a research workspace.</span>
+          <span>Information, policies, and contact details for visitors and administrators.</span>
+        </div>
+        <div class="d-flex flex-wrap gap-3 site-legal-links">
+          <a href="/privacy.html">Privacy Policy</a>
+          <a href="/terms.html">Terms of Use</a>
+          <a href="/disclaimer.html">Disclaimer</a>
+          <a href="/accessibility.html">Accessibility</a>
+          <a href="/contact.html">Contact</a>
+          <a href="/admin.html">Admin</a>
+        </div>
       </div>
     </footer>
+    <script>
+      const fallbackPosts = [
+        {
+          slug: 'repeating-number-themes',
+          title: 'How to spot repeating number themes across related words',
+          tag: 'Research Workflow',
+          readTime: '5 minute read',
+          summary: 'A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.',
+          body: `One strong way to use gematria is to avoid treating every isolated match as equally meaningful. Start by gathering words that share a root concept, a scriptural topic, or a repeated symbol. Once those terms sit beside each other, the totals become easier to interpret because you can see whether a pattern repeats inside a real theme instead of appearing once by chance.\n\nAfter that first pass, note which totals recur across categories. Ask whether the same number appears in action words, names, or descriptive terms. A repeated total can be useful, but the surrounding idea matters just as much. When several related words cluster around one value, you have a better basis for further study than you would from a single surprising result.\n\nA practical workflow is simple: calculate a lead term, open the database, collect related words, and then write short notes about why each result belongs in the group. That turns a quick lookup into a reusable research trail.`,
+          publishedAt: 'Starter content'
+        },
+        {
+          slug: 'matching-name-values',
+          title: 'What to compare when two names share the same gematria value',
+          tag: 'Name Analysis',
+          readTime: '4 minute read',
+          summary: 'Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.',
+          body: `Matching values can be interesting, but the next step should always be comparison rather than conclusion. Check alternate spellings, abbreviations, or transliterations first. Two names may land on the same total while coming from very different structures, which means the shared number is only the beginning of the conversation.\n\nIt also helps to compare the names with the words that sit around them. If a name shares a value with a cluster of related ideas, titles, or traits, that broader field may tell you more than the raw number alone. In contrast, if the match stands by itself with no supporting context, it may be less useful for interpretation.\n\nThe most reliable approach is to use the name lookup page for quick comparisons and then record the strongest companion words you find. That creates a balanced view built from value, structure, and context.`,
+          publishedAt: 'Starter content'
+        }
+      ];
+      const escapeHtml = (value = '') => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+
+      function renderPosts(posts) {
+        document.getElementById('blogSidebarLinks').innerHTML = posts.map((post) => `
+          <a class="blog-mini-link text-decoration-none" href="#${escapeHtml(post.slug)}">
+            <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
+            <span class="text-muted small">${escapeHtml(post.summary)}</span>
+          </a>`).join('');
+
+        document.getElementById('blogPosts').innerHTML = posts.map((post, index) => {
+          const paragraphs = String(post.body || '').split(/\n\s*\n/).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('');
+          return `<article id="${escapeHtml(post.slug || `post-${index}`)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="badge text-bg-warning">${escapeHtml(post.tag || 'Blog Post')}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3">${escapeHtml(post.title)}</h2><p class="text-muted">${escapeHtml(post.summary)}</p>${paragraphs}<p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p></article>`;
+        }).join('');
+      }
+
+      fetch('/api/public-posts')
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load published posts')))
+        .then((payload) => renderPosts(payload.items?.length ? payload.items : fallbackPosts))
+        .catch(() => renderPosts(fallbackPosts));
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>

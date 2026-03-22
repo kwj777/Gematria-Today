@@ -65,14 +65,6 @@ export async function ensureMemberSchema(sql) {
   END
   $$`;
 
-  await sql`CREATE OR REPLACE FUNCTION set_updated_at_timestamp()
-  RETURNS TRIGGER AS $$
-  BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-  END;
-  $$ LANGUAGE plpgsql`;
-
   await sql`CREATE TABLE IF NOT EXISTS member_profiles (
     user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -101,16 +93,8 @@ export async function ensureMemberSchema(sql) {
   await sql`CREATE INDEX IF NOT EXISTS calculation_history_calculator_source_idx ON calculation_history (calculator_source, created_at DESC)`;
 
   await sql`DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles`;
-  await sql`CREATE TRIGGER set_member_profiles_updated_at
-    BEFORE UPDATE ON member_profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION set_updated_at_timestamp()`;
-
   await sql`DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history`;
-  await sql`CREATE TRIGGER set_calculation_history_updated_at
-    BEFORE UPDATE ON calculation_history
-    FOR EACH ROW
-    EXECUTE FUNCTION set_updated_at_timestamp()`;
+  await sql`DROP FUNCTION IF EXISTS set_updated_at_timestamp()`;
 }
 
 function normalizeEmail(email) {

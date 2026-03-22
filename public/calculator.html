@@ -32,11 +32,15 @@
       <script>
 const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');
-      const DEFAULT_RELATED_WORD_LIMIT = 250;
+      const DEFAULT_RELATED_WORD_LIMIT = 100;
       const clearSearchButton = document.querySelector('#clear-search-button');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
+
+      function getRelatedWordLimit() {
+        return memberSession?.authenticated ? 250 : DEFAULT_RELATED_WORD_LIMIT;
+      }
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
@@ -130,7 +134,7 @@ const lookupForm = document.querySelector('#lookup-form');
         return requestJson('/.netlify/functions/englishGematria', searchParams);
       }
 
-      async function requestRelatedWords(term, limit = DEFAULT_RELATED_WORD_LIMIT) {
+      async function requestRelatedWords(term, limit = getRelatedWordLimit()) {
         const normalizedTerm = String(term || '').toLowerCase();
         const searchParams = new URLSearchParams({ word: normalizedTerm, limit: String(limit) });
         return requestJson('/.netlify/functions/wordnikRelatedWords', searchParams);

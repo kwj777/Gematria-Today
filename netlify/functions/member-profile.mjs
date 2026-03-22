@@ -20,7 +20,7 @@ export async function handler(event) {
         SET display_name = ${displayName},
             updated_at = NOW()
         WHERE id = ${member.id}
-        RETURNING id, username, email, display_name, membership_level, status, email_verified, created_at, updated_at
+        RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
       `;
 
       const profileRows = await sql`
@@ -42,6 +42,10 @@ export async function handler(event) {
           email: memberRows[0].email,
           displayName: memberRows[0].display_name,
           membershipLevel: memberRows[0].membership_level,
+          membershipStartedAt: memberRows[0].membership_started_at,
+          membershipExpiresAt: memberRows[0].membership_expires_at,
+          stripeCustomerId: memberRows[0].stripe_customer_id,
+          stripeLastCheckoutSessionId: memberRows[0].stripe_last_checkout_session_id,
           status: memberRows[0].status,
           emailVerified: memberRows[0].email_verified,
           createdAt: memberRows[0].created_at,

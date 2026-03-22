@@ -35,7 +35,7 @@
             <div class="col-lg-8">
               <p class="section-kicker mb-3">Member Access</p>
               <h1 class="display-5 fw-bold mb-3">Create an account, save gematria history, and manage your profile.</h1>
-              <p class="lead mb-0">Membership now includes secure sign up, sign in, profile settings, and saved calculation history backed by Neon and Netlify Functions.</p>
+              <p class="lead mb-0">Membership now includes secure sign up, sign in, profile settings, saved calculation history, and a Stripe-powered $5.55 one-year premium upgrade.</p>
             </div>
             <div class="col-lg-4">
               <div class="content-panel p-4 text-dark h-100">
@@ -44,6 +44,8 @@
                   <li>• Email or username sign-in</li>
                   <li>• Profile preferences and timezone</li>
                   <li>• Free memberships can save up to 3 calculations</li>
+                  <li>• Premium one-year membership: $5.55</li>
+                  <li>• Lifetime memberships are not available yet</li>
                 </ul>
               </div>
             </div>
@@ -94,7 +96,7 @@
           </div>
 
           <div class="row g-4 mb-4">
-            <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p class="mb-0 text-muted">Current membership tier.</p></div></div>
+            <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p id="membershipPlanMeta" class="mb-0 text-muted">Current membership tier.</p></div></div>
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Status</div><div id="membershipStatus" class="metric-value text-success">active</div><p class="mb-0 text-muted">Account state for sign-in access.</p></div></div>
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Saved Searches</div><div id="historyCount" class="metric-value text-info">0</div><p id="historyCountMeta" class="mb-0 text-muted">Calculation history items currently stored.</p></div></div>
           </div>
@@ -115,15 +117,42 @@
             </div>
 
             <div class="col-xl-7">
-              <section class="content-panel p-4 h-100">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="section-kicker mb-2">History</p>
-                    <h3 class="h4 mb-0">Saved calculations</h3>
+              <div class="d-grid gap-4 h-100">
+                <section class="content-panel p-4">
+                  <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+                    <div>
+                      <p class="section-kicker mb-2">Membership Upgrade</p>
+                      <h3 class="h4 mb-2">Pay with Stripe</h3>
+                      <p class="text-muted mb-0">Upgrade to a one-year premium membership for <strong>$5.55</strong>. Lifetime memberships are not offered yet.</p>
+                    </div>
+                    <div class="membership-price-badge">$5.55 / year</div>
                   </div>
-                </div>
-                <div id="historyList" class="admin-list"></div>
-              </section>
+                  <form id="paymentForm" class="membership-payment-form row g-3 align-items-end">
+                    <div class="col-md-7">
+                      <label class="form-label" for="paymentPlan">Membership plan</label>
+                      <select id="paymentPlan" class="form-select" disabled>
+                        <option value="yearly" selected>One year membership — $5.55</option>
+                      </select>
+                    </div>
+                    <div class="col-md-5 d-grid">
+                      <button id="paymentButton" class="btn btn-primary btn-lg" type="submit">Continue to Stripe</button>
+                    </div>
+                    <div class="col-12">
+                      <div class="membership-upgrade-note">Secure hosted checkout powered by Stripe. After payment, your membership dashboard will refresh automatically.</div>
+                    </div>
+                  </form>
+                </section>
+
+                <section class="content-panel p-4 h-100">
+                  <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                    <div>
+                      <p class="section-kicker mb-2">History</p>
+                      <h3 class="h4 mb-0">Saved calculations</h3>
+                    </div>
+                  </div>
+                  <div id="historyList" class="admin-list"></div>
+                </section>
+              </div>
             </div>
           </div>
         </section>
@@ -154,6 +183,8 @@
       const memberMeta = document.getElementById('memberMeta');
       const membershipLevel = document.getElementById('membershipLevel');
       const membershipStatus = document.getElementById('membershipStatus');
+      const membershipPlanMeta = document.getElementById('membershipPlanMeta');
+      const paymentButton = document.getElementById('paymentButton');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       const historyCount = document.getElementById('historyCount');
       const historyCountMeta = document.getElementById('historyCountMeta');
@@ -161,6 +192,7 @@
 
       let session = null;
       let historyItems = [];
+      let paymentConfirmationInFlight = false;
 
       function showAlert(message, tone = 'danger') {
         memberAlert.textContent = message;
@@ -188,6 +220,46 @@
       function setLoggedIn(isLoggedIn) {
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
+        syncPaymentButton(isLoggedIn ? session?.member : null);
+      }
+
+      function formatMembershipWindow(member) {
+        if (member.membershipLevel !== 'premium' || !member.membershipExpiresAt) {
+          return 'Current membership tier.';
+        }
+
+        return `Premium access active through ${new Date(member.membershipExpiresAt).toLocaleDateString()}.`;
+      }
+
+      function syncPaymentButton(member = session?.member) {
+        const isPremium = member?.membershipLevel === 'premium';
+        paymentButton.disabled = !member || isPremium;
+        paymentButton.textContent = isPremium ? 'Premium membership active' : 'Continue to Stripe';
+      }
+
+      async function confirmStripePayment(sessionId) {
+        if (!sessionId || paymentConfirmationInFlight) {
+          return;
+        }
+
+        paymentConfirmationInFlight = true;
+        try {
+          const payload = await request('/api/member-payment-confirm', {
+            method: 'POST',
+            body: JSON.stringify({ sessionId }),
+          });
+          session = { ...session, member: payload.member, authenticated: true };
+          populateProfile(session.member, session.profile);
+          syncPaymentButton(session.member);
+          showAlert(`Payment received. Your ${payload.membership.label.toLowerCase()} is active.`, 'success');
+          const url = new URL(window.location.href);
+          url.searchParams.delete('session_id');
+          window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+        } catch (error) {
+          showAlert(error.message || 'Payment was received, but the membership status could not be refreshed yet.');
+        } finally {
+          paymentConfirmationInFlight = false;
+        }
       }
 
 
@@ -259,6 +331,7 @@
       function populateProfile(member, profile) {
         memberMeta.textContent = `Signed in as ${member.displayName || member.username} (${member.email})`;
         membershipLevel.textContent = member.membershipLevel;
+        membershipPlanMeta.textContent = formatMembershipWindow(member);
         membershipStatus.textContent = member.status;
         historyCountMeta.textContent = member.membershipLevel === 'free'
           ? `Calculation history items currently stored (${historyItems.length}/${FREE_MEMBERSHIP_SAVE_LIMIT} free saves used).`
@@ -267,6 +340,7 @@
         document.getElementById('profileFavoriteCipher').value = profile?.favoriteCipher || '';
         document.getElementById('profileTimezone').value = profile?.timezone || '';
         document.getElementById('profileNotes').value = profile?.preferences?.notes || '';
+        syncPaymentButton(member);
       }
 
       async function loadHistory() {
@@ -276,16 +350,29 @@
       }
 
       async function bootstrapSession() {
+        const url = new URL(window.location.href);
+        const paymentState = url.searchParams.get('payment');
+        const stripeSessionId = url.searchParams.get('session_id');
+
         try {
           session = await request('/api/member-session', { method: 'GET' });
           setLoggedIn(true);
           populateProfile(session.member, session.profile);
           await loadHistory();
+
+          if (paymentState === 'success' && stripeSessionId) {
+            await confirmStripePayment(stripeSessionId);
+          } else if (paymentState === 'cancelled') {
+            showAlert('Stripe checkout was cancelled. Your membership remains unchanged.', 'warning');
+          }
         } catch {
           session = null;
           setLoggedIn(false);
           historyItems = [];
           renderHistory();
+          if (paymentState === 'success') {
+            showAlert('Sign in to finish activating your Stripe payment.', 'warning');
+          }
         }
       }
 
@@ -362,6 +449,31 @@
         } finally {
           session = null;
           setLoggedIn(false);
+        }
+      });
+
+      document.getElementById('paymentForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+
+        if (!session?.member) {
+          showAlert('Create your account or sign in before starting checkout.', 'warning');
+          return;
+        }
+
+        if (session.member.membershipLevel === 'premium') {
+          showAlert('Your premium membership is already active.', 'info');
+          return;
+        }
+
+        try {
+          paymentButton.disabled = true;
+          paymentButton.textContent = 'Opening Stripe…';
+          const payload = await request('/api/member-payment-checkout', { method: 'POST', body: '{}' });
+          window.location.assign(payload.checkoutUrl);
+        } catch (error) {
+          syncPaymentButton(session.member);
+          showAlert(error.message || 'Unable to start Stripe checkout.');
         }
       });
 

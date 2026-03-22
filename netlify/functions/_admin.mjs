@@ -100,6 +100,16 @@ export async function ensureAdminSchema(sql) {
   )`;
 
   await sql`CREATE INDEX IF NOT EXISTS faqs_is_published_sort_order_idx ON faqs(is_published, sort_order ASC, created_at ASC)`;
+
+
+  await sql`CREATE TABLE IF NOT EXISTS admin_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT,
+    updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+
 }
 
 export function slugify(value) {

@@ -41,7 +41,7 @@
                 <h2 class="h5 mb-3">Server-backed features</h2>
                 <ul class="list-unstyled mb-0 d-grid gap-2 small">
                   <li>• HttpOnly cookie session login</li>
-                  <li>• Neon storage for feeds, posts, FAQs, and tasks</li>
+                  <li>• Neon storage for feeds, posts, FAQs, tasks, and Stripe settings</li>
                   <li>• Public blog/news pages driven by published data</li>
                 </ul>
               </div>
@@ -166,6 +166,27 @@
               <section class="content-panel p-4 h-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
+                    <p class="section-kicker mb-2">Payments</p>
+                    <h3 class="h4 mb-0">Stripe account details</h3>
+                  </div>
+                  <span class="badge text-bg-primary">Stripe</span>
+                </div>
+                <p class="text-muted small">Store the Stripe account details used by membership checkout directly from the back-office.</p>
+                <form id="stripeSettingsForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="stripeAccountId">Stripe account ID</label><input id="stripeAccountId" class="form-control" placeholder="acct_..." /></div>
+                  <div class="col-12"><label class="form-label" for="stripePublishableKey">Publishable key</label><input id="stripePublishableKey" class="form-control" placeholder="pk_live_..." /></div>
+                  <div class="col-12"><label class="form-label" for="stripeSecretKey">Secret key</label><input id="stripeSecretKey" class="form-control" placeholder="sk_live_..." autocomplete="off" /></div>
+                  <div class="col-12"><label class="form-label" for="stripeWebhookSigningSecret">Webhook signing secret</label><input id="stripeWebhookSigningSecret" class="form-control" placeholder="whsec_..." autocomplete="off" /></div>
+                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save Stripe settings</button></div>
+                </form>
+                <div id="stripeSettingsMeta" class="small text-muted mt-3">Stripe settings have not been loaded yet.</div>
+              </section>
+            </div>
+
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
                     <p class="section-kicker mb-2">Operations</p>
                     <h3 class="h4 mb-0">Admin task list</h3>
                   </div>
@@ -215,7 +236,7 @@
       const faqCount = document.getElementById('faqCount');
       const sessionMeta = document.getElementById('sessionMeta');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], editingFaqId: null };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, editingFaqId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -336,6 +357,19 @@
         document.getElementById('faqCancelButton').classList.remove('d-none');
       }
 
+      function renderStripeSettings() {
+        const settings = state.stripeSettings || {};
+        document.getElementById('stripeAccountId').value = settings.stripeAccountId || '';
+        document.getElementById('stripePublishableKey').value = settings.stripePublishableKey || '';
+        document.getElementById('stripeSecretKey').value = settings.stripeSecretKey || '';
+        document.getElementById('stripeWebhookSigningSecret').value = settings.stripeWebhookSigningSecret || '';
+        const configuredCount = ['stripeAccountId', 'stripePublishableKey', 'stripeSecretKey', 'stripeWebhookSigningSecret']
+          .filter((key) => Boolean(settings[key])).length;
+        document.getElementById('stripeSettingsMeta').textContent = configuredCount
+          ? `${configuredCount} Stripe detail${configuredCount === 1 ? '' : 's'} configured for hosted checkout.`
+          : 'No Stripe account details saved yet.';
+      }
+
       function renderTasks() {
         taskCount.textContent = String(state.tasks.length);
         const list = document.getElementById('taskList');
@@ -356,20 +390,23 @@
       }
 
       async function refreshDashboard() {
-        const [feeds, posts, faqs, tasks] = await Promise.all([
+        const [feeds, posts, faqs, tasks, settings] = await Promise.all([
           request('/api/admin-feeds'),
           request('/api/admin-posts'),
           request('/api/admin-faqs'),
-          request('/api/admin-tasks')
+          request('/api/admin-tasks'),
+          request('/api/admin-settings')
         ]);
         state.feeds = feeds.items || [];
         state.posts = posts.items || [];
         state.faqs = faqs.items || [];
         state.tasks = tasks.items || [];
+        state.stripeSettings = settings.settings || null;
         renderFeeds();
         renderPosts();
         renderFaqs();
         renderTasks();
+        renderStripeSettings();
       }
 
       async function loadSession() {
@@ -482,6 +519,27 @@
 
       document.getElementById('faqCancelButton').addEventListener('click', () => {
         resetFaqForm();
+      });
+
+      document.getElementById('stripeSettingsForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              stripeAccountId: document.getElementById('stripeAccountId').value,
+              stripePublishableKey: document.getElementById('stripePublishableKey').value,
+              stripeSecretKey: document.getElementById('stripeSecretKey').value,
+              stripeWebhookSigningSecret: document.getElementById('stripeWebhookSigningSecret').value
+            })
+          });
+          state.stripeSettings = payload.settings || null;
+          renderStripeSettings();
+          showMessage(saveMessage, 'Stripe account details saved.');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
       });
 
       document.getElementById('taskForm').addEventListener('submit', async (event) => {

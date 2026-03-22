@@ -253,3 +253,25 @@ footer.site-footer {
 .legal-copy ul:last-child {
   margin-bottom: 0;
 }
+
+.membership-payment-form {
+  background: linear-gradient(180deg, rgba(53, 95, 140, 0.06), rgba(51, 161, 214, 0.02));
+  border: 1px solid rgba(var(--bs-primary-rgb), 0.12);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.membership-price-badge {
+  align-self: flex-start;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(var(--bs-warning-rgb), 0.16);
+  color: #7a4e00;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.membership-upgrade-note {
+  color: var(--app-muted);
+  font-size: 0.95rem;
+}

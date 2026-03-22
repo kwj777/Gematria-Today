@@ -67,6 +67,15 @@ CREATE TABLE IF NOT EXISTS faqs (
 );
 
 
+CREATE TABLE IF NOT EXISTS admin_settings (
+  setting_key TEXT PRIMARY KEY,
+  setting_value TEXT,
+  updated_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
 INSERT INTO users (id, username, password_hash, role)
 VALUES (
   'kevandmel',

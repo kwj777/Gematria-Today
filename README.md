@@ -62,6 +62,8 @@ Apply the SQL files in order when bootstrapping a database:
 
 The membership implementation now exposes member auth/profile/history endpoints (`member-register`, `member-login`, `member-session`, `member-profile`, and `member-history`) plus a published `/member.html` dashboard for registration, profile editing, and saved searches.
 
+Stripe-backed membership upgrades now also use `member-payment-checkout` and `member-payment-confirm`. Stripe credentials can now be managed from the admin back-office via `admin-settings`, with environment variables such as `STRIPE_SECRET_KEY` still supported as a fallback.
+
 ## License
 
 See [LICENSE](./LICENSE) for details.

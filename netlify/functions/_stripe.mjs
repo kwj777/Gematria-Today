@@ -2,6 +2,7 @@ import { ensureAdminSchema } from './_admin.mjs';
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 const YEARLY_MEMBERSHIP_PRICE_CENTS = 555;
+const YEARLY_MEMBERSHIP_REGULAR_PRICE_CENTS = 777;
 const YEARLY_MEMBERSHIP_LABEL = 'One Year Membership';
 const YEARLY_MEMBERSHIP_INTERVAL_DAYS = 365;
 
@@ -77,6 +78,9 @@ export function getMembershipPaymentConfig() {
     product: 'yearly',
     amountCents: YEARLY_MEMBERSHIP_PRICE_CENTS,
     amountDisplay: '$5.55',
+    regularAmountCents: YEARLY_MEMBERSHIP_REGULAR_PRICE_CENTS,
+    regularAmountDisplay: '$7.77',
+    introductorySpecial: true,
     label: YEARLY_MEMBERSHIP_LABEL,
     durationDays: YEARLY_MEMBERSHIP_INTERVAL_DAYS,
   };
@@ -91,7 +95,7 @@ export async function createMembershipCheckoutSession(event, member, sql = null)
     cancel_url: `${siteUrl}/member.html?payment=cancelled`,
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][product_data][name]': membership.label,
-    'line_items[0][price_data][product_data][description]': 'Unlock one year of premium EndTimes.Today membership access.',
+    'line_items[0][price_data][product_data][description]': 'Unlock one year of premium EndTimes.Today membership access at the limited-time introductory special of $5.55 (regularly $7.77/year).',
     'line_items[0][price_data][unit_amount]': String(membership.amountCents),
     'line_items[0][quantity]': '1',
     'metadata[user_id]': member.id,

@@ -86,6 +86,7 @@ footer.site-footer {
 #related-words-result .matching-word, #results .meta-highlight { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: rgba(var(--bs-warning-rgb), .18); color: #7a4e00; font-weight: 600; }
 #related-words-result .word-link, #related-words-result .definition-link, #related-words-result .inline-button, #results .inline-button, #results .word-button, #word-list a { color: var(--bs-primary); }
 #related-words-result .related-word { word-spacing: 6px; }
+#related-words-result li { padding-bottom: 12px; }
 #related-words-result ul, #results .word-list { padding-left: 1.2rem; }
 #results .result-card { border: 1px solid rgba(53,65,79,.08); border-radius: 1rem; background: rgba(255,255,255,.92); box-shadow: 0 1rem 2rem rgba(63,64,58,.06); padding: 1rem; }
 #word-list .word-item { list-style: none; }

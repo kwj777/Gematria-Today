@@ -207,13 +207,6 @@ const lookupForm = document.querySelector('#lookup-form');
                 return leftMatches ? -1 : 1;
               }
 
-              const leftTotal = Number(left.gematria?.gematria?.total ?? Number.POSITIVE_INFINITY);
-              const rightTotal = Number(right.gematria?.gematria?.total ?? Number.POSITIVE_INFINITY);
-
-              if (leftTotal !== rightTotal) {
-                return leftTotal - rightTotal;
-              }
-
               return left.word.localeCompare(right.word);
             });
 

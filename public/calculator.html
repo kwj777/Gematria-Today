@@ -45,6 +45,30 @@ const lookupForm = document.querySelector('#lookup-form');
       let currentSearchPayload = null;
       let memberSession = null;
 
+      function createMembershipLimitMessageFragment(message) {
+        const fragment = document.createDocumentFragment();
+        const normalizedMessage = String(message || '');
+
+        if (!/out of memory/i.test(normalizedMessage)) {
+          fragment.append(normalizedMessage || 'Unable to load results.');
+          return fragment;
+        }
+
+        fragment.append('Non-member guests have limits on searches. Try again in a few minutes or sign up for a ');
+        const membershipLink = document.createElement('a');
+        membershipLink.href = '/member.html#registerForm';
+        membershipLink.textContent = 'free membership';
+        membershipLink.addEventListener('click', () => {
+          window.location.assign('/member.html#registerForm');
+        });
+        fragment.append(membershipLink, '.');
+        return fragment;
+      }
+
+      function setStatusMessage(node, message) {
+        node.replaceChildren(createMembershipLimitMessageFragment(message));
+      }
+
       async function requestJson(endpoint, searchParams) {
         const response = await fetch(`${endpoint}?${searchParams.toString()}`);
         const rawBody = await response.text();
@@ -263,7 +287,7 @@ const lookupForm = document.querySelector('#lookup-form');
 
           relatedWordsResult.appendChild(wrapper);
         } catch (error) {
-          lookupStatus.textContent = error.message || 'Unable to search by gematria value.';
+          setStatusMessage(lookupStatus, error.message || 'Unable to search by gematria value.');
         }
       }
 
@@ -462,7 +486,7 @@ const lookupForm = document.querySelector('#lookup-form');
             };
             updateMemberSaveState();
           } catch (error) {
-            lookupStatus.textContent = error.message || 'Unable to load related words.';
+            setStatusMessage(lookupStatus, error.message || 'Unable to load related words.');
             relatedWordsResult.innerHTML = '';
             currentSearchPayload = {
               queryText: term,
@@ -476,7 +500,7 @@ const lookupForm = document.querySelector('#lookup-form');
             updateMemberSaveState();
           }
         } catch (error) {
-          lookupStatus.textContent = error.message || 'Unable to load gematria and related words.';
+          setStatusMessage(lookupStatus, error.message || 'Unable to load gematria and related words.');
           gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
           currentSearchPayload = null;

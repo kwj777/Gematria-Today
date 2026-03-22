@@ -4,7 +4,7 @@ import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout,
 const WORDNIK_RELATIONSHIP_TYPES = 'synonym';
 const DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE = 250;
 const MAX_LIMIT_PER_RELATIONSHIP_TYPE = 250;
-const AUTHENTICATED_MAX_LIMIT_PER_RELATIONSHIP_TYPE = 1000;
+const ANONYMOUS_LIMIT_PER_RELATIONSHIP_TYPE = 100;
 
 function toResponse(statusCode, payload, extraHeaders = {}) {
   return new Response(JSON.stringify(payload), {
@@ -29,7 +29,9 @@ function extractRequestOptionsFromEvent(event) {
 }
 
 function parseLimit(limit, { isAuthenticated = false } = {}) {
-  if (limit == null || limit === '') return DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE;
+  const defaultLimit = isAuthenticated ? DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE : ANONYMOUS_LIMIT_PER_RELATIONSHIP_TYPE;
+  const maxLimit = isAuthenticated ? MAX_LIMIT_PER_RELATIONSHIP_TYPE : ANONYMOUS_LIMIT_PER_RELATIONSHIP_TYPE;
+  if (limit == null || limit === '') return defaultLimit;
   const parsedLimit = Number.parseInt(limit, 10);
   const maxLimit = isAuthenticated ? AUTHENTICATED_MAX_LIMIT_PER_RELATIONSHIP_TYPE : MAX_LIMIT_PER_RELATIONSHIP_TYPE;
   if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) throw new Error('Query parameter "limit" must be a positive integer');

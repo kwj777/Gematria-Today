@@ -22,6 +22,10 @@ export async function ensureMemberSchema(sql) {
     ADD COLUMN IF NOT EXISTS email TEXT,
     ADD COLUMN IF NOT EXISTS display_name TEXT,
     ADD COLUMN IF NOT EXISTS membership_level TEXT NOT NULL DEFAULT 'free',
+    ADD COLUMN IF NOT EXISTS membership_started_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS membership_expires_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
+    ADD COLUMN IF NOT EXISTS stripe_last_checkout_session_id TEXT,
     ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active',
     ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE
   `;
@@ -120,6 +124,10 @@ export function formatMemberUser(row) {
     email: row.email,
     displayName: row.display_name,
     membershipLevel: row.membership_level,
+    membershipStartedAt: row.membership_started_at,
+    membershipExpiresAt: row.membership_expires_at,
+    stripeCustomerId: row.stripe_customer_id,
+    stripeLastCheckoutSessionId: row.stripe_last_checkout_session_id,
     status: row.status,
     emailVerified: row.email_verified,
     createdAt: row.created_at,
@@ -207,6 +215,10 @@ export async function registerMember(sql, { username, email, password, displayNa
       password_hash,
       role,
       membership_level,
+      membership_started_at,
+      membership_expires_at,
+      stripe_customer_id,
+      stripe_last_checkout_session_id,
       status,
       email_verified
     )
@@ -218,6 +230,10 @@ export async function registerMember(sql, { username, email, password, displayNa
       ${passwordHash},
       'member',
       'free',
+      NULL,
+      NULL,
+      NULL,
+      NULL,
       'active',
       FALSE
     )
@@ -227,6 +243,33 @@ export async function registerMember(sql, { username, email, password, displayNa
   const member = rows[0];
   const profile = await ensureMemberProfile(sql, member.id, {});
   return { member: formatMemberUser(member), profile };
+}
+
+
+export async function activateYearlyMembership(sql, memberId, { stripeCustomerId = null, stripeCheckoutSessionId = null, purchasedAt = new Date() } = {}) {
+  await ensureMemberSchema(sql);
+
+  const startedAt = new Date(purchasedAt);
+  const expiresAt = new Date(startedAt);
+  expiresAt.setUTCDate(expiresAt.getUTCDate() + 365);
+
+  const rows = await sql`
+    UPDATE users
+    SET membership_level = 'premium',
+        membership_started_at = ${startedAt.toISOString()},
+        membership_expires_at = ${expiresAt.toISOString()},
+        stripe_customer_id = COALESCE(${stripeCustomerId}, stripe_customer_id),
+        stripe_last_checkout_session_id = COALESCE(${stripeCheckoutSessionId}, stripe_last_checkout_session_id),
+        updated_at = NOW()
+    WHERE id = ${memberId}
+    RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
+  `;
+
+  if (!rows.length) {
+    throw Object.assign(new Error('Member not found'), { statusCode: 404 });
+  }
+
+  return formatMemberUser(rows[0]);
 }
 
 export async function authenticateMemberCredentials(sql, identifier, password) {
@@ -239,7 +282,7 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
 
   const normalizedEmail = normalizeEmail(normalizedIdentifier);
   const rows = await sql`
-    SELECT id, username, email, display_name, membership_level, status, email_verified, password_hash, role, created_at, updated_at
+    SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, password_hash, role, created_at, updated_at
     FROM users
     WHERE username = ${normalizedIdentifier}
        OR LOWER(email) = ${normalizedEmail}
@@ -283,7 +326,7 @@ export async function getAuthenticatedMember(event, { requireAuth = true } = {})
   }
 
   const memberRows = await sql`
-    SELECT id, username, email, display_name, membership_level, status, email_verified, created_at, updated_at
+    SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
     FROM users
     WHERE id = ${authResult.user.id}
     LIMIT 1

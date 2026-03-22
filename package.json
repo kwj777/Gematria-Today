@@ -2,6 +2,9 @@
   "name": "endtimes-neon-app",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "count-lines": "find . -not -path './.git/*' -not -path './node_modules/*' -type f \\( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.mjs' -o -name '*.sql' -o -name '*.toml' -o -name '*.json' \\) -print0 | xargs -0 wc -l"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0"
   }

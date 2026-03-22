@@ -33,14 +33,12 @@
 const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');
       const DEFAULT_RELATED_WORD_LIMIT = 100;
+      const AUTHENTICATED_RELATED_WORD_LIMIT = 250;
       const clearSearchButton = document.querySelector('#clear-search-button');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
 
-      function getRelatedWordLimit() {
-        return memberSession?.authenticated ? 250 : DEFAULT_RELATED_WORD_LIMIT;
-      }
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;

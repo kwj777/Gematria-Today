@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EndTimes.Today Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index2.html">EndTimes.Today</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/index2.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
+            <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
+            <li class="nav-item"><a class="nav-link" href="/calculator.html">Calculator</a></li>
+            <li class="nav-item"><a class="nav-link" href="/nameCalculator.html">Name Lookup</a></li>
+            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-5">
+      <div class="container">
+        <section class="hero-panel p-4 p-lg-5 mb-5">
+          <div class="row g-4 align-items-center">
+            <div class="col-lg-8">
+              <p class="section-kicker mb-3">Back Office</p>
+              <h1 class="display-5 fw-bold mb-3">Manage secure admin content with server-side login and Neon-backed storage.</h1>
+              <p class="lead mb-0">Use this dashboard to manage RSS sources, published blog posts, FAQ entries, and internal admin tasks through authenticated API calls.</p>
+            </div>
+            <div class="col-lg-4">
+              <div class="content-panel p-4 text-dark h-100">
+                <h2 class="h5 mb-3">Server-backed features</h2>
+                <ul class="list-unstyled mb-0 d-grid gap-2 small">
+                  <li>• HttpOnly cookie session login</li>
+                  <li>• Neon storage for feeds, posts, FAQs, tasks, and Stripe settings</li>
+                  <li>• Public blog/news pages driven by published data</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="authPanel" class="row justify-content-center">
+          <div class="col-lg-6">
+            <div class="content-panel p-4 p-lg-5 admin-auth-card">
+              <p class="section-kicker mb-2">Secure Access</p>
+              <h2 class="h3 mb-3">Admin sign in</h2>
+              <p class="text-muted">Credentials are verified by the server and stored in secure session cookies.</p>
+              <div id="authMessage" class="alert alert-danger d-none" role="alert"></div>
+              <form id="loginForm" class="row g-3">
+                <div class="col-12">
+                  <label class="form-label" for="username">Username</label>
+                  <input class="form-control form-control-lg" id="username" name="username" autocomplete="username" required />
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="password">Password</label>
+                  <input class="form-control form-control-lg" id="password" name="password" type="password" autocomplete="current-password" required />
+                </div>
+                <div class="col-12 d-grid">
+                  <button class="btn btn-primary btn-lg" type="submit">Unlock admin dashboard</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="dashboardPanel" class="d-none">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Control Center</p>
+              <h2 class="h3 mb-0">Admin dashboard</h2>
+              <p id="sessionMeta" class="text-muted small mb-0"></p>
+            </div>
+            <div class="d-flex gap-2">
+              <a class="btn btn-outline-primary" href="/news.html">View News page</a>
+              <a class="btn btn-outline-primary" href="/blog.html">View Blog page</a>
+              <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
+            </div>
+          </div>
+
+          <div class="row g-4 mb-4">
+            <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Feeds</div><div id="feedCount" class="metric-value text-primary">0</div><p class="mb-0 text-muted">Configured RSS sources in the database.</p></div></div>
+            <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Posts</div><div id="postCount" class="metric-value text-success">0</div><p class="mb-0 text-muted">Saved blog entries ready for the public blog page.</p></div></div>
+            <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">FAQs</div><div id="faqCount" class="metric-value text-info">0</div><p class="mb-0 text-muted">Published help answers shown on the public FAQ page.</p></div></div>
+            <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Tasks</div><div id="taskCount" class="metric-value text-warning">0</div><p class="mb-0 text-muted">Open administrative tasks still pending.</p></div></div>
+          </div>
+
+          <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
+          <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+          <div class="row g-4">
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">News Sources</p>
+                    <h3 class="h4 mb-0">Add RSS feeds</h3>
+                  </div>
+                  <span class="badge text-bg-info">News</span>
+                </div>
+                <form id="feedForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="feedName">Feed name</label><input id="feedName" class="form-control" required /></div>
+                  <div class="col-12"><label class="form-label" for="feedUrl">RSS URL</label><input id="feedUrl" class="form-control" type="url" placeholder="https://example.com/feed.xml" required /></div>
+                  <div class="col-12"><label class="form-label" for="feedCategory">Category</label><input id="feedCategory" class="form-control" placeholder="World, Alerts, Analysis" /></div>
+                  <div class="col-12"><label class="form-label" for="feedNotes">Editorial notes</label><textarea id="feedNotes" class="form-control" rows="3"></textarea></div>
+                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save RSS feed</button></div>
+                </form>
+                <div id="feedList" class="admin-list mt-4"></div>
+              </section>
+            </div>
+
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Publishing</p>
+                    <h3 class="h4 mb-0">Create blog posts</h3>
+                  </div>
+                  <span class="badge text-bg-warning">Blog</span>
+                </div>
+                <form id="postForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
+                  <div class="col-md-6"><label class="form-label" for="postTag">Tag</label><input id="postTag" class="form-control" placeholder="Research Workflow" /></div>
+                  <div class="col-md-6"><label class="form-label" for="postReadTime">Read time</label><input id="postReadTime" class="form-control" placeholder="5 minute read" /></div>
+                  <div class="col-12"><label class="form-label" for="postSummary">Summary</label><textarea id="postSummary" class="form-control" rows="2" required></textarea></div>
+                  <div class="col-12"><label class="form-label" for="postBody">Body</label><textarea id="postBody" class="form-control" rows="7" placeholder="Use blank lines to split paragraphs." required></textarea></div>
+                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Publish blog post</button></div>
+                </form>
+                <div id="postList" class="admin-list mt-4"></div>
+              </section>
+            </div>
+
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Help Center</p>
+                    <h3 class="h4 mb-0">Manage FAQ entries</h3>
+                  </div>
+                  <span class="badge text-bg-info">FAQ</span>
+                </div>
+                <form id="faqForm" class="row g-3">
+                  <input id="faqId" type="hidden" />
+                  <div class="col-12"><label class="form-label" for="faqQuestion">Question</label><input id="faqQuestion" class="form-control" required /></div>
+                  <div class="col-12"><label class="form-label" for="faqAnswer">Answer</label><textarea id="faqAnswer" class="form-control" rows="5" required></textarea></div>
+                  <div class="col-md-6"><label class="form-label" for="faqSortOrder">Display order</label><input id="faqSortOrder" class="form-control" type="number" min="0" step="1" value="0" /></div>
+                  <div class="col-md-6 d-flex align-items-end"><div class="form-check mb-2"><input id="faqPublished" class="form-check-input" type="checkbox" checked /><label class="form-check-label" for="faqPublished">Published on public FAQ page</label></div></div>
+                  <div class="col-12 d-flex flex-column flex-sm-row gap-2">
+                    <button id="faqSubmitButton" class="btn btn-primary flex-fill" type="submit">Save FAQ entry</button>
+                    <button id="faqCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
+                  </div>
+                </form>
+                <div id="faqList" class="admin-list mt-4"></div>
+              </section>
+            </div>
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Payments</p>
+                    <h3 class="h4 mb-0">Stripe account details</h3>
+                  </div>
+                  <span class="badge text-bg-primary">Stripe</span>
+                </div>
+                <p class="text-muted small">Store the Stripe account details used by membership checkout directly from the back-office.</p>
+                <form id="stripeSettingsForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="stripeAccountId">Stripe account ID</label><input id="stripeAccountId" class="form-control" placeholder="acct_..." /></div>
+                  <div class="col-12"><label class="form-label" for="stripePublishableKey">Publishable key</label><input id="stripePublishableKey" class="form-control" placeholder="pk_live_..." /></div>
+                  <div class="col-12"><label class="form-label" for="stripeSecretKey">Secret key</label><input id="stripeSecretKey" class="form-control" placeholder="sk_live_..." autocomplete="off" /></div>
+                  <div class="col-12"><label class="form-label" for="stripeWebhookSigningSecret">Webhook signing secret</label><input id="stripeWebhookSigningSecret" class="form-control" placeholder="whsec_..." autocomplete="off" /></div>
+                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save Stripe settings</button></div>
+                </form>
+                <div id="stripeSettingsMeta" class="small text-muted mt-3">Stripe settings have not been loaded yet.</div>
+              </section>
+            </div>
+
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Operations</p>
+                    <h3 class="h4 mb-0">Admin task list</h3>
+                  </div>
+                  <span class="badge text-bg-secondary">Tasks</span>
+                </div>
+                <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
+                  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                    <div>
+                      <h4 class="h6 mb-1">Clear server cache</h4>
+                      <p class="small text-muted mb-0">Removes saved API response cache entries so public pages rebuild with fresh data on their next request.</p>
+                    </div>
+                    <button id="clearCacheButton" class="btn btn-outline-warning" type="button">Clear cache</button>
+                  </div>
+                </div>
+                <form id="taskForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="taskTitle">Task</label><input id="taskTitle" class="form-control" required /></div>
+                  <div class="col-md-6"><label class="form-label" for="taskOwner">Owner</label><input id="taskOwner" class="form-control" placeholder="Kev, editor, dev" /></div>
+                  <div class="col-md-6"><label class="form-label" for="taskDueDate">Due date</label><input id="taskDueDate" class="form-control" type="date" /></div>
+                  <div class="col-12"><label class="form-label" for="taskNotes">Notes</label><textarea id="taskNotes" class="form-control" rows="3"></textarea></div>
+                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Add admin task</button></div>
+                </form>
+                <div id="taskList" class="admin-list mt-4"></div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer py-4 mt-5">
+      <div class="container d-flex flex-column gap-3 small text-muted">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
+          <span>EndTimes.Today — a research workspace.</span>
+          <span>Information, policies, and contact details for visitors and administrators.</span>
+        </div>
+        <div class="d-flex flex-wrap gap-3 site-legal-links">
+          <a href="/privacy.html">Privacy Policy</a>
+          <a href="/terms.html">Terms of Use</a>
+          <a href="/disclaimer.html">Disclaimer</a>
+          <a href="/accessibility.html">Accessibility</a>
+          <a href="/contact.html">Contact</a>
+          <a href="/admin.html">Admin</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const authPanel = document.getElementById('authPanel');
+      const dashboardPanel = document.getElementById('dashboardPanel');
+      const authMessage = document.getElementById('authMessage');
+      const saveMessage = document.getElementById('saveMessage');
+      const errorMessage = document.getElementById('errorMessage');
+      const feedCount = document.getElementById('feedCount');
+      const postCount = document.getElementById('postCount');
+      const taskCount = document.getElementById('taskCount');
+      const faqCount = document.getElementById('faqCount');
+      const sessionMeta = document.getElementById('sessionMeta');
+
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, editingFaqId: null };
+      const escapeHtml = (value = '') => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+
+      function showMessage(target, message) {
+        target.textContent = message;
+        target.classList.remove('d-none');
+      }
+
+      function clearMessage(target) {
+        target.textContent = '';
+        target.classList.add('d-none');
+      }
+
+      async function request(url, options = {}) {
+        const response = await fetch(url, {
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+          ...options
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Request failed');
+        }
+        return payload;
+      }
+
+      function setLoggedIn(isLoggedIn) {
+        authPanel.classList.toggle('d-none', isLoggedIn);
+        dashboardPanel.classList.toggle('d-none', !isLoggedIn);
+      }
+
+      function renderFeeds() {
+        feedCount.textContent = String(state.feeds.length);
+        const list = document.getElementById('feedList');
+        list.innerHTML = state.feeds.length ? state.feeds.map((feed) => `
+          <article class="admin-item-card mb-3 p-3">
+            <div class="d-flex justify-content-between gap-3">
+              <div>
+                <h4 class="h6 mb-1">${escapeHtml(feed.name)}</h4>
+                <p class="small text-muted mb-2">${escapeHtml(feed.url)}</p>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  ${feed.category ? `<span class="badge text-bg-light">${escapeHtml(feed.category)}</span>` : ''}
+                  <span class="badge news-source-badge">${feed.isActive ? 'Active' : 'Inactive'}</span>
+                </div>
+                ${feed.notes ? `<p class="small mb-0">${escapeHtml(feed.notes)}</p>` : ''}
+              </div>
+              <button class="btn btn-sm btn-outline-danger" type="button" data-delete-feed="${feed.id}">Delete</button>
+            </div>
+          </article>`).join('') : '<p class="text-muted small mb-0">No RSS feeds saved yet.</p>';
+      }
+
+      function renderPosts() {
+        postCount.textContent = String(state.posts.length);
+        const list = document.getElementById('postList');
+        list.innerHTML = state.posts.length ? state.posts.map((post) => `
+          <article class="admin-item-card mb-3 p-3">
+            <div class="d-flex justify-content-between gap-3">
+              <div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  ${post.tag ? `<span class="badge text-bg-warning">${escapeHtml(post.tag)}</span>` : ''}
+                  ${post.readTime ? `<span class="badge text-bg-light">${escapeHtml(post.readTime)}</span>` : ''}
+                </div>
+                <h4 class="h6 mb-1">${escapeHtml(post.title)}</h4>
+                <p class="small text-muted mb-2">${escapeHtml(post.summary)}</p>
+                <p class="small mb-0">Status: ${escapeHtml(post.status)} · Published ${escapeHtml(post.publishedAt || post.createdAt || '')}</p>
+              </div>
+              <button class="btn btn-sm btn-outline-danger" type="button" data-delete-post="${post.id}">Delete</button>
+            </div>
+          </article>`).join('') : '<p class="text-muted small mb-0">No blog posts published yet.</p>';
+      }
+
+      function renderFaqs() {
+        faqCount.textContent = String(state.faqs.length);
+        const list = document.getElementById('faqList');
+        list.innerHTML = state.faqs.length ? state.faqs.map((faq) => `
+          <article class="admin-item-card mb-3 p-3">
+            <div class="d-flex justify-content-between gap-3">
+              <div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span class="badge text-bg-light">Order ${escapeHtml(faq.sortOrder)}</span>
+                  <span class="badge ${faq.isPublished ? 'text-bg-info' : 'text-bg-secondary'}">${faq.isPublished ? 'Published' : 'Draft'}</span>
+                </div>
+                <h4 class="h6 mb-1">${escapeHtml(faq.question)}</h4>
+                <p class="small mb-0">${escapeHtml(faq.answer)}</p>
+              </div>
+              <div class="d-flex flex-column gap-2">
+                <button class="btn btn-sm btn-outline-primary" type="button" data-edit-faq="${faq.id}">Edit</button>
+                <button class="btn btn-sm btn-outline-danger" type="button" data-delete-faq="${faq.id}">Delete</button>
+              </div>
+            </div>
+          </article>`).join('') : '<p class="text-muted small mb-0">No FAQ entries saved yet.</p>';
+      }
+
+      function resetFaqForm() {
+        state.editingFaqId = null;
+        document.getElementById('faqForm').reset();
+        document.getElementById('faqId').value = '';
+        document.getElementById('faqSortOrder').value = '0';
+        document.getElementById('faqPublished').checked = true;
+        document.getElementById('faqSubmitButton').textContent = 'Save FAQ entry';
+        document.getElementById('faqCancelButton').classList.add('d-none');
+      }
+
+      function startFaqEdit(faqId) {
+        const faq = state.faqs.find((item) => item.id === faqId);
+        if (!faq) return;
+        state.editingFaqId = faq.id;
+        document.getElementById('faqId').value = faq.id;
+        document.getElementById('faqQuestion').value = faq.question || '';
+        document.getElementById('faqAnswer').value = faq.answer || '';
+        document.getElementById('faqSortOrder').value = String(faq.sortOrder ?? 0);
+        document.getElementById('faqPublished').checked = Boolean(faq.isPublished);
+        document.getElementById('faqSubmitButton').textContent = 'Update FAQ entry';
+        document.getElementById('faqCancelButton').classList.remove('d-none');
+      }
+
+      function renderStripeSettings() {
+        const settings = state.stripeSettings || {};
+        document.getElementById('stripeAccountId').value = settings.stripeAccountId || '';
+        document.getElementById('stripePublishableKey').value = settings.stripePublishableKey || '';
+        document.getElementById('stripeSecretKey').value = settings.stripeSecretKey || '';
+        document.getElementById('stripeWebhookSigningSecret').value = settings.stripeWebhookSigningSecret || '';
+        const configuredCount = ['stripeAccountId', 'stripePublishableKey', 'stripeSecretKey', 'stripeWebhookSigningSecret']
+          .filter((key) => Boolean(settings[key])).length;
+        document.getElementById('stripeSettingsMeta').textContent = configuredCount
+          ? `${configuredCount} Stripe detail${configuredCount === 1 ? '' : 's'} configured for hosted checkout.`
+          : 'No Stripe account details saved yet.';
+      }
+
+      function renderTasks() {
+        taskCount.textContent = String(state.tasks.length);
+        const list = document.getElementById('taskList');
+        list.innerHTML = state.tasks.length ? state.tasks.map((task) => `
+          <article class="admin-item-card mb-3 p-3">
+            <div class="d-flex justify-content-between gap-3">
+              <div>
+                <h4 class="h6 mb-1">${escapeHtml(task.title)}</h4>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  ${task.owner ? `<span class="badge text-bg-secondary">${escapeHtml(task.owner)}</span>` : ''}
+                  ${task.dueDate ? `<span class="badge text-bg-light">Due ${escapeHtml(task.dueDate)}</span>` : ''}
+                </div>
+                ${task.notes ? `<p class="small mb-0">${escapeHtml(task.notes)}</p>` : ''}
+              </div>
+              <button class="btn btn-sm btn-outline-danger" type="button" data-delete-task="${task.id}">Done</button>
+            </div>
+          </article>`).join('') : '<p class="text-muted small mb-0">No open admin tasks right now.</p>';
+      }
+
+      async function refreshDashboard() {
+        const [feeds, posts, faqs, tasks, settings] = await Promise.all([
+          request('/api/admin-feeds'),
+          request('/api/admin-posts'),
+          request('/api/admin-faqs'),
+          request('/api/admin-tasks'),
+          request('/api/admin-settings')
+        ]);
+        state.feeds = feeds.items || [];
+        state.posts = posts.items || [];
+        state.faqs = faqs.items || [];
+        state.tasks = tasks.items || [];
+        state.stripeSettings = settings.settings || null;
+        renderFeeds();
+        renderPosts();
+        renderFaqs();
+        renderTasks();
+        renderStripeSettings();
+      }
+
+      async function loadSession() {
+        try {
+          const payload = await request('/api/admin-session', { method: 'GET' });
+          state.user = payload.user;
+          sessionMeta.textContent = `Signed in as ${payload.user.username}`;
+          setLoggedIn(true);
+          await refreshDashboard();
+        } catch (error) {
+          state.user = null;
+          sessionMeta.textContent = '';
+          setLoggedIn(false);
+        }
+      }
+
+      document.getElementById('loginForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(authMessage);
+        clearMessage(errorMessage);
+        try {
+          await request('/api/admin-login', {
+            method: 'POST',
+            body: JSON.stringify({
+              username: document.getElementById('username').value,
+              password: document.getElementById('password').value
+            })
+          });
+          event.target.reset();
+          showMessage(saveMessage, 'Admin dashboard unlocked.');
+          await loadSession();
+        } catch (error) {
+          showMessage(authMessage, error.message);
+        }
+      });
+
+      document.getElementById('logoutButton').addEventListener('click', async () => {
+        clearMessage(errorMessage);
+        await request('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => null);
+        state.user = null;
+        setLoggedIn(false);
+      });
+
+      document.getElementById('feedForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          await request('/api/admin-feeds', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: document.getElementById('feedName').value,
+              url: document.getElementById('feedUrl').value,
+              category: document.getElementById('feedCategory').value,
+              notes: document.getElementById('feedNotes').value
+            })
+          });
+          event.target.reset();
+          showMessage(saveMessage, 'RSS feed saved.');
+          await refreshDashboard();
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('postForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          await request('/api/admin-posts', {
+            method: 'POST',
+            body: JSON.stringify({
+              title: document.getElementById('postTitle').value,
+              tag: document.getElementById('postTag').value,
+              readTime: document.getElementById('postReadTime').value,
+              summary: document.getElementById('postSummary').value,
+              body: document.getElementById('postBody').value,
+              status: 'published'
+            })
+          });
+          event.target.reset();
+          showMessage(saveMessage, 'Blog post published.');
+          await refreshDashboard();
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('faqForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const faqId = document.getElementById('faqId').value;
+          await request('/api/admin-faqs', {
+            method: faqId ? 'PUT' : 'POST',
+            body: JSON.stringify({
+              id: faqId || undefined,
+              question: document.getElementById('faqQuestion').value,
+              answer: document.getElementById('faqAnswer').value,
+              sortOrder: Number(document.getElementById('faqSortOrder').value || 0),
+              isPublished: document.getElementById('faqPublished').checked
+            })
+          });
+          resetFaqForm();
+          showMessage(saveMessage, faqId ? 'FAQ entry updated.' : 'FAQ entry saved.');
+          await refreshDashboard();
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('faqCancelButton').addEventListener('click', () => {
+        resetFaqForm();
+      });
+
+      document.getElementById('clearCacheButton').addEventListener('click', async (event) => {
+        clearMessage(errorMessage);
+        try {
+          event.currentTarget.disabled = true;
+          const payload = await request('/api/admin-settings', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'clear-cache' })
+          });
+          showMessage(saveMessage, `Server cache cleared. ${payload.deletedCount || 0} entr${payload.deletedCount === 1 ? 'y was' : 'ies were'} removed.`);
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        } finally {
+          event.currentTarget.disabled = false;
+        }
+      });
+
+      document.getElementById('stripeSettingsForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              stripeAccountId: document.getElementById('stripeAccountId').value,
+              stripePublishableKey: document.getElementById('stripePublishableKey').value,
+              stripeSecretKey: document.getElementById('stripeSecretKey').value,
+              stripeWebhookSigningSecret: document.getElementById('stripeWebhookSigningSecret').value
+            })
+          });
+          state.stripeSettings = payload.settings || null;
+          renderStripeSettings();
+          showMessage(saveMessage, 'Stripe account details saved.');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('taskForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          await request('/api/admin-tasks', {
+            method: 'POST',
+            body: JSON.stringify({
+              title: document.getElementById('taskTitle').value,
+              owner: document.getElementById('taskOwner').value,
+              dueDate: document.getElementById('taskDueDate').value,
+              notes: document.getElementById('taskNotes').value
+            })
+          });
+          event.target.reset();
+          showMessage(saveMessage, 'Admin task added.');
+          await refreshDashboard();
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.addEventListener('click', async (event) => {
+        const { deleteFeed, deletePost, deleteFaq, editFaq, deleteTask } = event.target.dataset;
+        if (!deleteFeed && !deletePost && !deleteFaq && !editFaq && !deleteTask) {
+          return;
+        }
+        clearMessage(errorMessage);
+        try {
+          if (editFaq) {
+            startFaqEdit(editFaq);
+            return;
+          }
+          if (deleteFeed) {
+            await request(`/api/admin-feeds?id=${encodeURIComponent(deleteFeed)}`, { method: 'DELETE' });
+            showMessage(saveMessage, 'RSS feed removed.');
+          }
+          if (deletePost) {
+            await request(`/api/admin-posts?id=${encodeURIComponent(deletePost)}`, { method: 'DELETE' });
+            showMessage(saveMessage, 'Blog post removed.');
+          }
+          if (deleteFaq) {
+            await request(`/api/admin-faqs?id=${encodeURIComponent(deleteFaq)}`, { method: 'DELETE' });
+            if (state.editingFaqId === deleteFaq) {
+              resetFaqForm();
+            }
+            showMessage(saveMessage, 'FAQ entry removed.');
+          }
+          if (deleteTask) {
+            await request(`/api/admin-tasks?id=${encodeURIComponent(deleteTask)}`, { method: 'DELETE' });
+            showMessage(saveMessage, 'Task completed.');
+          }
+          await refreshDashboard();
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      resetFaqForm();
+      loadSession();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></script>
+  </body>
+</html>

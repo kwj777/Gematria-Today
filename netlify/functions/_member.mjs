@@ -1,4 +1,23 @@
+import crypto from 'node:crypto';
+import {
+  AUTH_COOKIES,
+  clearSessionCookie,
+  createSession,
+  createSessionCookie,
+  getAuthenticatedUser as getAuthenticatedUserShared,
+  getSqlClient,
+  hashPassword,
+  jsonResponse,
+  parseBody,
+  verifyPassword,
+} from './_auth.mjs';
+import { ensureAdminSchema } from './_admin.mjs';
+
+export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getSqlClient, hashPassword, jsonResponse, parseBody };
+
 export async function ensureMemberSchema(sql) {
+  await ensureAdminSchema(sql);
+
   await sql`ALTER TABLE users
     ADD COLUMN IF NOT EXISTS email TEXT,
     ADD COLUMN IF NOT EXISTS display_name TEXT,
@@ -86,6 +105,28 @@ export async function ensureMemberSchema(sql) {
     EXECUTE FUNCTION set_updated_at_timestamp()`;
 }
 
+function normalizeEmail(email) {
+  return String(email ?? '').trim().toLowerCase();
+}
+
+function normalizeUsername(username) {
+  return String(username ?? '').trim();
+}
+
+export function formatMemberUser(row) {
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    displayName: row.display_name,
+    membershipLevel: row.membership_level,
+    status: row.status,
+    emailVerified: row.email_verified,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export function formatMemberProfile(row) {
   return {
     userId: row.user_id,
@@ -110,5 +151,166 @@ export function formatCalculationHistory(row) {
     resultPayload: row.result_payload,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+export async function ensureMemberProfile(sql, userId, profile = {}) {
+  const preferences = profile.preferences && typeof profile.preferences === 'object' ? profile.preferences : {};
+  const favoriteCipher = profile.favoriteCipher ? String(profile.favoriteCipher) : null;
+  const timezone = profile.timezone ? String(profile.timezone) : null;
+
+  const rows = await sql`
+    INSERT INTO member_profiles (user_id, preferences, favorite_cipher, timezone)
+    VALUES (${userId}, ${JSON.stringify(preferences)}::jsonb, ${favoriteCipher}, ${timezone})
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+      preferences = COALESCE(member_profiles.preferences, '{}'::jsonb),
+      favorite_cipher = COALESCE(member_profiles.favorite_cipher, EXCLUDED.favorite_cipher),
+      timezone = COALESCE(member_profiles.timezone, EXCLUDED.timezone),
+      updated_at = NOW()
+    RETURNING *
+  `;
+
+  return formatMemberProfile(rows[0]);
+}
+
+export async function registerMember(sql, { username, email, password, displayName = '' }) {
+  await ensureMemberSchema(sql);
+
+  const normalizedUsername = normalizeUsername(username);
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedDisplayName = String(displayName ?? '').trim() || normalizedUsername;
+
+  if (!normalizedUsername || !normalizedEmail || !password) {
+    throw Object.assign(new Error('Username, email, and password are required'), { statusCode: 400 });
+  }
+
+  const existing = await sql`
+    SELECT id, username, email
+    FROM users
+    WHERE username = ${normalizedUsername}
+       OR LOWER(email) = ${normalizedEmail}
+    LIMIT 1
+  `;
+
+  if (existing.length) {
+    throw Object.assign(new Error('A member with that username or email already exists'), { statusCode: 409 });
+  }
+
+  const passwordHash = await hashPassword(password);
+  const rows = await sql`
+    INSERT INTO users (
+      id,
+      username,
+      email,
+      display_name,
+      password_hash,
+      role,
+      membership_level,
+      status,
+      email_verified
+    )
+    VALUES (
+      ${crypto.randomUUID()},
+      ${normalizedUsername},
+      ${normalizedEmail},
+      ${normalizedDisplayName},
+      ${passwordHash},
+      'member',
+      'free',
+      'active',
+      FALSE
+    )
+    RETURNING *
+  `;
+
+  const member = rows[0];
+  const profile = await ensureMemberProfile(sql, member.id, {});
+  return { member: formatMemberUser(member), profile };
+}
+
+export async function authenticateMemberCredentials(sql, identifier, password) {
+  await ensureMemberSchema(sql);
+
+  const normalizedIdentifier = String(identifier ?? '').trim();
+  if (!normalizedIdentifier || !password) {
+    return null;
+  }
+
+  const normalizedEmail = normalizeEmail(normalizedIdentifier);
+  const rows = await sql`
+    SELECT id, username, email, display_name, membership_level, status, email_verified, password_hash, role, created_at, updated_at
+    FROM users
+    WHERE username = ${normalizedIdentifier}
+       OR LOWER(email) = ${normalizedEmail}
+    LIMIT 1
+  `;
+
+  if (!rows.length) {
+    return null;
+  }
+
+  const user = rows[0];
+  if (user.role !== 'member') {
+    return null;
+  }
+
+  const isValid = await verifyPassword(password, user.password_hash);
+  if (!isValid) {
+    return null;
+  }
+
+  if (user.status !== 'active') {
+    throw Object.assign(new Error(`This membership account is ${user.status}`), { statusCode: 403 });
+  }
+
+  return formatMemberUser(user);
+}
+
+export async function getAuthenticatedMember(event, { requireAuth = true } = {}) {
+  const sql = getSqlClient();
+  await ensureMemberSchema(sql);
+
+  const authResult = await getAuthenticatedUserShared(event, {
+    sql,
+    cookieName: AUTH_COOKIES.member,
+    requireAuth,
+    role: 'member',
+  });
+
+  if (!authResult.user) {
+    return { ...authResult, member: null, profile: null };
+  }
+
+  const memberRows = await sql`
+    SELECT id, username, email, display_name, membership_level, status, email_verified, created_at, updated_at
+    FROM users
+    WHERE id = ${authResult.user.id}
+    LIMIT 1
+  `;
+
+  if (!memberRows.length) {
+    if (requireAuth) {
+      throw Object.assign(new Error('Unauthorized'), { statusCode: 401 });
+    }
+    return { sql, sessionToken: authResult.sessionToken, user: null, member: null, profile: null };
+  }
+
+  const profileRows = await sql`
+    SELECT *
+    FROM member_profiles
+    WHERE user_id = ${authResult.user.id}
+    LIMIT 1
+  `;
+
+  const member = formatMemberUser(memberRows[0]);
+  const profile = profileRows.length ? formatMemberProfile(profileRows[0]) : await ensureMemberProfile(sql, authResult.user.id, {});
+
+  return {
+    sql,
+    sessionToken: authResult.sessionToken,
+    user: authResult.user,
+    member,
+    profile,
   };
 }

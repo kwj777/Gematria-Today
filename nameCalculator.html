@@ -286,23 +286,23 @@ const form = document.querySelector('#name-form');
 
         const meta = document.createElement('div');
         meta.className = 'meta';
+        const shouldHighlightBaseRoot = highlightBaseRootMatch || isBaseRoot;
+        const baseRootSummary = document.createElement('span');
+        baseRootSummary.className = shouldHighlightBaseRoot ? 'meta-highlight' : '';
+        baseRootSummary.append(
+          createBaseRootLink(),
+          createTextNode(`: ${isBaseRoot ? 'Yes' : 'No'}`)
+        );
+
         meta.append(
           createTextNode('Original word: '),
           createTextNode(result.related?.query || name),
           createTextNode(' | Gematria: '),
           createGematriaButton(result.gematria.gematria.total),
           createTextNode(' | Digital Root: '),
-          Object.assign(document.createElement('span'), {
-            className: highlightBaseRootMatch ? 'meta-highlight' : '',
-            textContent: String(result.gematria.gematria.digitalRoot),
-          }),
+          createTextNode(String(result.gematria.gematria.digitalRoot)),
           createTextNode(' | '),
-          createBaseRootLink(),
-          createTextNode(': '),
-          Object.assign(document.createElement('span'), {
-            className: highlightBaseRootMatch || isBaseRoot ? 'meta-highlight' : '',
-            textContent: isBaseRoot ? 'Yes' : 'No',
-          }),
+          baseRootSummary,
           createTextNode(` | Searches: ${result.gematria.searchCount}`)
         );
         article.appendChild(meta);

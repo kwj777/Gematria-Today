@@ -1,4 +1,5 @@
 import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
+import { clearCachedJson, logRequestAudit } from './_security.mjs';
 
 const DEFAULT_SETTINGS = {
   stripeAccountId: '',
@@ -37,6 +38,24 @@ export async function handler(event) {
       }
 
       return jsonResponse(200, { settings });
+    }
+
+    if (event.httpMethod === 'POST') {
+      const action = String(parseBody(event).action ?? event.queryStringParameters?.action ?? '').trim().toLowerCase();
+
+      if (action !== 'clear-cache') {
+        return jsonResponse(400, { error: 'Unsupported admin settings action' });
+      }
+
+      const cacheResult = await clearCachedJson(sql);
+      await logRequestAudit(sql, event, {
+        route: 'admin-settings',
+        action: 'clear_cache',
+        outcome: 'success',
+        metadata: { deletedCount: cacheResult.deletedCount, userId: user.id },
+      });
+
+      return jsonResponse(200, { cleared: true, deletedCount: cacheResult.deletedCount });
     }
 
     if (event.httpMethod === 'PUT' || event.httpMethod === 'PATCH') {

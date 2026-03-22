@@ -266,6 +266,18 @@ export async function getCachedJson(sql, cacheKey) {
   };
 }
 
+export async function clearCachedJson(sql, { route } = {}) {
+  await ensureSecuritySchema(sql);
+
+  if (route) {
+    const result = await sql`DELETE FROM function_response_cache WHERE route = ${String(route)} RETURNING cache_key`;
+    return { deletedCount: result.length, route: String(route) };
+  }
+
+  const result = await sql`DELETE FROM function_response_cache RETURNING cache_key`;
+  return { deletedCount: result.length, route: 'all' };
+}
+
 export async function setCachedJson(sql, { cacheKey, route, statusCode = 200, payload, ttlSeconds = DEFAULT_CACHE_TTL_SECONDS } = {}) {
   await ensureSecuritySchema(sql);
   const expiresAt = new Date(Date.now() + parseInteger(ttlSeconds, DEFAULT_CACHE_TTL_SECONDS) * 1000);

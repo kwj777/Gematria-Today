@@ -182,6 +182,15 @@ const form = document.querySelector('#name-form');
         return link;
       }
 
+      function createBaseRootLink() {
+        const link = document.createElement('a');
+        link.href = 'https://endtimes.today/blog.html?post=what-is-a-base-root-word#what-is-a-base-root-word';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Base Root';
+        return link;
+      }
+
       function createRelatedWordButton(word) {
         const link = document.createElement('a');
         link.className = 'word-button';
@@ -247,7 +256,7 @@ const form = document.querySelector('#name-form');
   <body>
     <main>
       <h1>${escapeHtml(name)}</h1>
-      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))} | Base Root: ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}</p>
+      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))} | <a href="https://endtimes.today/blog.html?post=what-is-a-base-root-word#what-is-a-base-root-word" target="_blank" rel="noopener noreferrer">Base Root</a>: ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}</p>
       <p class="meta">Click any related word below to open an English Gematria search for that word.</p>
       ${sections || '<p>No related words found.</p>'}
     </main>
@@ -285,7 +294,9 @@ const form = document.querySelector('#name-form');
             className: 'meta-highlight',
             textContent: String(result.gematria.gematria.digitalRoot),
           }),
-          createTextNode(' | Base Root: '),
+          createTextNode(' | '),
+          createBaseRootLink(),
+          createTextNode(': '),
           Object.assign(document.createElement('span'), {
             className: 'meta-highlight',
             textContent: result.gematria.isBaseRoot ? 'Yes' : 'No',

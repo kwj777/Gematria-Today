@@ -1,4 +1,12 @@
-import { authenticateCredentials, clearSessionCookie, createSession, createSessionCookie, getSqlClient, jsonResponse, parseBody } from './_admin.mjs';
+import {
+  AUTH_COOKIES,
+  clearSessionCookie,
+  createSession,
+  createSessionCookie,
+  jsonResponse,
+  parseBody,
+} from './_auth.mjs';
+import { authenticateCredentials, getSqlClient } from './_admin.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -11,7 +19,7 @@ export async function handler(event) {
     const user = await authenticateCredentials(sql, username.trim(), password);
 
     if (!user) {
-      return jsonResponse(401, { error: 'Invalid username or password' }, { 'set-cookie': clearSessionCookie() });
+      return jsonResponse(401, { error: 'Invalid username or password' }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
     }
 
     const { token, expiresAt } = await createSession(sql, user.id);
@@ -19,10 +27,9 @@ export async function handler(event) {
       authenticated: true,
       user: { id: user.id, username: user.username, role: user.role },
     }, {
-      'set-cookie': createSessionCookie(token, expiresAt),
+      'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
     });
   } catch (error) {
     return jsonResponse(500, { error: error.message || 'Failed to log in' });
   }
 }
-

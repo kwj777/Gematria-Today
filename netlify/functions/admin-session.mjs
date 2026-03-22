@@ -1,4 +1,5 @@
-import { clearSessionCookie, getAuthenticatedUser, jsonResponse } from './_admin.mjs';
+import { AUTH_COOKIES, clearSessionCookie, jsonResponse } from './_auth.mjs';
+import { getAuthenticatedUser } from './_admin.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'GET') {
@@ -10,6 +11,6 @@ export async function handler(event) {
     return jsonResponse(200, { authenticated: true, user });
   } catch (error) {
     const statusCode = error.statusCode || 401;
-    return jsonResponse(statusCode, { authenticated: false }, { 'set-cookie': clearSessionCookie() });
+    return jsonResponse(statusCode, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
   }
 }

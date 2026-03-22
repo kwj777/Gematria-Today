@@ -129,6 +129,11 @@ const lookupForm = document.querySelector('#lookup-form');
           : `Signed in as ${memberName}. Run a lookup to save it.${freeTierSuffix}`;
       }
 
+
+      function getRelatedWordLimit() {
+        return memberSession?.authenticated ? AUTHENTICATED_RELATED_WORD_LIMIT : DEFAULT_RELATED_WORD_LIMIT;
+      }
+
       async function requestGematria(word) {
         const searchParams = new URLSearchParams({ word });
         return requestJson('/.netlify/functions/englishGematria', searchParams);
@@ -443,7 +448,7 @@ const lookupForm = document.querySelector('#lookup-form');
           renderSearchGematriaSummary(searchGematria);
 
           try {
-            const relatedWordsPayload = await requestRelatedWords(term);
+            const relatedWordsPayload = await requestRelatedWords(term, getRelatedWordLimit());
             const relationships = Array.isArray(relatedWordsPayload.data) ? relatedWordsPayload.data : [];
             const enrichedRelationships = await enrichRelationshipWords(relationships, searchGematria.gematria.total);
             lookupStatus.textContent = '';

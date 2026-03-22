@@ -58,6 +58,11 @@ const form = document.querySelector('#name-form');
           .filter(Boolean);
       }
 
+
+      function getFullRelatedWordLimit() {
+        return memberSession?.authenticated ? AUTHENTICATED_RELATED_WORD_LIMIT : FULL_RELATED_WORD_LIMIT;
+      }
+
       async function requestMemberSession() {
         const response = await fetch('/api/member-session', { credentials: 'same-origin' });
         if (!response.ok) {
@@ -342,7 +347,7 @@ const form = document.querySelector('#name-form');
           const gematria = await requestGematria(name);
 
           try {
-            const related = await requestRelatedWords(name.toLowerCase(), FULL_RELATED_WORD_LIMIT);
+            const related = await requestRelatedWords(name.toLowerCase(), getFullRelatedWordLimit());
             return { gematria, related };
           } catch (error) {
             return {

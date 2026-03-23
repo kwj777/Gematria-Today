@@ -375,6 +375,14 @@
         target.classList.add('d-none');
       }
 
+      function collapseAdminSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (!section || !section.classList.contains('show') || !window.bootstrap?.Collapse) {
+          return;
+        }
+        window.bootstrap.Collapse.getOrCreateInstance(section).hide();
+      }
+
       async function request(url, options = {}) {
         const response = await fetch(url, {
           credentials: 'same-origin',
@@ -691,6 +699,7 @@
           event.target.reset();
           showMessage(saveMessage, 'RSS feed saved.');
           await refreshDashboard();
+          collapseAdminSection('feedSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -716,6 +725,7 @@
           resetPostForm();
           showMessage(saveMessage, postId ? 'Blog post updated.' : 'Blog post published.');
           await refreshDashboard();
+          collapseAdminSection('postSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -743,6 +753,7 @@
           resetFaqForm();
           showMessage(saveMessage, faqId ? 'FAQ entry updated.' : 'FAQ entry saved.');
           await refreshDashboard();
+          collapseAdminSection('faqSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -782,6 +793,7 @@
           renderMembershipGrantMeta();
           event.target.reset();
           showMessage(saveMessage, payload.message || 'Premium membership granted.');
+          collapseAdminSection('membershipSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -806,6 +818,7 @@
           state.stripeSettings = payload.settings || null;
           renderEmailSettings();
           showMessage(saveMessage, 'Recovery email delivery settings saved.');
+          collapseAdminSection('emailSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -830,6 +843,7 @@
           state.emailSettings = payload.settings || null;
           renderStripeSettings();
           showMessage(saveMessage, 'Stripe account details saved.');
+          collapseAdminSection('stripeSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -851,6 +865,7 @@
           event.target.reset();
           showMessage(saveMessage, 'Admin task added.');
           await refreshDashboard();
+          collapseAdminSection('taskSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }

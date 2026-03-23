@@ -147,18 +147,33 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
       recoveryUrl ? `Reset your password: ${recoveryUrl}` : null,
     ].filter(Boolean).join('\n');
 
+  const recoveryCodeHtml = `
+    <span style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <code style="font-size:16px;padding:4px 8px;background:#f5f5f5;border-radius:4px;">${safeRecoveryCode}</code>
+      <button
+        type="button"
+        onclick="navigator.clipboard && navigator.clipboard.writeText('${safeRecoveryCode}')"
+        style="padding:4px 10px;border:1px solid #d0d7de;border-radius:6px;background:#ffffff;color:#24292f;cursor:pointer;font:inherit;"
+      >
+        Copy to clipboard
+      </button>
+    </span>
+    <br>
+    <span style="color:#57606a;font-size:12px;">If the button is unavailable in your email app, copy the recovery code manually.</span>
+  `;
+
   const html = recoveryType === 'forgot-userid'
     ? `
       <p>You requested a username reminder for your EndTimes.Today account.</p>
       <p><strong>Username:</strong> ${safeUsername}</p>
-      <p><strong>Recovery code:</strong> <code>${safeRecoveryCode}</code></p>
+      <p><strong>Recovery code:</strong> ${recoveryCodeHtml}</p>
       <p><strong>Expires:</strong> ${escapeHtml(expiresText)}</p>
       ${recoveryUrl ? `<p><a href="${escapeHtml(recoveryUrl)}">Open the sign-in page</a></p>` : ''}
     `
     : `
       <p>You requested a password reset code for your EndTimes.Today account.</p>
       <p><strong>Username:</strong> ${safeUsername}</p>
-      <p><strong>Recovery code:</strong> <code>${safeRecoveryCode}</code></p>
+      <p><strong>Recovery code:</strong> ${recoveryCodeHtml}</p>
       <p><strong>Expires:</strong> ${escapeHtml(expiresText)}</p>
       ${recoveryUrl ? `<p><a href="${escapeHtml(recoveryUrl)}">Open the password reset page</a></p>` : ''}
     `;

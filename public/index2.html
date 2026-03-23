@@ -69,38 +69,8 @@
           </div>
 
           <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-ride="carousel">
-            <div class="carousel-indicators blog-carousel-indicators position-static mb-4">
-              <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-              <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-            </div>
-            <div class="carousel-inner">
-              <div class="carousel-item active">
-                <article class="blog-slide-card p-4 p-lg-5">
-                  <span class="badge text-bg-warning mb-3">Research Workflow</span>
-                  <h3 class="mb-3">How to spot repeating number themes across related words</h3>
-                  <p class="text-muted mb-4">A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.</p>
-                  <div class="d-flex flex-wrap gap-2 mb-4">
-                    <span class="word-chip">Pattern Study</span>
-                    <span class="word-chip">Related Terms</span>
-                    <span class="word-chip">Workflow</span>
-                  </div>
-                  <a class="btn btn-primary" href="/blog.html#post-patterns">Read this post</a>
-                </article>
-              </div>
-              <div class="carousel-item">
-                <article class="blog-slide-card p-4 p-lg-5">
-                  <span class="badge text-bg-info mb-3">Name Analysis</span>
-                  <h3 class="mb-3">What to compare when two names share the same gematria value</h3>
-                  <p class="text-muted mb-4">Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.</p>
-                  <div class="d-flex flex-wrap gap-2 mb-4">
-                    <span class="word-chip">Names</span>
-                    <span class="word-chip">Comparison</span>
-                    <span class="word-chip">Interpretation</span>
-                  </div>
-                  <a class="btn btn-primary" href="/blog.html#post-names">Read this post</a>
-                </article>
-              </div>
-            </div>
+            <div id="blogPostsCarouselIndicators" class="carousel-indicators blog-carousel-indicators position-static mb-4"></div>
+            <div id="blogPostsCarouselInner" class="carousel-inner"></div>
             <button class="carousel-control-prev" type="button" data-bs-target="#blogPostsCarousel" data-bs-slide="prev">
               <span class="carousel-control-prev-icon" aria-hidden="true"></span>
               <span class="visually-hidden">Previous</span>
@@ -155,6 +125,66 @@
         </div>
       </div>
     </footer>
+    <script>
+      const fallbackPosts = [
+        {
+          slug: 'repeating-number-themes',
+          title: 'How to spot repeating number themes across related words',
+          tag: 'Research Workflow',
+          readTime: '5 minute read',
+          summary: 'A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.'
+        },
+        {
+          slug: 'matching-name-values',
+          title: 'What to compare when two names share the same gematria value',
+          tag: 'Name Analysis',
+          readTime: '4 minute read',
+          summary: 'Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.'
+        }
+      ];
+
+      const escapeHtml = (value = '') => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+
+      function renderHomepageSlider(posts) {
+        const normalizedPosts = (posts.length ? posts : fallbackPosts).slice(0, 5);
+        const indicators = document.getElementById('blogPostsCarouselIndicators');
+        const carouselInner = document.getElementById('blogPostsCarouselInner');
+
+        indicators.innerHTML = normalizedPosts.map((post, index) => `
+          <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}" ${index === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${index + 1}"></button>
+        `).join('');
+
+        carouselInner.innerHTML = normalizedPosts.map((post, index) => {
+          const slug = escapeHtml(post.slug || `post-${index}`);
+          const tagClass = index % 2 === 0 ? 'text-bg-warning' : 'text-bg-info';
+          return `
+            <div class="carousel-item ${index === 0 ? 'active' : ''}">
+              <article class="blog-slide-card p-4 p-lg-5">
+                <span class="badge ${tagClass} mb-3">${escapeHtml(post.tag || 'Featured Post')}</span>
+                <h3 class="mb-3">${escapeHtml(post.title || 'Blog post')}</h3>
+                <p class="text-muted mb-4">${escapeHtml(post.summary || 'Open the blog to keep reading this featured post.')}</p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                  ${post.readTime ? `<span class="word-chip">${escapeHtml(post.readTime)}</span>` : ''}
+                  <span class="word-chip">Featured</span>
+                  <span class="word-chip">Blog</span>
+                </div>
+                <a class="btn btn-primary" href="/blog.html?post=${encodeURIComponent(post.slug || `post-${index}`)}#${slug}">Read this post</a>
+              </article>
+            </div>
+          `;
+        }).join('');
+      }
+
+      fetch('/api/public-posts?featured=true&limit=5')
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load featured posts')))
+        .then((payload) => renderHomepageSlider(payload.items || []))
+        .catch(() => renderHomepageSlider([]));
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>

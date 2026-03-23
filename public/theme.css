@@ -120,6 +120,87 @@ body {
   object-position: center;
 }
 
+
+.membership-hero-card {
+  display: grid;
+  gap: 1rem;
+  min-height: 100%;
+  padding: 1.35rem;
+  color: #12304a;
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 102, 0.95), transparent 26%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(226, 241, 252, 0.95));
+  border: 1px solid rgba(53, 95, 140, 0.16);
+  border-radius: 1.25rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 1rem 2rem rgba(18, 48, 74, 0.14);
+}
+
+.membership-hero-card__header {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(53, 95, 140, 0.12);
+}
+
+.membership-hero-card__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(53, 95, 140, 0.82);
+}
+
+.membership-tier {
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(53, 95, 140, 0.12);
+}
+
+.membership-tier--free {
+  background: rgba(255,255,255,0.88);
+}
+
+.membership-tier--premium {
+  background: linear-gradient(135deg, rgba(53, 95, 140, 0.12), rgba(51, 161, 214, 0.2));
+}
+
+.membership-tier__label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  margin-bottom: 0.75rem;
+  border-radius: 999px;
+  background: rgba(18, 48, 74, 0.08);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.membership-tier__list {
+  display: grid;
+  gap: 0.6rem;
+  font-size: 0.96rem;
+}
+
+.membership-tier__list li {
+  position: relative;
+  padding-left: 1.2rem;
+}
+
+.membership-tier__list li::before {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  color: var(--bs-warning);
+}
+
+.membership-hero-card__footer {
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(18, 48, 74, 0.08);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
 .hero-media-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.12em;

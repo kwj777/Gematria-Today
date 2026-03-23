@@ -164,3 +164,69 @@ CREATE INDEX IF NOT EXISTS account_recovery_requests_user_type_idx
 
 CREATE INDEX IF NOT EXISTS account_recovery_requests_expires_idx
   ON account_recovery_requests (expires_at DESC);
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS summary TEXT;
+
+UPDATE posts
+SET summary = ''
+WHERE summary IS NULL;
+
+ALTER TABLE posts
+  ALTER COLUMN summary SET DEFAULT '';
+
+ALTER TABLE posts
+  ALTER COLUMN summary SET NOT NULL;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS body TEXT;
+
+UPDATE posts
+SET body = ''
+WHERE body IS NULL;
+
+ALTER TABLE posts
+  ALTER COLUMN body SET DEFAULT '';
+
+ALTER TABLE posts
+  ALTER COLUMN body SET NOT NULL;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS read_time TEXT;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN;
+
+UPDATE posts
+SET show_on_homepage = FALSE
+WHERE show_on_homepage IS NULL;
+
+ALTER TABLE posts
+  ALTER COLUMN show_on_homepage SET DEFAULT FALSE;
+
+ALTER TABLE posts
+  ALTER COLUMN show_on_homepage SET NOT NULL;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS status TEXT;
+
+UPDATE posts
+SET status = 'published'
+WHERE status IS NULL OR BTRIM(status) = '';
+
+ALTER TABLE posts
+  ALTER COLUMN status SET DEFAULT 'published';
+
+ALTER TABLE posts
+  ALTER COLUMN status SET NOT NULL;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+
+UPDATE posts
+SET published_at = COALESCE(published_at, created_at)
+WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+  AND published_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS posts_status_published_at_idx
+  ON posts(status, published_at DESC);

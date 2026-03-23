@@ -64,6 +64,8 @@ The membership implementation now exposes member auth/profile/history endpoints 
 
 Stripe-backed membership upgrades now also use `member-payment-checkout` and `member-payment-confirm`. Stripe credentials can now be managed from the admin back-office via `admin-settings`, with environment variables such as `STRIPE_SECRET_KEY` still supported as a fallback.
 
+Member and admin account recovery can now send transactional emails through SendGrid when outbound email is configured. Without SendGrid credentials, the recovery handlers continue to fall back to on-screen previews so local development and bootstrap flows still work.
+
 ## DDoS and abuse protection
 
 The serverless layer now includes:
@@ -93,6 +95,12 @@ Set these in Netlify to tune protection behavior:
 - `STRIPE_TIMEOUT_MS=5000` to control Stripe fetch timeouts
 - `TURNSTILE_SECRET_KEY=...` if you want auth flows to require and verify a client-side anti-bot challenge token against Cloudflare Turnstile
 - `TURNSTILE_EXPECTED_HOSTNAME=...` to pin Turnstile verification to a specific hostname instead of deriving it from the incoming request host header
+- `SENDGRID_API_KEY=...` to enable transactional email delivery for admin/member account recovery
+- `SENDGRID_FROM_EMAIL=...` verified sender address used for recovery emails
+- `SENDGRID_FROM_NAME="EndTimes.Today"` optional sender display name shown in recovery emails
+- `SENDGRID_REPLY_TO_EMAIL=...` optional reply-to address for recovery emails
+- `PUBLIC_SITE_URL=https://example.com` optional canonical site URL used in recovery email links
+- `ADMIN_EMAIL=...` bootstrap admin email address needed for admin username recovery
 
 ### Edge protection still required
 

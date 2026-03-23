@@ -37,14 +37,14 @@ export async function handler(event) {
           ? await sql`
             SELECT *
             FROM posts
-            WHERE status = 'published' AND show_on_homepage = TRUE
+            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND show_on_homepage = TRUE
             ORDER BY COALESCE(published_at, created_at) DESC
             ${requestedLimit ? sql`LIMIT ${requestedLimit}` : sql``}
           `
           : await sql`
             SELECT *
             FROM posts
-            WHERE status = 'published'
+            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
             ORDER BY COALESCE(published_at, created_at) DESC
             ${requestedLimit ? sql`LIMIT ${requestedLimit}` : sql``}
           `;

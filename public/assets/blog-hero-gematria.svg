@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Gematria blog hero artwork</title>
+  <desc id="desc">A cosmic gematria-themed illustration with glowing title text, sacred geometry, numbers, a book, and scrolls.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c1330"/>
+      <stop offset="40%" stop-color="#21456e"/>
+      <stop offset="75%" stop-color="#5c356f"/>
+      <stop offset="100%" stop-color="#e18a2b"/>
+    </linearGradient>
+    <radialGradient id="glowGold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff6bf" stop-opacity="1"/>
+      <stop offset="45%" stop-color="#ffd86b" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ff9d2f" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#bg)"/>
+  <g opacity="0.85">
+    <circle cx="180" cy="120" r="2" fill="#fff2b0"/><circle cx="230" cy="80" r="2" fill="#c7ebff"/><circle cx="420" cy="130" r="2.5" fill="#ffd36d"/>
+    <circle cx="540" cy="65" r="2" fill="#fff2b0"/><circle cx="690" cy="140" r="1.8" fill="#c7ebff"/><circle cx="860" cy="105" r="2" fill="#ffd36d"/>
+    <circle cx="1020" cy="70" r="2.5" fill="#fff2b0"/><circle cx="1170" cy="125" r="2" fill="#ffd36d"/><circle cx="1360" cy="90" r="2" fill="#c7ebff"/>
+    <circle cx="1490" cy="145" r="2" fill="#ffd36d"/><circle cx="118" cy="245" r="2" fill="#c7ebff"/><circle cx="310" cy="215" r="2" fill="#fff2b0"/>
+    <circle cx="515" cy="245" r="2" fill="#ffd36d"/><circle cx="980" cy="210" r="2.2" fill="#fff2b0"/><circle cx="1430" cy="250" r="2.5" fill="#c7ebff"/>
+    <circle cx="210" cy="980" r="2" fill="#ffd36d"/><circle cx="420" cy="1060" r="2" fill="#c7ebff"/><circle cx="1010" cy="1000" r="2.2" fill="#fff2b0"/>
+    <circle cx="1410" cy="1080" r="2" fill="#ffd36d"/><circle cx="1540" cy="920" r="2.2" fill="#fff2b0"/>
+  </g>
+  <text x="86" y="235" fill="#ffeeb3" font-size="170" font-family="Georgia, 'Times New Roman', serif" font-weight="700" filter="url(#softGlow)">GEMATRIA</text>
+  <g transform="translate(1180 285)" filter="url(#softGlow)">
+    <circle r="190" fill="url(#glowGold)" opacity="0.85"/>
+    <polygon points="0,-150 130,75 -130,75" fill="none" stroke="#ffd76d" stroke-width="12" stroke-linejoin="round"/>
+    <polygon points="0,150 130,-75 -130,-75" fill="none" stroke="#ffd76d" stroke-width="12" stroke-linejoin="round"/>
+    <circle r="210" fill="none" stroke="#ffbf5c" stroke-opacity="0.25" stroke-width="10" stroke-dasharray="12 18"/>
+  </g>
+  <g transform="translate(320 590)" filter="url(#softGlow)" stroke="#ffd990" stroke-width="4" fill="none" opacity="0.95">
+    <circle cx="0" cy="-180" r="22" fill="#bb7bff" stroke="#f1d6ff"/>
+    <circle cx="120" cy="-285" r="22" fill="#9be05b" stroke="#efffc8"/>
+    <circle cx="240" cy="-180" r="22" fill="#ff9f58" stroke="#ffe2c7"/>
+    <circle cx="0" cy="-35" r="22" fill="#ffbc6a" stroke="#fff0d2"/>
+    <circle cx="120" cy="-35" r="22" fill="#ffd84d" stroke="#fff7b7"/>
+    <circle cx="240" cy="-35" r="22" fill="#9f8cff" stroke="#ebe6ff"/>
+    <circle cx="0" cy="110" r="22" fill="#b8e87b" stroke="#f2ffd7"/>
+    <circle cx="120" cy="145" r="22" fill="#ff9d50" stroke="#ffe1c1"/>
+    <circle cx="240" cy="110" r="22" fill="#ffe0a6" stroke="#fff8dc"/>
+    <circle cx="120" cy="285" r="22" fill="#ffd95f" stroke="#fff8ce"/>
+    <line x1="120" y1="-285" x2="0" y2="-180"/><line x1="120" y1="-285" x2="240" y2="-180"/>
+    <line x1="0" y1="-180" x2="0" y2="-35"/><line x1="240" y1="-180" x2="240" y2="-35"/>
+    <line x1="0" y1="-35" x2="120" y2="-35"/><line x1="120" y1="-35" x2="240" y2="-35"/>
+    <line x1="120" y1="-285" x2="120" y2="145"/><line x1="0" y1="-35" x2="120" y2="145"/><line x1="240" y1="-35" x2="120" y2="145"/>
+    <line x1="0" y1="110" x2="120" y2="145"/><line x1="120" y1="145" x2="240" y2="110"/>
+    <line x1="0" y1="110" x2="0" y2="-35"/><line x1="240" y1="110" x2="240" y2="-35"/>
+    <line x1="0" y1="110" x2="120" y2="285"/><line x1="240" y1="110" x2="120" y2="285"/>
+    <line x1="120" y1="145" x2="120" y2="285"/>
+  </g>
+  <g fill="#ffe7a7" font-family="Georgia, serif" font-weight="700" filter="url(#softGlow)">
+    <text x="820" y="500" font-size="82">333</text>
+    <text x="580" y="640" font-size="96">777</text>
+    <text x="700" y="810" font-size="96">528</text>
+  </g>
+  <g>
+    <ellipse cx="810" cy="1010" rx="560" ry="130" fill="#8f4c1d" opacity="0.35"/>
+    <path d="M610 830 C680 760, 860 760, 930 830 L930 1010 C860 965, 680 965, 610 1010 Z" fill="#5e3117"/>
+    <path d="M615 835 C685 790, 860 790, 925 835 L925 992 C860 948, 690 948, 615 992 Z" fill="#f1c18b"/>
+    <path d="M615 835 C685 885, 860 885, 925 835 L925 992 C860 1042, 690 1042, 615 992 Z" fill="#f8e2bf" opacity="0.95"/>
+    <path d="M770 780 L826 682 L868 694 L808 794 Z" fill="#dda24e"/>
+    <path d="M820 695 L887 659 L845 730 Z" fill="#f6d082"/>
+    <rect x="1070" y="770" width="320" height="95" rx="40" fill="#f1c18b" stroke="#8a4f26" stroke-width="7" transform="rotate(12 1070 770)"/>
+    <circle cx="1105" cy="815" r="34" fill="#a7672f" stroke="#6e3f1e" stroke-width="7"/>
+    <circle cx="1383" cy="875" r="34" fill="#a7672f" stroke="#6e3f1e" stroke-width="7"/>
+    <rect x="1142" y="792" width="175" height="52" rx="18" fill="#4d698f" transform="rotate(12 1142 792)"/>
+    <circle cx="1285" cy="1010" r="78" fill="#f8e2bf" stroke="#b06d23" stroke-width="10"/>
+    <circle cx="1285" cy="1010" r="55" fill="none" stroke="#d8bc8c" stroke-width="4" opacity="0.8"/>
+  </g>
+  <g opacity="0.92">
+    <circle cx="1440" cy="860" r="46" fill="#caa0ff"/>
+    <circle cx="980" cy="610" r="34" fill="#72a6ff"/>
+    <circle cx="820" cy="340" r="26" fill="#66c2ff"/>
+    <circle cx="660" cy="1010" r="22" fill="#ffd86b"/>
+    <circle cx="530" cy="1080" r="18" fill="#6eb2ff"/>
+    <circle cx="360" cy="1020" r="28" fill="#ffd08b"/>
+    <circle cx="560" cy="370" r="22" fill="#7da6ff"/>
+  </g>
+</svg>

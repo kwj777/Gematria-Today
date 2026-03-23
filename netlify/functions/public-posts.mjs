@@ -33,21 +33,34 @@ export async function handler(event) {
       route: 'public-posts',
       ttlSeconds: 120,
       compute: async () => {
-        const rows = featuredOnly
-          ? await sql`
-            SELECT *
-            FROM posts
+        let rows;
+        if (featuredOnly && requestedLimit) {
+          rows = await sql`
+            SELECT * FROM posts
             WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND show_on_homepage = TRUE
             ORDER BY COALESCE(published_at, created_at) DESC
-            ${requestedLimit ? sql`LIMIT ${requestedLimit}` : sql``}
-          `
-          : await sql`
-            SELECT *
-            FROM posts
+            LIMIT ${requestedLimit}
+          `;
+        } else if (featuredOnly) {
+          rows = await sql`
+            SELECT * FROM posts
+            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND show_on_homepage = TRUE
+            ORDER BY COALESCE(published_at, created_at) DESC
+          `;
+        } else if (requestedLimit) {
+          rows = await sql`
+            SELECT * FROM posts
             WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
             ORDER BY COALESCE(published_at, created_at) DESC
-            ${requestedLimit ? sql`LIMIT ${requestedLimit}` : sql``}
+            LIMIT ${requestedLimit}
           `;
+        } else {
+          rows = await sql`
+            SELECT * FROM posts
+            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+            ORDER BY COALESCE(published_at, created_at) DESC
+          `;
+        }
         return { items: rows.map(formatPost) };
       },
     });

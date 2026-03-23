@@ -205,8 +205,22 @@
                 <form id="stripeSettingsForm" class="row g-3">
                   <div class="col-12"><label class="form-label" for="stripeAccountId">Stripe account ID</label><input id="stripeAccountId" class="form-control" placeholder="acct_..." /></div>
                   <div class="col-12"><label class="form-label" for="stripePublishableKey">Publishable key</label><input id="stripePublishableKey" class="form-control" placeholder="pk_live_..." /></div>
-                  <div class="col-12"><label class="form-label" for="stripeSecretKey">Secret key</label><input id="stripeSecretKey" class="form-control" placeholder="sk_live_..." autocomplete="off" /></div>
-                  <div class="col-12"><label class="form-label" for="stripeWebhookSigningSecret">Webhook signing secret</label><input id="stripeWebhookSigningSecret" class="form-control" placeholder="whsec_..." autocomplete="off" /></div>
+                  <div class="col-12">
+                    <label class="form-label" for="stripeSecretKey">Secret key</label>
+                    <div class="input-group">
+                      <input id="stripeSecretKey" class="form-control" type="password" placeholder="Enter a new Stripe secret key" autocomplete="new-password" data-secret-input="stripeSecretKey" disabled />
+                      <button id="stripeSecretKeyToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeSecretKey">Change</button>
+                    </div>
+                    <div id="stripeSecretKeyHelp" class="form-text text-muted">Hidden after save. Use Change only when replacing the stored key.</div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="stripeWebhookSigningSecret">Webhook signing secret</label>
+                    <div class="input-group">
+                      <input id="stripeWebhookSigningSecret" class="form-control" type="password" placeholder="Enter a new Stripe webhook secret" autocomplete="new-password" data-secret-input="stripeWebhookSigningSecret" disabled />
+                      <button id="stripeWebhookSigningSecretToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeWebhookSigningSecret">Change</button>
+                    </div>
+                    <div id="stripeWebhookSigningSecretHelp" class="form-text text-muted">Hidden after save. Use Change only when replacing the stored secret.</div>
+                  </div>
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save Stripe settings</button></div>
                 </form>
                 <div id="stripeSettingsMeta" class="small text-muted mt-3">Stripe settings have not been loaded yet.</div>
@@ -274,8 +288,12 @@
       const taskCount = document.getElementById('taskCount');
       const faqCount = document.getElementById('faqCount');
       const sessionMeta = document.getElementById('sessionMeta');
+      const stripeSecretKeyInput = document.getElementById('stripeSecretKey');
+      const stripeWebhookSigningSecretInput = document.getElementById('stripeWebhookSigningSecret');
+      const stripeSecretKeyToggle = document.getElementById('stripeSecretKeyToggle');
+      const stripeWebhookSigningSecretToggle = document.getElementById('stripeWebhookSigningSecretToggle');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -421,6 +439,32 @@
         document.getElementById('faqCancelButton').classList.remove('d-none');
       }
 
+
+      function setSecretFieldMode(fieldName, shouldEnable) {
+        const config = {
+          stripeSecretKey: {
+            input: stripeSecretKeyInput,
+            button: stripeSecretKeyToggle,
+            stateKey: 'replaceStripeSecretKey',
+            placeholder: 'Enter a new Stripe secret key',
+          },
+          stripeWebhookSigningSecret: {
+            input: stripeWebhookSigningSecretInput,
+            button: stripeWebhookSigningSecretToggle,
+            stateKey: 'replaceStripeWebhookSigningSecret',
+            placeholder: 'Enter a new Stripe webhook secret',
+          },
+        }[fieldName];
+        if (!config) return;
+        state[config.stateKey] = shouldEnable;
+        config.input.disabled = !shouldEnable;
+        config.input.value = '';
+        config.input.placeholder = config.placeholder;
+        config.button.textContent = shouldEnable ? 'Keep existing' : 'Change';
+        config.button.classList.toggle('btn-outline-secondary', !shouldEnable);
+        config.button.classList.toggle('btn-outline-warning', shouldEnable);
+      }
+
       function renderMembershipGrantMeta() {
         const meta = document.getElementById('membershipGrantMeta');
         const member = state.latestGrantedMember;
@@ -439,12 +483,21 @@
         const settings = state.stripeSettings || {};
         document.getElementById('stripeAccountId').value = settings.stripeAccountId || '';
         document.getElementById('stripePublishableKey').value = settings.stripePublishableKey || '';
-        document.getElementById('stripeSecretKey').value = settings.stripeSecretKey || '';
-        document.getElementById('stripeWebhookSigningSecret').value = settings.stripeWebhookSigningSecret || '';
-        const configuredCount = ['stripeAccountId', 'stripePublishableKey', 'stripeSecretKey', 'stripeWebhookSigningSecret']
-          .filter((key) => Boolean(settings[key])).length;
+        setSecretFieldMode('stripeSecretKey', false);
+        setSecretFieldMode('stripeWebhookSigningSecret', false);
+        const configuredCount = [
+          settings.stripeAccountId,
+          settings.stripePublishableKey,
+          settings.hasStripeSecretKey,
+          settings.hasStripeWebhookSigningSecret,
+        ].filter(Boolean).length;
+        const hiddenDetails = [
+          settings.hasStripeSecretKey ? 'secret key' : '',
+          settings.hasStripeWebhookSigningSecret ? 'webhook signing secret' : '',
+        ].filter(Boolean);
+        const metaSuffix = hiddenDetails.length ? ` Hidden ${hiddenDetails.join(' and ')} stored securely.` : '';
         document.getElementById('stripeSettingsMeta').textContent = configuredCount
-          ? `${configuredCount} Stripe detail${configuredCount === 1 ? '' : 's'} configured for hosted checkout.`
+          ? `${configuredCount} Stripe detail${configuredCount === 1 ? '' : 's'} configured for hosted checkout.${metaSuffix}`
           : 'No Stripe account details saved yet.';
       }
 
@@ -650,8 +703,10 @@
             body: JSON.stringify({
               stripeAccountId: document.getElementById('stripeAccountId').value,
               stripePublishableKey: document.getElementById('stripePublishableKey').value,
-              stripeSecretKey: document.getElementById('stripeSecretKey').value,
-              stripeWebhookSigningSecret: document.getElementById('stripeWebhookSigningSecret').value
+              stripeSecretKey: state.replaceStripeSecretKey ? stripeSecretKeyInput.value : undefined,
+              stripeWebhookSigningSecret: state.replaceStripeWebhookSigningSecret ? stripeWebhookSigningSecretInput.value : undefined,
+              replaceStripeSecretKey: state.replaceStripeSecretKey,
+              replaceStripeWebhookSigningSecret: state.replaceStripeWebhookSigningSecret
             })
           });
           state.stripeSettings = payload.settings || null;
@@ -684,7 +739,18 @@
       });
 
       document.addEventListener('click', async (event) => {
-        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask } = event.target.dataset;
+        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask, enableSecret } = event.target.dataset;
+        if (enableSecret) {
+          const stateKey = enableSecret === 'stripeSecretKey' ? 'replaceStripeSecretKey' : 'replaceStripeWebhookSigningSecret';
+          const shouldEnable = !state[stateKey];
+          setSecretFieldMode(enableSecret, shouldEnable);
+          if (shouldEnable) {
+            ({ stripeSecretKey: stripeSecretKeyInput, stripeWebhookSigningSecret: stripeWebhookSigningSecretInput }[enableSecret])?.focus();
+          } else {
+            event.target.blur();
+          }
+          return;
+        }
         if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask) {
           return;
         }

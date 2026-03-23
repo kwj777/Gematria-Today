@@ -36,6 +36,12 @@ export async function ensureAdminSchema(sql) {
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
+  await sql`ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS email TEXT`;
+
+  await sql`UPDATE users SET email = LOWER(email) WHERE email IS NOT NULL`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (LOWER(email)) WHERE email IS NOT NULL`;
+
   await sql`CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -135,6 +141,7 @@ export async function syncBootstrapAdminUser(sql) {
   const username = process.env.ADMIN_USERNAME;
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;
   const password = process.env.ADMIN_PASSWORD;
+  const email = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase() || null;
 
   if (!username || (!passwordHash && !password)) {
     return;
@@ -142,10 +149,10 @@ export async function syncBootstrapAdminUser(sql) {
 
   const effectiveHash = passwordHash || await hashPassword(password);
   await sql`
-    INSERT INTO users (id, username, password_hash, role)
-    VALUES (${crypto.randomUUID()}, ${username}, ${effectiveHash}, 'admin')
+    INSERT INTO users (id, username, email, password_hash, role)
+    VALUES (${crypto.randomUUID()}, ${username}, ${email}, ${effectiveHash}, 'admin')
     ON CONFLICT (username)
-    DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, updated_at = NOW()
+    DO UPDATE SET email = COALESCE(EXCLUDED.email, users.email), password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, updated_at = NOW()
   `;
 }
 

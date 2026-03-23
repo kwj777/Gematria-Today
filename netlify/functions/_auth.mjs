@@ -11,6 +11,96 @@ import {
 const scrypt = promisify(crypto.scrypt);
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
+
+const ACCOUNT_RECOVERY_TTL_MS = 1000 * 60 * 30;
+
+export async function ensureAccountRecoverySchema(sql) {
+  await sql`CREATE TABLE IF NOT EXISTS account_recovery_requests (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL,
+    recovery_type TEXT NOT NULL,
+    lookup_key TEXT,
+    token_hash TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    consumed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+
+  await sql`CREATE INDEX IF NOT EXISTS account_recovery_requests_user_type_idx
+    ON account_recovery_requests (user_id, recovery_type, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS account_recovery_requests_expires_idx
+    ON account_recovery_requests (expires_at DESC)`;
+}
+
+export async function createAccountRecoveryRequest(sql, {
+  userId,
+  role,
+  recoveryType,
+  lookupKey = null,
+  ttlMs = ACCOUNT_RECOVERY_TTL_MS,
+} = {}) {
+  if (!userId || !role || !recoveryType) {
+    throw new Error('Missing recovery request details');
+  }
+
+  await ensureAccountRecoverySchema(sql);
+  const token = crypto.randomBytes(24).toString('hex');
+  const expiresAt = new Date(Date.now() + ttlMs);
+
+  await sql`DELETE FROM account_recovery_requests
+    WHERE user_id = ${userId}
+      AND role = ${role}
+      AND recovery_type = ${recoveryType}
+      AND consumed_at IS NULL`;
+
+  await sql`INSERT INTO account_recovery_requests (
+      id,
+      user_id,
+      role,
+      recovery_type,
+      lookup_key,
+      token_hash,
+      expires_at
+    )
+    VALUES (
+      ${crypto.randomUUID()},
+      ${userId},
+      ${role},
+      ${recoveryType},
+      ${lookupKey},
+      ${hashToken(token)},
+      ${expiresAt.toISOString()}
+    )`;
+
+  return { token, expiresAt };
+}
+
+export async function consumeAccountRecoveryRequest(sql, {
+  role,
+  recoveryType,
+  token,
+} = {}) {
+  await ensureAccountRecoverySchema(sql);
+  const normalizedToken = String(token || '').trim();
+  if (!role || !recoveryType || !normalizedToken) {
+    return null;
+  }
+
+  const rows = await sql`
+    UPDATE account_recovery_requests
+    SET consumed_at = NOW()
+    WHERE token_hash = ${hashToken(normalizedToken)}
+      AND role = ${role}
+      AND recovery_type = ${recoveryType}
+      AND consumed_at IS NULL
+      AND expires_at > NOW()
+    RETURNING *
+  `;
+
+  return rows[0] || null;
+}
+
 export const AUTH_COOKIES = {
   admin: 'endtimes_admin_session',
   member: 'endtimes_member_session',
@@ -66,7 +156,7 @@ export async function verifyPassword(password, storedHash) {
   return crypto.timingSafeEqual(Buffer.from(candidate, 'utf8'), Buffer.from(key, 'utf8'));
 }
 
-function hashToken(token) {
+export function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 

@@ -24,19 +24,37 @@ export async function handler(event) {
       });
     }
 
+    const featuredOnly = event.queryStringParameters?.featured === 'true';
+    const limitValue = Number.parseInt(event.queryStringParameters?.limit || '', 10);
+    const requestedLimit = Number.isFinite(limitValue) && limitValue > 0 ? Math.min(limitValue, 12) : null;
+
     const cacheResult = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'public-posts' }),
+      cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit }),
       route: 'public-posts',
       ttlSeconds: 120,
       compute: async () => {
-        const rows = await sql`SELECT * FROM posts WHERE status = 'published' ORDER BY COALESCE(published_at, created_at) DESC`;
+        const rows = featuredOnly
+          ? await sql`
+            SELECT *
+            FROM posts
+            WHERE status = 'published' AND show_on_homepage = TRUE
+            ORDER BY COALESCE(published_at, created_at) DESC
+            ${requestedLimit ? sql`LIMIT ${requestedLimit}` : sql``}
+          `
+          : await sql`
+            SELECT *
+            FROM posts
+            WHERE status = 'published'
+            ORDER BY COALESCE(published_at, created_at) DESC
+            ${requestedLimit ? sql`LIMIT ${requestedLimit}` : sql``}
+          `;
         return { items: rows.map(formatPost) };
       },
     });
 
     await logRequestAudit(sql, event, {
       route: 'public-posts',
-      action: 'read',
+      action: featuredOnly ? 'read_featured' : 'read',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
     });
 

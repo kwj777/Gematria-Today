@@ -73,12 +73,16 @@ export async function ensureAdminSchema(sql) {
     summary TEXT NOT NULL,
     body TEXT NOT NULL,
     read_time TEXT,
+    show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE,
     status TEXT NOT NULL DEFAULT 'published',
     published_at TIMESTAMPTZ,
     created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+
+  await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE`;
 
   await sql`CREATE INDEX IF NOT EXISTS posts_status_published_at_idx ON posts(status, published_at DESC)`;
 
@@ -184,6 +188,7 @@ export function formatPost(row) {
     summary: row.summary,
     body: row.body,
     readTime: row.read_time,
+    showOnHomepage: row.show_on_homepage,
     status: row.status,
     publishedAt: row.published_at,
     createdAt: row.created_at,

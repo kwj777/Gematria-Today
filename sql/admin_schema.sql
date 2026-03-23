@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS posts (
   summary TEXT NOT NULL,
   body TEXT NOT NULL,
   read_time TEXT,
+  show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'published',
   published_at TIMESTAMPTZ,
   created_by TEXT REFERENCES users(id) ON DELETE SET NULL,

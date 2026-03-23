@@ -176,6 +176,12 @@
                   <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
                   <div class="col-md-6"><label class="form-label" for="postTag">Tag</label><input id="postTag" class="form-control" placeholder="Research Workflow" /></div>
                   <div class="col-md-6"><label class="form-label" for="postReadTime">Read time</label><input id="postReadTime" class="form-control" placeholder="5 minute read" /></div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input id="postShowOnHomepage" class="form-check-input" type="checkbox" />
+                      <label class="form-check-label" for="postShowOnHomepage">Show this post in the home page slider</label>
+                    </div>
+                  </div>
                   <div class="col-12"><label class="form-label" for="postSummary">Summary</label><textarea id="postSummary" class="form-control" rows="2" required></textarea></div>
                   <div class="col-12"><label class="form-label" for="postBody">Body</label><textarea id="postBody" class="form-control" rows="7" placeholder="HTML is supported for formatting (for example: <p>, <strong>, <ul>, <a>). Plain text still works with blank lines." required></textarea></div>
                   <div class="col-12 d-flex flex-column flex-sm-row gap-2">
@@ -433,6 +439,7 @@
                 <div class="d-flex flex-wrap gap-2 mb-2">
                   ${post.tag ? `<span class="badge text-bg-warning">${escapeHtml(post.tag)}</span>` : ''}
                   ${post.readTime ? `<span class="badge text-bg-light">${escapeHtml(post.readTime)}</span>` : ''}
+                  ${post.showOnHomepage ? '<span class="badge text-bg-primary">Home slider</span>' : ''}
                 </div>
                 <h4 class="h6 mb-1">${escapeHtml(post.title)}</h4>
                 <p class="small text-muted mb-2">${escapeHtml(post.summary)}</p>
@@ -452,6 +459,7 @@
         document.getElementById('postId').value = '';
         document.getElementById('postSubmitButton').textContent = 'Publish blog post';
         document.getElementById('postCancelButton').classList.add('d-none');
+        document.getElementById('postShowOnHomepage').checked = false;
       }
 
       function startPostEdit(postId) {
@@ -462,6 +470,7 @@
         document.getElementById('postTitle').value = post.title || '';
         document.getElementById('postTag').value = post.tag || '';
         document.getElementById('postReadTime').value = post.readTime || '';
+        document.getElementById('postShowOnHomepage').checked = Boolean(post.showOnHomepage);
         document.getElementById('postSummary').value = post.summary || '';
         document.getElementById('postBody').value = post.body || '';
         document.getElementById('postSubmitButton').textContent = 'Update blog post';
@@ -755,6 +764,7 @@
               title: document.getElementById('postTitle').value,
               tag: document.getElementById('postTag').value,
               readTime: document.getElementById('postReadTime').value,
+              showOnHomepage: document.getElementById('postShowOnHomepage').checked,
               summary: document.getElementById('postSummary').value,
               body: document.getElementById('postBody').value,
               status: 'published'

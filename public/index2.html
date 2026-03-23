@@ -125,11 +125,11 @@
     </footer>
     <script>
       const escapeHtml = (value = '') => String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
       function renderHomepageSlider(posts) {
         const normalizedPosts = posts.slice(0, 5);
@@ -176,10 +176,22 @@
         }).join('');
       }
 
-      fetch('/api/public-posts?featured=true&limit=5')
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load featured posts')))
-        .then((payload) => renderHomepageSlider(payload.items || []))
-        .catch(() => renderHomepageSlider([]));
+      renderHomepageSlider([]);
+
+      const fetchFeaturedPosts = async () => {
+        const response = await fetch('/api/public-posts?featured=true&limit=5');
+        if (!response.ok) {
+          throw new Error('Failed to load featured posts');
+        }
+        return response.json();
+      };
+
+      Promise.race([
+        fetchFeaturedPosts(),
+        new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
+      ])
+        .then((payload) => renderHomepageSlider(payload?.items || []))
+        .catch(() => {});
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

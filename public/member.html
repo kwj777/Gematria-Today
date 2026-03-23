@@ -94,6 +94,7 @@
                 <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" required /></div>
                 <div class="col-12 d-grid"><button class="btn btn-outline-primary" type="submit">Sign in</button></div>
               </form>
+              <div id="memberRecoveryResult" class="alert alert-info small d-none mt-3 mb-0" role="status"></div>
               <hr class="my-4" />
               <div class="row g-3">
                 <div class="col-12">
@@ -118,9 +119,6 @@
                     <div class="col-md-6"><label class="form-label" for="resetNewPassword">New password</label><input id="resetNewPassword" class="form-control" type="password" minlength="8" required /></div>
                     <div class="col-12 d-grid"><button class="btn btn-outline-success" type="submit">Reset password</button></div>
                   </form>
-                </div>
-                <div class="col-12">
-                  <div id="memberRecoveryResult" class="small text-muted"></div>
                 </div>
               </div>
             </div>
@@ -252,8 +250,11 @@
         memberAlert.className = 'alert d-none';
       }
 
-      function renderRecoveryResult(label) {
-        memberRecoveryResult.innerHTML = `<span class="text-muted">${label}</span>`;
+      function renderRecoveryResult(label = '', tone = 'info') {
+        memberRecoveryResult.textContent = label;
+        memberRecoveryResult.className = label
+          ? `alert alert-${tone} small mt-3 mb-0`
+          : 'alert alert-info small d-none mt-3 mb-0';
       }
 
       async function request(url, options = {}) {
@@ -530,6 +531,7 @@
       document.getElementById('loginForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAlert();
+        renderRecoveryResult();
         try {
           session = await request('/api/member-login', {
             method: 'POST',
@@ -559,8 +561,7 @@
               email: document.getElementById('forgotUseridEmail').value.trim(),
             }),
           });
-          showAlert(payload.message, 'info');
-          renderRecoveryResult('If the account exists, check your email for username recovery details.');
+          renderRecoveryResult(payload.message, 'info');
         } catch (error) {
           showAlert(error.message || 'Unable to recover your username.');
         }
@@ -577,8 +578,7 @@
               identifier: document.getElementById('forgotPasswordIdentifier').value.trim(),
             }),
           });
-          showAlert(payload.message, 'info');
-          renderRecoveryResult('If the account exists, check your email for the one-time reset code.');
+          renderRecoveryResult(payload.message, 'info');
         } catch (error) {
           showAlert(error.message || 'Unable to start password recovery.');
         }

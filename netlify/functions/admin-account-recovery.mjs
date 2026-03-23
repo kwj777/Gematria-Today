@@ -56,7 +56,6 @@ export async function handler(event) {
       }
 
       const rows = await sql`SELECT id, username, email FROM users WHERE role = 'admin' AND LOWER(email) = ${email} LIMIT 1`;
-      let delivery = 'onscreen-preview';
       const recovery = rows.length ? await createAccountRecoveryRequest(sql, {
         userId: rows[0].id,
         role: 'admin',
@@ -64,7 +63,7 @@ export async function handler(event) {
         lookupKey: email,
       }) : null;
       if (recovery) {
-        const emailResult = await sendRecoveryEmail({
+        await sendRecoveryEmail({
           toEmail: rows[0].email,
           username: rows[0].username,
           recoveryCode: recovery.token,
@@ -72,7 +71,6 @@ export async function handler(event) {
           role: 'admin',
           recoveryType: 'forgot-userid',
         });
-        delivery = emailResult.delivery;
       }
 
       await logRequestAudit(sql, event, {
@@ -84,15 +82,7 @@ export async function handler(event) {
 
       return jsonResponse(200, {
         ok: true,
-        message: recovery && delivery === 'email'
-          ? 'If that admin email is configured, recovery details have been sent by email.'
-          : 'If that admin email is configured, the username recovery details are shown below.',
-        recovery: recovery ? {
-          username: rows[0].username,
-          recoveryCode: recovery.token,
-          expiresAt: recovery.expiresAt,
-          delivery,
-        } : null,
+        message: 'If that admin email is configured, recovery details have been sent by email.',
       });
     }
 
@@ -104,7 +94,6 @@ export async function handler(event) {
 
       const email = normalizeEmail(identifier);
       const rows = await sql`SELECT id, username, email FROM users WHERE role = 'admin' AND (username = ${identifier} OR LOWER(email) = ${email}) LIMIT 1`;
-      let delivery = 'onscreen-preview';
       const recovery = rows.length ? await createAccountRecoveryRequest(sql, {
         userId: rows[0].id,
         role: 'admin',
@@ -112,7 +101,7 @@ export async function handler(event) {
         lookupKey: identifier,
       }) : null;
       if (recovery) {
-        const emailResult = await sendRecoveryEmail({
+        await sendRecoveryEmail({
           toEmail: rows[0].email || email,
           username: rows[0].username,
           recoveryCode: recovery.token,
@@ -120,7 +109,6 @@ export async function handler(event) {
           role: 'admin',
           recoveryType: 'forgot-password',
         });
-        delivery = emailResult.delivery;
       }
 
       await logRequestAudit(sql, event, {
@@ -132,15 +120,7 @@ export async function handler(event) {
 
       return jsonResponse(200, {
         ok: true,
-        message: recovery && delivery === 'email'
-          ? 'If that admin account exists, a one-time password reset code has been sent by email.'
-          : 'If that admin account exists, a one-time password reset code is available below.',
-        recovery: recovery ? {
-          username: rows[0].username,
-          recoveryCode: recovery.token,
-          expiresAt: recovery.expiresAt,
-          delivery,
-        } : null,
+        message: 'If that admin account exists, a one-time password reset code has been sent by email.',
       }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
     }
 

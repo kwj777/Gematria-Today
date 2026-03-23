@@ -98,7 +98,7 @@
               <div class="row g-3">
                 <div class="col-12">
                   <h3 class="h5 mb-2">Account recovery</h3>
-                  <p class="text-muted small mb-0">Use your email to recover your username or generate a one-time password reset code. When SendGrid is configured, recovery details are sent by email; otherwise they are displayed on screen.</p>
+                  <p class="text-muted small mb-0">Use your email to recover your username or request a one-time password reset code. Recovery details are sent only by email.</p>
                 </div>
                 <div class="col-12">
                   <form id="forgotUseridForm" class="row g-2">
@@ -252,21 +252,8 @@
         memberAlert.className = 'alert d-none';
       }
 
-      function renderRecoveryResult(payload, label) {
-        if (!payload?.recovery) {
-          memberRecoveryResult.innerHTML = `<span class="text-muted">${label}</span>`;
-          return;
-        }
-
-        const recovery = payload.recovery;
-        memberRecoveryResult.innerHTML = `
-          <div class="alert alert-info mb-0">
-            <div><strong>Recovery preview:</strong> ${label}</div>
-            ${recovery.username ? `<div>Username: <code>${recovery.username}</code></div>` : ''}
-            <div>Recovery code: <code>${recovery.recoveryCode}</code></div>
-            <div>Expires: ${new Date(recovery.expiresAt).toLocaleString()}</div>
-          </div>
-        `;
+      function renderRecoveryResult(label) {
+        memberRecoveryResult.innerHTML = `<span class="text-muted">${label}</span>`;
       }
 
       async function request(url, options = {}) {
@@ -573,7 +560,7 @@
             }),
           });
           showAlert(payload.message, 'info');
-          renderRecoveryResult(payload, 'Username recovery is available for the matched member account.');
+          renderRecoveryResult('If the account exists, check your email for username recovery details.');
         } catch (error) {
           showAlert(error.message || 'Unable to recover your username.');
         }
@@ -591,10 +578,7 @@
             }),
           });
           showAlert(payload.message, 'info');
-          renderRecoveryResult(payload, 'Use this one-time code with your new password below.');
-          if (payload.recovery?.recoveryCode) {
-            document.getElementById('resetRecoveryCode').value = payload.recovery.recoveryCode;
-          }
+          renderRecoveryResult('If the account exists, check your email for the one-time reset code.');
         } catch (error) {
           showAlert(error.message || 'Unable to start password recovery.');
         }
@@ -618,7 +602,7 @@
           populateProfile(session.member, session.profile);
           await loadHistory();
           showAlert(payload.message || 'Password reset complete.', 'success');
-          renderRecoveryResult(null, 'Recovery code consumed.');
+          renderRecoveryResult('Recovery code consumed.');
           event.target.reset();
         } catch (error) {
           showAlert(error.message || 'Unable to reset your password.');

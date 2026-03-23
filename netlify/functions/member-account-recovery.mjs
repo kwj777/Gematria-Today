@@ -13,6 +13,7 @@ import {
   verifyTurnstileToken,
 } from './_auth.mjs';
 import { ensureMemberProfile, ensureMemberSchema, formatMemberUser } from './_member.mjs';
+import { sendRecoveryEmail } from './_email.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
 function normalizeEmail(value) {
@@ -63,6 +64,7 @@ export async function handler(event) {
 
       let recovery = null;
       let member = null;
+      let delivery = 'onscreen-preview';
       if (rows.length) {
         member = formatMemberUser(rows[0]);
         recovery = await createAccountRecoveryRequest(sql, {
@@ -71,6 +73,15 @@ export async function handler(event) {
           recoveryType: 'forgot-userid',
           lookupKey: email,
         });
+        const emailResult = await sendRecoveryEmail({
+          toEmail: member.email,
+          username: member.username,
+          recoveryCode: recovery.token,
+          expiresAt: recovery.expiresAt,
+          role: 'member',
+          recoveryType: 'forgot-userid',
+        });
+        delivery = emailResult.delivery;
       }
 
       await logRequestAudit(sql, event, {
@@ -82,12 +93,14 @@ export async function handler(event) {
 
       return jsonResponse(200, {
         ok: true,
-        message: 'If a membership account matches that email, the username recovery details are shown below.',
+        message: recovery && delivery === 'email'
+          ? 'If a membership account matches that email, recovery details have been sent by email.'
+          : 'If a membership account matches that email, the username recovery details are shown below.',
         recovery: recovery ? {
           username: member.username,
           recoveryCode: recovery.token,
           expiresAt: recovery.expiresAt,
-          delivery: 'onscreen-preview',
+          delivery,
         } : null,
       });
     }
@@ -100,19 +113,32 @@ export async function handler(event) {
 
       const email = normalizeEmail(identifier);
       const rows = await sql`
-        SELECT id, username
+        SELECT id, username, email
         FROM users
         WHERE role = 'member'
           AND (username = ${identifier} OR LOWER(email) = ${email})
         LIMIT 1
       `;
 
-      const recovery = rows.length ? await createAccountRecoveryRequest(sql, {
-        userId: rows[0].id,
-        role: 'member',
-        recoveryType: 'forgot-password',
-        lookupKey: identifier,
-      }) : null;
+      let delivery = 'onscreen-preview';
+      let recovery = null;
+      if (rows.length) {
+        recovery = await createAccountRecoveryRequest(sql, {
+          userId: rows[0].id,
+          role: 'member',
+          recoveryType: 'forgot-password',
+          lookupKey: identifier,
+        });
+        const emailResult = await sendRecoveryEmail({
+          toEmail: rows[0].email || email || null,
+          username: rows[0].username,
+          recoveryCode: recovery.token,
+          expiresAt: recovery.expiresAt,
+          role: 'member',
+          recoveryType: 'forgot-password',
+        });
+        delivery = emailResult.delivery;
+      }
 
       await logRequestAudit(sql, event, {
         route: 'member-account-recovery',
@@ -123,12 +149,14 @@ export async function handler(event) {
 
       return jsonResponse(200, {
         ok: true,
-        message: 'If that membership account exists, a one-time password reset code is available below.',
+        message: recovery && delivery === 'email'
+          ? 'If that membership account exists, a one-time password reset code has been sent by email.'
+          : 'If that membership account exists, a one-time password reset code is available below.',
         recovery: recovery ? {
           username: rows[0].username,
           recoveryCode: recovery.token,
           expiresAt: recovery.expiresAt,
-          delivery: 'onscreen-preview',
+          delivery,
         } : null,
       }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
     }

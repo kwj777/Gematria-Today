@@ -82,7 +82,42 @@ export async function ensureAdminSchema(sql) {
   )`;
 
   await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS summary TEXT`;
+
+  await sql`ALTER TABLE posts
+    ALTER COLUMN summary SET DEFAULT ''`;
+
+  await sql`UPDATE posts SET summary = '' WHERE summary IS NULL`;
+
+  await sql`ALTER TABLE posts
+    ALTER COLUMN summary SET NOT NULL`;
+
+  await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS body TEXT`;
+
+  await sql`ALTER TABLE posts
+    ALTER COLUMN body SET DEFAULT ''`;
+
+  await sql`UPDATE posts SET body = '' WHERE body IS NULL`;
+
+  await sql`ALTER TABLE posts
+    ALTER COLUMN body SET NOT NULL`;
+
+  await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS read_time TEXT`;
+
+  await sql`ALTER TABLE posts
     ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE`;
+
+  await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'published'`;
+
+  await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`;
+
+  await sql`UPDATE posts
+    SET published_at = COALESCE(published_at, created_at)
+    WHERE status = 'published' AND published_at IS NULL`;
 
   await sql`CREATE INDEX IF NOT EXISTS posts_status_published_at_idx ON posts(status, published_at DESC)`;
 

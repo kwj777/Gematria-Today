@@ -239,6 +239,46 @@ footer.site-footer {
 
 
 
+.admin-dashboard-section {
+  overflow: hidden;
+}
+
+.admin-section-toggle {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  text-align: left;
+}
+
+.admin-section-toggle:focus-visible {
+  outline: 3px solid rgba(var(--bs-primary-rgb), 0.28);
+  outline-offset: 0.35rem;
+  border-radius: 0.75rem;
+}
+
+.admin-section-toggle-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--bs-primary);
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.admin-section-toggle.collapsed .admin-section-toggle-icon {
+  transform: rotate(0deg);
+}
+
+.admin-section-body {
+  border-top: 1px solid rgba(53, 65, 79, 0.08);
+  padding-top: 1.25rem;
+}
+
 .member-history-card {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }

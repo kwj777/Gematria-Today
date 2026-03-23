@@ -134,14 +134,18 @@
 
           <div class="row g-4">
             <div class="col-xl-4">
-              <section class="content-panel p-4 h-100">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="section-kicker mb-2">News Sources</p>
-                    <h3 class="h4 mb-0">Add RSS feeds</h3>
-                  </div>
-                  <span class="badge text-bg-info">News</span>
-                </div>
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feedSectionBody" aria-expanded="false" aria-controls="feedSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">News Sources</span>
+                    <span class="h4 mb-0 d-block">Add RSS feeds</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-info">News</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="feedSectionBody" class="collapse admin-section-body mt-4">
                 <form id="feedForm" class="row g-3">
                   <div class="col-12"><label class="form-label" for="feedName">Feed name</label><input id="feedName" class="form-control" required /></div>
                   <div class="col-12"><label class="form-label" for="feedUrl">RSS URL</label><input id="feedUrl" class="form-control" type="url" placeholder="https://example.com/feed.xml" required /></div>
@@ -150,18 +154,23 @@
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save RSS feed</button></div>
                 </form>
                 <div id="feedList" class="admin-list mt-4"></div>
+                </div>
               </section>
             </div>
 
             <div class="col-xl-4">
-              <section class="content-panel p-4 h-100">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="section-kicker mb-2">Publishing</p>
-                    <h3 class="h4 mb-0">Create blog posts</h3>
-                  </div>
-                  <span class="badge text-bg-warning">Blog</span>
-                </div>
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#postSectionBody" aria-expanded="false" aria-controls="postSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Publishing</span>
+                    <span class="h4 mb-0 d-block">Create blog posts</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-warning">Blog</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="postSectionBody" class="collapse admin-section-body mt-4">
                 <form id="postForm" class="row g-3">
                   <input id="postId" type="hidden" />
                   <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
@@ -175,18 +184,23 @@
                   </div>
                 </form>
                 <div id="postList" class="admin-list mt-4"></div>
+                </div>
               </section>
             </div>
 
             <div class="col-xl-4">
-              <section class="content-panel p-4 h-100">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="section-kicker mb-2">Help Center</p>
-                    <h3 class="h4 mb-0">Manage FAQ entries</h3>
-                  </div>
-                  <span class="badge text-bg-info">FAQ</span>
-                </div>
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqSectionBody" aria-expanded="false" aria-controls="faqSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Help Center</span>
+                    <span class="h4 mb-0 d-block">Manage FAQ entries</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-info">FAQ</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="faqSectionBody" class="collapse admin-section-body mt-4">
                 <form id="faqForm" class="row g-3">
                   <input id="faqId" type="hidden" />
                   <div class="col-12"><label class="form-label" for="faqQuestion">Question</label><input id="faqQuestion" class="form-control" required /></div>
@@ -199,35 +213,45 @@
                   </div>
                 </form>
                 <div id="faqList" class="admin-list mt-4"></div>
+                </div>
               </section>
             </div>
             <div class="col-xl-4">
-              <section class="content-panel p-4 h-100">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="section-kicker mb-2">Memberships</p>
-                    <h3 class="h4 mb-0">Grant premium access</h3>
-                  </div>
-                  <span class="badge text-bg-success">Members</span>
-                </div>
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#membershipSectionBody" aria-expanded="false" aria-controls="membershipSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Memberships</span>
+                    <span class="h4 mb-0 d-block">Grant premium access</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-success">Members</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="membershipSectionBody" class="collapse admin-section-body mt-4">
                 <p class="text-muted small">Give an existing member a free one-year premium membership by entering the email address on their account.</p>
                 <form id="membershipGrantForm" class="row g-3">
                   <div class="col-12"><label class="form-label" for="memberGrantEmail">Member email</label><input id="memberGrantEmail" class="form-control" type="email" placeholder="member@example.com" required /></div>
                   <div class="col-12 d-grid"><button class="btn btn-success" type="submit">Grant free premium membership</button></div>
                 </form>
                 <div id="membershipGrantMeta" class="small text-muted mt-3">The premium term starts immediately and lasts for one year.</div>
+                </div>
               </section>
             </div>
 
             <div class="col-xl-4">
-              <section class="content-panel p-4 h-100">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="section-kicker mb-2">Payments</p>
-                    <h3 class="h4 mb-0">Stripe account details</h3>
-                  </div>
-                  <span class="badge text-bg-primary">Stripe</span>
-                </div>
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#stripeSectionBody" aria-expanded="false" aria-controls="stripeSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Payments</span>
+                    <span class="h4 mb-0 d-block">Stripe account details</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-primary">Stripe</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="stripeSectionBody" class="collapse admin-section-body mt-4">
                 <p class="text-muted small">Store the Stripe account details used by membership checkout directly from the back-office.</p>
                 <form id="stripeSettingsForm" class="row g-3">
                   <div class="col-12"><label class="form-label" for="stripeAccountId">Stripe account ID</label><input id="stripeAccountId" class="form-control" placeholder="acct_..." /></div>
@@ -251,18 +275,23 @@
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save Stripe settings</button></div>
                 </form>
                 <div id="stripeSettingsMeta" class="small text-muted mt-3">Stripe settings have not been loaded yet.</div>
+                </div>
               </section>
             </div>
 
             <div class="col-xl-4">
-              <section class="content-panel p-4 h-100">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                  <div>
-                    <p class="section-kicker mb-2">Operations</p>
-                    <h3 class="h4 mb-0">Admin task list</h3>
-                  </div>
-                  <span class="badge text-bg-secondary">Tasks</span>
-                </div>
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#taskSectionBody" aria-expanded="false" aria-controls="taskSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Operations</span>
+                    <span class="h4 mb-0 d-block">Admin task list</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-secondary">Tasks</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="taskSectionBody" class="collapse admin-section-body mt-4">
                 <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
                   <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
                     <div>
@@ -280,6 +309,7 @@
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Add admin task</button></div>
                 </form>
                 <div id="taskList" class="admin-list mt-4"></div>
+                </div>
               </section>
             </div>
           </div>

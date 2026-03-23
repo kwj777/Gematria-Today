@@ -29,6 +29,20 @@ body {
 
 .navbar-brand { letter-spacing: 0.04em; }
 
+
+@media (min-width: 992px) {
+  .navbar .dropdown:hover > .dropdown-menu,
+  .navbar .dropdown:focus-within > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+  }
+
+  .navbar .dropdown:hover > .dropdown-toggle,
+  .navbar .dropdown:focus-within > .dropdown-toggle {
+    color: var(--bs-navbar-hover-color);
+  }
+}
+
 .hero-panel,
 .content-panel,
 .stat-card,

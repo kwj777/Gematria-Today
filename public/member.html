@@ -82,6 +82,35 @@
                 <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" required /></div>
                 <div class="col-12 d-grid"><button class="btn btn-outline-primary" type="submit">Sign in</button></div>
               </form>
+              <hr class="my-4" />
+              <div class="row g-3">
+                <div class="col-12">
+                  <h3 class="h5 mb-2">Account recovery</h3>
+                  <p class="text-muted small mb-0">Use your email to recover your username or generate a one-time password reset code. Recovery codes are displayed on screen because email delivery is not configured yet.</p>
+                </div>
+                <div class="col-12">
+                  <form id="forgotUseridForm" class="row g-2">
+                    <div class="col-12"><label class="form-label" for="forgotUseridEmail">Recover username by email</label><input id="forgotUseridEmail" class="form-control" type="email" required /></div>
+                    <div class="col-12 d-grid"><button class="btn btn-outline-secondary" type="submit">Find my username</button></div>
+                  </form>
+                </div>
+                <div class="col-12">
+                  <form id="forgotPasswordForm" class="row g-2">
+                    <div class="col-12"><label class="form-label" for="forgotPasswordIdentifier">Reset password with username or email</label><input id="forgotPasswordIdentifier" class="form-control" required /></div>
+                    <div class="col-12 d-grid"><button class="btn btn-outline-secondary" type="submit">Get reset code</button></div>
+                  </form>
+                </div>
+                <div class="col-12">
+                  <form id="resetPasswordForm" class="row g-2">
+                    <div class="col-md-6"><label class="form-label" for="resetRecoveryCode">Recovery code</label><input id="resetRecoveryCode" class="form-control" required /></div>
+                    <div class="col-md-6"><label class="form-label" for="resetNewPassword">New password</label><input id="resetNewPassword" class="form-control" type="password" minlength="8" required /></div>
+                    <div class="col-12 d-grid"><button class="btn btn-outline-success" type="submit">Reset password</button></div>
+                  </form>
+                </div>
+                <div class="col-12">
+                  <div id="memberRecoveryResult" class="small text-muted"></div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -194,6 +223,7 @@
       const historyCount = document.getElementById('historyCount');
       const historyCountMeta = document.getElementById('historyCountMeta');
       const historyList = document.getElementById('historyList');
+      const memberRecoveryResult = document.getElementById('memberRecoveryResult');
 
       let session = null;
       let historyItems = [];
@@ -208,6 +238,23 @@
       function clearAlert() {
         memberAlert.textContent = '';
         memberAlert.className = 'alert d-none';
+      }
+
+      function renderRecoveryResult(payload, label) {
+        if (!payload?.recovery) {
+          memberRecoveryResult.innerHTML = `<span class="text-muted">${label}</span>`;
+          return;
+        }
+
+        const recovery = payload.recovery;
+        memberRecoveryResult.innerHTML = `
+          <div class="alert alert-info mb-0">
+            <div><strong>Recovery preview:</strong> ${label}</div>
+            ${recovery.username ? `<div>Username: <code>${recovery.username}</code></div>` : ''}
+            <div>Recovery code: <code>${recovery.recoveryCode}</code></div>
+            <div>Expires: ${new Date(recovery.expiresAt).toLocaleString()}</div>
+          </div>
+        `;
       }
 
       async function request(url, options = {}) {
@@ -499,6 +546,70 @@
           await loadHistory();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
+        }
+      });
+
+      document.getElementById('forgotUseridForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+        try {
+          const payload = await request('/api/member-account-recovery', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'forgot-userid',
+              email: document.getElementById('forgotUseridEmail').value.trim(),
+            }),
+          });
+          showAlert(payload.message, 'info');
+          renderRecoveryResult(payload, 'Username recovery is available for the matched member account.');
+        } catch (error) {
+          showAlert(error.message || 'Unable to recover your username.');
+        }
+      });
+
+      document.getElementById('forgotPasswordForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+        try {
+          const payload = await request('/api/member-account-recovery', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'forgot-password',
+              identifier: document.getElementById('forgotPasswordIdentifier').value.trim(),
+            }),
+          });
+          showAlert(payload.message, 'info');
+          renderRecoveryResult(payload, 'Use this one-time code with your new password below.');
+          if (payload.recovery?.recoveryCode) {
+            document.getElementById('resetRecoveryCode').value = payload.recovery.recoveryCode;
+          }
+        } catch (error) {
+          showAlert(error.message || 'Unable to start password recovery.');
+        }
+      });
+
+      document.getElementById('resetPasswordForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+        try {
+          const payload = await request('/api/member-account-recovery', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'reset-password',
+              recoveryCode: document.getElementById('resetRecoveryCode').value.trim(),
+              newPassword: document.getElementById('resetNewPassword').value,
+            }),
+          });
+          session = payload;
+          loadFavoriteHistoryIds();
+          setLoggedIn(true);
+          populateProfile(session.member, session.profile);
+          await loadHistory();
+          showAlert(payload.message || 'Password reset complete.', 'success');
+          renderRecoveryResult(null, 'Recovery code consumed.');
+          event.target.reset();
+        } catch (error) {
+          showAlert(error.message || 'Unable to reset your password.');
         }
       });
 

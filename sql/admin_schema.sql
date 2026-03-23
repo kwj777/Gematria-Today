@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
+  email TEXT,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'admin',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -132,3 +133,33 @@ CREATE TABLE IF NOT EXISTS request_audit_log (
 
 CREATE INDEX IF NOT EXISTS request_audit_log_route_created_at_idx
   ON request_audit_log (route, created_at DESC);
+
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS email TEXT;
+
+UPDATE users
+SET email = LOWER(email)
+WHERE email IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx
+  ON users (LOWER(email))
+  WHERE email IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS account_recovery_requests (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  recovery_type TEXT NOT NULL,
+  lookup_key TEXT,
+  token_hash TEXT UNIQUE NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  consumed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS account_recovery_requests_user_type_idx
+  ON account_recovery_requests (user_id, recovery_type, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS account_recovery_requests_expires_idx
+  ON account_recovery_requests (expires_at DESC);

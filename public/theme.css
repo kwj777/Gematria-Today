@@ -87,6 +87,21 @@ body {
   background: rgba(7, 28, 69, 0.4);
 }
 
+.blog-hero-image {
+  display: block;
+  width: 100%;
+  height: clamp(180px, 24vw, 240px);
+  min-height: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-width: 991px) {
+  .blog-hero-image {
+    height: clamp(160px, 48vw, 220px);
+  }
+}
+
 .news-hero-image {
   display: block;
   width: 100%;

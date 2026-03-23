@@ -6,3 +6,5 @@ Disallow: /member
 Disallow: /member.html
 Disallow: /api/
 Disallow: /.netlify/functions/
+
+Sitemap: https://endtimes.today/sitemap.xml

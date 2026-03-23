@@ -48,7 +48,7 @@
                 <h2 class="h5 mb-3">Server-backed features</h2>
                 <ul class="list-unstyled mb-0 d-grid gap-2 small">
                   <li>• HttpOnly cookie session login</li>
-                  <li>• Neon storage for feeds, posts, FAQs, tasks, Stripe settings, and member access</li>
+                  <li>• Neon storage for feeds, posts, FAQs, tasks, payment/email settings, and member access</li>
                   <li>• Public blog/news pages driven by published data</li>
                   <li>• Premium membership grants for existing members by email</li>
                 </ul>
@@ -287,6 +287,40 @@
 
             <div class="col-xl-4">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailSectionBody" aria-expanded="false" aria-controls="emailSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Account Recovery</span>
+                    <span class="h4 mb-0 d-block">Email delivery settings</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-secondary">Email</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="emailSectionBody" class="collapse admin-section-body mt-4">
+                <p class="text-muted small">Configure SendGrid delivery for admin/member account recovery emails. Leave the API key unchanged unless you are rotating credentials.</p>
+                <form id="emailSettingsForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="sendgridFromEmail">From email</label><input id="sendgridFromEmail" class="form-control" type="email" placeholder="support@example.com" /></div>
+                  <div class="col-12"><label class="form-label" for="sendgridFromName">From name</label><input id="sendgridFromName" class="form-control" placeholder="EndTimes.Today" /></div>
+                  <div class="col-12"><label class="form-label" for="sendgridReplyToEmail">Reply-to email</label><input id="sendgridReplyToEmail" class="form-control" type="email" placeholder="help@example.com" /></div>
+                  <div class="col-12"><label class="form-label" for="publicSiteUrl">Public site URL</label><input id="publicSiteUrl" class="form-control" type="url" placeholder="https://example.com" /></div>
+                  <div class="col-12">
+                    <label class="form-label" for="sendgridApiKey">SendGrid API key</label>
+                    <div class="input-group">
+                      <input id="sendgridApiKey" class="form-control" type="password" placeholder="Enter a new SendGrid API key" autocomplete="new-password" data-secret-input="sendgridApiKey" disabled />
+                      <button id="sendgridApiKeyToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="sendgridApiKey">Change</button>
+                    </div>
+                    <div class="form-text text-muted">Hidden after save. Use Change only when replacing the stored SendGrid API key.</div>
+                  </div>
+                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save email delivery settings</button></div>
+                </form>
+                <div id="emailSettingsMeta" class="small text-muted mt-3">Recovery email delivery settings have not been loaded yet.</div>
+                </div>
+              </section>
+            </div>
+
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#taskSectionBody" aria-expanded="false" aria-controls="taskSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Operations</span>
@@ -355,9 +389,11 @@
       const stripeWebhookSigningSecretInput = document.getElementById('stripeWebhookSigningSecret');
       const stripeSecretKeyToggle = document.getElementById('stripeSecretKeyToggle');
       const stripeWebhookSigningSecretToggle = document.getElementById('stripeWebhookSigningSecretToggle');
+      const sendgridApiKeyInput = document.getElementById('sendgridApiKey');
+      const sendgridApiKeyToggle = document.getElementById('sendgridApiKeyToggle');
       const adminRecoveryResult = document.getElementById('adminRecoveryResult');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -525,6 +561,12 @@
             stateKey: 'replaceStripeWebhookSigningSecret',
             placeholder: 'Enter a new Stripe webhook secret',
           },
+          sendgridApiKey: {
+            input: sendgridApiKeyInput,
+            button: sendgridApiKeyToggle,
+            stateKey: 'replaceSendgridApiKey',
+            placeholder: 'Enter a new SendGrid API key',
+          },
         }[fieldName];
         if (!config) return;
         state[config.stateKey] = shouldEnable;
@@ -572,6 +614,27 @@
           : 'No Stripe account details saved yet.';
       }
 
+      function renderEmailSettings() {
+        const settings = state.emailSettings || {};
+        document.getElementById('sendgridFromEmail').value = settings.sendgridFromEmail || '';
+        document.getElementById('sendgridFromName').value = settings.sendgridFromName || '';
+        document.getElementById('sendgridReplyToEmail').value = settings.sendgridReplyToEmail || '';
+        document.getElementById('publicSiteUrl').value = settings.publicSiteUrl || '';
+        setSecretFieldMode('sendgridApiKey', false);
+        const configuredDetails = [
+          settings.sendgridFromEmail ? 'verified sender email' : '',
+          settings.sendgridFromName ? 'sender name' : '',
+          settings.sendgridReplyToEmail ? 'reply-to email' : '',
+          settings.publicSiteUrl ? 'public site URL' : '',
+          settings.hasSendgridApiKey ? 'SendGrid API key' : '',
+        ].filter(Boolean);
+        document.getElementById('emailSettingsMeta').textContent = settings.emailDeliveryConfigured
+          ? `Recovery emails are ready to send. Configured: ${configuredDetails.join(', ')}.`
+          : configuredDetails.length
+            ? `Recovery emails are not ready yet. Still required: ${settings.hasSendgridApiKey ? 'verified sender email' : 'verified sender email and SendGrid API key'}.`
+            : 'No recovery email delivery settings saved yet.';
+      }
+
       function renderTasks() {
         taskCount.textContent = String(state.tasks.length);
         const list = document.getElementById('taskList');
@@ -604,11 +667,13 @@
         state.faqs = faqs.items || [];
         state.tasks = tasks.items || [];
         state.stripeSettings = settings.settings || null;
+        state.emailSettings = settings.settings || null;
         renderFeeds();
         renderPosts();
         renderFaqs();
         renderTasks();
         renderStripeSettings();
+        renderEmailSettings();
         renderMembershipGrantMeta();
       }
 
@@ -829,6 +894,30 @@
         }
       });
 
+      document.getElementById('emailSettingsForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              sendgridFromEmail: document.getElementById('sendgridFromEmail').value,
+              sendgridFromName: document.getElementById('sendgridFromName').value,
+              sendgridReplyToEmail: document.getElementById('sendgridReplyToEmail').value,
+              publicSiteUrl: document.getElementById('publicSiteUrl').value,
+              sendgridApiKey: state.replaceSendgridApiKey ? sendgridApiKeyInput.value : undefined,
+              replaceSendgridApiKey: state.replaceSendgridApiKey
+            })
+          });
+          state.emailSettings = payload.settings || null;
+          state.stripeSettings = payload.settings || null;
+          renderEmailSettings();
+          showMessage(saveMessage, 'Recovery email delivery settings saved.');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
       document.getElementById('stripeSettingsForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearMessage(errorMessage);
@@ -845,6 +934,7 @@
             })
           });
           state.stripeSettings = payload.settings || null;
+          state.emailSettings = payload.settings || null;
           renderStripeSettings();
           showMessage(saveMessage, 'Stripe account details saved.');
         } catch (error) {
@@ -876,11 +966,11 @@
       document.addEventListener('click', async (event) => {
         const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask, enableSecret } = event.target.dataset;
         if (enableSecret) {
-          const stateKey = enableSecret === 'stripeSecretKey' ? 'replaceStripeSecretKey' : 'replaceStripeWebhookSigningSecret';
+          const stateKey = ({ stripeSecretKey: 'replaceStripeSecretKey', stripeWebhookSigningSecret: 'replaceStripeWebhookSigningSecret', sendgridApiKey: 'replaceSendgridApiKey' })[enableSecret];
           const shouldEnable = !state[stateKey];
           setSecretFieldMode(enableSecret, shouldEnable);
           if (shouldEnable) {
-            ({ stripeSecretKey: stripeSecretKeyInput, stripeWebhookSigningSecret: stripeWebhookSigningSecretInput }[enableSecret])?.focus();
+            ({ stripeSecretKey: stripeSecretKeyInput, stripeWebhookSigningSecret: stripeWebhookSigningSecretInput, sendgridApiKey: sendgridApiKeyInput }[enableSecret])?.focus();
           } else {
             event.target.blur();
           }

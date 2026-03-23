@@ -73,6 +73,7 @@ export async function handler(event) {
           lookupKey: email,
         });
         await sendRecoveryEmail({
+          sql,
           toEmail: member.email,
           username: member.username,
           recoveryCode: recovery.token,
@@ -119,6 +120,7 @@ export async function handler(event) {
           lookupKey: identifier,
         });
         await sendRecoveryEmail({
+          sql,
           toEmail: rows[0].email || email || null,
           username: rows[0].username,
           recoveryCode: recovery.token,

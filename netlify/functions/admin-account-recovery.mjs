@@ -64,6 +64,7 @@ export async function handler(event) {
       }) : null;
       if (recovery) {
         await sendRecoveryEmail({
+          sql,
           toEmail: rows[0].email,
           username: rows[0].username,
           recoveryCode: recovery.token,
@@ -102,6 +103,7 @@ export async function handler(event) {
       }) : null;
       if (recovery) {
         await sendRecoveryEmail({
+          sql,
           toEmail: rows[0].email || email,
           username: rows[0].username,
           recoveryCode: recovery.token,

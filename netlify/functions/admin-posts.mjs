@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { formatPost, getAuthenticatedUser, jsonResponse, parseBody, slugify } from './_admin.mjs';
+import { clearCachedJson } from './_security.mjs';
 
 export async function handler(event) {
   try {
@@ -37,6 +38,7 @@ export async function handler(event) {
         )
         RETURNING *
       `;
+      await clearCachedJson(sql, { route: 'public-posts' });
       return jsonResponse(201, { item: formatPost(rows[0]) });
     }
 
@@ -75,6 +77,7 @@ export async function handler(event) {
       if (!rows.length) {
         return jsonResponse(404, { error: 'Post not found' });
       }
+      await clearCachedJson(sql, { route: 'public-posts' });
       return jsonResponse(200, { item: formatPost(rows[0]) });
     }
 
@@ -84,6 +87,7 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'Missing post id' });
       }
       await sql`DELETE FROM posts WHERE id = ${id}`;
+      await clearCachedJson(sql, { route: 'public-posts' });
       return jsonResponse(200, { deleted: true });
     }
 

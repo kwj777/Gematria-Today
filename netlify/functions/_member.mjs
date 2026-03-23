@@ -97,7 +97,7 @@ export async function ensureMemberSchema(sql) {
   await sql`DROP FUNCTION IF EXISTS set_updated_at_timestamp()`;
 }
 
-function normalizeEmail(email) {
+export function normalizeEmail(email) {
   return String(email ?? '').trim().toLowerCase();
 }
 
@@ -258,6 +258,25 @@ export async function activateYearlyMembership(sql, memberId, { stripeCustomerId
   }
 
   return formatMemberUser(rows[0]);
+}
+
+export async function findMemberByEmail(sql, email) {
+  await ensureMemberSchema(sql);
+
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const rows = await sql`
+    SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
+    FROM users
+    WHERE LOWER(email) = ${normalizedEmail}
+      AND role = 'member'
+    LIMIT 1
+  `;
+
+  return rows.length ? formatMemberUser(rows[0]) : null;
 }
 
 export async function authenticateMemberCredentials(sql, identifier, password) {

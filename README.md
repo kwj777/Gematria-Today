@@ -64,7 +64,7 @@ The membership implementation now exposes member auth/profile/history endpoints 
 
 Stripe-backed membership upgrades now also use `member-payment-checkout` and `member-payment-confirm`. Stripe credentials can now be managed from the admin back-office via `admin-settings`, with environment variables such as `STRIPE_SECRET_KEY` still supported as a fallback.
 
-Member and admin account recovery can now send transactional emails through SendGrid when outbound email is configured. Without SendGrid credentials, the recovery handlers continue to fall back to on-screen previews so local development and bootstrap flows still work.
+Member and admin account recovery now sends transactional emails through SendGrid only. Recovery requests require outbound email to be configured; recovery codes and username reminders are no longer shown on screen.
 
 ## DDoS and abuse protection
 

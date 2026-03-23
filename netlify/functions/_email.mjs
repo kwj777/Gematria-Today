@@ -88,7 +88,18 @@ export async function sendTransactionalEmail({ toEmail, subject, text, html }) {
 export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expiresAt, role, recoveryType }) {
   const config = getEmailDeliveryConfig();
   if (!config.enabled) {
-    return { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured' };
+    throw Object.assign(new Error('Account recovery email delivery is not configured'), {
+      statusCode: 503,
+      reason: 'sendgrid-not-configured',
+    });
+  }
+
+  const normalizedToEmail = normalizeEmail(toEmail);
+  if (!normalizedToEmail) {
+    throw Object.assign(new Error('Account recovery email recipient is missing'), {
+      statusCode: 503,
+      reason: 'missing-recipient-email',
+    });
   }
 
   const accountLabel = role === 'admin' ? 'admin' : 'member';
@@ -136,7 +147,7 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
     `;
 
   return sendTransactionalEmail({
-    toEmail,
+    toEmail: normalizedToEmail,
     subject,
     text,
     html,

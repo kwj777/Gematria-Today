@@ -48,8 +48,9 @@
                 <h2 class="h5 mb-3">Server-backed features</h2>
                 <ul class="list-unstyled mb-0 d-grid gap-2 small">
                   <li>• HttpOnly cookie session login</li>
-                  <li>• Neon storage for feeds, posts, FAQs, tasks, and Stripe settings</li>
+                  <li>• Neon storage for feeds, posts, FAQs, tasks, Stripe settings, and member access</li>
                   <li>• Public blog/news pages driven by published data</li>
+                  <li>• Premium membership grants for existing members by email</li>
                 </ul>
               </div>
             </div>
@@ -204,6 +205,24 @@
               <section class="content-panel p-4 h-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
+                    <p class="section-kicker mb-2">Memberships</p>
+                    <h3 class="h4 mb-0">Grant premium access</h3>
+                  </div>
+                  <span class="badge text-bg-success">Members</span>
+                </div>
+                <p class="text-muted small">Give an existing member a free one-year premium membership by entering the email address on their account.</p>
+                <form id="membershipGrantForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="memberGrantEmail">Member email</label><input id="memberGrantEmail" class="form-control" type="email" placeholder="member@example.com" required /></div>
+                  <div class="col-12 d-grid"><button class="btn btn-success" type="submit">Grant free premium membership</button></div>
+                </form>
+                <div id="membershipGrantMeta" class="small text-muted mt-3">The premium term starts immediately and lasts for one year.</div>
+              </section>
+            </div>
+
+            <div class="col-xl-4">
+              <section class="content-panel p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
                     <p class="section-kicker mb-2">Payments</p>
                     <h3 class="h4 mb-0">Stripe account details</h3>
                   </div>
@@ -284,7 +303,7 @@
       const sessionMeta = document.getElementById('sessionMeta');
       const adminRecoveryResult = document.getElementById('adminRecoveryResult');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, editingPostId: null, editingFaqId: null };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -446,6 +465,20 @@
         document.getElementById('faqCancelButton').classList.remove('d-none');
       }
 
+      function renderMembershipGrantMeta() {
+        const meta = document.getElementById('membershipGrantMeta');
+        const member = state.latestGrantedMember;
+        if (!member) {
+          meta.textContent = 'The premium term starts immediately and lasts for one year.';
+          return;
+        }
+
+        const expiresText = member.membershipExpiresAt
+          ? new Date(member.membershipExpiresAt).toLocaleString()
+          : 'an upcoming renewal date';
+        meta.textContent = `${member.email} now has premium access through ${expiresText}.`;
+      }
+
       function renderStripeSettings() {
         const settings = state.stripeSettings || {};
         document.getElementById('stripeAccountId').value = settings.stripeAccountId || '';
@@ -496,6 +529,7 @@
         renderFaqs();
         renderTasks();
         renderStripeSettings();
+        renderMembershipGrantMeta();
       }
 
       async function loadSession() {
@@ -698,6 +732,25 @@
         }
       });
 
+      document.getElementById('membershipGrantForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-memberships', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: document.getElementById('memberGrantEmail').value
+            })
+          });
+          state.latestGrantedMember = payload.member || null;
+          renderMembershipGrantMeta();
+          event.target.reset();
+          showMessage(saveMessage, payload.message || 'Premium membership granted.');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
       document.getElementById('stripeSettingsForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearMessage(errorMessage);
@@ -785,6 +838,7 @@
 
       resetPostForm();
       resetFaqForm();
+      renderMembershipGrantMeta();
       loadSession();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></script>

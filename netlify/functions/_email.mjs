@@ -1,3 +1,4 @@
+import { ensureAdminSchema } from './_admin.mjs';
 import { fetchWithTimeout } from './_security.mjs';
 
 const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send';
@@ -16,12 +17,28 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-export function getEmailDeliveryConfig() {
-  const apiKey = String(process.env.SENDGRID_API_KEY || '').trim();
-  const fromEmail = normalizeEmail(process.env.SENDGRID_FROM_EMAIL);
-  const fromName = String(process.env.SENDGRID_FROM_NAME || 'EndTimes.Today').trim();
-  const replyTo = normalizeEmail(process.env.SENDGRID_REPLY_TO_EMAIL);
-  const appBaseUrl = String(process.env.PUBLIC_SITE_URL || process.env.URL || '').trim().replace(/\/$/, '');
+async function getStoredEmailSetting(sql, key) {
+  if (!sql) {
+    return '';
+  }
+
+  await ensureAdminSchema(sql);
+  const rows = await sql`
+    SELECT setting_value
+    FROM admin_settings
+    WHERE setting_key = ${key}
+    LIMIT 1
+  `;
+
+  return rows[0]?.setting_value || '';
+}
+
+export async function getEmailDeliveryConfig(sql = null) {
+  const apiKey = (await getStoredEmailSetting(sql, 'sendgrid_api_key')) || String(process.env.SENDGRID_API_KEY || '').trim();
+  const fromEmail = normalizeEmail((await getStoredEmailSetting(sql, 'sendgrid_from_email')) || process.env.SENDGRID_FROM_EMAIL);
+  const fromName = String((await getStoredEmailSetting(sql, 'sendgrid_from_name')) || process.env.SENDGRID_FROM_NAME || 'EndTimes.Today').trim();
+  const replyTo = normalizeEmail((await getStoredEmailSetting(sql, 'sendgrid_reply_to_email')) || process.env.SENDGRID_REPLY_TO_EMAIL);
+  const appBaseUrl = String((await getStoredEmailSetting(sql, 'public_site_url')) || process.env.PUBLIC_SITE_URL || process.env.URL || '').trim().replace(/\/$/, '');
 
   return {
     enabled: Boolean(apiKey && fromEmail),
@@ -33,8 +50,8 @@ export function getEmailDeliveryConfig() {
   };
 }
 
-export async function sendTransactionalEmail({ toEmail, subject, text, html }) {
-  const config = getEmailDeliveryConfig();
+export async function sendTransactionalEmail({ toEmail, subject, text, html, sql = null }) {
+  const config = await getEmailDeliveryConfig(sql);
   if (!config.enabled) {
     return { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured' };
   }
@@ -85,8 +102,8 @@ export async function sendTransactionalEmail({ toEmail, subject, text, html }) {
   return { delivered: true, delivery: 'email' };
 }
 
-export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expiresAt, role, recoveryType }) {
-  const config = getEmailDeliveryConfig();
+export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expiresAt, role, recoveryType, sql = null }) {
+  const config = await getEmailDeliveryConfig(sql);
   if (!config.enabled) {
     throw Object.assign(new Error('Account recovery email delivery is not configured'), {
       statusCode: 503,
@@ -151,5 +168,6 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
     subject,
     text,
     html,
+    sql,
   });
 }

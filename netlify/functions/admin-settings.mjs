@@ -6,6 +6,11 @@ const DEFAULT_SETTINGS = {
   stripePublishableKey: '',
   stripeSecretKey: '',
   stripeWebhookSigningSecret: '',
+  sendgridFromEmail: '',
+  sendgridFromName: '',
+  sendgridReplyToEmail: '',
+  sendgridApiKey: '',
+  publicSiteUrl: '',
 };
 
 function normalizeSettings(body = {}) {
@@ -16,6 +21,12 @@ function normalizeSettings(body = {}) {
     stripeWebhookSigningSecret: String(body.stripeWebhookSigningSecret ?? '').trim(),
     replaceStripeSecretKey: Boolean(body.replaceStripeSecretKey),
     replaceStripeWebhookSigningSecret: Boolean(body.replaceStripeWebhookSigningSecret),
+    sendgridFromEmail: String(body.sendgridFromEmail ?? '').trim().toLowerCase(),
+    sendgridFromName: String(body.sendgridFromName ?? '').trim(),
+    sendgridReplyToEmail: String(body.sendgridReplyToEmail ?? '').trim().toLowerCase(),
+    sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
+    publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
+    replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
   };
 }
 
@@ -25,6 +36,12 @@ function serializeSettings(settings = {}) {
     stripePublishableKey: settings.stripePublishableKey || '',
     hasStripeSecretKey: Boolean(settings.stripeSecretKey),
     hasStripeWebhookSigningSecret: Boolean(settings.stripeWebhookSigningSecret),
+    sendgridFromEmail: settings.sendgridFromEmail || '',
+    sendgridFromName: settings.sendgridFromName || '',
+    sendgridReplyToEmail: settings.sendgridReplyToEmail || '',
+    publicSiteUrl: settings.publicSiteUrl || '',
+    hasSendgridApiKey: Boolean(settings.sendgridApiKey),
+    emailDeliveryConfigured: Boolean(settings.sendgridApiKey && settings.sendgridFromEmail),
   };
 }
 
@@ -36,7 +53,7 @@ export async function handler(event) {
       const rows = await sql`
         SELECT setting_key, setting_value
         FROM admin_settings
-        WHERE setting_key LIKE 'stripe_%'
+        WHERE setting_key LIKE 'stripe_%' OR setting_key LIKE 'sendgrid_%' OR setting_key = 'public_site_url'
         ORDER BY setting_key ASC
       `;
 
@@ -46,6 +63,11 @@ export async function handler(event) {
         if (row.setting_key === 'stripe_publishable_key') settings.stripePublishableKey = row.setting_value || '';
         if (row.setting_key === 'stripe_secret_key') settings.stripeSecretKey = row.setting_value || '';
         if (row.setting_key === 'stripe_webhook_signing_secret') settings.stripeWebhookSigningSecret = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_from_email') settings.sendgridFromEmail = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_from_name') settings.sendgridFromName = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
+        if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
       }
 
       return jsonResponse(200, { settings: serializeSettings(settings) });
@@ -74,7 +96,7 @@ export async function handler(event) {
       const existingRows = await sql`
         SELECT setting_key, setting_value
         FROM admin_settings
-        WHERE setting_key LIKE 'stripe_%'
+        WHERE setting_key LIKE 'stripe_%' OR setting_key LIKE 'sendgrid_%' OR setting_key = 'public_site_url'
       `;
       const existingSettings = { ...DEFAULT_SETTINGS };
       for (const row of existingRows) {
@@ -82,6 +104,11 @@ export async function handler(event) {
         if (row.setting_key === 'stripe_publishable_key') existingSettings.stripePublishableKey = row.setting_value || '';
         if (row.setting_key === 'stripe_secret_key') existingSettings.stripeSecretKey = row.setting_value || '';
         if (row.setting_key === 'stripe_webhook_signing_secret') existingSettings.stripeWebhookSigningSecret = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_from_email') existingSettings.sendgridFromEmail = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_from_name') existingSettings.sendgridFromName = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_reply_to_email') existingSettings.sendgridReplyToEmail = row.setting_value || '';
+        if (row.setting_key === 'sendgrid_api_key') existingSettings.sendgridApiKey = row.setting_value || '';
+        if (row.setting_key === 'public_site_url') existingSettings.publicSiteUrl = row.setting_value || '';
       }
 
       const nextSettings = {
@@ -91,6 +118,11 @@ export async function handler(event) {
         stripeWebhookSigningSecret: settings.replaceStripeWebhookSigningSecret
           ? settings.stripeWebhookSigningSecret
           : existingSettings.stripeWebhookSigningSecret,
+        sendgridFromEmail: settings.sendgridFromEmail,
+        sendgridFromName: settings.sendgridFromName,
+        sendgridReplyToEmail: settings.sendgridReplyToEmail,
+        sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
+        publicSiteUrl: settings.publicSiteUrl,
       };
 
       const pairs = [
@@ -98,6 +130,11 @@ export async function handler(event) {
         ['stripe_publishable_key', nextSettings.stripePublishableKey],
         ['stripe_secret_key', nextSettings.stripeSecretKey],
         ['stripe_webhook_signing_secret', nextSettings.stripeWebhookSigningSecret],
+        ['sendgrid_from_email', nextSettings.sendgridFromEmail],
+        ['sendgrid_from_name', nextSettings.sendgridFromName],
+        ['sendgrid_reply_to_email', nextSettings.sendgridReplyToEmail],
+        ['sendgrid_api_key', nextSettings.sendgridApiKey],
+        ['public_site_url', nextSettings.publicSiteUrl],
       ];
 
       for (const [key, value] of pairs) {

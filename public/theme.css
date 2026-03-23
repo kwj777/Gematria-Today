@@ -96,6 +96,10 @@ body {
   object-position: center;
 }
 
+.news-hero-figure {
+  box-shadow: 0 1rem 2rem rgba(12, 19, 48, 0.18);
+}
+
 .hero-media-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.12em;

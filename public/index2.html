@@ -126,23 +126,6 @@
       </div>
     </footer>
     <script>
-      const fallbackPosts = [
-        {
-          slug: 'repeating-number-themes',
-          title: 'How to spot repeating number themes across related words',
-          tag: 'Research Workflow',
-          readTime: '5 minute read',
-          summary: 'A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.'
-        },
-        {
-          slug: 'matching-name-values',
-          title: 'What to compare when two names share the same gematria value',
-          tag: 'Name Analysis',
-          readTime: '4 minute read',
-          summary: 'Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.'
-        }
-      ];
-
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -151,9 +134,24 @@
         .replaceAll("'", '&#39;');
 
       function renderHomepageSlider(posts) {
-        const normalizedPosts = (posts.length ? posts : fallbackPosts).slice(0, 5);
+        const normalizedPosts = posts.slice(0, 5);
         const indicators = document.getElementById('blogPostsCarouselIndicators');
         const carouselInner = document.getElementById('blogPostsCarouselInner');
+
+        if (!normalizedPosts.length) {
+          indicators.innerHTML = '';
+          carouselInner.innerHTML = `
+            <div class="carousel-item active">
+              <article class="blog-slide-card p-4 p-lg-5">
+                <span class="badge text-bg-secondary mb-3">Blog</span>
+                <h3 class="mb-3">No blog posts are currently selected for the home slider.</h3>
+                <p class="text-muted mb-4">Check the "Show this post in the home page slider" box on a published blog post to feature it here.</p>
+                <a class="btn btn-outline-primary" href="/blog.html">Browse all blog posts</a>
+              </article>
+            </div>
+          `;
+          return;
+        }
 
         indicators.innerHTML = normalizedPosts.map((post, index) => `
           <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}" ${index === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${index + 1}"></button>

@@ -335,12 +335,13 @@ footer.site-footer {
 
 .news-feature-card {
   overflow: hidden;
+  min-height: 18rem;
 }
 
 .news-preview-card {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  min-height: 20rem;
 }
 
 .news-source-badge {
@@ -377,6 +378,10 @@ footer.site-footer {
 
 .news-placeholder-panel {
   padding: 1.25rem;
+}
+
+#feedGrid {
+  min-height: 20rem;
 }
 
 

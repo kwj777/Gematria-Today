@@ -65,7 +65,14 @@
             </div>
             <span class="text-muted small">Update feed sources from the admin dashboard.</span>
           </div>
-          <article id="featuredFeed" class="news-feature-card p-4 p-lg-5"></article>
+          <article id="featuredFeed" class="news-feature-card p-4 p-lg-5">
+            <div class="news-placeholder-panel">
+              <p class="placeholder-glow mb-3"><span class="placeholder col-3"></span></p>
+              <p class="placeholder-glow mb-2"><span class="placeholder col-9"></span></p>
+              <p class="placeholder-glow mb-4"><span class="placeholder col-7"></span></p>
+              <p class="placeholder-glow mb-0"><span class="placeholder col-5"></span></p>
+            </div>
+          </article>
         </section>
 
         <section class="mb-5">
@@ -77,7 +84,24 @@
             <span class="text-muted small">Each saved feed is displayed below for editorial review.</span>
           </div>
 
-          <div id="feedGrid" class="row g-4"></div>
+          <div id="feedGrid" class="row g-4">
+            <div class="col-md-6 col-xl-4">
+              <article class="news-preview-card h-100 p-4 news-placeholder-panel">
+                <p class="placeholder-glow mb-3"><span class="placeholder col-5"></span></p>
+                <p class="placeholder-glow mb-2"><span class="placeholder col-8"></span></p>
+                <p class="placeholder-glow mb-2"><span class="placeholder col-10"></span></p>
+                <p class="placeholder-glow mb-0"><span class="placeholder col-6"></span></p>
+              </article>
+            </div>
+            <div class="col-md-6 col-xl-4 d-none d-md-block">
+              <article class="news-preview-card h-100 p-4 news-placeholder-panel">
+                <p class="placeholder-glow mb-3"><span class="placeholder col-4"></span></p>
+                <p class="placeholder-glow mb-2"><span class="placeholder col-9"></span></p>
+                <p class="placeholder-glow mb-2"><span class="placeholder col-7"></span></p>
+                <p class="placeholder-glow mb-0"><span class="placeholder col-5"></span></p>
+              </article>
+            </div>
+          </div>
         </section>
       </div>
     </main>

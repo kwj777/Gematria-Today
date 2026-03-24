@@ -23,3 +23,6 @@
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"
+
+[functions."member-prune-unverified"]
+  schedule = "*/15 * * * *"

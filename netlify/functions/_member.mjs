@@ -7,6 +7,7 @@ import {
   getOptionalAuthenticatedSession,
   getAuthenticatedUser as getAuthenticatedUserShared,
   getSqlClient,
+  hashToken,
   hashPassword,
   jsonResponse,
   parseBody,
@@ -17,6 +18,7 @@ import { ensureSecuritySchema } from './_security.mjs';
 import { ensureAdminSchema } from './_admin.mjs';
 
 export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, getSqlClient, hashPassword, jsonResponse, parseBody, verifyTurnstileToken };
+const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 
 export async function ensureMemberSchema(sql) {
   await ensureAdminSchema(sql);
@@ -91,6 +93,19 @@ export async function ensureMemberSchema(sql) {
   await sql`CREATE INDEX IF NOT EXISTS calculation_history_user_created_at_idx ON calculation_history (user_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS calculation_history_query_type_idx ON calculation_history (query_type, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS calculation_history_calculator_source_idx ON calculation_history (calculator_source, created_at DESC)`;
+
+  await sql`CREATE TABLE IF NOT EXISTS member_email_verification_requests (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    consumed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_user_idx
+    ON member_email_verification_requests (user_id, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_expires_idx
+    ON member_email_verification_requests (expires_at DESC)`;
 
   await sql`DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles`;
   await sql`DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history`;
@@ -222,7 +237,7 @@ export async function registerMember(sql, { username, email, password, displayNa
       NULL,
       NULL,
       NULL,
-      'active',
+      'pending',
       FALSE
     )
     RETURNING *
@@ -231,6 +246,118 @@ export async function registerMember(sql, { username, email, password, displayNa
   const member = rows[0];
   const profile = await ensureMemberProfile(sql, member.id, {});
   return { member: formatMemberUser(member), profile };
+}
+
+export async function createMemberEmailVerificationRequest(sql, userId, { ttlMs = EMAIL_VERIFICATION_TTL_MS } = {}) {
+  await ensureMemberSchema(sql);
+  if (!userId) {
+    throw new Error('Missing user id for email verification');
+  }
+
+  const token = crypto.randomBytes(24).toString('hex');
+  const expiresAt = new Date(Date.now() + ttlMs);
+
+  await sql`DELETE FROM member_email_verification_requests
+    WHERE user_id = ${userId}
+      AND consumed_at IS NULL`;
+
+  await sql`INSERT INTO member_email_verification_requests (
+      id,
+      user_id,
+      token_hash,
+      expires_at
+    )
+    VALUES (
+      ${crypto.randomUUID()},
+      ${userId},
+      ${hashToken(token)},
+      ${expiresAt.toISOString()}
+    )`;
+
+  return { token, expiresAt };
+}
+
+export async function consumeMemberEmailVerificationRequest(sql, token) {
+  await ensureMemberSchema(sql);
+  const normalizedToken = String(token || '').trim();
+  if (!normalizedToken) {
+    return null;
+  }
+
+  const rows = await sql`
+    UPDATE member_email_verification_requests
+    SET consumed_at = NOW()
+    WHERE token_hash = ${hashToken(normalizedToken)}
+      AND consumed_at IS NULL
+      AND expires_at > NOW()
+    RETURNING *
+  `;
+  if (!rows.length) {
+    return null;
+  }
+
+  return rows[0];
+}
+
+export async function finalizeMemberEmailVerification(sql, token) {
+  const verification = await consumeMemberEmailVerificationRequest(sql, token);
+  if (!verification) {
+    return null;
+  }
+
+  const rows = await sql`
+    UPDATE users
+    SET email_verified = TRUE,
+        status = 'active',
+        updated_at = NOW()
+    WHERE id = ${verification.user_id}
+      AND role = 'member'
+      AND status = 'pending'
+    RETURNING *
+  `;
+
+  return rows.length ? formatMemberUser(rows[0]) : null;
+}
+
+export async function deleteExpiredUnverifiedMembers(sql) {
+  await ensureMemberSchema(sql);
+
+  const rows = await sql`
+    DELETE FROM users
+    WHERE role = 'member'
+      AND status = 'pending'
+      AND email_verified = FALSE
+      AND created_at <= NOW() - INTERVAL '24 hours'
+    RETURNING id
+  `;
+
+  await sql`DELETE FROM member_email_verification_requests
+    WHERE consumed_at IS NOT NULL
+       OR expires_at <= NOW()`;
+
+  return rows.length;
+}
+
+export async function deleteExpiredUnverifiedMemberByIdentifier(sql, identifier = '') {
+  await ensureMemberSchema(sql);
+  const normalizedIdentifier = String(identifier || '').trim();
+  if (!normalizedIdentifier) {
+    return 0;
+  }
+  const normalizedEmail = normalizeEmail(normalizedIdentifier);
+  const rows = await sql`
+    DELETE FROM users
+    WHERE role = 'member'
+      AND status = 'pending'
+      AND email_verified = FALSE
+      AND created_at <= NOW() - INTERVAL '24 hours'
+      AND (
+        username = ${normalizedIdentifier}
+        OR LOWER(email) = ${normalizedEmail}
+      )
+    RETURNING id
+  `;
+  return rows.length;
 }
 
 
@@ -286,6 +413,7 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
   if (!normalizedIdentifier || !password) {
     return null;
   }
+  await deleteExpiredUnverifiedMemberByIdentifier(sql, normalizedIdentifier);
 
   const normalizedEmail = normalizeEmail(normalizedIdentifier);
   const rows = await sql`
@@ -308,6 +436,10 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
   const isValid = await verifyPassword(password, user.password_hash);
   if (!isValid) {
     return null;
+  }
+
+  if (user.status === 'pending' && !user.email_verified) {
+    throw Object.assign(new Error('Please verify your email before signing in. Unverified accounts are deleted after 24 hours.'), { statusCode: 403 });
   }
 
   if (user.status !== 'active') {

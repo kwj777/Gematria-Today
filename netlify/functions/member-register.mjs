@@ -1,7 +1,7 @@
 import {
   AUTH_COOKIES,
-  createSession,
-  createSessionCookie,
+  clearSessionCookie,
+  createMemberEmailVerificationRequest,
   getOptionalAuthenticatedSession,
   getSqlClient,
   jsonResponse,
@@ -9,6 +9,7 @@ import {
   registerMember,
   verifyTurnstileToken,
 } from './_member.mjs';
+import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
 export async function handler(event) {
@@ -38,20 +39,39 @@ export async function handler(event) {
     await verifyTurnstileToken(event, body.challengeToken);
 
     const registration = await registerMember(sql, body);
-    const { token, expiresAt } = await createSession(sql, registration.member.id);
+    const verification = await createMemberEmailVerificationRequest(sql, registration.member.id);
+    const delivery = await sendMemberVerificationEmail({
+      sql,
+      toEmail: registration.member.email,
+      username: registration.member.username,
+      verificationToken: verification.token,
+      expiresAt: verification.expiresAt,
+    });
     await logRequestAudit(sql, event, {
       route: 'member-register',
       action: 'register',
       outcome: 'success',
-      metadata: { memberId: registration.member.id, username: normalizedUsername, email: normalizedEmail },
+      metadata: {
+        memberId: registration.member.id,
+        username: normalizedUsername,
+        email: normalizedEmail,
+        verificationDelivery: delivery.delivery || 'unknown',
+      },
     });
 
     return jsonResponse(201, {
-      authenticated: true,
+      authenticated: false,
       member: registration.member,
       profile: registration.profile,
+      message: 'Membership account created. Check your email to verify your account before signing in.',
+      verification: {
+        required: true,
+        expiresAt: verification.expiresAt.toISOString(),
+        delivery: delivery.delivery || 'unknown',
+      },
+      ...(delivery.verificationUrl ? { verificationUrl: delivery.verificationUrl } : {}),
     }, {
-      'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.member),
+      'set-cookie': clearSessionCookie(AUTH_COOKIES.member),
     });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Failed to register member' }, error.headers || {});

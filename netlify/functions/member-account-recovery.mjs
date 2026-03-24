@@ -49,7 +49,7 @@ export async function handler(event) {
 
     await verifyTurnstileToken(event, body.challengeToken);
 
-    if (action === 'forgot-userid') {
+    if (action === 'forgot-userid' || action === 'forgot-both') {
       const email = normalizeEmail(body.email);
       if (!email) {
         return jsonResponse(400, { error: 'Email is required' });
@@ -62,11 +62,10 @@ export async function handler(event) {
         LIMIT 1
       `;
 
-      let recovery = null;
       let member = null;
       if (rows.length) {
         member = formatMemberUser(rows[0]);
-        recovery = await createAccountRecoveryRequest(sql, {
+        const usernameRecovery = await createAccountRecoveryRequest(sql, {
           userId: member.id,
           role: 'member',
           recoveryType: 'forgot-userid',
@@ -76,11 +75,29 @@ export async function handler(event) {
           sql,
           toEmail: member.email,
           username: member.username,
-          recoveryCode: recovery.token,
-          expiresAt: recovery.expiresAt,
+          recoveryCode: usernameRecovery.token,
+          expiresAt: usernameRecovery.expiresAt,
           role: 'member',
           recoveryType: 'forgot-userid',
         });
+
+        if (action === 'forgot-both') {
+          const passwordRecovery = await createAccountRecoveryRequest(sql, {
+            userId: member.id,
+            role: 'member',
+            recoveryType: 'forgot-password',
+            lookupKey: email,
+          });
+          await sendRecoveryEmail({
+            sql,
+            toEmail: member.email,
+            username: member.username,
+            recoveryCode: passwordRecovery.token,
+            expiresAt: passwordRecovery.expiresAt,
+            role: 'member',
+            recoveryType: 'forgot-password',
+          });
+        }
       }
 
       await logRequestAudit(sql, event, {
@@ -97,7 +114,7 @@ export async function handler(event) {
     }
 
     if (action === 'forgot-password') {
-      const identifier = normalizeIdentifier(body.identifier);
+      const identifier = normalizeIdentifier(body.identifier || body.email);
       if (!identifier) {
         return jsonResponse(400, { error: 'Username or email is required' });
       }

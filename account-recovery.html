@@ -41,6 +41,14 @@
               <label class="form-label" for="recoveryEmail">Membership email</label>
               <input id="recoveryEmail" class="form-control" type="email" autocomplete="email" required />
             </div>
+            <div class="col-12">
+              <label class="form-label" for="recoveryRequestType">I need help with</label>
+              <select id="recoveryRequestType" class="form-select" required>
+                <option value="forgot-password">Reset my password</option>
+                <option value="forgot-userid">Remind me of my username</option>
+                <option value="forgot-both">Both username and password reset</option>
+              </select>
+            </div>
             <div class="col-12 d-grid d-sm-flex gap-2 justify-content-sm-end">
               <a class="btn btn-outline-secondary" href="/member.html">Back to sign in</a>
               <button class="btn btn-primary" type="submit">Send recovery email</button>
@@ -109,14 +117,17 @@
         const submitButton = event.target.querySelector('button[type="submit"]');
         submitButton.disabled = true;
 
+        const recoveryRequestType = document.getElementById('recoveryRequestType').value;
+
         try {
           const response = await fetch('/api/member-account-recovery', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
-              action: 'forgot-userid',
+              action: recoveryRequestType,
               email: document.getElementById('recoveryEmail').value.trim(),
+              identifier: document.getElementById('recoveryEmail').value.trim(),
             }),
           });
 

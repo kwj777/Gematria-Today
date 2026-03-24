@@ -305,6 +305,19 @@
         paymentButton.textContent = isPremium ? 'Premium membership active' : 'Continue to Stripe';
       }
 
+      function scrollToLoginArea() {
+        const loginForm = document.getElementById('loginForm');
+        const loginIdentifier = document.getElementById('loginIdentifier');
+        if (!loginForm || !loginIdentifier) {
+          return;
+        }
+
+        loginForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.setTimeout(() => {
+          loginIdentifier.focus({ preventScroll: true });
+        }, 300);
+      }
+
       async function confirmStripePayment(sessionId) {
         if (!sessionId || paymentConfirmationInFlight) {
           return;
@@ -505,6 +518,7 @@
           try {
             await request(`/api/member-verify-email?token=${encodeURIComponent(verifyEmailToken)}`, { method: 'GET' });
             showAlert('Email verified. Your account is now active and you can sign in.', 'success');
+            scrollToLoginArea();
           } catch (error) {
             showAlert(error.message || 'Email verification link is invalid or expired.', 'warning');
           } finally {

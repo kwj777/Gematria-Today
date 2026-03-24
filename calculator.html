@@ -322,9 +322,10 @@ const lookupForm = document.querySelector('#lookup-form');
           const detailMiddlePrefix = document.createTextNode(' | ');
           const detailMiddle = createDigitalRootValueNode(payload.gematria.digitalRoot, 'Digital Root: ');
           const detailMiddleSuffix = document.createTextNode(' | ');
-          const baseRootValue = document.createTextNode(` ${formatBaseRootLabel(payload.isBaseRoot)} | Searches: ${payload.searchCount}`);
+          const baseRootValue = createBaseRootValueNode(payload.isBaseRoot);
+          const searchCountSuffix = document.createTextNode(` | Searches: ${payload.searchCount}`);
 
-          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddlePrefix, detailMiddle, detailMiddleSuffix, createBaseRootLink(), baseRootValue);
+          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddlePrefix, detailMiddle, detailMiddleSuffix, createBaseRootLink(), document.createTextNode(' '), baseRootValue, searchCountSuffix);
         } else {
           gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
         }

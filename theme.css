@@ -495,3 +495,60 @@ footer.site-footer {
   color: var(--app-muted);
   font-size: 0.95rem;
 }
+
+.global-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(9, 12, 22, 0.45);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.global-loading-overlay--visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.global-loading-overlay__card {
+  min-width: min(90vw, 19rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.875rem;
+  border-radius: 14px;
+  padding: 0.875rem 1.1rem;
+  background: rgba(16, 22, 39, 0.92);
+  color: #f5f7ff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 28px rgba(5, 8, 16, 0.35);
+}
+
+.global-loading-overlay__spinner {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-top-color: #7ac2ff;
+  animation: globalLoadingSpin 0.85s linear infinite;
+}
+
+.global-loading-overlay__text {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+@keyframes globalLoadingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

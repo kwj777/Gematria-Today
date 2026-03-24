@@ -449,6 +449,19 @@
         const url = new URL(window.location.href);
         const paymentState = url.searchParams.get('payment');
         const stripeSessionId = url.searchParams.get('session_id');
+        const verifyEmailToken = url.searchParams.get('verify_email_token');
+
+        if (verifyEmailToken) {
+          try {
+            await request(`/api/member-verify-email?token=${encodeURIComponent(verifyEmailToken)}`, { method: 'GET' });
+            showAlert('Email verified. Your account is now active and you can sign in.', 'success');
+          } catch (error) {
+            showAlert(error.message || 'Email verification link is invalid or expired.', 'warning');
+          } finally {
+            url.searchParams.delete('verify_email_token');
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          }
+        }
 
         try {
           session = await request('/api/member-session', { method: 'GET' });
@@ -486,12 +499,13 @@
 
         try {
           session = await request('/api/member-register', { method: 'POST', body: JSON.stringify(payload) });
-          loadFavoriteHistoryIds();
-          showAlert('Membership account created. You are now signed in.', 'success');
-          setLoggedIn(true);
-          populateProfile(session.member, session.profile);
+          session = null;
+          favoriteHistoryIds = new Set();
+          setLoggedIn(false);
+          showAlert('Membership account created. Please check your email and verify your account before signing in.', 'success');
           historyItems = [];
           renderHistory();
+          event.target.reset();
         } catch (error) {
           showAlert(error.message || 'Unable to create membership account.');
         }

@@ -186,3 +186,50 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
     sql,
   });
 }
+
+export async function sendMemberVerificationEmail({ toEmail, username, verificationToken, expiresAt, sql = null }) {
+  const config = await getEmailDeliveryConfig(sql);
+  if (!config.enabled) {
+    return { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured' };
+  }
+
+  const normalizedToEmail = normalizeEmail(toEmail);
+  if (!normalizedToEmail) {
+    return { delivered: false, delivery: 'onscreen-preview', reason: 'missing-recipient-email' };
+  }
+
+  const safeUsername = escapeHtml(username);
+  const expiresText = new Date(expiresAt).toUTCString();
+  const verificationUrl = config.appBaseUrl
+    ? `${config.appBaseUrl}/member.html?verify_email_token=${encodeURIComponent(verificationToken)}`
+    : null;
+
+  const text = [
+    'Welcome to EndTimes.Today.',
+    `Hello ${username}, please verify your email to activate your membership account.`,
+    `Verification expires: ${expiresText}`,
+    verificationUrl ? `Verify email: ${verificationUrl}` : `Verification token: ${verificationToken}`,
+  ].join('\n');
+
+  const html = `
+    <p>Welcome to EndTimes.Today.</p>
+    <p>Hello <strong>${safeUsername}</strong>, please verify your email to activate your membership account.</p>
+    <p><strong>Verification expires:</strong> ${escapeHtml(expiresText)}</p>
+    ${verificationUrl
+    ? `<p><a href="${escapeHtml(verificationUrl)}">Verify your email</a></p>`
+    : `<p><strong>Verification token:</strong> <code>${escapeHtml(verificationToken)}</code></p>`}
+  `;
+
+  const delivery = await sendTransactionalEmail({
+    toEmail: normalizedToEmail,
+    subject: 'Verify your EndTimes.Today membership email',
+    text,
+    html,
+    sql,
+  });
+
+  return {
+    ...delivery,
+    verificationUrl,
+  };
+}

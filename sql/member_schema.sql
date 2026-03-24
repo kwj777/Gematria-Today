@@ -82,6 +82,21 @@ CREATE INDEX IF NOT EXISTS calculation_history_query_type_idx
 CREATE INDEX IF NOT EXISTS calculation_history_calculator_source_idx
   ON calculation_history (calculator_source, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS member_email_verification_requests (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT UNIQUE NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  consumed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS member_email_verification_requests_user_idx
+  ON member_email_verification_requests (user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS member_email_verification_requests_expires_idx
+  ON member_email_verification_requests (expires_at DESC);
+
 DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles;
 DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history;
 DROP FUNCTION IF EXISTS set_updated_at_timestamp();

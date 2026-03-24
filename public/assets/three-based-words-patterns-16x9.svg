@@ -1,0 +1,86 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Exploring Three-Based Words and Repeating Number Patterns</title>
+  <desc id="desc">A 16 by 9 social image with repeating numbers 222, 333, and 666, geometric accents, and explanatory text about gematria patterns.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#050816"/>
+      <stop offset="0.55" stop-color="#111C44"/>
+      <stop offset="1" stop-color="#2A1550"/>
+    </linearGradient>
+
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1240 220) rotate(130) scale(440 340)">
+      <stop stop-color="#6EE7FF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6EE7FF" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(320 760) rotate(40) scale(460 320)">
+      <stop stop-color="#C084FC" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#C084FC" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#020617" flood-opacity="0.55"/>
+    </filter>
+
+    <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse">
+      <path d="M56 0H0V56" stroke="#94A3B8" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <rect width="1600" height="900" fill="url(#glowA)"/>
+  <rect width="1600" height="900" fill="url(#glowB)"/>
+
+  <g opacity="0.5" stroke="#8B5CF6" stroke-opacity="0.6">
+    <circle cx="1260" cy="700" r="250"/>
+    <circle cx="1260" cy="700" r="185"/>
+    <circle cx="1260" cy="700" r="120"/>
+  </g>
+
+  <g opacity="0.65" stroke="#38BDF8" stroke-opacity="0.7">
+    <path d="M1110 196L1430 196" stroke-width="2"/>
+    <path d="M1110 256L1430 256" stroke-width="2"/>
+    <path d="M1110 316L1430 316" stroke-width="2"/>
+    <path d="M1110 376L1430 376" stroke-width="2"/>
+    <path d="M1110 436L1430 436" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <rect x="84" y="86" width="948" height="728" rx="30" fill="url(#panel)" stroke="#E2E8F0" stroke-opacity="0.26"/>
+    <rect x="104" y="106" width="908" height="688" rx="24" fill="#0B122C" fill-opacity="0.56"/>
+  </g>
+
+  <text x="134" y="190" fill="#A5B4FC" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="2.8">GEMATRIA PATTERN STUDY</text>
+
+  <text x="134" y="280" fill="#F8FAFC" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="72" font-weight="800">Exploring “Three-Based” Words</text>
+  <text x="134" y="352" fill="#E2E8F0" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="52" font-weight="700">and Repeating Number Patterns</text>
+
+  <text x="134" y="432" fill="#BFDBFE" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="33" font-weight="500">Three-based words reveal repeating numerical symmetry across gematria systems.</text>
+
+  <g transform="translate(132 498)">
+    <rect width="498" height="230" rx="24" fill="#0B132E" fill-opacity="0.62" stroke="#7DD3FC" stroke-opacity="0.5"/>
+    <text x="30" y="56" fill="#7DD3FC" font-family="JetBrains Mono, Consolas, Menlo, monospace" font-size="34" font-weight="700">base 2  →  222</text>
+    <text x="30" y="116" fill="#C4B5FD" font-family="JetBrains Mono, Consolas, Menlo, monospace" font-size="34" font-weight="700">base 3  →  333</text>
+    <text x="30" y="176" fill="#FCA5A5" font-family="JetBrains Mono, Consolas, Menlo, monospace" font-size="34" font-weight="700">base 6  →  666</text>
+  </g>
+
+  <g transform="translate(662 498)">
+    <rect width="332" height="230" rx="24" fill="#111827" fill-opacity="0.62" stroke="#C084FC" stroke-opacity="0.48"/>
+    <text x="22" y="54" fill="#E9D5FF" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="28" font-weight="700">Digital Root Echo</text>
+    <text x="22" y="102" fill="#D1D5DB" font-family="JetBrains Mono, Consolas, Menlo, monospace" font-size="27" font-weight="500">222 → 2+2+2 = 6</text>
+    <text x="22" y="146" fill="#D1D5DB" font-family="JetBrains Mono, Consolas, Menlo, monospace" font-size="27" font-weight="500">333 → 3+3+3 = 9</text>
+    <text x="22" y="190" fill="#D1D5DB" font-family="JetBrains Mono, Consolas, Menlo, monospace" font-size="27" font-weight="500">666 → 6+6+6 = 18 → 9</text>
+  </g>
+
+  <text x="1110" y="622" fill="#E0F2FE" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="36" font-weight="700">Different base → different digit</text>
+  <text x="1110" y="678" fill="#F5D0FE" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="36" font-weight="700">Same structure → repeats ×3</text>
+
+  <text x="1110" y="780" fill="#CBD5E1" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="26" font-weight="500">endtimes.today</text>
+</svg>

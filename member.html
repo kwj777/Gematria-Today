@@ -138,28 +138,44 @@
             <div class="col-xl-5">
               <div class="d-grid gap-4 h-100">
                 <section class="content-panel p-4">
-                  <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
-                    <div>
-                      <p class="section-kicker mb-2">Membership Upgrade</p>
-                      <h3 class="h4 mb-2">Pay with Stripe</h3>
-                      <p class="text-muted mb-0">Upgrade to a one-year premium membership for <strong>$7.77 per year</strong>, with a <strong>limited-time introductory special of $5.55</strong>. Lifetime memberships are not offered yet.</p>
-                    </div>
-                    <div class="membership-price-badge"><span class="text-decoration-line-through opacity-75 me-2">$7.77</span>$5.55 / year intro</div>
+                  <div id="premiumActiveToggleRow" class="d-none mb-3">
+                    <button
+                      id="premiumActiveToggleButton"
+                      class="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center gap-2"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#membershipUpgradeContent"
+                      aria-expanded="false"
+                      aria-controls="membershipUpgradeContent"
+                    >
+                      <span class="fw-semibold">Premium Membership is Active</span>
+                      <span id="premiumActiveToggleArrow" aria-hidden="true">▼</span>
+                    </button>
                   </div>
-                  <form id="paymentForm" class="membership-payment-form row g-3 align-items-end">
-                    <div class="col-md-7">
-                      <label class="form-label" for="paymentPlan">Membership plan</label>
-                      <select id="paymentPlan" class="form-select" disabled>
-                        <option value="yearly" selected>One year membership — $5.55 introductory special (regularly $7.77/year)</option>
-                      </select>
+                  <div id="membershipUpgradeContent" class="collapse show">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+                      <div>
+                        <p class="section-kicker mb-2">Membership Upgrade</p>
+                        <h3 class="h4 mb-2">Pay with Stripe</h3>
+                        <p class="text-muted mb-0">Upgrade to a one-year premium membership for <strong>$7.77 per year</strong>, with a <strong>limited-time introductory special of $5.55</strong>. Lifetime memberships are not offered yet.</p>
+                      </div>
+                      <div class="membership-price-badge"><span class="text-decoration-line-through opacity-75 me-2">$7.77</span>$5.55 / year intro</div>
                     </div>
-                    <div class="col-md-5 d-grid">
-                      <button id="paymentButton" class="btn btn-primary btn-lg" type="submit">Continue to Stripe</button>
-                    </div>
-                    <div class="col-12">
-                      <div class="membership-upgrade-note">Secure hosted checkout powered by Stripe. After payment, your membership dashboard will refresh automatically.</div>
-                    </div>
-                  </form>
+                    <form id="paymentForm" class="membership-payment-form row g-3 align-items-end">
+                      <div class="col-md-7">
+                        <label class="form-label" for="paymentPlan">Membership plan</label>
+                        <select id="paymentPlan" class="form-select" disabled>
+                          <option value="yearly" selected>One year membership — $5.55 introductory special (regularly $7.77/year)</option>
+                        </select>
+                      </div>
+                      <div class="col-md-5 d-grid">
+                        <button id="paymentButton" class="btn btn-primary btn-lg" type="submit">Continue to Stripe</button>
+                      </div>
+                      <div class="col-12">
+                        <div class="membership-upgrade-note">Secure hosted checkout powered by Stripe. After payment, your membership dashboard will refresh automatically.</div>
+                      </div>
+                    </form>
+                  </div>
                 </section>
 
                 <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
@@ -209,6 +225,10 @@
       const historyCount = document.getElementById('historyCount');
       const historyCountMeta = document.getElementById('historyCountMeta');
       const historyList = document.getElementById('historyList');
+      const premiumActiveToggleRow = document.getElementById('premiumActiveToggleRow');
+      const premiumActiveToggleButton = document.getElementById('premiumActiveToggleButton');
+      const premiumActiveToggleArrow = document.getElementById('premiumActiveToggleArrow');
+      const membershipUpgradeContent = document.getElementById('membershipUpgradeContent');
 
       let session = null;
       let historyItems = [];
@@ -238,10 +258,20 @@
         return payload;
       }
 
+      function syncMembershipUpgradePanel(member = session?.member) {
+        const isPremium = member?.membershipLevel === 'premium';
+        premiumActiveToggleRow.classList.toggle('d-none', !isPremium);
+        membershipUpgradeContent.classList.add('collapse');
+        membershipUpgradeContent.classList.toggle('show', !isPremium);
+        premiumActiveToggleButton.setAttribute('aria-expanded', (!isPremium).toString());
+        premiumActiveToggleArrow.textContent = isPremium ? '▼' : '';
+      }
+
       function setLoggedIn(isLoggedIn) {
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
         syncPaymentButton(isLoggedIn ? session?.member : null);
+        syncMembershipUpgradePanel(isLoggedIn ? session?.member : null);
       }
 
       function formatMembershipWindow(member) {
@@ -285,6 +315,7 @@
           session = { ...session, member: payload.member, authenticated: true };
           populateProfile(session.member, session.profile);
           syncPaymentButton(session.member);
+          syncMembershipUpgradePanel(session.member);
           showAlert(`Payment received. Your ${payload.membership.label.toLowerCase()} is active.`, 'success');
           const url = new URL(window.location.href);
           url.searchParams.delete('session_id');
@@ -445,6 +476,7 @@
         document.getElementById('profileDisplayName').value = member.displayName || '';
         document.getElementById('profileNotes').value = profile?.preferences?.notes || '';
         syncPaymentButton(member);
+        syncMembershipUpgradePanel(member);
       }
 
       async function loadHistory() {
@@ -617,6 +649,16 @@
         } catch (error) {
           showAlert(error.message || 'Unable to refresh history.');
         }
+      });
+
+      membershipUpgradeContent.addEventListener('show.bs.collapse', () => {
+        premiumActiveToggleArrow.textContent = '▲';
+        premiumActiveToggleButton.setAttribute('aria-expanded', 'true');
+      });
+
+      membershipUpgradeContent.addEventListener('hide.bs.collapse', () => {
+        premiumActiveToggleArrow.textContent = '▼';
+        premiumActiveToggleButton.setAttribute('aria-expanded', 'false');
       });
 
       window.addEventListener('DOMContentLoaded', bootstrapSession);

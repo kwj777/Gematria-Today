@@ -112,10 +112,11 @@ const titleNode = document.querySelector('#page-title');
       function createWordItem(entry) {
         const item = document.createElement('li');
         item.className = 'word-item';
+        const isDigitalRootSix = Number(entry.gematria?.digitalRoot) === 6;
         item.innerHTML = `
           <a class="word-link" href="/calculator.html?query=${encodeURIComponent(entry.word)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.word)}</a>
           <div class="word-actions">
-            <span>Root ${escapeHtml(String(entry.gematria.digitalRoot))}</span>
+            <span class="${isDigitalRootSix ? 'meta-highlight' : ''}">Root ${escapeHtml(String(entry.gematria.digitalRoot))}</span>
             <a class="definition-link" href="/definition?word=${encodeURIComponent(entry.word)}" target="_blank" rel="noopener noreferrer">(definition)</a>
           </div>
         `;

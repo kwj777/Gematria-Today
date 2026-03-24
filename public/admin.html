@@ -194,6 +194,9 @@
                   <div class="col-12">
                     <label class="form-label" for="postImageUrl">Cover image URL</label>
                     <input id="postImageUrl" class="form-control" type="url" placeholder="https://example.com/blog-cover.jpg" />
+                    <div class="d-flex justify-content-end mt-2">
+                      <button id="postClearImageUrlButton" class="btn btn-sm btn-outline-secondary" type="button">Delete current image URL</button>
+                    </div>
                     <div class="form-text">Use a landscape image (around 16:9) for best results.</div>
                     <div id="postImageDropzone" class="post-image-dropzone mt-2" role="button" tabindex="0" aria-label="Upload cover image">
                       <strong class="d-block mb-1">Drag and drop an image here</strong>
@@ -424,6 +427,7 @@
       const postImageFileInput = document.getElementById('postImageFile');
       const postImageUploadMeta = document.getElementById('postImageUploadMeta');
       const postImagePreview = document.getElementById('postImagePreview');
+      const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false };
       const escapeHtml = (value = '') => String(value)
@@ -981,6 +985,13 @@
 
       postImageUrlInput.addEventListener('input', () => {
         renderPostImagePreview(postImageUrlInput.value);
+      });
+
+      postClearImageUrlButton.addEventListener('click', () => {
+        postImageUrlInput.value = '';
+        renderPostImagePreview('');
+        setPostImageMeta('Image URL removed. You can paste a new URL or upload another image.');
+        postImageUrlInput.focus();
       });
 
       postImageDropzone.addEventListener('click', () => {

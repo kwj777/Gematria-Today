@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS posts (
   summary TEXT NOT NULL,
   body TEXT NOT NULL,
   read_time TEXT,
+  image_url TEXT,
   show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'published',
   published_at TIMESTAMPTZ,
@@ -193,6 +194,9 @@ ALTER TABLE posts
 
 ALTER TABLE posts
   ADD COLUMN IF NOT EXISTS read_time TEXT;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 ALTER TABLE posts
   ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN;

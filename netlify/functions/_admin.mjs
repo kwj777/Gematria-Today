@@ -107,6 +107,9 @@ export async function ensureAdminSchema(sql) {
     ADD COLUMN IF NOT EXISTS read_time TEXT`;
 
   await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS image_url TEXT`;
+
+  await sql`ALTER TABLE posts
     ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE`;
 
   await sql`ALTER TABLE posts
@@ -248,6 +251,7 @@ export function formatPost(row) {
     summary: row.summary,
     body: row.body,
     readTime: row.read_time,
+    imageUrl: row.image_url,
     showOnHomepage: row.show_on_homepage,
     status: row.status,
     publishedAt: row.published_at,

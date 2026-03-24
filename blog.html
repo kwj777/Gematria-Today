@@ -121,6 +121,24 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+
+      const normalizePostImageUrl = (value = '') => {
+        const raw = String(value || '').trim();
+        if (!raw) {
+          return '';
+        }
+        if (raw.startsWith('/')) {
+          return raw;
+        }
+        if (/^data:image\//i.test(raw)) {
+          return raw;
+        }
+        if (/^https?:\/\//i.test(raw)) {
+          return raw;
+        }
+        return '';
+      };
+
       const normalizePostBodyHtml = (value = '') => {
         const raw = String(value || '').trim();
         if (!raw) {
@@ -272,7 +290,11 @@
           const tagMarkup = tags.length
             ? tags.map((tag) => `<button type="button" class="badge text-bg-warning border-0 blog-post-tag" data-tag-filter="${escapeHtml(tag.toLowerCase())}">${escapeHtml(tag)}</button>`).join(' ')
             : '<span class="badge text-bg-warning">Blog Post</span>';
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p><a class="small fw-semibold" href="${postUrl}">Link to this post</a></div></article>`;
+          const coverImageUrl = normalizePostImageUrl(post.imageUrl);
+          const coverImageMarkup = coverImageUrl
+            ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" /></figure>`
+            : '';
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p><a class="small fw-semibold" href="${postUrl}">Link to this post</a></div></article>`;
         }).join('');
 
         if (filteredPosts.length) {

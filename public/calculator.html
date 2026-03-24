@@ -333,12 +333,12 @@ const lookupForm = document.querySelector('#lookup-form');
           gematriaButton.addEventListener('click', () => {
             renderGematriaMatches(payload.gematria.total);
           });
-          const detailMiddle = document.createTextNode(
-            ` | Digital Root: ${payload.gematria.digitalRoot} | `
-          );
+          const detailMiddlePrefix = document.createTextNode(' | ');
+          const detailMiddle = createDigitalRootValueNode(payload.gematria.digitalRoot, 'Digital Root: ');
+          const detailMiddleSuffix = document.createTextNode(' | ');
           const baseRootValue = document.createTextNode(` ${formatBaseRootLabel(payload.isBaseRoot)} | Searches: ${payload.searchCount}`);
 
-          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddle, createBaseRootLink(), baseRootValue);
+          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddlePrefix, detailMiddle, detailMiddleSuffix, createBaseRootLink(), baseRootValue);
         } else {
           gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
         }
@@ -394,6 +394,17 @@ const lookupForm = document.querySelector('#lookup-form');
         return isBaseRoot ? 'Yes' : 'No';
       }
 
+      function isHighlightedDigitalRoot(value) {
+        return Number(value) === 6;
+      }
+
+      function createDigitalRootValueNode(value, prefix = '') {
+        return Object.assign(document.createElement('span'), {
+          className: isHighlightedDigitalRoot(value) ? 'meta-highlight' : '',
+          textContent: `${prefix}${value}`,
+        });
+      }
+
       function createBaseRootValueNode(isBaseRoot) {
         return Object.assign(document.createElement('span'), {
           className: isBaseRoot ? 'meta-highlight' : '',
@@ -406,7 +417,9 @@ const lookupForm = document.querySelector('#lookup-form');
         gematriaResult.append(
           `Base-6 English Gematria for "${searchGematria.word}": `,
           createGematriaSearchButton(searchGematria.gematria.total),
-          ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | `,
+          ' (',
+          createDigitalRootValueNode(searchGematria.gematria.digitalRoot, 'Digital Root: '),
+          ') | ',
           createBaseRootLink(),
           ' ',
           createBaseRootValueNode(searchGematria.isBaseRoot),

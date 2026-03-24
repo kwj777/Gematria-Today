@@ -352,7 +352,11 @@
           return `Names: ${names.join(', ') || '—'} · Successful results: ${successfulCount}`;
         }
 
-        return `Gematria: ${item.gematriaTotal ?? '—'} · Digital Root: ${item.digitalRoot ?? '—'} · Base Root: ${item.isBaseRoot === null ? '—' : (item.isBaseRoot ? 'Yes' : 'No')}`;
+        const digitalRootValue = item.digitalRoot ?? '—';
+        const digitalRootSummary = Number(item.digitalRoot) === 6
+          ? `<span class="meta-highlight">Digital Root: ${digitalRootValue}</span>`
+          : `Digital Root: ${digitalRootValue}`;
+        return `Gematria: ${item.gematriaTotal ?? '—'} · ${digitalRootSummary} · Base Root: ${item.isBaseRoot === null ? '—' : (item.isBaseRoot ? 'Yes' : 'No')}`;
       }
 
       function getFavoriteStorageKey() {

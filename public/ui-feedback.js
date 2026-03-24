@@ -69,7 +69,10 @@
   const nativeFetch = window.fetch.bind(window);
 
   window.fetch = function trackedFetch(input, init = {}) {
-    const shouldSkip = Boolean(init && init.globalLoading === false);
+    const explicitLoadingSetting = init && typeof init.globalLoading === 'boolean' ? init.globalLoading : null;
+    const requestMethod = (init && init.method ? init.method : 'GET').toUpperCase();
+    const shouldTrack = explicitLoadingSetting !== null ? explicitLoadingSetting : requestMethod !== 'GET';
+    const shouldSkip = !shouldTrack;
     if (shouldSkip) {
       return nativeFetch(input, init);
     }

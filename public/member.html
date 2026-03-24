@@ -132,6 +132,9 @@
                   </div>
                 </div>
                 <div id="historyList" class="admin-list"></div>
+                <div id="historyListToggleWrap" class="mt-3 d-none">
+                  <button id="historyListToggleButton" class="btn btn-outline-primary btn-sm" type="button">View all saved calculations</button>
+                </div>
               </section>
             </div>
 
@@ -225,6 +228,8 @@
       const historyCount = document.getElementById('historyCount');
       const historyCountMeta = document.getElementById('historyCountMeta');
       const historyList = document.getElementById('historyList');
+      const historyListToggleWrap = document.getElementById('historyListToggleWrap');
+      const historyListToggleButton = document.getElementById('historyListToggleButton');
       const premiumActiveToggleRow = document.getElementById('premiumActiveToggleRow');
       const premiumActiveToggleButton = document.getElementById('premiumActiveToggleButton');
       const premiumActiveToggleArrow = document.getElementById('premiumActiveToggleArrow');
@@ -233,6 +238,7 @@
       let session = null;
       let historyItems = [];
       let favoriteHistoryIds = new Set();
+      let showAllHistoryItems = false;
       let paymentConfirmationInFlight = false;
 
       function showAlert(message, tone = 'danger') {
@@ -404,14 +410,20 @@
       }
 
       function renderHistory() {
+        const isPremiumMember = session?.member?.membershipLevel !== 'free';
+        const sortedHistoryItems = sortHistoryItems(historyItems);
+        const canExpandHistoryList = isPremiumMember && sortedHistoryItems.length > FREE_MEMBERSHIP_SAVE_LIMIT;
+        const visibleHistoryItems = showAllHistoryItems || !canExpandHistoryList
+          ? sortedHistoryItems
+          : sortedHistoryItems.slice(0, FREE_MEMBERSHIP_SAVE_LIMIT);
+
         historyCount.textContent = String(historyItems.length);
-        if (session?.member?.membershipLevel === 'free') {
+        if (!isPremiumMember) {
           historyCountMeta.textContent = `Calculation history items currently stored (${historyItems.length}/${FREE_MEMBERSHIP_SAVE_LIMIT} free saves used).`;
         } else {
           historyCountMeta.textContent = 'Calculation history items currently stored.';
         }
 
-        const visibleHistoryItems = sortHistoryItems(historyItems);
         historyList.innerHTML = visibleHistoryItems.length ? visibleHistoryItems.map((item) => {
           const favorited = isFavorited(item);
           return `
@@ -440,6 +452,16 @@
           </article>
         `;
         }).join('') : '<p class="text-muted mb-0">No saved calculations yet. Run a lookup on the calculator or name calculator page and click <strong>Save result</strong>.</p>';
+
+        if (canExpandHistoryList) {
+          historyListToggleWrap.classList.remove('d-none');
+          historyListToggleButton.textContent = showAllHistoryItems
+            ? 'Show only first 3 calculations'
+            : 'View all saved calculations';
+        } else {
+          historyListToggleWrap.classList.add('d-none');
+          showAllHistoryItems = false;
+        }
 
         historyList.querySelectorAll('[data-favorite-id]').forEach((button) => {
           button.addEventListener('click', () => {
@@ -490,6 +512,11 @@
         persistFavoriteHistoryIds();
         renderHistory();
       }
+
+      historyListToggleButton.addEventListener('click', () => {
+        showAllHistoryItems = !showAllHistoryItems;
+        renderHistory();
+      });
 
       async function bootstrapSession() {
         const url = new URL(window.location.href);

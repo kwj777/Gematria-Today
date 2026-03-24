@@ -235,11 +235,16 @@ export async function getAuthenticatedUser(event, { requireAuth = true } = {}) {
 }
 
 export function formatPost(row) {
+  const tagValue = String(row.tag ?? '').trim();
+  const tags = tagValue
+    ? [...new Map(tagValue.split(',').map((tag) => String(tag || '').trim()).filter(Boolean).map((tag) => [tag.toLowerCase(), tag])).values()]
+    : [];
   return {
     id: row.id,
     title: row.title,
     slug: row.slug,
-    tag: row.tag,
+    tag: tagValue || null,
+    tags,
     summary: row.summary,
     body: row.body,
     readTime: row.read_time,

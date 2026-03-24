@@ -147,7 +147,7 @@
                 <form id="postForm" class="row g-3">
                   <input id="postId" type="hidden" />
                   <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
-                  <div class="col-md-6"><label class="form-label" for="postTag">Tag</label><input id="postTag" class="form-control" placeholder="Research Workflow" /></div>
+                  <div class="col-md-6"><label class="form-label" for="postTag">Tags</label><input id="postTag" class="form-control" placeholder="Research Workflow, Name Analysis" /><div class="form-text">Use commas to add multiple tags.</div><div id="postTagsInUse" class="small text-muted mt-2">Tags in use: none yet.</div></div>
                   <div class="col-md-6"><label class="form-label" for="postReadTime">Read time</label><input id="postReadTime" class="form-control" placeholder="5 minute read" /></div>
                   <div class="col-12"><label class="form-label" for="postSummary">Summary</label><textarea id="postSummary" class="form-control" rows="2" required></textarea></div>
                   <div class="col-12"><label class="form-label" for="postBody">Body</label><textarea id="postBody" class="form-control" rows="7" placeholder="HTML is supported for formatting (for example: <p>, <strong>, <ul>, <a>). Plain text still works with blank lines." required></textarea></div>
@@ -365,6 +365,60 @@
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
 
+      const getPostTagList = (post) => {
+        const tags = [];
+        const addTag = (tagValue) => {
+          const normalizedTag = String(tagValue || '').trim();
+          if (!normalizedTag) {
+            return;
+          }
+          if (tags.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
+            return;
+          }
+          tags.push(normalizedTag);
+        };
+
+        if (Array.isArray(post.tags)) {
+          post.tags.forEach((tagValue) => addTag(tagValue));
+        }
+
+        if (typeof post.tag === 'string') {
+          post.tag.split(',').forEach((tagValue) => addTag(tagValue));
+        }
+
+        return tags;
+      };
+
+      const renderPostTagBadges = (post) => getPostTagList(post)
+        .map((tag) => `<span class="badge text-bg-warning">${escapeHtml(tag)}</span>`)
+        .join('');
+
+
+      function renderTagsInUse() {
+        const tagsInUse = [...new Map(state.posts
+          .flatMap((post) => getPostTagList(post))
+          .map((tag) => [tag.toLowerCase(), tag])).values()]
+          .sort((left, right) => left.localeCompare(right));
+        const target = document.getElementById('postTagsInUse');
+        target.innerHTML = tagsInUse.length
+          ? `Tags in use: ${tagsInUse.map((tag) => `<button type="button" class="btn btn-sm btn-outline-secondary me-1 mb-1" data-use-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`).join('')}`
+          : 'Tags in use: none yet.';
+      }
+
+
+
+      function addTagToPostField(tagValue) {
+        const input = document.getElementById('postTag');
+        const tags = input.value
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        if (!tags.some((tag) => tag.toLowerCase() === String(tagValue).trim().toLowerCase())) {
+          tags.push(String(tagValue).trim());
+        }
+        input.value = tags.join(', ');
+        input.focus();
+      }
       function showMessage(target, message) {
         target.textContent = message;
         target.classList.remove('d-none');
@@ -423,13 +477,14 @@
 
       function renderPosts() {
         postCount.textContent = String(state.posts.length);
+        renderTagsInUse();
         const list = document.getElementById('postList');
         list.innerHTML = state.posts.length ? state.posts.map((post) => `
           <article class="admin-item-card mb-3 p-3">
             <div class="d-flex justify-content-between gap-3">
               <div>
                 <div class="d-flex flex-wrap gap-2 mb-2">
-                  ${post.tag ? `<span class="badge text-bg-warning">${escapeHtml(post.tag)}</span>` : ''}
+                  ${renderPostTagBadges(post)}
                   ${post.readTime ? `<span class="badge text-bg-light">${escapeHtml(post.readTime)}</span>` : ''}
                 </div>
                 <h4 class="h6 mb-1">${escapeHtml(post.title)}</h4>
@@ -703,6 +758,14 @@
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
+      });
+
+      document.getElementById('postTagsInUse').addEventListener('click', (event) => {
+        const tagButton = event.target.closest('[data-use-tag]');
+        if (!tagButton) {
+          return;
+        }
+        addTagToPostField(tagButton.dataset.useTag || '');
       });
 
       document.getElementById('postForm').addEventListener('submit', async (event) => {

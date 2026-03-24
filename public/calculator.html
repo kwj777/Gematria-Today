@@ -336,7 +336,7 @@ const lookupForm = document.querySelector('#lookup-form');
           const detailMiddle = document.createTextNode(
             ` | Digital Root: ${payload.gematria.digitalRoot} | `
           );
-          const baseRootValue = document.createTextNode(`: ${formatBaseRootLabel(payload.isBaseRoot)} | Searches: ${payload.searchCount}`);
+          const baseRootValue = document.createTextNode(` ${formatBaseRootLabel(payload.isBaseRoot)} | Searches: ${payload.searchCount}`);
 
           gematriaDetail.append(detailPrefix, gematriaButton, detailMiddle, createBaseRootLink(), baseRootValue);
         } else {
@@ -383,10 +383,10 @@ const lookupForm = document.querySelector('#lookup-form');
 
       function createBaseRootLink() {
         const link = document.createElement('a');
-        link.href = 'https://endtimes.today/blog.html?post=what-is-a-base-root-word#what-is-a-base-root-word';
+        link.href = 'https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
-        link.textContent = 'Base Root';
+        link.textContent = 'Base Rooted:';
         return link;
       }
 
@@ -408,7 +408,7 @@ const lookupForm = document.querySelector('#lookup-form');
           createGematriaSearchButton(searchGematria.gematria.total),
           ` (Digital Root: ${searchGematria.gematria.digitalRoot}) | `,
           createBaseRootLink(),
-          ': ',
+          ' ',
           createBaseRootValueNode(searchGematria.isBaseRoot),
           ` | Searches: ${searchGematria.searchCount}`,
           document.createElement('br'),

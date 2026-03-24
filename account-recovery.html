@@ -93,6 +93,7 @@
             credentials: 'same-origin',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
+              action: 'forgot-userid',
               email: document.getElementById('recoveryEmail').value.trim(),
             }),
           });

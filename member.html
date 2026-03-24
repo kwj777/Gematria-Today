@@ -123,21 +123,19 @@
           </div>
 
           <div class="row g-4">
-            <div class="col-xl-5">
+            <div class="col-xl-7">
               <section class="content-panel p-4 h-100">
-                <p class="section-kicker mb-2">Profile</p>
-                <h3 class="h4 mb-3">Preferences</h3>
-                <form id="profileForm" class="row g-3">
-                  <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
-                  <div class="col-md-6"><label class="form-label" for="profileFavoriteCipher">Favorite cipher</label><input id="profileFavoriteCipher" class="form-control" placeholder="English Ordinal" /></div>
-                  <div class="col-md-6"><label class="form-label" for="profileTimezone">Timezone</label><input id="profileTimezone" class="form-control" placeholder="America/New_York" /></div>
-                  <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
-                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save profile</button></div>
-                </form>
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">History</p>
+                    <h3 class="h4 mb-0">Saved calculations</h3>
+                  </div>
+                </div>
+                <div id="historyList" class="admin-list"></div>
               </section>
             </div>
 
-            <div class="col-xl-7">
+            <div class="col-xl-5">
               <div class="d-grid gap-4 h-100">
                 <section class="content-panel p-4">
                   <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
@@ -164,14 +162,14 @@
                   </form>
                 </section>
 
-                <section class="content-panel p-4 h-100">
-                  <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                    <div>
-                      <p class="section-kicker mb-2">History</p>
-                      <h3 class="h4 mb-0">Saved calculations</h3>
-                    </div>
-                  </div>
-                  <div id="historyList" class="admin-list"></div>
+                <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
+                  <p class="section-kicker mb-2">Profile</p>
+                  <h3 class="h4 mb-3">Preferences</h3>
+                  <form id="profileForm" class="row g-3">
+                    <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
+                    <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
+                    <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save profile</button></div>
+                  </form>
                 </section>
               </div>
             </div>
@@ -445,8 +443,6 @@
           ? `Calculation history items currently stored (${historyItems.length}/${FREE_MEMBERSHIP_SAVE_LIMIT} free saves used).`
           : 'Calculation history items currently stored.';
         document.getElementById('profileDisplayName').value = member.displayName || '';
-        document.getElementById('profileFavoriteCipher').value = profile?.favoriteCipher || '';
-        document.getElementById('profileTimezone').value = profile?.timezone || '';
         document.getElementById('profileNotes').value = profile?.preferences?.notes || '';
         syncPaymentButton(member);
       }
@@ -563,8 +559,6 @@
             method: 'PATCH',
             body: JSON.stringify({
               displayName: document.getElementById('profileDisplayName').value.trim(),
-              favoriteCipher: document.getElementById('profileFavoriteCipher').value.trim(),
-              timezone: document.getElementById('profileTimezone').value.trim(),
               preferences: { notes: document.getElementById('profileNotes').value.trim() },
             }),
           });

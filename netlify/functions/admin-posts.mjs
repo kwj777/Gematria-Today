@@ -2,6 +2,32 @@ import crypto from 'node:crypto';
 import { formatPost, getAuthenticatedUser, jsonResponse, parseBody, slugify } from './_admin.mjs';
 import { clearCachedJson } from './_security.mjs';
 
+function normalizePostTags(tagInput, tagsInput) {
+  const tagTokens = [];
+  const addTag = (tagValue) => {
+    const normalizedTag = String(tagValue ?? '').trim();
+    if (!normalizedTag) {
+      return;
+    }
+    if (tagTokens.some((tag) => tag.toLowerCase() === normalizedTag.toLowerCase())) {
+      return;
+    }
+    tagTokens.push(normalizedTag);
+  };
+
+  if (Array.isArray(tagsInput)) {
+    tagsInput.forEach((tagValue) => addTag(tagValue));
+  }
+
+  if (typeof tagInput === 'string') {
+    tagInput.split(',').forEach((tagValue) => addTag(tagValue));
+  } else if (tagInput != null) {
+    addTag(tagInput);
+  }
+
+  return tagTokens.length ? tagTokens.join(', ') : null;
+}
+
 export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
@@ -20,13 +46,14 @@ export async function handler(event) {
       const slug = slugify(body.slug || title);
       const status = body.status === 'draft' ? 'draft' : 'published';
       const showOnHomepage = Boolean(body.showOnHomepage);
+      const normalizedTagValue = normalizePostTags(body.tag, body.tags);
       const rows = await sql`
         INSERT INTO posts (id, title, slug, tag, summary, body, read_time, show_on_homepage, status, published_at, created_by, updated_at)
         VALUES (
           ${crypto.randomUUID()},
           ${title},
           ${slug},
-          ${String(body.tag ?? '').trim() || null},
+          ${normalizedTagValue},
           ${String(body.summary ?? '').trim()},
           ${String(body.body ?? '').trim()},
           ${String(body.readTime ?? '').trim() || null},
@@ -55,12 +82,13 @@ export async function handler(event) {
       const slug = slugify(body.slug || title);
       const status = body.status === 'draft' ? 'draft' : 'published';
       const showOnHomepage = Boolean(body.showOnHomepage);
+      const normalizedTagValue = normalizePostTags(body.tag, body.tags);
       const rows = await sql`
         UPDATE posts
         SET
           title = ${title},
           slug = ${slug},
-          tag = ${String(body.tag ?? '').trim() || null},
+          tag = ${normalizedTagValue},
           summary = ${String(body.summary ?? '').trim()},
           body = ${String(body.body ?? '').trim()},
           read_time = ${String(body.readTime ?? '').trim() || null},

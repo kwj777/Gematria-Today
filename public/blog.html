@@ -75,6 +75,11 @@
             <aside class="content-panel p-4 sticky-top blog-sidebar">
               <p class="section-kicker mb-2">Selected Posts</p>
               <h2 class="h4 mb-3">Start with these reads</h2>
+              <div class="mb-4">
+                <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
+                <div id="blogTagFilters" class="d-flex flex-wrap gap-2"></div>
+              </div>
+              <p id="blogFilterSummary" class="small text-muted mb-3"></p>
               <div id="blogSidebarLinks" class="d-grid gap-3"></div>
               <a class="btn btn-outline-primary mt-4" href="/admin.html">Open admin dashboard</a>
             </aside>
@@ -158,14 +163,52 @@
         const params = new URLSearchParams(window.location.search);
         return params.get('post') || window.location.hash.slice(1);
       };
+      const getRequestedTag = () => {
+        const params = new URLSearchParams(window.location.search);
+        const tag = String(params.get('tag') || '').trim();
+        return tag ? tag.toLowerCase() : '';
+      };
       const syncBlogLocation = (slug) => {
-        if (!slug) {
-          return;
-        }
         const url = new URL(window.location.href);
-        url.searchParams.set('post', slug);
-        url.hash = slug;
+        if (slug) {
+          url.searchParams.set('post', slug);
+          url.hash = slug;
+        } else {
+          url.searchParams.delete('post');
+          url.hash = '';
+        }
         window.history.replaceState({}, '', url);
+      };
+      const syncTagLocation = (tag) => {
+        const url = new URL(window.location.href);
+        if (tag) {
+          url.searchParams.set('tag', tag);
+        } else {
+          url.searchParams.delete('tag');
+        }
+        url.searchParams.delete('post');
+        url.hash = '';
+        window.history.replaceState({}, '', url);
+      };
+      const getPostTags = (post) => {
+        const knownTags = [];
+        const addTag = (tagValue) => {
+          const cleanTag = String(tagValue || '').trim();
+          if (!cleanTag) {
+            return;
+          }
+          if (knownTags.some((existingTag) => existingTag.toLowerCase() === cleanTag.toLowerCase())) {
+            return;
+          }
+          knownTags.push(cleanTag);
+        };
+        if (Array.isArray(post.tags)) {
+          post.tags.forEach((tagValue) => addTag(tagValue));
+        }
+        if (typeof post.tag === 'string') {
+          post.tag.split(',').forEach((tagValue) => addTag(tagValue));
+        }
+        return knownTags;
       };
       const focusLinkedPost = (slug) => {
         if (!slug) {
@@ -181,25 +224,93 @@
         syncBlogLocation(slug);
       };
 
+      let latestPosts = [];
+      let selectedTag = '';
+
+      const renderTagFilters = (posts) => {
+        const tagCounts = new Map();
+        posts.forEach((post) => {
+          getPostTags(post).forEach((tag) => {
+            const normalizedTag = tag.toLowerCase();
+            const currentTag = tagCounts.get(normalizedTag);
+            if (currentTag) {
+              currentTag.count += 1;
+            } else {
+              tagCounts.set(normalizedTag, { label: tag, count: 1 });
+            }
+          });
+        });
+
+        const sortedTags = Array.from(tagCounts.values()).sort((left, right) => left.label.localeCompare(right.label));
+        if (selectedTag && !tagCounts.has(selectedTag)) {
+          selectedTag = '';
+          syncTagLocation('');
+        }
+
+        document.getElementById('blogTagFilters').innerHTML = [
+          `<button type="button" class="btn btn-sm ${selectedTag ? 'btn-outline-secondary' : 'btn-primary'}" data-tag-filter="">All tags <span class="badge text-bg-light ms-1">${posts.length}</span></button>`,
+          ...sortedTags.map((tag) => {
+            const isActive = selectedTag === tag.label.toLowerCase();
+            return `<button type="button" class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline-secondary'}" data-tag-filter="${escapeHtml(tag.label.toLowerCase())}">${escapeHtml(tag.label)} <span class="badge text-bg-light ms-1">${tag.count}</span></button>`;
+          })
+        ].join('');
+      };
+
+      const getVisiblePosts = () => {
+        if (!selectedTag) {
+          return latestPosts;
+        }
+        return latestPosts.filter((post) => getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag));
+      };
+
       function renderPosts(posts) {
-        const normalizedPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
-        document.getElementById('blogSidebarLinks').innerHTML = normalizedPosts.map((post) => `
+        latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
+        renderTagFilters(latestPosts);
+
+        const filteredPosts = getVisiblePosts();
+        document.getElementById('blogFilterSummary').innerHTML = selectedTag
+          ? `Showing <strong>${filteredPosts.length}</strong> post${filteredPosts.length === 1 ? '' : 's'} tagged <strong>${escapeHtml(selectedTag)}</strong>.`
+          : `Showing all <strong>${filteredPosts.length}</strong> posts.`;
+
+        document.getElementById('blogSidebarLinks').innerHTML = filteredPosts.map((post) => `
           <a class="blog-mini-link text-decoration-none" href="/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}">
             <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
             <span class="text-muted small">${escapeHtml(post.summary)}</span>
           </a>`).join('');
 
-        document.getElementById('blogPosts').innerHTML = normalizedPosts.map((post) => {
+        document.getElementById('blogPosts').innerHTML = filteredPosts.map((post) => {
           const bodyHtml = normalizePostBodyHtml(post.body || '');
           const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="badge text-bg-warning">${escapeHtml(post.tag || 'Blog Post')}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p><a class="small fw-semibold" href="${postUrl}">Link to this post</a></div></article>`;
+          const tags = getPostTags(post);
+          const tagMarkup = tags.length
+            ? tags.map((tag) => `<button type="button" class="badge text-bg-warning border-0 blog-post-tag" data-tag-filter="${escapeHtml(tag.toLowerCase())}">${escapeHtml(tag)}</button>`).join(' ')
+            : '<span class="badge text-bg-warning">Blog Post</span>';
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div><h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</p><a class="small fw-semibold" href="${postUrl}">Link to this post</a></div></article>`;
         }).join('');
 
-        focusLinkedPost(getRequestedPostSlug());
+        if (filteredPosts.length) {
+          focusLinkedPost(getRequestedPostSlug());
+        } else {
+          syncBlogLocation('');
+        }
       }
 
-      window.addEventListener('hashchange', () => focusLinkedPost(getRequestedPostSlug()));
+      window.addEventListener('hashchange', () => {
+        const requestedTag = getRequestedTag();
+        if (requestedTag !== selectedTag) {
+          selectedTag = requestedTag;
+          renderPosts(latestPosts);
+        }
+        focusLinkedPost(getRequestedPostSlug());
+      });
       document.addEventListener('click', (event) => {
+        const tagFilter = event.target.closest('[data-tag-filter]');
+        if (tagFilter) {
+          selectedTag = String(tagFilter.dataset.tagFilter || '').trim().toLowerCase();
+          syncTagLocation(selectedTag);
+          renderPosts(latestPosts);
+          return;
+        }
         const postLink = event.target.closest('a[href*="/blog.html?post="], a[href^="#"]');
         if (!postLink) {
           return;
@@ -211,6 +322,7 @@
         window.setTimeout(() => focusLinkedPost(url.searchParams.get('post') || url.hash.slice(1)), 0);
       });
 
+      selectedTag = getRequestedTag();
       renderPosts(fallbackPosts);
 
       const fetchPublishedPosts = async () => {
@@ -227,6 +339,7 @@
       ])
         .then((payload) => {
           if (payload?.items?.length) {
+            selectedTag = getRequestedTag();
             renderPosts(payload.items);
           }
         })

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Back Office Reports | EndTimes.Today</title>
+    <meta name="description" content="Back office analytics and operational reporting for EndTimes.Today." />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="canonical" href="https://endtimes.today/admin-reports.html" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="/theme.css" />
+    <script src="/ui-feedback.js"></script>
+    <style>
+      .report-bar { height: 0.75rem; }
+      .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+      .report-card { border: 1px solid rgba(255,255,255,0.12); border-radius: 0.75rem; padding: 1rem; background: rgba(20,24,35,0.65); }
+      .muted-label { font-size: 0.85rem; color: var(--bs-secondary-color); text-transform: uppercase; letter-spacing: .05em; }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html">EndTimes.Today</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/admin-reports.html">Reports</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-5">
+      <div class="container d-grid gap-4">
+        <section class="hero-panel p-4 p-lg-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+              <p class="section-kicker mb-2">Back Office Analytics</p>
+              <h1 class="display-6 fw-bold mb-2">Reports dashboard</h1>
+              <p id="metaLine" class="text-muted mb-0">Checking admin session…</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <select id="windowSelect" class="form-select form-select-sm" aria-label="Reporting window">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+              </select>
+              <button id="refreshButton" class="btn btn-primary btn-sm" type="button">Refresh</button>
+              <a class="btn btn-outline-light btn-sm" href="/admin.html">Back to admin</a>
+            </div>
+          </div>
+        </section>
+
+        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+        <section>
+          <h2 class="h4 mb-3">Executive snapshot</h2>
+          <div class="report-grid" id="overviewGrid"></div>
+        </section>
+
+        <section class="content-panel p-4">
+          <h2 class="h4 mb-3">Membership and publishing trends</h2>
+          <div class="row g-4">
+            <div class="col-lg-6">
+              <h3 class="h6">Member signups by day</h3>
+              <div id="signupTrend" class="d-grid gap-2"></div>
+            </div>
+            <div class="col-lg-6">
+              <h3 class="h6">Published posts by day</h3>
+              <div id="postTrend" class="d-grid gap-2"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="row g-4">
+          <div class="col-lg-4">
+            <div class="content-panel p-4 h-100">
+              <h2 class="h5 mb-3">Membership levels</h2>
+              <div id="membershipBreakdown" class="d-grid gap-3"></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="content-panel p-4 h-100">
+              <h2 class="h5 mb-3">Task status</h2>
+              <div id="taskBreakdown" class="d-grid gap-3"></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="content-panel p-4 h-100">
+              <h2 class="h5 mb-3">Top post tags</h2>
+              <div id="topTags" class="d-grid gap-2"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="row g-4">
+          <div class="col-lg-6">
+            <div class="content-panel p-4 h-100">
+              <h2 class="h5 mb-3">Coverage and inventory</h2>
+              <div id="coverageSummary" class="d-grid gap-3"></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="content-panel p-4 h-100">
+              <h2 class="h5 mb-3">Recent failed security events</h2>
+              <div id="securityEvents" class="d-grid gap-2"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const state = { reports: null, days: 30, user: null };
+
+      function showError(message) {
+        const target = document.getElementById('errorMessage');
+        target.textContent = message;
+        target.classList.remove('d-none');
+      }
+
+      function clearError() {
+        const target = document.getElementById('errorMessage');
+        target.textContent = '';
+        target.classList.add('d-none');
+      }
+
+      async function request(url) {
+        const response = await fetch(url, {
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Request failed');
+        }
+        return payload;
+      }
+
+      function formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(Number(value || 0));
+      }
+
+      function renderBars(targetId, rows, valueField, labelField) {
+        const target = document.getElementById(targetId);
+        if (!rows || !rows.length) {
+          target.innerHTML = '<p class="text-muted small mb-0">No data available for this window.</p>';
+          return;
+        }
+        const maxValue = Math.max(...rows.map((row) => Number(row[valueField] || 0)), 1);
+        target.innerHTML = rows.map((row) => {
+          const value = Number(row[valueField] || 0);
+          const percent = Math.max(2, Math.round((value / maxValue) * 100));
+          return `
+            <div>
+              <div class="d-flex justify-content-between small mb-1">
+                <span>${row[labelField]}</span>
+                <span>${formatNumber(value)}</span>
+              </div>
+              <div class="progress report-bar" role="img" aria-label="${row[labelField]} ${value}">
+                <div class="progress-bar" style="width: ${percent}%"></div>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      function renderOverviewCards(overview) {
+        const cards = [
+          ['New members', overview.newMembers],
+          ['Active premium', overview.activePremiumMembers],
+          ['Premium expiring in 30d', overview.expiringPremiumMembers],
+          ['Published posts', overview.publishedPosts],
+          ['Open tasks', overview.openTasks],
+          ['Overdue tasks', overview.overdueTasks],
+          ['Failed actions', overview.failedActions],
+        ];
+        const target = document.getElementById('overviewGrid');
+        target.innerHTML = cards.map(([label, value]) => `
+          <article class="report-card">
+            <p class="muted-label mb-2">${label}</p>
+            <div class="h3 mb-0">${formatNumber(value)}</div>
+          </article>
+        `).join('');
+      }
+
+      function renderCoverage(reports) {
+        const { faqCoverage, feedCoverage } = reports;
+        const target = document.getElementById('coverageSummary');
+        target.innerHTML = `
+          <div class="report-card">
+            <p class="muted-label mb-1">FAQ coverage</p>
+            <p class="mb-0">Published: <strong>${formatNumber(faqCoverage.published)}</strong> · Unpublished: <strong>${formatNumber(faqCoverage.unpublished)}</strong> · Total: <strong>${formatNumber(faqCoverage.total)}</strong></p>
+          </div>
+          <div class="report-card">
+            <p class="muted-label mb-1">Feed inventory</p>
+            <p class="mb-0">Active: <strong>${formatNumber(feedCoverage.active)}</strong> · Inactive: <strong>${formatNumber(feedCoverage.inactive)}</strong> · Total: <strong>${formatNumber(feedCoverage.total)}</strong></p>
+          </div>
+        `;
+      }
+
+      function renderSecurityEvents(rows) {
+        const target = document.getElementById('securityEvents');
+        if (!rows.length) {
+          target.innerHTML = '<p class="text-success small mb-0">No failed security events in this reporting window.</p>';
+          return;
+        }
+        target.innerHTML = rows.map((event) => `
+          <article class="border rounded p-2">
+            <p class="small mb-1"><strong>${event.route}</strong> · ${event.action}</p>
+            <p class="small text-muted mb-0">${new Date(event.createdAt).toLocaleString()} · ${event.outcome}</p>
+          </article>
+        `).join('');
+      }
+
+      function renderReports(reports) {
+        renderOverviewCards(reports.overview);
+        renderBars('signupTrend', reports.memberSignupsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
+        renderBars('postTrend', reports.publishedPostsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
+        renderBars('membershipBreakdown', reports.membershipsByLevel, 'total', 'level');
+        renderBars('taskBreakdown', reports.taskStatusBreakdown, 'total', 'status');
+        renderBars('topTags', reports.topTags.map((row) => ({ ...row, tag: `#${row.tag}` })), 'total', 'tag');
+        renderCoverage(reports);
+        renderSecurityEvents(reports.securityEvents);
+
+        const generated = new Date(reports.generatedAt).toLocaleString();
+        document.getElementById('metaLine').textContent = `Signed in as ${reports.user.username}. Window: last ${reports.days} days. Last refresh: ${generated}.`;
+      }
+
+      async function loadReports() {
+        clearError();
+        const select = document.getElementById('windowSelect');
+        const days = Number.parseInt(select.value, 10) || 30;
+        state.days = days;
+
+        try {
+          await request('/api/admin-session');
+          const reports = await request(`/api/admin-reports?days=${days}`);
+          state.reports = reports;
+          state.user = reports.user;
+          renderReports(reports);
+        } catch (error) {
+          showError(`${error.message}. Visit Admin to sign in, then return here.`);
+          document.getElementById('metaLine').textContent = 'Not authenticated or unable to load report data.';
+        }
+      }
+
+      document.getElementById('refreshButton').addEventListener('click', loadReports);
+      document.getElementById('windowSelect').addEventListener('change', loadReports);
+      loadReports();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>

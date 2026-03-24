@@ -72,38 +72,8 @@
           </div>
 
           <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-ride="carousel">
-            <div class="carousel-indicators blog-carousel-indicators position-static mb-4">
-              <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-              <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-            </div>
-            <div class="carousel-inner">
-              <div class="carousel-item active">
-                <article class="blog-slide-card p-4 p-lg-5">
-                  <span class="badge text-bg-warning mb-3">Research Workflow</span>
-                  <h3 class="mb-3">How to spot repeating number themes across related words</h3>
-                  <p class="text-muted mb-4">A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.</p>
-                  <div class="d-flex flex-wrap gap-2 mb-4">
-                    <span class="word-chip">Pattern Study</span>
-                    <span class="word-chip">Related Terms</span>
-                    <span class="word-chip">Workflow</span>
-                  </div>
-                  <a class="btn btn-primary" href="/blog.html#post-patterns">Read this post</a>
-                </article>
-              </div>
-              <div class="carousel-item">
-                <article class="blog-slide-card p-4 p-lg-5">
-                  <span class="badge text-bg-info mb-3">Name Analysis</span>
-                  <h3 class="mb-3">What to compare when two names share the same gematria value</h3>
-                  <p class="text-muted mb-4">Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.</p>
-                  <div class="d-flex flex-wrap gap-2 mb-4">
-                    <span class="word-chip">Names</span>
-                    <span class="word-chip">Comparison</span>
-                    <span class="word-chip">Interpretation</span>
-                  </div>
-                  <a class="btn btn-primary" href="/blog.html#post-names">Read this post</a>
-                </article>
-              </div>
-            </div>
+            <div class="carousel-indicators blog-carousel-indicators position-static mb-4"></div>
+            <div class="carousel-inner"></div>
             <button class="carousel-control-prev" type="button" data-bs-target="#blogPostsCarousel" data-bs-slide="prev">
               <span class="carousel-control-prev-icon" aria-hidden="true"></span>
               <span class="visually-hidden">Previous</span>
@@ -158,6 +128,117 @@
         </div>
       </div>
     </footer>
+    <script>
+      const homeFallbackPosts = [
+        {
+          slug: 'repeating-number-themes',
+          title: 'How to spot repeating number themes across related words',
+          tag: 'Research Workflow',
+          summary: 'A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.',
+          imageUrl: '/assets/three-based-words-patterns-16x9.svg'
+        },
+        {
+          slug: 'matching-name-values',
+          title: 'What to compare when two names share the same gematria value',
+          tag: 'Name Analysis',
+          summary: 'Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.',
+          imageUrl: '/assets/why-english-gematria-relevant-hero-16x9.svg'
+        }
+      ];
+
+      const escapeHtml = (value = '') => String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+      const normalizePostImageUrl = (value = '') => {
+        const raw = String(value || '').trim();
+        if (!raw || /\s/.test(raw)) {
+          return '';
+        }
+        if (/^data:image\//i.test(raw)) {
+          return raw;
+        }
+        if (raw.startsWith('//')) {
+          return `https:${raw}`;
+        }
+        const explicitScheme = raw.match(/^([a-z][a-z0-9+.-]*):/i);
+        if (explicitScheme) {
+          const scheme = explicitScheme[1].toLowerCase();
+          return scheme === 'http' || scheme === 'https' ? raw : '';
+        }
+        return `/${raw.replace(/^\.?\//, '')}`;
+      };
+
+      const getPostSlug = (post, index) => {
+        const rawSlug = String(post.slug || '').trim();
+        if (rawSlug) {
+          return rawSlug;
+        }
+        const rawTitle = String(post.title || '').trim().toLowerCase();
+        const slugFromTitle = rawTitle
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        return slugFromTitle || `post-${index}`;
+      };
+
+      const renderHomeCarousel = (posts = []) => {
+        const normalizedPosts = posts
+          .map((post, index) => ({ ...post, slug: getPostSlug(post, index) }))
+          .filter((post) => String(post.title || '').trim());
+        if (!normalizedPosts.length) {
+          return;
+        }
+
+        const indicatorsNode = document.querySelector('#blogPostsCarousel .carousel-indicators');
+        const innerNode = document.querySelector('#blogPostsCarousel .carousel-inner');
+        indicatorsNode.innerHTML = normalizedPosts.map((_, index) => (
+          `<button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}" ${index === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${index + 1}"></button>`
+        )).join('');
+
+        innerNode.innerHTML = normalizedPosts.map((post, index) => {
+          const heroImageUrl = normalizePostImageUrl(post.imageUrl) || '/assets/blog-hero-gematria.svg';
+          const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
+          const tag = String(post.tag || '').trim() || 'Featured Post';
+          return `
+            <div class="carousel-item ${index === 0 ? 'active' : ''}">
+              <article class="blog-slide-card p-4 p-lg-5">
+                <figure class="blog-slide-image-frame mb-4">
+                  <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title)} hero image" loading="lazy" decoding="async" />
+                </figure>
+                <span class="badge text-bg-warning mb-3">${escapeHtml(tag)}</span>
+                <h3 class="mb-3">${escapeHtml(post.title)}</h3>
+                <p class="text-muted mb-4">${escapeHtml(post.summary || '')}</p>
+                <a class="btn btn-primary" href="${postUrl}">Read this post</a>
+              </article>
+            </div>
+          `;
+        }).join('');
+      };
+
+      const fetchFeaturedHomepagePosts = async () => {
+        const response = await fetch('/api/public-posts?featured=true&limit=6');
+        if (!response.ok) {
+          throw new Error('Failed to load featured posts');
+        }
+        const payload = await response.json();
+        return Array.isArray(payload?.items) ? payload.items : [];
+      };
+
+      renderHomeCarousel(homeFallbackPosts);
+      Promise.race([
+        fetchFeaturedHomepagePosts(),
+        new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
+      ])
+        .then((posts) => {
+          if (posts.length) {
+            renderHomeCarousel(posts);
+          }
+        })
+        .catch(() => {});
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>

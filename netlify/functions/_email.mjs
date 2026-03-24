@@ -124,7 +124,7 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
   const safeUsername = escapeHtml(username);
   const safeRecoveryCode = escapeHtml(recoveryCode);
   const recoveryUrl = config.appBaseUrl
-    ? `${config.appBaseUrl}/${accountLabel === 'admin' ? 'admin.html' : 'member.html'}`
+    ? `${config.appBaseUrl}/${accountLabel === 'admin' ? 'admin.html' : 'account-recovery.html'}${recoveryType === 'forgot-password' ? `?recovery_code=${encodeURIComponent(recoveryCode)}` : ''}`
     : null;
 
   const subject = recoveryType === 'forgot-userid'

@@ -393,14 +393,30 @@
         return response.json();
       };
 
+      const mergeWithFallbackPosts = (items = []) => {
+        const mergedPosts = [];
+        const seenSlugs = new Set();
+        [...items, ...fallbackPosts].forEach((post, index) => {
+          const slug = createPostSlug(post, index).toLowerCase();
+          if (seenSlugs.has(slug)) {
+            return;
+          }
+          seenSlugs.add(slug);
+          mergedPosts.push(post);
+        });
+        return mergedPosts;
+      };
+
       Promise.race([
         fetchPublishedPosts(),
         new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading published posts')), 4000))
       ])
         .then((payload) => {
-          if (payload?.items?.length) {
+          const publishedItems = Array.isArray(payload?.items) ? payload.items : [];
+          const mergedPosts = mergeWithFallbackPosts(publishedItems);
+          if (mergedPosts.length) {
             selectedTag = getRequestedTag();
-            renderPosts(payload.items);
+            renderPosts(mergedPosts);
           }
         })
         .catch(() => {});

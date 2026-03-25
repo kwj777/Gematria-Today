@@ -257,6 +257,7 @@
         }
         return knownTags;
       };
+      const isHiddenFromMainBlog = (post) => Boolean(post?.hideFromBlog);
       const focusLinkedPost = (slug) => {
         if (!slug) {
           return;
@@ -311,7 +312,9 @@
       };
 
       function renderPosts(posts) {
-        latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
+        latestPosts = posts
+          .filter((post) => !isHiddenFromMainBlog(post))
+          .map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
         renderTagFilters(latestPosts);
 
         const filteredPosts = getVisiblePosts();

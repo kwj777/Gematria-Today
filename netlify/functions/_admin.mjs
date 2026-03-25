@@ -92,6 +92,7 @@ export async function ensureAdminSchema(sql) {
     body TEXT NOT NULL,
     read_time TEXT,
     show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE,
+    hide_from_blog BOOLEAN NOT NULL DEFAULT FALSE,
     status TEXT NOT NULL DEFAULT 'published',
     published_at TIMESTAMPTZ,
     created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -134,6 +135,9 @@ export async function ensureAdminSchema(sql) {
     ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE`;
 
   await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS hide_from_blog BOOLEAN NOT NULL DEFAULT FALSE`;
+
+  await sql`ALTER TABLE posts
     ADD COLUMN IF NOT EXISTS status TEXT`;
 
   await sql`UPDATE posts
@@ -155,6 +159,16 @@ export async function ensureAdminSchema(sql) {
 
   await sql`ALTER TABLE posts
     ALTER COLUMN show_on_homepage SET NOT NULL`;
+
+  await sql`UPDATE posts
+    SET hide_from_blog = FALSE
+    WHERE hide_from_blog IS NULL`;
+
+  await sql`ALTER TABLE posts
+    ALTER COLUMN hide_from_blog SET DEFAULT FALSE`;
+
+  await sql`ALTER TABLE posts
+    ALTER COLUMN hide_from_blog SET NOT NULL`;
 
   await sql`ALTER TABLE posts
     ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`;
@@ -299,6 +313,7 @@ export function formatPost(row) {
     imageUrl: row.image_url,
     sliderImageUrl: row.slider_image_url,
     showOnHomepage: row.show_on_homepage,
+    hideFromBlog: row.hide_from_blog,
     status: row.status,
     publishedAt: row.published_at,
     createdAt: row.created_at,

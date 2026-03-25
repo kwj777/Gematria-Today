@@ -81,3 +81,68 @@
     return nativeFetch(input, init).finally(stopLoading);
   };
 })();
+
+(function installAdminNavVisibility() {
+  if (typeof window === 'undefined' || window.__adminNavVisibilityInstalled || typeof document === 'undefined') {
+    return;
+  }
+
+  window.__adminNavVisibilityInstalled = true;
+
+  const ADMIN_CHECK_PATH = '/api/admin-session';
+
+  function getNavMenu() {
+    return document.querySelector('#siteNav .navbar-nav');
+  }
+
+  function hasAdminLink(navMenu) {
+    return Boolean(navMenu && navMenu.querySelector('a[href="/admin.html"]'));
+  }
+
+  function appendAdminLink() {
+    const navMenu = getNavMenu();
+    if (!navMenu || hasAdminLink(navMenu)) {
+      return;
+    }
+
+    const item = document.createElement('li');
+    item.className = 'nav-item';
+
+    const link = document.createElement('a');
+    link.className = 'nav-link';
+    link.href = '/admin.html';
+    link.textContent = 'Admin';
+
+    item.appendChild(link);
+    navMenu.appendChild(item);
+  }
+
+  async function revealAdminLinkWhenAuthenticated() {
+    if (window.location.pathname === '/admin.html') {
+      return;
+    }
+
+    try {
+      const response = await window.fetch(ADMIN_CHECK_PATH, {
+        method: 'GET',
+        credentials: 'same-origin',
+        globalLoading: false,
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      appendAdminLink();
+    } catch (_error) {
+      // Ignore connectivity/auth check errors to keep public nav rendering stable.
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', revealAdminLinkWhenAuthenticated, { once: true });
+    return;
+  }
+
+  revealAdminLinkWhenAuthenticated();
+})();

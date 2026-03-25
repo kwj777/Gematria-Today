@@ -79,6 +79,12 @@ body {
   padding: 0;
 }
 
+
+.hero-panel--compact {
+  padding-top: clamp(1rem, 1.2vw + 0.75rem, 1.75rem) !important;
+  padding-bottom: clamp(1rem, 1.2vw + 0.75rem, 1.75rem) !important;
+}
+
 .hero-selling-points-panel {
   display: flex;
   align-items: center;

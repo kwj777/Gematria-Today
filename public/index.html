@@ -199,23 +199,15 @@
 
         carouselInner.innerHTML = normalizedPosts.map((post, index) => {
           const slug = escapeHtml(post.slug || `post-${index}`);
-          const tagClass = index % 2 === 0 ? 'text-bg-warning' : 'text-bg-info';
           const heroImageUrl = normalizePostImageUrl(post.imageUrl) || '/assets/blog-hero-gematria.svg';
           return `
             <div class="carousel-item ${index === 0 ? 'active' : ''}">
               <article class="blog-slide-card p-4 p-lg-5">
-                <figure class="blog-slide-image-frame mb-4">
-                  <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title || 'Featured post')} hero image" loading="lazy" decoding="async" />
-                </figure>
-                <span class="badge ${tagClass} mb-3">${escapeHtml(post.tag || 'Featured Post')}</span>
-                <h3 class="mb-3">${escapeHtml(post.title || 'Blog post')}</h3>
-                <p class="text-muted mb-4">${escapeHtml(post.summary || 'Open the blog to keep reading this featured post.')}</p>
-                <div class="d-flex flex-wrap gap-2 mb-4">
-                  ${post.readTime ? `<span class="word-chip">${escapeHtml(post.readTime)}</span>` : ''}
-                  <span class="word-chip">Featured</span>
-                  <span class="word-chip">Blog</span>
-                </div>
-                <a class="btn btn-primary" href="/blog.html?post=${encodeURIComponent(post.slug || `post-${index}`)}#${slug}">Read this post</a>
+                <a href="/blog.html?post=${encodeURIComponent(post.slug || `post-${index}`)}#${slug}" aria-label="Read ${escapeHtml(post.title || 'Featured post')}" class="d-block">
+                  <figure class="blog-slide-image-frame mb-0">
+                    <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title || 'Featured post')} hero image" loading="lazy" decoding="async" />
+                  </figure>
+                </a>
               </article>
             </div>
           `;

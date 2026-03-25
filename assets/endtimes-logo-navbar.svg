@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 84" role="img" aria-labelledby="title desc">
+  <title id="title">EndTimes.Today logo</title>
+  <desc id="desc">A celestial ring icon with the EndTimes.Today wordmark.</desc>
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd76a"/>
+      <stop offset="100%" stop-color="#ff9f1a"/>
+    </linearGradient>
+    <linearGradient id="text" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#dbe4ff"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(10,9)">
+    <circle cx="33" cy="33" r="28" fill="none" stroke="url(#ring)" stroke-width="6"/>
+    <circle cx="33" cy="33" r="10" fill="#f8fafc" opacity="0.95"/>
+    <path d="M4 33h58" stroke="#f8fafc" stroke-opacity="0.8" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="12" cy="24" r="2.5" fill="#f8fafc"/>
+    <circle cx="53" cy="43" r="2" fill="#f8fafc" opacity="0.9"/>
+  </g>
+
+  <text x="82" y="36" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="30" font-weight="700" fill="url(#text)">EndTimes</text>
+  <text x="244" y="36" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="30" font-weight="700" fill="#fbbf24">.Today</text>
+  <text x="84" y="61" font-family="Inter, Segoe UI, Roboto, Arial, sans-serif" font-size="12" letter-spacing="1.9" fill="#94a3b8">RESEARCH • CALCULATE • DISCOVER</text>
+</svg>

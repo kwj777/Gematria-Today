@@ -741,3 +741,21 @@ footer.site-footer {
     margin-bottom: 1.5rem;
   }
 }
+
+
+.navbar-brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+@media (max-width: 576px) {
+  .site-logo {
+    height: 34px;
+  }
+}

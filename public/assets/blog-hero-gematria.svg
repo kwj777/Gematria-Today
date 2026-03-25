@@ -28,7 +28,6 @@
     <circle cx="210" cy="980" r="2" fill="#ffd36d"/><circle cx="420" cy="1060" r="2" fill="#c7ebff"/><circle cx="1010" cy="1000" r="2.2" fill="#fff2b0"/>
     <circle cx="1410" cy="1080" r="2" fill="#ffd36d"/><circle cx="1540" cy="920" r="2.2" fill="#fff2b0"/>
   </g>
-  <text x="86" y="235" fill="#ffeeb3" font-size="170" font-family="Georgia, 'Times New Roman', serif" font-weight="700" filter="url(#softGlow)">GEMATRIA</text>
   <g transform="translate(1180 285)" filter="url(#softGlow)">
     <circle r="190" fill="url(#glowGold)" opacity="0.85"/>
     <polygon points="0,-150 130,75 -130,75" fill="none" stroke="#ffd76d" stroke-width="12" stroke-linejoin="round"/>

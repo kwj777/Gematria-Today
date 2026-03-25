@@ -337,12 +337,6 @@
                   <div class="col-12"><label class="form-label" for="sendgridFromName">From name</label><input id="sendgridFromName" class="form-control" placeholder="EndTimes.Today" /></div>
                   <div class="col-12"><label class="form-label" for="sendgridReplyToEmail">Reply-to email</label><input id="sendgridReplyToEmail" class="form-control" type="email" placeholder="help@example.com" /></div>
                   <div class="col-12"><label class="form-label" for="publicSiteUrl">Public site URL</label><input id="publicSiteUrl" class="form-control" type="url" placeholder="https://example.com" /></div>
-                  <div class="col-12"><label class="form-label" for="welcomeEmailSubject">Welcome email subject (Day +1)</label><input id="welcomeEmailSubject" class="form-control" placeholder="You’re in 🎉 (quick next step inside)" /></div>
-                  <div class="col-12">
-                    <label class="form-label" for="welcomeEmailBody">Welcome email body (Day +1)</label>
-                    <textarea id="welcomeEmailBody" class="form-control" rows="8" placeholder="Hey {{first_name}},&#10;&#10;Glad you joined us..."></textarea>
-                    <div class="form-text">Use placeholders like <code>{{first_name}}</code>, <code>{{blog_link}}</code>, <code>{{sender_name}}</code>, and <code>{{site_name}}</code>.</div>
-                  </div>
                   <div class="col-12">
                     <label class="form-label" for="sendgridApiKey">SendGrid API key</label>
                     <div class="input-group">
@@ -354,6 +348,40 @@
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save email delivery settings</button></div>
                 </form>
                 <div id="emailSettingsMeta" class="small text-muted mt-3">Recovery email delivery settings have not been loaded yet.</div>
+                </div>
+              </section>
+            </div>
+
+            <div class="col-md-6 admin-dashboard-masonry-item">
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailTemplatesSectionBody" aria-expanded="false" aria-controls="emailTemplatesSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Messaging</span>
+                    <span class="h4 mb-0 d-block">Email Templates</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-secondary">Templates</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="emailTemplatesSectionBody" class="collapse admin-section-body mt-4">
+                <p class="text-muted small">Manage each email template separately. Select a template to edit, then save updates for that template only.</p>
+                <form id="emailTemplateForm" class="row g-3">
+                  <input id="emailTemplateId" type="hidden" />
+                  <div class="col-12"><label class="form-label" for="emailTemplateName">Template</label><input id="emailTemplateName" class="form-control" disabled /></div>
+                  <div class="col-12"><label class="form-label" for="emailTemplateSubject">Subject</label><input id="emailTemplateSubject" class="form-control" placeholder="Email subject" required /></div>
+                  <div class="col-12">
+                    <label class="form-label" for="emailTemplateBody">Body</label>
+                    <textarea id="emailTemplateBody" class="form-control" rows="8" placeholder="Email body" required></textarea>
+                    <div class="form-text">Use placeholders like <code>{{first_name}}</code>, <code>{{blog_link}}</code>, <code>{{sender_name}}</code>, and <code>{{site_name}}</code>.</div>
+                  </div>
+                  <div class="col-12 d-flex flex-column flex-sm-row gap-2">
+                    <button id="emailTemplateSubmitButton" class="btn btn-primary flex-fill" type="submit">Save template</button>
+                    <button id="emailTemplateCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
+                  </div>
+                </form>
+                <div id="emailTemplateList" class="admin-list mt-4"></div>
+                <div id="emailTemplatesMeta" class="small text-muted mt-3">Email templates have not been loaded yet.</div>
                 </div>
               </section>
             </div>
@@ -438,7 +466,7 @@
       const postImagePreview = document.getElementById('postImagePreview');
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -780,16 +808,12 @@
         document.getElementById('sendgridFromName').value = settings.sendgridFromName || '';
         document.getElementById('sendgridReplyToEmail').value = settings.sendgridReplyToEmail || '';
         document.getElementById('publicSiteUrl').value = settings.publicSiteUrl || '';
-        document.getElementById('welcomeEmailSubject').value = settings.welcomeEmailSubject || '';
-        document.getElementById('welcomeEmailBody').value = settings.welcomeEmailBody || '';
         setSecretFieldMode('sendgridApiKey', false);
         const configuredDetails = [
           settings.sendgridFromEmail ? 'verified sender email' : '',
           settings.sendgridFromName ? 'sender name' : '',
           settings.sendgridReplyToEmail ? 'reply-to email' : '',
           settings.publicSiteUrl ? 'public site URL' : '',
-          settings.welcomeEmailSubject ? 'welcome email subject' : '',
-          settings.welcomeEmailBody ? 'welcome email body' : '',
           settings.hasSendgridApiKey ? 'SendGrid API key' : '',
         ].filter(Boolean);
         document.getElementById('emailSettingsMeta').textContent = settings.emailDeliveryConfigured
@@ -797,6 +821,57 @@
           : configuredDetails.length
             ? `Recovery emails are not ready yet. Still required: ${settings.hasSendgridApiKey ? 'verified sender email' : 'verified sender email and SendGrid API key'}.`
             : 'No recovery email delivery settings saved yet.';
+      }
+
+      function renderEmailTemplates() {
+        const templates = Array.isArray(state.emailTemplates) ? state.emailTemplates : [];
+        const list = document.getElementById('emailTemplateList');
+        list.innerHTML = templates.length
+          ? templates.map((template) => `
+            <article class="admin-item-card mb-3 p-3">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge text-bg-light">${escapeHtml(template.id || 'template')}</span>
+                    <span class="badge ${template.subject ? 'text-bg-info' : 'text-bg-secondary'}">${template.subject ? 'Configured' : 'Draft'}</span>
+                  </div>
+                  <h4 class="h6 mb-1">${escapeHtml(template.name || template.id || 'Email template')}</h4>
+                  <p class="small mb-0 text-muted">${escapeHtml(template.subject || 'No subject saved yet.')}</p>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-edit-email-template="${escapeHtml(template.id)}">Edit</button>
+              </div>
+            </article>`).join('')
+          : '<p class="text-muted small mb-0">No email templates saved yet.</p>';
+
+        const configuredCount = templates.filter((template) => template.subject && template.body).length;
+        document.getElementById('emailTemplatesMeta').textContent = templates.length
+          ? `${configuredCount} of ${templates.length} email template${templates.length === 1 ? '' : 's'} fully configured.`
+          : 'No email templates saved yet.';
+      }
+
+      function resetEmailTemplateForm() {
+        state.editingEmailTemplateId = null;
+        document.getElementById('emailTemplateForm').reset();
+        document.getElementById('emailTemplateId').value = '';
+        document.getElementById('emailTemplateName').value = '';
+        document.getElementById('emailTemplateSubject').value = '';
+        document.getElementById('emailTemplateBody').value = '';
+        document.getElementById('emailTemplateSubmitButton').textContent = 'Save template';
+        document.getElementById('emailTemplateCancelButton').classList.add('d-none');
+      }
+
+      function startEmailTemplateEdit(templateId) {
+        const template = state.emailTemplates.find((item) => item.id === templateId);
+        if (!template) {
+          return;
+        }
+        state.editingEmailTemplateId = template.id;
+        document.getElementById('emailTemplateId').value = template.id;
+        document.getElementById('emailTemplateName').value = template.name || template.id;
+        document.getElementById('emailTemplateSubject').value = template.subject || '';
+        document.getElementById('emailTemplateBody').value = template.body || '';
+        document.getElementById('emailTemplateSubmitButton').textContent = 'Update template';
+        document.getElementById('emailTemplateCancelButton').classList.remove('d-none');
       }
 
       function renderTasks() {
@@ -832,12 +907,14 @@
         state.tasks = tasks.items || [];
         state.stripeSettings = settings.settings || null;
         state.emailSettings = settings.settings || null;
+        state.emailTemplates = settings.emailTemplates || [];
         renderFeeds();
         renderPosts();
         renderFaqs();
         renderTasks();
         renderStripeSettings();
         renderEmailSettings();
+        renderEmailTemplates();
         renderMembershipGrantMeta();
       }
 
@@ -1140,8 +1217,6 @@
               sendgridFromName: document.getElementById('sendgridFromName').value,
               sendgridReplyToEmail: document.getElementById('sendgridReplyToEmail').value,
               publicSiteUrl: document.getElementById('publicSiteUrl').value,
-              welcomeEmailSubject: document.getElementById('welcomeEmailSubject').value,
-              welcomeEmailBody: document.getElementById('welcomeEmailBody').value,
               sendgridApiKey: state.replaceSendgridApiKey ? sendgridApiKeyInput.value : undefined,
               replaceSendgridApiKey: state.replaceSendgridApiKey
             })
@@ -1149,7 +1224,9 @@
           state.emailSettings = payload.settings || null;
           state.stripeSettings = payload.settings || null;
           renderEmailSettings();
-          showMessage(saveMessage, 'Email delivery and welcome email settings saved.');
+          state.emailTemplates = payload.emailTemplates || state.emailTemplates;
+          renderEmailTemplates();
+          showMessage(saveMessage, 'Recovery email delivery settings saved.');
           collapseAdminSection('emailSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
@@ -1181,6 +1258,40 @@
         }
       });
 
+      document.getElementById('emailTemplateForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const templateId = document.getElementById('emailTemplateId').value;
+          if (!templateId) {
+            throw new Error('Select an email template to edit.');
+          }
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              emailTemplate: {
+                id: templateId,
+                subject: document.getElementById('emailTemplateSubject').value,
+                body: document.getElementById('emailTemplateBody').value,
+              },
+            }),
+          });
+          state.emailTemplates = payload.emailTemplates || state.emailTemplates;
+          state.emailSettings = payload.settings || state.emailSettings;
+          renderEmailTemplates();
+          renderEmailSettings();
+          startEmailTemplateEdit(templateId);
+          showMessage(saveMessage, 'Email template saved.');
+          collapseAdminSection('emailTemplatesSectionBody');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('emailTemplateCancelButton').addEventListener('click', () => {
+        resetEmailTemplateForm();
+      });
+
       document.getElementById('taskForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearMessage(errorMessage);
@@ -1204,7 +1315,7 @@
       });
 
       document.addEventListener('click', async (event) => {
-        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask, enableSecret } = event.target.dataset;
+        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask, enableSecret, editEmailTemplate } = event.target.dataset;
         if (enableSecret) {
           const stateKey = ({ stripeSecretKey: 'replaceStripeSecretKey', stripeWebhookSigningSecret: 'replaceStripeWebhookSigningSecret', sendgridApiKey: 'replaceSendgridApiKey' })[enableSecret];
           const shouldEnable = !state[stateKey];
@@ -1216,7 +1327,7 @@
           }
           return;
         }
-        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask) {
+        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate) {
           return;
         }
         clearMessage(errorMessage);
@@ -1227,6 +1338,10 @@
           }
           if (editFaq) {
             startFaqEdit(editFaq);
+            return;
+          }
+          if (editEmailTemplate) {
+            startEmailTemplateEdit(editEmailTemplate);
             return;
           }
           if (deleteFeed) {
@@ -1260,6 +1375,7 @@
       resetPostForm();
       resetFaqForm();
       renderMembershipGrantMeta();
+      resetEmailTemplateForm();
       loadSession();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

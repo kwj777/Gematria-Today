@@ -11,9 +11,21 @@ const DEFAULT_SETTINGS = {
   sendgridReplyToEmail: '',
   sendgridApiKey: '',
   publicSiteUrl: '',
-  welcomeEmailSubject: '',
-  welcomeEmailBody: '',
 };
+
+const DEFAULT_EMAIL_TEMPLATES = [
+  {
+    id: 'welcome_day_1',
+    name: 'Welcome email (Day +1)',
+    subject: '',
+    body: '',
+    placeholders: ['{{first_name}}', '{{blog_link}}', '{{sender_name}}', '{{site_name}}'],
+  },
+];
+
+function getDefaultEmailTemplates() {
+  return DEFAULT_EMAIL_TEMPLATES.map((template) => ({ ...template }));
+}
 
 function normalizeSettings(body = {}) {
   return {
@@ -28,9 +40,15 @@ function normalizeSettings(body = {}) {
     sendgridReplyToEmail: String(body.sendgridReplyToEmail ?? '').trim().toLowerCase(),
     sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
     publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
-    welcomeEmailSubject: String(body.welcomeEmailSubject ?? '').trim(),
-    welcomeEmailBody: String(body.welcomeEmailBody ?? '').trim(),
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
+  };
+}
+
+function normalizeEmailTemplate(body = {}) {
+  return {
+    id: String(body.id ?? '').trim().toLowerCase(),
+    subject: String(body.subject ?? '').trim(),
+    body: String(body.body ?? '').trim(),
   };
 }
 
@@ -44,11 +62,41 @@ function serializeSettings(settings = {}) {
     sendgridFromName: settings.sendgridFromName || '',
     sendgridReplyToEmail: settings.sendgridReplyToEmail || '',
     publicSiteUrl: settings.publicSiteUrl || '',
-    welcomeEmailSubject: settings.welcomeEmailSubject || '',
-    welcomeEmailBody: settings.welcomeEmailBody || '',
     hasSendgridApiKey: Boolean(settings.sendgridApiKey),
     emailDeliveryConfigured: Boolean(settings.sendgridApiKey && settings.sendgridFromEmail),
   };
+}
+
+function mapSettingsFromRows(rows = []) {
+  const settings = { ...DEFAULT_SETTINGS };
+  const emailTemplates = getDefaultEmailTemplates();
+  const templateById = new Map(emailTemplates.map((template) => [template.id, template]));
+
+  for (const row of rows) {
+    if (row.setting_key === 'stripe_account_id') settings.stripeAccountId = row.setting_value || '';
+    if (row.setting_key === 'stripe_publishable_key') settings.stripePublishableKey = row.setting_value || '';
+    if (row.setting_key === 'stripe_secret_key') settings.stripeSecretKey = row.setting_value || '';
+    if (row.setting_key === 'stripe_webhook_signing_secret') settings.stripeWebhookSigningSecret = row.setting_value || '';
+    if (row.setting_key === 'sendgrid_from_email') settings.sendgridFromEmail = row.setting_value || '';
+    if (row.setting_key === 'sendgrid_from_name') settings.sendgridFromName = row.setting_value || '';
+    if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
+    if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
+    if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
+
+    const subjectMatch = /^email_template_(.+)_subject$/.exec(row.setting_key || '');
+    if (subjectMatch) {
+      const template = templateById.get(subjectMatch[1]);
+      if (template) template.subject = row.setting_value || '';
+    }
+
+    const bodyMatch = /^email_template_(.+)_body$/.exec(row.setting_key || '');
+    if (bodyMatch) {
+      const template = templateById.get(bodyMatch[1]);
+      if (template) template.body = row.setting_value || '';
+    }
+  }
+
+  return { settings, emailTemplates };
 }
 
 export async function handler(event) {
@@ -62,26 +110,12 @@ export async function handler(event) {
         WHERE setting_key LIKE 'stripe_%'
           OR setting_key LIKE 'sendgrid_%'
           OR setting_key = 'public_site_url'
-          OR setting_key LIKE 'welcome_email_%'
+          OR setting_key LIKE 'email_template_%'
         ORDER BY setting_key ASC
       `;
 
-      const settings = { ...DEFAULT_SETTINGS };
-      for (const row of rows) {
-        if (row.setting_key === 'stripe_account_id') settings.stripeAccountId = row.setting_value || '';
-        if (row.setting_key === 'stripe_publishable_key') settings.stripePublishableKey = row.setting_value || '';
-        if (row.setting_key === 'stripe_secret_key') settings.stripeSecretKey = row.setting_value || '';
-        if (row.setting_key === 'stripe_webhook_signing_secret') settings.stripeWebhookSigningSecret = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_from_email') settings.sendgridFromEmail = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_from_name') settings.sendgridFromName = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
-        if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
-        if (row.setting_key === 'welcome_email_subject') settings.welcomeEmailSubject = row.setting_value || '';
-        if (row.setting_key === 'welcome_email_body') settings.welcomeEmailBody = row.setting_value || '';
-      }
-
-      return jsonResponse(200, { settings: serializeSettings(settings) });
+      const { settings, emailTemplates } = mapSettingsFromRows(rows);
+      return jsonResponse(200, { settings: serializeSettings(settings), emailTemplates });
     }
 
     if (event.httpMethod === 'POST') {
@@ -103,14 +137,54 @@ export async function handler(event) {
     }
 
     if (event.httpMethod === 'PUT' || event.httpMethod === 'PATCH') {
-      const settings = normalizeSettings(parseBody(event));
+      const body = parseBody(event);
+
+      if (body.emailTemplate) {
+        const templateInput = normalizeEmailTemplate(body.emailTemplate);
+        const template = getDefaultEmailTemplates().find((item) => item.id === templateInput.id);
+        if (!template) {
+          return jsonResponse(400, { error: 'Unknown email template id' });
+        }
+
+        const pairs = [
+          [`email_template_${templateInput.id}_subject`, templateInput.subject],
+          [`email_template_${templateInput.id}_body`, templateInput.body],
+        ];
+
+        for (const [key, value] of pairs) {
+          await sql`
+            INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
+            VALUES (${key}, ${value || null}, ${user.id}, NOW())
+            ON CONFLICT (setting_key)
+            DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW()
+          `;
+        }
+
+        const rows = await sql`
+          SELECT setting_key, setting_value
+          FROM admin_settings
+          WHERE setting_key LIKE 'stripe_%'
+            OR setting_key LIKE 'sendgrid_%'
+            OR setting_key = 'public_site_url'
+            OR setting_key LIKE 'email_template_%'
+          ORDER BY setting_key ASC
+        `;
+        const { settings, emailTemplates } = mapSettingsFromRows(rows);
+        return jsonResponse(200, {
+          saved: true,
+          settings: serializeSettings(settings),
+          emailTemplates,
+          updatedTemplateId: templateInput.id,
+        });
+      }
+
+      const settings = normalizeSettings(body);
       const existingRows = await sql`
         SELECT setting_key, setting_value
         FROM admin_settings
         WHERE setting_key LIKE 'stripe_%'
           OR setting_key LIKE 'sendgrid_%'
           OR setting_key = 'public_site_url'
-          OR setting_key LIKE 'welcome_email_%'
       `;
       const existingSettings = { ...DEFAULT_SETTINGS };
       for (const row of existingRows) {
@@ -123,8 +197,6 @@ export async function handler(event) {
         if (row.setting_key === 'sendgrid_reply_to_email') existingSettings.sendgridReplyToEmail = row.setting_value || '';
         if (row.setting_key === 'sendgrid_api_key') existingSettings.sendgridApiKey = row.setting_value || '';
         if (row.setting_key === 'public_site_url') existingSettings.publicSiteUrl = row.setting_value || '';
-        if (row.setting_key === 'welcome_email_subject') existingSettings.welcomeEmailSubject = row.setting_value || '';
-        if (row.setting_key === 'welcome_email_body') existingSettings.welcomeEmailBody = row.setting_value || '';
       }
 
       const nextSettings = {
@@ -139,8 +211,6 @@ export async function handler(event) {
         sendgridReplyToEmail: settings.sendgridReplyToEmail,
         sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
         publicSiteUrl: settings.publicSiteUrl,
-        welcomeEmailSubject: settings.welcomeEmailSubject,
-        welcomeEmailBody: settings.welcomeEmailBody,
       };
 
       const pairs = [
@@ -153,8 +223,6 @@ export async function handler(event) {
         ['sendgrid_reply_to_email', nextSettings.sendgridReplyToEmail],
         ['sendgrid_api_key', nextSettings.sendgridApiKey],
         ['public_site_url', nextSettings.publicSiteUrl],
-        ['welcome_email_subject', nextSettings.welcomeEmailSubject],
-        ['welcome_email_body', nextSettings.welcomeEmailBody],
       ];
 
       for (const [key, value] of pairs) {
@@ -166,7 +234,18 @@ export async function handler(event) {
         `;
       }
 
-      return jsonResponse(200, { saved: true, settings: serializeSettings(nextSettings) });
+      const rows = await sql`
+        SELECT setting_key, setting_value
+        FROM admin_settings
+        WHERE setting_key LIKE 'stripe_%'
+          OR setting_key LIKE 'sendgrid_%'
+          OR setting_key = 'public_site_url'
+          OR setting_key LIKE 'email_template_%'
+        ORDER BY setting_key ASC
+      `;
+      const { emailTemplates } = mapSettingsFromRows(rows);
+
+      return jsonResponse(200, { saved: true, settings: serializeSettings(nextSettings), emailTemplates });
     }
 
     return jsonResponse(405, { error: 'Method not allowed' });

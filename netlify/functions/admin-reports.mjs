@@ -2,6 +2,7 @@ import { getAuthenticatedUser, jsonResponse } from './_admin.mjs';
 import { ensureMemberSchema } from './_member.mjs';
 
 const ALLOWED_WINDOWS = new Set([7, 30, 90]);
+const SECURITY_PROBLEM_OUTCOMES = ['blocked', 'invalid_credentials'];
 
 function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
@@ -42,7 +43,11 @@ export async function handler(event) {
           (SELECT COUNT(*)::int FROM posts WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval) AS published_posts,
           (SELECT COUNT(*)::int FROM tasks WHERE status = 'open') AS open_tasks,
           (SELECT COUNT(*)::int FROM tasks WHERE status = 'open' AND due_date IS NOT NULL AND due_date < CURRENT_DATE) AS overdue_tasks,
-          (SELECT COUNT(*)::int FROM request_audit_log WHERE created_at >= NOW() - (${days} || ' days')::interval AND outcome <> 'success') AS failed_actions
+          (SELECT COUNT(*)::int
+            FROM request_audit_log
+            WHERE created_at >= NOW() - (${days} || ' days')::interval
+              AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
+          ) AS failed_actions
       `,
     ]);
 
@@ -80,7 +85,7 @@ export async function handler(event) {
       sql`SELECT route, action, outcome, created_at
           FROM request_audit_log
           WHERE created_at >= NOW() - (${days} || ' days')::interval
-            AND outcome <> 'success'
+            AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ORDER BY created_at DESC
           LIMIT 12`,
       sql`SELECT LOWER(BTRIM(tag_name)) AS tag_name, COUNT(*)::int AS total

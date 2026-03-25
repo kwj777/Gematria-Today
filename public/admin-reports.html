@@ -105,7 +105,7 @@
           </div>
           <div class="col-lg-6">
             <div class="content-panel p-4 h-100">
-              <h2 class="h5 mb-3">Recent failed security events</h2>
+              <h2 class="h5 mb-3">Recent security problems</h2>
               <div id="securityEvents" class="d-grid gap-2"></div>
             </div>
           </div>
@@ -204,7 +204,7 @@
       function renderSecurityEvents(rows) {
         const target = document.getElementById('securityEvents');
         if (!rows.length) {
-          target.innerHTML = '<p class="text-success small mb-0">No failed security events in this reporting window.</p>';
+          target.innerHTML = '<p class="text-success small mb-0">No security problems in this reporting window.</p>';
           return;
         }
         target.innerHTML = rows.map((event) => `

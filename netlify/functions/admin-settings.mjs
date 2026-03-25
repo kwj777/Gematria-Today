@@ -11,6 +11,8 @@ const DEFAULT_SETTINGS = {
   sendgridReplyToEmail: '',
   sendgridApiKey: '',
   publicSiteUrl: '',
+  welcomeEmailSubject: '',
+  welcomeEmailBody: '',
 };
 
 function normalizeSettings(body = {}) {
@@ -26,6 +28,8 @@ function normalizeSettings(body = {}) {
     sendgridReplyToEmail: String(body.sendgridReplyToEmail ?? '').trim().toLowerCase(),
     sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
     publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
+    welcomeEmailSubject: String(body.welcomeEmailSubject ?? '').trim(),
+    welcomeEmailBody: String(body.welcomeEmailBody ?? '').trim(),
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
   };
 }
@@ -40,6 +44,8 @@ function serializeSettings(settings = {}) {
     sendgridFromName: settings.sendgridFromName || '',
     sendgridReplyToEmail: settings.sendgridReplyToEmail || '',
     publicSiteUrl: settings.publicSiteUrl || '',
+    welcomeEmailSubject: settings.welcomeEmailSubject || '',
+    welcomeEmailBody: settings.welcomeEmailBody || '',
     hasSendgridApiKey: Boolean(settings.sendgridApiKey),
     emailDeliveryConfigured: Boolean(settings.sendgridApiKey && settings.sendgridFromEmail),
   };
@@ -53,7 +59,10 @@ export async function handler(event) {
       const rows = await sql`
         SELECT setting_key, setting_value
         FROM admin_settings
-        WHERE setting_key LIKE 'stripe_%' OR setting_key LIKE 'sendgrid_%' OR setting_key = 'public_site_url'
+        WHERE setting_key LIKE 'stripe_%'
+          OR setting_key LIKE 'sendgrid_%'
+          OR setting_key = 'public_site_url'
+          OR setting_key LIKE 'welcome_email_%'
         ORDER BY setting_key ASC
       `;
 
@@ -68,6 +77,8 @@ export async function handler(event) {
         if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
         if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
         if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
+        if (row.setting_key === 'welcome_email_subject') settings.welcomeEmailSubject = row.setting_value || '';
+        if (row.setting_key === 'welcome_email_body') settings.welcomeEmailBody = row.setting_value || '';
       }
 
       return jsonResponse(200, { settings: serializeSettings(settings) });
@@ -96,7 +107,10 @@ export async function handler(event) {
       const existingRows = await sql`
         SELECT setting_key, setting_value
         FROM admin_settings
-        WHERE setting_key LIKE 'stripe_%' OR setting_key LIKE 'sendgrid_%' OR setting_key = 'public_site_url'
+        WHERE setting_key LIKE 'stripe_%'
+          OR setting_key LIKE 'sendgrid_%'
+          OR setting_key = 'public_site_url'
+          OR setting_key LIKE 'welcome_email_%'
       `;
       const existingSettings = { ...DEFAULT_SETTINGS };
       for (const row of existingRows) {
@@ -109,6 +123,8 @@ export async function handler(event) {
         if (row.setting_key === 'sendgrid_reply_to_email') existingSettings.sendgridReplyToEmail = row.setting_value || '';
         if (row.setting_key === 'sendgrid_api_key') existingSettings.sendgridApiKey = row.setting_value || '';
         if (row.setting_key === 'public_site_url') existingSettings.publicSiteUrl = row.setting_value || '';
+        if (row.setting_key === 'welcome_email_subject') existingSettings.welcomeEmailSubject = row.setting_value || '';
+        if (row.setting_key === 'welcome_email_body') existingSettings.welcomeEmailBody = row.setting_value || '';
       }
 
       const nextSettings = {
@@ -123,6 +139,8 @@ export async function handler(event) {
         sendgridReplyToEmail: settings.sendgridReplyToEmail,
         sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
         publicSiteUrl: settings.publicSiteUrl,
+        welcomeEmailSubject: settings.welcomeEmailSubject,
+        welcomeEmailBody: settings.welcomeEmailBody,
       };
 
       const pairs = [
@@ -135,6 +153,8 @@ export async function handler(event) {
         ['sendgrid_reply_to_email', nextSettings.sendgridReplyToEmail],
         ['sendgrid_api_key', nextSettings.sendgridApiKey],
         ['public_site_url', nextSettings.publicSiteUrl],
+        ['welcome_email_subject', nextSettings.welcomeEmailSubject],
+        ['welcome_email_body', nextSettings.welcomeEmailBody],
       ];
 
       for (const [key, value] of pairs) {

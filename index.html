@@ -199,7 +199,7 @@
         )).join('');
 
         innerNode.innerHTML = normalizedPosts.map((post, index) => {
-          const heroImageUrl = normalizePostImageUrl(post.imageUrl) || '/assets/blog-hero-gematria.svg';
+          const heroImageUrl = normalizePostImageUrl(post.sliderImageUrl || post.imageUrl) || '/assets/blog-hero-gematria.svg';
           const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
           return `
             <div class="carousel-item ${index === 0 ? 'active' : ''}">

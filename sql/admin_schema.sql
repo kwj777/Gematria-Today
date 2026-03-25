@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS posts (
   body TEXT NOT NULL,
   read_time TEXT,
   image_url TEXT,
+  slider_image_url TEXT,
   show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'published',
   published_at TIMESTAMPTZ,
@@ -102,6 +103,7 @@ INSERT INTO posts (
   body,
   read_time,
   image_url,
+  slider_image_url,
   show_on_homepage,
   status,
   published_at,
@@ -115,6 +117,7 @@ VALUES (
   'See how digital roots offer a quick pattern layer for comparing words, names, and phrases in gematria work.',
   '<p>Digital roots reduce any number to a single digit by repeatedly adding digits until one remains. For example, 197 becomes 1 + 9 + 7 = 17, then 1 + 7 = 8. In gematria, this gives you a fast way to compare values that look different on the surface but may still share a structural rhythm.</p><p>Why does this matter? Large totals can hide simple relationships. Two words may not match exactly, but their digital roots can align and suggest they belong in the same thematic group. This does not replace standard value matching; instead, it adds a second layer for pattern recognition. Think of total value as the full measurement and digital root as the compressed signature.</p><p>A practical method is to calculate both numbers every time: the full gematria total and the digital root. First, sort by exact total to find direct matches. Next, scan by digital root to find families of related terms that may deserve closer study. When a root value repeats across names, symbols, and action words in the same topic, you may have a stronger pattern than a one-off coincidence.</p><p>Digital roots are also useful for organizing research notes. You can create sections for root values 1 through 9 and file candidate terms under each group. Over time, this makes it easier to compare clusters and notice recurring themes without re-running every calculation from scratch.</p><p>Most importantly, treat digital roots as guidance, not proof. Context, language history, spelling variants, and textual setting still carry the most interpretive weight. Used carefully, digital roots can make gematria research more structured, more searchable, and more reproducible.</p>',
   '6 minute read',
+  '/assets/digital-roots-gematria-hero.svg',
   '/assets/digital-roots-gematria-hero.svg',
   TRUE,
   'published',
@@ -264,3 +267,7 @@ WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
 
 CREATE INDEX IF NOT EXISTS posts_status_published_at_idx
   ON posts(status, published_at DESC);
+
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS slider_image_url TEXT;

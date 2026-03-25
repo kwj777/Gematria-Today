@@ -44,6 +44,46 @@ const lookupForm = document.querySelector('#lookup-form');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
+      let shareStatusTimeout = null;
+
+      function setShareStatus(message) {
+        if (shareStatusTimeout) {
+          window.clearTimeout(shareStatusTimeout);
+        }
+        lookupStatus.textContent = message;
+        shareStatusTimeout = window.setTimeout(() => {
+          if (lookupStatus.textContent === message) {
+            lookupStatus.textContent = '';
+          }
+        }, 3000);
+      }
+
+      async function sharePage(payload) {
+        const sharePayload = {
+          title: payload.title || document.title,
+          text: payload.text || '',
+          url: payload.url || window.location.href,
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(sharePayload);
+            return;
+          } catch (error) {
+            if (error?.name === 'AbortError') {
+              return;
+            }
+          }
+        }
+
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(sharePayload.url);
+          setShareStatus('Share link copied to your clipboard.');
+          return;
+        }
+
+        window.prompt('Copy this link to share:', sharePayload.url);
+      }
 
       function createMembershipLimitMessageFragment(message) {
         const fragment = document.createDocumentFragment();
@@ -401,6 +441,19 @@ const lookupForm = document.querySelector('#lookup-form');
       }
 
       function renderSearchGematriaSummary(searchGematria) {
+        const shareButton = document.createElement('button');
+        shareButton.type = 'button';
+        shareButton.className = 'btn btn-outline-secondary btn-sm mt-2';
+        shareButton.textContent = 'Share this lookup';
+        const shareUrl = `${window.location.origin}/calculator.html?query=${encodeURIComponent(searchGematria.word)}`;
+        shareButton.addEventListener('click', async () => {
+          await sharePage({
+            title: `Gematria lookup for ${searchGematria.word}`,
+            text: `Gematria value ${searchGematria.gematria.total} for "${searchGematria.word}"`,
+            url: shareUrl,
+          });
+        });
+
         gematriaResult.textContent = '';
         gematriaResult.append(
           `Base-6 English Gematria for "${searchGematria.word}": `,
@@ -413,7 +466,8 @@ const lookupForm = document.querySelector('#lookup-form');
           createBaseRootValueNode(searchGematria.isBaseRoot),
           ` | Searches: ${searchGematria.searchCount}`,
           document.createElement('br'),
-          document.createElement('br')
+          document.createElement('br'),
+          shareButton
         );
       }
 
@@ -445,6 +499,19 @@ const lookupForm = document.querySelector('#lookup-form');
           ' ',
           createGematriaSearchButton(searchGematria.gematria.total)
         );
+
+        const shareSearchButton = document.createElement('button');
+        shareSearchButton.type = 'button';
+        shareSearchButton.className = 'btn btn-outline-secondary btn-sm mt-2';
+        shareSearchButton.textContent = 'Share results';
+        shareSearchButton.addEventListener('click', async () => {
+          await sharePage({
+            title: `Gematria related words for ${payload.query}`,
+            text: `Related gematria matches for "${payload.query}"`,
+            url: `${window.location.origin}/calculator.html?query=${encodeURIComponent(payload.query)}`,
+          });
+        });
+        meta.append(document.createElement('br'), shareSearchButton);
         relatedWordsResult.appendChild(meta);
 
         const disclaimer = document.createElement('p');

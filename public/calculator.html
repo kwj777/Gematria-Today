@@ -3,20 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>English Gematria Calculator | EndTimes.Today</title>
-    <meta name="description" content="Calculate English gematria values for words and phrases, then review matching terms and related definitions." />
-    <meta name="robots" content="index,follow" />
-    <link rel="canonical" href="https://endtimes.today/calculator.html" />
-    <meta property="og:site_name" content="EndTimes.Today" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="English Gematria Calculator | EndTimes.Today" />
-    <meta property="og:description" content="Calculate English gematria values for words and phrases, then review matching terms and related definitions." />
-    <meta property="og:url" content="https://endtimes.today/calculator.html" />
-    <meta property="og:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="English Gematria Calculator | EndTimes.Today" />
-    <meta name="twitter:description" content="Calculate English gematria values for words and phrases, then review matching terms and related definitions." />
-    <meta name="twitter:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <title>English Gematria Calculator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="/theme.css" />
     <script src="/ui-feedback.js"></script>
@@ -57,12 +44,46 @@ const lookupForm = document.querySelector('#lookup-form');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
+      let shareStatusTimeout = null;
 
-      const saveHistoryButton = document.querySelector('#save-history-button');
-      const memberSaveMeta = document.querySelector('#member-save-meta');
-      const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
-      let currentSearchPayload = null;
-      let memberSession = null;
+      function setShareStatus(message) {
+        if (shareStatusTimeout) {
+          window.clearTimeout(shareStatusTimeout);
+        }
+        lookupStatus.textContent = message;
+        shareStatusTimeout = window.setTimeout(() => {
+          if (lookupStatus.textContent === message) {
+            lookupStatus.textContent = '';
+          }
+        }, 3000);
+      }
+
+      async function sharePage(payload) {
+        const sharePayload = {
+          title: payload.title || document.title,
+          text: payload.text || '',
+          url: payload.url || window.location.href,
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(sharePayload);
+            return;
+          } catch (error) {
+            if (error?.name === 'AbortError') {
+              return;
+            }
+          }
+        }
+
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(sharePayload.url);
+          setShareStatus('Share link copied to your clipboard.');
+          return;
+        }
+
+        window.prompt('Copy this link to share:', sharePayload.url);
+      }
 
       function createMembershipLimitMessageFragment(message) {
         const fragment = document.createDocumentFragment();
@@ -87,6 +108,11 @@ const lookupForm = document.querySelector('#lookup-form');
       function setStatusMessage(node, message) {
         node.replaceChildren(createMembershipLimitMessageFragment(message));
       }
+      const saveHistoryButton = document.querySelector('#save-history-button');
+      const memberSaveMeta = document.querySelector('#member-save-meta');
+      const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
+      let currentSearchPayload = null;
+      let memberSession = null;
 
       async function requestJson(endpoint, searchParams) {
         const response = await fetch(`${endpoint}?${searchParams.toString()}`);
@@ -415,6 +441,19 @@ const lookupForm = document.querySelector('#lookup-form');
       }
 
       function renderSearchGematriaSummary(searchGematria) {
+        const shareButton = document.createElement('button');
+        shareButton.type = 'button';
+        shareButton.className = 'btn btn-outline-secondary btn-sm mt-2';
+        shareButton.textContent = 'Share this lookup';
+        const shareUrl = `${window.location.origin}/calculator.html?query=${encodeURIComponent(searchGematria.word)}`;
+        shareButton.addEventListener('click', async () => {
+          await sharePage({
+            title: `Gematria lookup for ${searchGematria.word}`,
+            text: `Gematria value ${searchGematria.gematria.total} for "${searchGematria.word}"`,
+            url: shareUrl,
+          });
+        });
+
         gematriaResult.textContent = '';
         gematriaResult.append(
           `Base-6 English Gematria for "${searchGematria.word}": `,
@@ -427,7 +466,8 @@ const lookupForm = document.querySelector('#lookup-form');
           createBaseRootValueNode(searchGematria.isBaseRoot),
           ` | Searches: ${searchGematria.searchCount}`,
           document.createElement('br'),
-          document.createElement('br')
+          document.createElement('br'),
+          shareButton
         );
       }
 
@@ -459,6 +499,19 @@ const lookupForm = document.querySelector('#lookup-form');
           ' ',
           createGematriaSearchButton(searchGematria.gematria.total)
         );
+
+        const shareSearchButton = document.createElement('button');
+        shareSearchButton.type = 'button';
+        shareSearchButton.className = 'btn btn-outline-secondary btn-sm mt-2';
+        shareSearchButton.textContent = 'Share results';
+        shareSearchButton.addEventListener('click', async () => {
+          await sharePage({
+            title: `Gematria related words for ${payload.query}`,
+            text: `Related gematria matches for "${payload.query}"`,
+            url: `${window.location.origin}/calculator.html?query=${encodeURIComponent(payload.query)}`,
+          });
+        });
+        meta.append(document.createElement('br'), shareSearchButton);
         relatedWordsResult.appendChild(meta);
 
         const disclaimer = document.createElement('p');

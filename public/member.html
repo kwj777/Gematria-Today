@@ -348,6 +348,36 @@
         return `/calculator.html?query=${encodeURIComponent(queryText)}`;
       }
 
+      async function shareHistoryItem(item) {
+        const reopenPath = getHistoryReopenUrl(item);
+        const shareUrl = `${window.location.origin}${reopenPath}`;
+        const sharePayload = {
+          title: 'EndTimes.Today saved search',
+          text: `Saved search: ${item.queryText || 'Gematria lookup'}\nView results: ${shareUrl}`,
+          url: shareUrl,
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(sharePayload);
+            showAlert('Share opened.', 'success');
+            return;
+          } catch (error) {
+            if (error?.name === 'AbortError') {
+              return;
+            }
+          }
+        }
+
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showAlert('Share link copied to clipboard.', 'success');
+          return;
+        } catch {}
+
+        window.prompt('Copy this link to share:', shareUrl);
+      }
+
       function formatHistorySummary(item) {
         if (item.calculatorSource === 'name-calculator') {
           const names = Array.isArray(item.resultPayload?.names) ? item.resultPayload.names.filter(Boolean) : [];
@@ -446,6 +476,7 @@
               </div>
               <div class="d-flex align-items-center gap-2">
                 <a class="btn btn-outline-primary btn-sm" href="${getHistoryReopenUrl(item)}">Reopen</a>
+                <button class="btn btn-warning btn-sm fw-semibold share-action-button" type="button" data-share-id="${item.id}">Share</button>
                 <button class="btn btn-outline-danger btn-sm" type="button" data-delete-id="${item.id}">Delete</button>
               </div>
             </div>
@@ -483,6 +514,18 @@
             } catch (error) {
               showAlert(error.message || 'Unable to delete history item.');
             }
+          });
+        });
+
+        historyList.querySelectorAll('[data-share-id]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            const selected = historyItems.find((item) => String(item.id) === String(button.dataset.shareId));
+            if (!selected) {
+              showAlert('Saved search could not be found.');
+              return;
+            }
+
+            await shareHistoryItem(selected);
           });
         });
       }

@@ -257,10 +257,14 @@ const form = document.querySelector('#name-form');
       }
 
       async function shareUrl(payload) {
+        const shareUrl = payload.url || window.location.href;
+        const shareText = payload.text || '';
         const sharePayload = {
           title: payload.title || document.title,
-          text: payload.text || '',
-          url: payload.url || window.location.href,
+          text: shareText.includes(shareUrl) ? shareText : `${shareText}
+
+View results: ${shareUrl}`.trim(),
+          url: shareUrl,
         };
 
         if (navigator.share) {

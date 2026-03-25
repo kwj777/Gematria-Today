@@ -241,7 +241,7 @@ export async function syncBootstrapAdminUser(sql) {
         ${seededPost.publishedAt},
         ${seededPost.createdBy}
       )
-      ON CONFLICT (slug) DO NOTHING
+      ON CONFLICT DO NOTHING
     `;
   }
 

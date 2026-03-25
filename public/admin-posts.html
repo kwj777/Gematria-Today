@@ -149,7 +149,7 @@
 
       async function loadPosts() {
         const payload = await request('/api/admin-posts');
-        state.posts = payload.posts || [];
+        state.posts = payload.items || payload.posts || [];
         renderPosts();
       }
 

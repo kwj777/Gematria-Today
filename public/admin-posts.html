@@ -76,6 +76,13 @@
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
 
+      function formatCreatedOnLabel(value) {
+        if (!value) return 'Created on: —';
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return 'Created on: —';
+        return `Created on: ${parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`;
+      }
+
       function showMessage(target, message) {
         target.textContent = message;
         target.classList.remove('d-none');
@@ -106,8 +113,8 @@
           return `
             <details class="admin-post-details admin-item-card p-3" ${isEditing ? 'open' : ''}>
               <summary class="admin-post-summary">
-                <span class="fw-semibold">${escapeHtml(post.title)}</span>
-                <span class="small text-muted">${escapeHtml(post.publishedAt || post.createdAt || '')}</span>
+                <span class="fw-semibold admin-post-summary-title">${escapeHtml(post.title)}</span>
+                <span class="small text-muted admin-post-summary-meta">${escapeHtml(formatCreatedOnLabel(post.createdAt || post.publishedAt))}</span>
               </summary>
               <div class="pt-3">
                 <p class="small text-muted mb-2">${escapeHtml(post.summary || '')}</p>

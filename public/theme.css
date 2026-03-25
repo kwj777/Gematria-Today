@@ -723,6 +723,17 @@ footer.site-footer {
   display: none;
 }
 
+.admin-post-summary-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-post-summary-meta {
+  flex-shrink: 0;
+  min-width: 11.5rem;
+  text-align: right;
+}
+
 .admin-post-summary::after {
   content: '⌄';
   color: var(--app-primary);

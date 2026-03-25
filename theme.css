@@ -97,6 +97,13 @@ body {
   object-position: center;
 }
 
+.faq-hero-image {
+  width: min(100%, 20rem);
+  height: auto;
+  min-height: 0;
+  margin-inline: auto;
+}
+
 .hero-media-placeholder {
   display: grid;
   align-content: end;

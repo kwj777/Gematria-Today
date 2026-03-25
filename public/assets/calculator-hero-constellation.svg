@@ -1,0 +1,67 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Word and phrase calculator hero artwork</title>
+  <desc id="desc">Abstract celestial interface with letters, numbers, and connected nodes representing gematria analysis.</desc>
+  <defs>
+    <linearGradient id="bg" x1="80" y1="40" x2="1520" y2="860" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0C2D52"/>
+      <stop offset="0.55" stop-color="#1B4B7F"/>
+      <stop offset="1" stop-color="#2B7BB8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1280 170) rotate(135) scale(540 430)">
+      <stop stop-color="#FFE8A3" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FFE8A3" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="0" y="0" width="1600" height="900" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" rx="42" fill="url(#bg)"/>
+  <rect width="1600" height="900" rx="42" fill="url(#glow)"/>
+
+  <g opacity="0.2" filter="url(#soft)">
+    <circle cx="300" cy="160" r="120" fill="#5FD4FF"/>
+    <circle cx="1220" cy="660" r="170" fill="#6FB7FF"/>
+  </g>
+
+  <g stroke="#D8EDFF" stroke-opacity="0.45" stroke-width="2.6">
+    <path d="M210 635L388 468L590 530L750 362L955 426L1168 295L1390 360"/>
+    <path d="M242 284L452 330L636 238L844 274L1045 191L1272 226"/>
+    <path d="M272 734L486 658L660 710L878 620L1094 676L1314 608"/>
+  </g>
+
+  <g fill="#F5FBFF">
+    <circle cx="210" cy="635" r="8"/>
+    <circle cx="388" cy="468" r="8"/>
+    <circle cx="590" cy="530" r="8"/>
+    <circle cx="750" cy="362" r="8"/>
+    <circle cx="955" cy="426" r="8"/>
+    <circle cx="1168" cy="295" r="8"/>
+    <circle cx="1390" cy="360" r="8"/>
+
+    <circle cx="242" cy="284" r="7"/>
+    <circle cx="452" cy="330" r="7"/>
+    <circle cx="636" cy="238" r="7"/>
+    <circle cx="844" cy="274" r="7"/>
+    <circle cx="1045" cy="191" r="7"/>
+    <circle cx="1272" cy="226" r="7"/>
+
+    <circle cx="272" cy="734" r="7"/>
+    <circle cx="486" cy="658" r="7"/>
+    <circle cx="660" cy="710" r="7"/>
+    <circle cx="878" cy="620" r="7"/>
+    <circle cx="1094" cy="676" r="7"/>
+    <circle cx="1314" cy="608" r="7"/>
+  </g>
+
+  <g fill="#EAF6FF" font-family="'Inter', 'Segoe UI', sans-serif" font-size="56" font-weight="700" opacity="0.9">
+    <text x="270" y="230">A1</text>
+    <text x="530" y="194">Z26</text>
+    <text x="888" y="152">6</text>
+    <text x="1186" y="478">WORD</text>
+    <text x="314" y="578">PHRASE</text>
+    <text x="985" y="742">ROOT</text>
+  </g>
+
+  <rect x="164" y="126" width="1272" height="650" rx="30" stroke="#C6E8FF" stroke-opacity="0.35" stroke-width="3"/>
+</svg>

@@ -1,0 +1,71 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Digital Roots and Gematria hero image</title>
+  <desc id="desc">A glowing number grid and concentric circles symbolizing digital roots and gematria pattern analysis.</desc>
+  <defs>
+    <linearGradient id="bg" x1="190" y1="20" x2="1450" y2="880" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1027"/>
+      <stop offset="0.55" stop-color="#141B42"/>
+      <stop offset="1" stop-color="#22154F"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(810 450) rotate(90) scale(350)">
+      <stop stop-color="#8EE7FF" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#8EE7FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="320" y1="160" x2="1270" y2="730" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D2A61" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#101736" stop-opacity="0.94"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="810" cy="450" r="360" fill="url(#halo)"/>
+
+  <g opacity="0.2" stroke="#9CC8FF">
+    <path d="M0 150H1600"/>
+    <path d="M0 300H1600"/>
+    <path d="M0 450H1600"/>
+    <path d="M0 600H1600"/>
+    <path d="M0 750H1600"/>
+    <path d="M200 0V900"/>
+    <path d="M400 0V900"/>
+    <path d="M600 0V900"/>
+    <path d="M800 0V900"/>
+    <path d="M1000 0V900"/>
+    <path d="M1200 0V900"/>
+    <path d="M1400 0V900"/>
+  </g>
+
+  <rect x="260" y="135" width="1080" height="630" rx="28" fill="url(#panel)" stroke="#6FA9FF" stroke-opacity="0.55"/>
+
+  <g opacity="0.55" stroke="#7ED9FF" stroke-width="2">
+    <circle cx="810" cy="450" r="220"/>
+    <circle cx="810" cy="450" r="155"/>
+    <circle cx="810" cy="450" r="90"/>
+  </g>
+
+  <g fill="#E6F2FF" font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="810" y="270" font-size="64" font-weight="700" fill="#C8ECFF">Digital Roots</text>
+    <text x="810" y="322" font-size="34" font-weight="500" fill="#9FD5FF">Pattern Lens for Gematria Study</text>
+  </g>
+
+  <g fill="#9BE0FF" font-family="'JetBrains Mono', 'Consolas', monospace" font-size="56" font-weight="700" text-anchor="middle">
+    <text x="550" y="465">1 + 9 + 7</text>
+    <text x="810" y="465" fill="#DDF6FF">= 17</text>
+    <text x="1048" y="465">→ 8</text>
+  </g>
+
+  <g fill="#FFFFFF" fill-opacity="0.92" font-family="'JetBrains Mono', 'Consolas', monospace" font-size="42" text-anchor="middle">
+    <text x="510" y="595">444</text>
+    <text x="660" y="595">216</text>
+    <text x="810" y="595" fill="#8EF0FF">9</text>
+    <text x="960" y="595">153</text>
+    <text x="1110" y="595">333</text>
+  </g>
+
+  <g fill="#BDE9FF" font-family="'Inter', 'Segoe UI', sans-serif" font-size="24" text-anchor="middle" opacity="0.95">
+    <text x="510" y="635">4+4+4=12→3</text>
+    <text x="660" y="635">2+1+6=9</text>
+    <text x="960" y="635">1+5+3=9</text>
+    <text x="1110" y="635">3+3+3=9</text>
+  </g>
+</svg>

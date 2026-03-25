@@ -48,8 +48,9 @@ export async function handler(event) {
       const showOnHomepage = Boolean(body.showOnHomepage);
       const normalizedTagValue = normalizePostTags(body.tag, body.tags);
       const imageUrl = String(body.imageUrl ?? '').trim() || null;
+      const sliderImageUrl = String(body.sliderImageUrl ?? '').trim() || null;
       const rows = await sql`
-        INSERT INTO posts (id, title, slug, tag, summary, body, read_time, image_url, show_on_homepage, status, published_at, created_by, updated_at)
+        INSERT INTO posts (id, title, slug, tag, summary, body, read_time, image_url, slider_image_url, show_on_homepage, status, published_at, created_by, updated_at)
         VALUES (
           ${crypto.randomUUID()},
           ${title},
@@ -59,6 +60,7 @@ export async function handler(event) {
           ${String(body.body ?? '').trim()},
           ${String(body.readTime ?? '').trim() || null},
           ${imageUrl},
+          ${sliderImageUrl},
           ${showOnHomepage},
           ${status},
           ${status === 'published' ? new Date().toISOString() : null},
@@ -86,6 +88,7 @@ export async function handler(event) {
       const showOnHomepage = Boolean(body.showOnHomepage);
       const normalizedTagValue = normalizePostTags(body.tag, body.tags);
       const imageUrl = String(body.imageUrl ?? '').trim() || null;
+      const sliderImageUrl = String(body.sliderImageUrl ?? '').trim() || null;
       const rows = await sql`
         UPDATE posts
         SET
@@ -96,6 +99,7 @@ export async function handler(event) {
           body = ${String(body.body ?? '').trim()},
           read_time = ${String(body.readTime ?? '').trim() || null},
           image_url = ${imageUrl},
+          slider_image_url = ${sliderImageUrl},
           show_on_homepage = ${showOnHomepage},
           status = ${status},
           published_at = CASE

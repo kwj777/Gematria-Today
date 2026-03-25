@@ -210,6 +210,7 @@
                     <div id="postImageUploadMeta" class="small text-muted mt-2"></div>
                     <div id="postImagePreview" class="post-image-preview mt-2 d-none"></div>
                   </div>
+                  <div class="col-12"><label class="form-label" for="postSliderImageUrl">Home slider image URL</label><input id="postSliderImageUrl" class="form-control" type="text" placeholder="https://example.com/home-slider.jpg or /assets/home-slider.jpg" /><div class="form-text">Optional: this image is used only in the home slider (16:9 recommended) and is not shown in the full blog post card.</div></div>
                   <div class="col-12">
                     <div class="form-check">
                       <input id="postShowOnHomepage" class="form-check-input" type="checkbox" />
@@ -666,6 +667,7 @@
         document.getElementById('postId').value = '';
         document.getElementById('postSubmitButton').textContent = 'Publish blog post';
         document.getElementById('postCancelButton').classList.add('d-none');
+        document.getElementById('postSliderImageUrl').value = '';
         document.getElementById('postShowOnHomepage').checked = false;
         setPostImageMeta('');
         renderPostImagePreview('');
@@ -680,6 +682,7 @@
         document.getElementById('postTag').value = post.tag || '';
         document.getElementById('postReadTime').value = post.readTime || '';
         document.getElementById('postImageUrl').value = post.imageUrl || '';
+        document.getElementById('postSliderImageUrl').value = post.sliderImageUrl || '';
         document.getElementById('postShowOnHomepage').checked = Boolean(post.showOnHomepage);
         document.getElementById('postSummary').value = post.summary || '';
         document.getElementById('postBody').value = post.body || '';
@@ -1123,6 +1126,7 @@
               tag: document.getElementById('postTag').value,
               readTime: document.getElementById('postReadTime').value,
               imageUrl: document.getElementById('postImageUrl').value,
+              sliderImageUrl: document.getElementById('postSliderImageUrl').value,
               showOnHomepage: document.getElementById('postShowOnHomepage').checked,
               summary: document.getElementById('postSummary').value,
               body: document.getElementById('postBody').value,

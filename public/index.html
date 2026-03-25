@@ -199,7 +199,7 @@
 
         carouselInner.innerHTML = normalizedPosts.map((post, index) => {
           const slug = escapeHtml(post.slug || `post-${index}`);
-          const heroImageUrl = normalizePostImageUrl(post.imageUrl) || '/assets/blog-hero-gematria.svg';
+          const heroImageUrl = normalizePostImageUrl(post.sliderImageUrl || post.imageUrl) || '/assets/blog-hero-gematria.svg';
           return `
             <div class="carousel-item ${index === 0 ? 'active' : ''}">
               <article class="blog-slide-card p-4 p-lg-5">

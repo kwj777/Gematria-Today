@@ -320,13 +320,14 @@ footer.site-footer {
 }
 
 .blog-slide-card {
-  margin: 0 3rem;
+  margin: 0 clamp(0rem, 4vw, 3rem);
   box-shadow: 0 1rem 2rem rgba(63,64,58,.08);
 }
 
 .blog-slide-image-frame {
   margin: 0 auto;
-  width: min(420px, 72%);
+  width: min(720px, 100%);
+  aspect-ratio: 16 / 9;
   border-radius: 0.9rem;
   overflow: hidden;
   border: 1px solid rgba(53, 65, 79, 0.12);
@@ -337,7 +338,7 @@ footer.site-footer {
 .blog-slide-image {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   object-fit: cover;
   object-position: center;
 }

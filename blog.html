@@ -396,12 +396,20 @@
       const mergeWithFallbackPosts = (items = []) => {
         const mergedPosts = [];
         const seenSlugs = new Set();
+        const seenTitles = new Set();
         [...items, ...fallbackPosts].forEach((post, index) => {
           const slug = createPostSlug(post, index).toLowerCase();
+          const normalizedTitle = String(post?.title || '').trim().toLowerCase();
           if (seenSlugs.has(slug)) {
             return;
           }
+          if (normalizedTitle && seenTitles.has(normalizedTitle)) {
+            return;
+          }
           seenSlugs.add(slug);
+          if (normalizedTitle) {
+            seenTitles.add(normalizedTitle);
+          }
           mergedPosts.push(post);
         });
         return mergedPosts;

@@ -34,7 +34,22 @@
       </div>
     </nav>
     <main class="py-5">
-      <div class="container"><section class="content-panel p-4 p-lg-5 form-shell"><p class="section-kicker mb-2">Calculator</p><h1 class="mb-3">English Gematria Calculator (Base-6)</h1><p class="text-muted mb-4">Look up a word or phrase, inspect its gematria value, and browse related matches using a consistent site form layout.</p><section class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your gematria searches to your account.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-outline-primary btn-sm" href="/member.html">Open membership</a><button id="save-history-button" class="btn btn-primary btn-sm" type="button" disabled>Save result</button></div></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div></div></section></section></div>
+      <div class="container">
+        <section class="hero-panel p-4 p-lg-5 mb-4">
+          <div class="row g-4 align-items-center">
+            <div class="col-lg-7">
+              <p class="section-kicker text-white-50 mb-2">Calculator</p>
+              <h1 class="mb-3">English Gematria Calculator (Base-6)</h1>
+              <p class="mb-0 text-white-50">Look up a word or phrase, inspect its gematria value, and explore related matches with one focused workflow.</p>
+            </div>
+            <div class="col-lg-5">
+              <figure class="content-panel hero-media-panel hero-image-frame h-100 mb-0 overflow-hidden">
+                <img class="calculator-hero-image" src="/assets/calculator-hero-constellation.svg" alt="Abstract constellation-style interface showing words, numbers, and connected nodes for gematria analysis." loading="lazy" decoding="async" />
+              </figure>
+            </div>
+          </div>
+        </section>
+        <section class="content-panel p-4 p-lg-5 form-shell"><section class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your gematria searches to your account.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-outline-primary btn-sm" href="/member.html">Open membership</a><button id="save-history-button" class="btn btn-primary btn-sm" type="button" disabled>Save result</button></div></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div></div></section></section></div>
       <script>
 const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');

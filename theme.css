@@ -328,6 +328,7 @@ footer.site-footer {
   margin: 0 auto;
   width: min(720px, 100%);
   aspect-ratio: 16 / 9;
+  position: relative;
   border-radius: 0.9rem;
   overflow: hidden;
   border: 1px solid rgba(53, 65, 79, 0.12);
@@ -341,6 +342,16 @@ footer.site-footer {
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+
+.blog-slide-cta {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+}
+
+.blog-slide-cta .btn {
+  pointer-events: none;
 }
 
 .blog-post-card {

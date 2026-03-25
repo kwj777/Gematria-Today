@@ -283,7 +283,7 @@
         }
 
         document.getElementById('blogTagFilters').innerHTML = [
-          `<button type="button" class="btn btn-sm ${selectedTag ? 'btn-outline-secondary' : 'btn-primary'}" data-tag-filter="">All tags <span class="badge text-bg-light ms-1">${posts.length}</span></button>`,
+          `<button type="button" class="btn btn-sm ${selectedTag ? 'btn-outline-secondary' : 'btn-primary'}" data-tag-filter="">All posts <span class="badge text-bg-light ms-1">${posts.length}</span></button>`,
           ...sortedTags.map((tag) => {
             const isActive = selectedTag === tag.label.toLowerCase();
             return `<button type="button" class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline-secondary'}" data-tag-filter="${escapeHtml(tag.label.toLowerCase())}">${escapeHtml(tag.label)} <span class="badge text-bg-light ms-1">${tag.count}</span></button>`;

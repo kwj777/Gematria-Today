@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">FAQ hero guidance illustration</title>
+  <desc id="desc">An abstract scene with question marks, an open guidebook, and symbolic numbers to represent frequently asked questions.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b132b"/>
+      <stop offset="55%" stop-color="#1c2541"/>
+      <stop offset="100%" stop-color="#3a506b"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="18%" r="42%">
+      <stop offset="0%" stop-color="#fde68a" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#fde68a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="book" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="bookRight" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1200" fill="url(#bg)"/>
+  <rect width="1600" height="1200" fill="url(#sun)"/>
+
+  <g opacity="0.24" stroke="#93c5fd" stroke-width="2" fill="none">
+    <circle cx="300" cy="280" r="140"/>
+    <circle cx="1300" cy="230" r="110"/>
+    <circle cx="1220" cy="830" r="180"/>
+    <path d="M160 950C340 760 620 730 840 860S1280 990 1480 860"/>
+    <path d="M80 620C260 500 520 520 690 640S1130 820 1520 660"/>
+  </g>
+
+  <g opacity="0.16" fill="#bfdbfe">
+    <text x="180" y="230" font-size="180" font-family="Georgia, 'Times New Roman', serif">?</text>
+    <text x="1320" y="390" font-size="140" font-family="Georgia, 'Times New Roman', serif">?</text>
+    <text x="1260" y="980" font-size="170" font-family="Georgia, 'Times New Roman', serif">?</text>
+    <text x="250" y="1020" font-size="120" font-family="Georgia, 'Times New Roman', serif">7</text>
+    <text x="980" y="180" font-size="120" font-family="Georgia, 'Times New Roman', serif">3</text>
+  </g>
+
+  <ellipse cx="800" cy="920" rx="420" ry="68" fill="#0f172a" opacity="0.45" filter="url(#soft)"/>
+
+  <g transform="translate(430 490)">
+    <path d="M0 320C130 238 260 238 390 320V66C260 -14 130 -14 0 66Z" fill="url(#book)"/>
+    <path d="M390 320C520 238 650 238 780 320V66C650 -14 520 -14 390 66Z" fill="url(#bookRight)"/>
+    <path d="M390 66V320" stroke="#64748b" stroke-width="6"/>
+    <path d="M28 110C152 38 246 38 374 108" stroke="#94a3b8" stroke-width="4" fill="none"/>
+    <path d="M406 108C532 38 628 38 752 110" stroke="#94a3b8" stroke-width="4" fill="none"/>
+
+    <g fill="#334155" font-family="'Segoe UI', Tahoma, sans-serif" font-size="40" font-weight="700" opacity="0.9">
+      <text x="95" y="170">Q</text>
+      <text x="150" y="170">•</text>
+      <text x="184" y="170">A</text>
+      <text x="510" y="170">FAQ</text>
+    </g>
+
+    <g stroke="#64748b" stroke-width="4" opacity="0.75">
+      <line x1="82" y1="214" x2="338" y2="214"/>
+      <line x1="82" y1="252" x2="350" y2="252"/>
+      <line x1="82" y1="290" x2="320" y2="290"/>
+      <line x1="440" y1="214" x2="696" y2="214"/>
+      <line x1="440" y1="252" x2="710" y2="252"/>
+      <line x1="440" y1="290" x2="672" y2="290"/>
+    </g>
+  </g>
+
+  <g fill="#fef3c7" opacity="0.8">
+    <circle cx="572" cy="416" r="10"/>
+    <circle cx="792" cy="372" r="8"/>
+    <circle cx="1020" cy="438" r="9"/>
+  </g>
+</svg>

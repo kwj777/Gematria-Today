@@ -687,3 +687,21 @@ footer.site-footer {
     transform: rotate(360deg);
   }
 }
+
+
+.navbar-brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+@media (max-width: 576px) {
+  .site-logo {
+    height: 34px;
+  }
+}

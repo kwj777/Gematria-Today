@@ -58,6 +58,10 @@ const lookupForm = document.querySelector('#lookup-form');
         }, 3000);
       }
 
+      function formatCalculationSharePreview(word, result) {
+        return `Searched: "${word}" | Result: ${result}`;
+      }
+
       async function sharePage(payload) {
         const sharePayload = {
           title: payload.title || document.title,
@@ -449,7 +453,7 @@ const lookupForm = document.querySelector('#lookup-form');
         shareButton.addEventListener('click', async () => {
           await sharePage({
             title: `Gematria lookup for ${searchGematria.word}`,
-            text: `Gematria value ${searchGematria.gematria.total} for "${searchGematria.word}"`,
+            text: formatCalculationSharePreview(searchGematria.word, searchGematria.gematria.total),
             url: shareUrl,
           });
         });
@@ -507,7 +511,7 @@ const lookupForm = document.querySelector('#lookup-form');
         shareSearchButton.addEventListener('click', async () => {
           await sharePage({
             title: `Gematria related words for ${payload.query}`,
-            text: `Related gematria matches for "${payload.query}"`,
+            text: formatCalculationSharePreview(payload.query, searchGematria.gematria.total),
             url: `${window.location.origin}/calculator.html?query=${encodeURIComponent(payload.query)}`,
           });
         });

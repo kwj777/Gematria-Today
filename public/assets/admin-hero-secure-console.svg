@@ -1,0 +1,40 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Secure admin console hero illustration</title>
+  <desc id="desc">Abstract interface with a lock badge, synced database nodes, and published content cards.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D244D"/>
+      <stop offset="1" stop-color="#1A77A6"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="172" y1="124" x2="1028" y2="551" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EAF4FF" stop-opacity="0.98"/>
+      <stop offset="1" stop-color="#D7E9FF" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="40" fill="url(#bg)"/>
+  <circle cx="1110" cy="105" r="132" fill="#74C8F5" fill-opacity="0.22"/>
+  <circle cx="126" cy="593" r="104" fill="#6FA7FF" fill-opacity="0.2"/>
+  <rect x="172" y="124" width="856" height="427" rx="30" fill="url(#panel)"/>
+  <rect x="218" y="172" width="468" height="26" rx="13" fill="#2E5B88" fill-opacity="0.28"/>
+  <rect x="218" y="214" width="386" height="18" rx="9" fill="#2E5B88" fill-opacity="0.2"/>
+  <rect x="744" y="172" width="238" height="156" rx="20" fill="#F7FBFF"/>
+  <rect x="768" y="204" width="148" height="14" rx="7" fill="#4873A3" fill-opacity="0.35"/>
+  <rect x="768" y="230" width="188" height="12" rx="6" fill="#4873A3" fill-opacity="0.2"/>
+  <rect x="768" y="252" width="166" height="12" rx="6" fill="#4873A3" fill-opacity="0.2"/>
+  <rect x="218" y="282" width="330" height="232" rx="20" fill="#FFFFFF"/>
+  <rect x="246" y="314" width="130" height="14" rx="7" fill="#3B6597" fill-opacity="0.4"/>
+  <rect x="246" y="340" width="228" height="12" rx="6" fill="#3B6597" fill-opacity="0.22"/>
+  <rect x="246" y="364" width="206" height="12" rx="6" fill="#3B6597" fill-opacity="0.22"/>
+  <rect x="246" y="388" width="190" height="12" rx="6" fill="#3B6597" fill-opacity="0.22"/>
+  <rect x="574" y="356" width="408" height="158" rx="20" fill="#FFFFFF"/>
+  <rect x="602" y="388" width="214" height="14" rx="7" fill="#2D6D9A" fill-opacity="0.38"/>
+  <rect x="602" y="414" width="332" height="12" rx="6" fill="#2D6D9A" fill-opacity="0.2"/>
+  <rect x="602" y="438" width="308" height="12" rx="6" fill="#2D6D9A" fill-opacity="0.2"/>
+  <circle cx="572" cy="258" r="62" fill="#2D6D9A"/>
+  <rect x="548" y="250" width="48" height="38" rx="8" fill="#F6FBFF"/>
+  <path d="M560 250V238C560 226.954 568.954 218 580 218C591.046 218 600 226.954 600 238V250" stroke="#F6FBFF" stroke-width="10" stroke-linecap="round"/>
+  <path d="M640 258H742" stroke="#2D6D9A" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 16"/>
+  <path d="M572 320V356" stroke="#2D6D9A" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 16"/>
+  <circle cx="742" cy="258" r="18" fill="#2D6D9A" fill-opacity="0.3"/>
+  <circle cx="572" cy="356" r="18" fill="#2D6D9A" fill-opacity="0.3"/>
+</svg>

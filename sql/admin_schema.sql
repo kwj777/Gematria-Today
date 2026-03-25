@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS posts (
   image_url TEXT,
   slider_image_url TEXT,
   show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE,
+  hide_from_blog BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'published',
   published_at TIMESTAMPTZ,
   created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -243,6 +244,19 @@ ALTER TABLE posts
 
 ALTER TABLE posts
   ALTER COLUMN show_on_homepage SET NOT NULL;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS hide_from_blog BOOLEAN;
+
+UPDATE posts
+SET hide_from_blog = FALSE
+WHERE hide_from_blog IS NULL;
+
+ALTER TABLE posts
+  ALTER COLUMN hide_from_blog SET DEFAULT FALSE;
+
+ALTER TABLE posts
+  ALTER COLUMN hide_from_blog SET NOT NULL;
 
 ALTER TABLE posts
   ADD COLUMN IF NOT EXISTS status TEXT;

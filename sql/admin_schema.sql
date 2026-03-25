@@ -121,7 +121,7 @@ VALUES (
   '2026-03-25T00:00:00.000Z',
   'kevandmel'
 )
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 
 CREATE TABLE IF NOT EXISTS request_rate_limits (

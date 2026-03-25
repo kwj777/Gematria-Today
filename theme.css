@@ -29,6 +29,17 @@ body {
 
 .navbar-brand { letter-spacing: 0.04em; }
 
+.share-action-button {
+  box-shadow: 0 0.35rem 0.9rem rgba(255, 124, 53, 0.28);
+  border-width: 2px;
+}
+
+.share-action-button:hover,
+.share-action-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 0.55rem 1.1rem rgba(255, 124, 53, 0.35);
+}
+
 
 @media (min-width: 992px) {
   .navbar .dropdown:hover > .dropdown-menu,

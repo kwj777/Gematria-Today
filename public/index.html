@@ -162,6 +162,17 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+      const normalizePostImageUrl = (value) => {
+        const raw = String(value ?? '').trim();
+        if (!raw) {
+          return '';
+        }
+        if (raw.startsWith('http://') || raw.startsWith('https://')) {
+          return raw;
+        }
+        return `/${raw.replace(/^\.?\//, '')}`;
+      };
+
       function renderHomepageSlider(posts) {
         const normalizedPosts = posts.slice(0, 5);
         const indicators = document.getElementById('blogPostsCarouselIndicators');
@@ -189,9 +200,13 @@
         carouselInner.innerHTML = normalizedPosts.map((post, index) => {
           const slug = escapeHtml(post.slug || `post-${index}`);
           const tagClass = index % 2 === 0 ? 'text-bg-warning' : 'text-bg-info';
+          const heroImageUrl = normalizePostImageUrl(post.imageUrl) || '/assets/blog-hero-gematria.svg';
           return `
             <div class="carousel-item ${index === 0 ? 'active' : ''}">
               <article class="blog-slide-card p-4 p-lg-5">
+                <figure class="blog-slide-image-frame mb-4">
+                  <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title || 'Featured post')} hero image" loading="lazy" decoding="async" />
+                </figure>
                 <span class="badge ${tagClass} mb-3">${escapeHtml(post.tag || 'Featured Post')}</span>
                 <h3 class="mb-3">${escapeHtml(post.title || 'Blog post')}</h3>
                 <p class="text-muted mb-4">${escapeHtml(post.summary || 'Open the blog to keep reading this featured post.')}</p>

@@ -28,6 +28,16 @@ export async function handler(event) {
     const limitValue = Number.parseInt(event.queryStringParameters?.limit || '', 10);
     const requestedLimit = Number.isFinite(limitValue) && limitValue > 0 ? Math.min(limitValue, 12) : null;
 
+    await sql`
+      UPDATE posts
+      SET
+        slider_image_url = image_url,
+        updated_at = NOW()
+      WHERE
+        COALESCE(NULLIF(BTRIM(slider_image_url), ''), NULL) IS NULL
+        AND COALESCE(NULLIF(BTRIM(image_url), ''), NULL) IS NOT NULL
+    `;
+
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit }),
       route: 'public-posts',

@@ -241,6 +241,33 @@ const form = document.querySelector('#name-form');
         return `/calculator.html?query=${encodeURIComponent(String(word || '').trim())}`;
       }
 
+      async function shareUrl(payload) {
+        const sharePayload = {
+          title: payload.title || document.title,
+          text: payload.text || '',
+          url: payload.url || window.location.href,
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(sharePayload);
+            return;
+          } catch (error) {
+            if (error?.name === 'AbortError') {
+              return;
+            }
+          }
+        }
+
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(sharePayload.url);
+          statusNode.textContent = 'Share link copied to clipboard.';
+          return;
+        }
+
+        window.prompt('Copy this link to share:', sharePayload.url);
+      }
+
       function openFullRelatedWordsWindow(name, result, relationships) {
         const popup = window.open('', '_blank');
         if (!popup) {
@@ -325,6 +352,23 @@ const form = document.querySelector('#name-form');
           createTextNode(` | Searches: ${result.gematria.searchCount}`)
         );
         article.appendChild(meta);
+
+        const cardActions = document.createElement('div');
+        cardActions.className = 'd-flex flex-wrap gap-2 mb-3';
+        const shareButton = document.createElement('button');
+        shareButton.type = 'button';
+        shareButton.className = 'btn btn-sm btn-outline-secondary';
+        shareButton.textContent = 'Share this name result';
+        shareButton.addEventListener('click', async () => {
+          const url = `${window.location.origin}/nameCalculator.html?name1=${encodeURIComponent(name)}`;
+          await shareUrl({
+            title: `Gematria result for ${name}`,
+            text: `Gematria value ${result.gematria.gematria.total} for ${name}`,
+            url,
+          });
+        });
+        cardActions.appendChild(shareButton);
+        article.appendChild(cardActions);
 
         const relationships = dedupeRelatedWords(name, Array.isArray(result.related?.data) ? result.related.data : []);
         const relatedSection = document.createElement('section');
@@ -411,6 +455,22 @@ const form = document.querySelector('#name-form');
         updateMemberSaveState();
 
         const results = await Promise.all(names.map((name) => fetchNameResult(name)));
+        if (names.length) {
+          const shareAllButton = document.createElement('button');
+          shareAllButton.type = 'button';
+          shareAllButton.className = 'btn btn-sm btn-outline-secondary mb-3';
+          shareAllButton.textContent = 'Share this comparison';
+          shareAllButton.addEventListener('click', async () => {
+            const url = new URL('/nameCalculator.html', window.location.origin);
+            names.forEach((name, index) => url.searchParams.set(`name${index + 1}`, name));
+            await shareUrl({
+              title: `Name calculator comparison: ${names.join(', ')}`,
+              text: 'Compare these gematria name results.',
+              url: url.toString(),
+            });
+          });
+          resultsGrid.appendChild(shareAllButton);
+        }
         const highlightBaseRootMatch = names.length === 3 && results.every((result) => !result.error && result.gematria?.isBaseRoot === true);
         results.forEach((result, index) => {
           resultsGrid.appendChild(createResultCard(names[index], result, { highlightBaseRootMatch }));

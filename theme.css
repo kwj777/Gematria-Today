@@ -21,6 +21,16 @@
   --app-muted: #6d7278;
 }
 
+
+.badge.text-bg-success,
+.badge.text-bg-secondary,
+.badge.text-bg-info,
+.badge.text-bg-warning,
+.badge.text-bg-light {
+  color: #1f2a37 !important;
+  font-weight: 600;
+}
+
 body {
   min-height: 100vh;
   color: var(--app-ink);

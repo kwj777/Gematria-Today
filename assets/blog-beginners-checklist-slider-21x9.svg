@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="900" viewBox="0 0 2100 900" role="img" aria-labelledby="title desc">
+  <title id="title">Gematria Checklist Slider Banner</title>
+  <desc id="desc">Panoramic banner with checklist steps and symbolic numbers for a beginner gematria checklist article.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0a142a"/>
+      <stop offset="45%" stop-color="#1c2d62"/>
+      <stop offset="100%" stop-color="#3c1e5a"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff3cf"/>
+      <stop offset="100%" stop-color="#ecd9ab"/>
+    </linearGradient>
+  </defs>
+  <rect width="2100" height="900" fill="url(#bg)"/>
+  <g fill="#fff" opacity="0.2" font-family="'Segoe UI', Arial, sans-serif" font-size="56" font-weight="700">
+    <text x="120" y="180">QUESTION</text>
+    <text x="1490" y="210">VARIANTS</text>
+    <text x="1650" y="760">EVIDENCE</text>
+  </g>
+
+  <g transform="translate(580 150)">
+    <rect width="950" height="600" rx="36" fill="#121a33" opacity="0.48"/>
+    <rect x="42" y="42" width="866" height="516" rx="26" fill="url(#card)"/>
+
+    <text x="90" y="126" fill="#2c2240" font-family="'Segoe UI', Arial, sans-serif" font-size="52" font-weight="700">Before You Draw Conclusions</text>
+    <text x="90" y="176" fill="#574175" font-family="'Segoe UI', Arial, sans-serif" font-size="30" font-weight="600">A Beginner's Gematria Research Checklist</text>
+
+    <g fill="#2c2240" font-family="'Segoe UI', Arial, sans-serif" font-size="30" font-weight="600">
+      <text x="170" y="255">Use themed sets, not isolated words</text>
+      <text x="170" y="323">Track non-matches to avoid bias</text>
+      <text x="170" y="391">Separate data from interpretation</text>
+      <text x="170" y="459">Assign confidence before publishing</text>
+    </g>
+
+    <g fill="none" stroke="#4b3c74" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="112" cy="244" r="20"/>
+      <path d="M102 244l8 9 13-17"/>
+      <circle cx="112" cy="312" r="20"/>
+      <path d="M102 312l8 9 13-17"/>
+      <circle cx="112" cy="380" r="20"/>
+      <path d="M102 380l8 9 13-17"/>
+      <circle cx="112" cy="448" r="20"/>
+      <path d="M102 448l8 9 13-17"/>
+    </g>
+  </g>
+</svg>

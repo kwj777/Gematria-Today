@@ -337,6 +337,12 @@
                   <div class="col-12"><label class="form-label" for="sendgridFromName">From name</label><input id="sendgridFromName" class="form-control" placeholder="EndTimes.Today" /></div>
                   <div class="col-12"><label class="form-label" for="sendgridReplyToEmail">Reply-to email</label><input id="sendgridReplyToEmail" class="form-control" type="email" placeholder="help@example.com" /></div>
                   <div class="col-12"><label class="form-label" for="publicSiteUrl">Public site URL</label><input id="publicSiteUrl" class="form-control" type="url" placeholder="https://example.com" /></div>
+                  <div class="col-12"><label class="form-label" for="welcomeEmailSubject">Welcome email subject (Day +1)</label><input id="welcomeEmailSubject" class="form-control" placeholder="You’re in 🎉 (quick next step inside)" /></div>
+                  <div class="col-12">
+                    <label class="form-label" for="welcomeEmailBody">Welcome email body (Day +1)</label>
+                    <textarea id="welcomeEmailBody" class="form-control" rows="8" placeholder="Hey {{first_name}},&#10;&#10;Glad you joined us..."></textarea>
+                    <div class="form-text">Use placeholders like <code>{{first_name}}</code>, <code>{{blog_link}}</code>, <code>{{sender_name}}</code>, and <code>{{site_name}}</code>.</div>
+                  </div>
                   <div class="col-12">
                     <label class="form-label" for="sendgridApiKey">SendGrid API key</label>
                     <div class="input-group">
@@ -774,12 +780,16 @@
         document.getElementById('sendgridFromName').value = settings.sendgridFromName || '';
         document.getElementById('sendgridReplyToEmail').value = settings.sendgridReplyToEmail || '';
         document.getElementById('publicSiteUrl').value = settings.publicSiteUrl || '';
+        document.getElementById('welcomeEmailSubject').value = settings.welcomeEmailSubject || '';
+        document.getElementById('welcomeEmailBody').value = settings.welcomeEmailBody || '';
         setSecretFieldMode('sendgridApiKey', false);
         const configuredDetails = [
           settings.sendgridFromEmail ? 'verified sender email' : '',
           settings.sendgridFromName ? 'sender name' : '',
           settings.sendgridReplyToEmail ? 'reply-to email' : '',
           settings.publicSiteUrl ? 'public site URL' : '',
+          settings.welcomeEmailSubject ? 'welcome email subject' : '',
+          settings.welcomeEmailBody ? 'welcome email body' : '',
           settings.hasSendgridApiKey ? 'SendGrid API key' : '',
         ].filter(Boolean);
         document.getElementById('emailSettingsMeta').textContent = settings.emailDeliveryConfigured
@@ -1130,6 +1140,8 @@
               sendgridFromName: document.getElementById('sendgridFromName').value,
               sendgridReplyToEmail: document.getElementById('sendgridReplyToEmail').value,
               publicSiteUrl: document.getElementById('publicSiteUrl').value,
+              welcomeEmailSubject: document.getElementById('welcomeEmailSubject').value,
+              welcomeEmailBody: document.getElementById('welcomeEmailBody').value,
               sendgridApiKey: state.replaceSendgridApiKey ? sendgridApiKeyInput.value : undefined,
               replaceSendgridApiKey: state.replaceSendgridApiKey
             })
@@ -1137,7 +1149,7 @@
           state.emailSettings = payload.settings || null;
           state.stripeSettings = payload.settings || null;
           renderEmailSettings();
-          showMessage(saveMessage, 'Recovery email delivery settings saved.');
+          showMessage(saveMessage, 'Email delivery and welcome email settings saved.');
           collapseAdminSection('emailSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);

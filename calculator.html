@@ -493,6 +493,14 @@ View results: ${shareUrl}`.trim(),
         );
       }
 
+      function renderRelatedWordsError(message) {
+        relatedWordsResult.innerHTML = '';
+        const errorState = document.createElement('p');
+        errorState.className = 'small text-muted mt-2';
+        errorState.textContent = message;
+        relatedWordsResult.appendChild(errorState);
+      }
+
       function renderRelatedWords(payload, relationships, searchGematria) {
         relatedWordsResult.innerHTML = '';
 
@@ -608,8 +616,11 @@ View results: ${shareUrl}`.trim(),
             };
             updateMemberSaveState();
           } catch (error) {
-            setStatusMessage(lookupStatus, error.message || 'Unable to load related words.');
-            relatedWordsResult.innerHTML = '';
+            const relatedWordsErrorMessage = error.message === "Wordnik's search came up empty."
+              ? 'Wordnik did not find any related words.'
+              : (error.message || 'Unable to load related words.');
+            lookupStatus.textContent = '';
+            renderRelatedWordsError(relatedWordsErrorMessage);
             currentSearchPayload = {
               queryText: term,
               queryType: 'word',

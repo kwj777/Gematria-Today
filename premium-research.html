@@ -153,7 +153,7 @@
 
         wordnikResults.innerHTML = `
           <p class="mb-2"><strong>${payload.count}</strong> ${payload.relationshipType} results for <strong>${payload.word}</strong>:</p>
-          <div class="d-flex flex-wrap gap-2">${words.map((word) => `<span class="badge text-bg-light border">${word}</span>`).join('')}</div>
+          <div class="d-flex flex-wrap gap-2">${words.map((word) => `<a class="badge text-bg-light border text-decoration-none" href="/calculator.html?query=${encodeURIComponent(word)}" target="_blank" rel="noopener noreferrer" aria-label="Open calculator for ${word}">${word}</a>`).join('')}</div>
         `;
       }
 

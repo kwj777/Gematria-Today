@@ -74,7 +74,8 @@ const titleNode = document.querySelector('#page-title');
           if (parsed.origin !== window.location.origin) {
             return '';
           }
-          return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+          const normalizedPath = parsed.pathname === '/calculator' ? '/calculator.html' : parsed.pathname;
+          return `${normalizedPath}${parsed.search}${parsed.hash}`;
         } catch {
           return '';
         }

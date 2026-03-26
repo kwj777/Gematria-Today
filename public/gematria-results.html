@@ -55,10 +55,11 @@
       </div>
     </nav>
     <main class="py-5">
-      <div class="container"><section class="content-panel p-4 p-lg-5"><a class="btn btn-outline-secondary btn-sm mb-3" href="/nameCalculator.html">← Back to Name Calculator</a><h1 id="page-title" class="mb-2">Gematria matches</h1><p id="page-meta" class="text-muted"></p><div class="d-flex flex-wrap gap-2 mb-3"><button id="clear-search-top" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-top" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><label for="word-search" class="form-label fw-semibold">Search these words</label><input id="word-search" class="form-control form-control-lg" type="search" placeholder="Type to filter matching words" /></div></div><p id="status" class="text-muted">Loading words…</p><ul id="word-list" class="list-group result-list" hidden></ul><p id="empty" class="text-muted" hidden>No matching words found.</p><div class="d-flex flex-wrap gap-2 mt-4"><button id="clear-search-bottom" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-bottom" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div></section></div>
+      <div class="container"><section class="content-panel p-4 p-lg-5"><a id="return-link" class="btn btn-outline-secondary btn-sm mb-3" href="/calculator.html">← Back to Calculator</a><h1 id="page-title" class="mb-2">Gematria matches</h1><p id="page-meta" class="text-muted"></p><div class="d-flex flex-wrap gap-2 mb-3"><button id="clear-search-top" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-top" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><label for="word-search" class="form-label fw-semibold">Search these words</label><input id="word-search" class="form-control form-control-lg" type="search" placeholder="Type to filter matching words" /></div></div><p id="status" class="text-muted">Loading words…</p><ul id="word-list" class="list-group result-list" hidden></ul><p id="empty" class="text-muted" hidden>No matching words found.</p><div class="d-flex flex-wrap gap-2 mt-4"><button id="clear-search-bottom" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-bottom" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div></section></div>
       <script>
 const titleNode = document.querySelector('#page-title');
       const metaNode = document.querySelector('#page-meta');
+      const returnLink = document.querySelector('#return-link');
       const clearSearchButtons = [
         document.querySelector('#clear-search-top'),
         document.querySelector('#clear-search-bottom')
@@ -73,9 +74,26 @@ const titleNode = document.querySelector('#page-title');
       const emptyNode = document.querySelector('#empty');
       const params = new URLSearchParams(window.location.search);
       const gematria = String(params.get('gematria') || '').trim();
+      const returnTo = String(params.get('returnTo') || '').trim();
       let allWords = [];
       let isCollapsed = false;
       let visibleCount = 0;
+
+      function getSafeInternalReturnPath(path) {
+        if (!path || !path.startsWith('/')) {
+          return '';
+        }
+
+        try {
+          const parsed = new URL(path, window.location.origin);
+          if (parsed.origin !== window.location.origin) {
+            return '';
+          }
+          return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        } catch {
+          return '';
+        }
+      }
 
       function escapeHtml(value) {
         return String(value ?? '')
@@ -198,6 +216,12 @@ const titleNode = document.querySelector('#page-title');
       }
 
       async function init() {
+        const safeReturnPath = getSafeInternalReturnPath(returnTo);
+        if (safeReturnPath) {
+          returnLink.href = safeReturnPath;
+          returnLink.textContent = '← Back to previous calculator';
+        }
+
         if (!gematria) {
           titleNode.textContent = 'Gematria matches';
           statusNode.textContent = 'Missing gematria value in the page URL.';

@@ -253,7 +253,10 @@ const form = document.querySelector('#name-form');
       function createGematriaButton(total) {
         const link = document.createElement('a');
         link.className = 'inline-button';
-        link.href = `/gematria-results.html?gematria=${encodeURIComponent(String(total))}`;
+        const destination = new URL('/gematria-results.html', window.location.origin);
+        destination.searchParams.set('gematria', String(total));
+        destination.searchParams.set('returnTo', `${window.location.pathname}${window.location.search}${window.location.hash}`);
+        link.href = `${destination.pathname}${destination.search}`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = String(total);

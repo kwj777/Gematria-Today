@@ -583,7 +583,11 @@ View results: ${shareUrl}`.trim(),
           return;
         }
 
-        await renderResults(names);
+        try {
+          await renderResults(names);
+        } catch (error) {
+          statusNode.textContent = error?.message || 'Unable to calculate names right now. Please try again.';
+        }
       });
 
       clearNamesButton.addEventListener('click', () => {

@@ -50,6 +50,26 @@ body {
   box-shadow: 0 0.55rem 1.1rem rgba(255, 124, 53, 0.35);
 }
 
+.premium-research-button {
+  border-width: 2px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 0.45rem 1rem rgba(255, 124, 53, 0.34);
+}
+
+.premium-research-button:hover,
+.premium-research-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 0.6rem 1.2rem rgba(255, 124, 53, 0.4);
+}
+
+.premium-research-button.disabled,
+.premium-research-button:disabled,
+.premium-research-button[aria-disabled="true"] {
+  opacity: 0.75;
+  box-shadow: 0 0.3rem 0.75rem rgba(255, 124, 53, 0.24);
+}
+
 
 @media (min-width: 992px) {
   .navbar .dropdown:hover > .dropdown-menu,

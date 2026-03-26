@@ -271,7 +271,7 @@ View results: ${shareUrl}`.trim(),
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
           saveHistoryButton.disabled = false;
-          saveHistoryButton.classList.add('disabled');
+          saveHistoryButton.classList.add('member-save-button--guest');
           saveHistoryButton.setAttribute('aria-disabled', 'true');
           createMembersOnlyPopover();
           memberSaveMeta.textContent = currentSearchPayload
@@ -281,7 +281,7 @@ View results: ${shareUrl}`.trim(),
         }
 
         destroyMembersOnlyPopover();
-        saveHistoryButton.classList.remove('disabled');
+        saveHistoryButton.classList.remove('member-save-button--guest');
         saveHistoryButton.removeAttribute('aria-disabled');
         saveHistoryButton.disabled = !currentSearchPayload;
         const memberName = memberSession.member.displayName || memberSession.member.username;

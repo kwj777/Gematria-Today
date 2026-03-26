@@ -45,17 +45,7 @@
             </div>
             <button id="refreshStatsButton" class="btn btn-outline-secondary btn-sm" type="button">Refresh stats</button>
           </div>
-          <div id="statsCards" class="row g-3 mb-4"></div>
-          <div class="row g-4">
-            <div class="col-lg-6">
-              <h3 class="h6 text-uppercase text-muted">Most recently added words</h3>
-              <div id="recentWords" class="small text-muted">Loading…</div>
-            </div>
-            <div class="col-lg-6">
-              <h3 class="h6 text-uppercase text-muted">Top digital-root-6 words</h3>
-              <div id="topSixWords" class="small text-muted">Loading…</div>
-            </div>
-          </div>
+          <div id="statsCards" class="row g-3"></div>
         </section>
 
         <section class="row g-4">
@@ -115,8 +105,6 @@
       const wordnikResults = document.getElementById('wordnikResults');
       const gematriaResults = document.getElementById('gematriaResults');
       const statsCards = document.getElementById('statsCards');
-      const recentWords = document.getElementById('recentWords');
-      const topSixWords = document.getElementById('topSixWords');
 
       function showAlert(message, tone = 'danger') {
         premiumAlert.textContent = message;
@@ -234,16 +222,7 @@
           toMetricCard('Total words', totals.totalWords || 0, 'Indexed in EndTimes database.'),
           toMetricCard('Base-root words', totals.baseRootCount || 0, `${totals.baseRootPercentage || 0}% of all words.`),
           toMetricCard('Digital root 6', totals.digitalRootSixCount || 0, `${totals.digitalRootSixPercentage || 0}% of all words.`),
-          toMetricCard('Base-root + DR6', totals.baseRootAndDigitalRootSixCount || 0, 'Overlapping high-signal terms.'),
         ].join('');
-
-        recentWords.innerHTML = (payload.recentWords || []).length
-          ? `<ul class="list-group list-group-flush">${payload.recentWords.map((row) => `<li class="list-group-item px-0"><strong>${row.word}</strong> · G:${row.gematriaValue} · DR:${row.digitalRoot} · ${row.isBaseRoot ? 'Base Root' : 'Not Base Root'} · ${row.timestamp ? new Date(row.timestamp).toLocaleString() : 'Timestamp unavailable'}</li>`).join('')}</ul>`
-          : '<p class="text-muted mb-0">No timestamped records available in the words table.</p>';
-
-        topSixWords.innerHTML = (payload.topDigitalRootSixWords || []).length
-          ? `<ol class="mb-0">${payload.topDigitalRootSixWords.map((row) => `<li><strong>${row.word}</strong> (G:${row.gematriaValue}, searches:${row.searchCount}, ${row.isBaseRoot ? 'base-root' : 'non-base-root'})</li>`).join('')}</ol>`
-          : '<p class="text-muted mb-0">No digital-root-6 trends yet.</p>';
       }
 
       async function loadStats() {

@@ -96,12 +96,14 @@ const form = document.querySelector('#name-form');
 
       function showCalculatorLoadingOverlay() {
         overlayRequestCount += 1;
-        calculatorLoadingOverlay.hidden = false;
+        if (calculatorLoadingOverlay) {
+          calculatorLoadingOverlay.hidden = false;
+        }
       }
 
       function hideCalculatorLoadingOverlay() {
         overlayRequestCount = Math.max(0, overlayRequestCount - 1);
-        if (overlayRequestCount === 0) {
+        if (overlayRequestCount === 0 && calculatorLoadingOverlay) {
           calculatorLoadingOverlay.hidden = true;
         }
       }
@@ -602,7 +604,12 @@ View results: ${shareUrl}`.trim(),
           return;
         }
 
-        await renderResults(names);
+        try {
+          await renderResults(names);
+        } catch (error) {
+          statusNode.textContent = error?.message || 'Unable to calculate names right now. Please try again.';
+          hideCalculatorLoadingOverlay();
+        }
       });
 
       clearNamesButton.addEventListener('click', () => {

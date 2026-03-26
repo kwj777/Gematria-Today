@@ -154,12 +154,13 @@ function sanitizeCalculatorPath(value) {
 
   try {
     const parsed = new URL(String(value), 'https://endtimes.today');
+    const normalizedPathname = parsed.pathname === '/calculator' ? '/calculator.html' : parsed.pathname;
 
-    if (parsed.origin !== 'https://endtimes.today' || parsed.pathname !== '/calculator.html') {
+    if (parsed.origin !== 'https://endtimes.today' || normalizedPathname !== '/calculator.html') {
       return fallbackPath;
     }
 
-    return `${parsed.pathname}${parsed.search}`;
+    return `${normalizedPathname}${parsed.search}`;
   } catch (_error) {
     return fallbackPath;
   }

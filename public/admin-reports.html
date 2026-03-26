@@ -211,11 +211,12 @@
 
       function renderSecurityEvents(rows) {
         const target = document.getElementById('securityEvents');
-        if (!rows.length) {
+        const visibleRows = rows.filter((event) => event.action !== 'rate_limit');
+        if (!visibleRows.length) {
           target.innerHTML = '<p class="text-success small mb-0">No security problems in this reporting window.</p>';
           return;
         }
-        target.innerHTML = rows.map((event) => `
+        target.innerHTML = visibleRows.map((event) => `
           <article class="border rounded p-2">
             <p class="small mb-1"><strong>${event.route}</strong> · ${event.action}</p>
             <p class="small text-muted mb-0">${new Date(event.createdAt).toLocaleString()} · ${event.outcome}</p>

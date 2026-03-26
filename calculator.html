@@ -66,7 +66,7 @@
         <section class="content-panel p-4 p-lg-5 form-shell">
           <section class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your gematria searches to your account.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-outline-primary btn-sm" href="/member.html">Go to My Dashboard</a><button id="save-history-button" class="btn btn-primary btn-sm" type="button" disabled>Save result</button></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your gematria searches to your account.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-outline-primary btn-sm" href="/member.html">Go to My Dashboard</a></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
             </div>
           </section>
         </section>
@@ -168,6 +168,7 @@ View results: ${shareUrl}`.trim(),
       }
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
+      let saveHistoryPopover = null;
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       let currentSearchPayload = null;
       let memberSession = null;
@@ -201,6 +202,38 @@ View results: ${shareUrl}`.trim(),
 
         memberSession = await response.json();
         return memberSession;
+      }
+
+      function showMembersOnlySaveMessage() {
+        memberSaveMeta.textContent = '';
+        memberSaveMeta.append('Only registered members can save searches. ');
+        const joinLink = document.createElement('a');
+        joinLink.href = '/member.html#registerForm';
+        joinLink.textContent = 'Join';
+        memberSaveMeta.append(joinLink, '.');
+      }
+
+      function createMembersOnlyPopover() {
+        if (!window.bootstrap?.Popover || saveHistoryPopover || !saveHistoryButton) {
+          return;
+        }
+
+        saveHistoryPopover = new window.bootstrap.Popover(saveHistoryButton, {
+          container: 'body',
+          html: true,
+          trigger: 'hover focus',
+          placement: 'top',
+          content: 'Only registered members can save searches. <a href="/member.html#registerForm">Join</a>.',
+        });
+      }
+
+      function destroyMembersOnlyPopover() {
+        if (!saveHistoryPopover) {
+          return;
+        }
+
+        saveHistoryPopover.dispose();
+        saveHistoryPopover = null;
       }
 
       async function saveCurrentSearch() {
@@ -237,13 +270,19 @@ View results: ${shareUrl}`.trim(),
 
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
-          saveHistoryButton.disabled = true;
+          saveHistoryButton.disabled = false;
+          saveHistoryButton.classList.add('disabled');
+          saveHistoryButton.setAttribute('aria-disabled', 'true');
+          createMembersOnlyPopover();
           memberSaveMeta.textContent = currentSearchPayload
             ? 'Sign in to save this result to your account.'
             : 'Sign in to save your gematria searches to your account.';
           return;
         }
 
+        destroyMembersOnlyPopover();
+        saveHistoryButton.classList.remove('disabled');
+        saveHistoryButton.removeAttribute('aria-disabled');
         saveHistoryButton.disabled = !currentSearchPayload;
         const memberName = memberSession.member.displayName || memberSession.member.username;
         const freeTierSuffix = memberSession.member.membershipLevel === 'free'
@@ -688,7 +727,23 @@ View results: ${shareUrl}`.trim(),
         updateMemberSaveState();
       });
 
-      saveHistoryButton.addEventListener('click', async () => {
+      ['mouseenter', 'focus'].forEach((eventName) => {
+        saveHistoryButton.addEventListener(eventName, () => {
+          if (!memberSession?.authenticated) {
+            showMembersOnlySaveMessage();
+            saveHistoryPopover?.show();
+          }
+        });
+      });
+
+      saveHistoryButton.addEventListener('click', async (event) => {
+        if (!memberSession?.authenticated) {
+          event.preventDefault();
+          showMembersOnlySaveMessage();
+          saveHistoryPopover?.show();
+          return;
+        }
+
         try {
           await saveCurrentSearch();
         } catch (error) {

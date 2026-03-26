@@ -37,7 +37,7 @@
 
     <main class="py-5">
       <div class="container">
-        <section class="hero-panel p-4 p-lg-5 mb-5">
+        <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5">
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
               <p class="section-kicker mb-3">Member Access</p>
@@ -219,6 +219,7 @@
     <script>
       const authSection = document.getElementById('authSection');
       const dashboardSection = document.getElementById('dashboardSection');
+      const membershipHero = document.getElementById('membershipHero');
       const memberAlert = document.getElementById('memberAlert');
       const memberMeta = document.getElementById('memberMeta');
       const membershipLevel = document.getElementById('membershipLevel');
@@ -277,6 +278,8 @@
       }
 
       function setLoggedIn(isLoggedIn) {
+        const isPremiumMember = session?.member?.membershipLevel === 'premium';
+        membershipHero.classList.toggle('d-none', isLoggedIn && isPremiumMember);
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
         syncPaymentButton(isLoggedIn ? session?.member : null);

@@ -30,6 +30,7 @@
       <script src="/pwa-register.js" defer></script>
   </head>
   <body>
+    <div id="calculator-loading-overlay" class="calculator-loading-overlay" role="status" aria-live="polite" hidden><p class="calculator-loading-overlay__message">getting the results for you. :)</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -89,7 +90,21 @@ const form = document.querySelector('#name-form');
       const clearNamesButton = document.querySelector('#clear-names');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
+      const calculatorLoadingOverlay = document.querySelector('#calculator-loading-overlay');
+      let overlayRequestCount = 0;
       const MOBILE_QUERY = '(max-width: 820px), (pointer: coarse)';
+
+      function showCalculatorLoadingOverlay() {
+        overlayRequestCount += 1;
+        calculatorLoadingOverlay.hidden = false;
+      }
+
+      function hideCalculatorLoadingOverlay() {
+        overlayRequestCount = Math.max(0, overlayRequestCount - 1);
+        if (overlayRequestCount === 0) {
+          calculatorLoadingOverlay.hidden = true;
+        }
+      }
       const DISPLAY_RELATED_WORD_LIMIT = 10;
       const FULL_RELATED_WORD_LIMIT = 100;
       const AUTHENTICATED_RELATED_WORD_LIMIT = 250;
@@ -512,54 +527,59 @@ View results: ${shareUrl}`.trim(),
       }
 
       async function renderResults(names) {
-        statusNode.textContent = 'Calculating names...';
-        resultsShell.hidden = false;
-        resultsGrid.innerHTML = '';
-        currentSearchPayload = null;
-        updateMemberSaveState();
+        showCalculatorLoadingOverlay();
+        try {
+          statusNode.textContent = 'Calculating names...';
+          resultsShell.hidden = false;
+          resultsGrid.innerHTML = '';
+          currentSearchPayload = null;
+          updateMemberSaveState();
 
-        const results = await Promise.all(names.map((name) => fetchNameResult(name)));
-        resultsActions.innerHTML = '';
-        if (names.length) {
-          const shareAllButton = document.createElement('button');
-          shareAllButton.type = 'button';
-          shareAllButton.className = 'btn btn-sm btn-warning fw-semibold share-action-button';
-          shareAllButton.textContent = 'Share comparison';
-          shareAllButton.setAttribute('aria-label', 'Share this comparison');
-          shareAllButton.addEventListener('click', async () => {
-            const url = new URL('/nameCalculator.html', window.location.origin);
-            names.forEach((name, index) => url.searchParams.set(`name${index + 1}`, name));
-            await shareUrl({
-              title: `Name calculator comparison: ${names.join(', ')}`,
-              text: 'Compare these gematria name results.',
-              url: url.toString(),
+          const results = await Promise.all(names.map((name) => fetchNameResult(name)));
+          resultsActions.innerHTML = '';
+          if (names.length) {
+            const shareAllButton = document.createElement('button');
+            shareAllButton.type = 'button';
+            shareAllButton.className = 'btn btn-sm btn-warning fw-semibold share-action-button';
+            shareAllButton.textContent = 'Share comparison';
+            shareAllButton.setAttribute('aria-label', 'Share this comparison');
+            shareAllButton.addEventListener('click', async () => {
+              const url = new URL('/nameCalculator.html', window.location.origin);
+              names.forEach((name, index) => url.searchParams.set(`name${index + 1}`, name));
+              await shareUrl({
+                title: `Name calculator comparison: ${names.join(', ')}`,
+                text: 'Compare these gematria name results.',
+                url: url.toString(),
+              });
             });
+            resultsActions.appendChild(shareAllButton);
+          }
+          const highlightBaseRootMatch = names.length === 3 && results.every((result) => !result.error && result.gematria?.isBaseRoot === true);
+          results.forEach((result, index) => {
+            resultsGrid.appendChild(createResultCard(names[index], result, { highlightBaseRootMatch }));
           });
-          resultsActions.appendChild(shareAllButton);
-        }
-        const highlightBaseRootMatch = names.length === 3 && results.every((result) => !result.error && result.gematria?.isBaseRoot === true);
-        results.forEach((result, index) => {
-          resultsGrid.appendChild(createResultCard(names[index], result, { highlightBaseRootMatch }));
-        });
 
-        const successfulResults = results.filter((result) => !result.error && result.gematria);
-        if (successfulResults.length) {
-          currentSearchPayload = {
-            queryText: names.join(', '),
-            queryType: 'names',
-            calculatorSource: 'name-calculator',
-            gematriaTotal: successfulResults[0]?.gematria?.gematria?.total ?? null,
-            digitalRoot: successfulResults[0]?.gematria?.gematria?.digitalRoot ?? null,
-            isBaseRoot: typeof successfulResults[0]?.gematria?.isBaseRoot === 'boolean' ? successfulResults[0].gematria.isBaseRoot : null,
-            resultPayload: {
-              names,
-              results,
-            },
-          };
-        }
+          const successfulResults = results.filter((result) => !result.error && result.gematria);
+          if (successfulResults.length) {
+            currentSearchPayload = {
+              queryText: names.join(', '),
+              queryType: 'names',
+              calculatorSource: 'name-calculator',
+              gematriaTotal: successfulResults[0]?.gematria?.gematria?.total ?? null,
+              digitalRoot: successfulResults[0]?.gematria?.gematria?.digitalRoot ?? null,
+              isBaseRoot: typeof successfulResults[0]?.gematria?.isBaseRoot === 'boolean' ? successfulResults[0].gematria.isBaseRoot : null,
+              resultPayload: {
+                names,
+                results,
+              },
+            };
+          }
 
-        statusNode.textContent = '';
-        updateMemberSaveState();
+          statusNode.textContent = '';
+          updateMemberSaveState();
+        } finally {
+          hideCalculatorLoadingOverlay();
+        }
       }
 
       form.addEventListener('submit', async (event) => {
@@ -593,13 +613,18 @@ View results: ${shareUrl}`.trim(),
       });
 
       window.addEventListener('DOMContentLoaded', async () => {
-        mobileNoteNode.textContent = getDefaultMobileNote();
-        await requestMemberSession().catch(() => null);
-        updateMemberSaveState();
+        showCalculatorLoadingOverlay();
+        try {
+          mobileNoteNode.textContent = getDefaultMobileNote();
+          await requestMemberSession().catch(() => null);
+          updateMemberSaveState();
 
-        const namesFromQuery = populateNamesFromSearchParams();
-        if (namesFromQuery.length) {
-          await renderResults(namesFromQuery);
+          const namesFromQuery = populateNamesFromSearchParams();
+          if (namesFromQuery.length) {
+            await renderResults(namesFromQuery);
+          }
+        } finally {
+          hideCalculatorLoadingOverlay();
         }
       });
       </script>

@@ -255,17 +255,22 @@ function renderDefinitionPage(payload, { calculatorPath = '/calculator.html' } =
         color: #57606a;
         font-family: Helvetica, Arial, sans-serif;
       }
-      .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
+      .top-controls {
+        display: flex;
+        justify-content: flex-end;
         margin-bottom: 1rem;
-        color: #0969da;
-        font: 600 0.95rem/1 Helvetica, Arial, sans-serif;
-        text-decoration: none;
       }
-      .back-link:hover {
-        text-decoration: underline;
+      .close-button {
+        border: 1px solid #d0d7de;
+        background: #ffffff;
+        color: #24292f;
+        border-radius: 999px;
+        padding: 0.4rem 0.85rem;
+        font: 600 0.95rem/1 Helvetica, Arial, sans-serif;
+        cursor: pointer;
+      }
+      .close-button:hover {
+        background: #f6f8fa;
       }
       .definitions {
         margin-top: 1.5rem;
@@ -344,7 +349,9 @@ function renderDefinitionPage(payload, { calculatorPath = '/calculator.html' } =
   </head>
   <body>
     <main>
-      <a id="back-to-calculator-link" class="back-link" href="${calculatorPath}" aria-label="Return to the calculator page">← Back to calculator</a>
+      <div class="top-controls">
+        <button id="close-definition-button" class="close-button" type="button" aria-label="Close this definition page">✕ Close</button>
+      </div>
       <section class="page-header">
         <h1>${escapeHtml(payload.word)}</h1>
         <p class="subtitle">Dictionary-style definitions sourced from Wordnik.</p>
@@ -353,21 +360,14 @@ function renderDefinitionPage(payload, { calculatorPath = '/calculator.html' } =
     </main>
     <script>
       (() => {
-        const link = document.getElementById('back-to-calculator-link');
-        if (!link) return;
+        const closeButton = document.getElementById('close-definition-button');
+        if (!closeButton) return;
 
-        const isDesktopViewport = window.matchMedia('(min-width: 992px)').matches;
-        const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
-        const isDesktop = isDesktopViewport && hasFinePointer;
-
-        if (!isDesktop) return;
-
-        link.addEventListener('click', (event) => {
-          event.preventDefault();
+        closeButton.addEventListener('click', () => {
           window.close();
           setTimeout(() => {
             if (!window.closed) {
-              window.location.assign(link.href);
+              window.location.assign(${JSON.stringify(calculatorPath)});
             }
           }, 100);
         });

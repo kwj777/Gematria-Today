@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EndTimes icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#355f8c"/>
+      <stop offset="1" stop-color="#2d547c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="176" fill="#ff7c35"/>
+  <path d="M172 160h188v44H224v30h112v44H224v30h136v44H172z" fill="#f8f5ef"/>
+</svg>

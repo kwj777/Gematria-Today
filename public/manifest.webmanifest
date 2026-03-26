@@ -1,0 +1,28 @@
+{
+  "name": "EndTimes.Today",
+  "short_name": "EndTimes",
+  "description": "Gematria calculators, curated news, and research tools from EndTimes.Today.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f5ef",
+  "theme_color": "#355f8c",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/assets/icons/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/assets/icons/icon-maskable-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

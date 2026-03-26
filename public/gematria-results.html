@@ -48,14 +48,10 @@
       </div>
     </nav>
     <main class="py-5">
-      <div class="container"><section class="content-panel p-4 p-lg-5"><a class="btn btn-outline-secondary btn-sm mb-3" href="/nameCalculator.html">← Back to Name Calculator</a><h1 id="page-title" class="mb-2">Gematria matches</h1><p id="page-meta" class="text-muted"></p><div class="d-flex flex-wrap gap-2 mb-3"><button id="clear-search-top" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-top" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button><a id="view-all-button-top" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer" hidden>Show all matches in new tab</a></div><div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><label for="word-search" class="form-label fw-semibold">Search these words</label><input id="word-search" class="form-control form-control-lg" type="search" placeholder="Type to filter matching words" /></div></div><p id="status" class="text-muted">Loading words…</p><ul id="word-list" class="list-group result-list" hidden></ul><p id="empty" class="text-muted" hidden>No matching words found.</p><div class="d-flex flex-wrap gap-2 mt-4"><button id="clear-search-bottom" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-bottom" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button><a id="view-all-button-bottom" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener noreferrer" hidden>Show all matches in new tab</a></div></section></div>
+      <div class="container"><section class="content-panel p-4 p-lg-5"><a class="btn btn-outline-secondary btn-sm mb-3" href="/nameCalculator.html">← Back to Name Calculator</a><h1 id="page-title" class="mb-2">Gematria matches</h1><p id="page-meta" class="text-muted"></p><div class="d-flex flex-wrap gap-2 mb-3"><button id="clear-search-top" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-top" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><label for="word-search" class="form-label fw-semibold">Search these words</label><input id="word-search" class="form-control form-control-lg" type="search" placeholder="Type to filter matching words" /></div></div><p id="status" class="text-muted">Loading words…</p><ul id="word-list" class="list-group result-list" hidden></ul><p id="empty" class="text-muted" hidden>No matching words found.</p><div class="d-flex flex-wrap gap-2 mt-4"><button id="clear-search-bottom" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-bottom" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div></section></div>
       <script>
 const titleNode = document.querySelector('#page-title');
       const metaNode = document.querySelector('#page-meta');
-      const viewAllButtons = [
-        document.querySelector('#view-all-button-top'),
-        document.querySelector('#view-all-button-bottom')
-      ];
       const clearSearchButtons = [
         document.querySelector('#clear-search-top'),
         document.querySelector('#clear-search-bottom')
@@ -70,8 +66,6 @@ const titleNode = document.querySelector('#page-title');
       const emptyNode = document.querySelector('#empty');
       const params = new URLSearchParams(window.location.search);
       const gematria = String(params.get('gematria') || '').trim();
-      const isAllView = String(params.get('view') || '').trim().toLowerCase() === 'all';
-      const DEFAULT_VISIBLE_LIMIT = 30;
       let allWords = [];
       let isCollapsed = false;
       let visibleCount = 0;
@@ -193,8 +187,7 @@ const titleNode = document.querySelector('#page-title');
         const filteredWords = !query
           ? allWords
           : allWords.filter((entry) => entry.word.toLowerCase().includes(query));
-        const visibleWords = isAllView ? filteredWords : filteredWords.slice(0, DEFAULT_VISIBLE_LIMIT);
-        renderList(visibleWords);
+        renderList(filteredWords);
       }
 
       async function init() {
@@ -207,17 +200,11 @@ const titleNode = document.querySelector('#page-title');
 
         titleNode.textContent = `Gematria ${gematria} matches`;
         document.title = `Gematria ${gematria} Matches`;
-        viewAllButtons.forEach((button) => {
-          button.href = `/gematria-results.html?gematria=${encodeURIComponent(gematria)}&view=all`;
-        });
 
         try {
           const payload = await requestWordsByGematria(gematria);
           allWords = Array.isArray(payload.words) ? payload.words : [];
           metaNode.textContent = `${payload.count || allWords.length} total word${(payload.count || allWords.length) === 1 ? '' : 's'} with gematria ${gematria}.`;
-          viewAllButtons.forEach((button) => {
-            button.hidden = isAllView || allWords.length <= DEFAULT_VISIBLE_LIMIT;
-          });
           statusNode.textContent = '';
           applySearch();
         } catch (error) {

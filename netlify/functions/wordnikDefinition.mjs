@@ -344,13 +344,35 @@ function renderDefinitionPage(payload, { calculatorPath = '/calculator.html' } =
   </head>
   <body>
     <main>
-      <a class="back-link" href="${calculatorPath}" aria-label="Return to the calculator page">← Back to calculator</a>
+      <a id="back-to-calculator-link" class="back-link" href="${calculatorPath}" aria-label="Return to the calculator page">← Back to calculator</a>
       <section class="page-header">
         <h1>${escapeHtml(payload.word)}</h1>
         <p class="subtitle">Dictionary-style definitions sourced from Wordnik.</p>
       </section>
       <section class="definitions">${body}</section>
     </main>
+    <script>
+      (() => {
+        const link = document.getElementById('back-to-calculator-link');
+        if (!link) return;
+
+        const isDesktopViewport = window.matchMedia('(min-width: 992px)').matches;
+        const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
+        const isDesktop = isDesktopViewport && hasFinePointer;
+
+        if (!isDesktop) return;
+
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          window.close();
+          setTimeout(() => {
+            if (!window.closed) {
+              window.location.assign(link.href);
+            }
+          }, 100);
+        });
+      })();
+    </script>
   </body>
 </html>`;
 }

@@ -169,13 +169,19 @@ const form = document.querySelector('#name-form');
 
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
-          saveHistoryButton.disabled = true;
+          saveHistoryButton.disabled = false;
+          saveHistoryButton.classList.add('member-save-button--guest');
+          saveHistoryButton.setAttribute('aria-disabled', 'true');
+          saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
           memberSaveMeta.textContent = currentSearchPayload
             ? 'Sign in to save these name calculator results to your account.'
             : 'Sign in to save your name calculator results to your account.';
           return;
         }
 
+        saveHistoryButton.classList.remove('member-save-button--guest');
+        saveHistoryButton.removeAttribute('aria-disabled');
+        saveHistoryButton.removeAttribute('title');
         saveHistoryButton.disabled = !currentSearchPayload;
         memberSaveMeta.textContent = currentSearchPayload
           ? `Signed in as ${memberSession.member.displayName || memberSession.member.username}. Save these results to history.`

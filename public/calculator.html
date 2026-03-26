@@ -17,6 +17,7 @@
       <script src="/pwa-register.js" defer></script>
   </head>
   <body>
+    <div id="calculator-loading-overlay" class="calculator-loading-overlay" role="status" aria-live="polite" hidden><p class="calculator-loading-overlay__message">getting the results for you. :)</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -75,7 +76,21 @@ const lookupForm = document.querySelector('#lookup-form');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
+      const calculatorLoadingOverlay = document.querySelector('#calculator-loading-overlay');
+      let overlayRequestCount = 0;
       let shareStatusTimeout = null;
+
+      function showCalculatorLoadingOverlay() {
+        overlayRequestCount += 1;
+        calculatorLoadingOverlay.hidden = false;
+      }
+
+      function hideCalculatorLoadingOverlay() {
+        overlayRequestCount = Math.max(0, overlayRequestCount - 1);
+        if (overlayRequestCount === 0) {
+          calculatorLoadingOverlay.hidden = true;
+        }
+      }
 
       function setShareStatus(message) {
         if (shareStatusTimeout) {
@@ -611,6 +626,7 @@ View results: ${shareUrl}`.trim(),
 
       lookupForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        showCalculatorLoadingOverlay();
 
         const term = lookupInput.value.trim();
         if (!term) {
@@ -670,6 +686,7 @@ View results: ${shareUrl}`.trim(),
           currentSearchPayload = null;
           updateMemberSaveState();
         } finally {
+          hideCalculatorLoadingOverlay();
           lookupForm.reset();
           lookupInput.focus();
         }
@@ -690,12 +707,17 @@ View results: ${shareUrl}`.trim(),
       });
 
       window.addEventListener('DOMContentLoaded', async () => {
-        await requestMemberSession().catch(() => null);
-        updateMemberSaveState();
-        const searchParams = new URLSearchParams(window.location.search);
-        const query = searchParams.get('query') || '';
-        if (query) {
-          runSearch(query);
+        showCalculatorLoadingOverlay();
+        try {
+          await requestMemberSession().catch(() => null);
+          updateMemberSaveState();
+          const searchParams = new URLSearchParams(window.location.search);
+          const query = searchParams.get('query') || '';
+          if (query) {
+            runSearch(query);
+          }
+        } finally {
+          hideCalculatorLoadingOverlay();
         }
       });
       </script>

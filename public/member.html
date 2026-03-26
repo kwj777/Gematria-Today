@@ -112,6 +112,7 @@
             </div>
             <div class="d-flex gap-2 flex-wrap">
               <a class="btn btn-outline-primary" href="/calculator.html">Open calculator</a>
+              <a id="premiumResearchLink" class="btn btn-outline-warning disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
               <button id="refreshHistoryButton" class="btn btn-outline-secondary" type="button">Refresh history</button>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Sign out</button>
             </div>
@@ -235,6 +236,7 @@
       const premiumActiveToggleButton = document.getElementById('premiumActiveToggleButton');
       const premiumActiveToggleArrow = document.getElementById('premiumActiveToggleArrow');
       const membershipUpgradeContent = document.getElementById('membershipUpgradeContent');
+      const premiumResearchLink = document.getElementById('premiumResearchLink');
 
       let session = null;
       let historyItems = [];
@@ -279,6 +281,7 @@
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
         syncPaymentButton(isLoggedIn ? session?.member : null);
         syncMembershipUpgradePanel(isLoggedIn ? session?.member : null);
+        syncPremiumResearchLink(isLoggedIn ? session?.member : null);
       }
 
       function formatMembershipWindow(member) {
@@ -293,6 +296,14 @@
         const isPremium = member?.membershipLevel === 'premium';
         paymentButton.disabled = !member || isPremium;
         paymentButton.textContent = isPremium ? 'Premium membership active' : 'Continue to Stripe';
+      }
+
+      function syncPremiumResearchLink(member = session?.member) {
+        const isPremium = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
+        premiumResearchLink.classList.toggle('disabled', !isPremium);
+        premiumResearchLink.setAttribute('aria-disabled', isPremium ? 'false' : 'true');
+        premiumResearchLink.tabIndex = isPremium ? 0 : -1;
+        premiumResearchLink.textContent = isPremium ? 'Premium research' : 'Premium research (locked)';
       }
 
       function scrollToLoginArea() {
@@ -543,6 +554,7 @@
         document.getElementById('profileNotes').value = profile?.preferences?.notes || '';
         syncPaymentButton(member);
         syncMembershipUpgradePanel(member);
+        syncPremiumResearchLink(member);
       }
 
       async function loadHistory() {

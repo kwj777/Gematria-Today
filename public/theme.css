@@ -258,6 +258,87 @@ body {
   font-weight: 600;
 }
 
+.membership-comparison-wrap {
+  border: 1px solid rgba(53, 95, 140, 0.16);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.membership-comparison-table thead th {
+  background: linear-gradient(180deg, rgba(53, 95, 140, 0.16), rgba(53, 95, 140, 0.06));
+  color: #12304a;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom-width: 0;
+}
+
+.membership-comparison-table tbody th {
+  min-width: 270px;
+  color: #12304a;
+  font-weight: 600;
+}
+
+.membership-comparison-table td,
+.membership-comparison-table th {
+  padding: 0.9rem 0.85rem;
+  border-color: rgba(53, 95, 140, 0.12);
+}
+
+.comparison-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.comparison-pill--included {
+  background: rgba(25, 135, 84, 0.14);
+  color: #115738;
+}
+
+.comparison-pill--limited {
+  background: rgba(255, 193, 7, 0.2);
+  color: #6c5200;
+}
+
+.comparison-pill--muted {
+  background: rgba(108, 117, 125, 0.15);
+  color: #495057;
+}
+
+.comparison-pill--neutral {
+  background: rgba(13, 110, 253, 0.12);
+  color: #0b4ca4;
+}
+
+.comparison-pill--premium {
+  background: linear-gradient(135deg, rgba(53, 95, 140, 0.2), rgba(255, 193, 7, 0.32));
+  color: #12304a;
+}
+
+.comparison-pill--premium small {
+  font-size: 0.73rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 767.98px) {
+  .membership-comparison-table td,
+  .membership-comparison-table th {
+    padding: 0.75rem 0.65rem;
+  }
+
+  .comparison-pill {
+    font-size: 0.76rem;
+    white-space: normal;
+  }
+}
+
 .hero-media-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.12em;

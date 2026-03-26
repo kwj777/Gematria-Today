@@ -32,6 +32,25 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'queryText and resultPayload are required' });
       }
 
+      const normalizedQueryText = queryText.toLowerCase();
+      const existingRows = await sql`
+        SELECT *
+        FROM calculation_history
+        WHERE user_id = ${member.id}
+          AND LOWER(query_text) = ${normalizedQueryText}
+          AND query_type = ${queryType}
+          AND calculator_source = ${calculatorSource}
+        ORDER BY created_at DESC
+        LIMIT 1
+      `;
+
+      if (existingRows.length) {
+        return jsonResponse(200, {
+          duplicate: true,
+          item: formatCalculationHistory(existingRows[0]),
+        });
+      }
+
       if (member.membershipLevel === 'free') {
         const [{ count }] = await sql`
           SELECT COUNT(*)::int AS count

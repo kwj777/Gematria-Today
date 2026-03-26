@@ -164,7 +164,7 @@ const form = document.querySelector('#name-form');
       }
 
       async function requestJson(endpoint, searchParams) {
-        const response = await fetch(`${endpoint}?${searchParams.toString()}`);
+        const response = await fetch(`${endpoint}?${searchParams.toString()}`, { globalLoading: true });
         const rawBody = await response.text();
 
         let payload;

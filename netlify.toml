@@ -12,6 +12,27 @@
   to = "/.netlify/functions/wordnikDefinition"
   status = 200
 
+
+[[redirects]]
+  from = "/apple-touch-icon.png"
+  to = "/.netlify/functions/pwa-icon?size=180&variant=default"
+  status = 200
+
+[[redirects]]
+  from = "/assets/icons/icon-192.png"
+  to = "/.netlify/functions/pwa-icon?size=192&variant=default"
+  status = 200
+
+[[redirects]]
+  from = "/assets/icons/icon-512.png"
+  to = "/.netlify/functions/pwa-icon?size=512&variant=default"
+  status = 200
+
+[[redirects]]
+  from = "/assets/icons/icon-maskable-512.png"
+  to = "/.netlify/functions/pwa-icon?size=512&variant=maskable"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

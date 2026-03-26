@@ -273,6 +273,7 @@ View results: ${shareUrl}`.trim(),
           saveHistoryButton.disabled = false;
           saveHistoryButton.classList.add('member-save-button--guest');
           saveHistoryButton.setAttribute('aria-disabled', 'true');
+          saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
           createMembersOnlyPopover();
           memberSaveMeta.textContent = currentSearchPayload
             ? 'Sign in to save this result to your account.'
@@ -283,6 +284,7 @@ View results: ${shareUrl}`.trim(),
         destroyMembersOnlyPopover();
         saveHistoryButton.classList.remove('member-save-button--guest');
         saveHistoryButton.removeAttribute('aria-disabled');
+        saveHistoryButton.removeAttribute('title');
         saveHistoryButton.disabled = !currentSearchPayload;
         const memberName = memberSession.member.displayName || memberSession.member.username;
         const freeTierSuffix = memberSession.member.membershipLevel === 'free'

@@ -288,7 +288,9 @@ View results: ${shareUrl}`.trim(),
       function createDefinitionLink(word) {
         const definitionLink = document.createElement('a');
         definitionLink.className = 'definition-link';
-        definitionLink.href = `/definition?word=${encodeURIComponent(word)}`;
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        const definitionParams = new URLSearchParams({ word, returnTo });
+        definitionLink.href = `/definition?${definitionParams.toString()}`;
         definitionLink.target = '_blank';
         definitionLink.rel = 'noopener noreferrer';
         definitionLink.textContent = '(definition)';

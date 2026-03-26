@@ -613,18 +613,13 @@ View results: ${shareUrl}`.trim(),
       });
 
       window.addEventListener('DOMContentLoaded', async () => {
-        showCalculatorLoadingOverlay();
-        try {
-          mobileNoteNode.textContent = getDefaultMobileNote();
-          await requestMemberSession().catch(() => null);
-          updateMemberSaveState();
+        mobileNoteNode.textContent = getDefaultMobileNote();
+        await requestMemberSession().catch(() => null);
+        updateMemberSaveState();
 
-          const namesFromQuery = populateNamesFromSearchParams();
-          if (namesFromQuery.length) {
-            await renderResults(namesFromQuery);
-          }
-        } finally {
-          hideCalculatorLoadingOverlay();
+        const namesFromQuery = populateNamesFromSearchParams();
+        if (namesFromQuery.length) {
+          await renderResults(namesFromQuery);
         }
       });
       </script>

@@ -707,17 +707,12 @@ View results: ${shareUrl}`.trim(),
       });
 
       window.addEventListener('DOMContentLoaded', async () => {
-        showCalculatorLoadingOverlay();
-        try {
-          await requestMemberSession().catch(() => null);
-          updateMemberSaveState();
-          const searchParams = new URLSearchParams(window.location.search);
-          const query = searchParams.get('query') || '';
-          if (query) {
-            runSearch(query);
-          }
-        } finally {
-          hideCalculatorLoadingOverlay();
+        await requestMemberSession().catch(() => null);
+        updateMemberSaveState();
+        const searchParams = new URLSearchParams(window.location.search);
+        const query = searchParams.get('query') || '';
+        if (query) {
+          runSearch(query);
         }
       });
       </script>

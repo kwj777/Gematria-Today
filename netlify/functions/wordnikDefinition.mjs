@@ -144,6 +144,27 @@ function createDefinitionMeta(definition) {
   return details.length > 0 ? `<div class="definition-meta">${details.join('')}</div>` : '';
 }
 
+
+function sanitizeCalculatorPath(value) {
+  const fallbackPath = '/calculator.html';
+
+  if (!value) {
+    return fallbackPath;
+  }
+
+  try {
+    const parsed = new URL(String(value), 'https://endtimes.today');
+
+    if (parsed.origin !== 'https://endtimes.today' || parsed.pathname !== '/calculator.html') {
+      return fallbackPath;
+    }
+
+    return `${parsed.pathname}${parsed.search}`;
+  } catch (_error) {
+    return fallbackPath;
+  }
+}
+
 function createExamples(definition) {
   const examples = [];
 
@@ -165,7 +186,7 @@ function createExamples(definition) {
   return `<div class="examples"><h3>Examples</h3><ul>${items}</ul></div>`;
 }
 
-function renderDefinitionPage(payload) {
+function renderDefinitionPage(payload, { calculatorPath = '/calculator.html' } = {}) {
   const definitions = Array.isArray(payload.definitions) ? payload.definitions : [];
   const visibleDefinitions = definitions
     .map((definition) => ({
@@ -190,7 +211,6 @@ function renderDefinitionPage(payload) {
     ? definitionItems
     : '<p class="empty-state">No definitions were returned for this word.</p>';
   const canonicalPath = `/definition?word=${encodeURIComponent(payload.word)}`;
-  const calculatorPath = '/calculator.html';
 
   return `<!doctype html>
 <html lang="en">
@@ -365,7 +385,9 @@ async function fetchDefinition(sql, source, word) {
 }
 
 export default async function onRequest(request) {
-  const word = new URL(request.url).searchParams.get('word');
+  const requestUrl = new URL(request.url);
+  const word = requestUrl.searchParams.get('word');
+  const calculatorPath = sanitizeCalculatorPath(requestUrl.searchParams.get('returnTo'));
 
   if (!word?.trim()) {
     const payload = { error: 'Missing required query parameter: word' };
@@ -396,7 +418,7 @@ export default async function onRequest(request) {
     });
     const payload = cacheResult.payload;
     return isHtmlRequest(request)
-      ? toResponse(200, renderDefinitionPage(payload), 'text/html; charset=utf-8')
+      ? toResponse(200, renderDefinitionPage(payload, { calculatorPath }), 'text/html; charset=utf-8')
       : toResponse(200, payload, 'application/json; charset=utf-8');
   } catch (error) {
     const statusCode = getStatusCode(error);

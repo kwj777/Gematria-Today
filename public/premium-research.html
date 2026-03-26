@@ -180,7 +180,24 @@
         }
 
         const resultId = `gematria-result-${Date.now()}`;
-        const cards = payload.words.slice(0, 120).map((row) => {
+        const visibleWordsLimit = 30;
+        const hasHiddenWords = payload.words.length > visibleWordsLimit;
+        const cards = payload.words.slice(0, visibleWordsLimit).map((row) => {
+          const safeWord = escapeHtml(row.word);
+          const calcUrl = `/calculator.html?query=${encodeURIComponent(row.word)}`;
+          const researchUrl = `https://www.wordnik.com/words/${encodeURIComponent(row.word)}`;
+          return `
+            <article class="border rounded p-3 h-100 bg-body-tertiary">
+              <h3 class="h6 mb-2"><a class="text-decoration-none" href="${calcUrl}" target="_blank" rel="noopener noreferrer">${safeWord}</a></h3>
+              <p class="small text-muted mb-2">DR ${row.digitalRoot} · ${row.isBaseRoot ? 'Base Root' : 'Not Base Root'} · ${row.searchCount} searches</p>
+              <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-sm btn-outline-primary" href="${calcUrl}" target="_blank" rel="noopener noreferrer">Calculate</a>
+                <a class="btn btn-sm btn-outline-secondary" href="${researchUrl}" target="_blank" rel="noopener noreferrer">Research</a>
+              </div>
+            </article>
+          `;
+        }).join('');
+        const allCards = payload.words.map((row) => {
           const safeWord = escapeHtml(row.word);
           const calcUrl = `/calculator.html?query=${encodeURIComponent(row.word)}`;
           const researchUrl = `https://www.wordnik.com/words/${encodeURIComponent(row.word)}`;
@@ -199,17 +216,26 @@
         gematriaResults.innerHTML = `
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <p class="mb-0"><strong>${payload.count}</strong> words found for gematria <strong>${payload.gematria}</strong>.</p>
-            <div class="d-flex gap-2">
-              <button id="gematriaClearButton" class="btn btn-sm btn-outline-secondary" type="button">Clear search</button>
-              <button id="gematriaToggleButton" class="btn btn-sm btn-outline-secondary" type="button" aria-controls="${resultId}" aria-expanded="true">Collapse results</button>
-            </div>
           </div>
           <div id="${resultId}" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">${cards}</div>
+          <div class="d-flex gap-2 flex-wrap mt-3">
+            ${hasHiddenWords ? '<button id="gematriaShowAllButton" class="btn btn-sm btn-primary" type="button">Show all results</button>' : ''}
+            <button id="gematriaClearButton" class="btn btn-sm btn-outline-secondary" type="button">Clear search</button>
+            <button id="gematriaToggleButton" class="btn btn-sm btn-outline-secondary" type="button" aria-controls="${resultId}" aria-expanded="true">Collapse results</button>
+          </div>
         `;
 
+        const showAllButton = document.getElementById('gematriaShowAllButton');
         const clearButton = document.getElementById('gematriaClearButton');
         const toggleButton = document.getElementById('gematriaToggleButton');
         const resultPanel = document.getElementById(resultId);
+        let isShowingAllResults = !hasHiddenWords;
+
+        showAllButton?.addEventListener('click', () => {
+          resultPanel.innerHTML = allCards;
+          isShowingAllResults = true;
+          showAllButton.remove();
+        });
 
         clearButton?.addEventListener('click', () => {
           document.getElementById('gematriaValue').value = '';
@@ -220,6 +246,9 @@
           const isHidden = resultPanel.classList.toggle('d-none');
           toggleButton.textContent = isHidden ? 'Show results' : 'Collapse results';
           toggleButton.setAttribute('aria-expanded', String(!isHidden));
+          if (!isHidden && !isShowingAllResults && showAllButton) {
+            showAllButton.hidden = false;
+          }
         });
       }
 

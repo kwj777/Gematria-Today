@@ -201,18 +201,15 @@
         carouselInner.innerHTML = normalizedPosts.map((post, index) => {
           const slug = escapeHtml(post.slug || `post-${index}`);
           const heroImageUrl = normalizePostImageUrl(post.sliderImageUrl || post.imageUrl) || '/assets/blog-hero-gematria.svg';
-          const postHref = `/blog.html?post=${encodeURIComponent(post.slug || `post-${index}`)}#${slug}`;
           return `
             <div class="carousel-item ${index === 0 ? 'active' : ''}">
               <article class="blog-slide-card p-4 p-lg-5">
-                <a href="${postHref}" aria-label="Read ${escapeHtml(post.title || 'Featured post')}" class="d-block">
-                  <figure class="blog-slide-image-frame mb-0">
+                <figure class="blog-slide-image-frame mb-0">
                     <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title || 'Featured post')} hero image" loading="lazy" decoding="async" />
                     <figcaption class="blog-slide-cta">
-                      <span class="btn btn-warning fw-semibold">Read ${escapeHtml(post.title || 'Featured post')}</span>
+                      <span class="btn btn-warning fw-semibold" aria-hidden="true">Read</span>
                     </figcaption>
                   </figure>
-                </a>
               </article>
             </div>
           `;

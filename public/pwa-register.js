@@ -22,11 +22,27 @@
     overlay.className = 'pwa-launch-overlay';
     overlay.setAttribute('data-pwa-launch-overlay', 'true');
 
+    const content = document.createElement('div');
+    content.className = 'pwa-launch-overlay__content';
+
+    const logo = document.createElement('img');
+    logo.className = 'pwa-launch-overlay__logo';
+    logo.src = '/assets/endtimes-logo-navbar.svg';
+    logo.alt = 'EndTimes.Today';
+    logo.width = 220;
+    logo.height = 52;
+    logo.decoding = 'async';
+
+    const spinner = document.createElement('span');
+    spinner.className = 'pwa-launch-overlay__spinner';
+    spinner.setAttribute('aria-hidden', 'true');
+
     const message = document.createElement('p');
     message.className = 'pwa-launch-overlay__message';
-    message.textContent = 'getting latest updates...';
+    message.textContent = 'Opening app…';
 
-    overlay.appendChild(message);
+    content.append(logo, spinner, message);
+    overlay.appendChild(content);
     document.body.appendChild(overlay);
   }
 

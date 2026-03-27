@@ -977,19 +977,49 @@ body.admin-render-pending footer {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: rgba(15, 23, 42, 0.68);
-  backdrop-filter: blur(2px);
+  background: rgba(15, 23, 42, 0.76);
+  backdrop-filter: blur(3px);
+}
+
+.pwa-launch-overlay__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-width: min(22rem, 92vw);
+  padding: 1.5rem 1.35rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+}
+
+.pwa-launch-overlay__logo {
+  display: block;
+  width: min(220px, 80vw);
+  height: auto;
+}
+
+.pwa-launch-overlay__spinner {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 0.24rem solid rgba(53, 95, 140, 0.2);
+  border-top-color: var(--bs-primary);
+  animation: pwa-launch-spin 0.85s linear infinite;
 }
 
 .pwa-launch-overlay__message {
   margin: 0;
-  padding: 1rem 1.5rem;
-  border-radius: 999px;
-  background: #ffffff;
   color: #1f2937;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-align: center;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+}
+
+@keyframes pwa-launch-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .calculator-loading-overlay {

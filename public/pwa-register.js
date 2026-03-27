@@ -4,7 +4,6 @@
   }
 
   let deferredInstallPrompt = null;
-  let launchOverlayTimer = null;
 
   function removeLaunchOverlay() {
     const existing = document.querySelector('[data-pwa-launch-overlay]');
@@ -21,32 +20,30 @@
     const overlay = document.createElement('div');
     overlay.className = 'pwa-launch-overlay';
     overlay.setAttribute('data-pwa-launch-overlay', 'true');
+    overlay.setAttribute('role', 'status');
+    overlay.setAttribute('aria-live', 'polite');
+
+    const panel = document.createElement('div');
+    panel.className = 'pwa-launch-overlay__panel';
+
+    const logo = document.createElement('img');
+    logo.className = 'pwa-launch-overlay__logo';
+    logo.src = '/assets/endtimes-logo-navbar.svg';
+    logo.alt = 'EndTimes.Today';
+    logo.width = 220;
+    logo.height = 52;
+
+    const spinner = document.createElement('span');
+    spinner.className = 'pwa-launch-overlay__spinner';
+    spinner.setAttribute('aria-hidden', 'true');
 
     const message = document.createElement('p');
     message.className = 'pwa-launch-overlay__message';
-    message.textContent = 'getting latest updates...';
+    message.textContent = 'Loading app...';
 
-    overlay.appendChild(message);
+    panel.append(logo, spinner, message);
+    overlay.appendChild(panel);
     document.body.appendChild(overlay);
-  }
-
-  function startLaunchOverlayTimer() {
-    if (!isStandaloneMode()) {
-      return;
-    }
-
-    launchOverlayTimer = window.setTimeout(() => {
-      showLaunchOverlay();
-    }, 500);
-  }
-
-  function clearLaunchOverlayTimer() {
-    if (launchOverlayTimer !== null) {
-      window.clearTimeout(launchOverlayTimer);
-      launchOverlayTimer = null;
-    }
-
-    removeLaunchOverlay();
   }
 
   function isStandaloneMode() {
@@ -119,7 +116,7 @@
     removeInstallCta();
   });
 
-  startLaunchOverlayTimer();
+  showLaunchOverlay();
 
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {
@@ -130,6 +127,6 @@
       removeInstallCta();
     }
 
-    clearLaunchOverlayTimer();
+    removeLaunchOverlay();
   });
 })();

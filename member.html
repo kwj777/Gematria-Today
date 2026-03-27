@@ -401,7 +401,7 @@
         const loginOnlyMode = !isLoggedIn && normalizeAuthView(new URL(window.location.href).searchParams.get('auth')) === 'login';
 
         membershipHero.classList.toggle('d-none', isLoggedIn && isPremiumMember);
-        membershipComparisonSection.classList.toggle('d-none', loginOnlyMode);
+        membershipComparisonSection.classList.toggle('d-none', loginOnlyMode || (isLoggedIn && isFreeMember));
 
         if (isFreeMember) {
           membershipHeroKicker.textContent = 'Upgrade to Premium';

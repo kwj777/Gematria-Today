@@ -68,9 +68,10 @@
                     <li><strong>Unlimited history</strong> for saved calculations.</li>
                     <li>Ability to <strong>favorite</strong> searches.</li>
                     <li>Search up to <strong>250 related words</strong>.</li>
+                    <li>Full <strong>Premium Research</strong> with Wordnik-powered related-word exploration and clickable word drill-down.</li>
                   </ul>
                 </div>
-                <p class="membership-hero-card__footer mb-0">More features for paid memberships are on the way.</p>
+                <p class="membership-hero-card__footer mb-0">Premium Research is now included for premium members, with more paid features on the way.</p>
               </div>
             </div>
           </div>
@@ -123,7 +124,7 @@
                   <td><span class="comparison-pill comparison-pill--included">Up to 250 related words</span></td>
                 </tr>
                 <tr>
-                  <th scope="row">Favorite searches + premium research button</th>
+                  <th scope="row">Premium Research + favorites (Wordnik deep related-word explorer with clickable drill-down)</th>
                   <td><span class="comparison-pill comparison-pill--muted">Not available</span></td>
                   <td><span class="comparison-pill comparison-pill--muted">Not available</span></td>
                   <td><span class="comparison-pill comparison-pill--included">Included</span></td>
@@ -141,33 +142,43 @@
 
         <div id="memberAlert" class="alert d-none" role="alert"></div>
 
-        <section id="authSection" class="row g-4">
-          <div class="col-lg-6">
-            <div class="content-panel p-4 p-lg-5 h-100">
-              <p class="section-kicker mb-2">New Member</p>
-              <h2 class="h3 mb-3">Create account</h2>
-              <form id="registerForm" class="row g-3">
-                <div class="col-md-6"><label class="form-label" for="registerUsername">Username</label><input id="registerUsername" class="form-control" required /></div>
-                <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" /></div>
-                <div class="col-12"><label class="form-label" for="registerEmail">Email</label><input id="registerEmail" class="form-control" type="email" required /></div>
-                <div class="col-12"><label class="form-label" for="registerPassword">Password</label><input id="registerPassword" class="form-control" type="password" minlength="8" required /></div>
-                <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create membership</button></div>
-              </form>
+        <section id="authSection" class="content-panel p-4 p-lg-5 mb-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Member Access</p>
+              <h2 class="h3 mb-0">Create account or sign in</h2>
             </div>
           </div>
-          <div class="col-lg-6">
-            <div class="content-panel p-4 p-lg-5 h-100">
-              <p class="section-kicker mb-2">Returning Member</p>
-              <h2 class="h3 mb-3">Sign in</h2>
-              <form id="loginForm" class="row g-3">
-                <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" required /></div>
-                <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" required /></div>
-                <div class="col-12 d-grid"><button class="btn btn-outline-primary" type="submit">Sign in</button></div>
-                <div class="col-12 text-center">
-                  <a class="link-primary text-decoration-none" href="/account-recovery.html">Forgot username/password</a>
-                </div>
-              </form>
-            </div>
+          <ul class="nav nav-pills gap-2 mb-4" role="tablist" aria-label="Membership authentication options">
+            <li class="nav-item" role="presentation">
+              <button id="authTabRegister" class="btn btn-primary active" type="button" data-auth-view="register" aria-selected="true">Create account</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button id="authTabLogin" class="btn btn-outline-primary" type="button" data-auth-view="login" aria-selected="false">Sign in</button>
+            </li>
+          </ul>
+          <div id="authPanelRegister" data-auth-panel="register">
+            <p class="section-kicker mb-2">New Member</p>
+            <h3 class="h4 mb-3">Create account</h3>
+            <form id="registerForm" class="row g-3">
+              <div class="col-md-6"><label class="form-label" for="registerUsername">Username</label><input id="registerUsername" class="form-control" required /></div>
+              <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" /></div>
+              <div class="col-12"><label class="form-label" for="registerEmail">Email</label><input id="registerEmail" class="form-control" type="email" required /></div>
+              <div class="col-12"><label class="form-label" for="registerPassword">Password</label><input id="registerPassword" class="form-control" type="password" minlength="8" required /></div>
+              <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create membership</button></div>
+            </form>
+          </div>
+          <div id="authPanelLogin" data-auth-panel="login" class="d-none">
+            <p class="section-kicker mb-2">Returning Member</p>
+            <h3 class="h4 mb-3">Sign in</h3>
+            <form id="loginForm" class="row g-3">
+              <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" required /></div>
+              <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" required /></div>
+              <div class="col-12 d-grid"><button class="btn btn-outline-primary" type="submit">Sign in</button></div>
+              <div class="col-12 text-center">
+                <a class="link-primary text-decoration-none" href="/account-recovery.html">Forgot username/password</a>
+              </div>
+            </form>
           </div>
         </section>
 
@@ -306,6 +317,10 @@
       const premiumActiveToggleArrow = document.getElementById('premiumActiveToggleArrow');
       const membershipUpgradeContent = document.getElementById('membershipUpgradeContent');
       const premiumResearchLink = document.getElementById('premiumResearchLink');
+      const authTabRegister = document.getElementById('authTabRegister');
+      const authTabLogin = document.getElementById('authTabLogin');
+      const authPanelRegister = document.getElementById('authPanelRegister');
+      const authPanelLogin = document.getElementById('authPanelLogin');
 
       let session = null;
       let historyItems = [];
@@ -378,6 +393,7 @@
       }
 
       function scrollToLoginArea() {
+        setAuthView('login', { updateUrl: true });
         const loginForm = document.getElementById('loginForm');
         const loginIdentifier = document.getElementById('loginIdentifier');
         if (!loginForm || !loginIdentifier) {
@@ -388,6 +404,41 @@
         window.setTimeout(() => {
           loginIdentifier.focus({ preventScroll: true });
         }, 300);
+      }
+
+      function normalizeAuthView(value) {
+        return value === 'login' ? 'login' : 'register';
+      }
+
+      function setAuthView(view, options = {}) {
+        const { updateUrl = true } = options;
+        const normalizedView = normalizeAuthView(view);
+        const registerSelected = normalizedView === 'register';
+
+        authTabRegister.classList.toggle('btn-primary', registerSelected);
+        authTabRegister.classList.toggle('btn-outline-primary', !registerSelected);
+        authTabRegister.classList.toggle('active', registerSelected);
+        authTabRegister.setAttribute('aria-selected', registerSelected ? 'true' : 'false');
+
+        authTabLogin.classList.toggle('btn-primary', !registerSelected);
+        authTabLogin.classList.toggle('btn-outline-primary', registerSelected);
+        authTabLogin.classList.toggle('active', !registerSelected);
+        authTabLogin.setAttribute('aria-selected', registerSelected ? 'false' : 'true');
+
+        authPanelRegister.classList.toggle('d-none', !registerSelected);
+        authPanelLogin.classList.toggle('d-none', registerSelected);
+
+        if (!updateUrl) {
+          return;
+        }
+
+        const url = new URL(window.location.href);
+        if (registerSelected) {
+          url.searchParams.delete('auth');
+        } else {
+          url.searchParams.set('auth', 'login');
+        }
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
       }
 
       async function confirmStripePayment(sessionId) {
@@ -650,6 +701,9 @@
         const paymentState = url.searchParams.get('payment');
         const stripeSessionId = url.searchParams.get('session_id');
         const verifyEmailToken = url.searchParams.get('verify_email_token');
+        const authView = normalizeAuthView(url.searchParams.get('auth'));
+
+        setAuthView(authView, { updateUrl: false });
 
         if (verifyEmailToken) {
           try {
@@ -709,11 +763,20 @@
           historyItems = [];
           renderHistory();
           event.target.reset();
+          setAuthView('login', { updateUrl: true });
         } catch (error) {
           showAlert(error.message || 'Unable to create membership account.');
         } finally {
           registerButton.disabled = false;
         }
+      });
+
+      authTabRegister.addEventListener('click', () => {
+        setAuthView('register', { updateUrl: true });
+      });
+
+      authTabLogin.addEventListener('click', () => {
+        setAuthView('login', { updateUrl: true });
       });
 
       document.getElementById('loginForm').addEventListener('submit', async (event) => {

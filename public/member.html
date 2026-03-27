@@ -396,7 +396,8 @@
 
       function syncComparisonVisibility(member = session?.member) {
         const level = member?.membershipLevel || 'visitor';
-        const hideComparison = level === 'premium' || level === 'lifetime';
+        const loginOnlyMode = !member && normalizeAuthView(new URL(window.location.href).searchParams.get('auth')) === 'login';
+        const hideComparison = level === 'premium' || level === 'lifetime' || loginOnlyMode;
         comparisonSection.classList.toggle('d-none', hideComparison);
       }
 

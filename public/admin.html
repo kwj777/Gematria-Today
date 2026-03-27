@@ -272,6 +272,29 @@
 
             <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#promotionSectionBody" aria-expanded="false" aria-controls="promotionSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Promotion</span>
+                    <span class="h4 mb-0 d-block">Promote premium members to admin</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-dark">Admin</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="promotionSectionBody" class="collapse admin-section-body mt-4">
+                <p class="text-muted small">Promote an existing premium or lifetime member to admin access by entering their membership email. Their member account remains active.</p>
+                <form id="memberPromotionForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="memberPromotionEmail">Member email</label><input id="memberPromotionEmail" class="form-control" type="email" placeholder="member@example.com" required /></div>
+                  <div class="col-12 d-grid"><button class="btn btn-dark" type="submit">Promote premium member to admin</button></div>
+                </form>
+                <div id="memberPromotionMeta" class="small text-muted mt-3">Only premium and lifetime members can be promoted.</div>
+                </div>
+              </section>
+            </div>
+
+            <div class="col-md-6 admin-dashboard-masonry-item">
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#stripeSectionBody" aria-expanded="false" aria-controls="stripeSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Payments</span>
@@ -458,7 +481,7 @@
       const postImagePreview = document.getElementById('postImagePreview');
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -776,6 +799,16 @@
         meta.textContent = `${member.email} now has premium access through ${expiresText}.`;
       }
 
+      function renderMemberPromotionMeta() {
+        const meta = document.getElementById('memberPromotionMeta');
+        const member = state.latestPromotedMember;
+        if (!member) {
+          meta.textContent = 'Only premium and lifetime members can be promoted.';
+          return;
+        }
+        meta.textContent = `${member.email} can now sign in to the admin dashboard with their existing account password.`;
+      }
+
       function renderStripeSettings() {
         const settings = state.stripeSettings || {};
         document.getElementById('stripeAccountId').value = settings.stripeAccountId || '';
@@ -912,6 +945,7 @@
         renderEmailSettings();
         renderEmailTemplates();
         renderMembershipGrantMeta();
+        renderMemberPromotionMeta();
       }
 
       async function loadSession() {
@@ -1199,6 +1233,27 @@
           event.target.reset();
           showMessage(saveMessage, payload.message || 'Premium membership granted.');
           collapseAdminSection('membershipSectionBody');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('memberPromotionForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-memberships', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'promote-admin',
+              email: document.getElementById('memberPromotionEmail').value
+            })
+          });
+          state.latestPromotedMember = payload.member || null;
+          renderMemberPromotionMeta();
+          event.target.reset();
+          showMessage(saveMessage, payload.message || 'Member promoted to admin.');
+          collapseAdminSection('promotionSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }

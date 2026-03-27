@@ -4,15 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#355f8c" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
-    <meta name="theme-color" content="#2d547c" />
-<title>EndTimes.Today Admin</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<title>Admin Dashboard | EndTimes.Today</title>
+    <meta name="description" content="Admin portal for EndTimes.Today content operations and site management." />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="canonical" href="https://endtimes.today/admin.html" />
+    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Admin Dashboard | EndTimes.Today" />
+    <meta property="og:description" content="Admin portal for EndTimes.Today content operations and site management." />
+    <meta property="og:url" content="https://endtimes.today/admin.html" />
+    <meta property="og:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Admin Dashboard | EndTimes.Today" />
+    <meta name="twitter:description" content="Admin portal for EndTimes.Today content operations and site management." />
+    <meta name="twitter:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="/theme.css" />
     <script src="/ui-feedback.js"></script>
+      <script src="/pwa-register.js" defer></script>
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
@@ -63,6 +78,33 @@
                   <button class="btn btn-primary btn-lg" type="submit">Unlock admin dashboard</button>
                 </div>
               </form>
+              <hr class="my-4" />
+              <div class="row g-3">
+                <div class="col-12">
+                  <h3 class="h5 mb-2">Admin recovery</h3>
+                  <p class="text-muted small mb-0">Admin recovery details are sent only by email. Set <code>ADMIN_EMAIL</code> for bootstrap admins so forgotten username recovery can work.</p>
+                </div>
+                <div class="col-12">
+                  <form id="adminForgotUseridForm" class="row g-2">
+                    <div class="col-12"><label class="form-label" for="adminRecoveryEmail">Recover admin username by email</label><input id="adminRecoveryEmail" class="form-control" type="email" required /></div>
+                    <div class="col-12 d-grid"><button class="btn btn-outline-secondary" type="submit">Find admin username</button></div>
+                  </form>
+                </div>
+                <div class="col-12">
+                  <form id="adminForgotPasswordForm" class="row g-2">
+                    <div class="col-12"><label class="form-label" for="adminRecoveryIdentifier">Reset admin password with username or email</label><input id="adminRecoveryIdentifier" class="form-control" required /></div>
+                    <div class="col-12 d-grid"><button class="btn btn-outline-secondary" type="submit">Get admin reset code</button></div>
+                  </form>
+                </div>
+                <div class="col-12">
+                  <form id="adminResetPasswordForm" class="row g-2">
+                    <div class="col-md-6"><label class="form-label" for="adminResetRecoveryCode">Recovery code</label><input id="adminResetRecoveryCode" class="form-control" required /></div>
+                    <div class="col-md-6"><label class="form-label" for="adminResetNewPassword">New password</label><input id="adminResetNewPassword" class="form-control" type="password" minlength="8" required /></div>
+                    <div class="col-12 d-grid"><button class="btn btn-outline-success" type="submit">Reset admin password</button></div>
+                  </form>
+                </div>
+                <div class="col-12"><div id="adminRecoveryResult" class="small text-muted"></div></div>
+              </div>
             </div>
           </div>
         </section>
@@ -77,6 +119,8 @@
             <div class="d-flex gap-2">
               <a class="btn btn-outline-primary" href="/news.html">View News page</a>
               <a class="btn btn-outline-primary" href="/blog.html">View Blog page</a>
+              <a class="btn btn-outline-primary" href="/admin-posts.html">Manage posts</a>
+              <a class="btn btn-outline-primary" href="/admin-reports.html">View Reports</a>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
             </div>
           </div>
@@ -91,8 +135,8 @@
           <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
           <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
-          <div class="row g-4">
-            <div class="col-md-6">
+          <div class="row g-4 admin-dashboard-masonry">
+            <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feedSectionBody" aria-expanded="false" aria-controls="feedSectionBody">
                   <span>
@@ -117,7 +161,7 @@
               </section>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#postSectionBody" aria-expanded="false" aria-controls="postSectionBody">
                   <span>
@@ -130,6 +174,7 @@
                   </span>
                 </button>
                 <div id="postSectionBody" class="collapse admin-section-body mt-4">
+                <a class="btn btn-sm btn-outline-primary mb-3" href="/admin-posts.html">Go to manage all posts</a>
                 <form id="postForm" class="row g-3">
                   <input id="postId" type="hidden" />
                   <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
@@ -150,6 +195,19 @@
                     <div id="postImageUploadMeta" class="small text-muted mt-2"></div>
                     <div id="postImagePreview" class="post-image-preview mt-2 d-none"></div>
                   </div>
+                  <div class="col-12"><label class="form-label" for="postSliderImageUrl">Home slider image URL</label><input id="postSliderImageUrl" class="form-control" type="text" placeholder="https://example.com/home-slider.jpg or /assets/home-slider.jpg" /><div class="form-text">Optional: this image is used only in the home slider (16:9 recommended) and is not shown in the full blog post card.</div></div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input id="postShowOnHomepage" class="form-check-input" type="checkbox" />
+                      <label class="form-check-label" for="postShowOnHomepage">Show this post in the home page slider</label>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input id="postHideFromBlog" class="form-check-input" type="checkbox" />
+                      <label class="form-check-label" for="postHideFromBlog">Hide this post from the main Blog page</label>
+                    </div>
+                  </div>
                   <div class="col-12"><label class="form-label" for="postSummary">Summary</label><textarea id="postSummary" class="form-control" rows="2" required></textarea></div>
                   <div class="col-12"><label class="form-label" for="postBody">Body</label><textarea id="postBody" class="form-control" rows="7" placeholder="HTML is supported for formatting (for example: <p>, <strong>, <ul>, <a>). Plain text still works with blank lines." required></textarea></div>
                   <div class="col-12 d-flex flex-column flex-sm-row gap-2">
@@ -157,12 +215,11 @@
                     <button id="postCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
                   </div>
                 </form>
-                <div id="postList" class="admin-list mt-4"></div>
                 </div>
               </section>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqSectionBody" aria-expanded="false" aria-controls="faqSectionBody">
                   <span>
@@ -190,7 +247,7 @@
                 </div>
               </section>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#membershipSectionBody" aria-expanded="false" aria-controls="membershipSectionBody">
                   <span>
@@ -213,7 +270,30 @@
               </section>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 admin-dashboard-masonry-item">
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#promotionSectionBody" aria-expanded="false" aria-controls="promotionSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Promotion</span>
+                    <span class="h4 mb-0 d-block">Promote premium members to admin</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-dark">Admin</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="promotionSectionBody" class="collapse admin-section-body mt-4">
+                <p class="text-muted small">Promote an existing premium or lifetime member to admin access by entering their membership email. Their member account remains active.</p>
+                <form id="memberPromotionForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="memberPromotionEmail">Member email</label><input id="memberPromotionEmail" class="form-control" type="email" placeholder="member@example.com" required /></div>
+                  <div class="col-12 d-grid"><button class="btn btn-dark" type="submit">Promote premium member to admin</button></div>
+                </form>
+                <div id="memberPromotionMeta" class="small text-muted mt-3">Only premium and lifetime members can be promoted.</div>
+                </div>
+              </section>
+            </div>
+
+            <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#stripeSectionBody" aria-expanded="false" aria-controls="stripeSectionBody">
                   <span>
@@ -253,7 +333,7 @@
               </section>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailSectionBody" aria-expanded="false" aria-controls="emailSectionBody">
                   <span>
@@ -287,7 +367,41 @@
               </section>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 admin-dashboard-masonry-item">
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailTemplatesSectionBody" aria-expanded="false" aria-controls="emailTemplatesSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Messaging</span>
+                    <span class="h4 mb-0 d-block">Email Templates</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-secondary">Templates</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="emailTemplatesSectionBody" class="collapse admin-section-body mt-4">
+                <p class="text-muted small">Manage each email template separately. Select a template to edit, then save updates for that template only.</p>
+                <form id="emailTemplateForm" class="row g-3">
+                  <input id="emailTemplateId" type="hidden" />
+                  <div class="col-12"><label class="form-label" for="emailTemplateName">Template</label><input id="emailTemplateName" class="form-control" disabled /></div>
+                  <div class="col-12"><label class="form-label" for="emailTemplateSubject">Subject</label><input id="emailTemplateSubject" class="form-control" placeholder="Email subject" required /></div>
+                  <div class="col-12">
+                    <label class="form-label" for="emailTemplateBody">Body</label>
+                    <textarea id="emailTemplateBody" class="form-control" rows="8" placeholder="Email body" required></textarea>
+                    <div class="form-text">Use placeholders like <code>{{first_name}}</code>, <code>{{blog_link}}</code>, <code>{{sender_name}}</code>, and <code>{{site_name}}</code>.</div>
+                  </div>
+                  <div class="col-12 d-flex flex-column flex-sm-row gap-2">
+                    <button id="emailTemplateSubmitButton" class="btn btn-primary flex-fill" type="submit">Save template</button>
+                    <button id="emailTemplateCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
+                  </div>
+                </form>
+                <div id="emailTemplateList" class="admin-list mt-4"></div>
+                <div id="emailTemplatesMeta" class="small text-muted mt-3">Email templates have not been loaded yet.</div>
+                </div>
+              </section>
+            </div>
+
+            <div class="col-md-6 admin-dashboard-masonry-item">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#taskSectionBody" aria-expanded="false" aria-controls="taskSectionBody">
                   <span>
@@ -357,6 +471,9 @@
       const stripeWebhookSigningSecretInput = document.getElementById('stripeWebhookSigningSecret');
       const stripeSecretKeyToggle = document.getElementById('stripeSecretKeyToggle');
       const stripeWebhookSigningSecretToggle = document.getElementById('stripeWebhookSigningSecretToggle');
+      const sendgridApiKeyInput = document.getElementById('sendgridApiKey');
+      const sendgridApiKeyToggle = document.getElementById('sendgridApiKeyToggle');
+      const adminRecoveryResult = document.getElementById('adminRecoveryResult');
       const postImageUrlInput = document.getElementById('postImageUrl');
       const postImageDropzone = document.getElementById('postImageDropzone');
       const postImageFileInput = document.getElementById('postImageFile');
@@ -364,7 +481,7 @@
       const postImagePreview = document.getElementById('postImagePreview');
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, latestGrantedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false };
+      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -511,6 +628,10 @@
         setPostImageMeta(`Image ready (${file.name}). URL created automatically.`);
       }
 
+      function renderRecoveryPreview(label) {
+        adminRecoveryResult.innerHTML = `<span class="text-muted">${escapeHtml(label)}</span>`;
+      }
+
       async function request(url, options = {}) {
         const response = await fetch(url, {
           credentials: 'same-origin',
@@ -552,26 +673,6 @@
       function renderPosts() {
         postCount.textContent = String(state.posts.length);
         renderTagsInUse();
-        const list = document.getElementById('postList');
-        list.innerHTML = state.posts.length ? state.posts.map((post) => `
-          <article class="admin-item-card mb-3 p-3">
-            <div class="d-flex justify-content-between gap-3">
-              <div>
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                  ${renderPostTagBadges(post)}
-                  ${post.readTime ? `<span class="badge text-bg-light">${escapeHtml(post.readTime)}</span>` : ''}
-                  ${post.imageUrl ? '<span class="badge text-bg-secondary">Has image</span>' : ''}
-                </div>
-                <h4 class="h6 mb-1">${escapeHtml(post.title)}</h4>
-                <p class="small text-muted mb-2">${escapeHtml(post.summary)}</p>
-                <p class="small mb-0">Status: ${escapeHtml(post.status)} · Published ${escapeHtml(post.publishedAt || post.createdAt || '')}</p>
-              </div>
-              <div class="d-flex flex-column gap-2">
-                <button class="btn btn-sm btn-outline-primary" type="button" data-edit-post="${post.id}">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" type="button" data-delete-post="${post.id}">Delete</button>
-              </div>
-            </div>
-          </article>`).join('') : '<p class="text-muted small mb-0">No blog posts published yet.</p>';
       }
 
       function resetPostForm() {
@@ -580,6 +681,9 @@
         document.getElementById('postId').value = '';
         document.getElementById('postSubmitButton').textContent = 'Publish blog post';
         document.getElementById('postCancelButton').classList.add('d-none');
+        document.getElementById('postSliderImageUrl').value = '';
+        document.getElementById('postShowOnHomepage').checked = false;
+        document.getElementById('postHideFromBlog').checked = false;
         setPostImageMeta('');
         renderPostImagePreview('');
       }
@@ -593,6 +697,9 @@
         document.getElementById('postTag').value = post.tag || '';
         document.getElementById('postReadTime').value = post.readTime || '';
         document.getElementById('postImageUrl').value = post.imageUrl || '';
+        document.getElementById('postSliderImageUrl').value = post.sliderImageUrl || '';
+        document.getElementById('postShowOnHomepage').checked = Boolean(post.showOnHomepage);
+        document.getElementById('postHideFromBlog').checked = Boolean(post.hideFromBlog);
         document.getElementById('postSummary').value = post.summary || '';
         document.getElementById('postBody').value = post.body || '';
         document.getElementById('postSubmitButton').textContent = 'Update blog post';
@@ -692,6 +799,16 @@
         meta.textContent = `${member.email} now has premium access through ${expiresText}.`;
       }
 
+      function renderMemberPromotionMeta() {
+        const meta = document.getElementById('memberPromotionMeta');
+        const member = state.latestPromotedMember;
+        if (!member) {
+          meta.textContent = 'Only premium and lifetime members can be promoted.';
+          return;
+        }
+        meta.textContent = `${member.email} can now sign in to the admin dashboard with their existing account password.`;
+      }
+
       function renderStripeSettings() {
         const settings = state.stripeSettings || {};
         document.getElementById('stripeAccountId').value = settings.stripeAccountId || '';
@@ -735,6 +852,57 @@
             : 'No recovery email delivery settings saved yet.';
       }
 
+      function renderEmailTemplates() {
+        const templates = Array.isArray(state.emailTemplates) ? state.emailTemplates : [];
+        const list = document.getElementById('emailTemplateList');
+        list.innerHTML = templates.length
+          ? templates.map((template) => `
+            <article class="admin-item-card mb-3 p-3">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge text-bg-light">${escapeHtml(template.id || 'template')}</span>
+                    <span class="badge ${template.subject ? 'text-bg-info' : 'text-bg-secondary'}">${template.subject ? 'Configured' : 'Draft'}</span>
+                  </div>
+                  <h4 class="h6 mb-1">${escapeHtml(template.name || template.id || 'Email template')}</h4>
+                  <p class="small mb-0 text-muted">${escapeHtml(template.subject || 'No subject saved yet.')}</p>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-edit-email-template="${escapeHtml(template.id)}">Edit</button>
+              </div>
+            </article>`).join('')
+          : '<p class="text-muted small mb-0">No email templates saved yet.</p>';
+
+        const configuredCount = templates.filter((template) => template.subject && template.body).length;
+        document.getElementById('emailTemplatesMeta').textContent = templates.length
+          ? `${configuredCount} of ${templates.length} email template${templates.length === 1 ? '' : 's'} fully configured.`
+          : 'No email templates saved yet.';
+      }
+
+      function resetEmailTemplateForm() {
+        state.editingEmailTemplateId = null;
+        document.getElementById('emailTemplateForm').reset();
+        document.getElementById('emailTemplateId').value = '';
+        document.getElementById('emailTemplateName').value = '';
+        document.getElementById('emailTemplateSubject').value = '';
+        document.getElementById('emailTemplateBody').value = '';
+        document.getElementById('emailTemplateSubmitButton').textContent = 'Save template';
+        document.getElementById('emailTemplateCancelButton').classList.add('d-none');
+      }
+
+      function startEmailTemplateEdit(templateId) {
+        const template = state.emailTemplates.find((item) => item.id === templateId);
+        if (!template) {
+          return;
+        }
+        state.editingEmailTemplateId = template.id;
+        document.getElementById('emailTemplateId').value = template.id;
+        document.getElementById('emailTemplateName').value = template.name || template.id;
+        document.getElementById('emailTemplateSubject').value = template.subject || '';
+        document.getElementById('emailTemplateBody').value = template.body || '';
+        document.getElementById('emailTemplateSubmitButton').textContent = 'Update template';
+        document.getElementById('emailTemplateCancelButton').classList.remove('d-none');
+      }
+
       function renderTasks() {
         taskCount.textContent = String(state.tasks.length);
         const list = document.getElementById('taskList');
@@ -768,13 +936,16 @@
         state.tasks = tasks.items || [];
         state.stripeSettings = settings.settings || null;
         state.emailSettings = settings.settings || null;
+        state.emailTemplates = settings.emailTemplates || [];
         renderFeeds();
         renderPosts();
         renderFaqs();
         renderTasks();
         renderStripeSettings();
         renderEmailSettings();
+        renderEmailTemplates();
         renderMembershipGrantMeta();
+        renderMemberPromotionMeta();
       }
 
       async function loadSession() {
@@ -790,6 +961,69 @@
           setLoggedIn(false);
         }
       }
+
+      document.getElementById('adminForgotUseridForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(authMessage);
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-account-recovery', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'forgot-userid',
+              email: document.getElementById('adminRecoveryEmail').value.trim()
+            })
+          });
+          showMessage(saveMessage, payload.message);
+          renderRecoveryPreview('If the account exists, check the configured admin email for username recovery details.');
+        } catch (error) {
+          showMessage(authMessage, error.message);
+        }
+      });
+
+      document.getElementById('adminForgotPasswordForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(authMessage);
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-account-recovery', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'forgot-password',
+              identifier: document.getElementById('adminRecoveryIdentifier').value.trim()
+            })
+          });
+          showMessage(saveMessage, payload.message);
+          renderRecoveryPreview('If the account exists, check the configured admin email for the one-time reset code.');
+        } catch (error) {
+          showMessage(authMessage, error.message);
+        }
+      });
+
+      document.getElementById('adminResetPasswordForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(authMessage);
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-account-recovery', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'reset-password',
+              recoveryCode: document.getElementById('adminResetRecoveryCode').value.trim(),
+              newPassword: document.getElementById('adminResetNewPassword').value
+            })
+          });
+          state.user = payload.user;
+          sessionMeta.textContent = `Signed in as ${payload.user.username}`;
+          setLoggedIn(true);
+          showMessage(saveMessage, payload.message || 'Admin password reset complete.');
+          renderRecoveryPreview('Recovery code consumed.');
+          event.target.reset();
+          await refreshDashboard();
+        } catch (error) {
+          showMessage(authMessage, error.message);
+        }
+      });
 
       document.getElementById('loginForm').addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -919,6 +1153,9 @@
               tag: document.getElementById('postTag').value,
               readTime: document.getElementById('postReadTime').value,
               imageUrl: document.getElementById('postImageUrl').value,
+              sliderImageUrl: document.getElementById('postSliderImageUrl').value,
+              showOnHomepage: document.getElementById('postShowOnHomepage').checked,
+              hideFromBlog: document.getElementById('postHideFromBlog').checked,
               summary: document.getElementById('postSummary').value,
               body: document.getElementById('postBody').value,
               status: 'published'
@@ -1001,6 +1238,27 @@
         }
       });
 
+      document.getElementById('memberPromotionForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-memberships', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'promote-admin',
+              email: document.getElementById('memberPromotionEmail').value
+            })
+          });
+          state.latestPromotedMember = payload.member || null;
+          renderMemberPromotionMeta();
+          event.target.reset();
+          showMessage(saveMessage, payload.message || 'Member promoted to admin.');
+          collapseAdminSection('promotionSectionBody');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
       document.getElementById('emailSettingsForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearMessage(errorMessage);
@@ -1019,6 +1277,8 @@
           state.emailSettings = payload.settings || null;
           state.stripeSettings = payload.settings || null;
           renderEmailSettings();
+          state.emailTemplates = payload.emailTemplates || state.emailTemplates;
+          renderEmailTemplates();
           showMessage(saveMessage, 'Recovery email delivery settings saved.');
           collapseAdminSection('emailSectionBody');
         } catch (error) {
@@ -1051,6 +1311,40 @@
         }
       });
 
+      document.getElementById('emailTemplateForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const templateId = document.getElementById('emailTemplateId').value;
+          if (!templateId) {
+            throw new Error('Select an email template to edit.');
+          }
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              emailTemplate: {
+                id: templateId,
+                subject: document.getElementById('emailTemplateSubject').value,
+                body: document.getElementById('emailTemplateBody').value,
+              },
+            }),
+          });
+          state.emailTemplates = payload.emailTemplates || state.emailTemplates;
+          state.emailSettings = payload.settings || state.emailSettings;
+          renderEmailTemplates();
+          renderEmailSettings();
+          startEmailTemplateEdit(templateId);
+          showMessage(saveMessage, 'Email template saved.');
+          collapseAdminSection('emailTemplatesSectionBody');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('emailTemplateCancelButton').addEventListener('click', () => {
+        resetEmailTemplateForm();
+      });
+
       document.getElementById('taskForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearMessage(errorMessage);
@@ -1074,7 +1368,7 @@
       });
 
       document.addEventListener('click', async (event) => {
-        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask, enableSecret } = event.target.dataset;
+        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask, enableSecret, editEmailTemplate } = event.target.dataset;
         if (enableSecret) {
           const stateKey = ({ stripeSecretKey: 'replaceStripeSecretKey', stripeWebhookSigningSecret: 'replaceStripeWebhookSigningSecret', sendgridApiKey: 'replaceSendgridApiKey' })[enableSecret];
           const shouldEnable = !state[stateKey];
@@ -1086,7 +1380,7 @@
           }
           return;
         }
-        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask) {
+        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate) {
           return;
         }
         clearMessage(errorMessage);
@@ -1097,6 +1391,10 @@
           }
           if (editFaq) {
             startFaqEdit(editFaq);
+            return;
+          }
+          if (editEmailTemplate) {
+            startEmailTemplateEdit(editEmailTemplate);
             return;
           }
           if (deleteFeed) {
@@ -1130,6 +1428,7 @@
       resetPostForm();
       resetFaqForm();
       renderMembershipGrantMeta();
+      resetEmailTemplateForm();
       loadSession();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

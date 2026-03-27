@@ -245,7 +245,7 @@ export async function authenticateCredentials(sql, identifier, password, { role 
   }
 
   const rows = await sql`
-    SELECT id, username, password_hash, role
+    SELECT id, username, password_hash, role, COALESCE(is_admin, FALSE) AS is_admin
     FROM users
     WHERE username = ${normalizedIdentifier}
     LIMIT 1
@@ -256,7 +256,10 @@ export async function authenticateCredentials(sql, identifier, password, { role 
   }
 
   const user = rows[0];
-  if (role && user.role !== role) {
+  const matchesRole = role
+    ? (role === 'admin' ? (user.role === 'admin' || user.is_admin) : user.role === role)
+    : true;
+  if (!matchesRole) {
     return null;
   }
 
@@ -356,7 +359,7 @@ export async function getAuthenticatedUser(event, {
   }
 
   const rows = await effectiveSql`
-    SELECT users.id, users.username, users.role, sessions.expires_at
+    SELECT users.id, users.username, users.role, COALESCE(users.is_admin, FALSE) AS is_admin, sessions.expires_at
     FROM sessions
     JOIN users ON users.id = sessions.user_id
     WHERE sessions.token_hash = ${hashToken(sessionToken)}
@@ -376,10 +379,14 @@ export async function getAuthenticatedUser(event, {
     id: rows[0].id,
     username: rows[0].username,
     role: rows[0].role,
+    isAdmin: Boolean(rows[0].is_admin),
     expiresAt: rows[0].expires_at,
   };
 
-  if (role && user.role !== role) {
+  const matchesRole = role
+    ? (role === 'admin' ? (user.role === 'admin' || user.isAdmin) : user.role === role)
+    : true;
+  if (!matchesRole) {
     throw Object.assign(new Error('Forbidden'), { statusCode: 403, sql: effectiveSql });
   }
 

@@ -50,12 +50,18 @@ export async function ensureAdminSchema(sql) {
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'admin',
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
   await sql`ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS email TEXT`;
+    ADD COLUMN IF NOT EXISTS email TEXT,
+    ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE`;
+
+  await sql`UPDATE users
+    SET is_admin = TRUE
+    WHERE role = 'admin'`;
 
   await sql`UPDATE users SET email = LOWER(email) WHERE email IS NOT NULL`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (LOWER(email)) WHERE email IS NOT NULL`;
@@ -228,10 +234,10 @@ export function slugify(value) {
 export async function syncBootstrapAdminUser(sql) {
   for (const seededUser of SEEDED_ADMIN_USERS) {
     await sql`
-      INSERT INTO users (id, username, password_hash, role)
-      VALUES (${seededUser.id}, ${seededUser.username}, ${seededUser.passwordHash}, ${seededUser.role})
+      INSERT INTO users (id, username, password_hash, role, is_admin)
+      VALUES (${seededUser.id}, ${seededUser.username}, ${seededUser.passwordHash}, ${seededUser.role}, TRUE)
       ON CONFLICT (username)
-      DO UPDATE SET id = EXCLUDED.id, password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, updated_at = NOW()
+      DO UPDATE SET id = EXCLUDED.id, password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
     `;
   }
 
@@ -270,10 +276,10 @@ export async function syncBootstrapAdminUser(sql) {
 
   const effectiveHash = passwordHash || await hashPassword(password);
   await sql`
-    INSERT INTO users (id, username, email, password_hash, role)
-    VALUES (${crypto.randomUUID()}, ${username}, ${email}, ${effectiveHash}, 'admin')
+    INSERT INTO users (id, username, email, password_hash, role, is_admin)
+    VALUES (${crypto.randomUUID()}, ${username}, ${email}, ${effectiveHash}, 'admin', TRUE)
     ON CONFLICT (username)
-    DO UPDATE SET email = COALESCE(EXCLUDED.email, users.email), password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, updated_at = NOW()
+    DO UPDATE SET email = COALESCE(EXCLUDED.email, users.email), password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
   `;
 }
 

@@ -205,6 +205,7 @@ View results: ${shareUrl}`.trim(),
         callout.append(title, document.createElement('br'), details, cta);
         relatedWordsResult.appendChild(callout);
       }
+      const memberSaveShell = document.querySelector('#member-save-shell');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
       let saveHistoryPopover = null;
@@ -309,6 +310,9 @@ View results: ${shareUrl}`.trim(),
 
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
+          if (memberSaveShell) {
+            memberSaveShell.hidden = true;
+          }
           saveHistoryButton.disabled = false;
           saveHistoryButton.classList.add('member-save-button--guest');
           saveHistoryButton.setAttribute('aria-disabled', 'true');
@@ -321,6 +325,9 @@ View results: ${shareUrl}`.trim(),
           return;
         }
 
+        if (memberSaveShell) {
+          memberSaveShell.hidden = false;
+        }
         destroyMembersOnlyPopover();
         saveHistoryButton.classList.remove('member-save-button--guest');
         saveHistoryButton.removeAttribute('aria-disabled');

@@ -86,7 +86,7 @@
               <p class="text-muted mb-0">Visitors can browse and calculate instantly, members can save and personalize, and premium members unlock deeper research limits.</p>
               <p id="comparisonCurrentLevel" class="small fw-semibold text-primary mb-0 mt-2">Current level: Visitor</p>
             </div>
-            <a class="btn btn-outline-primary" href="#authSection">Create free account</a>
+            <a id="comparisonCreateAccountButton" class="btn btn-outline-primary" href="#authSection">Create free account</a>
           </div>
 
           <div class="table-responsive membership-comparison-wrap">
@@ -336,6 +336,7 @@
       const comparisonVisitorCurrent = document.getElementById('comparisonVisitorCurrent');
       const comparisonMemberCurrent = document.getElementById('comparisonMemberCurrent');
       const comparisonPremiumCurrent = document.getElementById('comparisonPremiumCurrent');
+      const comparisonCreateAccountButton = document.getElementById('comparisonCreateAccountButton');
 
       let session = null;
       let historyItems = [];
@@ -380,6 +381,8 @@
         comparisonVisitorCurrent.classList.toggle('d-none', level !== 'visitor');
         comparisonMemberCurrent.classList.toggle('d-none', level !== 'free');
         comparisonPremiumCurrent.classList.toggle('d-none', !(level === 'premium' || level === 'lifetime'));
+
+        comparisonCreateAccountButton.classList.toggle('d-none', level !== 'visitor');
 
         if (level === 'free') {
           comparisonCurrentLevel.textContent = 'Current level: Member (Free)';

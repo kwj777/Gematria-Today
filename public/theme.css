@@ -725,6 +725,26 @@ footer.site-footer {
   padding: 1rem;
 }
 
+.membership-upgrade-panel--compact {
+  border: 1px solid rgba(var(--bs-warning-rgb), 0.35);
+  box-shadow: 0 10px 22px rgba(240, 171, 0, 0.12);
+}
+
+.membership-upgrade-cta {
+  background: linear-gradient(180deg, #ffd871, #f7b928);
+  border: none;
+  color: #432300;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+}
+
+.membership-upgrade-cta:hover,
+.membership-upgrade-cta:focus-visible {
+  background: linear-gradient(180deg, #ffdc80, #f8c03b);
+  color: #2f1900;
+}
+
 .membership-price-badge {
   align-self: flex-start;
   padding: 0.65rem 1rem;

@@ -37,6 +37,40 @@ function shouldCacheResponse(response) {
   return !/no-store|private/i.test(cacheControl);
 }
 
+
+async function refreshRuntimeCaches() {
+  await Promise.all([
+    caches.delete(PAGE_CACHE),
+    caches.delete(ASSET_CACHE),
+    caches.delete(STATIC_CACHE)
+  ]);
+
+  const staticCache = await caches.open(STATIC_CACHE);
+  await staticCache.addAll(PRECACHE_URLS).catch(() => Promise.resolve());
+}
+
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type !== 'REFRESH_CACHE') {
+    return;
+  }
+
+  const replyPort = event.ports && event.ports[0];
+
+  event.waitUntil((async () => {
+    try {
+      await refreshRuntimeCaches();
+      if (replyPort) {
+        replyPort.postMessage({ ok: true });
+      }
+    } catch (error) {
+      if (replyPort) {
+        replyPort.postMessage({ ok: false, error: error instanceof Error ? error.message : 'Cache refresh failed.' });
+      }
+    }
+  })());
+});
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)).catch(() => Promise.resolve())

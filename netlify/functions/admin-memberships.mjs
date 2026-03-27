@@ -34,7 +34,8 @@ export async function handler(event) {
 
       const promotedRows = await sql`
         UPDATE users
-        SET is_admin = TRUE,
+        SET role = 'admin',
+            is_admin = TRUE,
             membership_level = 'lifetime',
             membership_started_at = COALESCE(membership_started_at, NOW()),
             membership_expires_at = NULL,

@@ -93,47 +93,47 @@
               <thead>
                 <tr>
                   <th scope="col">Feature</th>
-                  <th scope="col">Visitor <span id="comparisonVisitorCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
-                  <th scope="col">Member <span id="comparisonMemberCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
-                  <th scope="col">Premium Member <span id="comparisonPremiumCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
+                  <th scope="col" class="comparison-col comparison-col--visitor">Visitor <span id="comparisonVisitorCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
+                  <th scope="col" class="comparison-col comparison-col--member">Member <span id="comparisonMemberCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
+                  <th scope="col" class="comparison-col comparison-col--premium">Premium Member <span id="comparisonPremiumCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <th scope="row">Access calculators, blog, news, and FAQ</th>
-                  <td><span class="comparison-pill comparison-pill--included">Included</span></td>
-                  <td><span class="comparison-pill comparison-pill--included">Included</span></td>
-                  <td><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included">Included</span></td>
                 </tr>
                 <tr>
                   <th scope="row">Create account and sign in dashboard</th>
-                  <td><span class="comparison-pill comparison-pill--muted">Not available</span></td>
-                  <td><span class="comparison-pill comparison-pill--included">Included</span></td>
-                  <td><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--muted">Not available</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included">Included</span></td>
                 </tr>
                 <tr>
                   <th scope="row">Saved gematria history</th>
-                  <td><span class="comparison-pill comparison-pill--muted">No saved history</span></td>
-                  <td><span class="comparison-pill comparison-pill--limited">Up to 3 saved calculations</span></td>
-                  <td><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Unlimited saved calculations</span></td>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--muted">No saved history</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Up to 3 saved calculations</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Unlimited saved calculations</span></td>
                 </tr>
                 <tr>
                   <th scope="row">Related word search depth</th>
-                  <td><span class="comparison-pill comparison-pill--limited">Standard search</span></td>
-                  <td><span class="comparison-pill comparison-pill--limited">Up to 100 related words</span></td>
-                  <td><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Up to 250 related words</span></td>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--limited">Standard search</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Up to 100 related words</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Up to 250 related words</span></td>
                 </tr>
                 <tr>
                   <th scope="row">Premium Research + favorites (Wordnik deep related-word explorer with clickable drill-down)</th>
-                  <td><span class="comparison-pill comparison-pill--muted">Not available</span></td>
-                  <td><span class="comparison-pill comparison-pill--muted">Not available</span></td>
-                  <td><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--muted">Not available</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--muted">Not available</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
                 </tr>
                 <tr>
                   <th scope="row">Price</th>
-                  <td><span class="comparison-pill comparison-pill--neutral">$0</span></td>
-                  <td><span class="comparison-pill comparison-pill--neutral">$0</span></td>
-                  <td><span class="comparison-pill comparison-pill--premium">$5.55 intro / year <small>(regularly $7.77)</small></span></td>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium">$5.55 intro / year <small>(regularly $7.77)</small></span></td>
                 </tr>
               </tbody>
             </table>
@@ -343,6 +343,9 @@
       const comparisonMemberCurrent = document.getElementById('comparisonMemberCurrent');
       const comparisonPremiumCurrent = document.getElementById('comparisonPremiumCurrent');
       const comparisonCreateAccountButton = document.getElementById('comparisonCreateAccountButton');
+      const comparisonVisitorColumns = comparisonSection.querySelectorAll('.comparison-col--visitor');
+      const comparisonMemberColumns = comparisonSection.querySelectorAll('.comparison-col--member');
+      const comparisonPremiumColumns = comparisonSection.querySelectorAll('.comparison-col--premium');
 
       let session = null;
       let historyItems = [];
@@ -437,6 +440,30 @@
 
       function syncComparisonCurrentLevel(member = session?.member) {
         const level = member?.membershipLevel || 'visitor';
+        let showVisitor = false;
+        let showMember = false;
+        let showPremium = false;
+
+        if (level === 'free') {
+          showMember = true;
+          showPremium = true;
+        } else if (level === 'premium' || level === 'lifetime') {
+          showPremium = true;
+        } else {
+          showVisitor = true;
+          showMember = true;
+        }
+
+        comparisonVisitorColumns.forEach((column) => {
+          column.classList.toggle('d-none', !showVisitor);
+        });
+        comparisonMemberColumns.forEach((column) => {
+          column.classList.toggle('d-none', !showMember);
+        });
+        comparisonPremiumColumns.forEach((column) => {
+          column.classList.toggle('d-none', !showPremium);
+        });
+
         comparisonVisitorCurrent.classList.toggle('d-none', level !== 'visitor');
         comparisonMemberCurrent.classList.toggle('d-none', level !== 'free');
         comparisonPremiumCurrent.classList.toggle('d-none', !(level === 'premium' || level === 'lifetime'));

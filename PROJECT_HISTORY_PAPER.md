@@ -17,7 +17,7 @@ This historical reconstruction is based on:
 - repository commit metadata (dates, subjects, and merge cadence), and
 - architectural and operational statements in `README.md`.
 
-At the time of writing, the repository records **664 commits** in total. Commit frequency was highly concentrated in late March 2026, with particularly high throughput on March 23–26.
+At the time of writing (March 27, 2026), the repository records **729 commits** in total. Commit frequency was highly concentrated in late March 2026, with sustained high throughput from March 23–27.
 
 ## 3. Phase I: Project Seeding and Early Calculation Logic (February 17–March 16, 2026)
 The earliest commits establish a minimal starting point: an initial commit plus an early under-construction front page. This is a common “scaffold first” pattern where deployment visibility is prioritized before core logic is complete.
@@ -87,21 +87,33 @@ Late-March commit traffic shows intense UI and product-surface refinement. Commi
 - member/premium UX adjustments,
 - premium research console and controls.
 
-This final observed phase is less about introducing entirely new architectural primitives and more about polish, coherence, and conversion-oriented experience quality.
+This phase is less about introducing entirely new architectural primitives and more about polish, coherence, and conversion-oriented experience quality.
 
-## 9. Process Characteristics Observed
+## 9. Phase VII: Membership Funnel and Admin Cohesion Sprint (March 27, 2026)
+March 27 introduced a concentrated product pass focused on membership-state UX and admin continuity. Commit subjects indicate:
+
+- membership-page conditional rendering by account tier (free vs premium),
+- removal or suppression of irrelevant comparison/CTA blocks for logged-in users,
+- delayed rendering and loading overlays to prevent hero-state flicker and improve perceived stability,
+- signup flow hardening (confirm-password validation),
+- role-aware navigation updates (admin button visibility from member surfaces), and
+- admin session/bootstrap fixes plus explicit promotion behavior updates.
+
+Historically, this sprint represents a maturity step in account-state orchestration: the same interface adapts to session context, role, and entitlement level with fewer visual flashes and fewer dead-end pathways.
+
+## 10. Process Characteristics Observed
 Three process-level patterns stand out:
 
-### 9.1 High-frequency PR integration
+### 10.1 High-frequency PR integration
 A large proportion of commits are merge commits tied to numbered pull requests. This implies a branch-and-merge workflow with small to medium increments and fast review/merge turnaround.
 
-### 9.2 Corrective micro-iterations
+### 10.2 Corrective micro-iterations
 Many features were shipped with immediate follow-up fixes (naming, URL behavior, overlay visibility, duplicate prevention, return paths). This suggests a pragmatic feedback loop: ship, observe, adjust.
 
-### 9.3 Parallel tracks: feature and operations
+### 10.3 Parallel tracks: feature and operations
 Development did not follow a strict “features first, operations later” sequence. Instead, operational concerns (timeouts, rate limiting, account recovery, admin settings) evolved in tandem with UX features.
 
-## 10. Lessons from This Build History
+## 11. Lessons from This Build History
 The Gematria timeline suggests several reusable lessons for rapid web product development:
 
 1. **Start with deployability, not perfection.** Early under-construction scaffolds accelerated visible progress.
@@ -110,14 +122,14 @@ The Gematria timeline suggests several reusable lessons for rapid web product de
 4. **Operational hardening is a product feature.** Rate limits, audit logs, and timeouts are part of user trust and platform continuity.
 5. **Polish compounds late-stage value.** Navigation consistency, overlays, accessibility, and SEO materially improve usability and discoverability.
 
-## 11. Conclusion
+## 12. Conclusion
 Gematria’s history is a compact case study in accelerated full-stack evolution. In roughly six weeks, the project advanced from a minimal placeholder to a feature-rich, operationally aware platform combining computation, content, membership, payments, and protections.
 
 Just as importantly, the repository records not only what was built, but *how* it was built: through dense iterative cycles, aggressive merge cadence, and continuous refinement at the intersection of logic, UX, and reliability.
 
 ---
 
-### Appendix A: Commit-Volume Snapshot (through March 26, 2026)
-- Total commits: **664**
+### Appendix A: Commit-Volume Snapshot (through March 27, 2026)
+- Total commits: **729**
 - Earliest commit date: **2026-02-17**
 - Highest-volume day in this window: **2026-03-25** (120 commits)

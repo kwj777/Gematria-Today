@@ -955,6 +955,21 @@ body.admin-render-pending footer {
   background: rgba(255, 255, 255, 0.28);
 }
 
+.pwa-refresh-cache-button {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1070;
+  box-shadow: 0 0.5rem 1.1rem rgba(63, 64, 58, 0.2);
+  background: rgba(248, 245, 239, 0.96);
+}
+
+.pwa-refresh-cache-button:hover,
+.pwa-refresh-cache-button:focus-visible {
+  background: rgba(248, 245, 239, 1);
+}
+
 @media (max-width: 576px) {
   .pwa-install-cta {
     left: 0.75rem;
@@ -965,6 +980,13 @@ body.admin-render-pending footer {
 
   .pwa-install-cta__button {
     margin-left: auto;
+  }
+
+  .pwa-refresh-cache-button {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    transform: none;
   }
 }
 

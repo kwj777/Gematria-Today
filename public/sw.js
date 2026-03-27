@@ -37,6 +37,25 @@ function shouldCacheResponse(response) {
   return !/no-store|private/i.test(cacheControl);
 }
 
+async function refreshCachedRequest(cache, request) {
+  try {
+    const networkResponse = await fetch(request, { cache: 'reload' });
+    if (shouldCacheResponse(networkResponse)) {
+      await cache.put(request, networkResponse.clone());
+      return;
+    }
+    await cache.delete(request);
+  } catch {
+    // Keep existing cached version when network refresh fails.
+  }
+}
+
+async function refreshCacheContents(cacheName) {
+  const cache = await caches.open(cacheName);
+  const requests = await cache.keys();
+  await Promise.all(requests.map((request) => refreshCachedRequest(cache, request)));
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)).catch(() => Promise.resolve())
@@ -113,4 +132,27 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(fetch(request));
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'PWA_REFRESH_CACHE') {
+    return;
+  }
+
+  event.waitUntil((async () => {
+    try {
+      const staticCache = await caches.open(STATIC_CACHE);
+      await staticCache.addAll(PRECACHE_URLS);
+      await Promise.all([
+        refreshCacheContents(PAGE_CACHE),
+        refreshCacheContents(ASSET_CACHE)
+      ]);
+      event.ports[0]?.postMessage({ ok: true });
+    } catch (error) {
+      event.ports[0]?.postMessage({
+        ok: false,
+        error: error instanceof Error ? error.message : 'Unable to refresh cache.'
+      });
+    }
+  })());
 });

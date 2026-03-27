@@ -12,6 +12,7 @@ import {
   parseBody,
   verifyTurnstileToken,
 } from './_auth.mjs';
+import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
 import { ensureMemberProfile, ensureMemberSchema, formatMemberUser } from './_member.mjs';
 import { sendRecoveryEmail } from './_email.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
@@ -32,6 +33,8 @@ export async function handler(event) {
   try {
     const sql = getSqlClient();
     await ensureMemberSchema(sql);
+    await ensureAdminSchema(sql);
+    await syncBootstrapAdminUser(sql);
     await ensureAccountRecoverySchema(sql);
     const body = parseBody(event);
     const action = String(body.action || '').trim();
@@ -56,18 +59,21 @@ export async function handler(event) {
       }
 
       const rows = await sql`
-        SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
+        SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, role, COALESCE(is_admin, FALSE) AS is_admin, created_at, updated_at
         FROM users
-        WHERE role = 'member' AND LOWER(email) = ${email}
+        WHERE LOWER(email) = ${email}
+          AND (role = 'member' OR role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
         LIMIT 1
       `;
 
       let member = null;
+      let accountRole = null;
       if (rows.length) {
+        accountRole = rows[0].role === 'member' ? 'member' : 'admin';
         member = formatMemberUser(rows[0]);
         const usernameRecovery = await createAccountRecoveryRequest(sql, {
           userId: member.id,
-          role: 'member',
+          role: accountRole,
           recoveryType: 'forgot-userid',
           lookupKey: email,
         });
@@ -77,14 +83,14 @@ export async function handler(event) {
           username: member.username,
           recoveryCode: usernameRecovery.token,
           expiresAt: usernameRecovery.expiresAt,
-          role: 'member',
+          role: accountRole,
           recoveryType: 'forgot-userid',
         });
 
         if (action === 'forgot-both') {
           const passwordRecovery = await createAccountRecoveryRequest(sql, {
             userId: member.id,
-            role: 'member',
+            role: accountRole,
             recoveryType: 'forgot-password',
             lookupKey: email,
           });
@@ -94,7 +100,7 @@ export async function handler(event) {
             username: member.username,
             recoveryCode: passwordRecovery.token,
             expiresAt: passwordRecovery.expiresAt,
-            role: 'member',
+            role: accountRole,
             recoveryType: 'forgot-password',
           });
         }
@@ -109,7 +115,7 @@ export async function handler(event) {
 
       return jsonResponse(200, {
         ok: true,
-        message: 'If a membership account matches that email, recovery details have been sent by email.',
+        message: 'If an account matches that email, recovery details have been sent by email.',
       });
     }
 
@@ -121,18 +127,19 @@ export async function handler(event) {
 
       const email = normalizeEmail(identifier);
       const rows = await sql`
-        SELECT id, username, email
+        SELECT id, username, email, role, COALESCE(is_admin, FALSE) AS is_admin
         FROM users
-        WHERE role = 'member'
+        WHERE (role = 'member' OR role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
           AND (username = ${identifier} OR LOWER(email) = ${email})
         LIMIT 1
       `;
 
       let recovery = null;
       if (rows.length) {
+        const accountRole = rows[0].role === 'member' ? 'member' : 'admin';
         recovery = await createAccountRecoveryRequest(sql, {
           userId: rows[0].id,
-          role: 'member',
+          role: accountRole,
           recoveryType: 'forgot-password',
           lookupKey: identifier,
         });
@@ -142,7 +149,7 @@ export async function handler(event) {
           username: rows[0].username,
           recoveryCode: recovery.token,
           expiresAt: recovery.expiresAt,
-          role: 'member',
+          role: accountRole,
           recoveryType: 'forgot-password',
         });
       }
@@ -156,7 +163,7 @@ export async function handler(event) {
 
       return jsonResponse(200, {
         ok: true,
-        message: 'If that membership account exists, a one-time password reset code has been sent by email.',
+        message: 'If that account exists, a one-time password reset code has been sent by email.',
       }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
     }
 
@@ -174,6 +181,10 @@ export async function handler(event) {
         role: 'member',
         recoveryType: 'forgot-password',
         token: recoveryCode,
+      }) || await consumeAccountRecoveryRequest(sql, {
+        role: 'admin',
+        recoveryType: 'forgot-password',
+        token: recoveryCode,
       });
 
       if (!recovery) {
@@ -181,6 +192,39 @@ export async function handler(event) {
       }
 
       const passwordHash = await hashPassword(newPassword);
+      if (recovery.role === 'admin') {
+        const rows = await sql`
+          UPDATE users
+          SET password_hash = ${passwordHash}, updated_at = NOW()
+          WHERE id = ${recovery.user_id}
+            AND (role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
+          RETURNING id, username, role
+        `;
+
+        if (!rows.length) {
+          return jsonResponse(404, { error: 'Admin account not found' });
+        }
+
+        const user = rows[0];
+        const { token, expiresAt } = await createSession(sql, user.id);
+        await logRequestAudit(sql, event, {
+          route: 'member-account-recovery',
+          action,
+          outcome: 'success_admin',
+          metadata: { userId: user.id },
+        });
+
+        return jsonResponse(200, {
+          ok: true,
+          authenticated: true,
+          user: { id: user.id, username: user.username, role: user.role },
+          message: 'Password reset complete. You are now signed in.',
+          route: 'admin',
+        }, {
+          'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+        });
+      }
+
       const rows = await sql`
         UPDATE users
         SET password_hash = ${passwordHash}, updated_at = NOW()

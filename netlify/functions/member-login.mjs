@@ -11,6 +11,7 @@ import {
   parseBody,
   verifyTurnstileToken,
 } from './_member.mjs';
+import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
 export async function handler(event) {
@@ -20,6 +21,7 @@ export async function handler(event) {
 
   try {
     const sql = getSqlClient();
+    await syncBootstrapAdminUser(sql);
     const { identifier = '', password = '', challengeToken = '' } = parseBody(event);
     const normalizedIdentifier = String(identifier).trim().toLowerCase();
     const clientIp = getClientIp(event);
@@ -51,8 +53,9 @@ export async function handler(event) {
     await verifyTurnstileToken(event, challengeToken);
 
     const member = await authenticateMemberCredentials(sql, identifier, password);
+    const admin = member ? null : await authenticateCredentials(sql, identifier, password);
 
-    if (!member) {
+    if (!member && !admin) {
       await logRequestAudit(sql, event, {
         route: 'member-login',
         action: 'authenticate',
@@ -61,6 +64,24 @@ export async function handler(event) {
       });
 
       return jsonResponse(401, { error: 'Invalid username/email or password' }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
+    }
+
+    if (admin) {
+      const { token, expiresAt } = await createSession(sql, admin.id);
+      await logRequestAudit(sql, event, {
+        route: 'member-login',
+        action: 'authenticate',
+        outcome: 'success_admin',
+        metadata: { userId: admin.id },
+      });
+
+      return jsonResponse(200, {
+        authenticated: true,
+        user: { id: admin.id, username: admin.username, role: admin.role },
+        route: 'admin',
+      }, {
+        'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+      });
     }
 
     const profile = await ensureMemberProfile(sql, member.id, {});

@@ -39,14 +39,14 @@
         <section class="hero-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Member Access</p>
           <h1 class="display-6 fw-bold mb-3">Account recovery</h1>
-          <p class="lead mb-0">Request a recovery email, then use your one-time code to choose a new password and return to your member dashboard.</p>
+          <p class="lead mb-0">Request a recovery email, then use your one-time code to choose a new password and return to your dashboard.</p>
         </section>
 
         <section class="content-panel p-4 p-lg-5 mx-auto mb-4" style="max-width: 720px;">
           <div id="recoveryAlert" class="alert d-none" role="alert"></div>
           <form id="recoveryRequestForm" class="row g-3">
             <div class="col-12">
-              <label class="form-label" for="recoveryEmail">Membership email</label>
+              <label class="form-label" for="recoveryEmail">Account email</label>
               <input id="recoveryEmail" class="form-control" type="email" autocomplete="email" required />
             </div>
             <div class="col-12">
@@ -186,9 +186,10 @@
             throw new Error(payload.error || 'Unable to reset your password.');
           }
 
-          showAlert(payload.message || 'Password reset complete. Redirecting to member dashboard...', 'success');
+          const destination = payload.route === 'admin' ? '/admin.html' : '/member.html';
+          showAlert(payload.message || 'Password reset complete. Redirecting to your dashboard...', 'success');
           window.setTimeout(() => {
-            window.location.assign('/member.html');
+            window.location.assign(destination);
           }, 600);
         } catch (error) {
           showAlert(error.message || 'Unable to reset your password.');

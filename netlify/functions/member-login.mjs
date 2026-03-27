@@ -86,6 +86,24 @@ export async function handler(event) {
 
     const profile = await ensureMemberProfile(sql, member.id, {});
     const { token, expiresAt } = await createSession(sql, member.id);
+    const userRows = await sql`
+      SELECT id, username, role, COALESCE(is_admin, FALSE) AS is_admin
+      FROM users
+      WHERE id = ${member.id}
+      LIMIT 1
+    `;
+    const authenticatedUser = userRows.length ? {
+      id: userRows[0].id,
+      username: userRows[0].username,
+      role: userRows[0].role,
+      isAdmin: Boolean(userRows[0].is_admin),
+    } : {
+      id: member.id,
+      username: member.username,
+      role: 'member',
+      isAdmin: false,
+    };
+
     await logRequestAudit(sql, event, {
       route: 'member-login',
       action: 'authenticate',
@@ -95,6 +113,7 @@ export async function handler(event) {
 
     return jsonResponse(200, {
       authenticated: true,
+      user: authenticatedUser,
       member,
       profile,
     }, {

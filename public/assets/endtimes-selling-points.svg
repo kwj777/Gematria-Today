@@ -21,12 +21,7 @@
 
   <rect x="74" y="64" width="1052" height="772" rx="34" fill="#102240" fill-opacity="0.9" stroke="#ffffff" stroke-opacity="0.12"/>
 
-  <g transform="translate(116 118)">
-    <text x="0" y="0" fill="#ffcf6e" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="4">ENDTIMES.TODAY</text>
-    <rect x="0" y="104" width="220" height="6" rx="3" fill="url(#accent)"/>
-  </g>
-
-  <g transform="translate(116 220)">
+  <g transform="translate(116 146)">
     <rect x="0" y="0" width="968" height="96" rx="24" fill="#163156" stroke="#5f82b1" stroke-opacity="0.5" filter="url(#shadow)"/>
     <circle cx="54" cy="48" r="22" fill="#ffd36b"/>
     <text x="54" y="56" text-anchor="middle" fill="#102240" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700">01</text>
@@ -34,7 +29,7 @@
     <text x="100" y="69" fill="#d7e5ff" font-size="22" font-family="Arial, Helvetica, sans-serif">Explore words, names, patterns, blog content, and news from one organized hub.</text>
   </g>
 
-  <g transform="translate(116 338)">
+  <g transform="translate(116 264)">
     <rect x="0" y="0" width="968" height="96" rx="24" fill="#163156" stroke="#5f82b1" stroke-opacity="0.5" filter="url(#shadow)"/>
     <circle cx="54" cy="48" r="22" fill="#ffd36b"/>
     <text x="54" y="56" text-anchor="middle" fill="#102240" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700">02</text>
@@ -42,7 +37,7 @@
     <text x="100" y="69" fill="#d7e5ff" font-size="22" font-family="Arial, Helvetica, sans-serif">Calculate values quickly and continue into roots, related words, and interpretation paths.</text>
   </g>
 
-  <g transform="translate(116 456)">
+  <g transform="translate(116 382)">
     <rect x="0" y="0" width="968" height="96" rx="24" fill="#163156" stroke="#5f82b1" stroke-opacity="0.5" filter="url(#shadow)"/>
     <circle cx="54" cy="48" r="22" fill="#ffd36b"/>
     <text x="54" y="56" text-anchor="middle" fill="#102240" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700">03</text>
@@ -50,7 +45,7 @@
     <text x="100" y="69" fill="#d7e5ff" font-size="22" font-family="Arial, Helvetica, sans-serif">Compare up to three names, inspect shared totals, and jump to related result pages.</text>
   </g>
 
-  <g transform="translate(116 574)">
+  <g transform="translate(116 500)">
     <rect x="0" y="0" width="968" height="96" rx="24" fill="#163156" stroke="#5f82b1" stroke-opacity="0.5" filter="url(#shadow)"/>
     <circle cx="54" cy="48" r="22" fill="#ffd36b"/>
     <text x="54" y="56" text-anchor="middle" fill="#102240" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700">04</text>
@@ -58,7 +53,7 @@
     <text x="100" y="69" fill="#d7e5ff" font-size="22" font-family="Arial, Helvetica, sans-serif">Track featured stories and configured feeds without leaving the same workspace.</text>
   </g>
 
-  <g transform="translate(116 692)">
+  <g transform="translate(116 618)">
     <rect x="0" y="0" width="968" height="96" rx="24" fill="#163156" stroke="#5f82b1" stroke-opacity="0.5" filter="url(#shadow)"/>
     <circle cx="54" cy="48" r="22" fill="#ffd36b"/>
     <text x="54" y="56" text-anchor="middle" fill="#102240" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700">05</text>

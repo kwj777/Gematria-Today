@@ -166,6 +166,7 @@
               <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" /></div>
               <div class="col-12"><label class="form-label" for="registerEmail">Email</label><input id="registerEmail" class="form-control" type="email" required /></div>
               <div class="col-12"><label class="form-label" for="registerPassword">Password</label><input id="registerPassword" class="form-control" type="password" minlength="8" required /></div>
+              <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password</label><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" required /></div>
               <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create membership</button></div>
             </form>
           </div>
@@ -818,11 +819,17 @@
       document.getElementById('registerForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAlert();
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        if (password !== confirmPassword) {
+          showAlert('Password and confirm password do not match.', 'warning');
+          return;
+        }
         const payload = {
           username: document.getElementById('registerUsername').value.trim(),
           displayName: document.getElementById('registerDisplayName').value.trim(),
           email: document.getElementById('registerEmail').value.trim(),
-          password: document.getElementById('registerPassword').value,
+          password,
         };
 
         registerButton.disabled = true;

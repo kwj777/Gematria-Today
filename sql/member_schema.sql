@@ -6,6 +6,7 @@ BEGIN;
 ALTER TABLE users
   ADD COLUMN IF NOT EXISTS email TEXT,
   ADD COLUMN IF NOT EXISTS display_name TEXT,
+  ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS membership_level TEXT NOT NULL DEFAULT 'free',
   ADD COLUMN IF NOT EXISTS membership_started_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS membership_expires_at TIMESTAMPTZ,
@@ -17,6 +18,16 @@ ALTER TABLE users
 UPDATE users
 SET email = LOWER(email)
 WHERE email IS NOT NULL;
+
+UPDATE users
+SET membership_level = 'lifetime',
+    membership_started_at = COALESCE(membership_started_at, NOW()),
+    membership_expires_at = NULL
+WHERE (role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
+  AND (
+    membership_level IS DISTINCT FROM 'lifetime'
+    OR membership_expires_at IS NOT NULL
+  );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx
   ON users (LOWER(email))

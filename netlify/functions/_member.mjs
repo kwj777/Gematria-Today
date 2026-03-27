@@ -39,6 +39,17 @@ export async function ensureMemberSchema(sql) {
   await sql`UPDATE users SET email = LOWER(email) WHERE email IS NOT NULL`;
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (LOWER(email)) WHERE email IS NOT NULL`;
 
+  await sql`UPDATE users
+    SET membership_level = 'lifetime',
+        membership_started_at = COALESCE(membership_started_at, NOW()),
+        membership_expires_at = NULL,
+        updated_at = NOW()
+    WHERE (role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
+      AND (
+        membership_level IS DISTINCT FROM 'lifetime'
+        OR membership_expires_at IS NOT NULL
+      )`;
+
   await sql`DO $$
   BEGIN
     IF NOT EXISTS (

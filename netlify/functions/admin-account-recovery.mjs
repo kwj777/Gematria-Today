@@ -55,7 +55,13 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'Email is required' });
       }
 
-      const rows = await sql`SELECT id, username, email FROM users WHERE role = 'admin' AND LOWER(email) = ${email} LIMIT 1`;
+      const rows = await sql`
+        SELECT id, username, email
+        FROM users
+        WHERE (role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
+          AND LOWER(email) = ${email}
+        LIMIT 1
+      `;
       const recovery = rows.length ? await createAccountRecoveryRequest(sql, {
         userId: rows[0].id,
         role: 'admin',
@@ -94,7 +100,13 @@ export async function handler(event) {
       }
 
       const email = normalizeEmail(identifier);
-      const rows = await sql`SELECT id, username, email FROM users WHERE role = 'admin' AND (username = ${identifier} OR LOWER(email) = ${email}) LIMIT 1`;
+      const rows = await sql`
+        SELECT id, username, email
+        FROM users
+        WHERE (role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
+          AND (username = ${identifier} OR LOWER(email) = ${email})
+        LIMIT 1
+      `;
       const recovery = rows.length ? await createAccountRecoveryRequest(sql, {
         userId: rows[0].id,
         role: 'admin',
@@ -149,7 +161,8 @@ export async function handler(event) {
       const rows = await sql`
         UPDATE users
         SET password_hash = ${passwordHash}, updated_at = NOW()
-        WHERE id = ${recovery.user_id} AND role = 'admin'
+        WHERE id = ${recovery.user_id}
+          AND (role = 'admin' OR COALESCE(is_admin, FALSE) = TRUE)
         RETURNING id, username, role
       `;
 

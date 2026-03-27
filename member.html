@@ -45,24 +45,24 @@
         <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5">
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
-              <p class="section-kicker mb-3">Member Access</p>
-              <h1 class="display-5 fw-bold mb-3">Create an account, save gematria history, and manage your profile.</h1>
-              <p class="lead mb-0">Membership now includes secure sign up, sign in, profile settings, saved calculation history, and a Stripe-powered one-year premium upgrade for the regular price of $7.77, with a limited-time introductory special of $5.55.</p>
+              <p id="membershipHeroKicker" class="section-kicker mb-3">Member Access</p>
+              <h1 id="membershipHeroTitle" class="display-5 fw-bold mb-3">Create an account, save gematria history, and manage your profile.</h1>
+              <p id="membershipHeroLead" class="lead mb-0">Membership now includes secure sign up, sign in, profile settings, saved calculation history, and a Stripe-powered one-year premium upgrade for the regular price of $7.77, with a limited-time introductory special of $5.55.</p>
             </div>
-            <div class="col-lg-4">
+            <div id="membershipHeroCardColumn" class="col-lg-4">
               <div class="membership-hero-card h-100">
                 <div class="membership-hero-card__header">
-                  <p class="membership-hero-card__eyebrow mb-2">Membership Benefits</p>
-                  <h2 class="h5 mb-0">Choose the plan that fits your research.</h2>
+                  <p id="membershipHeroCardEyebrow" class="membership-hero-card__eyebrow mb-2">Membership Benefits</p>
+                  <h2 id="membershipHeroCardTitle" class="h5 mb-0">Choose the plan that fits your research.</h2>
                 </div>
-                <div class="membership-tier membership-tier--free">
+                <div id="membershipHeroFreeTier" class="membership-tier membership-tier--free">
                   <div class="membership-tier__label">Free Membership</div>
                   <ul class="list-unstyled mb-0 membership-tier__list">
                     <li>Store up to <strong>3 calculations</strong>.</li>
                     <li>Search up to <strong>100 related words</strong>.</li>
                   </ul>
                 </div>
-                <div class="membership-tier membership-tier--premium">
+                <div id="membershipHeroPremiumTier" class="membership-tier membership-tier--premium">
                   <div class="membership-tier__label">Premium Membership</div>
                   <ul class="list-unstyled mb-0 membership-tier__list">
                     <li><strong>Unlimited history</strong> for saved calculations.</li>
@@ -71,7 +71,7 @@
                     <li>Full <strong>Premium Research</strong> with Wordnik-powered related-word exploration and clickable word drill-down.</li>
                   </ul>
                 </div>
-                <p class="membership-hero-card__footer mb-0">Premium Research is now included for premium members, with more paid features on the way.</p>
+                <p id="membershipHeroCardFooter" class="membership-hero-card__footer mb-0">Premium Research is now included for premium members, with more paid features on the way.</p>
               </div>
             </div>
           </div>
@@ -84,6 +84,7 @@
               <p class="section-kicker mb-2">Plan Comparison</p>
               <h2 class="mb-2">Pick the access level that matches your workflow.</h2>
               <p class="text-muted mb-0">Visitors can browse and calculate instantly, members can save and personalize, and premium members unlock deeper research limits.</p>
+              <p id="comparisonCurrentLevel" class="small fw-semibold text-primary mb-0 mt-2">Current level: Visitor</p>
             </div>
             <a class="btn btn-outline-primary" href="#authSection">Create free account</a>
           </div>
@@ -93,9 +94,9 @@
               <thead>
                 <tr>
                   <th scope="col">Feature</th>
-                  <th scope="col">Visitor</th>
-                  <th scope="col">Member</th>
-                  <th scope="col">Premium Member</th>
+                  <th scope="col">Visitor <span id="comparisonVisitorCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
+                  <th scope="col">Member <span id="comparisonMemberCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
+                  <th scope="col">Premium Member <span id="comparisonPremiumCurrent" class="badge text-bg-primary ms-1 d-none">Current</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -321,6 +322,19 @@
       const authTabLogin = document.getElementById('authTabLogin');
       const authPanelRegister = document.getElementById('authPanelRegister');
       const authPanelLogin = document.getElementById('authPanelLogin');
+      const membershipHeroKicker = document.getElementById('membershipHeroKicker');
+      const membershipHeroTitle = document.getElementById('membershipHeroTitle');
+      const membershipHeroLead = document.getElementById('membershipHeroLead');
+      const membershipHeroCardColumn = document.getElementById('membershipHeroCardColumn');
+      const membershipHeroCardEyebrow = document.getElementById('membershipHeroCardEyebrow');
+      const membershipHeroCardTitle = document.getElementById('membershipHeroCardTitle');
+      const membershipHeroFreeTier = document.getElementById('membershipHeroFreeTier');
+      const membershipHeroPremiumTier = document.getElementById('membershipHeroPremiumTier');
+      const membershipHeroCardFooter = document.getElementById('membershipHeroCardFooter');
+      const comparisonCurrentLevel = document.getElementById('comparisonCurrentLevel');
+      const comparisonVisitorCurrent = document.getElementById('comparisonVisitorCurrent');
+      const comparisonMemberCurrent = document.getElementById('comparisonMemberCurrent');
+      const comparisonPremiumCurrent = document.getElementById('comparisonPremiumCurrent');
 
       let session = null;
       let historyItems = [];
@@ -360,9 +374,64 @@
         premiumActiveToggleArrow.textContent = isPremium ? '▼' : '';
       }
 
-      function setLoggedIn(isLoggedIn) {
-        const isPremiumMember = session?.member?.membershipLevel === 'premium';
+      function syncComparisonCurrentLevel(member = session?.member) {
+        const level = member?.membershipLevel || 'visitor';
+        comparisonVisitorCurrent.classList.toggle('d-none', level !== 'visitor');
+        comparisonMemberCurrent.classList.toggle('d-none', level !== 'free');
+        comparisonPremiumCurrent.classList.toggle('d-none', !(level === 'premium' || level === 'lifetime'));
+
+        if (level === 'free') {
+          comparisonCurrentLevel.textContent = 'Current level: Member (Free)';
+        } else if (level === 'premium' || level === 'lifetime') {
+          comparisonCurrentLevel.textContent = `Current level: ${level === 'lifetime' ? 'Lifetime Premium' : 'Premium Member'}`;
+        } else {
+          comparisonCurrentLevel.textContent = 'Current level: Visitor';
+        }
+      }
+
+      function syncMembershipHero(member = session?.member, isLoggedIn = Boolean(member)) {
+        const level = member?.membershipLevel || 'visitor';
+        const isPremiumMember = level === 'premium' || level === 'lifetime';
+        const isFreeMember = level === 'free';
+        const loginOnlyMode = !isLoggedIn && normalizeAuthView(new URL(window.location.href).searchParams.get('auth')) === 'login';
+
         membershipHero.classList.toggle('d-none', isLoggedIn && isPremiumMember);
+
+        if (isFreeMember) {
+          membershipHeroKicker.textContent = 'Upgrade to Premium';
+          membershipHeroTitle.textContent = 'Unlock deeper research with Premium Membership.';
+          membershipHeroLead.textContent = 'Your free account is active. Upgrade to premium to unlock unlimited saved history, favorites, expanded related-word depth, and full Premium Research access.';
+          membershipHeroCardEyebrow.textContent = 'Premium Upgrade';
+          membershipHeroCardTitle.textContent = 'Everything in one premium plan.';
+          membershipHeroFreeTier.classList.add('d-none');
+          membershipHeroPremiumTier.classList.remove('d-none');
+          membershipHeroCardFooter.textContent = 'Limited-time introductory special: $5.55/year (regularly $7.77/year).';
+          membershipHeroCardColumn.classList.remove('d-none');
+          return;
+        }
+
+        if (loginOnlyMode) {
+          membershipHeroKicker.textContent = 'Premium Member Access';
+          membershipHeroTitle.textContent = 'Welcome back, Premium Member.';
+          membershipHeroLead.textContent = 'Sign in to access your premium tools, saved favorites, and advanced research workflows.';
+          membershipHeroCardColumn.classList.add('d-none');
+          return;
+        }
+
+        membershipHeroKicker.textContent = 'Member Access';
+        membershipHeroTitle.textContent = 'Create an account, save gematria history, and manage your profile.';
+        membershipHeroLead.textContent = 'Membership now includes secure sign up, sign in, profile settings, saved calculation history, and a Stripe-powered one-year premium upgrade for the regular price of $7.77, with a limited-time introductory special of $5.55.';
+        membershipHeroCardEyebrow.textContent = 'Membership Benefits';
+        membershipHeroCardTitle.textContent = 'Choose the plan that fits your research.';
+        membershipHeroFreeTier.classList.remove('d-none');
+        membershipHeroPremiumTier.classList.remove('d-none');
+        membershipHeroCardFooter.textContent = 'Premium Research is now included for premium members, with more paid features on the way.';
+        membershipHeroCardColumn.classList.remove('d-none');
+      }
+
+      function setLoggedIn(isLoggedIn) {
+        syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
+        syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
         syncPaymentButton(isLoggedIn ? session?.member : null);
@@ -427,6 +496,7 @@
 
         authPanelRegister.classList.toggle('d-none', !registerSelected);
         authPanelLogin.classList.toggle('d-none', registerSelected);
+        syncMembershipHero(session?.member, Boolean(session?.member));
 
         if (!updateUrl) {
           return;

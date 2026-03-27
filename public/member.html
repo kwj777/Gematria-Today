@@ -41,7 +41,7 @@
     </nav>
 
     <main class="py-5">
-      <div class="container">
+      <div id="membershipPageContent" class="container d-none">
         <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5 d-none">
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
@@ -304,6 +304,7 @@
       const authSection = document.getElementById('authSection');
       const dashboardSection = document.getElementById('dashboardSection');
       const membershipHero = document.getElementById('membershipHero');
+      const membershipPageContent = document.getElementById('membershipPageContent');
       const memberAlert = document.getElementById('memberAlert');
       const memberMeta = document.getElementById('memberMeta');
       const membershipLevel = document.getElementById('membershipLevel');
@@ -460,6 +461,7 @@
         syncMembershipUpgradePanel(isLoggedIn ? session?.member : null);
         syncPremiumResearchLink(isLoggedIn ? session?.member : null);
         syncAdminPageButton(isLoggedIn ? session?.member : null, isLoggedIn ? session?.user : null);
+        membershipPageContent.classList.remove('d-none');
       }
 
       function formatMembershipWindow(member) {

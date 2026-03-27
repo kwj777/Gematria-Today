@@ -20,8 +20,12 @@
     <style>
       .report-bar { height: 0.75rem; }
       .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
-      .report-card { border: 1px solid rgba(255,255,255,0.12); border-radius: 0.75rem; padding: 1rem; background: rgba(20,24,35,0.65); }
-      .muted-label { font-size: 0.85rem; color: var(--bs-secondary-color); text-transform: uppercase; letter-spacing: .05em; }
+      .report-card { border: 1px solid rgba(255,255,255,0.36); border-radius: 0.75rem; padding: 1rem; background: #2f3542; box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset; }
+      .report-card .h3 { color: #f3f6fb; }
+      .report-card-button { width: 100%; text-align: left; color: #f3f6fb; cursor: pointer; transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease; }
+      .report-card-button:hover,
+      .report-card-button:focus-visible { border-color: rgba(255,255,255,0.72); transform: translateY(-1px); box-shadow: 0 0 0 0.2rem rgba(143, 182, 255, 0.32); }
+      .muted-label { font-size: 0.85rem; color: #cfd6e3; text-transform: uppercase; letter-spacing: .05em; }
     </style>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -68,6 +72,26 @@
           <h2 class="h4 mb-3">Executive snapshot</h2>
           <div class="report-grid" id="overviewGrid"></div>
         </section>
+
+        <div class="modal fade" id="overviewDetailModal" tabindex="-1" aria-labelledby="overviewDetailTitle" aria-hidden="true">
+          <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content bg-dark text-light">
+              <div class="modal-header border-secondary">
+                <h2 class="modal-title h5 mb-0" id="overviewDetailTitle">Details</h2>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p id="overviewDetailMeta" class="text-secondary small mb-3"></p>
+                <div class="table-responsive">
+                  <table class="table table-dark table-striped table-sm align-middle mb-0">
+                    <thead id="overviewDetailHead"></thead>
+                    <tbody id="overviewDetailBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <section class="content-panel p-4">
           <h2 class="h4 mb-3">Membership and publishing trends</h2>
@@ -175,23 +199,86 @@
         }).join('');
       }
 
+      const OVERVIEW_CARD_META = {
+        newMembers: { label: 'New members', valuePath: 'newMembers' },
+        activePremiumMembers: { label: 'Active premium', valuePath: 'activePremiumMembers' },
+        expiringPremiumMembers: { label: 'Premium expiring in 30d', valuePath: 'expiringPremiumMembers' },
+        publishedPosts: { label: 'Published posts', valuePath: 'publishedPosts' },
+        openTasks: { label: 'Open tasks', valuePath: 'openTasks' },
+        overdueTasks: { label: 'Overdue tasks', valuePath: 'overdueTasks' },
+        failedActions: { label: 'Failed actions', valuePath: 'failedActions' },
+      };
+
+      const OVERVIEW_DETAIL_COLUMNS = {
+        newMembers: [['ID', 'id'], ['Username', 'username'], ['Email', 'email'], ['Level', 'membershipLevel'], ['Status', 'status'], ['Created', 'createdAt'], ['Expires', 'membershipExpiresAt']],
+        activePremiumMembers: [['ID', 'id'], ['Username', 'username'], ['Email', 'email'], ['Level', 'membershipLevel'], ['Status', 'status'], ['Created', 'createdAt'], ['Expires', 'membershipExpiresAt']],
+        expiringPremiumMembers: [['ID', 'id'], ['Username', 'username'], ['Email', 'email'], ['Level', 'membershipLevel'], ['Status', 'status'], ['Expires', 'membershipExpiresAt']],
+        publishedPosts: [['ID', 'id'], ['Title', 'title'], ['Slug', 'slug'], ['Status', 'status'], ['Published', 'publishedAt'], ['Created', 'createdAt']],
+        openTasks: [['ID', 'id'], ['Title', 'title'], ['Status', 'status'], ['Due', 'dueDate'], ['Created', 'createdAt'], ['Updated', 'updatedAt']],
+        overdueTasks: [['ID', 'id'], ['Title', 'title'], ['Status', 'status'], ['Due', 'dueDate'], ['Created', 'createdAt'], ['Updated', 'updatedAt']],
+        failedActions: [['Route', 'route'], ['Action', 'action'], ['Outcome', 'outcome'], ['When', 'createdAt']],
+      };
+
+      function formatCellValue(key, value) {
+        if (value === null || value === undefined || value === '') {
+          return '—';
+        }
+        if (String(key).toLowerCase().includes('date') || String(key).toLowerCase().includes('at') || key === 'created' || key === 'published') {
+          const parsed = new Date(value);
+          if (!Number.isNaN(parsed.getTime())) {
+            return parsed.toLocaleString();
+          }
+        }
+        return String(value);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function openOverviewDetail(key) {
+        const reports = state.reports;
+        if (!reports) return;
+        const rows = reports.detailRows?.[key] || [];
+        const cardMeta = OVERVIEW_CARD_META[key] || { label: 'Details' };
+        const columns = OVERVIEW_DETAIL_COLUMNS[key] || [];
+
+        document.getElementById('overviewDetailTitle').textContent = `${cardMeta.label} details`;
+        document.getElementById('overviewDetailMeta').textContent = `Showing ${formatNumber(rows.length)} records (latest first, up to 50).`;
+        document.getElementById('overviewDetailHead').innerHTML = `<tr>${columns.map(([header]) => `<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr>`;
+        document.getElementById('overviewDetailBody').innerHTML = rows.length
+          ? rows.map((row) => `<tr>${columns.map(([, field]) => `<td>${escapeHtml(formatCellValue(field, row[field]))}</td>`).join('')}</tr>`).join('')
+          : `<tr><td colspan="${columns.length || 1}" class="text-secondary">No detail rows available.</td></tr>`;
+
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('overviewDetailModal'));
+        modal.show();
+      }
+
       function renderOverviewCards(overview) {
         const cards = [
-          ['New members', overview.newMembers],
-          ['Active premium', overview.activePremiumMembers],
-          ['Premium expiring in 30d', overview.expiringPremiumMembers],
-          ['Published posts', overview.publishedPosts],
-          ['Open tasks', overview.openTasks],
-          ['Overdue tasks', overview.overdueTasks],
-          ['Failed actions', overview.failedActions],
+          ['newMembers', OVERVIEW_CARD_META.newMembers.label, overview.newMembers],
+          ['activePremiumMembers', OVERVIEW_CARD_META.activePremiumMembers.label, overview.activePremiumMembers],
+          ['expiringPremiumMembers', OVERVIEW_CARD_META.expiringPremiumMembers.label, overview.expiringPremiumMembers],
+          ['publishedPosts', OVERVIEW_CARD_META.publishedPosts.label, overview.publishedPosts],
+          ['openTasks', OVERVIEW_CARD_META.openTasks.label, overview.openTasks],
+          ['overdueTasks', OVERVIEW_CARD_META.overdueTasks.label, overview.overdueTasks],
+          ['failedActions', OVERVIEW_CARD_META.failedActions.label, overview.failedActions],
         ];
         const target = document.getElementById('overviewGrid');
-        target.innerHTML = cards.map(([label, value]) => `
-          <article class="report-card">
+        target.innerHTML = cards.map(([key, label, value]) => `
+          <button type="button" class="report-card report-card-button" data-overview-key="${key}" aria-label="Open ${label} details">
             <p class="muted-label mb-2">${label}</p>
             <div class="h3 mb-0">${formatNumber(value)}</div>
-          </article>
+          </button>
         `).join('');
+        target.querySelectorAll('[data-overview-key]').forEach((element) => {
+          element.addEventListener('click', () => openOverviewDetail(element.getAttribute('data-overview-key')));
+        });
       }
 
       function renderCoverage(reports) {

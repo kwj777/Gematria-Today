@@ -51,7 +51,7 @@ export async function handler(event) {
       `,
     ]);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, openTaskRows, overdueTaskRows, failedActionRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -91,12 +91,58 @@ export async function handler(event) {
       sql`SELECT LOWER(BTRIM(tag_name)) AS tag_name, COUNT(*)::int AS total
           FROM (
             SELECT REGEXP_SPLIT_TO_TABLE(COALESCE(tag, ''), ',') AS tag_name
-            FROM posts
+          FROM posts
           ) split_tags
           WHERE BTRIM(tag_name) <> ''
           GROUP BY LOWER(BTRIM(tag_name))
           ORDER BY total DESC, tag_name ASC
           LIMIT 8`,
+      sql`SELECT id, username, email, membership_level, status, created_at, membership_expires_at
+          FROM users
+          WHERE role = 'member'
+            AND created_at >= NOW() - (${days} || ' days')::interval
+          ORDER BY created_at DESC
+          LIMIT 50`,
+      sql`SELECT id, username, email, membership_level, status, created_at, membership_expires_at
+          FROM users
+          WHERE role = 'member'
+            AND membership_level IN ('premium', 'lifetime')
+            AND status = 'active'
+          ORDER BY created_at DESC
+          LIMIT 50`,
+      sql`SELECT id, username, email, membership_level, status, membership_expires_at
+          FROM users
+          WHERE role = 'member'
+            AND membership_level IN ('premium', 'lifetime')
+            AND membership_expires_at IS NOT NULL
+            AND membership_expires_at >= NOW()
+            AND membership_expires_at <= NOW() + INTERVAL '30 days'
+          ORDER BY membership_expires_at ASC
+          LIMIT 50`,
+      sql`SELECT id, title, slug, status, created_at, published_at
+          FROM posts
+          WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+            AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval
+          ORDER BY COALESCE(published_at, created_at) DESC
+          LIMIT 50`,
+      sql`SELECT id, title, status, due_date, created_at, updated_at
+          FROM tasks
+          WHERE status = 'open'
+          ORDER BY COALESCE(due_date::timestamp, created_at) ASC
+          LIMIT 50`,
+      sql`SELECT id, title, status, due_date, created_at, updated_at
+          FROM tasks
+          WHERE status = 'open'
+            AND due_date IS NOT NULL
+            AND due_date < CURRENT_DATE
+          ORDER BY due_date ASC
+          LIMIT 50`,
+      sql`SELECT route, action, outcome, created_at
+          FROM request_audit_log
+          WHERE created_at >= NOW() - (${days} || ' days')::interval
+            AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
+          ORDER BY created_at DESC
+          LIMIT 50`,
     ]);
 
     const overview = overviewRows[0] || {};
@@ -152,6 +198,64 @@ export async function handler(event) {
         outcome: row.outcome,
         createdAt: toIsoDate(row.created_at),
       })),
+      detailRows: {
+        newMembers: newMembersRows.map((row) => ({
+          id: row.id,
+          username: row.username,
+          email: row.email,
+          membershipLevel: row.membership_level,
+          status: row.status,
+          createdAt: toIsoDate(row.created_at),
+          membershipExpiresAt: toIsoDate(row.membership_expires_at),
+        })),
+        activePremiumMembers: activePremiumRows.map((row) => ({
+          id: row.id,
+          username: row.username,
+          email: row.email,
+          membershipLevel: row.membership_level,
+          status: row.status,
+          createdAt: toIsoDate(row.created_at),
+          membershipExpiresAt: toIsoDate(row.membership_expires_at),
+        })),
+        expiringPremiumMembers: expiringPremiumRows.map((row) => ({
+          id: row.id,
+          username: row.username,
+          email: row.email,
+          membershipLevel: row.membership_level,
+          status: row.status,
+          membershipExpiresAt: toIsoDate(row.membership_expires_at),
+        })),
+        publishedPosts: publishedPostRows.map((row) => ({
+          id: row.id,
+          title: row.title,
+          slug: row.slug,
+          status: row.status,
+          createdAt: toIsoDate(row.created_at),
+          publishedAt: toIsoDate(row.published_at),
+        })),
+        openTasks: openTaskRows.map((row) => ({
+          id: row.id,
+          title: row.title,
+          status: row.status,
+          dueDate: row.due_date,
+          createdAt: toIsoDate(row.created_at),
+          updatedAt: toIsoDate(row.updated_at),
+        })),
+        overdueTasks: overdueTaskRows.map((row) => ({
+          id: row.id,
+          title: row.title,
+          status: row.status,
+          dueDate: row.due_date,
+          createdAt: toIsoDate(row.created_at),
+          updatedAt: toIsoDate(row.updated_at),
+        })),
+        failedActions: failedActionRows.map((row) => ({
+          route: row.route,
+          action: row.action,
+          outcome: row.outcome,
+          createdAt: toIsoDate(row.created_at),
+        })),
+      },
     });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to load admin reports' }, error.headers || {});

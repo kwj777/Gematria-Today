@@ -980,6 +980,13 @@
               password: document.getElementById('loginPassword').value,
             }),
           });
+          if (session?.route === 'admin') {
+            showAlert('Admin sign-in successful. Redirecting to admin dashboard…', 'success');
+            window.setTimeout(() => {
+              window.location.assign('/admin.html');
+            }, 350);
+            return;
+          }
           loadFavoriteHistoryIds();
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);

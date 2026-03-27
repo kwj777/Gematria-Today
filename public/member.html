@@ -78,7 +78,7 @@
         </section>
 
 
-        <section class="content-panel p-4 p-lg-5 mb-5">
+        <section id="comparisonSection" class="content-panel p-4 p-lg-5 mb-5">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
             <div>
               <p class="section-kicker mb-2">Plan Comparison</p>
@@ -331,6 +331,7 @@
       const membershipHeroFreeTier = document.getElementById('membershipHeroFreeTier');
       const membershipHeroPremiumTier = document.getElementById('membershipHeroPremiumTier');
       const membershipHeroCardFooter = document.getElementById('membershipHeroCardFooter');
+      const comparisonSection = document.getElementById('comparisonSection');
       const comparisonCurrentLevel = document.getElementById('comparisonCurrentLevel');
       const comparisonVisitorCurrent = document.getElementById('comparisonVisitorCurrent');
       const comparisonMemberCurrent = document.getElementById('comparisonMemberCurrent');
@@ -389,6 +390,12 @@
         }
       }
 
+      function syncComparisonVisibility(member = session?.member) {
+        const level = member?.membershipLevel || 'visitor';
+        const hideComparison = level === 'premium' || level === 'lifetime';
+        comparisonSection.classList.toggle('d-none', hideComparison);
+      }
+
       function syncMembershipHero(member = session?.member, isLoggedIn = Boolean(member)) {
         const level = member?.membershipLevel || 'visitor';
         const isPremiumMember = level === 'premium' || level === 'lifetime';
@@ -432,6 +439,7 @@
       function setLoggedIn(isLoggedIn) {
         syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
+        syncComparisonVisibility(isLoggedIn ? session?.member : null);
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
         syncPaymentButton(isLoggedIn ? session?.member : null);

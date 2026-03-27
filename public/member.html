@@ -350,6 +350,57 @@
       let showAllHistoryItems = false;
       let paymentConfirmationInFlight = false;
       let membershipHeroReady = false;
+      const PAGE_LOAD_OVERLAY_DELAY_MS = 500;
+      let pageLoadOverlayTimer = null;
+
+
+      function ensureWorkingOverlay() {
+        let overlay = document.getElementById('globalLoadingOverlay');
+        if (overlay) {
+          return overlay;
+        }
+
+        overlay = document.createElement('div');
+        overlay.id = 'globalLoadingOverlay';
+        overlay.className = 'global-loading-overlay';
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-busy', 'true');
+        overlay.innerHTML = [
+          '<div class="global-loading-overlay__card" role="status" aria-label="Loading">',
+          '  <div class="global-loading-overlay__spinner" aria-hidden="true"></div>',
+          '  <p class="global-loading-overlay__text">Working… Please wait.</p>',
+          '</div>',
+        ].join('');
+
+        document.body.appendChild(overlay);
+        return overlay;
+      }
+
+      function showWorkingOverlay() {
+        const overlay = ensureWorkingOverlay();
+        overlay.classList.add('global-loading-overlay--visible');
+      }
+
+      function hideWorkingOverlay() {
+        const overlay = document.getElementById('globalLoadingOverlay');
+        if (!overlay) {
+          return;
+        }
+        overlay.classList.remove('global-loading-overlay--visible');
+      }
+
+      function schedulePageLoadOverlay() {
+        window.clearTimeout(pageLoadOverlayTimer);
+        pageLoadOverlayTimer = window.setTimeout(() => {
+          showWorkingOverlay();
+        }, PAGE_LOAD_OVERLAY_DELAY_MS);
+      }
+
+      function completePageLoadOverlay() {
+        window.clearTimeout(pageLoadOverlayTimer);
+        pageLoadOverlayTimer = null;
+        hideWorkingOverlay();
+      }
 
       function showAlert(message, tone = 'danger') {
         memberAlert.textContent = message;
@@ -804,6 +855,7 @@
         const verifyEmailToken = url.searchParams.get('verify_email_token');
         const authView = normalizeAuthView(url.searchParams.get('auth'));
 
+        schedulePageLoadOverlay();
         setAuthView(authView, { updateUrl: false });
 
         if (verifyEmailToken) {
@@ -842,6 +894,8 @@
           if (paymentState === 'success') {
             showAlert('Sign in to finish activating your Stripe payment.', 'warning');
           }
+        } finally {
+          completePageLoadOverlay();
         }
       }
 

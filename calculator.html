@@ -67,7 +67,7 @@
         <section class="content-panel p-4 p-lg-5 form-shell">
           <section class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your gematria searches to your account.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-outline-primary btn-sm" href="/member.html">Go to My Dashboard</a></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
             </div>
           </section>
         </section>
@@ -208,6 +208,7 @@ View results: ${shareUrl}`.trim(),
       const memberSaveShell = document.querySelector('#member-save-shell');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
+      const memberLink = document.querySelector('#member-link');
       let saveHistoryPopover = null;
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       let currentSearchPayload = null;
@@ -311,7 +312,13 @@ View results: ${shareUrl}`.trim(),
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
           if (memberSaveShell) {
-            memberSaveShell.hidden = true;
+            memberSaveShell.hidden = false;
+          }
+          if (memberLink) {
+            memberLink.href = '/member.html#registerForm';
+            memberLink.textContent = 'Join for free';
+            memberLink.classList.remove('btn-outline-primary');
+            memberLink.classList.add('btn-primary');
           }
           saveHistoryButton.disabled = false;
           saveHistoryButton.classList.add('member-save-button--guest');
@@ -319,14 +326,20 @@ View results: ${shareUrl}`.trim(),
           saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
           createMembersOnlyPopover();
           memberSaveMeta.textContent = currentSearchPayload
-            ? 'Sign in to save this result to your account.'
-            : 'Sign in to save your gematria searches to your account.';
+            ? 'Join for free to save this result and see related words.'
+            : 'Join for free to save searches and see related words.';
           lookupSubmitButton.textContent = 'Calculate';
           return;
         }
 
         if (memberSaveShell) {
           memberSaveShell.hidden = false;
+        }
+        if (memberLink) {
+          memberLink.href = '/member.html';
+          memberLink.textContent = 'Go to My Dashboard';
+          memberLink.classList.remove('btn-primary');
+          memberLink.classList.add('btn-outline-primary');
         }
         destroyMembersOnlyPopover();
         saveHistoryButton.classList.remove('member-save-button--guest');

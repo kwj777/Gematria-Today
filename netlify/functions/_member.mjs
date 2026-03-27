@@ -464,14 +464,26 @@ export async function getAuthenticatedMember(event, { requireAuth = true } = {})
   const sql = getSqlClient();
   await ensureMemberSchema(sql);
 
-  const authResult = await getAuthenticatedUserShared(event, {
+  let authResult = await getAuthenticatedUserShared(event, {
     sql,
     cookieName: AUTH_COOKIES.member,
-    requireAuth,
+    requireAuth: false,
     role: 'member',
   });
 
   if (!authResult.user) {
+    authResult = await getAuthenticatedUserShared(event, {
+      sql,
+      cookieName: AUTH_COOKIES.admin,
+      requireAuth: false,
+      role: 'admin',
+    });
+  }
+
+  if (!authResult.user) {
+    if (requireAuth) {
+      throw Object.assign(new Error('Unauthorized'), { statusCode: 401, sql });
+    }
     return { ...authResult, member: null, profile: null };
   }
 

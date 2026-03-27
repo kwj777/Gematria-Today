@@ -194,6 +194,7 @@
               <a class="btn btn-outline-primary" href="/calculator.html">Open calculator</a>
               <a id="premiumResearchLink" class="btn btn-warning premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
               <button id="refreshHistoryButton" class="btn btn-outline-secondary" type="button">Refresh history</button>
+              <a id="adminPageButton" class="btn btn-outline-dark d-none" href="/admin.html">Admin page</a>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Sign out</button>
             </div>
           </div>
@@ -318,6 +319,7 @@
       const premiumActiveToggleArrow = document.getElementById('premiumActiveToggleArrow');
       const membershipUpgradeContent = document.getElementById('membershipUpgradeContent');
       const premiumResearchLink = document.getElementById('premiumResearchLink');
+      const adminPageButton = document.getElementById('adminPageButton');
       const authTabRegister = document.getElementById('authTabRegister');
       const authTabLogin = document.getElementById('authTabLogin');
       const authPanelRegister = document.getElementById('authPanelRegister');
@@ -445,6 +447,7 @@
         syncPaymentButton(isLoggedIn ? session?.member : null);
         syncMembershipUpgradePanel(isLoggedIn ? session?.member : null);
         syncPremiumResearchLink(isLoggedIn ? session?.member : null);
+        syncAdminPageButton(isLoggedIn ? session?.member : null, isLoggedIn ? session?.user : null);
       }
 
       function formatMembershipWindow(member) {
@@ -467,6 +470,11 @@
         premiumResearchLink.setAttribute('aria-disabled', isPremium ? 'false' : 'true');
         premiumResearchLink.tabIndex = isPremium ? 0 : -1;
         premiumResearchLink.textContent = isPremium ? 'Premium research' : 'Premium research (locked)';
+      }
+
+      function syncAdminPageButton(member = session?.member, user = session?.user) {
+        const isAdminLevel = user?.role === 'admin' || member?.role === 'admin' || member?.membershipLevel === 'admin';
+        adminPageButton.classList.toggle('d-none', !isAdminLevel);
       }
 
       function scrollToLoginArea() {
@@ -531,7 +539,7 @@
             body: JSON.stringify({ sessionId }),
           });
           session = { ...session, member: payload.member, authenticated: true };
-          populateProfile(session.member, session.profile);
+          populateProfile(session.member, session.profile, session.user);
           syncPaymentButton(session.member);
           syncMembershipUpgradePanel(session.member);
           showAlert(`Payment received. Your ${payload.membership.label.toLowerCase()} is active.`, 'success');
@@ -742,7 +750,7 @@
         });
       }
 
-      function populateProfile(member, profile) {
+      function populateProfile(member, profile, user = null) {
         memberMeta.textContent = `Signed in as ${member.displayName || member.username} (${member.email})`;
         membershipLevel.textContent = member.membershipLevel;
         membershipPlanMeta.textContent = formatMembershipWindow(member);
@@ -755,6 +763,7 @@
         syncPaymentButton(member);
         syncMembershipUpgradePanel(member);
         syncPremiumResearchLink(member);
+        syncAdminPageButton(member, user);
       }
 
       async function loadHistory() {
@@ -800,7 +809,7 @@
           session = await request('/api/member-session', { method: 'GET' });
           loadFavoriteHistoryIds();
           setLoggedIn(true);
-          populateProfile(session.member, session.profile);
+          populateProfile(session.member, session.profile, session.user);
           await loadHistory();
 
           if (paymentState === 'success' && stripeSessionId) {
@@ -877,7 +886,7 @@
           loadFavoriteHistoryIds();
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
-          populateProfile(session.member, session.profile);
+          populateProfile(session.member, session.profile, session.user);
           await loadHistory();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
@@ -896,7 +905,7 @@
             }),
           });
           session = { authenticated: true, member: payload.member, profile: payload.profile };
-          populateProfile(payload.member, payload.profile);
+          populateProfile(payload.member, payload.profile, session?.user);
           showAlert('Profile saved.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to save profile.');

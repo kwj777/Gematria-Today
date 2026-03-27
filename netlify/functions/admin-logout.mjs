@@ -12,7 +12,7 @@ export async function handler(event) {
       await deleteSession(sql, sessionToken);
     }
     return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
-  } catch (error) {
+  } catch {
     return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
   }
 }

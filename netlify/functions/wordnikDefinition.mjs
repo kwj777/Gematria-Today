@@ -161,7 +161,7 @@ function sanitizeCalculatorPath(value) {
     }
 
     return `${normalizedPathname}${parsed.search}`;
-  } catch (_error) {
+  } catch {
     return fallbackPath;
   }
 }
@@ -443,7 +443,7 @@ export default async function onRequest(request) {
     return isHtmlRequest(request)
       ? toResponse(200, renderDefinitionPage(payload, { calculatorPath }), 'text/html; charset=utf-8')
       : toResponse(200, payload, 'application/json; charset=utf-8');
-  } catch (error) {
+  } catch {
     const statusCode = getStatusCode(error);
     return isHtmlRequest(request)
       ? toResponse(statusCode, `<!doctype html><title>Error</title><p>${escapeHtml(error.message)}</p>`, 'text/html; charset=utf-8')
@@ -483,7 +483,7 @@ export async function handler(event) {
       'cache-control': 'public, max-age=600, stale-while-revalidate=120',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
-  } catch (error) {
+  } catch {
     return secureJsonResponse(getStatusCode(error), { error: error.message }, error.headers || {});
   }
 }

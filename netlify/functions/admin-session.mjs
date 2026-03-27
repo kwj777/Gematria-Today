@@ -1,4 +1,5 @@
-import { AUTH_COOKIES, clearSessionCookie, jsonResponse } from './_auth.mjs';
+import { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, jsonResponse } from './_auth.mjs';
+import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
 import { getAuthenticatedUser } from './_admin.mjs';
 
 export async function handler(event) {
@@ -10,7 +11,38 @@ export async function handler(event) {
     const { user } = await getAuthenticatedUser(event);
     return jsonResponse(200, { authenticated: true, user });
   } catch (error) {
+    try {
+      const sql = error.sql;
+      if (sql) {
+        await ensureAdminSchema(sql);
+        await syncBootstrapAdminUser(sql);
+
+        const optionalSession = await getOptionalAuthenticatedSession(event, { sql });
+        const isAdmin = optionalSession?.user && (optionalSession.user.role === 'admin');
+        if (isAdmin) {
+          const session = await createSession(sql, optionalSession.user.id);
+          return jsonResponse(
+            200,
+            {
+              authenticated: true,
+              user: {
+                ...optionalSession.user,
+                isAdmin: true,
+              },
+            },
+            { 'set-cookie': createSessionCookie(session.token, session.expiresAt, AUTH_COOKIES.admin) },
+          );
+        }
+      }
+    } catch {
+      // fall through to unauthorized response
+    }
+
     const statusCode = error.statusCode || 401;
-    return jsonResponse(statusCode, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
+    return jsonResponse(
+      statusCode,
+      { authenticated: false },
+      { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) },
+    );
   }
 }

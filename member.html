@@ -538,7 +538,7 @@
       }
 
       function syncAdminPageButton(member = session?.member, user = session?.user) {
-        const isAdminLevel = user?.role === 'admin' || member?.role === 'admin' || member?.membershipLevel === 'admin';
+        const isAdminLevel = Boolean(user?.isAdmin) || user?.role === 'admin' || member?.role === 'admin' || Boolean(member?.isAdmin);
         adminPageButton.classList.toggle('d-none', !isAdminLevel);
       }
 

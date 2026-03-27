@@ -191,16 +191,16 @@ View results: ${shareUrl}`.trim(),
         callout.className = 'alert alert-info mt-2';
 
         const title = document.createElement('strong');
-        title.textContent = 'Related word search is a member feature.';
+        title.textContent = 'Related word search is a free-member feature.';
         const details = document.createElement('p');
         details.className = 'mb-2';
         details.textContent = term
-          ? `You calculated "${term}". Join with a free or premium membership to unlock related words.`
-          : 'Join with a free or premium membership to unlock related word searching.';
+          ? `You calculated "${term}". Join as a free member to save this search and unlock related words.`
+          : 'Join as a free member to save searches and unlock related word searching.';
         const cta = document.createElement('a');
         cta.className = 'btn btn-sm btn-primary';
         cta.href = '/member.html#registerForm';
-        cta.textContent = 'Unlock with Free or Premium Membership';
+        cta.textContent = 'Join Free Membership';
 
         callout.append(title, document.createElement('br'), details, cta);
         relatedWordsResult.appendChild(callout);

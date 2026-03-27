@@ -4,6 +4,50 @@
   }
 
   let deferredInstallPrompt = null;
+  let launchOverlayTimer = null;
+
+  function removeLaunchOverlay() {
+    const existing = document.querySelector('[data-pwa-launch-overlay]');
+    if (existing) {
+      existing.remove();
+    }
+  }
+
+  function showLaunchOverlay() {
+    if (!isStandaloneMode() || document.querySelector('[data-pwa-launch-overlay]')) {
+      return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'pwa-launch-overlay';
+    overlay.setAttribute('data-pwa-launch-overlay', 'true');
+
+    const message = document.createElement('p');
+    message.className = 'pwa-launch-overlay__message';
+    message.textContent = 'getting latest updates...';
+
+    overlay.appendChild(message);
+    document.body.appendChild(overlay);
+  }
+
+  function startLaunchOverlayTimer() {
+    if (!isStandaloneMode()) {
+      return;
+    }
+
+    launchOverlayTimer = window.setTimeout(() => {
+      showLaunchOverlay();
+    }, 500);
+  }
+
+  function clearLaunchOverlayTimer() {
+    if (launchOverlayTimer !== null) {
+      window.clearTimeout(launchOverlayTimer);
+      launchOverlayTimer = null;
+    }
+
+    removeLaunchOverlay();
+  }
 
   function isStandaloneMode() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -75,6 +119,8 @@
     removeInstallCta();
   });
 
+  startLaunchOverlayTimer();
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {
       // Ignore registration failures in unsupported/private browsing scenarios.
@@ -83,5 +129,7 @@
     if (isStandaloneMode()) {
       removeInstallCta();
     }
+
+    clearLaunchOverlayTimer();
   });
 })();

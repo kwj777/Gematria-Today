@@ -67,7 +67,7 @@
         <section class="content-panel p-4 p-lg-5 form-shell">
           <section class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#authSection">Join for free</a></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
             </div>
           </section>
         </section>
@@ -172,10 +172,10 @@ View results: ${shareUrl}`.trim(),
 
         fragment.append('Non-member guests have limits on searches. Try again in a few minutes or sign up for a ');
         const membershipLink = document.createElement('a');
-        membershipLink.href = '/member.html#registerForm';
+        membershipLink.href = '/member.html#authSection';
         membershipLink.textContent = 'free membership';
         membershipLink.addEventListener('click', () => {
-          window.location.assign('/member.html#registerForm');
+          window.location.assign('/member.html#authSection');
         });
         fragment.append(membershipLink, '.');
         return fragment;
@@ -199,7 +199,7 @@ View results: ${shareUrl}`.trim(),
           : 'Join as a free member to save searches and unlock related word searching.';
         const cta = document.createElement('a');
         cta.className = 'btn btn-sm btn-primary';
-        cta.href = '/member.html#registerForm';
+        cta.href = '/member.html#authSection';
         cta.textContent = 'Join Free Membership';
 
         callout.append(title, document.createElement('br'), details, cta);
@@ -249,7 +249,7 @@ View results: ${shareUrl}`.trim(),
         memberSaveMeta.textContent = '';
         memberSaveMeta.append('Only registered members can save searches. ');
         const joinLink = document.createElement('a');
-        joinLink.href = '/member.html#registerForm';
+        joinLink.href = '/member.html#authSection';
         joinLink.textContent = 'Join';
         memberSaveMeta.append(joinLink, '.');
       }
@@ -264,7 +264,7 @@ View results: ${shareUrl}`.trim(),
           html: true,
           trigger: 'hover focus',
           placement: 'top',
-          content: 'Only registered members can save searches. <a href="/member.html#registerForm">Join</a>.',
+          content: 'Only registered members can save searches. <a href="/member.html#authSection">Join</a>.',
         });
       }
 
@@ -315,7 +315,7 @@ View results: ${shareUrl}`.trim(),
             memberSaveShell.hidden = false;
           }
           if (memberLink) {
-            memberLink.href = '/member.html#registerForm';
+            memberLink.href = '/member.html#authSection';
             memberLink.textContent = 'Join for free';
             memberLink.classList.remove('btn-outline-primary');
             memberLink.classList.add('btn-primary');

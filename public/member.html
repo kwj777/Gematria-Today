@@ -47,7 +47,7 @@
             <div class="col-lg-8">
               <p id="membershipHeroKicker" class="section-kicker mb-3">Member Access</p>
               <h1 id="membershipHeroTitle" class="display-5 fw-bold mb-3">Choose your membership level</h1>
-              <p id="membershipHeroLead" class="lead mb-0">Membership now includes secure sign up, sign in, profile settings, saved calculation history, and a Stripe-powered one-year premium upgrade for the regular price of $7.77, with a limited-time introductory special of $5.55.</p>
+              <p id="membershipHeroLead" class="lead mb-0">Membership now includes secure account access, profile settings, saved calculation history, and a Stripe-powered one-year premium upgrade. Regular price: $7.77. Intro special: $5.55.</p>
             </div>
             <div id="membershipHeroCardColumn" class="col-lg-4">
               <div class="membership-hero-card h-100">
@@ -71,7 +71,6 @@
                     <li>Full <strong>Premium Research</strong> with Wordnik-powered related-word exploration and clickable word drill-down.</li>
                   </ul>
                 </div>
-                <p id="membershipHeroCardFooter" class="membership-hero-card__footer text-muted mb-0">Premium Research is now included for premium members, with more paid features on the way.</p>
               </div>
             </div>
           </div>
@@ -331,7 +330,6 @@
       const membershipHeroCardTitle = document.getElementById('membershipHeroCardTitle');
       const membershipHeroFreeTier = document.getElementById('membershipHeroFreeTier');
       const membershipHeroPremiumTier = document.getElementById('membershipHeroPremiumTier');
-      const membershipHeroCardFooter = document.getElementById('membershipHeroCardFooter');
       const comparisonSection = document.getElementById('comparisonSection');
       const comparisonCurrentLevel = document.getElementById('comparisonCurrentLevel');
       const comparisonVisitorCurrent = document.getElementById('comparisonVisitorCurrent');
@@ -416,7 +414,6 @@
           membershipHeroCardTitle.textContent = 'Everything in one premium plan.';
           membershipHeroFreeTier.classList.add('d-none');
           membershipHeroPremiumTier.classList.remove('d-none');
-          membershipHeroCardFooter.textContent = 'Limited-time introductory special: $5.55/year (regularly $7.77/year).';
           membershipHeroCardColumn.classList.remove('d-none');
           return;
         }
@@ -431,12 +428,11 @@
 
         membershipHeroKicker.textContent = 'Member Access';
         membershipHeroTitle.textContent = 'Choose your membership level';
-        membershipHeroLead.textContent = 'Membership now includes secure sign up, sign in, profile settings, saved calculation history, and a Stripe-powered one-year premium upgrade for the regular price of $7.77, with a limited-time introductory special of $5.55.';
+        membershipHeroLead.textContent = 'Membership now includes secure account access, profile settings, saved calculation history, and a Stripe-powered one-year premium upgrade. Regular price: $7.77. Intro special: $5.55.';
         membershipHeroCardEyebrow.textContent = 'Membership Benefits';
         membershipHeroCardTitle.textContent = 'Choose the plan that fits your research.';
         membershipHeroFreeTier.classList.remove('d-none');
         membershipHeroPremiumTier.classList.remove('d-none');
-        membershipHeroCardFooter.textContent = 'Premium Research is now included for premium members, with more paid features on the way.';
         membershipHeroCardColumn.classList.remove('d-none');
       }
 

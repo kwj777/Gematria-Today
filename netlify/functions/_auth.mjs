@@ -239,6 +239,7 @@ export async function deleteSession(sql, token) {
 
 export async function authenticateCredentials(sql, identifier, password, { role = null } = {}) {
   const normalizedIdentifier = String(identifier ?? '').trim();
+  const normalizedEmail = normalizedIdentifier.toLowerCase();
 
   if (!normalizedIdentifier || !password) {
     return null;
@@ -248,6 +249,7 @@ export async function authenticateCredentials(sql, identifier, password, { role 
     SELECT id, username, password_hash, role, COALESCE(is_admin, FALSE) AS is_admin
     FROM users
     WHERE username = ${normalizedIdentifier}
+      OR LOWER(email) = ${normalizedEmail}
     LIMIT 1
   `;
 

@@ -293,6 +293,24 @@ const form = document.querySelector('#name-form');
         return link;
       }
 
+      function createRelatedWordsMembershipNotice(name) {
+        const notice = document.createElement('div');
+        notice.className = 'alert alert-info mt-2 mb-0';
+
+        const title = document.createElement('strong');
+        title.textContent = 'Related word search is a member feature.';
+        const details = document.createElement('p');
+        details.className = 'mb-2';
+        details.textContent = `Join with a free or premium membership to view related words for ${name}.`;
+        const cta = document.createElement('a');
+        cta.className = 'btn btn-sm btn-primary';
+        cta.href = '/member.html#registerForm';
+        cta.textContent = 'Unlock with Free or Premium Membership';
+
+        notice.append(title, document.createElement('br'), details, cta);
+        return notice;
+      }
+
       function dedupeRelatedWords(name, relationships) {
         const seen = new Set();
         return relationships
@@ -468,7 +486,9 @@ View results: ${shareUrl}`.trim(),
         relatedHeading.textContent = 'Related words';
         relatedSection.appendChild(relatedHeading);
 
-        if (!relationships.length) {
+        if (result.relatedLocked) {
+          relatedSection.appendChild(createRelatedWordsMembershipNotice(name));
+        } else if (!relationships.length) {
           const empty = document.createElement('p');
           empty.className = 'empty';
           empty.textContent = 'No related words found.';
@@ -508,6 +528,10 @@ View results: ${shareUrl}`.trim(),
       async function fetchNameResult(name) {
         try {
           const gematria = await requestGematria(name);
+
+          if (!memberSession?.authenticated) {
+            return { gematria, related: null, relatedLocked: true };
+          }
 
           try {
             const related = await requestRelatedWords(name.toLowerCase(), getFullRelatedWordLimit());

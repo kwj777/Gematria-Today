@@ -26,6 +26,10 @@
       .report-card-button:hover,
       .report-card-button:focus-visible { border-color: rgba(255,255,255,0.72); transform: translateY(-1px); box-shadow: 0 0 0 0.2rem rgba(143, 182, 255, 0.32); }
       .muted-label { font-size: 0.85rem; color: #cfd6e3; text-transform: uppercase; letter-spacing: .05em; }
+      .funnel-card { border: 1px solid rgba(255,255,255,0.28); border-radius: .75rem; background: #2f3542; }
+      .funnel-stage { min-height: 100%; }
+      .funnel-arrow { font-size: 1.35rem; color: #aeb8c8; display: flex; align-items: center; justify-content: center; }
+      .funnel-rate { color: #cfd6e3; font-size: .85rem; }
     </style>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -56,9 +60,12 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
               <select id="windowSelect" class="form-select form-select-sm" aria-label="Reporting window">
-                <option value="7">Last 7 days</option>
+                <option value="1">Daily (24h)</option>
+                <option value="7">Weekly (7d)</option>
                 <option value="30" selected>Last 30 days</option>
+                <option value="60">Last 60 days</option>
                 <option value="90">Last 90 days</option>
+                <option value="365">Yearly (365d)</option>
               </select>
               <button id="refreshButton" class="btn btn-primary btn-sm" type="button">Refresh</button>
               <a class="btn btn-outline-light btn-sm" href="/admin.html">Back to admin</a>
@@ -92,6 +99,11 @@
             </div>
           </div>
         </div>
+
+        <section class="content-panel p-4">
+          <h2 class="h4 mb-3">Visitor-to-member conversion funnel</h2>
+          <div id="conversionFunnel" class="d-grid gap-3"></div>
+        </section>
 
         <section class="content-panel p-4">
           <h2 class="h4 mb-3">Membership and publishing trends</h2>
@@ -311,6 +323,64 @@
         `).join('');
       }
 
+      function renderConversionFunnel(funnel) {
+        const target = document.getElementById('conversionFunnel');
+        if (!funnel) {
+          target.innerHTML = '<p class="text-muted small mb-0">No conversion funnel data available.</p>';
+          return;
+        }
+
+        const visitors = Number(funnel.uniqueVisitors || 0);
+        const freeMembers = Number(funnel.freeMemberships || 0);
+        const premiumMembers = Number(funnel.premiumConversions || 0);
+        const visitorBase = Math.max(visitors, 1);
+        const freeBase = Math.max(freeMembers, 1);
+        const visitorsToFreeRate = Number(funnel.visitorsToFreeRate || 0);
+        const freeToPremiumRate = Number(funnel.freeToPremiumRate || 0);
+
+        const stepWidth = (value, base) => Math.max(8, Math.round((Math.max(value, 0) / Math.max(base, 1)) * 100));
+
+        target.innerHTML = `
+          <p class="small text-muted mb-0">Window: <strong>${escapeHtml(funnel.windowLabel || `Last ${state.days} days`)}</strong></p>
+          <div class="row g-3 align-items-stretch">
+            <div class="col-lg-4">
+              <article class="funnel-card funnel-stage p-3 h-100">
+                <p class="muted-label mb-1">Step 1</p>
+                <h3 class="h6 mb-2">Unique visitors</h3>
+                <p class="h4 mb-2">${formatNumber(visitors)}</p>
+                <div class="progress report-bar" role="img" aria-label="Unique visitors ${visitors}">
+                  <div class="progress-bar" style="width: ${stepWidth(visitors, visitorBase)}%"></div>
+                </div>
+              </article>
+            </div>
+            <div class="col-lg-1 d-none d-lg-flex funnel-arrow">→</div>
+            <div class="col-lg-3">
+              <article class="funnel-card funnel-stage p-3 h-100">
+                <p class="muted-label mb-1">Step 2</p>
+                <h3 class="h6 mb-2">Converted to free membership</h3>
+                <p class="h4 mb-2">${formatNumber(freeMembers)}</p>
+                <div class="progress report-bar mb-2" role="img" aria-label="Free memberships ${freeMembers}">
+                  <div class="progress-bar bg-success" style="width: ${stepWidth(freeMembers, visitorBase)}%"></div>
+                </div>
+                <p class="funnel-rate mb-0">Visitor → Free: <strong>${visitorsToFreeRate.toFixed(2)}%</strong></p>
+              </article>
+            </div>
+            <div class="col-lg-1 d-none d-lg-flex funnel-arrow">→</div>
+            <div class="col-lg-3">
+              <article class="funnel-card funnel-stage p-3 h-100">
+                <p class="muted-label mb-1">Step 3</p>
+                <h3 class="h6 mb-2">Free members converted to premium</h3>
+                <p class="h4 mb-2">${formatNumber(premiumMembers)}</p>
+                <div class="progress report-bar mb-2" role="img" aria-label="Premium conversions ${premiumMembers}">
+                  <div class="progress-bar bg-warning text-dark" style="width: ${stepWidth(premiumMembers, freeBase)}%"></div>
+                </div>
+                <p class="funnel-rate mb-0">Free → Premium: <strong>${freeToPremiumRate.toFixed(2)}%</strong></p>
+              </article>
+            </div>
+          </div>
+        `;
+      }
+
       function renderReports(reports) {
         renderOverviewCards(reports.overview);
         renderBars('signupTrend', reports.memberSignupsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
@@ -319,6 +389,7 @@
         renderBars('taskBreakdown', reports.taskStatusBreakdown, 'total', 'status');
         renderBars('topTags', reports.topTags.map((row) => ({ ...row, tag: `#${row.tag}` })), 'total', 'tag');
         renderCoverage(reports);
+        renderConversionFunnel(reports.conversionFunnel);
         renderSecurityEvents(reports.securityEvents);
 
         const generated = new Date(reports.generatedAt).toLocaleString();

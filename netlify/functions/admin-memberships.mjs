@@ -1,11 +1,10 @@
-import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
+import { getAuthenticatedUser, jsonResponse, parseBody, requireHttpMethod } from './_admin.mjs';
 import { activateYearlyMembership, ensureMemberProfile, ensureMemberSchema, findMemberByEmail } from './_member.mjs';
 import { logRequestAudit } from './_security.mjs';
 
 export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
+  const methodError = requireHttpMethod(event, 'POST');
+  if (methodError) return methodError;
 
   try {
     const { sql, user } = await getAuthenticatedUser(event);

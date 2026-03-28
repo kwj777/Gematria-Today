@@ -302,6 +302,27 @@ export async function getAuthenticatedUser(event, { requireAuth = true } = {}) {
   });
 }
 
+export function methodNotAllowedResponse() {
+  return jsonResponse(405, { error: 'Method not allowed' });
+}
+
+export function requireHttpMethod(event, ...allowedMethods) {
+  const methods = allowedMethods.flat().map((method) => String(method || '').toUpperCase()).filter(Boolean);
+  if (!methods.includes(String(event?.httpMethod || '').toUpperCase())) {
+    return methodNotAllowedResponse();
+  }
+  return null;
+}
+
+export async function routeByHttpMethod(event, handlers = {}, { methodNotAllowed = methodNotAllowedResponse } = {}) {
+  const method = String(event?.httpMethod || '').toUpperCase();
+  const handler = handlers[method];
+  if (!handler) {
+    return methodNotAllowed();
+  }
+  return handler();
+}
+
 export function formatPost(row) {
   const tagValue = String(row.tag ?? '').trim();
   const tags = tagValue

@@ -1,16 +1,16 @@
 import crypto from 'node:crypto';
-import { formatFaq, getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
+import { formatFaq, getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMethod } from './_admin.mjs';
 
 export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
-
-    if (event.httpMethod === 'GET') {
+    return routeByHttpMethod(event, {
+      GET: async () => {
       const rows = await sql`SELECT * FROM faqs ORDER BY sort_order ASC, created_at ASC`;
       return jsonResponse(200, { items: rows.map(formatFaq) });
-    }
+      },
 
-    if (event.httpMethod === 'POST') {
+      POST: async () => {
       const body = parseBody(event);
       const question = String(body.question ?? '').trim();
       const answer = String(body.answer ?? '').trim();
@@ -32,9 +32,9 @@ export async function handler(event) {
         RETURNING *
       `;
       return jsonResponse(201, { item: formatFaq(rows[0]) });
-    }
+      },
 
-    if (event.httpMethod === 'PUT') {
+      PUT: async () => {
       const body = parseBody(event);
       const id = String(body.id ?? '').trim();
       const question = String(body.question ?? '').trim();
@@ -62,18 +62,17 @@ export async function handler(event) {
       }
 
       return jsonResponse(200, { item: formatFaq(rows[0]) });
-    }
+      },
 
-    if (event.httpMethod === 'DELETE') {
+      DELETE: async () => {
       const id = event.queryStringParameters?.id;
       if (!id) {
         return jsonResponse(400, { error: 'Missing FAQ id' });
       }
       await sql`DELETE FROM faqs WHERE id = ${id}`;
       return jsonResponse(200, { deleted: true });
-    }
-
-    return jsonResponse(405, { error: 'Method not allowed' });
+      },
+    });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'FAQ request failed' });
   }

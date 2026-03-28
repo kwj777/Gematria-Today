@@ -1,4 +1,4 @@
-import { getAuthenticatedUser, jsonResponse } from './_admin.mjs';
+import { getAuthenticatedUser, jsonResponse, requireHttpMethod } from './_admin.mjs';
 import { ensureMemberSchema } from './_member.mjs';
 
 const ALLOWED_WINDOWS = new Set([7, 30, 90]);
@@ -24,9 +24,8 @@ function toIsoDate(value) {
 }
 
 export async function handler(event) {
-  if (event.httpMethod !== 'GET') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
+  const methodError = requireHttpMethod(event, 'GET');
+  if (methodError) return methodError;
 
   try {
     const url = new URL(event.rawUrl || `https://endtimes.today${event.path}${event.rawQuery ? `?${event.rawQuery}` : ''}`);

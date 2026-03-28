@@ -1,10 +1,9 @@
 import { AUTH_COOKIES, clearSessionCookie, deleteSession, jsonResponse } from './_auth.mjs';
-import { getAuthenticatedUser } from './_admin.mjs';
+import { getAuthenticatedUser, requireHttpMethod } from './_admin.mjs';
 
 export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
+  const methodError = requireHttpMethod(event, 'POST');
+  if (methodError) return methodError;
 
   try {
     const { sql, sessionToken } = await getAuthenticatedUser(event, { requireAuth: false });

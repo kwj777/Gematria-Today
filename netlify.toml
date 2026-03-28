@@ -48,6 +48,10 @@
 [functions."member-prune-unverified"]
   schedule = "*/15 * * * *"
 
+
+[functions."security-retention"]
+  schedule = "0 * * * *"
+
 [[headers]]
   for = "/sw.js"
   [headers.values]

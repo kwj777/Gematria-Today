@@ -84,6 +84,7 @@ The serverless layer now includes:
 - per-IP and per-account rate limiting stored in Postgres
 - response caching for high-volume public endpoints
 - request audit logging with request fingerprints
+- periodic retention cleanup for request logs and cache rows
 - endpoint-level load-shedding flags for expensive public routes
 - fetch timeouts for Wordnik and Stripe requests
 - stricter response security headers for the site and API routes
@@ -104,6 +105,14 @@ Set these in Netlify to tune protection behavior:
 - `DISABLE_EXPENSIVE_PUBLIC_ENDPOINTS=true` to disable expensive anonymous endpoints
 - `WORDNIK_TIMEOUT_MS=5000` to control Wordnik fetch timeouts
 - `STRIPE_TIMEOUT_MS=5000` to control Stripe fetch timeouts
+- `REQUEST_AUDIT_LOG_RETENTION_DAYS=30` to retain request audit rows for a fixed window
+- `FUNCTION_RESPONSE_CACHE_GRACE_DAYS=2` to keep expired cache rows briefly before cleanup
+- `REQUEST_RATE_LIMIT_RETENTION_DAYS=7` to prune stale rate-limit records
+- `ALERT_MEMBER_LOGIN_SPIKE_5M=40` for login spike alerts in admin reports
+- `ALERT_MEMBER_REGISTER_SPIKE_5M=20` for register spike alerts in admin reports
+- `ALERT_PUBLIC_FEEDS_SPIKE_5M=60` for expensive public feeds spike alerts
+- `ALERT_WORDNIK_DEFINITION_SPIKE_5M=120` for definition endpoint spike alerts
+- `ALERT_WORDNIK_RELATED_WORDS_SPIKE_5M=80` for related words endpoint spike alerts
 - `TURNSTILE_SECRET_KEY=...` if you want auth flows to require and verify a client-side anti-bot challenge token against Cloudflare Turnstile
 - `TURNSTILE_EXPECTED_HOSTNAME=...` to pin Turnstile verification to a specific hostname instead of deriving it from the incoming request host header
 - `SENDGRID_API_KEY=...` to enable transactional email delivery for admin/member account recovery
@@ -112,6 +121,13 @@ Set these in Netlify to tune protection behavior:
 - `SENDGRID_REPLY_TO_EMAIL=...` optional reply-to address for recovery emails
 - `PUBLIC_SITE_URL=https://example.com` optional canonical site URL used in recovery email links
 - `ADMIN_EMAIL=...` bootstrap admin email address needed for admin username recovery
+
+
+### Dashboards, alerts, and high alert operations
+
+- `admin-reports` now includes a `trafficAlerts` dashboard payload that highlights spike conditions for `/api/member-login`, `/api/member-register`, and expensive public endpoints.
+- A scheduled `security-retention` function runs hourly to enforce DB retention for `request_audit_log`, `function_response_cache`, and stale `request_rate_limits` rows.
+- Runbook + rehearsal checklist: [`docs-high-alert-mode-runbook.md`](./docs-high-alert-mode-runbook.md).
 
 ### Edge protection still required
 

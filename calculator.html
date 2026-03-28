@@ -16,7 +16,6 @@
     <script src="/conversion-tracking.js"></script>
   </head>
   <body>
-    <div id="calculator-loading-overlay" class="calculator-loading-overlay" role="status" aria-live="polite"><p class="calculator-loading-overlay__message">getting your results :)</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -83,22 +82,14 @@ const lookupForm = document.querySelector('#lookup-form');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
-      const calculatorLoadingOverlay = document.querySelector('#calculator-loading-overlay');
-      let overlayRequestCount = 1;
       let shareStatusTimeout = null;
 
       function showCalculatorLoadingOverlay() {
-        overlayRequestCount += 1;
-        if (calculatorLoadingOverlay) {
-          calculatorLoadingOverlay.hidden = false;
-        }
+        window.showWorkingOverlay?.();
       }
 
       function hideCalculatorLoadingOverlay() {
-        overlayRequestCount = Math.max(0, overlayRequestCount - 1);
-        if (overlayRequestCount === 0 && calculatorLoadingOverlay) {
-          calculatorLoadingOverlay.hidden = true;
-        }
+        window.hideWorkingOverlay?.();
       }
 
       function setShareStatus(message) {
@@ -771,7 +762,6 @@ View results: ${shareUrl}`.trim(),
 
       lookupForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        showCalculatorLoadingOverlay();
 
         const term = lookupInput.value.trim();
         window.endTimesTracking?.track('calculator_usage_start', {
@@ -784,6 +774,7 @@ View results: ${shareUrl}`.trim(),
           relatedWordsResult.innerHTML = '';
           return;
         }
+        showCalculatorLoadingOverlay();
 
         lookupStatus.textContent = memberSession?.authenticated
           ? 'Searching for gematria and related words...'
@@ -910,6 +901,7 @@ View results: ${shareUrl}`.trim(),
       });
 
       window.addEventListener('DOMContentLoaded', async () => {
+        showCalculatorLoadingOverlay();
         try {
           await requestMemberSession().catch(() => null);
           updateMemberSaveState();

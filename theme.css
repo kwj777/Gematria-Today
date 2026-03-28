@@ -609,6 +609,48 @@ footer.site-footer {
 }
 
 
+.async-content-shell {
+  position: relative;
+  min-height: 14rem;
+}
+
+.async-content-shell--md {
+  min-height: 18rem;
+}
+
+.async-content-shell--lg {
+  min-height: 24rem;
+}
+
+.async-shell-card {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(53, 65, 79, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
+}
+
+.async-shell-line {
+  display: block;
+  height: 0.85rem;
+  border-radius: 999px;
+}
+
+.async-shell-line--lg {
+  height: 1.35rem;
+}
+
+#blogPosts,
+#blogSidebarLinks,
+#faqAccordion,
+#word-list {
+  min-height: 14rem;
+}
+
+#blogPostsCarouselInner {
+  min-height: 20rem;
+}
+
+
 .admin-auth-card {
   max-width: 38rem;
   margin: 0 auto;

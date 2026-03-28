@@ -4,15 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#355f8c" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
-    <meta name="theme-color" content="#2d547c" />
-<title>EndTimes.Today News</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<title>World News Feed | EndTimes.Today</title>
+    <meta name="description" content="Browse curated world news headlines and source links alongside the EndTimes.Today research workflow." />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://endtimes.today/news.html" />
+    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="World News Feed | EndTimes.Today" />
+    <meta property="og:description" content="Browse curated world news headlines and source links alongside the EndTimes.Today research workflow." />
+    <meta property="og:url" content="https://endtimes.today/news.html" />
+    <meta property="og:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="World News Feed | EndTimes.Today" />
+    <meta name="twitter:description" content="Browse curated world news headlines and source links alongside the EndTimes.Today research workflow." />
+    <meta name="twitter:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="/theme.css" />
     <script src="/ui-feedback.js"></script>
+      <script src="/pwa-register.js" defer></script>
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
@@ -49,11 +64,11 @@
               <p class="lead mb-0">Stay up to date with real-time news pulled from trusted sources across the web. Explore the latest stories, breaking updates, and global events as they happen.</p>
             </div>
             <div class="col-lg-4">
-              <figure class="content-panel hero-media-panel hero-image-frame h-100 mb-0 overflow-hidden news-hero-figure">
+              <figure class="content-panel hero-media-panel hero-image-frame h-100 mb-0 overflow-hidden news-summary-card">
                 <img
-                  class="blog-hero-image"
-                  src="/assets/blog-hero-gematria.svg"
-                  alt="Gematria artwork showing glowing sacred geometry, symbolic numbers, gemstones, a Hebrew manuscript, and scrolls in a cosmic scene."
+                  class="news-hero-image"
+                  src="/assets/news-hero-world.svg"
+                  alt="World news artwork showing a globe, connected world map, city skylines, global landmarks, breaking-news banner, market decline chart, disaster scene, and a cyclone."
                   width="1600"
                   height="1200"
                   loading="eager"

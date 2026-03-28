@@ -4,26 +4,54 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#355f8c" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
-    <meta name="theme-color" content="#2d547c" />
-<title>EndTimes.Today Home</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<title>EndTimes.Today | Gematria Calculator, Name Meaning, News & Blog</title>
+    <meta name="description" content="Use EndTimes.Today to calculate English gematria values, compare names, explore related words, and read curated news and blog insights in one place." />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://endtimes.today/" />
+    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="EndTimes.Today | Gematria Calculator, Name Meaning, News & Blog" />
+    <meta property="og:description" content="Use EndTimes.Today to calculate English gematria values, compare names, explore related words, and read curated news and blog insights in one place." />
+    <meta property="og:url" content="https://endtimes.today/" />
+    <meta property="og:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EndTimes.Today | Gematria Calculator, Name Meaning, News & Blog" />
+    <meta name="twitter:description" content="Use EndTimes.Today to calculate English gematria values, compare names, explore related words, and read curated news and blog insights in one place." />
+    <meta name="twitter:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="/theme.css" />
     <script src="/ui-feedback.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "EndTimes.Today",
+        "url": "https://endtimes.today/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://endtimes.today/calculator.html",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+      <script src="/pwa-register.js" defer></script>
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link active" href="/index.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
             <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
@@ -78,8 +106,8 @@
           </div>
 
           <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-ride="carousel">
-            <div class="carousel-indicators blog-carousel-indicators position-static mb-4"></div>
-            <div class="carousel-inner"></div>
+            <div id="blogPostsCarouselIndicators" class="carousel-indicators blog-carousel-indicators position-static mb-4"></div>
+            <div id="blogPostsCarouselInner" class="carousel-inner"></div>
             <button class="carousel-control-prev" type="button" data-bs-target="#blogPostsCarousel" data-bs-slide="prev">
               <span class="carousel-control-prev-icon" aria-hidden="true"></span>
               <span class="visually-hidden">Previous</span>
@@ -135,76 +163,49 @@
       </div>
     </footer>
     <script>
-      const homeFallbackPosts = [
-        {
-          slug: 'repeating-number-themes',
-          title: 'How to spot repeating number themes across related words',
-          tag: 'Research Workflow',
-          summary: 'A practical guide to grouping words by root idea, comparing totals, and deciding which matches are worth deeper study.',
-          imageUrl: '/assets/three-based-words-patterns-16x9.svg'
-        },
-        {
-          slug: 'matching-name-values',
-          title: 'What to compare when two names share the same gematria value',
-          tag: 'Name Analysis',
-          summary: 'Learn how to move beyond a matching total by checking spelling variants, context, and neighboring word groups.',
-          imageUrl: '/assets/why-english-gematria-relevant-hero-16x9.svg'
-        }
-      ];
-
-      const escapeHtml = (value = '') => String(value)
+      const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
-      const normalizePostImageUrl = (value = '') => {
-        const raw = String(value || '').trim();
-        if (!raw || /\s/.test(raw)) {
+      const normalizePostImageUrl = (value) => {
+        const raw = String(value ?? '').trim();
+        if (!raw) {
           return '';
         }
-        if (/^data:image\//i.test(raw)) {
+        if (raw.startsWith('http://') || raw.startsWith('https://')) {
           return raw;
-        }
-        if (raw.startsWith('//')) {
-          return `https:${raw}`;
-        }
-        const explicitScheme = raw.match(/^([a-z][a-z0-9+.-]*):/i);
-        if (explicitScheme) {
-          const scheme = explicitScheme[1].toLowerCase();
-          return scheme === 'http' || scheme === 'https' ? raw : '';
         }
         return `/${raw.replace(/^\.?\//, '')}`;
       };
 
-      const getPostSlug = (post, index) => {
-        const rawSlug = String(post.slug || '').trim();
-        if (rawSlug) {
-          return rawSlug;
-        }
-        const rawTitle = String(post.title || '').trim().toLowerCase();
-        const slugFromTitle = rawTitle
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-        return slugFromTitle || `post-${index}`;
-      };
+      function renderHomepageSlider(posts) {
+        const normalizedPosts = posts.slice(0, 5);
+        const indicators = document.getElementById('blogPostsCarouselIndicators');
+        const carouselInner = document.getElementById('blogPostsCarouselInner');
 
-      const renderHomeCarousel = (posts = []) => {
-        const normalizedPosts = posts
-          .map((post, index) => ({ ...post, slug: getPostSlug(post, index) }))
-          .filter((post) => String(post.title || '').trim());
         if (!normalizedPosts.length) {
+          indicators.innerHTML = '';
+          carouselInner.innerHTML = `
+            <div class="carousel-item active">
+              <article class="blog-slide-card p-4 p-lg-5">
+                <span class="badge text-bg-secondary mb-3">Blog</span>
+                <h3 class="mb-3">No blog posts are currently selected for the home slider.</h3>
+                <p class="text-muted mb-4">Check the "Show this post in the home page slider" box on a published blog post to feature it here.</p>
+                <a class="btn btn-outline-primary" href="/blog.html">Browse all blog posts</a>
+              </article>
+            </div>
+          `;
           return;
         }
 
-        const indicatorsNode = document.querySelector('#blogPostsCarousel .carousel-indicators');
-        const innerNode = document.querySelector('#blogPostsCarousel .carousel-inner');
-        indicatorsNode.innerHTML = normalizedPosts.map((_, index) => (
-          `<button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}" ${index === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${index + 1}"></button>`
-        )).join('');
+        indicators.innerHTML = normalizedPosts.map((post, index) => `
+          <button type="button" data-bs-target="#blogPostsCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}" ${index === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${index + 1}"></button>
+        `).join('');
 
-        innerNode.innerHTML = normalizedPosts.map((post, index) => {
+        carouselInner.innerHTML = normalizedPosts.map((post, index) => {
           const slug = String(post.slug || `post-${index}`).trim();
           const heroImageUrl = normalizePostImageUrl(post.sliderImageUrl || post.imageUrl) || '/assets/blog-hero-gematria.svg';
           return `
@@ -212,7 +213,7 @@
               <article class="blog-slide-card p-4 p-lg-5">
                 <a href="/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}" class="d-block text-decoration-none" aria-label="Read ${escapeHtml(post.title || 'featured post')}" title="${escapeHtml(post.title || 'Read this featured post')}" rel="bookmark">
                   <figure class="blog-slide-image-frame mb-0">
-                      <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title)} hero image" loading="lazy" decoding="async" />
+                      <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title || 'Featured post')} hero image" loading="lazy" decoding="async" />
                       <figcaption class="blog-slide-cta">
                         <span class="btn btn-warning fw-semibold" aria-hidden="true">Read</span>
                       </figcaption>
@@ -222,27 +223,23 @@
             </div>
           `;
         }).join('');
-      };
+      }
 
-      const fetchFeaturedHomepagePosts = async () => {
-        const response = await fetch('/api/public-posts?featured=true&limit=6');
+      renderHomepageSlider([]);
+
+      const fetchFeaturedPosts = async () => {
+        const response = await fetch('/api/public-posts?featured=true&limit=5');
         if (!response.ok) {
           throw new Error('Failed to load featured posts');
         }
-        const payload = await response.json();
-        return Array.isArray(payload?.items) ? payload.items : [];
+        return response.json();
       };
 
-      renderHomeCarousel(homeFallbackPosts);
       Promise.race([
-        fetchFeaturedHomepagePosts(),
+        fetchFeaturedPosts(),
         new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
       ])
-        .then((posts) => {
-          if (posts.length) {
-            renderHomeCarousel(posts);
-          }
-        })
+        .then((payload) => renderHomepageSlider(payload?.items || []))
         .catch(() => {});
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

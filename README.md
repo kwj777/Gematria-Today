@@ -32,6 +32,17 @@ A web-based Gematria calculator application built with HTML, CSS, JavaScript, an
 └── use-gematria.js
 ```
 
+## Page source of truth
+
+Deployable pages live in `public/` and are the canonical source.
+
+Root-level mirrored files (`index.html`, `calculator.html`, etc.) are generated from `public/` for compatibility and should not be edited manually.
+
+- `npm run sync-root-pages` updates root mirrors from `public/`.
+- `npm run check-root-pages` fails if any mirrored root file diverges.
+
+A GitHub Actions workflow runs the mirror check on pushes and pull requests.
+
 ## Lines of Code
 
 The repository contains approximately **6,350 lines of source code** across HTML, CSS, JavaScript/MJS, SQL, TOML, and JSON files.

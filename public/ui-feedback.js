@@ -7,6 +7,7 @@
 
   const SHOW_DELAY_MS = 200;
   let pendingRequests = 0;
+  let manualRequests = 0;
   let showTimer = null;
 
   function ensureOverlay() {
@@ -44,6 +45,10 @@
     overlay.classList.remove('global-loading-overlay--visible');
   }
 
+  function hasPendingWork() {
+    return pendingRequests + manualRequests > 0;
+  }
+
   function startLoading() {
     pendingRequests += 1;
     if (pendingRequests === 1) {
@@ -57,7 +62,7 @@
 
   function stopLoading() {
     pendingRequests = Math.max(0, pendingRequests - 1);
-    if (pendingRequests > 0) {
+    if (hasPendingWork()) {
       return;
     }
 
@@ -65,6 +70,18 @@
     showTimer = null;
     hideOverlay();
   }
+
+  window.showWorkingOverlay = function showWorkingOverlay() {
+    manualRequests += 1;
+    showOverlay();
+  };
+
+  window.hideWorkingOverlay = function hideWorkingOverlay() {
+    manualRequests = Math.max(0, manualRequests - 1);
+    if (!hasPendingWork()) {
+      hideOverlay();
+    }
+  };
 
   const nativeFetch = window.fetch.bind(window);
 

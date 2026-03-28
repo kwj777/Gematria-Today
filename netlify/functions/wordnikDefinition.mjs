@@ -8,12 +8,8 @@ function toResponse(statusCode, payload, contentType = "application/json; charse
   });
 }
 
-function toNetlifyResponse(statusCode, payload) {
-  return {
-    statusCode,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-    body: JSON.stringify(payload),
-  };
+function toNetlifyResponse(statusCode, payload, extraHeaders = {}) {
+  return secureJsonResponse(statusCode, payload, extraHeaders);
 }
 
 function extractWordFromEvent(event) {
@@ -443,7 +439,7 @@ export default async function onRequest(request) {
     return isHtmlRequest(request)
       ? toResponse(200, renderDefinitionPage(payload, { calculatorPath }), 'text/html; charset=utf-8')
       : toResponse(200, payload, 'application/json; charset=utf-8');
-  } catch {
+  } catch (error) {
     const statusCode = getStatusCode(error);
     return isHtmlRequest(request)
       ? toResponse(statusCode, `<!doctype html><title>Error</title><p>${escapeHtml(error.message)}</p>`, 'text/html; charset=utf-8')
@@ -483,7 +479,7 @@ export async function handler(event) {
       'cache-control': 'public, max-age=600, stale-while-revalidate=120',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
-  } catch {
+  } catch (error) {
     return secureJsonResponse(getStatusCode(error), { error: error.message }, error.headers || {});
   }
 }

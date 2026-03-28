@@ -30,6 +30,8 @@
       .funnel-stage { min-height: 100%; }
       .funnel-arrow { font-size: 1.35rem; color: #aeb8c8; display: flex; align-items: center; justify-content: center; }
       .funnel-rate { color: #cfd6e3; font-size: .85rem; }
+      .on-dark-muted { color: #d9e3f3 !important; }
+      .on-light-muted { color: #4a5970 !important; }
     </style>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -62,7 +64,7 @@
             <div>
               <p class="section-kicker mb-2">Back Office Analytics</p>
               <h1 class="display-6 fw-bold mb-2">Reports dashboard</h1>
-              <p id="metaLine" class="text-muted mb-0">Checking admin session…</p>
+              <p id="metaLine" class="on-dark-muted mb-0">Checking admin session…</p>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <select id="windowSelect" class="form-select form-select-sm" aria-label="Reporting window">
@@ -94,7 +96,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
-                <p id="overviewDetailMeta" class="text-secondary small mb-3"></p>
+                <p id="overviewDetailMeta" class="on-dark-muted small mb-3"></p>
                 <div class="table-responsive">
                   <table class="table table-dark table-striped table-sm align-middle mb-0">
                     <thead id="overviewDetailHead"></thead>
@@ -205,7 +207,7 @@
       function renderBars(targetId, rows, valueField, labelField) {
         const target = document.getElementById(targetId);
         if (!rows || !rows.length) {
-          target.innerHTML = '<p class="text-muted small mb-0">No data available for this window.</p>';
+          target.innerHTML = '<p class="on-light-muted small mb-0">No data available for this window.</p>';
           return;
         }
         const maxValue = Math.max(...rows.map((row) => Number(row[valueField] || 0)), 1);
@@ -279,7 +281,7 @@
         document.getElementById('overviewDetailHead').innerHTML = `<tr>${columns.map(([header]) => `<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr>`;
         document.getElementById('overviewDetailBody').innerHTML = rows.length
           ? rows.map((row) => `<tr>${columns.map(([, field]) => `<td>${escapeHtml(formatCellValue(field, row[field]))}</td>`).join('')}</tr>`).join('')
-          : `<tr><td colspan="${columns.length || 1}" class="text-secondary">No detail rows available.</td></tr>`;
+          : `<tr><td colspan="${columns.length || 1}" class="on-dark-muted">No detail rows available.</td></tr>`;
 
         const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('overviewDetailModal'));
         modal.show();
@@ -332,7 +334,7 @@
         target.innerHTML = visibleRows.map((event) => `
           <article class="border rounded p-2">
             <p class="small mb-1"><strong>${event.route}</strong> · ${event.action}</p>
-            <p class="small text-muted mb-0">${new Date(event.createdAt).toLocaleString()} · ${event.outcome}</p>
+            <p class="small on-light-muted mb-0">${new Date(event.createdAt).toLocaleString()} · ${event.outcome}</p>
           </article>
         `).join('');
       }
@@ -340,7 +342,7 @@
       function renderConversionFunnel(funnel) {
         const target = document.getElementById('conversionFunnel');
         if (!funnel) {
-          target.innerHTML = '<p class="text-muted small mb-0">No conversion funnel data available.</p>';
+          target.innerHTML = '<p class="on-light-muted small mb-0">No conversion funnel data available.</p>';
           return;
         }
 
@@ -355,7 +357,7 @@
         const stepWidth = (value, base) => Math.max(8, Math.round((Math.max(value, 0) / Math.max(base, 1)) * 100));
 
         target.innerHTML = `
-          <p class="small text-muted mb-0">Window: <strong>${escapeHtml(funnel.windowLabel || `Last ${state.days} days`)}</strong></p>
+          <p class="small on-light-muted mb-0">Window: <strong>${escapeHtml(funnel.windowLabel || `Last ${state.days} days`)}</strong></p>
           <div class="row g-3 align-items-stretch">
             <div class="col-lg-4">
               <article class="funnel-card funnel-stage p-3 h-100">

@@ -8,13 +8,12 @@ import {
   parseBody,
   verifyTurnstileToken,
 } from './_auth.mjs';
-import { authenticateCredentials, getSqlClient } from './_admin.mjs';
+import { authenticateCredentials, getSqlClient, requireHttpMethod } from './_admin.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
 export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
+  const methodError = requireHttpMethod(event, 'POST');
+  if (methodError) return methodError;
 
   try {
     const sql = getSqlClient();

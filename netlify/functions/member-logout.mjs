@@ -13,7 +13,7 @@ export async function handler(event) {
     }
 
     return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
-  } catch (error) {
-    return jsonResponse(500, { error: error.message || 'Failed to sign out' }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
+  } catch {
+    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
   }
 }

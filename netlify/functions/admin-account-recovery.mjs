@@ -12,7 +12,7 @@ import {
   parseBody,
   verifyTurnstileToken,
 } from './_auth.mjs';
-import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
+import { ensureAdminSchema, requireHttpMethod, syncBootstrapAdminUser } from './_admin.mjs';
 import { sendRecoveryEmail } from './_email.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -25,9 +25,8 @@ function normalizeIdentifier(value) {
 }
 
 export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
+  const methodError = requireHttpMethod(event, 'POST');
+  if (methodError) return methodError;
 
   try {
     const sql = getSqlClient();

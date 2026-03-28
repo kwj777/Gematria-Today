@@ -1,11 +1,9 @@
 import { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, jsonResponse } from './_auth.mjs';
-import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
-import { getAuthenticatedUser } from './_admin.mjs';
+import { ensureAdminSchema, getAuthenticatedUser, requireHttpMethod, syncBootstrapAdminUser } from './_admin.mjs';
 
 export async function handler(event) {
-  if (event.httpMethod !== 'GET') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
+  const methodError = requireHttpMethod(event, 'GET');
+  if (methodError) return methodError;
 
   try {
     const { user } = await getAuthenticatedUser(event);

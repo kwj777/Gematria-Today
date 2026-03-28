@@ -6,7 +6,8 @@
     "test": "node --test tests/*.test.mjs",
     "count-lines": "find . -not -path './.git/*' -not -path './node_modules/*' -type f \\( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.mjs' -o -name '*.sql' -o -name '*.toml' -o -name '*.json' \\) -print0 | xargs -0 wc -l",
     "sync-root-pages": "node scripts/sync-root-pages.mjs --write",
-    "check-root-pages": "node scripts/sync-root-pages.mjs --check"
+    "check-root-pages": "node scripts/sync-root-pages.mjs --check",
+    "audit:accessibility": "node scripts/accessibility-audit.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0"

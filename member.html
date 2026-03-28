@@ -16,6 +16,7 @@
     <script src="/conversion-tracking.js"></script>
   </head>
   <body>
+    <div id="memberPageLoadingOverlay" class="calculator-loading-overlay" role="status" aria-live="polite"><p class="calculator-loading-overlay__message">Loading membership...</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -365,8 +366,7 @@
       let showAllHistoryItems = false;
       let paymentConfirmationInFlight = false;
       let membershipHeroReady = false;
-      const PAGE_LOAD_OVERLAY_DELAY_MS = 500;
-      let pageLoadOverlayTimer = null;
+      const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
 
 
       function ensureWorkingOverlay() {
@@ -405,16 +405,16 @@
       }
 
       function schedulePageLoadOverlay() {
-        window.clearTimeout(pageLoadOverlayTimer);
-        pageLoadOverlayTimer = window.setTimeout(() => {
-          showWorkingOverlay();
-        }, PAGE_LOAD_OVERLAY_DELAY_MS);
+        if (memberPageLoadingOverlay) {
+          memberPageLoadingOverlay.hidden = false;
+        }
       }
 
       function completePageLoadOverlay() {
-        window.clearTimeout(pageLoadOverlayTimer);
-        pageLoadOverlayTimer = null;
         hideWorkingOverlay();
+        if (memberPageLoadingOverlay) {
+          memberPageLoadingOverlay.hidden = true;
+        }
       }
 
       function showAlert(message, tone = 'danger') {

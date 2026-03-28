@@ -34,6 +34,12 @@
       <script src="/pwa-register.js" defer></script>
   </head>
   <body>
+    <div id="adminReportsLoadingOverlay" class="admin-render-overlay" role="status" aria-live="polite" aria-label="Loading admin reports">
+      <div class="admin-render-overlay__card">
+        <div class="spinner-border text-primary" role="presentation" aria-hidden="true"></div>
+        <p class="mb-0 fw-semibold">Loading admin reports…</p>
+      </div>
+    </div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -159,6 +165,14 @@
 
     <script>
       const state = { reports: null, days: 30, user: null };
+      const adminReportsLoadingOverlay = document.getElementById('adminReportsLoadingOverlay');
+      let reportsBootstrapped = false;
+
+      function hideAdminReportsLoadingOverlay() {
+        if (adminReportsLoadingOverlay) {
+          adminReportsLoadingOverlay.classList.add('d-none');
+        }
+      }
 
       function showError(message) {
         const target = document.getElementById('errorMessage');
@@ -411,6 +425,11 @@
         } catch (error) {
           showError(`${error.message}. Visit Admin to sign in, then return here.`);
           document.getElementById('metaLine').textContent = 'Not authenticated or unable to load report data.';
+        } finally {
+          if (!reportsBootstrapped) {
+            hideAdminReportsLoadingOverlay();
+            reportsBootstrapped = true;
+          }
         }
       }
 

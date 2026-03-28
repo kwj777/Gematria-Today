@@ -29,6 +29,7 @@
     <link rel="preload" as="image" href="/assets/endtimes-logo-navbar.svg" type="image/svg+xml" fetchpriority="high" />
     <link rel="preload" as="image" href="/assets/endtimes-selling-points.svg" type="image/svg+xml" fetchpriority="high" />
     <script src="/ui-feedback.js"></script>
+    <script src="/conversion-tracking.js"></script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -74,11 +75,11 @@
         <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
           <div class="row align-items-center g-4">
             <div class="col-lg-7">
-              <h1 class="display-4 fw-bold mb-3">Explore words, names, and news in one workspace.</h1>
-              <p class="lead mb-4">Find connections fast.</p>
+              <h1 id="homeHeroTitle" class="display-4 fw-bold mb-3">Explore words, names, and news in one workspace.</h1>
+              <p id="homeHeroLead" class="lead mb-4">Find connections fast.</p>
               <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-warning btn-lg" href="/member.html#authSection">Join FREE</a>
-                <a class="btn btn-outline-light btn-lg" href="/calculator.html">Open Calculator</a>
+                <a id="homeJoinCta" class="btn btn-warning btn-lg" href="/member.html#authSection">Join FREE</a>
+                <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg" href="/calculator.html">Open Calculator</a>
               </div>
             </div>
             <div class="col-lg-5">
@@ -136,6 +137,19 @@
           <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Share</div><div class="metric-value text-info">Insights</div><p class="mb-0 text-muted">Share your gematria findings with clear, linkable result pages that make patterns, comparisons, and key takeaways easy to revisit.</p></div></div>
         </section>
 
+
+
+        <section class="content-panel p-4 p-lg-5 mb-5">
+          <p class="section-kicker mb-2">Conversion Path</p>
+          <h2 class="mb-3">Follow the fastest path from first lookup to premium research.</h2>
+          <p class="text-muted mb-4">This CTA ladder keeps every next step visible so visitors can move from one action to the next without guessing.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary" data-cta-ladder-step="calculator" href="/calculator.html">1) Use calculator</a>
+            <a class="btn btn-outline-primary" data-cta-ladder-step="save-history" href="/member.html#registerForm">2) Save history (free account)</a>
+            <a class="btn btn-outline-primary" data-cta-ladder-step="dashboard" href="/member.html#dashboardSection">3) Open dashboard</a>
+            <a class="btn btn-warning" data-cta-ladder-step="premium-research" href="/premium-research.html">4) Unlock premium research</a>
+          </div>
+        </section>
         <section class="content-panel p-4 p-lg-5 mb-5">
           <div class="row g-4 align-items-center">
             <div class="col-lg-6">
@@ -245,6 +259,76 @@
         }
         return response.json();
       };
+
+      const homeHeroVariants = [
+        {
+          id: 'A',
+          title: 'Explore words, names, and news in one workspace.',
+          lead: 'Find connections fast.',
+          joinLabel: 'Join FREE',
+          calculatorLabel: 'Open Calculator',
+        },
+        {
+          id: 'B',
+          title: 'Run your first gematria lookup in seconds, then save every insight.',
+          lead: 'Calculate first. Register free to keep your research history.',
+          joinLabel: 'Create Free Account',
+          calculatorLabel: 'Start With Calculator',
+        },
+      ];
+
+      function pickHeroVariant() {
+        const storageKey = 'home_hero_variant';
+        const existing = window.localStorage.getItem(storageKey);
+        const selected = homeHeroVariants.find((variant) => variant.id === existing);
+        if (selected) {
+          return selected;
+        }
+        const next = homeHeroVariants[Math.random() < 0.5 ? 0 : 1];
+        window.localStorage.setItem(storageKey, next.id);
+        return next;
+      }
+
+      function applyHeroVariantTest() {
+        const title = document.getElementById('homeHeroTitle');
+        const lead = document.getElementById('homeHeroLead');
+        const join = document.getElementById('homeJoinCta');
+        const calculator = document.getElementById('homeCalculatorCta');
+        if (!title || !lead || !join || !calculator) {
+          return;
+        }
+
+        const variant = pickHeroVariant();
+        title.textContent = variant.title;
+        lead.textContent = variant.lead;
+        join.textContent = variant.joinLabel;
+        calculator.textContent = variant.calculatorLabel;
+
+        window.endTimesTracking?.track('ab_test_exposure', {
+          experimentId: 'home_top_copy_member_conversion_v1',
+          variantId: variant.id,
+        });
+
+        join.addEventListener('click', () => {
+          window.endTimesTracking?.track('ab_test_conversion_click', {
+            experimentId: 'home_top_copy_member_conversion_v1',
+            variantId: variant.id,
+            ctaTarget: 'member_registration',
+          });
+        });
+      }
+
+      document.querySelectorAll('[data-cta-ladder-step]').forEach((link) => {
+        link.addEventListener('click', () => {
+          window.endTimesTracking?.track('cta_ladder_click', {
+            step: link.dataset.ctaLadderStep,
+            location: 'home_conversion_path',
+            destination: link.getAttribute('href') || '',
+          });
+        });
+      });
+
+      applyHeroVariantTest();
 
       Promise.race([
         fetchFeaturedPosts(),

@@ -1,7 +1,7 @@
 import { getAuthenticatedUser, jsonResponse, requireHttpMethod } from './_admin.mjs';
 import { ensureMemberSchema } from './_member.mjs';
 
-const ALLOWED_WINDOWS = new Set([7, 30, 90]);
+const ALLOWED_WINDOWS = new Set([1, 7, 30, 60, 90, 365]);
 const SECURITY_PROBLEM_OUTCOMES = ['blocked', 'invalid_credentials'];
 const TRAFFIC_SPIKE_WINDOW_MINUTES = 5;
 const TRAFFIC_SPIKE_BASELINE_MINUTES = 60;
@@ -60,6 +60,16 @@ function toIsoDate(value) {
   }
 }
 
+function formatWindowLabel(days) {
+  if (days === 1) return 'Daily (last 24 hours)';
+  if (days === 7) return 'Weekly (last 7 days)';
+  if (days === 30) return 'Last 30 days';
+  if (days === 60) return 'Last 60 days';
+  if (days === 90) return 'Last 90 days';
+  if (days === 365) return 'Yearly (last 365 days)';
+  return `Last ${days} days`;
+}
+
 export async function handler(event) {
   const methodError = requireHttpMethod(event, 'GET');
   if (methodError) return methodError;
@@ -89,7 +99,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -194,6 +204,37 @@ export async function handler(event) {
           AND created_at >= NOW() - (${TRAFFIC_SPIKE_BASELINE_MINUTES} || ' minutes')::interval
         GROUP BY route
       `,
+      sql`
+        WITH conversion_window AS (
+          SELECT NOW() - (${days} || ' days')::interval AS starts_at
+        ),
+        unique_visitors AS (
+          SELECT COUNT(DISTINCT request_fingerprint)::int AS total
+          FROM request_audit_log, conversion_window
+          WHERE created_at >= conversion_window.starts_at
+            AND route NOT LIKE 'admin-%'
+            AND route <> 'security-retention'
+        ),
+        free_memberships AS (
+          SELECT COUNT(*)::int AS total
+          FROM users, conversion_window
+          WHERE role = 'member'
+            AND created_at >= conversion_window.starts_at
+        ),
+        premium_conversions AS (
+          SELECT COUNT(*)::int AS total
+          FROM users, conversion_window
+          WHERE role = 'member'
+            AND membership_level IN ('premium', 'lifetime')
+            AND membership_started_at IS NOT NULL
+            AND membership_started_at >= conversion_window.starts_at
+        )
+        SELECT
+          unique_visitors.total AS unique_visitors,
+          free_memberships.total AS free_memberships,
+          premium_conversions.total AS premium_conversions
+        FROM unique_visitors, free_memberships, premium_conversions
+      `,
     ]);
 
     const overview = overviewRows[0] || {};
@@ -206,6 +247,13 @@ export async function handler(event) {
       currentFiveMinuteCount: Number(trafficSpikeMap.get(config.route)?.current_five_minute_count || 0),
       priorWindowCount: Number(trafficSpikeMap.get(config.route)?.prior_window_count || 0),
     }));
+
+    const conversionFunnel = conversionFunnelRows[0] || {};
+    const uniqueVisitors = Number(conversionFunnel.unique_visitors || 0);
+    const freeMemberships = Number(conversionFunnel.free_memberships || 0);
+    const premiumConversions = Number(conversionFunnel.premium_conversions || 0);
+    const visitorsToFreeRate = uniqueVisitors > 0 ? Number(((freeMemberships / uniqueVisitors) * 100).toFixed(2)) : 0;
+    const freeToPremiumRate = freeMemberships > 0 ? Number(((premiumConversions / freeMemberships) * 100).toFixed(2)) : 0;
 
     return jsonResponse(200, {
       generatedAt: new Date().toISOString(),
@@ -256,6 +304,14 @@ export async function handler(event) {
         baselineMinutes: TRAFFIC_SPIKE_BASELINE_MINUTES,
         hasActiveAlerts: trafficAlerts.some((item) => item.alert),
         items: trafficAlerts,
+      },
+      conversionFunnel: {
+        windowLabel: formatWindowLabel(days),
+        uniqueVisitors,
+        freeMemberships,
+        premiumConversions,
+        visitorsToFreeRate,
+        freeToPremiumRate,
       },
       securityEvents: securityRows.map((row) => ({
         route: row.route,

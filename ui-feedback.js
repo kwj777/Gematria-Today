@@ -44,14 +44,9 @@
     overlay.classList.remove('global-loading-overlay--visible');
   }
 
-  function startLoading({ immediate = false } = {}) {
+  function startLoading() {
     pendingRequests += 1;
     if (pendingRequests === 1) {
-      if (immediate) {
-        showOverlay();
-        return;
-      }
-
       showTimer = window.setTimeout(() => {
         if (pendingRequests > 0) {
           showOverlay();
@@ -82,8 +77,7 @@
       return nativeFetch(input, init);
     }
 
-    const shouldShowImmediately = explicitLoadingSetting === true;
-    startLoading({ immediate: shouldShowImmediately });
+    startLoading();
     return nativeFetch(input, init).finally(stopLoading);
   };
 })();

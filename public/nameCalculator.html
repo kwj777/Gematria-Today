@@ -28,7 +28,7 @@
     <script src="/ui-feedback.js"></script>
   </head>
   <body>
-    <div id="calculator-loading-overlay" class="calculator-loading-overlay" role="status" aria-live="polite" hidden><p class="calculator-loading-overlay__message">getting your results :)</p></div>
+    <div id="calculator-loading-overlay" class="calculator-loading-overlay" role="status" aria-live="polite"><p class="calculator-loading-overlay__message">getting your results :)</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -92,7 +92,7 @@ const form = document.querySelector('#name-form');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
       const calculatorLoadingOverlay = document.querySelector('#calculator-loading-overlay');
-      let overlayRequestCount = 0;
+      let overlayRequestCount = 1;
       const MOBILE_QUERY = '(max-width: 820px), (pointer: coarse)';
       const DISPLAY_RELATED_WORD_LIMIT = 10;
       const FULL_RELATED_WORD_LIMIT = 100;
@@ -651,13 +651,17 @@ View results: ${shareUrl}`.trim(),
       });
 
       window.addEventListener('DOMContentLoaded', async () => {
-        mobileNoteNode.textContent = getDefaultMobileNote();
-        await requestMemberSession().catch(() => null);
-        updateMemberSaveState();
+        try {
+          mobileNoteNode.textContent = getDefaultMobileNote();
+          await requestMemberSession().catch(() => null);
+          updateMemberSaveState();
 
-        const namesFromQuery = populateNamesFromSearchParams();
-        if (namesFromQuery.length) {
-          await renderResults(namesFromQuery);
+          const namesFromQuery = populateNamesFromSearchParams();
+          if (namesFromQuery.length) {
+            await renderResults(namesFromQuery);
+          }
+        } finally {
+          hideCalculatorLoadingOverlay();
         }
       });
       </script>

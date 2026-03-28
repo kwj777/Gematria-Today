@@ -146,6 +146,9 @@ CREATE TABLE IF NOT EXISTS request_rate_limits (
 CREATE INDEX IF NOT EXISTS request_rate_limits_blocked_until_idx
   ON request_rate_limits (blocked_until);
 
+CREATE INDEX IF NOT EXISTS request_rate_limits_last_seen_at_idx
+  ON request_rate_limits (last_seen_at ASC);
+
 CREATE TABLE IF NOT EXISTS function_response_cache (
   cache_key TEXT PRIMARY KEY,
   route TEXT NOT NULL,
@@ -158,6 +161,9 @@ CREATE TABLE IF NOT EXISTS function_response_cache (
 
 CREATE INDEX IF NOT EXISTS function_response_cache_route_expires_idx
   ON function_response_cache (route, expires_at DESC);
+
+CREATE INDEX IF NOT EXISTS function_response_cache_expires_at_idx
+  ON function_response_cache (expires_at ASC);
 
 CREATE TABLE IF NOT EXISTS request_audit_log (
   id TEXT PRIMARY KEY,
@@ -172,6 +178,9 @@ CREATE TABLE IF NOT EXISTS request_audit_log (
 
 CREATE INDEX IF NOT EXISTS request_audit_log_route_created_at_idx
   ON request_audit_log (route, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS request_audit_log_created_at_idx
+  ON request_audit_log (created_at ASC);
 
 
 ALTER TABLE users

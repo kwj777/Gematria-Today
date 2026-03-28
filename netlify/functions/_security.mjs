@@ -98,6 +98,7 @@ export async function ensureSecuritySchema(sql) {
   )`;
 
   await sql`CREATE INDEX IF NOT EXISTS request_rate_limits_blocked_until_idx ON request_rate_limits (blocked_until)`;
+  await sql`CREATE INDEX IF NOT EXISTS request_rate_limits_last_seen_at_idx ON request_rate_limits (last_seen_at ASC)`;
 
   await sql`CREATE TABLE IF NOT EXISTS function_response_cache (
     cache_key TEXT PRIMARY KEY,
@@ -110,6 +111,7 @@ export async function ensureSecuritySchema(sql) {
   )`;
 
   await sql`CREATE INDEX IF NOT EXISTS function_response_cache_route_expires_idx ON function_response_cache (route, expires_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS function_response_cache_expires_at_idx ON function_response_cache (expires_at ASC)`;
 
   await sql`CREATE TABLE IF NOT EXISTS request_audit_log (
     id TEXT PRIMARY KEY,
@@ -123,6 +125,7 @@ export async function ensureSecuritySchema(sql) {
   )`;
 
   await sql`CREATE INDEX IF NOT EXISTS request_audit_log_route_created_at_idx ON request_audit_log (route, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS request_audit_log_created_at_idx ON request_audit_log (created_at ASC)`;
 }
 
 export function createRateLimitError(message = DEFAULT_RATE_LIMIT_MESSAGE, retryAfterSeconds = 60) {
@@ -305,6 +308,57 @@ export async function withCachedJson(sql, { cacheKey, route, ttlSeconds = DEFAUL
   return { statusCode: 200, payload, cached: false };
 }
 
+
+
+export function getRetentionConfig() {
+  return {
+    auditLogRetentionDays: parseInteger(process.env.REQUEST_AUDIT_LOG_RETENTION_DAYS, 30),
+    responseCacheGraceDays: parseInteger(process.env.FUNCTION_RESPONSE_CACHE_GRACE_DAYS, 2),
+    rateLimitRetentionDays: parseInteger(process.env.REQUEST_RATE_LIMIT_RETENTION_DAYS, 7),
+  };
+}
+
+export async function pruneSecurityData(sql, {
+  auditLogRetentionDays,
+  responseCacheGraceDays,
+  rateLimitRetentionDays,
+} = {}) {
+  await ensureSecuritySchema(sql);
+
+  const defaults = getRetentionConfig();
+  const normalizedAuditDays = parseInteger(auditLogRetentionDays, defaults.auditLogRetentionDays);
+  const normalizedCacheGraceDays = parseInteger(responseCacheGraceDays, defaults.responseCacheGraceDays);
+  const normalizedRateLimitDays = parseInteger(rateLimitRetentionDays, defaults.rateLimitRetentionDays);
+
+  const auditDeletedRows = await sql`
+    DELETE FROM request_audit_log
+    WHERE created_at < NOW() - (${normalizedAuditDays} * INTERVAL '1 day')
+    RETURNING id
+  `;
+
+  const cacheDeletedRows = await sql`
+    DELETE FROM function_response_cache
+    WHERE expires_at < NOW() - (${normalizedCacheGraceDays} * INTERVAL '1 day')
+    RETURNING cache_key
+  `;
+
+  const rateLimitDeletedRows = await sql`
+    DELETE FROM request_rate_limits
+    WHERE COALESCE(blocked_until, last_seen_at, updated_at, created_at) < NOW() - (${normalizedRateLimitDays} * INTERVAL '1 day')
+    RETURNING scope
+  `;
+
+  return {
+    auditLogDeletedCount: auditDeletedRows.length,
+    cacheDeletedCount: cacheDeletedRows.length,
+    rateLimitDeletedCount: rateLimitDeletedRows.length,
+    retention: {
+      auditLogRetentionDays: normalizedAuditDays,
+      responseCacheGraceDays: normalizedCacheGraceDays,
+      rateLimitRetentionDays: normalizedRateLimitDays,
+    },
+  };
+}
 export function getProtectionConfig() {
   return {
     highAlertMode: String(process.env.PROTECTION_HIGH_ALERT_MODE || '').toLowerCase() === 'true',

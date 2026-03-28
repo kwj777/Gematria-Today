@@ -3,6 +3,15 @@ import { ensureMemberSchema } from './_member.mjs';
 
 const ALLOWED_WINDOWS = new Set([7, 30, 90]);
 const SECURITY_PROBLEM_OUTCOMES = ['blocked', 'invalid_credentials'];
+const TRAFFIC_SPIKE_WINDOW_MINUTES = 5;
+const TRAFFIC_SPIKE_BASELINE_MINUTES = 60;
+const MONITORED_ROUTE_CONFIG = [
+  { route: 'member-login', apiPath: '/api/member-login', threshold: Number.parseInt(process.env.ALERT_MEMBER_LOGIN_SPIKE_5M || '40', 10) },
+  { route: 'member-register', apiPath: '/api/member-register', threshold: Number.parseInt(process.env.ALERT_MEMBER_REGISTER_SPIKE_5M || '20', 10) },
+  { route: 'public-feeds', apiPath: '/api/public-feeds', threshold: Number.parseInt(process.env.ALERT_PUBLIC_FEEDS_SPIKE_5M || '60', 10) },
+  { route: 'wordnikDefinition', apiPath: '/definition', threshold: Number.parseInt(process.env.ALERT_WORDNIK_DEFINITION_SPIKE_5M || '120', 10) },
+  { route: 'wordnikRelatedWords', apiPath: '/api/wordnikRelatedWords', threshold: Number.parseInt(process.env.ALERT_WORDNIK_RELATED_WORDS_SPIKE_5M || '80', 10) },
+];
 
 function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
@@ -12,6 +21,34 @@ function normalizeDays(value) {
   return parsed;
 }
 
+function toPositiveInteger(value, fallback) {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function buildTrafficAlert(entry) {
+  const threshold = toPositiveInteger(entry.threshold, 1);
+  const currentFiveMinuteCount = Number(entry.currentFiveMinuteCount || 0);
+  const priorWindowCount = Number(entry.priorWindowCount || 0);
+  const baselineFiveMinuteCount = priorWindowCount / Math.max(1, ((TRAFFIC_SPIKE_BASELINE_MINUTES - TRAFFIC_SPIKE_WINDOW_MINUTES) / TRAFFIC_SPIKE_WINDOW_MINUTES));
+  const multiplier = baselineFiveMinuteCount > 0 ? currentFiveMinuteCount / baselineFiveMinuteCount : null;
+  const thresholdTriggered = currentFiveMinuteCount >= threshold;
+  const baselineTriggered = baselineFiveMinuteCount >= 3 && currentFiveMinuteCount >= (baselineFiveMinuteCount * 3);
+
+  return {
+    route: entry.route,
+    apiPath: entry.apiPath,
+    threshold,
+    currentFiveMinuteCount,
+    baselineFiveMinuteCount: Number(baselineFiveMinuteCount.toFixed(2)),
+    spikeMultiplier: multiplier == null ? null : Number(multiplier.toFixed(2)),
+    alert: thresholdTriggered || baselineTriggered,
+    reasons: [
+      ...(thresholdTriggered ? ['absolute_threshold'] : []),
+      ...(baselineTriggered ? ['baseline_multiplier'] : []),
+    ],
+  };
+}
 function toIsoDate(value) {
   if (!value) {
     return null;
@@ -50,7 +87,9 @@ export async function handler(event) {
       `,
     ]);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, openTaskRows, overdueTaskRows, failedActionRows] = await Promise.all([
+    const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
+
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -142,11 +181,31 @@ export async function handler(event) {
             AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ORDER BY created_at DESC
           LIMIT 50`,
+      sql`
+        SELECT
+          route,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - (${TRAFFIC_SPIKE_WINDOW_MINUTES} || ' minutes')::interval)::int AS current_five_minute_count,
+          COUNT(*) FILTER (
+            WHERE created_at >= NOW() - (${TRAFFIC_SPIKE_BASELINE_MINUTES} || ' minutes')::interval
+              AND created_at < NOW() - (${TRAFFIC_SPIKE_WINDOW_MINUTES} || ' minutes')::interval
+          )::int AS prior_window_count
+        FROM request_audit_log
+        WHERE route = ANY(${monitoredRoutes})
+          AND created_at >= NOW() - (${TRAFFIC_SPIKE_BASELINE_MINUTES} || ' minutes')::interval
+        GROUP BY route
+      `,
     ]);
 
     const overview = overviewRows[0] || {};
     const faqCoverage = faqRows[0] || { published: 0, unpublished: 0, total: 0 };
     const feedCoverage = feedRows[0] || { active: 0, inactive: 0, total: 0 };
+
+    const trafficSpikeMap = new Map(trafficSpikeRows.map((row) => [row.route, row]));
+    const trafficAlerts = MONITORED_ROUTE_CONFIG.map((config) => buildTrafficAlert({
+      ...config,
+      currentFiveMinuteCount: Number(trafficSpikeMap.get(config.route)?.current_five_minute_count || 0),
+      priorWindowCount: Number(trafficSpikeMap.get(config.route)?.prior_window_count || 0),
+    }));
 
     return jsonResponse(200, {
       generatedAt: new Date().toISOString(),
@@ -190,6 +249,13 @@ export async function handler(event) {
         active: Number(feedCoverage.active || 0),
         inactive: Number(feedCoverage.inactive || 0),
         total: Number(feedCoverage.total || 0),
+      },
+      trafficAlerts: {
+        generatedAt: new Date().toISOString(),
+        windowMinutes: TRAFFIC_SPIKE_WINDOW_MINUTES,
+        baselineMinutes: TRAFFIC_SPIKE_BASELINE_MINUTES,
+        hasActiveAlerts: trafficAlerts.some((item) => item.alert),
+        items: trafficAlerts,
       },
       securityEvents: securityRows.map((row) => ({
         route: row.route,

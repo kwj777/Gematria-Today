@@ -29,7 +29,6 @@ A web-based Gematria calculator application built with HTML, CSS, JavaScript, an
 │   └── member_schema.sql          # Member profile/history schema
 ├── netlify.toml                   # Netlify configuration
 ├── package.json
-└── use-gematria.js
 ```
 
 ## Page source of truth
@@ -137,7 +136,6 @@ Application-level protections help, but you should still put the site behind a m
 - `/api/member-register`
 - `/api/member-payment-checkout`
 - `/api/member-payment-confirm`
-- `/api/getWords`
 - `/api/wordnikRelatedWords`
 - `/definition`
 

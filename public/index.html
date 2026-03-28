@@ -70,7 +70,8 @@
         </div>
       </div>
     </nav>
-    <main class="py-5">
+    <div id="startupOverlay" class="startup-overlay" aria-live="polite">Working… Please wait.</div>
+    <main id="homePageContent" class="py-5 d-none" aria-busy="true">
       <div class="container">
         <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
           <div class="row align-items-center g-4">
@@ -139,15 +140,15 @@
 
 
 
-        <section class="content-panel p-4 p-lg-5 mb-5">
+        <section id="homeConversionPath" class="content-panel p-4 p-lg-5 mb-5">
           <p class="section-kicker mb-2">Conversion Path</p>
           <h2 class="mb-3">Follow the fastest path from first lookup to premium research.</h2>
           <p class="text-muted mb-4">This CTA ladder keeps every next step visible so visitors can move from one action to the next without guessing.</p>
           <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-outline-primary" data-cta-ladder-step="calculator" href="/calculator.html">1) Use calculator</a>
-            <a class="btn btn-outline-primary" data-cta-ladder-step="save-history" href="/member.html#registerForm">2) Save history (free account)</a>
-            <a class="btn btn-outline-primary" data-cta-ladder-step="dashboard" href="/member.html#dashboardSection">3) Open dashboard</a>
-            <a class="btn btn-warning" data-cta-ladder-step="premium-research" href="/premium-research.html">4) Unlock premium research</a>
+            <a class="btn btn-outline-primary" data-membership-steps="visitor" data-cta-ladder-step="calculator" href="/calculator.html">1) Use calculator</a>
+            <a class="btn btn-outline-primary" data-membership-steps="visitor" data-cta-ladder-step="save-history" href="/member.html#registerForm">2) Save history (free account)</a>
+            <a class="btn btn-outline-primary" data-membership-steps="visitor,free" data-cta-ladder-step="dashboard" href="/member.html#dashboardSection">3) Open dashboard</a>
+            <a class="btn btn-warning" data-membership-steps="visitor,free" data-cta-ladder-step="premium-research" href="/premium-research.html">4) Unlock premium research</a>
           </div>
         </section>
         <section class="content-panel p-4 p-lg-5 mb-5">
@@ -188,12 +189,63 @@
       </div>
     </footer>
     <script>
+      const startupOverlay = document.getElementById('startupOverlay');
+      const homePageContent = document.getElementById('homePageContent');
+      const conversionPathSection = document.getElementById('homeConversionPath');
+
       const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+
+      function showStartupOverlay() {
+        startupOverlay?.classList.remove('d-none');
+      }
+
+      function hideStartupOverlay() {
+        startupOverlay?.classList.add('d-none');
+      }
+
+      function showHomePageContent() {
+        homePageContent?.classList.remove('d-none');
+        homePageContent?.setAttribute('aria-busy', 'false');
+      }
+
+      function requestMemberSession() {
+        return fetch('/api/member-session', { credentials: 'same-origin' })
+          .then(async (response) => {
+            if (!response.ok) {
+              return null;
+            }
+            return response.json().catch(() => null);
+          })
+          .catch(() => null);
+      }
+
+      function updateNextStepsState(session) {
+        if (!conversionPathSection) {
+          return;
+        }
+
+        const membershipLevel = session?.authenticated ? (session?.member?.membershipLevel || 'visitor') : 'visitor';
+        if (membershipLevel === 'premium' || membershipLevel === 'lifetime') {
+          conversionPathSection.hidden = true;
+          return;
+        }
+
+        const nextStepLinks = Array.from(conversionPathSection.querySelectorAll('[data-membership-steps]'));
+        nextStepLinks.forEach((link) => {
+          const allowedLevels = String(link.dataset.membershipSteps || '')
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean);
+          link.hidden = !allowedLevels.includes(membershipLevel);
+        });
+
+        conversionPathSection.hidden = !nextStepLinks.some((link) => !link.hidden);
+      }
 
       const normalizePostImageUrl = (value) => {
         const raw = String(value ?? '').trim();
@@ -328,14 +380,24 @@
         });
       });
 
-      applyHeroVariantTest();
+      showStartupOverlay();
 
-      Promise.race([
-        fetchFeaturedPosts(),
-        new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
+      Promise.all([
+        Promise.race([
+          fetchFeaturedPosts(),
+          new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
+        ]).catch(() => ({ items: [] })),
+        requestMemberSession(),
       ])
-        .then((payload) => renderHomepageSlider(payload?.items || []))
-        .catch(() => {});
+        .then(([featuredPostsPayload, session]) => {
+          applyHeroVariantTest();
+          renderHomepageSlider(featuredPostsPayload?.items || []);
+          updateNextStepsState(session);
+        })
+        .finally(() => {
+          showHomePageContent();
+          hideStartupOverlay();
+        });
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

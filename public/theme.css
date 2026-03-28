@@ -479,9 +479,9 @@ footer.site-footer {
 .blog-post-image {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  object-position: center;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
 }
 
 .post-image-dropzone {

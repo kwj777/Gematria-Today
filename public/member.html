@@ -31,6 +31,7 @@
     <script src="/conversion-tracking.js"></script>
   </head>
   <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <div id="memberPageLoadingOverlay" class="calculator-loading-overlay" role="status" aria-live="polite"><p class="calculator-loading-overlay__message">Loading membership...</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
@@ -44,7 +45,7 @@
             <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="calculatorsMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">Calculators</a>
+              <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/nameCalculator.html">Name Calculator</a></li>
@@ -57,7 +58,7 @@
       </div>
     </nav>
 
-    <main class="py-5">
+    <main id="mainContent" class="py-5">
       <div id="membershipPageContent" class="container d-none">
         <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5 d-none">
           <div class="row g-4 align-items-center">

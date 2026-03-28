@@ -31,6 +31,7 @@
       <script src="/pwa-register.js" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -43,7 +44,7 @@
             <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="calculatorsMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">Calculators</a>
+              <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/nameCalculator.html">Name Calculator</a></li>
@@ -55,7 +56,7 @@
         </div>
       </div>
     </nav>
-    <main class="py-5">
+    <main id="mainContent" class="py-5">
       <div class="container"><section class="content-panel p-4 p-lg-5"><a id="return-link" class="btn btn-outline-secondary btn-sm mb-3" href="/calculator.html">← Back to Calculator</a><h1 id="page-title" class="mb-2">Gematria matches</h1><p id="page-meta" class="text-muted"></p><div class="d-flex flex-wrap gap-2 mb-3"><button id="clear-search-top" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-top" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><label for="word-search" class="form-label fw-semibold">Search these words</label><input id="word-search" class="form-control form-control-lg" type="search" placeholder="Type to filter matching words" /></div></div><p id="status" class="text-muted">Loading words…</p><div id="resultsLoadingShell" class="news-placeholder-panel async-content-shell async-content-shell--md mb-3">
                 <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-4"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-9"></span></p>

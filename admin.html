@@ -30,6 +30,7 @@
       <script src="/pwa-register.js" defer></script>
   </head>
   <body class="admin-render-pending">
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -42,7 +43,7 @@
             <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="calculatorsMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">Calculators</a>
+              <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/nameCalculator.html">Name Calculator</a></li>
@@ -63,8 +64,9 @@
       </div>
     </div>
 
-    <main class="py-5">
+    <main id="mainContent" class="py-5">
       <div class="container">
+        <h1 id="adminPageTitle" class="visually-hidden">Admin Dashboard</h1>
         <section id="authPanel" class="row justify-content-center">
           <div class="col-lg-6">
             <div class="content-panel p-4 p-lg-5 admin-auth-card">
@@ -198,6 +200,7 @@
                       <strong class="d-block mb-1">Drag and drop an image here</strong>
                       <span class="small text-muted">or click to choose a file. We will create and fill the image URL automatically.</span>
                     </div>
+                    <label class="visually-hidden" for="postImageFile">Upload cover image file</label>
                     <input id="postImageFile" class="d-none" type="file" accept="image/*" />
                     <div id="postImageUploadMeta" class="small text-muted mt-2"></div>
                     <div id="postImagePreview" class="post-image-preview mt-2 d-none"></div>

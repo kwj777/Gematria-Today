@@ -259,6 +259,15 @@ View results: ${shareUrl}`.trim(),
         return memberSession;
       }
 
+      function getFirstLookupCompletedStorageKey() {
+        const memberId = memberSession?.authenticated
+          ? memberSession?.member?.id || memberSession?.member?.username || memberSession?.member?.email
+          : null;
+        return memberId
+          ? `${FIRST_LOOKUP_COMPLETED_KEY}:${memberId}`
+          : FIRST_LOOKUP_COMPLETED_KEY;
+      }
+
       function showMembersOnlySaveMessage() {
         memberSaveMeta.textContent = '';
         memberSaveMeta.append('Only registered members can save searches. ');
@@ -393,12 +402,13 @@ View results: ${shareUrl}`.trim(),
       }
 
       function maybeShowLevelOnePrompt() {
-        if (!levelOnePrompt || window.localStorage.getItem(FIRST_LOOKUP_COMPLETED_KEY)) {
+        const firstLookupStorageKey = getFirstLookupCompletedStorageKey();
+        if (!levelOnePrompt || window.localStorage.getItem(firstLookupStorageKey)) {
           return;
         }
 
         levelOnePrompt.hidden = false;
-        window.localStorage.setItem(FIRST_LOOKUP_COMPLETED_KEY, 'true');
+        window.localStorage.setItem(firstLookupStorageKey, 'true');
         window.endTimesTracking?.track('beginner_path_level_1_prompt_shown', {
           source: 'calculator_first_lookup',
           destination: '/gematria-basics.html',

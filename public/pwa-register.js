@@ -69,6 +69,13 @@
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   }
 
+  function isMobileBrowser() {
+    return /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent || '');
+  }
+
+  function shouldShowRefreshCacheButton() {
+    return isMobileBrowser();
+  }
 
   function injectRefreshButtonStyles() {
     if (document.getElementById('pwa-refresh-cache-styles')) {
@@ -253,6 +260,8 @@
     }
 
     clearLaunchOverlayTimer();
-    showRefreshCacheButton();
+    if (shouldShowRefreshCacheButton()) {
+      showRefreshCacheButton();
+    }
   });
 })();

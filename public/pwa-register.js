@@ -87,11 +87,10 @@
     style.textContent = `
       .pwa-refresh-cache-wrap {
         position: fixed;
-        left: 0;
-        right: 0;
-        bottom: max(12px, env(safe-area-inset-bottom));
+        top: max(12px, env(safe-area-inset-top));
+        right: 12px;
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
         pointer-events: none;
         z-index: 1050;
       }
@@ -100,7 +99,8 @@
         pointer-events: auto;
         border: 0;
         border-radius: 9999px;
-        padding: 0.6rem 1rem;
+        min-height: 48px;
+        padding: 0.75rem 1.125rem;
         font-size: 0.9rem;
         font-weight: 700;
         letter-spacing: 0.01em;

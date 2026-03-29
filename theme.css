@@ -1212,3 +1212,10 @@ body.admin-render-pending footer {
   text-align: center;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
 }
+
+.touch-target-lg {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

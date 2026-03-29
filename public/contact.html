@@ -30,6 +30,7 @@
       <script src="/pwa-register.js" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -42,7 +43,7 @@
             <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="calculatorsMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">Calculators</a>
+              <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/nameCalculator.html">Name Calculator</a></li>
@@ -55,7 +56,7 @@
       </div>
     </nav>
 
-    <main class="py-5">
+    <main id="mainContent" class="py-5">
       <div class="container">
         <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
           <p class="section-kicker mb-2">Contact</p>

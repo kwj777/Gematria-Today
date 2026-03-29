@@ -29,6 +29,28 @@ body {
 
 .navbar-brand { letter-spacing: 0.04em; }
 
+
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 1080;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  background: #111;
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-140%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 .share-action-button {
   box-shadow: 0 0.35rem 0.9rem rgba(255, 124, 53, 0.28);
   border-width: 2px;

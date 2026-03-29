@@ -96,6 +96,16 @@ body {
 .faq-card,
 .stat-card { background: rgba(255,255,255,0.92); border-radius: 1rem; }
 
+.badge-contrast-success {
+  background-color: #5a8f13 !important;
+  color: #fff !important;
+}
+
+.badge-contrast-secondary {
+  background-color: #6b665f !important;
+  color: #fff !important;
+}
+
 .hero-media-panel {
   min-height: 100%;
   padding: 0;

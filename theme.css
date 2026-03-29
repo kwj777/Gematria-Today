@@ -507,13 +507,13 @@ footer.site-footer {
 }
 
 .blog-slide-card {
-  margin: 0 clamp(0rem, 4vw, 3rem);
+  margin: 0 clamp(0rem, 2vw, 1.5rem);
   box-shadow: 0 1rem 2rem rgba(63,64,58,.08);
 }
 
 .blog-slide-image-frame {
   margin: 0 auto;
-  width: min(720px, 100%);
+  width: clamp(240px, 76vw, 560px);
   aspect-ratio: 16 / 9;
   position: relative;
   border-radius: 0.9rem;

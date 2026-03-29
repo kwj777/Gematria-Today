@@ -73,8 +73,13 @@
     return /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent || '');
   }
 
+  function isAdminDashboardPage() {
+    const path = window.location.pathname || '';
+    return path === '/admin' || path === '/admin.html';
+  }
+
   function shouldShowRefreshCacheButton() {
-    return isMobileBrowser();
+    return isMobileBrowser() && isAdminDashboardPage();
   }
 
   function injectRefreshButtonStyles() {

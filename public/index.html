@@ -76,11 +76,11 @@
         <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
           <div class="row align-items-center g-4">
             <div class="col-lg-7">
-              <h1 id="homeHeroTitle" class="display-4 fw-bold mb-3">Explore words, names, and news in one workspace.</h1>
-              <p id="homeHeroLead" class="lead mb-4">Find connections fast.</p>
+              <h1 id="homeHeroTitle" class="display-4 fw-bold mb-3">Start the beginner path with one clear next step.</h1>
+              <p id="homeHeroLead" class="lead mb-4">Follow the Level 0→4 sequence with account setup first, then calculators and pattern validation.</p>
               <div class="d-flex flex-wrap gap-2">
-                <a id="homeJoinCta" class="btn btn-warning btn-lg" href="/member.html#authSection">Join FREE</a>
-                <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg" href="/calculator.html">Open Calculator</a>
+                <a id="homeJoinCta" class="btn btn-warning btn-lg" href="/gematria-account-setup.html">Start Beginner Path (Level 0)</a>
+                <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg" href="/calculator.html">I just want to try calculator</a>
               </div>
             </div>
             <div class="col-lg-5">
@@ -304,63 +304,19 @@
         return response.json();
       };
 
-      const homeHeroVariants = [
-        {
-          id: 'A',
-          title: 'Explore words, names, and news in one workspace.',
-          lead: 'Find connections fast.',
-          joinLabel: 'Join FREE',
-          calculatorLabel: 'Open Calculator',
-        },
-        {
-          id: 'B',
-          title: 'Run your first gematria lookup in seconds, then save every insight.',
-          lead: 'Calculate first. Register free to keep your research history.',
-          joinLabel: 'Create Free Account',
-          calculatorLabel: 'Start With Calculator',
-        },
-      ];
-
-      function pickHeroVariant() {
-        const storageKey = 'home_hero_variant';
-        const existing = window.localStorage.getItem(storageKey);
-        const selected = homeHeroVariants.find((variant) => variant.id === existing);
-        if (selected) {
-          return selected;
-        }
-        const next = homeHeroVariants[Math.random() < 0.5 ? 0 : 1];
-        window.localStorage.setItem(storageKey, next.id);
-        return next;
-      }
-
-      function applyHeroVariantTest() {
-        const title = document.getElementById('homeHeroTitle');
-        const lead = document.getElementById('homeHeroLead');
-        const join = document.getElementById('homeJoinCta');
-        const calculator = document.getElementById('homeCalculatorCta');
-        if (!title || !lead || !join || !calculator) {
-          return;
-        }
-
-        const variant = pickHeroVariant();
-        title.textContent = variant.title;
-        lead.textContent = variant.lead;
-        join.textContent = variant.joinLabel;
-        calculator.textContent = variant.calculatorLabel;
-
-        window.endTimesTracking?.track('ab_test_exposure', {
-          experimentId: 'home_top_copy_member_conversion_v1',
-          variantId: variant.id,
+      document.getElementById('homeJoinCta')?.addEventListener('click', () => {
+        window.endTimesTracking?.track('beginner_path_start_click', {
+          source: 'home_hero_primary_cta',
+          destination: '/gematria-account-setup.html',
         });
+      });
 
-        join.addEventListener('click', () => {
-          window.endTimesTracking?.track('ab_test_conversion_click', {
-            experimentId: 'home_top_copy_member_conversion_v1',
-            variantId: variant.id,
-            ctaTarget: 'member_registration',
-          });
+      document.getElementById('homeCalculatorCta')?.addEventListener('click', () => {
+        window.endTimesTracking?.track('beginner_path_try_calculator_click', {
+          source: 'home_hero_secondary_cta',
+          destination: '/calculator.html',
         });
-      }
+      });
 
       document.querySelectorAll('[data-cta-ladder-step]').forEach((link) => {
         link.addEventListener('click', () => {
@@ -373,15 +329,14 @@
       });
 
 
-      Promise.all([
+        Promise.all([
         Promise.race([
           fetchFeaturedPosts(),
           new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
         ]).catch(() => ({ items: [] })),
         requestMemberSession(),
-      ])
+        ])
         .then(([featuredPostsPayload, session]) => {
-          applyHeroVariantTest();
           renderHomepageSlider(featuredPostsPayload?.items || []);
           updateNextStepsState(session);
         });

@@ -141,11 +141,16 @@ body {
   .hero-selling-points-image {
     min-height: 280px;
   }
+
+  .hero-why-gematria-link {
+    min-height: 280px;
+  }
 }
 
 .hero-why-gematria-link {
   position: relative;
   isolation: isolate;
+  min-height: clamp(220px, 40vw, 320px);
 }
 
 .hero-why-gematria-link::after {
@@ -200,6 +205,10 @@ body {
 
 @media (max-height: 480px) and (orientation: landscape) {
   .hero-selling-points-image {
+    min-height: 170px;
+  }
+
+  .hero-why-gematria-link {
     min-height: 170px;
   }
 

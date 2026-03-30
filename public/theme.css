@@ -153,7 +153,9 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(3, 16, 40, 0.15), rgba(3, 16, 40, 0.82));
+  background:
+    linear-gradient(180deg, rgba(3, 16, 40, 0.4) 0%, rgba(3, 16, 40, 0.92) 100%),
+    radial-gradient(circle at 50% 22%, rgba(4, 14, 34, 0.16), rgba(4, 14, 34, 0.75));
   z-index: 1;
   transition: opacity 0.2s ease;
 }
@@ -170,6 +172,8 @@ body {
   display: grid;
   gap: 0.5rem;
   padding: clamp(0.85rem, 1.1vw + 0.55rem, 1.2rem);
+  background: linear-gradient(180deg, rgba(3, 16, 40, 0.06), rgba(3, 16, 40, 0.72));
+  backdrop-filter: blur(1px);
   color: rgba(245, 250, 255, 0.95);
 }
 
@@ -184,6 +188,7 @@ body {
   line-height: 1.45;
   max-width: 56ch;
   color: rgba(235, 245, 255, 0.9);
+  text-wrap: balance;
 }
 
 .hero-why-gematria-readmore {
@@ -197,6 +202,33 @@ body {
 
   .hero-why-gematria-excerpt {
     display: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hero-selling-points-image {
+    min-height: 200px;
+    max-height: 200px;
+    object-fit: cover;
+  }
+
+  .hero-why-gematria-overlay {
+    gap: 0.4rem;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .hero-why-gematria-title {
+    font-size: 1.03rem;
+  }
+
+  .hero-why-gematria-excerpt {
+    font-size: 0.84rem;
+    line-height: 1.35;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
   }
 }
 

@@ -87,6 +87,7 @@ export async function handler(event) {
           (SELECT COUNT(*)::int FROM users WHERE role = 'member' AND membership_level IN ('premium', 'lifetime') AND status = 'active') AS active_premium_members,
           (SELECT COUNT(*)::int FROM users WHERE role = 'member' AND membership_level IN ('premium', 'lifetime') AND membership_expires_at IS NOT NULL AND membership_expires_at >= NOW() AND membership_expires_at <= NOW() + INTERVAL '30 days') AS expiring_premium_members,
           (SELECT COUNT(*)::int FROM posts WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval) AS published_posts,
+          (SELECT COUNT(*)::int FROM words) AS total_words,
           (SELECT COUNT(*)::int FROM tasks WHERE status = 'open') AS open_tasks,
           (SELECT COUNT(*)::int FROM tasks WHERE status = 'open' AND due_date IS NOT NULL AND due_date < CURRENT_DATE) AS overdue_tasks,
           (SELECT COUNT(*)::int
@@ -99,7 +100,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -172,6 +173,10 @@ export async function handler(event) {
           WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
             AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval
           ORDER BY COALESCE(published_at, created_at) DESC
+          LIMIT 50`,
+      sql`SELECT word, gematria_value, digital_root, search_count, updated_at
+          FROM words
+          ORDER BY updated_at DESC NULLS LAST, created_at DESC
           LIMIT 50`,
       sql`SELECT id, title, status, due_date, created_at, updated_at
           FROM tasks
@@ -264,6 +269,7 @@ export async function handler(event) {
         activePremiumMembers: Number(overview.active_premium_members || 0),
         expiringPremiumMembers: Number(overview.expiring_premium_members || 0),
         publishedPosts: Number(overview.published_posts || 0),
+        totalWords: Number(overview.total_words || 0),
         openTasks: Number(overview.open_tasks || 0),
         overdueTasks: Number(overview.overdue_tasks || 0),
         failedActions: Number(overview.failed_actions || 0),
@@ -353,6 +359,13 @@ export async function handler(event) {
           status: row.status,
           createdAt: toIsoDate(row.created_at),
           publishedAt: toIsoDate(row.published_at),
+        })),
+        totalWords: totalWordRows.map((row) => ({
+          word: row.word,
+          gematriaValue: Number(row.gematria_value || 0),
+          digitalRoot: Number(row.digital_root || 0),
+          searchCount: Number(row.search_count || 0),
+          updatedAt: toIsoDate(row.updated_at),
         })),
         openTasks: openTaskRows.map((row) => ({
           id: row.id,

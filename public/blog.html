@@ -501,13 +501,17 @@
         const targets = [
           { phrase: 'Word/Phrase Calculator', href: '/calculator.html' },
           { phrase: 'gematria calculator', href: '/calculator.html' },
+          { phrase: 'calculator', href: '/calculator.html' },
           { phrase: 'name lookup page', href: '/nameCalculator.html' },
           { phrase: 'name calculator', href: '/nameCalculator.html' },
+          { phrase: 'names', href: '/nameCalculator.html' },
           { phrase: 'news feed', href: '/news.html' },
           { phrase: 'FAQ', href: '/faq.html' },
           { phrase: 'premium research tools', href: '/premium-research.html' },
           { phrase: 'gematria guide', href: '/gematria-guide.html' },
-          { phrase: 'gematria results archive', href: '/gematria-results.html' }
+          { phrase: 'gematria results archive', href: '/gematria-results.html' },
+          { phrase: 'database', href: '/gematria-results.html' },
+          { phrase: 'related words', href: '/premium-research.html' }
         ];
 
         posts.forEach((post) => {
@@ -545,11 +549,12 @@
         const documentFragment = parser.parseFromString(`<div>${html}</div>`, 'text/html');
         const root = documentFragment.body.firstElementChild;
         if (!root) {
-          return html;
+          return { html, count: 0 };
         }
 
         const excludedParents = new Set(['A', 'BUTTON', 'CODE', 'PRE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
         const linkedTargets = new Set();
+        let linkCount = 0;
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
         const textNodes = [];
         while (walker.nextNode()) {
@@ -599,9 +604,10 @@
           }
           node.parentNode?.replaceChild(fragment, node);
           linkedTargets.add(target.phrase.toLowerCase());
+          linkCount += 1;
         });
 
-        return root.innerHTML;
+        return { html: root.innerHTML, count: linkCount };
       };
       const linkifyPlainText = (text = '', targets = []) => linkifyHtmlContent(escapeHtml(text), targets);
 
@@ -618,18 +624,23 @@
 
         document.getElementById('blogSidebarLinks').innerHTML = filteredPosts.map((post) => {
           const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
-          const linkedSummary = linkifyPlainText(post.summary, linkTargets);
+          const linkedSummaryResult = linkifyPlainText(post.summary, linkTargets);
           return `
           <a class="blog-mini-link text-decoration-none" href="/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}">
             <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
-            <span class="text-muted small">${linkedSummary}</span>
+            <span class="text-muted small">${linkedSummaryResult.html}</span>
           </a>`;
         }).join('');
 
         document.getElementById('blogPosts').innerHTML = filteredPosts.map((post) => {
           const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
-          const bodyHtml = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);
-          const summaryHtml = linkifyPlainText(post.summary, linkTargets);
+          const bodyLinkResult = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);
+          const summaryLinkResult = linkifyPlainText(post.summary, linkTargets);
+          const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/nameCalculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a></p>`;
+          const bodyHtml = bodyLinkResult.count === 0 && summaryLinkResult.count === 0
+            ? `${bodyLinkResult.html}${fallbackRelatedLinks}`
+            : bodyLinkResult.html;
+          const summaryHtml = summaryLinkResult.html;
           const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
           const createdOn = formatPostCreatedDate(post.publishedAt || post.createdAt || '');
           const tags = getPostTags(post);

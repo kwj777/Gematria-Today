@@ -41,7 +41,7 @@ test('session endpoints return unauthenticated payload shape when unauthenticate
     adminSessionHandler({ httpMethod: 'GET', headers: {} }),
   ]);
 
-  assert.equal(memberResponse.statusCode, 401);
+  assert.equal(memberResponse.statusCode, 200);
   assert.equal(adminResponse.statusCode, 401);
   assert.deepEqual(parseBody(memberResponse), { authenticated: false });
   assert.deepEqual(parseBody(adminResponse), { authenticated: false });

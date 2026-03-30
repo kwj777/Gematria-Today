@@ -161,18 +161,6 @@
 
         <div id="memberAlert" class="alert d-none" role="alert"></div>
 
-        <section id="membershipPathSection" class="content-panel p-4 p-lg-5 mb-4">
-          <p class="section-kicker mb-2">Membership path</p>
-          <h2 class="h4 mb-3">Use this ladder to move from free signup to premium research.</h2>
-          <div id="membershipPathLadder" class="d-flex flex-wrap gap-2">
-            <a class="btn btn-sm btn-outline-primary" data-cta-ladder-step="create-account" href="#registerForm">1) Create free account</a>
-            <a class="btn btn-sm btn-outline-primary" data-cta-ladder-step="member-dashboard" href="#dashboardSection">2) Open member dashboard</a>
-            <a class="btn btn-sm btn-outline-primary" data-cta-ladder-step="start-checkout" href="#paymentForm">3) Start checkout</a>
-            <a class="btn btn-sm btn-warning" data-cta-ladder-step="premium-research" href="/premium-research.html">4) Open premium research</a>
-          </div>
-          <p id="membershipPathCompleteMessage" class="text-muted mb-0 d-none">You are already on the highest membership tier.</p>
-        </section>
-
         <section id="authSection" class="content-panel p-4 p-lg-5 mb-5">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
             <div>
@@ -388,9 +376,6 @@
       const comparisonVisitorColumns = comparisonSection.querySelectorAll('.comparison-col--visitor');
       const comparisonMemberColumns = comparisonSection.querySelectorAll('.comparison-col--member');
       const comparisonPremiumColumns = comparisonSection.querySelectorAll('.comparison-col--premium');
-      const membershipPathSection = document.getElementById('membershipPathSection');
-      const membershipPathLadder = document.getElementById('membershipPathLadder');
-      const membershipPathCompleteMessage = document.getElementById('membershipPathCompleteMessage');
       const learningPathStep1Section = document.getElementById('learningPathStep1Section');
       const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
 
@@ -565,31 +550,6 @@
         membershipHeroCardColumn.classList.remove('d-none');
       }
 
-      function syncCtaLadder(member = session?.member) {
-        const level = member?.membershipLevel || 'visitor';
-        let completedStep = 0;
-
-        if (level === 'free') {
-          completedStep = 2;
-        } else if (level === 'premium' || level === 'lifetime') {
-          completedStep = 4;
-        }
-
-        const allSteps = Array.from(document.querySelectorAll('[data-cta-ladder-step]'));
-        let hasRemainingSteps = false;
-
-        allSteps.forEach((link, index) => {
-          const stepNumber = index + 1;
-          const showStep = stepNumber > completedStep;
-          link.classList.toggle('d-none', !showStep);
-          hasRemainingSteps = hasRemainingSteps || showStep;
-        });
-
-        membershipPathLadder.classList.toggle('d-none', !hasRemainingSteps);
-        membershipPathCompleteMessage.classList.toggle('d-none', hasRemainingSteps);
-        membershipPathSection.classList.toggle('d-none', level === 'premium' || level === 'lifetime');
-      }
-
       function hasLearningPathStep1Intent() {
         return window.localStorage.getItem('learningPathStep1Intent') === 'true';
       }
@@ -603,7 +563,6 @@
         syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
         syncComparisonVisibility(isLoggedIn ? session?.member : null);
-        syncCtaLadder(isLoggedIn ? session?.member : null);
         syncLearningPathStep1Cta(isLoggedIn ? session?.member : null);
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
@@ -1168,17 +1127,6 @@
       membershipUpgradeContent.addEventListener('hide.bs.collapse', () => {
         membershipUpgradeToggleArrow.textContent = '▼';
         membershipUpgradeToggleButton.setAttribute('aria-expanded', 'false');
-      });
-
-      document.querySelectorAll('[data-cta-ladder-step]').forEach((link) => {
-        link.addEventListener('click', () => {
-          window.endTimesTracking?.track('cta_ladder_click', {
-            step: link.dataset.ctaLadderStep,
-            location: 'member_page',
-            destination: link.getAttribute('href') || '',
-            authenticated: Boolean(session?.member),
-          });
-        });
       });
 
       goToLearningPathStep1Button?.addEventListener('click', () => {

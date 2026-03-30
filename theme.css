@@ -153,14 +153,14 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(3, 16, 40, 0.15), rgba(3, 16, 40, 0.82));
+  background: linear-gradient(180deg, rgba(248, 252, 255, 0.14), rgba(232, 243, 255, 0.72));
   z-index: 1;
   transition: opacity 0.2s ease;
 }
 
 .hero-why-gematria-link:hover::after,
 .hero-why-gematria-link:focus-visible::after {
-  opacity: 0.88;
+  opacity: 0.94;
 }
 
 .hero-why-gematria-overlay {
@@ -170,7 +170,8 @@ body {
   display: grid;
   gap: 0.5rem;
   padding: clamp(0.85rem, 1.1vw + 0.55rem, 1.2rem);
-  color: rgba(245, 250, 255, 0.95);
+  color: rgba(23, 36, 52, 0.97);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.45);
 }
 
 .hero-why-gematria-title {
@@ -183,7 +184,7 @@ body {
   font-size: 0.9rem;
   line-height: 1.45;
   max-width: 56ch;
-  color: rgba(235, 245, 255, 0.9);
+  color: rgba(18, 31, 46, 0.92);
 }
 
 .hero-why-gematria-readmore {

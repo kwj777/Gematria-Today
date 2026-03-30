@@ -706,11 +706,27 @@ footer.site-footer {
 .news-inline-link {
   color: var(--bs-primary);
   font-weight: 600;
-  text-decoration: none;
+  text-decoration-line: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+  text-decoration-color: rgba(var(--bs-primary-rgb), 0.45);
+  transition: color 0.2s ease, text-decoration-color 0.2s ease, background-color 0.2s ease;
 }
 
 .news-inline-link:hover {
   color: var(--bs-warning);
+  text-decoration-color: rgba(var(--bs-warning-rgb), 0.85);
+}
+
+.blog-post-body .news-inline-link,
+.text-muted .news-inline-link {
+  border-radius: 0.2rem;
+  padding: 0 0.12rem;
+}
+
+.blog-post-body .news-inline-link:hover,
+.text-muted .news-inline-link:hover {
+  background-color: rgba(var(--bs-warning-rgb), 0.15);
 }
 
 .news-meta-list {

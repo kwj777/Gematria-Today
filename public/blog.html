@@ -157,6 +157,24 @@
                 <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
                 <div id="blogTagFilters" class="d-flex flex-wrap gap-2 async-content-shell" aria-live="polite"><span class="placeholder-glow w-100"><span class="placeholder async-shell-line col-4"></span></span></div>
               </div>
+              <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
+                <div class="followit--follow-form-container followit-card followit-card--sidebar" attr-a attr-b attr-c attr-d attr-e attr-f>
+                  <form action="https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8" method="post" data-v-8a8a107f="">
+                    <div class="form-preview" data-v-8a8a107f="">
+                      <div class="preview-heading" data-v-8a8a107f="">
+                        <h5 data-v-8a8a107f="">Get new posts by email:</h5>
+                      </div>
+                      <div class="preview-input-field" data-v-8a8a107f="">
+                        <input type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" data-v-8a8a107f="">
+                      </div>
+                      <div class="preview-submit-button" data-v-8a8a107f="">
+                        <button type="submit" data-v-8a8a107f="">Subscribe</button>
+                      </div>
+                    </div>
+                  </form>
+                  <a href="https://follow.it" class="powered-by-line">Powered by <img src="https://follow.it/images/colored-logo.svg" alt="follow.it" height="17"></a>
+                </div>
+              </div>
               <p id="blogFilterSummary" class="small text-muted mb-3"></p>
               <div id="blogSidebarLinks" class="d-grid gap-3 async-content-shell async-content-shell--md" aria-live="polite">
                 <article class="blog-mini-link news-placeholder-panel">
@@ -612,106 +630,17 @@
       const linkifyPlainText = (text = '', targets = []) => linkifyHtmlContent(escapeHtml(text), targets);
       const inlineFollowFormMarkup = `
         <section class="content-panel p-4 p-lg-5 blog-post-card" aria-label="Email subscription">
-          <style>
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview {
-              display: flex !important;
-              flex-direction: column !important;
-              justify-content: center !important;
-              margin-top: 0 !important;
-              padding: clamp(20px, 3vw, 34px) clamp(18px, 4vw, 38px) !important;
-              max-width: none !important;
-              border-radius: 1rem !important;
-              border: 1px solid rgba(53, 65, 79, 0.08) !important;
-              box-shadow: 0 1rem 2.5rem rgba(63, 64, 58, 0.08) !important;
-              background: rgba(255, 255, 255, 0.92) !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview,
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview * {
-              box-sizing: border-box !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-heading {
-              width: 100% !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-heading h5 {
-              margin-top: 0 !important;
-              margin-bottom: 0 !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field {
-              margin-top: 20px !important;
-              width: 100% !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input {
-              width: 100% !important;
-              height: 40px !important;
-              border-radius: 0.75rem !important;
-              border: 1px solid rgba(53, 95, 140, 0.24) !important;
-              background-color: #fff !important;
-              outline: none !important;
-              color: #35414f !important;
-              font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-              font-size: 14px;
-              font-weight: 400;
-              line-height: 20px;
-              text-align: left;
-              padding: 0.55rem 0.8rem !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input::placeholder,
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input:-ms-input-placeholder,
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input::-ms-input-placeholder {
-              color: #000000 !important;
-              opacity: 1 !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-submit-button {
-              margin-top: 10px !important;
-              width: 100% !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-submit-button button {
-              width: 100% !important;
-              height: 40px !important;
-              border: 0 !important;
-              border-radius: 0.75rem !important;
-              line-height: 1 !important;
-              background: linear-gradient(135deg, #355f8c, #33a1d6) !important;
-              color: #fff !important;
-              font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-              font-size: 0.95rem !important;
-              font-weight: 700 !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-submit-button button:hover {
-              cursor: pointer !important;
-              filter: brightness(0.95);
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .powered-by-line {
-              color: #6d7278 !important;
-              font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-              font-size: 12px !important;
-              font-weight: 400 !important;
-              line-height: 25px !important;
-              text-align: center !important;
-              text-decoration: none !important;
-              display: flex !important;
-              width: 100% !important;
-              justify-content: center !important;
-              align-items: center !important;
-              margin-top: 12px !important;
-            }
-            .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .powered-by-line img {
-              margin-left: 10px !important;
-              height: 1.13em !important;
-              max-height: 1.13em !important;
-            }
-          </style>
-          <div class="followit--follow-form-container" attr-a attr-b attr-c attr-d attr-e attr-f>
+          <div class="followit--follow-form-container followit-card followit-card--inline" attr-a attr-b attr-c attr-d attr-e attr-f>
             <form action="https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8" method="post" data-v-8a8a107f="">
-              <div style="position:relative;" class="form-preview" data-v-8a8a107f="">
+              <div class="form-preview" data-v-8a8a107f="">
                 <div class="preview-heading" data-v-8a8a107f="">
-                  <h5 style="font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-weight:700;color:#12304a;font-size:1.05rem;text-align:left;text-transform:none !important;" data-v-8a8a107f="">Get new posts by email:</h5>
+                  <h5 data-v-8a8a107f="">Get new posts by email:</h5>
                 </div>
                 <div class="preview-input-field" data-v-8a8a107f="">
-                  <input type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" style="font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-weight:400;color:#35414f;font-size:14px;text-align:left;background-color:#ffffff;text-transform:none !important;" data-v-8a8a107f="">
+                  <input type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" data-v-8a8a107f="">
                 </div>
                 <div class="preview-submit-button" data-v-8a8a107f="">
-                  <button type="submit" style="font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-weight:700;color:#ffffff;font-size:15px;text-align:center;background:linear-gradient(135deg,#355f8c,#33a1d6);text-transform:none !important;" data-v-8a8a107f="">Subscribe</button>
+                  <button type="submit" data-v-8a8a107f="">Subscribe</button>
                 </div>
               </div>
             </form>

@@ -61,6 +61,18 @@ npm run count-lines
 
 2. Deploy to [Netlify](https://netlify.com) or run locally with the [Netlify CLI](https://docs.netlify.com/cli/get-started/).
 
+## Sync GitHub repo with Netlify
+
+This repo includes a GitHub Actions workflow at `.github/workflows/sync-netlify-deploy.yml` that keeps Netlify deployments in sync with `main`.
+
+### Setup steps
+
+1. In Netlify, open your site settings and create/copy a **Build Hook** URL.
+2. In GitHub, add a repository secret named `NETLIFY_BUILD_HOOK` with that URL.
+3. Push to `main` (or run the **Sync Netlify Deploy** workflow manually) to trigger a Netlify deploy from GitHub.
+
+If the secret is missing, the workflow fails fast with a clear error message so deployment drift is visible.
+
 ## Database Migrations
 
 Apply the SQL files in order when bootstrapping a database:

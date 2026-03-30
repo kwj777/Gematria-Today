@@ -573,21 +573,21 @@ footer.site-footer {
 
 .blog-slide-image-frame {
   margin: 0 auto;
-  width: clamp(240px, 76vw, 560px);
+  width: min(100%, 960px);
   aspect-ratio: 16 / 9;
   position: relative;
   border-radius: 0.9rem;
   overflow: hidden;
   border: 1px solid rgba(53, 65, 79, 0.12);
   box-shadow: 0 0.8rem 1.8rem rgba(63,64,58,.1);
-  background: rgba(237, 243, 249, 0.9);
+  background: rgba(15, 23, 42, 0.96);
 }
 
 .blog-slide-image {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
 }
 

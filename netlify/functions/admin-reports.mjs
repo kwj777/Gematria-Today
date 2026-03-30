@@ -79,6 +79,19 @@ export async function handler(event) {
     const days = normalizeDays(url.searchParams.get('days'));
     const { sql, user } = await getAuthenticatedUser(event);
     await ensureMemberSchema(sql);
+    const wordsColumnRows = await sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = CURRENT_SCHEMA()
+        AND table_name = 'words'
+    `;
+    const wordColumnNames = new Set(wordsColumnRows.map((row) => String(row.column_name)));
+    const wordsRecentOrderColumn = wordColumnNames.has('updated_at')
+      ? 'updated_at'
+      : (wordColumnNames.has('created_at') ? 'created_at' : null);
+    const wordsRecentSelectColumn = wordColumnNames.has('updated_at')
+      ? 'updated_at'
+      : (wordColumnNames.has('created_at') ? 'created_at' : null);
 
     const [overviewRows] = await Promise.all([
       sql`
@@ -174,10 +187,19 @@ export async function handler(event) {
             AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval
           ORDER BY COALESCE(published_at, created_at) DESC
           LIMIT 50`,
-      sql`SELECT word, gematria_value, digital_root, search_count, updated_at
-          FROM words
-          ORDER BY updated_at DESC NULLS LAST, created_at DESC
-          LIMIT 50`,
+      wordsRecentOrderColumn
+        ? sql.unsafe(`
+            SELECT word, gematria_value, digital_root, search_count, ${wordsRecentSelectColumn} AS updated_at
+            FROM words
+            ORDER BY ${wordsRecentOrderColumn} DESC
+            LIMIT 50
+          `)
+        : sql`
+            SELECT word, gematria_value, digital_root, search_count, NULL::timestamptz AS updated_at
+            FROM words
+            ORDER BY search_count DESC, LOWER(word) ASC
+            LIMIT 50
+          `,
       sql`SELECT id, title, status, due_date, created_at, updated_at
           FROM tasks
           WHERE status = 'open'

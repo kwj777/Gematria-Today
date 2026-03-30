@@ -153,19 +153,6 @@
           <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Share</div><div class="metric-value text-info">Insights</div><p class="mb-0 text-muted">Share your gematria findings with clear, linkable result pages that make patterns, comparisons, and key takeaways easy to revisit.</p></div></div>
         </section>
 
-
-
-        <section id="homeConversionPath" class="content-panel p-4 p-lg-5 mb-5">
-          <p class="section-kicker mb-2">Conversion Path</p>
-          <h2 class="mb-3">Follow the fastest path from first lookup to premium research.</h2>
-          <p class="text-muted mb-4">This CTA ladder keeps every next step visible so visitors can move from one action to the next without guessing.</p>
-          <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-outline-primary" data-membership-steps="visitor" data-cta-ladder-step="calculator" href="/calculator.html">1) Use calculator</a>
-            <a class="btn btn-outline-primary" data-membership-steps="visitor" data-cta-ladder-step="save-history" href="/member.html#registerForm">2) Save history (free account)</a>
-            <a class="btn btn-outline-primary" data-membership-steps="visitor,free" data-cta-ladder-step="dashboard" href="/member.html#dashboardSection">3) Open dashboard</a>
-            <a class="btn btn-warning" data-membership-steps="visitor,free" data-cta-ladder-step="premium-research" href="/premium-research.html">4) Unlock premium research</a>
-          </div>
-        </section>
       </div>
     </main>
     <footer class="site-footer py-4 mt-5">
@@ -185,50 +172,12 @@
       </div>
     </footer>
     <script>
-      const conversionPathSection = document.getElementById('homeConversionPath');
-
       const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-
-
-
-      function requestMemberSession() {
-        return fetch('/api/member-session', { credentials: 'same-origin' })
-          .then(async (response) => {
-            if (!response.ok) {
-              return null;
-            }
-            return response.json().catch(() => null);
-          })
-          .catch(() => null);
-      }
-
-      function updateNextStepsState(session) {
-        if (!conversionPathSection) {
-          return;
-        }
-
-        const membershipLevel = session?.authenticated ? (session?.member?.membershipLevel || 'visitor') : 'visitor';
-        if (membershipLevel === 'premium' || membershipLevel === 'lifetime') {
-          conversionPathSection.hidden = true;
-          return;
-        }
-
-        const nextStepLinks = Array.from(conversionPathSection.querySelectorAll('[data-membership-steps]'));
-        nextStepLinks.forEach((link) => {
-          const allowedLevels = String(link.dataset.membershipSteps || '')
-            .split(',')
-            .map((value) => value.trim())
-            .filter(Boolean);
-          link.hidden = !allowedLevels.includes(membershipLevel);
-        });
-
-        conversionPathSection.hidden = !nextStepLinks.some((link) => !link.hidden);
-      }
 
       const normalizePostImageUrl = (value) => {
         const raw = String(value ?? '').trim();
@@ -309,28 +258,15 @@
         });
       });
 
-      document.querySelectorAll('[data-cta-ladder-step]').forEach((link) => {
-        link.addEventListener('click', () => {
-          window.endTimesTracking?.track('cta_ladder_click', {
-            step: link.dataset.ctaLadderStep,
-            location: 'home_conversion_path',
-            destination: link.getAttribute('href') || '',
-          });
-        });
-      });
-
-
-        Promise.all([
+      Promise.all([
         Promise.race([
           fetchFeaturedPosts(),
           new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
         ]).catch(() => ({ items: [] })),
-        requestMemberSession(),
-        ])
-        .then(([featuredPostsPayload, session]) => {
-          renderHomepageSlider(featuredPostsPayload?.items || []);
-          updateNextStepsState(session);
-        });
+      ])
+      .then(([featuredPostsPayload]) => {
+        renderHomepageSlider(featuredPostsPayload?.items || []);
+      });
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

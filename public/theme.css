@@ -669,6 +669,77 @@ footer.site-footer {
   top: 5.5rem;
 }
 
+.followit-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0.9rem 2rem rgba(63, 64, 58, 0.08);
+}
+
+.followit-card .form-preview {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  gap: 0;
+}
+
+.followit-card .preview-heading h5 {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.followit-card .preview-input-field,
+.followit-card .preview-submit-button {
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.followit-card .preview-input-field .form-control {
+  min-height: 42px;
+  border-radius: 0.75rem;
+  border-color: rgba(var(--bs-primary-rgb), 0.28);
+  color: var(--app-ink);
+  background: #fff;
+}
+
+.followit-card .preview-input-field .form-control:focus {
+  border-color: rgba(var(--bs-primary-rgb), 0.55);
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.16);
+}
+
+.followit-card .preview-submit-button .btn {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 0.75rem;
+}
+
+.followit-card .powered-by-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.65rem;
+  font-size: 0.75rem;
+  color: var(--app-muted);
+  text-decoration: none;
+}
+
+.followit-card .powered-by-line img {
+  margin-left: 0.45rem;
+  height: 1.05em;
+}
+
+.followit-card--sidebar {
+  padding: 0.85rem;
+}
+
+.followit-card--sidebar .preview-heading h5 {
+  font-size: 0.95rem;
+}
+
 @media (max-width: 991px) {
   .blog-slide-card {
     margin: 0;

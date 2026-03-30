@@ -527,7 +527,6 @@ footer.site-footer {
 
 .blog-slide-card {
   margin: 0 clamp(0rem, 2vw, 1.5rem);
-  min-height: 26rem;
   box-shadow: 0 1rem 2rem rgba(63,64,58,.08);
 }
 
@@ -632,7 +631,6 @@ footer.site-footer {
 @media (max-width: 991px) {
   .blog-slide-card {
     margin: 0;
-    min-height: 22rem;
   }
 
   .blog-sidebar {

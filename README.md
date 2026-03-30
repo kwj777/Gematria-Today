@@ -61,6 +61,30 @@ npm run count-lines
 
 2. Deploy to [Netlify](https://netlify.com) or run locally with the [Netlify CLI](https://docs.netlify.com/cli/get-started/).
 
+
+## Screenshot fallback (repo-local)
+
+If your Codex/agent session does not expose a browser screenshot tool, you can capture screenshots from this repo with Playwright:
+
+1. Install dependencies (includes Playwright):
+   ```bash
+   npm install
+   ```
+2. Install the Chromium browser binary once:
+   ```bash
+   npx playwright install chromium
+   ```
+3. Start the app/server you want to capture (example Netlify local dev):
+   ```bash
+   npx netlify dev
+   ```
+4. Capture a screenshot:
+   ```bash
+   npm run screenshot -- --url http://127.0.0.1:8888 --output artifacts/home.png --full-page
+   ```
+
+The `--url` flag is required. `--output` defaults to `artifacts/screenshot.png`.
+
 ## Sync GitHub repo with Netlify
 
 This repo includes a GitHub Actions workflow at `.github/workflows/sync-netlify-deploy.yml` that keeps Netlify deployments in sync with `main`.

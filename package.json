@@ -9,9 +9,13 @@
     "count-lines": "find . -not -path './.git/*' -not -path './node_modules/*' -type f \\( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.mjs' -o -name '*.sql' -o -name '*.toml' -o -name '*.json' \\) -print0 | xargs -0 wc -l",
     "sync-root-pages": "node scripts/sync-root-pages.mjs --write",
     "check-root-pages": "node scripts/sync-root-pages.mjs --check",
-    "audit:accessibility": "node scripts/accessibility-audit.mjs"
+    "audit:accessibility": "node scripts/accessibility-audit.mjs",
+    "screenshot": "node scripts/capture-screenshot.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.54.2"
   }
 }

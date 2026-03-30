@@ -84,7 +84,7 @@
         <section class="content-panel p-4 p-lg-5 form-shell">
           <section class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="next-steps-shell" class="content-panel p-3 mb-3"><p class="section-kicker mb-2">Next steps</p><div class="d-flex flex-wrap gap-2"><a class="btn btn-sm btn-outline-primary" data-cta-ladder-step="save-history" href="/member.html#registerForm">Save history (free)</a><a class="btn btn-sm btn-outline-primary" data-cta-ladder-step="member-dashboard" href="/member.html#dashboardSection">Go to member dashboard</a><a class="btn btn-sm btn-warning" data-cta-ladder-step="premium-research" href="/premium-research.html">Unlock premium research</a></div></div><div id="level-one-prompt" class="alert alert-success d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3" hidden><div><strong>Nice first lookup—continue to Level 1 (Gematria Basics).</strong><div class="small text-muted">Learn the repeatable workflow before advancing to deeper pattern grouping.</div></div><a class="btn btn-sm btn-success" href="/gematria-basics.html">Continue to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+              <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="next-steps-shell" class="content-panel p-3 mb-3"><p class="section-kicker mb-2">Next steps</p><div class="d-flex flex-wrap gap-2"><a class="btn btn-sm btn-outline-primary" data-cta-ladder-step="save-history" href="/member.html#registerForm">Save history (free)</a><a class="btn btn-sm btn-outline-primary" data-cta-ladder-step="member-dashboard" href="/member.html#dashboardSection">Go to member dashboard</a><a class="btn btn-sm btn-warning" data-cta-ladder-step="premium-research" href="/premium-research.html">Unlock premium research</a></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
             </div>
           </section>
         </section>
@@ -99,8 +99,6 @@ const lookupForm = document.querySelector('#lookup-form');
       const lookupStatus = document.querySelector('#lookup-status');
       const gematriaResult = document.querySelector('#gematria-result');
       const relatedWordsResult = document.querySelector('#related-words-result');
-      const levelOnePrompt = document.querySelector('#level-one-prompt');
-      const FIRST_LOOKUP_COMPLETED_KEY = 'calculator_first_lookup_completed_v1';
       let shareStatusTimeout = null;
 
       function showCalculatorLoadingOverlay() {
@@ -260,15 +258,6 @@ View results: ${shareUrl}`.trim(),
         return memberSession;
       }
 
-      function getFirstLookupCompletedStorageKey() {
-        const memberId = memberSession?.authenticated
-          ? memberSession?.member?.id || memberSession?.member?.username || memberSession?.member?.email
-          : null;
-        return memberId
-          ? `${FIRST_LOOKUP_COMPLETED_KEY}:${memberId}`
-          : FIRST_LOOKUP_COMPLETED_KEY;
-      }
-
       function showMembersOnlySaveMessage() {
         memberSaveMeta.textContent = '';
         memberSaveMeta.append('Only registered members can save searches. ');
@@ -400,20 +389,6 @@ View results: ${shareUrl}`.trim(),
 
         const hasVisibleStep = nextStepLinks.some((link) => !link.hidden);
         nextStepsShell.hidden = !hasVisibleStep;
-      }
-
-      function maybeShowLevelOnePrompt() {
-        const firstLookupStorageKey = getFirstLookupCompletedStorageKey();
-        if (!levelOnePrompt || window.localStorage.getItem(firstLookupStorageKey)) {
-          return;
-        }
-
-        levelOnePrompt.hidden = false;
-        window.localStorage.setItem(firstLookupStorageKey, 'true');
-        window.endTimesTracking?.track('beginner_path_level_1_prompt_shown', {
-          source: 'calculator_first_lookup',
-          destination: '/gematria-basics.html',
-        });
       }
 
 
@@ -834,7 +809,6 @@ View results: ${shareUrl}`.trim(),
             authenticated: Boolean(memberSession?.authenticated),
           });
           renderSearchGematriaSummary(searchGematria);
-          maybeShowLevelOnePrompt();
 
           if (!memberSession?.authenticated) {
             lookupStatus.textContent = '';

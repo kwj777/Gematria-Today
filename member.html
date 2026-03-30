@@ -486,19 +486,9 @@
 
       function syncComparisonCurrentLevel(member = session?.member) {
         const level = member?.membershipLevel || 'visitor';
-        let showVisitor = false;
-        let showMember = false;
-        let showPremium = false;
-
-        if (level === 'free') {
-          showMember = true;
-          showPremium = true;
-        } else if (level === 'premium' || level === 'lifetime') {
-          showPremium = true;
-        } else {
-          showVisitor = true;
-          showMember = true;
-        }
+        const showVisitor = true;
+        const showMember = true;
+        const showPremium = true;
 
         comparisonVisitorColumns.forEach((column) => {
           column.classList.toggle('d-none', !showVisitor);

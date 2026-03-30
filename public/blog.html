@@ -291,6 +291,39 @@
         }
         return `${window.location.origin}${normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`}`;
       };
+      const blobToPngFile = async (imageBlob, slug = 'blog-post') => {
+        if (!(imageBlob instanceof Blob) || !imageBlob.type.startsWith('image/')) {
+          return null;
+        }
+
+        try {
+          const bitmap = await createImageBitmap(imageBlob);
+          const width = Math.max(1, Number(bitmap.width) || 1);
+          const height = Math.max(1, Number(bitmap.height) || 1);
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext('2d');
+          if (!context) {
+            bitmap.close();
+            return null;
+          }
+          context.drawImage(bitmap, 0, 0, width, height);
+          bitmap.close();
+
+          const pngBlob = await new Promise((resolve) => {
+            canvas.toBlob(resolve, 'image/png');
+          });
+          if (!pngBlob) {
+            return null;
+          }
+
+          const safeSlug = String(slug || 'blog-post').trim().replace(/[^a-z0-9-]+/gi, '-').replace(/^-+|-+$/g, '') || 'blog-post';
+          return new File([pngBlob], `${safeSlug}-hero-image.png`, { type: 'image/png' });
+        } catch {
+          return null;
+        }
+      };
       const fetchShareImageFile = async (post) => {
         const heroImageUrl = toAbsolutePostAssetUrl(post.imageUrl || post.heroImageUrl || post.sliderImageUrl);
         if (!heroImageUrl || /^data:image\//i.test(heroImageUrl)) {
@@ -306,18 +339,20 @@
           if (!imageBlob.type.startsWith('image/')) {
             return null;
           }
-          const urlPath = new URL(heroImageUrl, window.location.origin).pathname;
-          const filename = urlPath.split('/').pop() || `${post.slug || 'blog-post'}-hero-image`;
-          return new File([imageBlob], filename, { type: imageBlob.type });
+
+          const pngFile = await blobToPngFile(imageBlob, post.slug || 'blog-post');
+          return pngFile;
         } catch {
           return null;
         }
       };
       const shareBlogPost = async (post) => {
         const shareUrl = `${window.location.origin}/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+        const summaryText = String(post.summary || '').trim();
+        const shareText = summaryText.includes(shareUrl) ? summaryText : `${summaryText}\n\nRead: ${shareUrl}`.trim();
         const payload = {
           title: post.title || 'EndTimes.Today Blog Post',
-          text: post.summary || 'Read this post on EndTimes.Today.',
+          text: shareText || `Read this post on EndTimes.Today: ${shareUrl}`,
           url: shareUrl,
         };
 

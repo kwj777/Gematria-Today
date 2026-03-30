@@ -636,10 +636,8 @@
           const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
           const bodyLinkResult = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);
           const summaryLinkResult = linkifyPlainText(post.summary, linkTargets);
-          const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/nameCalculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a></p>`;
-          const bodyHtml = bodyLinkResult.count === 0 && summaryLinkResult.count === 0
-            ? `${bodyLinkResult.html}${fallbackRelatedLinks}`
-            : bodyLinkResult.html;
+          const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/nameCalculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a> · <a class="news-inline-link" href="/blog.html">More Blog Posts</a></p>`;
+          const bodyHtml = `${bodyLinkResult.html}${fallbackRelatedLinks}`;
           const summaryHtml = summaryLinkResult.html;
           const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
           const createdOn = formatPostCreatedDate(post.publishedAt || post.createdAt || '');

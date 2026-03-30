@@ -79,7 +79,7 @@
           </div>
         </section>
         <section class="content-panel p-4 p-lg-5 form-shell">
-          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your name calculator results to your account.</div></div><div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-primary btn-sm" href="/member.html">Go to My Dashboard</a><button id="save-history-button" class="btn btn-primary btn-sm" type="button" disabled>Save results</button></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-guide.html">Done! Back to Level 1</a></div><section class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><form id="name-form" class="row g-3"><div class="col-lg-4"><input id="name-1" name="name1" type="text" class="form-control form-control-lg" placeholder="First name" aria-label="First name" /></div><div class="col-lg-4"><input id="name-2" name="name2" type="text" class="form-control form-control-lg" placeholder="Second name" aria-label="Second name" /></div><div class="col-lg-4"><input id="name-3" name="name3" type="text" class="form-control form-control-lg" placeholder="Third name" aria-label="Third name" /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Calculate</button><button id="clear-names" type="button" class="btn btn-outline-secondary">Clear</button></div></form><p id="status" class="small text-muted mt-3 mb-2"></p><p id="mobile-note" class="small text-muted mb-0"></p></div></section><section id="results-shell" class="content-panel p-3 p-lg-4" hidden><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="h4 mb-0">Results</h2><div id="results-actions" class="d-flex"></div></div><div id="results-grid" class="results-grid"></div></section>
+          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your name calculator results to your account.</div></div><div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-primary btn-sm" href="/member.html">Go to My Dashboard</a><button id="save-history-button" class="btn btn-primary btn-sm" type="button" disabled>Save results</button></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-guide.html">Nice! Back to Level 1</a></div><section class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><form id="name-form" class="row g-3"><div class="col-lg-4"><input id="name-1" name="name1" type="text" class="form-control form-control-lg" placeholder="First name" aria-label="First name" /></div><div class="col-lg-4"><input id="name-2" name="name2" type="text" class="form-control form-control-lg" placeholder="Second name" aria-label="Second name" /></div><div class="col-lg-4"><input id="name-3" name="name3" type="text" class="form-control form-control-lg" placeholder="Third name" aria-label="Third name" /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Calculate</button><button id="clear-names" type="button" class="btn btn-outline-secondary">Clear</button></div></form><p id="status" class="small text-muted mt-3 mb-2"></p><p id="mobile-note" class="small text-muted mb-0"></p></div></section><section id="results-shell" class="content-panel p-3 p-lg-4" hidden><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="h4 mb-0">Results</h2><div id="results-actions" class="d-flex"></div></div><div id="results-grid" class="results-grid"></div></section>
         </section>
       </div>
       <script>
@@ -559,6 +559,20 @@ View results: ${shareUrl}`.trim(),
       }
 
       function configureLearningPathReturn() {
+        const getLearningPathLevel = (pathname) => {
+          const normalizedPath = String(pathname || '').toLowerCase();
+          if (normalizedPath === '/gematria-name-analysis.html') {
+            return 3;
+          }
+          if (normalizedPath === '/gematria-pattern-grouping.html') {
+            return 2;
+          }
+          if (normalizedPath === '/gematria-basics.html') {
+            return 1;
+          }
+          return null;
+        };
+
         const searchParams = new URLSearchParams(window.location.search);
         const source = String(searchParams.get('source') || '').trim();
         const returnTo = String(searchParams.get('returnTo') || '').trim();
@@ -572,6 +586,10 @@ View results: ${shareUrl}`.trim(),
             return;
           }
           learningPathReturnLink.href = `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`;
+          const level = getLearningPathLevel(returnUrl.pathname);
+          learningPathReturnLink.textContent = level
+            ? `Nice! Back to Level ${level}`
+            : 'Nice! Back to lesson';
           shouldShowLearningPathReturn = true;
         } catch {
           // Ignore invalid return URL values.

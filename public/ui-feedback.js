@@ -5,6 +5,16 @@
 
   window.__globalLoadingFeedbackInstalled = true;
 
+  const workingOverlayAllowedPages = new Set(['/calculator.html', '/namecalculator.html']);
+  const currentPath = (window.location && window.location.pathname ? window.location.pathname : '').toLowerCase();
+  const isWorkingOverlayPage = workingOverlayAllowedPages.has(currentPath);
+
+  if (!isWorkingOverlayPage) {
+    window.showWorkingOverlay = function showWorkingOverlay() {};
+    window.hideWorkingOverlay = function hideWorkingOverlay() {};
+    return;
+  }
+
   const SHOW_DELAY_MS = 200;
   let pendingRequests = 0;
   let manualRequests = 0;

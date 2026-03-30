@@ -496,6 +496,120 @@
         }
         return latestPosts.filter((post) => getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag));
       };
+      const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const buildInternalLinkTargets = (posts, currentSlug = '') => {
+        const targets = [
+          { phrase: 'Word/Phrase Calculator', href: '/calculator.html' },
+          { phrase: 'gematria calculator', href: '/calculator.html' },
+          { phrase: 'calculator', href: '/calculator.html' },
+          { phrase: 'name lookup page', href: '/nameCalculator.html' },
+          { phrase: 'name calculator', href: '/nameCalculator.html' },
+          { phrase: 'names', href: '/nameCalculator.html' },
+          { phrase: 'news feed', href: '/news.html' },
+          { phrase: 'FAQ', href: '/faq.html' },
+          { phrase: 'premium research tools', href: '/premium-research.html' },
+          { phrase: 'gematria guide', href: '/gematria-guide.html' },
+          { phrase: 'gematria results archive', href: '/gematria-results.html' },
+          { phrase: 'database', href: '/gematria-results.html' },
+          { phrase: 'related words', href: '/premium-research.html' }
+        ];
+
+        posts.forEach((post) => {
+          if (!post?.slug || String(post.slug).toLowerCase() === String(currentSlug).toLowerCase()) {
+            return;
+          }
+          const title = String(post.title || '').trim();
+          if (title.length < 12) {
+            return;
+          }
+          targets.push({
+            phrase: title,
+            href: `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`
+          });
+        });
+
+        const seen = new Set();
+        return targets
+          .map((target) => ({
+            phrase: String(target.phrase || '').trim(),
+            href: String(target.href || '').trim()
+          }))
+          .filter((target) => {
+            const key = `${target.phrase.toLowerCase()}::${target.href}`;
+            if (!target.phrase || !target.href || seen.has(key)) {
+              return false;
+            }
+            seen.add(key);
+            return true;
+          })
+          .sort((left, right) => right.phrase.length - left.phrase.length);
+      };
+      const linkifyHtmlContent = (html, targets = []) => {
+        const parser = new DOMParser();
+        const documentFragment = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+        const root = documentFragment.body.firstElementChild;
+        if (!root) {
+          return { html, count: 0 };
+        }
+
+        const excludedParents = new Set(['A', 'BUTTON', 'CODE', 'PRE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
+        const linkedTargets = new Set();
+        let linkCount = 0;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const textNodes = [];
+        while (walker.nextNode()) {
+          textNodes.push(walker.currentNode);
+        }
+
+        textNodes.forEach((node) => {
+          if (!node || !node.parentElement || excludedParents.has(node.parentElement.tagName)) {
+            return;
+          }
+          const text = node.textContent || '';
+          if (!text.trim()) {
+            return;
+          }
+          const target = targets.find((candidate) => {
+            if (!candidate?.phrase || linkedTargets.has(candidate.phrase.toLowerCase())) {
+              return false;
+            }
+            const pattern = new RegExp(`(^|[^\\w])(${escapeRegex(candidate.phrase)})(?=[^\\w]|$)`, 'i');
+            return pattern.test(text);
+          });
+          if (!target) {
+            return;
+          }
+
+          const pattern = new RegExp(`(^|[^\\w])(${escapeRegex(target.phrase)})(?=[^\\w]|$)`, 'i');
+          const match = text.match(pattern);
+          if (!match || typeof match.index !== 'number') {
+            return;
+          }
+
+          const matchStart = match.index + match[1].length;
+          const matchText = text.slice(matchStart, matchStart + match[2].length);
+          const before = text.slice(0, matchStart);
+          const after = text.slice(matchStart + match[2].length);
+          const fragment = document.createDocumentFragment();
+          if (before) {
+            fragment.appendChild(document.createTextNode(before));
+          }
+          const anchor = document.createElement('a');
+          anchor.className = 'news-inline-link';
+          anchor.href = target.href;
+          anchor.textContent = matchText;
+          fragment.appendChild(anchor);
+          if (after) {
+            fragment.appendChild(document.createTextNode(after));
+          }
+          node.parentNode?.replaceChild(fragment, node);
+          linkedTargets.add(target.phrase.toLowerCase());
+          linkCount += 1;
+        });
+
+        return { html: root.innerHTML, count: linkCount };
+      };
+      const linkifyPlainText = (text = '', targets = []) => linkifyHtmlContent(escapeHtml(text), targets);
 
       function renderPosts(posts) {
         latestPosts = posts
@@ -508,14 +622,25 @@
           ? `Showing <strong>${filteredPosts.length}</strong> post${filteredPosts.length === 1 ? '' : 's'} tagged <strong>${escapeHtml(selectedTag)}</strong>.`
           : `Showing all <strong>${filteredPosts.length}</strong> posts.`;
 
-        document.getElementById('blogSidebarLinks').innerHTML = filteredPosts.map((post) => `
+        document.getElementById('blogSidebarLinks').innerHTML = filteredPosts.map((post) => {
+          const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
+          const linkedSummaryResult = linkifyPlainText(post.summary, linkTargets);
+          return `
           <a class="blog-mini-link text-decoration-none" href="/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}">
             <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
-            <span class="text-muted small">${escapeHtml(post.summary)}</span>
-          </a>`).join('');
+            <span class="text-muted small">${linkedSummaryResult.html}</span>
+          </a>`;
+        }).join('');
 
         document.getElementById('blogPosts').innerHTML = filteredPosts.map((post) => {
-          const bodyHtml = normalizePostBodyHtml(post.body || '');
+          const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
+          const bodyLinkResult = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);
+          const summaryLinkResult = linkifyPlainText(post.summary, linkTargets);
+          const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/nameCalculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a></p>`;
+          const bodyHtml = bodyLinkResult.count === 0 && summaryLinkResult.count === 0
+            ? `${bodyLinkResult.html}${fallbackRelatedLinks}`
+            : bodyLinkResult.html;
+          const summaryHtml = summaryLinkResult.html;
           const postUrl = `/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}`;
           const createdOn = formatPostCreatedDate(post.publishedAt || post.createdAt || '');
           const tags = getPostTags(post);
@@ -526,7 +651,7 @@
           const coverImageMarkup = coverImageUrl
             ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`
             : '';
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${escapeHtml(post.summary)}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(createdOn ? `Created on: ${createdOn}` : '')}</p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${summaryHtml}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(createdOn ? `Created on: ${createdOn}` : '')}</p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         }).join('');
 
         if (filteredPosts.length) {

@@ -281,7 +281,20 @@ export async function syncBootstrapAdminUser(sql) {
         ${seededPost.publishedAt},
         ${seededPost.createdBy}
       )
-      ON CONFLICT DO NOTHING
+      ON CONFLICT (id)
+      DO UPDATE SET
+        title = EXCLUDED.title,
+        slug = EXCLUDED.slug,
+        tag = EXCLUDED.tag,
+        summary = EXCLUDED.summary,
+        body = EXCLUDED.body,
+        read_time = EXCLUDED.read_time,
+        image_url = EXCLUDED.image_url,
+        slider_image_url = EXCLUDED.slider_image_url,
+        show_on_homepage = EXCLUDED.show_on_homepage,
+        status = EXCLUDED.status,
+        published_at = EXCLUDED.published_at,
+        updated_at = NOW()
     `;
   }
 

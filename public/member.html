@@ -215,6 +215,17 @@
         </section>
 
         <section id="dashboardSection" class="d-none">
+          <section id="learningPathStep1Section" class="content-panel learning-path-step1-panel p-4 mb-4 d-none" aria-live="polite">
+            <p class="section-kicker mb-2">Learning Path</p>
+            <h3 class="h4 mb-2">You’re ready for Level 1</h3>
+            <p class="mb-3">Account created and verified? Continue your learning path now.</p>
+            <a
+              id="goToLearningPathStep1Button"
+              class="btn btn-warning btn-lg fw-bold px-4 py-3"
+              href="/gematria-basics.html"
+            >Go to Learning Path Step 1</a>
+          </section>
+
           <section id="membershipUpgradeSection" class="content-panel membership-upgrade-panel--compact p-3 p-lg-4 mb-4 d-none">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
               <div>
@@ -380,6 +391,8 @@
       const membershipPathSection = document.getElementById('membershipPathSection');
       const membershipPathLadder = document.getElementById('membershipPathLadder');
       const membershipPathCompleteMessage = document.getElementById('membershipPathCompleteMessage');
+      const learningPathStep1Section = document.getElementById('learningPathStep1Section');
+      const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
 
       let session = null;
       let historyItems = [];
@@ -587,11 +600,21 @@
         membershipPathSection.classList.toggle('d-none', level === 'premium' || level === 'lifetime');
       }
 
+      function hasLearningPathStep1Intent() {
+        return window.localStorage.getItem('learningPathStep1Intent') === 'true';
+      }
+
+      function syncLearningPathStep1Cta(member = session?.member) {
+        const shouldShow = Boolean(member) && hasLearningPathStep1Intent();
+        learningPathStep1Section.classList.toggle('d-none', !shouldShow);
+      }
+
       function setLoggedIn(isLoggedIn) {
         syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
         syncComparisonVisibility(isLoggedIn ? session?.member : null);
         syncCtaLadder(isLoggedIn ? session?.member : null);
+        syncLearningPathStep1Cta(isLoggedIn ? session?.member : null);
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
         syncPaymentButton(isLoggedIn ? session?.member : null);
@@ -1166,6 +1189,16 @@
             authenticated: Boolean(session?.member),
           });
         });
+      });
+
+      goToLearningPathStep1Button?.addEventListener('click', () => {
+        window.endTimesTracking?.track('cta_ladder_click', {
+          step: 'learning_path_step_1',
+          location: 'member_dashboard',
+          destination: '/gematria-basics.html',
+          authenticated: Boolean(session?.member),
+        });
+        window.localStorage.removeItem('learningPathStep1Intent');
       });
 
       window.addEventListener('DOMContentLoaded', bootstrapSession);

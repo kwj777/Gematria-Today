@@ -278,6 +278,41 @@
         }
         return String(value).trim();
       };
+      const toAbsolutePostAssetUrl = (value = '') => {
+        const normalizedUrl = normalizePostImageUrl(value);
+        if (!normalizedUrl || /^data:image\//i.test(normalizedUrl)) {
+          return normalizedUrl;
+        }
+        if (normalizedUrl.startsWith('//')) {
+          return `${window.location.protocol}${normalizedUrl}`;
+        }
+        if (/^https?:\/\//i.test(normalizedUrl)) {
+          return normalizedUrl;
+        }
+        return `${window.location.origin}${normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`}`;
+      };
+      const fetchShareImageFile = async (post) => {
+        const heroImageUrl = toAbsolutePostAssetUrl(post.imageUrl || post.heroImageUrl || post.sliderImageUrl);
+        if (!heroImageUrl || /^data:image\//i.test(heroImageUrl)) {
+          return null;
+        }
+
+        try {
+          const response = await fetch(heroImageUrl, { mode: 'cors' });
+          if (!response.ok) {
+            return null;
+          }
+          const imageBlob = await response.blob();
+          if (!imageBlob.type.startsWith('image/')) {
+            return null;
+          }
+          const urlPath = new URL(heroImageUrl, window.location.origin).pathname;
+          const filename = urlPath.split('/').pop() || `${post.slug || 'blog-post'}-hero-image`;
+          return new File([imageBlob], filename, { type: imageBlob.type });
+        } catch {
+          return null;
+        }
+      };
       const shareBlogPost = async (post) => {
         const shareUrl = `${window.location.origin}/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
         const payload = {
@@ -286,9 +321,16 @@
           url: shareUrl,
         };
 
+        const heroImageFile = await fetchShareImageFile(post);
+        const payloadWithImage = heroImageFile ? { ...payload, files: [heroImageFile] } : payload;
+
         if (navigator.share) {
           try {
-            await navigator.share(payload);
+            if (payloadWithImage.files && navigator.canShare?.({ files: payloadWithImage.files })) {
+              await navigator.share(payloadWithImage);
+            } else {
+              await navigator.share(payload);
+            }
             return;
           } catch (error) {
             if (error?.name === 'AbortError') {

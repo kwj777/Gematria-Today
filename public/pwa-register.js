@@ -5,6 +5,7 @@
 
   let deferredInstallPrompt = null;
   let launchOverlayTimer = null;
+  const IOS_INSTALL_DISMISSED_KEY = 'pwa-ios-install-dismissed';
 
   function removeLaunchOverlay() {
     const existing = document.querySelector('[data-pwa-launch-overlay]');
@@ -67,6 +68,77 @@
 
   function isStandaloneMode() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+
+  function isIosSafari() {
+    const ua = window.navigator.userAgent || '';
+    const isIos = /iPad|iPhone|iPod/.test(ua) ||
+      (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+    return isIos && isSafari;
+  }
+
+  function removeIosInstallPopup() {
+    const existing = document.querySelector('[data-pwa-ios-popup]');
+    if (existing) {
+      existing.remove();
+    }
+  }
+
+  function shouldShowIosInstallPopup() {
+    if (!isIosSafari() || isStandaloneMode()) {
+      return false;
+    }
+
+    return window.localStorage.getItem(IOS_INSTALL_DISMISSED_KEY) !== 'true';
+  }
+
+  function showIosInstallPopup() {
+    if (!shouldShowIosInstallPopup() || document.querySelector('[data-pwa-ios-popup]')) {
+      return;
+    }
+
+    const popup = document.createElement('div');
+    popup.className = 'pwa-ios-popup';
+    popup.setAttribute('data-pwa-ios-popup', 'true');
+    popup.setAttribute('role', 'dialog');
+    popup.setAttribute('aria-live', 'polite');
+    popup.setAttribute('aria-label', 'Install app on iPhone');
+
+    const title = document.createElement('p');
+    title.className = 'pwa-ios-popup__title';
+    title.textContent = 'Add EndTimes.Today to your Home Screen';
+
+    const instructions = document.createElement('p');
+    instructions.className = 'pwa-ios-popup__instructions';
+    instructions.innerHTML = 'Tap <strong>Share</strong> (􀈂), then choose <strong>Add to Home Screen</strong>.';
+
+    const actions = document.createElement('div');
+    actions.className = 'pwa-ios-popup__actions';
+
+    const gotItButton = document.createElement('button');
+    gotItButton.type = 'button';
+    gotItButton.className = 'btn btn-warning btn-sm fw-semibold';
+    gotItButton.textContent = 'Got it';
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'pwa-ios-popup__close';
+    closeButton.setAttribute('aria-label', 'Dismiss iPhone install popup');
+    closeButton.textContent = '×';
+
+    function dismissPopup() {
+      window.localStorage.setItem(IOS_INSTALL_DISMISSED_KEY, 'true');
+      removeIosInstallPopup();
+    }
+
+    gotItButton.addEventListener('click', dismissPopup);
+    closeButton.addEventListener('click', dismissPopup);
+
+    actions.append(gotItButton);
+    popup.append(closeButton, title, instructions, actions);
+    document.body.appendChild(popup);
   }
 
   function removeInstallCta() {
@@ -133,6 +205,7 @@
   window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
     removeInstallCta();
+    removeIosInstallPopup();
   });
 
   startLaunchOverlayTimer();
@@ -144,6 +217,9 @@
 
     if (isStandaloneMode()) {
       removeInstallCta();
+      removeIosInstallPopup();
+    } else {
+      showIosInstallPopup();
     }
 
     clearLaunchOverlayTimer();

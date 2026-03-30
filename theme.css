@@ -669,6 +669,111 @@ footer.site-footer {
   top: 5.5rem;
 }
 
+.followit-card .form-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  margin-top: 0;
+  padding: clamp(1rem, 2.2vw, 1.35rem);
+  border-radius: 1rem;
+  border: 1px solid rgba(53, 65, 79, 0.08);
+  box-shadow: 0 1rem 2.5rem rgba(63, 64, 58, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.followit-card .form-preview,
+.followit-card .form-preview * {
+  box-sizing: border-box;
+}
+
+.followit-card .preview-heading h5 {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
+  color: #12304a;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.followit-card .preview-input-field {
+  margin-top: 0.85rem;
+  width: 100%;
+}
+
+.followit-card .preview-input-field input {
+  width: 100%;
+  height: 42px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(53, 95, 140, 0.24);
+  background-color: #fff;
+  outline: none;
+  color: #35414f;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  text-align: left;
+  padding: 0.55rem 0.8rem;
+}
+
+.followit-card .preview-input-field input::placeholder {
+  color: #6d7278;
+  opacity: 1;
+}
+
+.followit-card .preview-submit-button {
+  margin-top: 0.65rem;
+  width: 100%;
+}
+
+.followit-card .preview-submit-button button {
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-radius: 0.75rem;
+  line-height: 1;
+  background: linear-gradient(135deg, #355f8c, #33a1d6);
+  color: #fff;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.followit-card .preview-submit-button button:hover {
+  cursor: pointer;
+  filter: brightness(0.95);
+}
+
+.followit-card .powered-by-line {
+  color: #6d7278;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.6rem;
+}
+
+.followit-card .powered-by-line img {
+  margin-left: 8px;
+  height: 1.1em;
+  max-height: 1.1em;
+}
+
+.followit-card--sidebar .form-preview {
+  padding: 0.9rem;
+}
+
+.followit-card--sidebar .preview-heading h5 {
+  font-size: 0.95rem;
+}
+
 @media (max-width: 991px) {
   .blog-slide-card {
     margin: 0;

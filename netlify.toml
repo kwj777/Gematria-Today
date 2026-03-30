@@ -12,6 +12,11 @@
   to = "/.netlify/functions/wordnikDefinition"
   status = 200
 
+[[redirects]]
+  from = "/blog.xml"
+  to = "/.netlify/functions/blog-rss"
+  status = 200
+
 
 [[redirects]]
   from = "/apple-touch-icon.png"
@@ -52,6 +57,13 @@
   for = "/sitemap.xml"
   [headers.values]
     Content-Type = "application/xml; charset=UTF-8"
+    X-Robots-Tag = "all"
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/blog.xml"
+  [headers.values]
+    Content-Type = "application/rss+xml; charset=UTF-8"
     X-Robots-Tag = "all"
     Cache-Control = "public, max-age=300"
 

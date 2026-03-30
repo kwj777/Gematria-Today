@@ -131,6 +131,7 @@
               <a class="btn btn-outline-primary" href="/blog.html">View Blog page</a>
               <a class="btn btn-outline-primary" href="/admin-posts.html">Manage posts</a>
               <a class="btn btn-outline-primary" href="/admin-reports.html">View Reports</a>
+              <button id="refreshSiteCacheButton" class="btn btn-outline-warning" type="button">Refresh site cache</button>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
             </div>
           </div>
@@ -1230,10 +1231,10 @@
         resetFaqForm();
       });
 
-      document.getElementById('clearCacheButton').addEventListener('click', async (event) => {
+      async function clearSiteCache(targetButton) {
         clearMessage(errorMessage);
         try {
-          event.currentTarget.disabled = true;
+          targetButton.disabled = true;
           const payload = await request('/api/admin-settings', {
             method: 'POST',
             body: JSON.stringify({ action: 'clear-cache' })
@@ -1242,8 +1243,16 @@
         } catch (error) {
           showMessage(errorMessage, error.message);
         } finally {
-          event.currentTarget.disabled = false;
+          targetButton.disabled = false;
         }
+      }
+
+      document.getElementById('refreshSiteCacheButton').addEventListener('click', async (event) => {
+        await clearSiteCache(event.currentTarget);
+      });
+
+      document.getElementById('clearCacheButton').addEventListener('click', async (event) => {
+        await clearSiteCache(event.currentTarget);
       });
 
       document.getElementById('membershipGrantForm').addEventListener('submit', async (event) => {

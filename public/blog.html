@@ -156,7 +156,8 @@
               <h2 class="h4 mb-3">Start with these reads</h2>
               <div class="mb-4">
                 <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
-                <div id="blogTagFilters" class="d-flex flex-wrap gap-2 async-content-shell" aria-live="polite"><span class="placeholder-glow w-100"><span class="placeholder async-shell-line col-4"></span></span></div>
+                <div id="blogTagFilters" class="blog-tag-filters blog-tag-filters--collapsed d-flex flex-wrap gap-2 async-content-shell" aria-live="polite"><span class="placeholder-glow w-100"><span class="placeholder async-shell-line col-4"></span></span></div>
+                <button id="blogTagFiltersToggle" type="button" class="btn btn-link btn-sm px-0 mt-2 text-decoration-none" hidden aria-expanded="false">Show all tags</button>
               </div>
               <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
                 <div class="followit--follow-form-container followit-card followit-card--sidebar" attr-a attr-b attr-c attr-d attr-e attr-f>
@@ -479,6 +480,25 @@
 
       let latestPosts = [];
       let selectedTag = '';
+      const updateTagFilterOverflowState = () => {
+        const tagFiltersEl = document.getElementById('blogTagFilters');
+        const toggleEl = document.getElementById('blogTagFiltersToggle');
+        if (!tagFiltersEl || !toggleEl) {
+          return;
+        }
+        const hasOverflow = tagFiltersEl.scrollHeight > tagFiltersEl.clientHeight + 4;
+        if (!hasOverflow) {
+          tagFiltersEl.classList.remove('blog-tag-filters--collapsed');
+          toggleEl.hidden = true;
+          toggleEl.textContent = 'Show all tags';
+          toggleEl.setAttribute('aria-expanded', 'false');
+          return;
+        }
+        toggleEl.hidden = false;
+        const isExpanded = !tagFiltersEl.classList.contains('blog-tag-filters--collapsed');
+        toggleEl.textContent = isExpanded ? 'Show fewer tags' : 'Show all tags';
+        toggleEl.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      };
 
       const renderTagFilters = (posts) => {
         const tagCounts = new Map();
@@ -500,13 +520,19 @@
           syncTagLocation('');
         }
 
-        document.getElementById('blogTagFilters').innerHTML = [
+        const tagFiltersEl = document.getElementById('blogTagFilters');
+        if (!tagFiltersEl) {
+          return;
+        }
+        tagFiltersEl.innerHTML = [
           `<button type="button" class="btn btn-sm ${selectedTag ? 'btn-outline-secondary' : 'btn-primary'}" data-tag-filter="">All posts <span class="badge text-bg-light ms-1">${posts.length}</span></button>`,
           ...sortedTags.map((tag) => {
             const isActive = selectedTag === tag.label.toLowerCase();
             return `<button type="button" class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline-secondary'}" data-tag-filter="${escapeHtml(tag.label.toLowerCase())}">${escapeHtml(tag.label)} <span class="badge text-bg-light ms-1">${tag.count}</span></button>`;
           })
         ].join('');
+        tagFiltersEl.classList.add('blog-tag-filters--collapsed');
+        window.requestAnimationFrame(updateTagFilterOverflowState);
       };
 
       const getVisiblePosts = () => {
@@ -709,6 +735,15 @@
         focusLinkedPost(getRequestedPostSlug());
       });
       document.addEventListener('click', (event) => {
+        const tagFilterToggle = event.target.closest('#blogTagFiltersToggle');
+        if (tagFilterToggle) {
+          const tagFiltersEl = document.getElementById('blogTagFilters');
+          if (tagFiltersEl) {
+            tagFiltersEl.classList.toggle('blog-tag-filters--collapsed');
+            updateTagFilterOverflowState();
+          }
+          return;
+        }
         const tagFilter = event.target.closest('[data-tag-filter]');
         if (tagFilter) {
           selectedTag = String(tagFilter.dataset.tagFilter || '').trim().toLowerCase();
@@ -735,6 +770,7 @@
         }
         window.setTimeout(() => focusLinkedPost(url.searchParams.get('post') || url.hash.slice(1)), 0);
       });
+      window.addEventListener('resize', () => window.requestAnimationFrame(updateTagFilterOverflowState));
 
       selectedTag = getRequestedTag();
 

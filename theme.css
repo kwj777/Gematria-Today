@@ -672,6 +672,19 @@ footer.site-footer {
   overscroll-behavior: contain;
 }
 
+.blog-tag-filters {
+  max-height: none;
+  overflow-y: visible;
+  padding-right: 0;
+  scrollbar-width: thin;
+}
+
+.blog-tag-filters.blog-tag-filters--collapsed {
+  max-height: 8rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
 .followit-card {
   padding: clamp(0.9rem, 2vw, 1.15rem);
   border-radius: 1rem;

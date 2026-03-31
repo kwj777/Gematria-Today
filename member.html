@@ -274,6 +274,7 @@
             <div class="d-flex gap-2 flex-wrap">
               <a class="btn btn-outline-primary" href="/calculator.html">Open calculator</a>
               <a id="premiumResearchLink" class="btn btn-warning premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
+              <a id="blogProposalNavButton" class="btn btn-outline-success d-none" href="#premiumBlogProposalSection">Submit blog post</a>
               <button id="refreshHistoryButton" class="btn btn-outline-secondary" type="button">Refresh history</button>
               <a id="adminPageButton" class="btn btn-outline-dark d-none" href="/admin.html">Admin page</a>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Sign out</button>
@@ -304,6 +305,44 @@
 
             <div class="col-xl-5">
               <div class="d-grid gap-4 h-100">
+                <section id="premiumBlogProposalSection" class="content-panel p-4 h-100">
+                  <p class="section-kicker mb-2">Premium Blog Contributions</p>
+                  <h3 class="h4 mb-2">Propose a blog post</h3>
+                  <p class="text-muted mb-3">Premium members can submit post ideas for editorial review.</p>
+                  <form id="premiumBlogProposalForm" class="row g-3 d-none">
+                    <div class="col-12">
+                      <label class="form-label" for="blogProposalTitle">Proposed title</label>
+                      <input id="blogProposalTitle" class="form-control" minlength="8" maxlength="140" required />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="blogProposalSummary">Post summary</label>
+                      <textarea id="blogProposalSummary" class="form-control" rows="3" minlength="40" maxlength="500" required placeholder="Share the main thesis and why it matters for readers."></textarea>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="blogProposalBody">Draft content</label>
+                      <textarea id="blogProposalBody" class="form-control" rows="6" minlength="120" required placeholder="Paste your full draft or detailed outline."></textarea>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="blogProposalTags">Suggested tags</label>
+                      <input id="blogProposalTags" class="form-control" placeholder="prophecy, gematria, bible study" aria-describedby="blogProposalTagsHelp" required />
+                      <div id="blogProposalTagsHelp" class="form-text">Use commas to separate each tag.</div>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="blogProposalAttribution">Username attribution</label>
+                      <input id="blogProposalAttribution" class="form-control" readonly />
+                    </div>
+                    <div class="col-12">
+                      <div class="form-check">
+                        <input id="blogProposalPolicyAgreement" class="form-check-input" type="checkbox" required />
+                        <label class="form-check-label" for="blogProposalPolicyAgreement">I have read the <a href="/disclaimer.html" target="_blank" rel="noopener">Editorial Policy</a> and agree to it.</label>
+                      </div>
+                    </div>
+                    <div class="col-12 d-grid">
+                      <button class="btn btn-success" type="submit">Send proposal</button>
+                    </div>
+                  </form>
+                  <div id="premiumBlogProposalLockedMessage" class="alert alert-warning mb-0 d-none" role="alert">This form is available to premium members only. Upgrade your membership to submit proposed blog posts.</div>
+                </section>
                 <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
                   <p class="section-kicker mb-2">Profile</p>
                   <h3 class="h4 mb-3">Preferences</h3>
@@ -389,6 +428,10 @@
       const comparisonPremiumColumns = comparisonSection.querySelectorAll('.comparison-col--premium');
       const learningPathStep1Section = document.getElementById('learningPathStep1Section');
       const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
+      const blogProposalNavButton = document.getElementById('blogProposalNavButton');
+      const premiumBlogProposalForm = document.getElementById('premiumBlogProposalForm');
+      const premiumBlogProposalLockedMessage = document.getElementById('premiumBlogProposalLockedMessage');
+      const blogProposalAttribution = document.getElementById('blogProposalAttribution');
 
       let session = null;
       let historyItems = [];
@@ -610,6 +653,7 @@
         syncMembershipUpgradePanel(isLoggedIn ? session?.member : null);
         syncPremiumResearchLink(isLoggedIn ? session?.member : null);
         syncAdminPageButton(isLoggedIn ? session?.member : null, isLoggedIn ? session?.user : null);
+        syncBlogProposalForm(isLoggedIn ? session?.member : null);
         membershipPageContent.classList.remove('d-none');
       }
 
@@ -638,6 +682,18 @@
       function syncAdminPageButton(member = session?.member, user = session?.user) {
         const isAdminLevel = Boolean(user?.isAdmin) || user?.role === 'admin' || member?.role === 'admin' || Boolean(member?.isAdmin);
         adminPageButton.classList.toggle('d-none', !isAdminLevel);
+      }
+
+      function isPremiumMembershipLevel(level) {
+        return level === 'premium' || level === 'lifetime';
+      }
+
+      function syncBlogProposalForm(member = session?.member) {
+        const isPremium = isPremiumMembershipLevel(member?.membershipLevel);
+        premiumBlogProposalForm.classList.toggle('d-none', !isPremium);
+        premiumBlogProposalLockedMessage.classList.toggle('d-none', isPremium);
+        blogProposalNavButton.classList.toggle('d-none', !isPremium);
+        blogProposalAttribution.value = member?.username || '';
       }
 
       function scrollToLoginArea() {
@@ -935,6 +991,7 @@
         syncMembershipUpgradePanel(member);
         syncPremiumResearchLink(member);
         syncAdminPageButton(member, user);
+        syncBlogProposalForm(member);
       }
 
       async function loadHistory() {
@@ -1109,6 +1166,46 @@
         } catch (error) {
           showAlert(error.message || 'Unable to save profile.');
         }
+      });
+
+      premiumBlogProposalForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+        if (!session?.member || !isPremiumMembershipLevel(session.member.membershipLevel)) {
+          showAlert('Premium membership is required to submit blog proposals.', 'warning');
+          return;
+        }
+
+        const rawTags = document.getElementById('blogProposalTags').value;
+        const tags = rawTags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+
+        if (tags.length === 0) {
+          showAlert('Please include at least one suggested tag separated by commas.', 'warning');
+          return;
+        }
+
+        const subject = encodeURIComponent(`Premium Blog Proposal: ${document.getElementById('blogProposalTitle').value.trim()}`);
+        const bodyLines = [
+          `Username Attribution: ${session.member.username}`,
+          `Display Name: ${session.member.displayName || 'N/A'}`,
+          `Email: ${session.member.email || 'N/A'}`,
+          `Suggested Tags: ${tags.join(', ')}`,
+          '',
+          'Summary:',
+          document.getElementById('blogProposalSummary').value.trim(),
+          '',
+          'Draft Content:',
+          document.getElementById('blogProposalBody').value.trim(),
+        ];
+        const body = encodeURIComponent(bodyLines.join('\n'));
+
+        window.location.href = `mailto:contact@endtimes.today?subject=${subject}&body=${body}`;
+        showAlert('Your email app was opened with your proposal draft for editorial review.', 'success');
+        event.target.reset();
+        blogProposalAttribution.value = session.member.username || '';
       });
 
       document.getElementById('logoutButton').addEventListener('click', async () => {

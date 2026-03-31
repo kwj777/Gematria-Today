@@ -140,7 +140,7 @@
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Feeds</div><div id="feedCount" class="metric-value text-primary">0</div><p class="mb-0 text-muted">Configured RSS sources in the database.</p></div></div>
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Posts</div><div id="postCount" class="metric-value text-success">0</div><p class="mb-0 text-muted">Saved blog entries ready for the public blog page.</p></div></div>
             <div class="col-md-6 col-xl-3">
-              <a id="proposalReviewStatLink" class="stat-card p-4 h-100 d-block text-decoration-none" href="#proposalSectionBody">
+              <a id="proposalReviewStatLink" class="stat-card p-4 h-100 d-block text-decoration-none" href="/admin-editorial.html">
                 <div class="section-kicker mb-2 text-dark">Proposals</div>
                 <div id="proposalPendingCount" class="metric-value text-danger">0</div>
                 <p class="mb-0 text-muted">Premium-member blog proposals awaiting review.</p>
@@ -234,25 +234,6 @@
                     <button id="postCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
                   </div>
                 </form>
-                </div>
-              </section>
-            </div>
-
-            <div class="col-md-6 admin-dashboard-masonry-item">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
-                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#proposalSectionBody" aria-expanded="false" aria-controls="proposalSectionBody">
-                  <span>
-                    <span class="section-kicker d-block mb-2">Editorial Queue</span>
-                    <span class="h4 mb-0 d-block">Review proposed blog posts</span>
-                  </span>
-                  <span class="d-inline-flex align-items-center gap-3">
-                    <span id="proposalPendingBadge" class="badge text-bg-danger">0 pending</span>
-                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
-                  </span>
-                </button>
-                <div id="proposalSectionBody" class="collapse admin-section-body mt-4">
-                  <p class="small text-muted">Load a proposal into the post editor, then publish from the regular “Create blog posts” section.</p>
-                  <div id="proposalList" class="admin-list mt-3"></div>
                 </div>
               </section>
             </div>
@@ -980,9 +961,15 @@
 
       function renderBlogProposals() {
         const list = document.getElementById('proposalList');
+        const pendingBadge = document.getElementById('proposalPendingBadge');
         const pendingCount = state.proposals.filter((proposal) => proposal.status === 'pending').length;
         proposalPendingCount.textContent = String(pendingCount);
-        document.getElementById('proposalPendingBadge').textContent = `${pendingCount} pending`;
+        if (pendingBadge) {
+          pendingBadge.textContent = `${pendingCount} pending`;
+        }
+        if (!list) {
+          return;
+        }
 
         list.innerHTML = state.proposals.length ? state.proposals.map((proposal) => `
           <article class="admin-item-card mb-3 p-3">
@@ -1051,6 +1038,10 @@
           sessionMeta.textContent = `Signed in as ${payload.user.username}`;
           setLoggedIn(true);
           await refreshDashboard();
+          const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
+          if (loadProposalFromQuery) {
+            await loadProposalIntoEditor(loadProposalFromQuery);
+          }
         } catch (error) {
           state.user = null;
           sessionMeta.textContent = '';
@@ -1471,16 +1462,29 @@
         }
       });
 
-      document.getElementById('proposalReviewStatLink').addEventListener('click', (event) => {
-        event.preventDefault();
-        const section = document.getElementById('proposalSectionBody');
-        if (window.bootstrap?.Collapse) {
-          window.bootstrap.Collapse.getOrCreateInstance(section, { toggle: false }).show();
-        } else {
-          section.classList.add('show');
+      async function loadProposalIntoEditor(proposalId) {
+        const proposal = state.proposals.find((item) => item.id === proposalId);
+        if (!proposal) {
+          return false;
         }
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+        document.getElementById('postTitle').value = proposal.title || '';
+        document.getElementById('postTag').value = proposal.suggestedTags || '';
+        document.getElementById('postSummary').value = proposal.summary || '';
+        document.getElementById('postBody').value = proposal.body || '';
+        if (proposal.proposedImageUrl) {
+          document.getElementById('postImageUrl').value = proposal.proposedImageUrl;
+          renderPostImagePreview(proposal.proposedImageUrl);
+          setPostImageMeta('Loaded proposal image URL into draft.');
+        } else {
+          document.getElementById('postImageUrl').value = '';
+          renderPostImagePreview('');
+          setPostImageMeta('Proposal has no suggested image URL.');
+        }
+        document.getElementById('postSectionBody').classList.add('show');
+        document.getElementById('postSectionBody').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showMessage(saveMessage, 'Proposal loaded into post editor.');
+        return true;
+      }
 
       document.addEventListener('click', async (event) => {
         const {

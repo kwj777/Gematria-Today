@@ -15,6 +15,7 @@ export async function handler(event) {
         SELECT id, title, summary, status, rejection_explanation, reviewed_at, created_at, updated_at
         FROM blog_post_proposals
         WHERE user_id = ${member.id}
+          AND archived_by_member_at IS NULL
         ORDER BY created_at DESC
       `;
       return jsonResponse(200, {
@@ -34,17 +35,26 @@ export async function handler(event) {
     if (method === 'PATCH') {
       const payload = parseBody(event);
       const id = String(payload.id || '').trim();
+      const action = String(payload.action || '').trim().toLowerCase();
       if (!id) {
         return jsonResponse(400, { error: 'id is required' });
       }
 
-      const rows = await sql`
-        DELETE FROM blog_post_proposals
-        WHERE id = ${id}
-          AND user_id = ${member.id}
-          AND status = 'rejected'
-        RETURNING id
-      `;
+      const rows = action === 'archive'
+        ? await sql`
+          UPDATE blog_post_proposals
+          SET archived_by_member_at = NOW(), updated_at = NOW()
+          WHERE id = ${id}
+            AND user_id = ${member.id}
+          RETURNING id
+        `
+        : await sql`
+          DELETE FROM blog_post_proposals
+          WHERE id = ${id}
+            AND user_id = ${member.id}
+            AND status = 'rejected'
+          RETURNING id
+        `;
 
       if (!rows.length) {
         return jsonResponse(404, { error: 'Proposal not found' });

@@ -645,6 +645,7 @@
       }
 
       function syncMembershipHero(member = session?.member, isLoggedIn = Boolean(member)) {
+        const justVerifiedEmail = window.sessionStorage.getItem('memberJustVerifiedEmail') === 'true';
         if (!membershipHeroReady) {
           membershipHero.classList.add('d-none');
           return;
@@ -671,8 +672,12 @@
 
         if (loginOnlyMode) {
           membershipHeroKicker.textContent = 'Premium Member Access';
-          membershipHeroTitle.textContent = 'Welcome back, Premium Member.';
-          membershipHeroLead.textContent = 'Sign in to access your premium tools, saved favorites, and advanced research workflows.';
+          membershipHeroTitle.textContent = justVerifiedEmail
+            ? 'Welcome to Premium Member Access.'
+            : 'Welcome back, Premium Member.';
+          membershipHeroLead.textContent = justVerifiedEmail
+            ? 'Your email is verified. Sign in to access premium tools, saved favorites, and advanced research workflows for the first time.'
+            : 'Sign in to access your premium tools, saved favorites, and advanced research workflows.';
           membershipHeroCardColumn.classList.add('d-none');
           return;
         }
@@ -697,6 +702,9 @@
       }
 
       function setLoggedIn(isLoggedIn) {
+        if (isLoggedIn) {
+          window.sessionStorage.removeItem('memberJustVerifiedEmail');
+        }
         syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
         syncComparisonVisibility(isLoggedIn ? session?.member : null);
@@ -1078,6 +1086,7 @@
         if (verifyEmailToken) {
           try {
             await request(`/api/member-verify-email?token=${encodeURIComponent(verifyEmailToken)}`, { method: 'GET' });
+            window.sessionStorage.setItem('memberJustVerifiedEmail', 'true');
             showAlert('Email verified. Your account is now active and you can sign in.', 'success');
             scrollToLoginArea();
           } catch (error) {

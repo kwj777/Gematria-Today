@@ -539,9 +539,15 @@
 
         const openedWindow = preopenedWindow && !preopenedWindow.closed
           ? preopenedWindow
-          : window.open('about:blank', targetName, 'noopener');
+          : window.open('', targetName);
 
-        if (!openedWindow) {
+        if (openedWindow) {
+          try {
+            openedWindow.opener = null;
+          } catch (_) {
+            // Ignore cross-origin opener protection errors.
+          }
+        } else {
           form.target = '_blank';
         }
 

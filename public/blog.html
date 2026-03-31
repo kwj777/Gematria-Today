@@ -481,6 +481,25 @@
 
       let latestPosts = [];
       let selectedTag = '';
+      const updateTagFilterOverflowState = () => {
+        const tagFiltersEl = document.getElementById('blogTagFilters');
+        const toggleEl = document.getElementById('blogTagFiltersToggle');
+        if (!tagFiltersEl || !toggleEl) {
+          return;
+        }
+        const hasOverflow = tagFiltersEl.scrollHeight > tagFiltersEl.clientHeight + 4;
+        if (!hasOverflow) {
+          tagFiltersEl.classList.remove('blog-tag-filters--collapsed');
+          toggleEl.hidden = true;
+          toggleEl.textContent = 'Show all tags';
+          toggleEl.setAttribute('aria-expanded', 'false');
+          return;
+        }
+        toggleEl.hidden = false;
+        const isExpanded = !tagFiltersEl.classList.contains('blog-tag-filters--collapsed');
+        toggleEl.textContent = isExpanded ? 'Show fewer tags' : 'Show all tags';
+        toggleEl.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      };
 
       const renderTagFilters = (posts) => {
         const tagCounts = new Map();
@@ -724,6 +743,15 @@
         renderPosts(latestPosts);
       });
       document.addEventListener('click', (event) => {
+        const tagFilterToggle = event.target.closest('#blogTagFiltersToggle');
+        if (tagFilterToggle) {
+          const tagFiltersEl = document.getElementById('blogTagFilters');
+          if (tagFiltersEl) {
+            tagFiltersEl.classList.toggle('blog-tag-filters--collapsed');
+            updateTagFilterOverflowState();
+          }
+          return;
+        }
         const tagFilter = event.target.closest('[data-tag-filter]');
         if (tagFilter) {
           selectedTag = String(tagFilter.dataset.tagFilter || '').trim().toLowerCase();
@@ -750,6 +778,7 @@
         }
         window.setTimeout(() => focusLinkedPost(url.searchParams.get('post') || url.hash.slice(1)), 0);
       });
+      window.addEventListener('resize', () => window.requestAnimationFrame(updateTagFilterOverflowState));
 
       selectedTag = getRequestedTag();
 

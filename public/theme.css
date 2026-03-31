@@ -668,16 +668,19 @@ footer.site-footer {
 .blog-sidebar {
   top: 5.5rem;
   max-height: calc(100vh - 6.5rem);
-  overflow: visible;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 #blogSidebarLinks {
   max-height: none;
-  overflow-y: visible;
+  overflow-y: hidden;
+  min-height: 0;
 }
 
 #blogSidebarLinks.blog-sidebar-links--scrollable {
-  max-height: min(24rem, calc(100vh - 20rem));
+  max-height: none;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 0.25rem;

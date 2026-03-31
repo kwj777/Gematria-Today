@@ -2,8 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin.html
-Disallow: /member
-Disallow: /member.html
 Disallow: /account-recovery
 Disallow: /account-recovery.html
 Disallow: /api/

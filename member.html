@@ -920,11 +920,15 @@
           const statusTone = isRejected ? 'danger' : isApproved ? 'success' : 'secondary';
           const statusLabel = isApproved ? 'accepted' : (proposal.status || 'pending');
           const reviewedAt = proposal.reviewedAt ? new Date(proposal.reviewedAt).toLocaleString() : '';
-          const acceptanceMessage = proposal.rejectionExplanation || 'Your proposal has been accepted and will be posted soon.';
-          const explanationMarkup = isRejected && proposal.rejectionExplanation
+          const explanationMarkup = proposal.rejectionExplanation
             ? `<div class="alert alert-warning small mb-0 mt-2 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
-                <span><strong>Editorial explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}</span>
-                <button class="btn btn-sm btn-outline-secondary align-self-start align-self-md-auto" type="button" data-delete-rejected-proposal="${escapeHtml(proposal.id)}">Delete message</button>
+                <span><strong>Message from admin:</strong> ${escapeHtml(proposal.rejectionExplanation)}</span>
+                <button class="btn btn-sm btn-outline-secondary align-self-start align-self-md-auto" type="button" data-archive-proposal="${escapeHtml(proposal.id)}">Archive</button>
+              </div>`
+            : '';
+          const archiveButtonMarkup = !proposal.rejectionExplanation
+            ? `<div class="mt-2">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-archive-proposal="${escapeHtml(proposal.id)}">Archive</button>
               </div>`
             : '';
 
@@ -936,6 +940,7 @@
               </div>
               ${reviewedAt ? `<p class="small text-muted mb-0 mt-2">Last reviewed: ${reviewedAt}</p>` : ''}
               ${explanationMarkup}
+              ${archiveButtonMarkup}
             </article>
           `;
         }).join('');
@@ -957,7 +962,7 @@
         renderMemberProposalFeedback();
       }
 
-      async function deleteRejectedProposal(proposalId) {
+      async function archiveProposal(proposalId) {
         const id = String(proposalId || '').trim();
         if (!id) {
           return;
@@ -965,7 +970,7 @@
 
         await request('/api/member-blog-proposals', {
           method: 'PATCH',
-          body: JSON.stringify({ id }),
+          body: JSON.stringify({ id, action: 'archive' }),
         });
 
         memberProposals = memberProposals.filter((proposal) => proposal.id !== id);
@@ -1536,7 +1541,7 @@
       });
 
       memberProposalFeedbackList?.addEventListener('click', async (event) => {
-        const button = event.target.closest('[data-delete-rejected-proposal]');
+        const button = event.target.closest('[data-archive-proposal]');
         if (!button) {
           return;
         }
@@ -1544,10 +1549,10 @@
         clearAlert();
         button.disabled = true;
         try {
-          await deleteRejectedProposal(button.dataset.deleteRejectedProposal);
-          showAlert('Rejected proposal deleted.', 'success');
+          await archiveProposal(button.dataset.archiveProposal);
+          showAlert('Proposal archived.', 'success');
         } catch (error) {
-          showAlert(error.message || 'Unable to delete rejected proposal.');
+          showAlert(error.message || 'Unable to archive proposal.');
           button.disabled = false;
         }
       });

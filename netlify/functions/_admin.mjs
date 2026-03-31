@@ -200,6 +200,54 @@ export async function ensureAdminSchema(sql) {
 
   await sql`CREATE INDEX IF NOT EXISTS posts_status_published_at_idx ON posts(status, published_at DESC)`;
 
+  await sql`CREATE TABLE IF NOT EXISTS blog_post_proposals (
+    id TEXT PRIMARY KEY,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    body TEXT NOT NULL,
+    suggested_tags TEXT,
+    attribution_username TEXT,
+    attribution_display_name TEXT,
+    attribution_email TEXT,
+    proposed_image_url TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+
+  await sql`ALTER TABLE blog_post_proposals
+    ADD COLUMN IF NOT EXISTS proposed_image_url TEXT`;
+
+  await sql`ALTER TABLE blog_post_proposals
+    ADD COLUMN IF NOT EXISTS reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL`;
+
+  await sql`ALTER TABLE blog_post_proposals
+    ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ`;
+
+  await sql`UPDATE blog_post_proposals
+    SET status = 'pending'
+    WHERE status IS NULL OR BTRIM(status) = ''`;
+
+  await sql`DO $$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conname = 'blog_post_proposals_status_check'
+    ) THEN
+      ALTER TABLE blog_post_proposals
+      ADD CONSTRAINT blog_post_proposals_status_check
+      CHECK (status IN ('pending', 'reviewed', 'approved', 'rejected'));
+    END IF;
+  END
+  $$`;
+
+  await sql`CREATE INDEX IF NOT EXISTS blog_post_proposals_status_created_idx
+    ON blog_post_proposals (status, created_at DESC)`;
+
   await sql`CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -406,6 +454,26 @@ export function formatFaq(row) {
     answer: row.answer,
     sortOrder: row.sort_order,
     isPublished: row.is_published,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function formatBlogPostProposal(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    summary: row.summary,
+    body: row.body,
+    suggestedTags: row.suggested_tags,
+    attributionUsername: row.attribution_username,
+    attributionDisplayName: row.attribution_display_name,
+    attributionEmail: row.attribution_email,
+    proposedImageUrl: row.proposed_image_url,
+    status: row.status,
+    reviewedBy: row.reviewed_by,
+    reviewedAt: row.reviewed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

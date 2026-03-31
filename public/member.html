@@ -183,6 +183,7 @@
               <div class="col-md-6"><label class="form-label" for="registerUsername">Username</label><input id="registerUsername" class="form-control" required /></div>
               <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" /></div>
               <div class="col-12"><label class="form-label" for="registerEmail">Email</label><input id="registerEmail" class="form-control" type="email" required /></div>
+              <div id="registerPasswordMismatchAlert" class="col-12 alert alert-warning d-none mb-0" role="alert">Password and confirm password do not match.</div>
               <div class="col-12"><label class="form-label" for="registerPassword">Password</label><input id="registerPassword" class="form-control" type="password" minlength="8" required /></div>
               <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password</label><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" required /></div>
               <div class="col-12">
@@ -348,6 +349,9 @@
       const membershipPlanMeta = document.getElementById('membershipPlanMeta');
       const paymentButton = document.getElementById('paymentButton');
       const registerButton = document.querySelector('#registerForm button[type="submit"]');
+      const registerPasswordMismatchAlert = document.getElementById('registerPasswordMismatchAlert');
+      const registerPasswordInput = document.getElementById('registerPassword');
+      const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       const historyCount = document.getElementById('historyCount');
       const historyCountMeta = document.getElementById('historyCountMeta');
@@ -450,6 +454,14 @@
       function clearAlert() {
         memberAlert.textContent = '';
         memberAlert.className = 'alert d-none';
+      }
+
+      function showRegisterPasswordMismatchAlert() {
+        registerPasswordMismatchAlert.classList.remove('d-none');
+      }
+
+      function clearRegisterPasswordMismatchAlert() {
+        registerPasswordMismatchAlert.classList.add('d-none');
       }
 
       async function request(url, options = {}) {
@@ -974,10 +986,11 @@
       document.getElementById('registerForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAlert();
-        const password = document.getElementById('registerPassword').value;
-        const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        clearRegisterPasswordMismatchAlert();
+        const password = registerPasswordInput.value;
+        const confirmPassword = registerConfirmPasswordInput.value;
         if (password !== confirmPassword) {
-          showAlert('Password and confirm password do not match.', 'warning');
+          showRegisterPasswordMismatchAlert();
           return;
         }
         const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
@@ -1015,6 +1028,9 @@
           registerButton.disabled = false;
         }
       });
+
+      registerPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
+      registerConfirmPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
 
       authTabRegister.addEventListener('click', () => {
         window.endTimesTracking?.track('sign_up_start', { source: 'member_auth_tab' });

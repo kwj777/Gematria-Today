@@ -532,8 +532,31 @@
         }
 
         const start = Date.now();
+        const isFollowItConfirmationPage = () => {
+          try {
+            const locationHref = String(followItWindow.location?.href || '');
+            if (!locationHref) {
+              return false;
+            }
+            const followItUrl = new URL(locationHref);
+            return /\/follow\.it-verification-code(?:\s*)\.html$/i.test(followItUrl.pathname);
+          } catch (_) {
+            return false;
+          }
+        };
+
+        const returnFocusToDashboard = () => {
+          window.focus();
+        };
+
         const closeIfReady = () => {
           if (!followItWindow || followItWindow.closed) {
+            return true;
+          }
+
+          if (isFollowItConfirmationPage()) {
+            returnFocusToDashboard();
+            followItWindow.close();
             return true;
           }
 

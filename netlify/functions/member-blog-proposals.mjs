@@ -39,13 +39,11 @@ export async function handler(event) {
       }
 
       const rows = await sql`
-        UPDATE blog_post_proposals
-        SET rejection_explanation = NULL,
-            updated_at = NOW()
+        DELETE FROM blog_post_proposals
         WHERE id = ${id}
           AND user_id = ${member.id}
           AND status = 'rejected'
-        RETURNING id, status, rejection_explanation, reviewed_at, created_at, updated_at
+        RETURNING id
       `;
 
       if (!rows.length) {
@@ -53,14 +51,7 @@ export async function handler(event) {
       }
 
       return jsonResponse(200, {
-        item: {
-          id: rows[0].id,
-          status: rows[0].status,
-          rejectionExplanation: rows[0].rejection_explanation,
-          reviewedAt: rows[0].reviewed_at,
-          createdAt: rows[0].created_at,
-          updatedAt: rows[0].updated_at,
-        },
+        item: { id: rows[0].id },
       });
     }
 

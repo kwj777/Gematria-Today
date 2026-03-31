@@ -64,6 +64,27 @@ export async function handler(event) {
       return jsonResponse(200, { item: formatBlogPostProposal(rows[0]) });
     }
 
+    if (method === 'DELETE') {
+      const payload = parseBody(event);
+      const id = String(payload.id || '').trim();
+
+      if (!id) {
+        return jsonResponse(400, { error: 'id is required' });
+      }
+
+      const rows = await sql`
+        DELETE FROM blog_post_proposals
+        WHERE id = ${id}
+        RETURNING id
+      `;
+
+      if (!rows.length) {
+        return jsonResponse(404, { error: 'Proposal not found' });
+      }
+
+      return jsonResponse(200, { ok: true, id });
+    }
+
     return jsonResponse(405, { error: 'Method not allowed' });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to process blog proposals' }, error.headers || {});

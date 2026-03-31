@@ -956,6 +956,25 @@
         renderMemberProposalFeedback();
       }
 
+      async function clearRejectionMessage(proposalId) {
+        const id = String(proposalId || '').trim();
+        if (!id) {
+          return;
+        }
+
+        await request('/api/member-blog-proposals', {
+          method: 'PATCH',
+          body: JSON.stringify({ id }),
+        });
+
+        memberProposals = memberProposals.map((proposal) => (
+          proposal.id === id
+            ? { ...proposal, rejectionExplanation: null, updatedAt: new Date().toISOString() }
+            : proposal
+        ));
+        renderMemberProposalFeedback();
+      }
+
       function getBlogSubscriptionEmailFromPreferences(profile = session?.profile, member = session?.member) {
         const savedEmail = String(profile?.preferences?.blogSubscriptionEmail || '').trim().toLowerCase();
         const membershipEmail = String(member?.email || '').trim().toLowerCase();
@@ -1517,6 +1536,23 @@
         premiumBlogProposalSuccessMessage.classList.remove('d-none');
         blogProposalAttribution.value = session.member.username || '';
         await loadMemberProposals();
+      });
+
+      memberProposalFeedbackList?.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-clear-rejection-message]');
+        if (!button) {
+          return;
+        }
+
+        clearAlert();
+        button.disabled = true;
+        try {
+          await clearRejectionMessage(button.dataset.clearRejectionMessage);
+          showAlert('Rejection message deleted.', 'success');
+        } catch (error) {
+          showAlert(error.message || 'Unable to delete rejection message.');
+          button.disabled = false;
+        }
       });
 
       document.getElementById('logoutButton').addEventListener('click', async () => {

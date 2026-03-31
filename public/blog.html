@@ -156,7 +156,9 @@
               <h2 class="h4 mb-3">Start with these reads</h2>
               <div class="mb-4">
                 <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
-                <div id="blogTagFilters" class="d-flex flex-wrap gap-2 async-content-shell" aria-live="polite"><span class="placeholder-glow w-100"><span class="placeholder async-shell-line col-4"></span></span></div>
+                <select id="blogTagFilters" class="form-select form-select-sm async-content-shell" aria-label="Filter blog posts by tag">
+                  <option value="">Loading tags…</option>
+                </select>
               </div>
               <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
                 <div class="followit--follow-form-container followit-card followit-card--sidebar" attr-a attr-b attr-c attr-d attr-e attr-f>
@@ -500,13 +502,17 @@
           syncTagLocation('');
         }
 
-        document.getElementById('blogTagFilters').innerHTML = [
-          `<button type="button" class="btn btn-sm ${selectedTag ? 'btn-outline-secondary' : 'btn-primary'}" data-tag-filter="">All posts <span class="badge text-bg-light ms-1">${posts.length}</span></button>`,
+        const tagFiltersEl = document.getElementById('blogTagFilters');
+        if (!tagFiltersEl) {
+          return;
+        }
+        tagFiltersEl.innerHTML = [
+          `<option value="">All posts (${posts.length})</option>`,
           ...sortedTags.map((tag) => {
-            const isActive = selectedTag === tag.label.toLowerCase();
-            return `<button type="button" class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline-secondary'}" data-tag-filter="${escapeHtml(tag.label.toLowerCase())}">${escapeHtml(tag.label)} <span class="badge text-bg-light ms-1">${tag.count}</span></button>`;
+            return `<option value="${escapeHtml(tag.label.toLowerCase())}">${escapeHtml(tag.label)} (${tag.count})</option>`;
           })
         ].join('');
+        tagFiltersEl.value = selectedTag;
       };
 
       const getVisiblePosts = () => {
@@ -707,6 +713,15 @@
           renderPosts(latestPosts);
         }
         focusLinkedPost(getRequestedPostSlug());
+      });
+      document.addEventListener('change', (event) => {
+        const tagFilterSelect = event.target.closest('#blogTagFilters');
+        if (!tagFilterSelect) {
+          return;
+        }
+        selectedTag = String(tagFilterSelect.value || '').trim().toLowerCase();
+        syncTagLocation(selectedTag);
+        renderPosts(latestPosts);
       });
       document.addEventListener('click', (event) => {
         const tagFilter = event.target.closest('[data-tag-filter]');

@@ -27,6 +27,7 @@ export async function handler(event) {
       const rejectionExplanation = rejectionExplanationRaw == null
         ? null
         : String(rejectionExplanationRaw).trim();
+      const acceptanceMessage = 'Your proposal has been accepted and will be posted soon.';
 
       if (!id || !status) {
         return jsonResponse(400, { error: 'id and status are required' });
@@ -44,7 +45,11 @@ export async function handler(event) {
         UPDATE blog_post_proposals
         SET
           status = ${status},
-          rejection_explanation = ${status === 'rejected' ? rejectionExplanation : null},
+          rejection_explanation = ${status === 'rejected'
+            ? rejectionExplanation
+            : status === 'approved'
+              ? acceptanceMessage
+              : null},
           reviewed_by = ${user.id},
           reviewed_at = NOW(),
           updated_at = NOW()

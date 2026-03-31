@@ -98,7 +98,8 @@
               </div>
               <div class="d-flex flex-column gap-2" style="min-width: 220px;">
                 <a class="btn btn-sm btn-outline-primary" href="/admin.html?loadProposal=${encodeURIComponent(proposal.id)}">Load into post editor</a>
-                <button class="btn btn-sm btn-outline-success" type="button" data-mark-proposal-reviewed="${escapeHtml(proposal.id)}">Mark reviewed</button>
+                <button class="btn btn-sm btn-outline-success" type="button" data-mark-proposal-accepted="${escapeHtml(proposal.id)}">Mark accepted</button>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-mark-proposal-reviewed="${escapeHtml(proposal.id)}">Mark reviewed</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-proposal-pending="${escapeHtml(proposal.id)}">Set pending</button>
                 <button class="btn btn-sm btn-outline-danger" type="button" data-reject-proposal="${escapeHtml(proposal.id)}">Reject post</button>
               </div>
@@ -106,6 +107,10 @@
             ${proposal.status === 'rejected' && proposal.rejectionExplanation ? `
               <div class="alert alert-warning small mt-3 mb-0">
                 <strong>Rejection explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}
+              </div>
+            ` : proposal.status === 'approved' && proposal.rejectionExplanation ? `
+              <div class="alert alert-success small mt-3 mb-0">
+                <strong>Acceptance message:</strong> ${escapeHtml(proposal.rejectionExplanation)}
               </div>
             ` : ''}
           </article>`).join('') : '<p class="text-muted small mb-0">No proposals yet.</p>';
@@ -127,9 +132,15 @@
       }
 
       document.addEventListener('click', async (event) => {
-        const proposalId = event.target.dataset.markProposalReviewed || event.target.dataset.markProposalPending || event.target.dataset.rejectProposal;
+        const proposalId = event.target.dataset.markProposalAccepted || event.target.dataset.markProposalReviewed || event.target.dataset.markProposalPending || event.target.dataset.rejectProposal;
         if (!proposalId) return;
-        const nextStatus = event.target.dataset.markProposalReviewed ? 'reviewed' : event.target.dataset.markProposalPending ? 'pending' : 'rejected';
+        const nextStatus = event.target.dataset.markProposalAccepted
+          ? 'approved'
+          : event.target.dataset.markProposalReviewed
+            ? 'reviewed'
+            : event.target.dataset.markProposalPending
+              ? 'pending'
+              : 'rejected';
         let rejectionExplanation = null;
         if (nextStatus === 'rejected') {
           const entered = window.prompt('Please provide a rejection explanation that will be shown on the member dashboard:');

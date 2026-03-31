@@ -323,6 +323,7 @@
                   <h3 class="h4 mb-2">Propose a blog post</h3>
                   <p class="text-muted mb-3">Premium members can submit post ideas for editorial review.</p>
                   <div id="premiumBlogProposalSuccessMessage" class="alert alert-success mb-3 d-none" role="status">Submission was successful.</div>
+                  <div id="memberProposalFeedbackList" class="admin-list mb-3 d-none"></div>
                   <form id="premiumBlogProposalForm" class="row g-3 d-none">
                     <div class="col-12">
                       <label class="form-label" for="blogProposalTitle">Proposed title</label>
@@ -451,6 +452,7 @@
       const premiumBlogProposalForm = document.getElementById('premiumBlogProposalForm');
       const premiumBlogProposalLockedMessage = document.getElementById('premiumBlogProposalLockedMessage');
       const premiumBlogProposalSuccessMessage = document.getElementById('premiumBlogProposalSuccessMessage');
+      const memberProposalFeedbackList = document.getElementById('memberProposalFeedbackList');
       const blogProposalAttribution = document.getElementById('blogProposalAttribution');
       const blogSubscriptionSection = document.getElementById('blogSubscriptionSection');
       const blogSubscriptionForm = document.getElementById('blogSubscriptionForm');
@@ -463,6 +465,7 @@
       let showAllHistoryItems = false;
       let paymentConfirmationInFlight = false;
       let membershipHeroReady = false;
+      let memberProposals = [];
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
 
 
@@ -522,6 +525,15 @@
       function clearAlert() {
         memberAlert.textContent = '';
         memberAlert.className = 'alert d-none';
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
       }
 
       function showRegisterPasswordMismatchAlert() {
@@ -890,6 +902,55 @@
         blogProposalAttribution.value = member?.username || '';
       }
 
+      function renderMemberProposalFeedback() {
+        if (!memberProposalFeedbackList) {
+          return;
+        }
+
+        if (!memberProposals.length) {
+          memberProposalFeedbackList.classList.add('d-none');
+          memberProposalFeedbackList.innerHTML = '';
+          return;
+        }
+
+        memberProposalFeedbackList.classList.remove('d-none');
+        memberProposalFeedbackList.innerHTML = memberProposals.map((proposal) => {
+          const isRejected = proposal.status === 'rejected';
+          const statusTone = isRejected ? 'danger' : proposal.status === 'approved' ? 'success' : 'secondary';
+          const reviewedAt = proposal.reviewedAt ? new Date(proposal.reviewedAt).toLocaleString() : '';
+          const explanationMarkup = isRejected && proposal.rejectionExplanation
+            ? `<div class="alert alert-warning small mb-0 mt-2"><strong>Editorial explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}</div>`
+            : '';
+
+          return `
+            <article class="admin-item-card p-3 mb-2">
+              <div class="d-flex justify-content-between align-items-center gap-2">
+                <strong>${escapeHtml(proposal.title || 'Untitled proposal')}</strong>
+                <span class="badge text-bg-${statusTone} text-uppercase">${escapeHtml(proposal.status || 'pending')}</span>
+              </div>
+              ${reviewedAt ? `<p class="small text-muted mb-0 mt-2">Last reviewed: ${reviewedAt}</p>` : ''}
+              ${explanationMarkup}
+            </article>
+          `;
+        }).join('');
+      }
+
+      async function loadMemberProposals() {
+        if (!session?.member) {
+          memberProposals = [];
+          renderMemberProposalFeedback();
+          return;
+        }
+
+        try {
+          const payload = await request('/api/member-blog-proposals', { method: 'GET' });
+          memberProposals = Array.isArray(payload.items) ? payload.items : [];
+        } catch (error) {
+          memberProposals = [];
+        }
+        renderMemberProposalFeedback();
+      }
+
       function getBlogSubscriptionEmailFromPreferences(profile = session?.profile, member = session?.member) {
         const savedEmail = String(profile?.preferences?.blogSubscriptionEmail || '').trim().toLowerCase();
         const membershipEmail = String(member?.email || '').trim().toLowerCase();
@@ -1255,6 +1316,7 @@
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
           await loadHistory();
+          await loadMemberProposals();
 
           if (paymentState === 'success' && stripeSessionId) {
             await confirmStripePayment(stripeSessionId);
@@ -1268,6 +1330,7 @@
           setLoggedIn(false);
           historyItems = [];
           renderHistory();
+          await loadMemberProposals();
           if (paymentState === 'success') {
             showAlert('Sign in to finish activating your Stripe payment.', 'warning');
           }
@@ -1359,6 +1422,7 @@
           populateProfile(session.member, session.profile, session.user);
           maybeOpenFollowItAfterVerifiedSignIn(session);
           await loadHistory();
+          await loadMemberProposals();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
         }
@@ -1447,6 +1511,7 @@
         premiumBlogProposalForm.classList.add('d-none');
         premiumBlogProposalSuccessMessage.classList.remove('d-none');
         blogProposalAttribution.value = session.member.username || '';
+        await loadMemberProposals();
       });
 
       document.getElementById('logoutButton').addEventListener('click', async () => {
@@ -1460,6 +1525,7 @@
           session = null;
           favoriteHistoryIds = new Set();
           setLoggedIn(false);
+          await loadMemberProposals();
         }
       });
 

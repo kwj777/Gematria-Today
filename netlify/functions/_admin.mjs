@@ -227,6 +227,9 @@ export async function ensureAdminSchema(sql) {
   await sql`ALTER TABLE blog_post_proposals
     ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ`;
 
+  await sql`ALTER TABLE blog_post_proposals
+    ADD COLUMN IF NOT EXISTS rejection_explanation TEXT`;
+
   await sql`UPDATE blog_post_proposals
     SET status = 'pending'
     WHERE status IS NULL OR BTRIM(status) = ''`;
@@ -474,6 +477,7 @@ export function formatBlogPostProposal(row) {
     status: row.status,
     reviewedBy: row.reviewed_by,
     reviewedAt: row.reviewed_at,
+    rejectionExplanation: row.rejection_explanation,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

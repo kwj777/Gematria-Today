@@ -23,6 +23,10 @@ export async function handler(event) {
       const payload = parseBody(event);
       const id = String(payload.id || '').trim();
       const status = String(payload.status || '').trim().toLowerCase();
+      const rejectionExplanationRaw = payload.rejectionExplanation;
+      const rejectionExplanation = rejectionExplanationRaw == null
+        ? null
+        : String(rejectionExplanationRaw).trim();
 
       if (!id || !status) {
         return jsonResponse(400, { error: 'id and status are required' });
@@ -32,10 +36,15 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'status must be one of pending, reviewed, approved, rejected' });
       }
 
+      if (status === 'rejected' && !rejectionExplanation) {
+        return jsonResponse(400, { error: 'rejectionExplanation is required when status is rejected' });
+      }
+
       const rows = await sql`
         UPDATE blog_post_proposals
         SET
           status = ${status},
+          rejection_explanation = ${status === 'rejected' ? rejectionExplanation : null},
           reviewed_by = ${user.id},
           reviewed_at = NOW(),
           updated_at = NOW()

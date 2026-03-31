@@ -8,11 +8,33 @@ function isPremiumMembership(level) {
 export async function handler(event) {
   try {
     const method = String(event?.httpMethod || '').toUpperCase();
+    const { sql, member } = await getAuthenticatedMember(event, { requireAuth: true });
+
+    if (method === 'GET') {
+      const rows = await sql`
+        SELECT id, title, summary, status, rejection_explanation, reviewed_at, created_at, updated_at
+        FROM blog_post_proposals
+        WHERE user_id = ${member.id}
+        ORDER BY created_at DESC
+      `;
+      return jsonResponse(200, {
+        items: rows.map((row) => ({
+          id: row.id,
+          title: row.title,
+          summary: row.summary,
+          status: row.status,
+          rejectionExplanation: row.rejection_explanation,
+          reviewedAt: row.reviewed_at,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        })),
+      });
+    }
+
     if (method !== 'POST') {
       return jsonResponse(405, { error: 'Method not allowed' });
     }
 
-    const { sql, member } = await getAuthenticatedMember(event, { requireAuth: true });
     if (!isPremiumMembership(member?.membershipLevel)) {
       return jsonResponse(403, { error: 'Premium membership is required to submit blog proposals.' });
     }

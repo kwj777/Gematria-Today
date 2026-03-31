@@ -353,6 +353,7 @@
       const registerPasswordInput = document.getElementById('registerPassword');
       const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
+      const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8';
       const historyCount = document.getElementById('historyCount');
       const historyCountMeta = document.getElementById('historyCountMeta');
       const historyList = document.getElementById('historyList');
@@ -462,6 +463,27 @@
 
       function clearRegisterPasswordMismatchAlert() {
         registerPasswordMismatchAlert.classList.add('d-none');
+      }
+
+      function openFollowItSubscription(email = '') {
+        const form = document.createElement('form');
+        form.action = FOLLOW_IT_SUBSCRIPTION_URL;
+        form.method = 'post';
+        form.target = '_blank';
+        form.style.display = 'none';
+
+        const normalizedEmail = String(email || '').trim();
+        if (normalizedEmail) {
+          const emailInput = document.createElement('input');
+          emailInput.type = 'hidden';
+          emailInput.name = 'email';
+          emailInput.value = normalizedEmail;
+          form.appendChild(emailInput);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
       }
 
       async function request(url, options = {}) {
@@ -994,6 +1016,7 @@
           return;
         }
         const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
+        const registerEmail = document.getElementById('registerEmail').value.trim();
         const payload = {
           username: document.getElementById('registerUsername').value.trim(),
           displayName: document.getElementById('registerDisplayName').value.trim(),
@@ -1015,7 +1038,7 @@
           renderHistory();
           event.target.reset();
           if (shouldSubscribeToBlog) {
-            window.open('https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8', '_blank', 'noopener,noreferrer');
+            openFollowItSubscription(registerEmail);
           }
           setAuthView('login', { updateUrl: true });
         } catch (error) {

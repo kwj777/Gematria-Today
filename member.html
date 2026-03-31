@@ -922,10 +922,11 @@
           const reviewedAt = proposal.reviewedAt ? new Date(proposal.reviewedAt).toLocaleString() : '';
           const acceptanceMessage = proposal.rejectionExplanation || 'Your proposal has been accepted and will be posted soon.';
           const explanationMarkup = isRejected && proposal.rejectionExplanation
-            ? `<div class="alert alert-warning small mb-0 mt-2"><strong>Editorial explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}</div>`
-            : isApproved
-              ? `<div class="alert alert-success small mb-0 mt-2"><strong>Editorial update:</strong> ${escapeHtml(acceptanceMessage)}</div>`
-              : '';
+            ? `<div class="alert alert-warning small mb-0 mt-2 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                <span><strong>Editorial explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}</span>
+                <button class="btn btn-sm btn-outline-secondary align-self-start align-self-md-auto" type="button" data-delete-rejected-proposal="${escapeHtml(proposal.id)}">Delete message</button>
+              </div>`
+            : '';
 
           return `
             <article class="admin-item-card p-3 mb-2">
@@ -956,7 +957,7 @@
         renderMemberProposalFeedback();
       }
 
-      async function clearRejectionMessage(proposalId) {
+      async function deleteRejectedProposal(proposalId) {
         const id = String(proposalId || '').trim();
         if (!id) {
           return;
@@ -967,11 +968,7 @@
           body: JSON.stringify({ id }),
         });
 
-        memberProposals = memberProposals.map((proposal) => (
-          proposal.id === id
-            ? { ...proposal, rejectionExplanation: null, updatedAt: new Date().toISOString() }
-            : proposal
-        ));
+        memberProposals = memberProposals.filter((proposal) => proposal.id !== id);
         renderMemberProposalFeedback();
       }
 
@@ -1539,7 +1536,7 @@
       });
 
       memberProposalFeedbackList?.addEventListener('click', async (event) => {
-        const button = event.target.closest('[data-clear-rejection-message]');
+        const button = event.target.closest('[data-delete-rejected-proposal]');
         if (!button) {
           return;
         }
@@ -1547,10 +1544,10 @@
         clearAlert();
         button.disabled = true;
         try {
-          await clearRejectionMessage(button.dataset.clearRejectionMessage);
-          showAlert('Rejection message deleted.', 'success');
+          await deleteRejectedProposal(button.dataset.deleteRejectedProposal);
+          showAlert('Rejected proposal deleted.', 'success');
         } catch (error) {
-          showAlert(error.message || 'Unable to delete rejection message.');
+          showAlert(error.message || 'Unable to delete rejected proposal.');
           button.disabled = false;
         }
       });

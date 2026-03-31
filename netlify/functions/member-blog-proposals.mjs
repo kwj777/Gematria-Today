@@ -31,6 +31,39 @@ export async function handler(event) {
       });
     }
 
+    if (method === 'PATCH') {
+      const payload = parseBody(event);
+      const id = String(payload.id || '').trim();
+      if (!id) {
+        return jsonResponse(400, { error: 'id is required' });
+      }
+
+      const rows = await sql`
+        UPDATE blog_post_proposals
+        SET rejection_explanation = NULL,
+            updated_at = NOW()
+        WHERE id = ${id}
+          AND user_id = ${member.id}
+          AND status = 'rejected'
+        RETURNING id, status, rejection_explanation, reviewed_at, created_at, updated_at
+      `;
+
+      if (!rows.length) {
+        return jsonResponse(404, { error: 'Proposal not found' });
+      }
+
+      return jsonResponse(200, {
+        item: {
+          id: rows[0].id,
+          status: rows[0].status,
+          rejectionExplanation: rows[0].rejection_explanation,
+          reviewedAt: rows[0].reviewed_at,
+          createdAt: rows[0].created_at,
+          updatedAt: rows[0].updated_at,
+        },
+      });
+    }
+
     if (method !== 'POST') {
       return jsonResponse(405, { error: 'Method not allowed' });
     }

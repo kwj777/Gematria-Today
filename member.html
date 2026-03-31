@@ -919,7 +919,10 @@
           const statusTone = isRejected ? 'danger' : proposal.status === 'approved' ? 'success' : 'secondary';
           const reviewedAt = proposal.reviewedAt ? new Date(proposal.reviewedAt).toLocaleString() : '';
           const explanationMarkup = isRejected && proposal.rejectionExplanation
-            ? `<div class="alert alert-warning small mb-0 mt-2"><strong>Editorial explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}</div>`
+            ? `<div class="alert alert-warning small mb-0 mt-2 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                <span><strong>Editorial explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}</span>
+                <button class="btn btn-sm btn-outline-secondary align-self-start align-self-md-auto" type="button" data-clear-rejection-message="${escapeHtml(proposal.id)}">Delete message</button>
+              </div>`
             : '';
 
           return `
@@ -948,6 +951,25 @@
         } catch (error) {
           memberProposals = [];
         }
+        renderMemberProposalFeedback();
+      }
+
+      async function clearRejectionMessage(proposalId) {
+        const id = String(proposalId || '').trim();
+        if (!id) {
+          return;
+        }
+
+        await request('/api/member-blog-proposals', {
+          method: 'PATCH',
+          body: JSON.stringify({ id }),
+        });
+
+        memberProposals = memberProposals.map((proposal) => (
+          proposal.id === id
+            ? { ...proposal, rejectionExplanation: null, updatedAt: new Date().toISOString() }
+            : proposal
+        ));
         renderMemberProposalFeedback();
       }
 
@@ -1512,6 +1534,23 @@
         premiumBlogProposalSuccessMessage.classList.remove('d-none');
         blogProposalAttribution.value = session.member.username || '';
         await loadMemberProposals();
+      });
+
+      memberProposalFeedbackList?.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-clear-rejection-message]');
+        if (!button) {
+          return;
+        }
+
+        clearAlert();
+        button.disabled = true;
+        try {
+          await clearRejectionMessage(button.dataset.clearRejectionMessage);
+          showAlert('Rejection message deleted.', 'success');
+        } catch (error) {
+          showAlert(error.message || 'Unable to delete rejection message.');
+          button.disabled = false;
+        }
       });
 
       document.getElementById('logoutButton').addEventListener('click', async () => {

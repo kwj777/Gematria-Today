@@ -100,8 +100,14 @@
                 <a class="btn btn-sm btn-outline-primary" href="/admin.html?loadProposal=${encodeURIComponent(proposal.id)}">Load into post editor</a>
                 <button class="btn btn-sm btn-outline-success" type="button" data-mark-proposal-reviewed="${escapeHtml(proposal.id)}">Mark reviewed</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-proposal-pending="${escapeHtml(proposal.id)}">Set pending</button>
+                <button class="btn btn-sm btn-outline-danger" type="button" data-reject-proposal="${escapeHtml(proposal.id)}">Reject post</button>
               </div>
             </div>
+            ${proposal.status === 'rejected' && proposal.rejectionExplanation ? `
+              <div class="alert alert-warning small mt-3 mb-0">
+                <strong>Rejection explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}
+              </div>
+            ` : ''}
           </article>`).join('') : '<p class="text-muted small mb-0">No proposals yet.</p>';
       }
 
@@ -121,14 +127,24 @@
       }
 
       document.addEventListener('click', async (event) => {
-        const proposalId = event.target.dataset.markProposalReviewed || event.target.dataset.markProposalPending;
+        const proposalId = event.target.dataset.markProposalReviewed || event.target.dataset.markProposalPending || event.target.dataset.rejectProposal;
         if (!proposalId) return;
-        const nextStatus = event.target.dataset.markProposalReviewed ? 'reviewed' : 'pending';
+        const nextStatus = event.target.dataset.markProposalReviewed ? 'reviewed' : event.target.dataset.markProposalPending ? 'pending' : 'rejected';
+        let rejectionExplanation = null;
+        if (nextStatus === 'rejected') {
+          const entered = window.prompt('Please provide a rejection explanation that will be shown on the member dashboard:');
+          if (entered === null) return;
+          rejectionExplanation = entered.trim();
+          if (!rejectionExplanation) {
+            showMessage(errorMessage, 'Rejection explanation is required.');
+            return;
+          }
+        }
         clearMessage(errorMessage);
         try {
           await request('/api/admin-blog-proposals', {
             method: 'PATCH',
-            body: JSON.stringify({ id: proposalId, status: nextStatus })
+            body: JSON.stringify({ id: proposalId, status: nextStatus, rejectionExplanation })
           });
           showMessage(saveMessage, `Proposal status updated to ${nextStatus}.`);
           await refreshProposals();

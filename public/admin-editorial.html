@@ -127,7 +127,7 @@
         clearMessage(errorMessage);
         try {
           await request('/api/admin-blog-proposals', {
-            method: 'POST',
+            method: 'PATCH',
             body: JSON.stringify({ id: proposalId, status: nextStatus })
           });
           showMessage(saveMessage, `Proposal status updated to ${nextStatus}.`);

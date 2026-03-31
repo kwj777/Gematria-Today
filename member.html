@@ -763,7 +763,7 @@
         } else {
           url.searchParams.set('auth', 'login');
         }
-        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
       }
 
       async function confirmStripePayment(sessionId) {
@@ -788,7 +788,7 @@
           });
           const url = new URL(window.location.href);
           url.searchParams.delete('session_id');
-          window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+          window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
         } catch (error) {
           window.endTimesTracking?.track('checkout_error', {
             source: 'member_payment_confirm',
@@ -1050,7 +1050,7 @@
             showAlert(error.message || 'Email verification link is invalid or expired.', 'warning');
           } finally {
             url.searchParams.delete('verify_email_token');
-            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+            window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
           }
         }
 

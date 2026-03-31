@@ -158,6 +158,24 @@
                 <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
                 <div id="blogTagFilters" class="d-flex flex-wrap gap-2 async-content-shell" aria-live="polite"><span class="placeholder-glow w-100"><span class="placeholder async-shell-line col-4"></span></span></div>
               </div>
+              <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
+                <div class="followit--follow-form-container followit-card followit-card--sidebar" attr-a attr-b attr-c attr-d attr-e attr-f>
+                  <form action="https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8" method="post" data-v-8a8a107f="">
+                    <div class="form-preview" data-v-8a8a107f="">
+                      <div class="preview-heading" data-v-8a8a107f="">
+                        <h5 data-v-8a8a107f="">Get new posts by email:</h5>
+                      </div>
+                      <div class="preview-input-field" data-v-8a8a107f="">
+                        <input type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" data-v-8a8a107f="">
+                      </div>
+                      <div class="preview-submit-button" data-v-8a8a107f="">
+                        <button type="submit" data-v-8a8a107f="">Subscribe</button>
+                      </div>
+                    </div>
+                  </form>
+                  <a href="https://follow.it" class="powered-by-line">Powered by <img src="https://follow.it/images/colored-logo.svg" alt="follow.it" height="17"></a>
+                </div>
+              </div>
               <p id="blogFilterSummary" class="small text-muted mb-3"></p>
               <div id="blogSidebarLinks" class="d-grid gap-3 async-content-shell async-content-shell--md" aria-live="polite">
                 <article class="blog-mini-link news-placeholder-panel">
@@ -611,6 +629,25 @@
         return { html: root.innerHTML, count: linkCount };
       };
       const linkifyPlainText = (text = '', targets = []) => linkifyHtmlContent(escapeHtml(text), targets);
+      const inlineFollowFormMarkup = `
+        <section class="content-panel p-4 p-lg-5 blog-post-card" aria-label="Email subscription">
+          <div class="followit--follow-form-container followit-card followit-card--inline" attr-a attr-b attr-c attr-d attr-e attr-f>
+            <form action="https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8" method="post" data-v-8a8a107f="">
+              <div class="form-preview" data-v-8a8a107f="">
+                <div class="preview-heading" data-v-8a8a107f="">
+                  <h5 data-v-8a8a107f="">Get new posts by email:</h5>
+                </div>
+                <div class="preview-input-field" data-v-8a8a107f="">
+                  <input type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" data-v-8a8a107f="">
+                </div>
+                <div class="preview-submit-button" data-v-8a8a107f="">
+                  <button type="submit" data-v-8a8a107f="">Subscribe</button>
+                </div>
+              </div>
+            </form>
+            <a href="https://follow.it" class="powered-by-line">Powered by <img src="https://follow.it/images/colored-logo.svg" alt="follow.it" height="17"></a>
+          </div>
+        </section>`;
 
       function renderPosts(posts) {
         latestPosts = posts
@@ -633,7 +670,7 @@
           </a>`;
         }).join('');
 
-        document.getElementById('blogPosts').innerHTML = filteredPosts.map((post) => {
+        const postMarkup = filteredPosts.map((post) => {
           const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
           const bodyLinkResult = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);
           const summaryLinkResult = linkifyPlainText(post.summary, linkTargets);
@@ -651,7 +688,13 @@
             ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`
             : '';
           return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<h2 class="mb-3"><a class="text-decoration-none text-reset" href="${postUrl}">${escapeHtml(post.title)}</a></h2><p class="text-muted">${summaryHtml}</p><div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(createdOn ? `Created on: ${createdOn}` : '')}</p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
-        }).join('');
+        });
+        if (postMarkup.length > 2) {
+          postMarkup.splice(2, 0, inlineFollowFormMarkup);
+        } else if (postMarkup.length > 0) {
+          postMarkup.push(inlineFollowFormMarkup);
+        }
+        document.getElementById('blogPosts').innerHTML = postMarkup.join('');
 
         if (filteredPosts.length) {
           focusLinkedPost(getRequestedPostSlug());

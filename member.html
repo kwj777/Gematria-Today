@@ -322,6 +322,7 @@
                   <p class="section-kicker mb-2">Premium Blog Contributions</p>
                   <h3 class="h4 mb-2">Propose a blog post</h3>
                   <p class="text-muted mb-3">Premium members can submit post ideas for editorial review.</p>
+                  <div id="premiumBlogProposalSuccessMessage" class="alert alert-success mb-3 d-none" role="status">Submission was successful.</div>
                   <form id="premiumBlogProposalForm" class="row g-3 d-none">
                     <div class="col-12">
                       <label class="form-label" for="blogProposalTitle">Proposed title</label>
@@ -449,6 +450,7 @@
       const blogProposalNavButton = document.getElementById('blogProposalNavButton');
       const premiumBlogProposalForm = document.getElementById('premiumBlogProposalForm');
       const premiumBlogProposalLockedMessage = document.getElementById('premiumBlogProposalLockedMessage');
+      const premiumBlogProposalSuccessMessage = document.getElementById('premiumBlogProposalSuccessMessage');
       const blogProposalAttribution = document.getElementById('blogProposalAttribution');
       const blogSubscriptionSection = document.getElementById('blogSubscriptionSection');
       const blogSubscriptionForm = document.getElementById('blogSubscriptionForm');
@@ -883,6 +885,7 @@
         const isPremium = isPremiumMembershipLevel(member?.membershipLevel);
         premiumBlogProposalForm.classList.toggle('d-none', !isPremium);
         premiumBlogProposalLockedMessage.classList.toggle('d-none', isPremium);
+        premiumBlogProposalSuccessMessage.classList.add('d-none');
         blogProposalNavButton.classList.toggle('d-none', !isPremium);
         blogProposalAttribution.value = member?.username || '';
       }
@@ -1441,6 +1444,8 @@
 
         showAlert('Your proposal was sent to the admin review queue.', 'success');
         event.target.reset();
+        premiumBlogProposalForm.classList.add('d-none');
+        premiumBlogProposalSuccessMessage.classList.remove('d-none');
         blogProposalAttribution.value = session.member.username || '';
       });
 

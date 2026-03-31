@@ -508,6 +508,48 @@
         registerPasswordMismatchAlert.classList.add('d-none');
       }
 
+      function scheduleFollowItTabAutoClose(followItWindow, minDelayMs = 15000, maxDelayMs = 300000) {
+        if (!followItWindow || followItWindow.closed) {
+          return;
+        }
+
+        const start = Date.now();
+        const closeIfReady = () => {
+          if (!followItWindow || followItWindow.closed) {
+            return true;
+          }
+
+          const elapsed = Date.now() - start;
+          if (elapsed >= maxDelayMs) {
+            followItWindow.close();
+            return true;
+          }
+
+          if (elapsed < minDelayMs) {
+            return false;
+          }
+
+          if (document.visibilityState === 'visible' && document.hasFocus()) {
+            followItWindow.close();
+            return true;
+          }
+
+          return false;
+        };
+
+        const pollId = window.setInterval(() => {
+          if (closeIfReady()) {
+            window.clearInterval(pollId);
+          }
+        }, 1000);
+
+        window.addEventListener('focus', () => {
+          if (closeIfReady()) {
+            window.clearInterval(pollId);
+          }
+        }, { once: true });
+      }
+
       function openFollowItSubscription(email = '', preopenedWindow = null) {
         const normalizedEmail = String(email || '').trim();
         if (!normalizedEmail) {
@@ -552,6 +594,7 @@
         }
 
         form.submit();
+        scheduleFollowItTabAutoClose(openedWindow);
         form.remove();
       }
 

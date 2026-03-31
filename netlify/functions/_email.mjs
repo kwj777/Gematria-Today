@@ -201,7 +201,7 @@ export async function sendMemberVerificationEmail({ toEmail, username, verificat
   const safeUsername = escapeHtml(username);
   const expiresText = new Date(expiresAt).toUTCString();
   const verificationUrl = config.appBaseUrl
-    ? `${config.appBaseUrl}/member.html?verify_email_token=${encodeURIComponent(verificationToken)}`
+    ? `${config.appBaseUrl}/member.html?verify_email_token=${encodeURIComponent(verificationToken)}&auth=login#authSection`
     : null;
 
   const text = [

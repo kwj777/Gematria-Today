@@ -665,6 +665,39 @@
           return;
         }
         openFollowItSubscription(rememberedEmail);
+        rememberBlogSubscriptionEmail(rememberedEmail);
+      }
+
+      async function rememberBlogSubscriptionEmail(email = '', activeSession = session) {
+        const membershipEmail = String(activeSession?.member?.email || '').trim().toLowerCase();
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        if (!membershipEmail || !normalizedEmail || membershipEmail !== normalizedEmail) {
+          return;
+        }
+
+        const existingPreferences = activeSession?.profile?.preferences && typeof activeSession.profile.preferences === 'object'
+          ? activeSession.profile.preferences
+          : {};
+        if (String(existingPreferences.blogSubscriptionEmail || '').trim().toLowerCase() === membershipEmail) {
+          return;
+        }
+
+        try {
+          const payload = await request('/api/member-profile', {
+            method: 'PATCH',
+            body: JSON.stringify({
+              displayName: document.getElementById('profileDisplayName').value.trim() || activeSession.member.displayName || activeSession.member.username,
+              preferences: {
+                ...existingPreferences,
+                blogSubscriptionEmail: membershipEmail,
+              },
+            }),
+          });
+          session = { ...activeSession, authenticated: true, member: payload.member, profile: payload.profile };
+          populateProfile(payload.member, payload.profile, session?.user);
+        } catch (error) {
+          console.warn('Unable to persist blog subscription preference.', error);
+        }
       }
 
       async function request(url, options = {}) {
@@ -1351,22 +1384,7 @@
         try {
           const membershipEmail = String(session.member.email).trim().toLowerCase();
           openFollowItSubscription(membershipEmail);
-
-          const existingPreferences = session?.profile?.preferences && typeof session.profile.preferences === 'object'
-            ? session.profile.preferences
-            : {};
-          const payload = await request('/api/member-profile', {
-            method: 'PATCH',
-            body: JSON.stringify({
-              displayName: document.getElementById('profileDisplayName').value.trim() || session.member.displayName || session.member.username,
-              preferences: {
-                ...existingPreferences,
-                blogSubscriptionEmail: membershipEmail,
-              },
-            }),
-          });
-          session = { ...session, authenticated: true, member: payload.member, profile: payload.profile };
-          populateProfile(payload.member, payload.profile, session?.user);
+          await rememberBlogSubscriptionEmail(membershipEmail);
           showAlert('Blog subscription started. Please finish confirmation in the opened tab.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to start blog subscription right now.');

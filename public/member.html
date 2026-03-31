@@ -185,6 +185,12 @@
               <div class="col-12"><label class="form-label" for="registerEmail">Email</label><input id="registerEmail" class="form-control" type="email" required /></div>
               <div class="col-12"><label class="form-label" for="registerPassword">Password</label><input id="registerPassword" class="form-control" type="password" minlength="8" required /></div>
               <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password</label><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" required /></div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input id="registerBlogSubscribe" class="form-check-input" type="checkbox" />
+                  <label class="form-check-label" for="registerBlogSubscribe">Subscribe to blog updates (opens follow.it in a new tab)</label>
+                </div>
+              </div>
               <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create membership</button></div>
             </form>
           </div>
@@ -974,6 +980,7 @@
           showAlert('Password and confirm password do not match.', 'warning');
           return;
         }
+        const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
         const payload = {
           username: document.getElementById('registerUsername').value.trim(),
           displayName: document.getElementById('registerDisplayName').value.trim(),
@@ -994,6 +1001,9 @@
           historyItems = [];
           renderHistory();
           event.target.reset();
+          if (shouldSubscribeToBlog) {
+            window.open('https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8', '_blank', 'noopener,noreferrer');
+          }
           setAuthView('login', { updateUrl: true });
         } catch (error) {
           window.endTimesTracking?.track('sign_up_error', {

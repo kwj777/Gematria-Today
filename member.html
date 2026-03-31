@@ -546,7 +546,16 @@
         };
 
         const returnFocusToDashboard = () => {
-          window.focus();
+          try {
+            window.focus();
+          } catch (_) {
+            // Ignore browser focus restrictions.
+          }
+        };
+
+        const closeFollowItWindowAndRefocus = () => {
+          followItWindow.close();
+          window.setTimeout(returnFocusToDashboard, 0);
         };
 
         const closeIfReady = () => {
@@ -555,14 +564,13 @@
           }
 
           if (isFollowItConfirmationPage()) {
-            returnFocusToDashboard();
-            followItWindow.close();
+            closeFollowItWindowAndRefocus();
             return true;
           }
 
           const elapsed = Date.now() - start;
           if (elapsed >= maxDelayMs) {
-            followItWindow.close();
+            closeFollowItWindowAndRefocus();
             return true;
           }
 
@@ -571,7 +579,7 @@
           }
 
           if (document.visibilityState === 'visible' && document.hasFocus()) {
-            followItWindow.close();
+            closeFollowItWindowAndRefocus();
             return true;
           }
 

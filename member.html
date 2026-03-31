@@ -508,25 +508,17 @@
         registerPasswordMismatchAlert.classList.add('d-none');
       }
 
-      function openFollowItSubscription(email = '') {
-        const form = document.createElement('form');
-        form.action = FOLLOW_IT_SUBSCRIPTION_URL;
-        form.method = 'post';
-        form.target = '_blank';
-        form.style.display = 'none';
-
+      function openFollowItSubscription(email = '', preopenedWindow = null) {
         const normalizedEmail = String(email || '').trim();
-        if (normalizedEmail) {
-          const emailInput = document.createElement('input');
-          emailInput.type = 'hidden';
-          emailInput.name = 'email';
-          emailInput.value = normalizedEmail;
-          form.appendChild(emailInput);
+        const emailParam = normalizedEmail ? `?email=${encodeURIComponent(normalizedEmail)}` : '';
+        const destinationUrl = `${FOLLOW_IT_SUBSCRIPTION_URL}${emailParam}`;
+
+        if (preopenedWindow && !preopenedWindow.closed) {
+          preopenedWindow.location.href = destinationUrl;
+          return;
         }
 
-        document.body.appendChild(form);
-        form.submit();
-        form.remove();
+        window.open(destinationUrl, '_blank', 'noopener');
       }
 
       async function request(url, options = {}) {
@@ -1074,6 +1066,7 @@
         }
         const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
         const registerEmail = document.getElementById('registerEmail').value.trim();
+        const preopenedFollowItWindow = shouldSubscribeToBlog ? window.open('about:blank', '_blank', 'noopener') : null;
         const payload = {
           username: document.getElementById('registerUsername').value.trim(),
           displayName: document.getElementById('registerDisplayName').value.trim(),
@@ -1095,7 +1088,7 @@
           renderHistory();
           event.target.reset();
           if (shouldSubscribeToBlog) {
-            openFollowItSubscription(registerEmail);
+            openFollowItSubscription(registerEmail, preopenedFollowItWindow);
           }
           setAuthView('login', { updateUrl: true });
         } catch (error) {
@@ -1103,6 +1096,9 @@
             source: 'member_register_form',
             errorMessage: error?.message || 'unknown_error',
           });
+          if (preopenedFollowItWindow && !preopenedFollowItWindow.closed) {
+            preopenedFollowItWindow.close();
+          }
           showAlert(error.message || 'Unable to create membership account.');
         } finally {
           registerButton.disabled = false;

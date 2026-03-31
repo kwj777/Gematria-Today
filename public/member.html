@@ -916,8 +916,11 @@
         memberProposalFeedbackList.classList.remove('d-none');
         memberProposalFeedbackList.innerHTML = memberProposals.map((proposal) => {
           const isRejected = proposal.status === 'rejected';
-          const statusTone = isRejected ? 'danger' : proposal.status === 'approved' ? 'success' : 'secondary';
+          const isApproved = proposal.status === 'approved';
+          const statusTone = isRejected ? 'danger' : isApproved ? 'success' : 'secondary';
+          const statusLabel = isApproved ? 'accepted' : (proposal.status || 'pending');
           const reviewedAt = proposal.reviewedAt ? new Date(proposal.reviewedAt).toLocaleString() : '';
+          const acceptanceMessage = proposal.rejectionExplanation || 'Your proposal has been accepted and will be posted soon.';
           const explanationMarkup = isRejected && proposal.rejectionExplanation
             ? `<div class="alert alert-warning small mb-0 mt-2 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
                 <span><strong>Editorial explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}</span>
@@ -929,7 +932,7 @@
             <article class="admin-item-card p-3 mb-2">
               <div class="d-flex justify-content-between align-items-center gap-2">
                 <strong>${escapeHtml(proposal.title || 'Untitled proposal')}</strong>
-                <span class="badge text-bg-${statusTone} text-uppercase">${escapeHtml(proposal.status || 'pending')}</span>
+                <span class="badge text-bg-${statusTone} text-uppercase">${escapeHtml(statusLabel)}</span>
               </div>
               ${reviewedAt ? `<p class="small text-muted mb-0 mt-2">Last reviewed: ${reviewedAt}</p>` : ''}
               ${explanationMarkup}

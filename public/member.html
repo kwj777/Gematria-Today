@@ -304,6 +304,20 @@
 
             <div class="col-xl-5">
               <div class="d-grid gap-4 h-100">
+                <section id="blogSubscriptionSection" class="content-panel p-4 h-100 d-none">
+                  <p class="section-kicker mb-2">Blog Updates</p>
+                  <h3 class="h4 mb-2">Subscribe with your membership email</h3>
+                  <p class="text-muted mb-3">Get notified when new blog posts are published.</p>
+                  <form id="blogSubscriptionForm" class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label" for="blogSubscriptionEmail">Membership email</label>
+                      <input id="blogSubscriptionEmail" class="form-control" type="email" readonly />
+                    </div>
+                    <div class="col-12 d-grid">
+                      <button id="blogSubscriptionButton" class="btn btn-outline-primary" type="submit">Subscribe to blog updates</button>
+                    </div>
+                  </form>
+                </section>
                 <section id="premiumBlogProposalSection" class="content-panel p-4 h-100">
                   <p class="section-kicker mb-2">Premium Blog Contributions</p>
                   <h3 class="h4 mb-2">Propose a blog post</h3>
@@ -432,6 +446,10 @@
       const premiumBlogProposalForm = document.getElementById('premiumBlogProposalForm');
       const premiumBlogProposalLockedMessage = document.getElementById('premiumBlogProposalLockedMessage');
       const blogProposalAttribution = document.getElementById('blogProposalAttribution');
+      const blogSubscriptionSection = document.getElementById('blogSubscriptionSection');
+      const blogSubscriptionForm = document.getElementById('blogSubscriptionForm');
+      const blogSubscriptionEmail = document.getElementById('blogSubscriptionEmail');
+      const blogSubscriptionButton = document.getElementById('blogSubscriptionButton');
 
       let session = null;
       let historyItems = [];
@@ -801,6 +819,24 @@
         blogProposalAttribution.value = member?.username || '';
       }
 
+      function getBlogSubscriptionEmailFromPreferences(profile = session?.profile, member = session?.member) {
+        const savedEmail = String(profile?.preferences?.blogSubscriptionEmail || '').trim().toLowerCase();
+        const membershipEmail = String(member?.email || '').trim().toLowerCase();
+        if (!savedEmail || !membershipEmail) {
+          return '';
+        }
+        return savedEmail === membershipEmail ? savedEmail : '';
+      }
+
+      function syncBlogSubscriptionSection(member = session?.member, profile = session?.profile) {
+        const membershipEmail = String(member?.email || '').trim();
+        const subscribedEmail = getBlogSubscriptionEmailFromPreferences(profile, member);
+        const shouldShowSubscriptionForm = Boolean(member) && Boolean(membershipEmail) && !subscribedEmail;
+
+        blogSubscriptionSection.classList.toggle('d-none', !shouldShowSubscriptionForm);
+        blogSubscriptionEmail.value = membershipEmail;
+      }
+
       function scrollToLoginArea() {
         setAuthView('login', { updateUrl: true });
         const loginForm = document.getElementById('loginForm');
@@ -1097,6 +1133,7 @@
         syncPremiumResearchLink(member);
         syncAdminPageButton(member, user);
         syncBlogProposalForm(member);
+        syncBlogSubscriptionSection(member, profile);
       }
 
       async function loadHistory() {
@@ -1260,18 +1297,60 @@
         event.preventDefault();
         clearAlert();
         try {
+          const existingPreferences = session?.profile?.preferences && typeof session.profile.preferences === 'object'
+            ? session.profile.preferences
+            : {};
           const payload = await request('/api/member-profile', {
             method: 'PATCH',
             body: JSON.stringify({
               displayName: document.getElementById('profileDisplayName').value.trim(),
-              preferences: { notes: document.getElementById('profileNotes').value.trim() },
+              preferences: {
+                ...existingPreferences,
+                notes: document.getElementById('profileNotes').value.trim(),
+              },
             }),
           });
-          session = { authenticated: true, member: payload.member, profile: payload.profile };
+          session = { ...session, authenticated: true, member: payload.member, profile: payload.profile };
           populateProfile(payload.member, payload.profile, session?.user);
           showAlert('Profile saved.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to save profile.');
+        }
+      });
+
+      blogSubscriptionForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+        if (!session?.member?.email) {
+          showAlert('Sign in before subscribing to blog updates.', 'warning');
+          return;
+        }
+
+        blogSubscriptionButton.disabled = true;
+        try {
+          const membershipEmail = String(session.member.email).trim().toLowerCase();
+          openFollowItSubscription(membershipEmail);
+
+          const existingPreferences = session?.profile?.preferences && typeof session.profile.preferences === 'object'
+            ? session.profile.preferences
+            : {};
+          const payload = await request('/api/member-profile', {
+            method: 'PATCH',
+            body: JSON.stringify({
+              displayName: document.getElementById('profileDisplayName').value.trim() || session.member.displayName || session.member.username,
+              preferences: {
+                ...existingPreferences,
+                blogSubscriptionEmail: membershipEmail,
+              },
+            }),
+          });
+          session = { ...session, authenticated: true, member: payload.member, profile: payload.profile };
+          populateProfile(payload.member, payload.profile, session?.user);
+          showAlert('Blog subscription started. Please finish confirmation in the opened tab.', 'success');
+        } catch (error) {
+          showAlert(error.message || 'Unable to start blog subscription right now.');
+        } finally {
+          blogSubscriptionButton.disabled = false;
         }
       });
 

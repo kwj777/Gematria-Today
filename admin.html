@@ -139,6 +139,13 @@
           <div class="row g-4 mb-4">
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Feeds</div><div id="feedCount" class="metric-value text-primary">0</div><p class="mb-0 text-muted">Configured RSS sources in the database.</p></div></div>
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Posts</div><div id="postCount" class="metric-value text-success">0</div><p class="mb-0 text-muted">Saved blog entries ready for the public blog page.</p></div></div>
+            <div class="col-md-6 col-xl-3">
+              <a id="proposalReviewStatLink" class="stat-card p-4 h-100 d-block text-decoration-none" href="#proposalSectionBody">
+                <div class="section-kicker mb-2 text-dark">Proposals</div>
+                <div id="proposalPendingCount" class="metric-value text-danger">0</div>
+                <p class="mb-0 text-muted">Premium-member blog proposals awaiting review.</p>
+              </a>
+            </div>
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">FAQs</div><div id="faqCount" class="metric-value text-info">0</div><p class="mb-0 text-muted">Published help answers shown on the public FAQ page.</p></div></div>
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Tasks</div><div id="taskCount" class="metric-value text-warning">0</div><p class="mb-0 text-muted">Open administrative tasks still pending.</p></div></div>
           </div>
@@ -227,6 +234,25 @@
                     <button id="postCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
                   </div>
                 </form>
+                </div>
+              </section>
+            </div>
+
+            <div class="col-md-6 admin-dashboard-masonry-item">
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#proposalSectionBody" aria-expanded="false" aria-controls="proposalSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Editorial Queue</span>
+                    <span class="h4 mb-0 d-block">Review proposed blog posts</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span id="proposalPendingBadge" class="badge text-bg-danger">0 pending</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="proposalSectionBody" class="collapse admin-section-body mt-4">
+                  <p class="small text-muted">Load a proposal into the post editor, then publish from the regular “Create blog posts” section.</p>
+                  <div id="proposalList" class="admin-list mt-3"></div>
                 </div>
               </section>
             </div>
@@ -493,6 +519,7 @@
       const errorMessage = document.getElementById('errorMessage');
       const feedCount = document.getElementById('feedCount');
       const postCount = document.getElementById('postCount');
+      const proposalPendingCount = document.getElementById('proposalPendingCount');
       const taskCount = document.getElementById('taskCount');
       const faqCount = document.getElementById('faqCount');
       const sessionMeta = document.getElementById('sessionMeta');
@@ -510,7 +537,7 @@
       const postImagePreview = document.getElementById('postImagePreview');
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
-      const state = { user: null, feeds: [], posts: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -951,16 +978,55 @@
           </article>`).join('') : '<p class="text-muted small mb-0">No open admin tasks right now.</p>';
       }
 
+      function renderBlogProposals() {
+        const list = document.getElementById('proposalList');
+        const pendingCount = state.proposals.filter((proposal) => proposal.status === 'pending').length;
+        proposalPendingCount.textContent = String(pendingCount);
+        document.getElementById('proposalPendingBadge').textContent = `${pendingCount} pending`;
+
+        list.innerHTML = state.proposals.length ? state.proposals.map((proposal) => `
+          <article class="admin-item-card mb-3 p-3">
+            <div class="d-flex justify-content-between gap-3">
+              <div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span class="badge ${proposal.status === 'pending' ? 'text-bg-danger' : 'text-bg-secondary'}">${escapeHtml(proposal.status || 'pending')}</span>
+                  <span class="badge text-bg-light">${escapeHtml(new Date(proposal.createdAt).toLocaleString())}</span>
+                  ${proposal.attributionUsername ? `<span class="badge text-bg-info">@${escapeHtml(proposal.attributionUsername)}</span>` : ''}
+                </div>
+                <h4 class="h6 mb-2">${escapeHtml(proposal.title || 'Untitled proposal')}</h4>
+                <p class="small mb-2">${escapeHtml(proposal.summary || '')}</p>
+                <p class="small text-muted mb-2">Suggested tags: ${escapeHtml(proposal.suggestedTags || 'none')}</p>
+                ${proposal.proposedImageUrl ? `<p class="small text-muted mb-2">Suggested image URL: <span class="text-break">${escapeHtml(proposal.proposedImageUrl)}</span></p>` : ''}
+                <details>
+                  <summary class="small">View draft content</summary>
+                  <pre class="small mt-2 mb-0 text-wrap" style="white-space: pre-wrap;">${escapeHtml(proposal.body || '')}</pre>
+                </details>
+              </div>
+              <div class="d-flex flex-column gap-2" style="min-width: 220px;">
+                <div class="form-check small">
+                  <input id="proposalUseImage-${escapeHtml(proposal.id)}" class="form-check-input" type="checkbox" data-proposal-use-image="${escapeHtml(proposal.id)}" ${proposal.proposedImageUrl ? 'checked' : ''} ${proposal.proposedImageUrl ? '' : 'disabled'} />
+                  <label class="form-check-label" for="proposalUseImage-${escapeHtml(proposal.id)}">Add proposed image to draft</label>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-load-proposal="${escapeHtml(proposal.id)}">Load into post editor</button>
+                <button class="btn btn-sm btn-outline-success" type="button" data-mark-proposal-reviewed="${escapeHtml(proposal.id)}">Mark reviewed</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-proposal-pending="${escapeHtml(proposal.id)}">Set pending</button>
+              </div>
+            </div>
+          </article>`).join('') : '<p class="text-muted small mb-0">No proposals yet.</p>';
+      }
+
       async function refreshDashboard() {
-        const [feeds, posts, faqs, tasks, settings] = await Promise.all([
+        const [feeds, posts, proposals, faqs, tasks, settings] = await Promise.all([
           request('/api/admin-feeds'),
           request('/api/admin-posts'),
+          request('/api/admin-blog-proposals'),
           request('/api/admin-faqs'),
           request('/api/admin-tasks'),
           request('/api/admin-settings')
         ]);
         state.feeds = feeds.items || [];
         state.posts = posts.items || [];
+        state.proposals = proposals.items || [];
         state.faqs = faqs.items || [];
         state.tasks = tasks.items || [];
         state.stripeSettings = settings.settings || null;
@@ -968,6 +1034,7 @@
         state.emailTemplates = settings.emailTemplates || [];
         renderFeeds();
         renderPosts();
+        renderBlogProposals();
         renderFaqs();
         renderTasks();
         renderStripeSettings();
@@ -1404,8 +1471,31 @@
         }
       });
 
+      document.getElementById('proposalReviewStatLink').addEventListener('click', (event) => {
+        event.preventDefault();
+        const section = document.getElementById('proposalSectionBody');
+        if (window.bootstrap?.Collapse) {
+          window.bootstrap.Collapse.getOrCreateInstance(section, { toggle: false }).show();
+        } else {
+          section.classList.add('show');
+        }
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
       document.addEventListener('click', async (event) => {
-        const { deleteFeed, editPost, deletePost, deleteFaq, editFaq, deleteTask, enableSecret, editEmailTemplate } = event.target.dataset;
+        const {
+          deleteFeed,
+          editPost,
+          deletePost,
+          deleteFaq,
+          editFaq,
+          deleteTask,
+          enableSecret,
+          editEmailTemplate,
+          loadProposal,
+          markProposalReviewed,
+          markProposalPending
+        } = event.target.dataset;
         if (enableSecret) {
           const stateKey = ({ stripeSecretKey: 'replaceStripeSecretKey', stripeWebhookSigningSecret: 'replaceStripeWebhookSigningSecret', sendgridApiKey: 'replaceSendgridApiKey' })[enableSecret];
           const shouldEnable = !state[stateKey];
@@ -1417,7 +1507,7 @@
           }
           return;
         }
-        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate) {
+        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate && !loadProposal && !markProposalReviewed && !markProposalPending) {
           return;
         }
         clearMessage(errorMessage);
@@ -1433,6 +1523,38 @@
           if (editEmailTemplate) {
             startEmailTemplateEdit(editEmailTemplate);
             return;
+          }
+          if (loadProposal) {
+            const proposal = state.proposals.find((item) => item.id === loadProposal);
+            if (!proposal) {
+              throw new Error('Proposal not found.');
+            }
+            resetPostForm();
+            document.getElementById('postTitle').value = proposal.title || '';
+            document.getElementById('postTag').value = proposal.suggestedTags || '';
+            document.getElementById('postSummary').value = proposal.summary || '';
+            document.getElementById('postBody').value = proposal.body || '';
+            const useImageCheckbox = document.getElementById(`proposalUseImage-${loadProposal}`);
+            if (proposal.proposedImageUrl && useImageCheckbox?.checked) {
+              document.getElementById('postImageUrl').value = proposal.proposedImageUrl;
+              renderPostImagePreview(proposal.proposedImageUrl);
+              setPostImageMeta('Loaded proposal image URL into draft.');
+            }
+            if (window.bootstrap?.Collapse) {
+              window.bootstrap.Collapse.getOrCreateInstance(document.getElementById('postSectionBody'), { toggle: false }).show();
+            }
+            document.getElementById('postSectionBody').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            showMessage(saveMessage, 'Proposal loaded into the blog post editor.');
+            return;
+          }
+          if (markProposalReviewed || markProposalPending) {
+            const proposalId = markProposalReviewed || markProposalPending;
+            const nextStatus = markProposalReviewed ? 'reviewed' : 'pending';
+            await request('/api/admin-blog-proposals', {
+              method: 'PATCH',
+              body: JSON.stringify({ id: proposalId, status: nextStatus }),
+            });
+            showMessage(saveMessage, `Proposal marked as ${nextStatus}.`);
           }
           if (deleteFeed) {
             await request(`/api/admin-feeds?id=${encodeURIComponent(deleteFeed)}`, { method: 'DELETE' });

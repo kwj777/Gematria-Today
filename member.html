@@ -272,7 +272,7 @@
             </div>
             <div class="d-flex gap-2 flex-wrap">
               <a class="btn btn-outline-primary" href="/calculator.html">Open calculator</a>
-              <a id="premiumResearchLink" class="btn btn-warning premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
+              <a id="premiumResearchLink" class="btn btn-outline-secondary premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
               <a id="blogProposalNavButton" class="btn btn-outline-success d-none" href="#premiumBlogProposalSection">Submit blog post</a>
               <button id="refreshHistoryButton" class="btn btn-outline-secondary" type="button">Refresh history</button>
               <a id="adminPageButton" class="btn btn-outline-dark d-none" href="/admin.html">Admin page</a>
@@ -781,16 +781,16 @@
         const isFreeMember = level === 'free';
         const loginOnlyMode = !isLoggedIn && normalizeAuthView(new URL(window.location.href).searchParams.get('auth')) === 'login';
 
-        membershipHero.classList.toggle('d-none', isLoggedIn && isPremiumMember);
+        membershipHero.classList.toggle('d-none', (isLoggedIn && isPremiumMember) || isFreeMember);
 
         if (isFreeMember) {
-          membershipHeroKicker.textContent = 'Upgrade to Premium';
-          membershipHeroTitle.textContent = 'Upgrade to Premium today';
-          membershipHeroLead.textContent = 'Your free account is active. Upgrade to premium to unlock unlimited saved history, favorites, expanded related-word depth, and full Premium Research access.';
-          membershipHeroCardEyebrow.textContent = 'Premium Upgrade';
-          membershipHeroCardTitle.textContent = 'Everything in one premium plan.';
-          membershipHeroFreeTier.classList.add('d-none');
-          membershipHeroPremiumTier.classList.remove('d-none');
+          membershipHeroKicker.textContent = 'Free Membership Active';
+          membershipHeroTitle.textContent = 'Your account is ready';
+          membershipHeroLead.textContent = 'You already have access to saved searches and related-word lookup. Upgrade is optional in the Membership Upgrade panel when you need deeper limits.';
+          membershipHeroCardEyebrow.textContent = 'Free Member Status';
+          membershipHeroCardTitle.textContent = 'Use your dashboard now and upgrade only when needed.';
+          membershipHeroFreeTier.classList.remove('d-none');
+          membershipHeroPremiumTier.classList.add('d-none');
           membershipHeroCardColumn.classList.remove('d-none');
           return;
         }
@@ -859,6 +859,8 @@
       function syncPremiumResearchLink(member = session?.member) {
         const isPremium = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
         premiumResearchLink.classList.toggle('disabled', !isPremium);
+        premiumResearchLink.classList.toggle('btn-warning', isPremium);
+        premiumResearchLink.classList.toggle('btn-outline-secondary', !isPremium);
         premiumResearchLink.setAttribute('aria-disabled', isPremium ? 'false' : 'true');
         premiumResearchLink.tabIndex = isPremium ? 0 : -1;
         premiumResearchLink.textContent = isPremium ? 'Premium research' : 'Premium research (locked)';

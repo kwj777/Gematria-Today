@@ -691,6 +691,7 @@
             <span class="text-muted small">${plainSummary}</span>
           </a>`;
         }).join('');
+        document.getElementById('blogSidebarLinks').classList.toggle('blog-sidebar-links--scrollable', filteredPosts.length > 3);
 
         const postMarkup = filteredPosts.map((post) => {
           const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);

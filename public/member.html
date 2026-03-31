@@ -393,6 +393,7 @@
       const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8';
+      const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
       const historyCount = document.getElementById('historyCount');
       const historyCountMeta = document.getElementById('historyCountMeta');
       const historyList = document.getElementById('historyList');
@@ -519,6 +520,34 @@
         }
 
         window.open(destinationUrl, '_blank', 'noopener');
+      }
+
+      function rememberFollowItSubscriptionIntent(email = '') {
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        if (!normalizedEmail) {
+          return;
+        }
+        localStorage.setItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY, normalizedEmail);
+      }
+
+      function popRememberedFollowItSubscriptionIntent() {
+        const rememberedEmail = String(localStorage.getItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY) || '').trim();
+        if (!rememberedEmail) {
+          return '';
+        }
+        localStorage.removeItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY);
+        return rememberedEmail;
+      }
+
+      function maybeOpenFollowItAfterVerifiedSignIn(activeSession = session) {
+        if (!activeSession?.member?.emailVerified) {
+          return;
+        }
+        const rememberedEmail = popRememberedFollowItSubscriptionIntent();
+        if (!rememberedEmail) {
+          return;
+        }
+        openFollowItSubscription(rememberedEmail);
       }
 
       async function request(url, options = {}) {
@@ -1066,7 +1095,6 @@
         }
         const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
         const registerEmail = document.getElementById('registerEmail').value.trim();
-        const preopenedFollowItWindow = shouldSubscribeToBlog ? window.open('about:blank', '_blank', 'noopener') : null;
         const payload = {
           username: document.getElementById('registerUsername').value.trim(),
           displayName: document.getElementById('registerDisplayName').value.trim(),
@@ -1088,7 +1116,7 @@
           renderHistory();
           event.target.reset();
           if (shouldSubscribeToBlog) {
-            openFollowItSubscription(registerEmail, preopenedFollowItWindow);
+            rememberFollowItSubscriptionIntent(registerEmail);
           }
           setAuthView('login', { updateUrl: true });
         } catch (error) {
@@ -1096,9 +1124,6 @@
             source: 'member_register_form',
             errorMessage: error?.message || 'unknown_error',
           });
-          if (preopenedFollowItWindow && !preopenedFollowItWindow.closed) {
-            preopenedFollowItWindow.close();
-          }
           showAlert(error.message || 'Unable to create membership account.');
         } finally {
           registerButton.disabled = false;
@@ -1139,6 +1164,7 @@
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
+          maybeOpenFollowItAfterVerifiedSignIn(session);
           await loadHistory();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');

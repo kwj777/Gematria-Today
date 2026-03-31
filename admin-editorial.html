@@ -26,9 +26,21 @@
         <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
 
         <section class="content-panel p-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <span class="section-kicker mb-0">Proposed posts report</span>
-            <span id="proposalPendingBadge" class="badge text-bg-danger">0 pending</span>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div class="d-flex align-items-center gap-3">
+              <span class="section-kicker mb-0">Proposed posts report</span>
+              <span id="proposalPendingBadge" class="badge text-bg-danger">0 pending</span>
+            </div>
+            <label class="d-flex align-items-center gap-2 small text-muted" for="proposalStatusFilter">
+              <span>Status filter</span>
+              <select id="proposalStatusFilter" class="form-select form-select-sm" style="min-width: 180px;">
+                <option value="all">Show all statuses</option>
+                <option value="pending">Pending only</option>
+                <option value="approved">Accepted only</option>
+                <option value="reviewed">Reviewed only</option>
+                <option value="rejected">Rejected only</option>
+              </select>
+            </label>
           </div>
           <div id="proposalList" class="admin-list"></div>
         </section>
@@ -36,7 +48,7 @@
     </main>
 
     <script>
-      const state = { proposals: [] };
+      const state = { proposals: [], statusFilter: 'all' };
       const saveMessage = document.getElementById('saveMessage');
       const errorMessage = document.getElementById('errorMessage');
 
@@ -77,8 +89,11 @@
       function renderBlogProposals() {
         const pendingCount = state.proposals.filter((proposal) => proposal.status === 'pending').length;
         document.getElementById('proposalPendingBadge').textContent = `${pendingCount} pending`;
+        const filteredProposals = state.statusFilter === 'all'
+          ? state.proposals
+          : state.proposals.filter((proposal) => (proposal.status || 'pending') === state.statusFilter);
         const list = document.getElementById('proposalList');
-        list.innerHTML = state.proposals.length ? state.proposals.map((proposal) => `
+        list.innerHTML = filteredProposals.length ? filteredProposals.map((proposal) => `
           <article class="admin-item-card mb-3 p-3">
             <div class="d-flex justify-content-between gap-3">
               <div>
@@ -113,7 +128,7 @@
                 <strong>Acceptance message:</strong> ${escapeHtml(proposal.rejectionExplanation)}
               </div>
             ` : ''}
-          </article>`).join('') : '<p class="text-muted small mb-0">No proposals yet.</p>';
+          </article>`).join('') : '<p class="text-muted small mb-0">No proposals match the selected status.</p>';
       }
 
       async function refreshProposals() {
@@ -162,6 +177,11 @@
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
+      });
+
+      document.getElementById('proposalStatusFilter').addEventListener('change', (event) => {
+        state.statusFilter = event.target.value || 'all';
+        renderBlogProposals();
       });
 
       init();

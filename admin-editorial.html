@@ -117,6 +117,7 @@
                 <button class="btn btn-sm btn-outline-primary" type="button" data-mark-proposal-reviewed="${escapeHtml(proposal.id)}">Mark reviewed</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-proposal-pending="${escapeHtml(proposal.id)}">Set pending</button>
                 <button class="btn btn-sm btn-outline-danger" type="button" data-reject-proposal="${escapeHtml(proposal.id)}">Reject post</button>
+                <button class="btn btn-sm btn-danger" type="button" data-delete-proposal="${escapeHtml(proposal.id)}">Delete submission</button>
               </div>
             </div>
             ${proposal.status === 'rejected' && proposal.rejectionExplanation ? `
@@ -147,8 +148,28 @@
       }
 
       document.addEventListener('click', async (event) => {
-        const proposalId = event.target.dataset.markProposalAccepted || event.target.dataset.markProposalReviewed || event.target.dataset.markProposalPending || event.target.dataset.rejectProposal;
+        const proposalId = event.target.dataset.markProposalAccepted
+          || event.target.dataset.markProposalReviewed
+          || event.target.dataset.markProposalPending
+          || event.target.dataset.rejectProposal
+          || event.target.dataset.deleteProposal;
         if (!proposalId) return;
+        if (event.target.dataset.deleteProposal) {
+          const confirmed = window.confirm('Delete this submission permanently? This action cannot be undone.');
+          if (!confirmed) return;
+          clearMessage(errorMessage);
+          try {
+            await request('/api/admin-blog-proposals', {
+              method: 'DELETE',
+              body: JSON.stringify({ id: proposalId })
+            });
+            showMessage(saveMessage, 'Submission deleted.');
+            await refreshProposals();
+          } catch (error) {
+            showMessage(errorMessage, error.message);
+          }
+          return;
+        }
         const nextStatus = event.target.dataset.markProposalAccepted
           ? 'approved'
           : event.target.dataset.markProposalReviewed

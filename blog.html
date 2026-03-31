@@ -659,12 +659,11 @@
           : `Showing all <strong>${filteredPosts.length}</strong> posts.`;
 
         document.getElementById('blogSidebarLinks').innerHTML = filteredPosts.map((post) => {
-          const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
-          const linkedSummaryResult = linkifyPlainText(post.summary, linkTargets);
+          const plainSummary = escapeHtml(post.summary || '');
           return `
           <a class="blog-mini-link text-decoration-none" href="/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}">
             <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
-            <span class="text-muted small">${linkedSummaryResult.html}</span>
+            <span class="text-muted small">${plainSummary}</span>
           </a>`;
         }).join('');
 

@@ -511,15 +511,43 @@
 
       function openFollowItSubscription(email = '', preopenedWindow = null) {
         const normalizedEmail = String(email || '').trim();
-        const emailParam = normalizedEmail ? `?email=${encodeURIComponent(normalizedEmail)}` : '';
-        const destinationUrl = `${FOLLOW_IT_SUBSCRIPTION_URL}${emailParam}`;
-
-        if (preopenedWindow && !preopenedWindow.closed) {
-          preopenedWindow.location.href = destinationUrl;
+        if (!normalizedEmail) {
           return;
         }
 
-        window.open(destinationUrl, '_blank', 'noopener');
+        const targetName = `followItSubscribe_${Date.now()}`;
+        if (preopenedWindow && !preopenedWindow.closed) {
+          try {
+            preopenedWindow.name = targetName;
+          } catch (_) {
+            // Ignore cross-origin naming issues and fall back to opening a new tab.
+          }
+        }
+
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = FOLLOW_IT_SUBSCRIPTION_URL;
+        form.target = targetName;
+        form.style.display = 'none';
+
+        const emailInput = document.createElement('input');
+        emailInput.type = 'hidden';
+        emailInput.name = 'email';
+        emailInput.value = normalizedEmail;
+        form.appendChild(emailInput);
+
+        document.body.appendChild(form);
+
+        const openedWindow = preopenedWindow && !preopenedWindow.closed
+          ? preopenedWindow
+          : window.open('about:blank', targetName, 'noopener');
+
+        if (!openedWindow) {
+          form.target = '_blank';
+        }
+
+        form.submit();
+        form.remove();
       }
 
       function rememberFollowItSubscriptionIntent(email = '') {

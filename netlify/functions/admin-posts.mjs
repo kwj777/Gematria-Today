@@ -28,9 +28,34 @@ function normalizePostTags(tagInput, tagsInput) {
   return tagTokens.length ? tagTokens.join(', ') : null;
 }
 
+function normalizeScheduledPublishAt(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) {
+    return null;
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed.toISOString();
+}
+
 export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
+
+    await sql`
+      UPDATE posts
+      SET
+        status = 'published',
+        published_at = COALESCE(published_at, scheduled_publish_at, NOW()),
+        scheduled_publish_at = NULL,
+        updated_at = NOW()
+      WHERE
+        COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
+        AND scheduled_publish_at IS NOT NULL
+        AND scheduled_publish_at <= NOW()
+    `;
 
     if (event.httpMethod === 'GET') {
       const rows = await sql`SELECT * FROM posts ORDER BY COALESCE(published_at, created_at) DESC`;
@@ -45,13 +70,14 @@ export async function handler(event) {
       }
       const slug = slugify(body.slug || title);
       const status = body.status === 'draft' ? 'draft' : 'published';
+      const scheduledPublishAt = normalizeScheduledPublishAt(body.scheduledPublishAt);
       const showOnHomepage = Boolean(body.showOnHomepage);
       const hideFromBlog = Boolean(body.hideFromBlog);
       const normalizedTagValue = normalizePostTags(body.tag, body.tags);
       const imageUrl = String(body.imageUrl ?? '').trim() || null;
       const sliderImageUrl = String(body.sliderImageUrl ?? '').trim() || null;
       const rows = await sql`
-        INSERT INTO posts (id, title, slug, tag, summary, body, read_time, image_url, slider_image_url, show_on_homepage, hide_from_blog, status, published_at, created_by, updated_at)
+        INSERT INTO posts (id, title, slug, tag, summary, body, read_time, image_url, slider_image_url, show_on_homepage, hide_from_blog, status, published_at, scheduled_publish_at, created_by, updated_at)
         VALUES (
           ${crypto.randomUUID()},
           ${title},
@@ -65,7 +91,8 @@ export async function handler(event) {
           ${showOnHomepage},
           ${hideFromBlog},
           ${status},
-          ${status === 'published' ? new Date().toISOString() : null},
+          ${status === 'published' ? (scheduledPublishAt || new Date().toISOString()) : null},
+          ${status === 'draft' ? scheduledPublishAt : null},
           ${user.id},
           NOW()
         )
@@ -87,6 +114,7 @@ export async function handler(event) {
       }
       const slug = slugify(body.slug || title);
       const status = body.status === 'draft' ? 'draft' : 'published';
+      const scheduledPublishAt = normalizeScheduledPublishAt(body.scheduledPublishAt);
       const showOnHomepage = Boolean(body.showOnHomepage);
       const hideFromBlog = Boolean(body.hideFromBlog);
       const normalizedTagValue = normalizePostTags(body.tag, body.tags);
@@ -107,7 +135,11 @@ export async function handler(event) {
           hide_from_blog = ${hideFromBlog},
           status = ${status},
           published_at = CASE
-            WHEN ${status} = 'published' THEN COALESCE(published_at, NOW())
+            WHEN ${status} = 'published' THEN COALESCE(published_at, ${scheduledPublishAt}, NOW())
+            ELSE NULL
+          END,
+          scheduled_publish_at = CASE
+            WHEN ${status} = 'draft' THEN ${scheduledPublishAt}
             ELSE NULL
           END,
           updated_at = NOW()

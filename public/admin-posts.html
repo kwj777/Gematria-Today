@@ -92,6 +92,18 @@
         return `Created on: ${parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`;
       }
 
+      function formatPostStatusLabel(status) {
+        return String(status || '').toLowerCase() === 'draft' ? 'Saved but not published' : 'Published';
+      }
+
+      function formatScheduledLabel(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) return '';
+        return `Scheduled publish: ${parsed.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
+      }
+
       function showMessage(target, message) {
         target.textContent = message;
         target.classList.remove('d-none');
@@ -126,6 +138,8 @@
                 <span class="small text-muted admin-post-summary-meta">${escapeHtml(formatCreatedOnLabel(post.createdAt || post.publishedAt))}</span>
               </summary>
               <div class="pt-3">
+                <p class="mb-2"><span class="badge ${String(post.status || '').toLowerCase() === 'draft' ? 'text-bg-secondary' : 'text-bg-success'}">${escapeHtml(formatPostStatusLabel(post.status))}</span></p>
+                ${post.scheduledPublishAt ? `<p class="small text-muted mb-2">${escapeHtml(formatScheduledLabel(post.scheduledPublishAt))}</p>` : ''}
                 <p class="small text-muted mb-2">${escapeHtml(post.summary || '')}</p>
                 <article class="small mb-3">${post.body || ''}</article>
                 <div class="d-flex flex-wrap gap-2 mb-3">
@@ -139,7 +153,9 @@
                   <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Post image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Home slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /><div class="form-text">Optional: only used on the home slider.</div></div>
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
+                  <div class="col-md-6"><label class="form-label" for="editScheduledPublishAt-${post.id}">Schedule publish date/time</label><input id="editScheduledPublishAt-${post.id}" class="form-control" type="datetime-local" value="${post.scheduledPublishAt ? escapeHtml(new Date(post.scheduledPublishAt).toISOString().slice(0, 16)) : ''}" /><div class="form-text">Future schedule keeps the post as saved but not published.</div></div>
                   <div class="col-12"><label class="form-label" for="editBody-${post.id}">Body</label><textarea id="editBody-${post.id}" class="form-control" rows="6" required>${escapeHtml(post.body || '')}</textarea></div>
+                  <div class="col-md-6"><label class="form-label" for="editStatus-${post.id}">Publish status</label><select id="editStatus-${post.id}" class="form-select"><option value="published" ${String(post.status || '').toLowerCase() === 'published' ? 'selected' : ''}>Published</option><option value="draft" ${String(post.status || '').toLowerCase() === 'draft' ? 'selected' : ''}>Saved but not published</option></select></div>
                   <div class="col-12">
                     <div class="form-check">
                       <input id="editHomepage-${post.id}" class="form-check-input" type="checkbox" ${post.showOnHomepage ? 'checked' : ''} />
@@ -227,7 +243,8 @@
               hideFromBlog: document.getElementById(`editHideFromBlog-${postId}`).checked,
               summary: document.getElementById(`editSummary-${postId}`).value,
               body: document.getElementById(`editBody-${postId}`).value,
-              status: 'published'
+              status: document.getElementById(`editStatus-${postId}`).value,
+              scheduledPublishAt: document.getElementById(`editScheduledPublishAt-${postId}`).value || null
             })
           });
           state.editingPostId = null;

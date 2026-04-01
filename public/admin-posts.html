@@ -638,6 +638,7 @@
               scheduledPublishAt: localDateTimeInputToIso(getFieldValue('editScheduledPublishAt'))
             })
           });
+          form.closest('details')?.removeAttribute('open');
           state.editingPostId = null;
           showMessage(saveMessage, 'Blog post updated.');
           await loadPosts();

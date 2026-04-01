@@ -337,6 +337,21 @@
         target.classList.remove('d-none');
       }
 
+
+      function estimateReadTimeLabelFromContent(content) {
+        const plainText = String(content || '')
+          .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+          .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/gi, ' ')
+          .replace(/&[a-z0-9#]+;/gi, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const wordCount = plainText ? plainText.split(' ').filter(Boolean).length : 0;
+        const estimatedMinutes = Math.max(1, Math.ceil(wordCount / 200));
+        return `${estimatedMinutes} minute read`;
+      }
+
       function renderCreatePostPreview() {
         const title = document.getElementById('createPostTitle').value.trim() || 'Untitled draft';
         const tag = document.getElementById('createPostTag').value.trim();
@@ -522,14 +537,19 @@
         clearMessage(errorMessage);
         clearMessage(saveMessage);
         try {
+          const readTimeField = document.getElementById('createPostReadTime');
+          const bodyValue = document.getElementById('createPostBody').value;
+          if (!String(readTimeField.value || '').trim()) {
+            readTimeField.value = estimateReadTimeLabelFromContent(bodyValue);
+          }
           await request('/api/admin-posts', {
             method: 'POST',
             body: JSON.stringify({
               title: document.getElementById('createPostTitle').value,
               tag: document.getElementById('createPostTag').value,
-              readTime: document.getElementById('createPostReadTime').value,
+              readTime: readTimeField.value,
               summary: document.getElementById('createPostSummary').value,
-              body: document.getElementById('createPostBody').value,
+              body: bodyValue,
               status: document.getElementById('createPostStatus').value,
               scheduledPublishAt: document.getElementById('createPostScheduledPublishAt').value || null
             })

@@ -156,12 +156,13 @@
       }
 
       function stripMarkdownDecorators(value = '') {
-        return String(value || '')
+        const cleaned = String(value || '')
           .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
           .replace(/\*\*(.+?)\*\*/g, '$1')
           .replace(/\*(.+?)\*/g, '$1')
           .replace(/`(.+?)`/g, '$1')
           .trim();
+        return cleaned.replace(/^["'](.+)["']$/, '$1').trim();
       }
 
       function markdownToHtml(markdown = '') {
@@ -233,12 +234,31 @@
         if (frontmatterMatch) {
           const frontmatterLines = frontmatterMatch[1].split('\n');
           bodyMarkdown = frontmatterMatch[2] || '';
+          let activeListKey = '';
           frontmatterLines.forEach((line) => {
+            const listItemMatch = line.match(/^\s*-\s+(.+)$/);
+            if (listItemMatch && activeListKey) {
+              const listValue = stripMarkdownDecorators(listItemMatch[1]);
+              if (!listValue) return;
+              if (!Array.isArray(frontmatter[activeListKey])) {
+                frontmatter[activeListKey] = [];
+              }
+              frontmatter[activeListKey].push(listValue);
+              return;
+            }
             const separatorIndex = line.indexOf(':');
             if (separatorIndex === -1) return;
             const key = line.slice(0, separatorIndex).trim().toLowerCase();
             const value = line.slice(separatorIndex + 1).trim();
-            if (key) frontmatter[key] = value;
+            if (!key) return;
+            activeListKey = key;
+            if (!value) {
+              if (key === 'tags' || key === 'tag') {
+                frontmatter[key] = [];
+              }
+              return;
+            }
+            frontmatter[key] = value;
           });
         }
 
@@ -246,7 +266,10 @@
         const title = stripMarkdownDecorators(frontmatter.title || titleFromHeading);
         const summaryLine = frontmatter.summary || bodyMarkdown.split('\n').map((line) => line.trim()).find((line) => line && !line.startsWith('#')) || '';
         const summary = stripMarkdownDecorators(summaryLine);
-        const tag = frontmatter.tags || frontmatter.tag || '';
+        const rawTagValue = Array.isArray(frontmatter.tags)
+          ? frontmatter.tags.join(', ')
+          : (frontmatter.tags || frontmatter.tag || '');
+        const tag = stripMarkdownDecorators(rawTagValue);
         const readTime = frontmatter.readtime || frontmatter['read-time'] || '';
 
         return { title, summary, tag, readTime, bodyMarkdown };

@@ -2,6 +2,7 @@ import { getAuthenticatedUser, jsonResponse, requireHttpMethod } from './_admin.
 import { ensureMemberSchema } from './_member.mjs';
 
 const ALLOWED_WINDOWS = new Set([1, 7, 30, 60, 90, 365]);
+const ALLOWED_HOUR_WINDOWS = new Set([1]);
 const SECURITY_PROBLEM_OUTCOMES = ['blocked', 'invalid_credentials'];
 const TRAFFIC_SPIKE_WINDOW_MINUTES = 5;
 const TRAFFIC_SPIKE_BASELINE_MINUTES = 60;
@@ -17,6 +18,14 @@ function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
   if (!Number.isFinite(parsed) || !ALLOWED_WINDOWS.has(parsed)) {
     return 30;
+  }
+  return parsed;
+}
+
+function normalizeHours(value) {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  if (!Number.isFinite(parsed) || !ALLOWED_HOUR_WINDOWS.has(parsed)) {
+    return null;
   }
   return parsed;
 }
@@ -60,7 +69,8 @@ function toIsoDate(value) {
   }
 }
 
-function formatWindowLabel(days) {
+function formatWindowLabel({ days, hours }) {
+  if (hours === 1) return 'Last 1 hour';
   if (days === 1) return 'Daily (last 24 hours)';
   if (days === 7) return 'Weekly (last 7 days)';
   if (days === 30) return 'Last 30 days';
@@ -76,7 +86,9 @@ export async function handler(event) {
 
   try {
     const url = new URL(event.rawUrl || `https://endtimes.today${event.path}${event.rawQuery ? `?${event.rawQuery}` : ''}`);
-    const days = normalizeDays(url.searchParams.get('days'));
+    const hours = normalizeHours(url.searchParams.get('hours'));
+    const days = hours ? null : normalizeDays(url.searchParams.get('days'));
+    const windowInterval = hours ? `${hours} hours` : `${days} days`;
     const { sql, user } = await getAuthenticatedUser(event);
     await ensureMemberSchema(sql);
     const wordsColumnRows = await sql`
@@ -96,16 +108,16 @@ export async function handler(event) {
     const [overviewRows] = await Promise.all([
       sql`
         SELECT
-          (SELECT COUNT(*)::int FROM users WHERE role = 'member' AND created_at >= NOW() - (${days} || ' days')::interval) AS new_members,
+          (SELECT COUNT(*)::int FROM users WHERE role = 'member' AND created_at >= NOW() - ${windowInterval}::interval) AS new_members,
           (SELECT COUNT(*)::int FROM users WHERE role = 'member' AND membership_level IN ('premium', 'lifetime') AND status = 'active') AS active_premium_members,
           (SELECT COUNT(*)::int FROM users WHERE role = 'member' AND membership_level IN ('premium', 'lifetime') AND membership_expires_at IS NOT NULL AND membership_expires_at >= NOW() AND membership_expires_at <= NOW() + INTERVAL '30 days') AS expiring_premium_members,
-          (SELECT COUNT(*)::int FROM posts WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval) AS published_posts,
+          (SELECT COUNT(*)::int FROM posts WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND COALESCE(published_at, created_at) >= NOW() - ${windowInterval}::interval) AS published_posts,
           (SELECT COUNT(*)::int FROM words) AS total_words,
           (SELECT COUNT(*)::int FROM tasks WHERE status = 'open') AS open_tasks,
           (SELECT COUNT(*)::int FROM tasks WHERE status = 'open' AND due_date IS NOT NULL AND due_date < CURRENT_DATE) AS overdue_tasks,
           (SELECT COUNT(*)::int
             FROM request_audit_log
-            WHERE created_at >= NOW() - (${days} || ' days')::interval
+            WHERE created_at >= NOW() - ${windowInterval}::interval
               AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ) AS failed_actions
       `,
@@ -121,13 +133,13 @@ export async function handler(event) {
           ORDER BY total DESC`,
       sql`SELECT DATE_TRUNC('day', created_at)::date AS day, COUNT(*)::int AS total
           FROM users
-          WHERE role = 'member' AND created_at >= NOW() - (${days} || ' days')::interval
+          WHERE role = 'member' AND created_at >= NOW() - ${windowInterval}::interval
           GROUP BY 1
           ORDER BY 1 ASC`,
       sql`SELECT DATE_TRUNC('day', COALESCE(published_at, created_at))::date AS day, COUNT(*)::int AS total
           FROM posts
           WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
-            AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval
+            AND COALESCE(published_at, created_at) >= NOW() - ${windowInterval}::interval
           GROUP BY 1
           ORDER BY 1 ASC`,
       sql`SELECT COALESCE(NULLIF(BTRIM(status), ''), 'unknown') AS status, COUNT(*)::int AS total
@@ -146,7 +158,7 @@ export async function handler(event) {
           FROM feeds`,
       sql`SELECT route, action, outcome, created_at
           FROM request_audit_log
-          WHERE created_at >= NOW() - (${days} || ' days')::interval
+          WHERE created_at >= NOW() - ${windowInterval}::interval
             AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ORDER BY created_at DESC
           LIMIT 12`,
@@ -162,7 +174,7 @@ export async function handler(event) {
       sql`SELECT id, username, email, membership_level, status, created_at, membership_expires_at
           FROM users
           WHERE role = 'member'
-            AND created_at >= NOW() - (${days} || ' days')::interval
+            AND created_at >= NOW() - ${windowInterval}::interval
           ORDER BY created_at DESC
           LIMIT 50`,
       sql`SELECT id, username, email, membership_level, status, created_at, membership_expires_at
@@ -184,7 +196,7 @@ export async function handler(event) {
       sql`SELECT id, title, slug, status, created_at, published_at
           FROM posts
           WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
-            AND COALESCE(published_at, created_at) >= NOW() - (${days} || ' days')::interval
+            AND COALESCE(published_at, created_at) >= NOW() - ${windowInterval}::interval
           ORDER BY COALESCE(published_at, created_at) DESC
           LIMIT 50`,
       wordsRecentOrderColumn
@@ -214,7 +226,7 @@ export async function handler(event) {
           LIMIT 50`,
       sql`SELECT route, action, outcome, created_at
           FROM request_audit_log
-          WHERE created_at >= NOW() - (${days} || ' days')::interval
+          WHERE created_at >= NOW() - ${windowInterval}::interval
             AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ORDER BY created_at DESC
           LIMIT 50`,
@@ -233,7 +245,7 @@ export async function handler(event) {
       `,
       sql`
         WITH conversion_window AS (
-          SELECT NOW() - (${days} || ' days')::interval AS starts_at
+          SELECT NOW() - ${windowInterval}::interval AS starts_at
         ),
         unique_visitors AS (
           SELECT COUNT(DISTINCT request_fingerprint)::int AS total
@@ -272,7 +284,7 @@ export async function handler(event) {
             request_fingerprint,
             COALESCE(NULLIF(TRIM(metadata->>'country'), ''), 'Unknown') AS country
           FROM request_audit_log
-          WHERE created_at >= NOW() - (${days} || ' days')::interval
+          WHERE created_at >= NOW() - ${windowInterval}::interval
             AND route NOT LIKE 'admin-%'
             AND route NOT LIKE 'member-%'
             AND route <> 'security-retention'
@@ -334,7 +346,7 @@ export async function handler(event) {
           COUNT(*)::int AS total_requests,
           COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
         FROM request_audit_log
-        WHERE created_at >= NOW() - (${days} || ' days')::interval
+        WHERE created_at >= NOW() - ${windowInterval}::interval
           AND route NOT LIKE 'admin-%'
           AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
@@ -362,7 +374,8 @@ export async function handler(event) {
 
     return jsonResponse(200, {
       generatedAt: new Date().toISOString(),
-      days,
+      days: days || null,
+      hours: hours || null,
       user,
       overview: {
         newMembers: Number(overview.new_members || 0),
@@ -412,7 +425,7 @@ export async function handler(event) {
         items: trafficAlerts,
       },
       conversionFunnel: {
-        windowLabel: formatWindowLabel(days),
+        windowLabel: formatWindowLabel({ days, hours }),
         uniqueVisitors,
         freeMemberships,
         premiumConversions,

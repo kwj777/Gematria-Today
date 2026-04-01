@@ -471,12 +471,17 @@
                   <button class="btn btn-sm btn-outline-primary" type="button" data-edit-post="${post.id}">Edit</button>
                   <button class="btn btn-sm btn-outline-danger" type="button" data-delete-post="${post.id}">Delete</button>
                 </div>
-                <form class="row g-2 ${isEditing ? '' : 'd-none'}" data-edit-form="${post.id}" data-current-status="${escapeHtml(String(post.status || 'published').toLowerCase())}" data-current-scheduled-publish-at="${post.scheduledPublishAt ? escapeHtml(post.scheduledPublishAt) : ''}">
+                <form class="row g-2 ${isEditing ? '' : 'd-none'}" data-edit-form="${post.id}">
                   <div class="col-12"><label class="form-label" for="editTitle-${post.id}">Title</label><input id="editTitle-${post.id}" class="form-control" value="${escapeHtml(post.title || '')}" required /></div>
+                  <div class="col-12"><label class="form-label" for="editSlug-${post.id}">Slug</label><input id="editSlug-${post.id}" class="form-control" value="${escapeHtml(post.slug || '')}" placeholder="auto-generated from title if left blank" /></div>
                   <div class="col-12"><label class="form-label" for="editTag-${post.id}">Tags</label><input id="editTag-${post.id}" class="form-control" value="${escapeHtml(post.tag || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editReadTime-${post.id}">Read time</label><input id="editReadTime-${post.id}" class="form-control" value="${escapeHtml(post.readTime || '')}" /></div>
+                  <div class="col-md-6"><label class="form-label" for="editStatus-${post.id}">Publish status</label><select id="editStatus-${post.id}" class="form-select"><option value="published" ${String(post.status || '').toLowerCase() === 'published' ? 'selected' : ''}>Publish now</option><option value="draft" ${String(post.status || '').toLowerCase() === 'draft' ? 'selected' : ''}>Save as draft</option></select></div>
+                  <div class="col-md-6"><label class="form-label" for="editScheduledPublishAt-${post.id}">Schedule publish date/time (optional)</label><input id="editScheduledPublishAt-${post.id}" class="form-control" type="datetime-local" value="${escapeHtml(isoToLocalDateTimeInput(post.scheduledPublishAt || ''))}" /></div>
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
                   <div class="col-12"><label class="form-label" for="editBody-${post.id}">Body</label><textarea id="editBody-${post.id}" class="form-control" rows="6" required>${escapeHtml(post.body || '')}</textarea></div>
+                  <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Hero image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
+                  <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Homepage slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /></div>
                   <div class="col-12">
                     <div class="form-check">
                       <input id="editHomepage-${post.id}" class="form-check-input" type="checkbox" ${post.showOnHomepage ? 'checked' : ''} />
@@ -637,14 +642,17 @@
             body: JSON.stringify({
               id: postId,
               title: getFieldValue('editTitle'),
+              slug: getFieldValue('editSlug'),
               tag: getFieldValue('editTag'),
               readTime: readTimeValue,
+              imageUrl: getFieldValue('editImageUrl'),
+              sliderImageUrl: getFieldValue('editSliderImageUrl'),
               showOnHomepage: Boolean(getField('editHomepage')?.checked),
               hideFromBlog: Boolean(getField('editHideFromBlog')?.checked),
               summary: getFieldValue('editSummary'),
               body: bodyValue,
-              status: String(form.dataset.currentStatus || 'published').toLowerCase(),
-              scheduledPublishAt: localDateTimeInputToIso(form.dataset.currentScheduledPublishAt || '')
+              status: String(getFieldValue('editStatus') || 'published').toLowerCase(),
+              scheduledPublishAt: localDateTimeInputToIso(getFieldValue('editScheduledPublishAt'))
             })
           });
           form.closest('details')?.removeAttribute('open');

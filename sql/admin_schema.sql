@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS posts (
   hide_from_blog BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'published',
   published_at TIMESTAMPTZ,
+  scheduled_publish_at TIMESTAMPTZ,
   created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -348,6 +349,9 @@ ALTER TABLE posts
 
 ALTER TABLE posts
   ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
+
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS scheduled_publish_at TIMESTAMPTZ;
 
 UPDATE posts
 SET published_at = COALESCE(published_at, created_at)

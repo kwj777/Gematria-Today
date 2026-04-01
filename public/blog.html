@@ -275,6 +275,130 @@
         return `/${raw.replace(/^\.?\//, '')}`;
       };
 
+      const applyInlineMarkdown = (value = '') => {
+        let output = escapeHtml(value);
+        output = output.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" decoding="async" />');
+        output = output.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a class="news-inline-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
+        output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        output = output.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+        output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        output = output.replace(/_([^_]+)_/g, '<em>$1</em>');
+        return output;
+      };
+
+      const convertMarkdownToHtml = (value = '') => {
+        const lines = String(value || '').replace(/\r\n?/g, '\n').split('\n');
+        const html = [];
+        let inUnorderedList = false;
+        let inOrderedList = false;
+        let inCodeBlock = false;
+        let codeFenceLanguage = '';
+        let paragraphLines = [];
+
+        const closeParagraph = () => {
+          if (!paragraphLines.length) return;
+          html.push(`<p>${applyInlineMarkdown(paragraphLines.join('<br />'))}</p>`);
+          paragraphLines = [];
+        };
+        const closeLists = () => {
+          if (inUnorderedList) {
+            html.push('</ul>');
+            inUnorderedList = false;
+          }
+          if (inOrderedList) {
+            html.push('</ol>');
+            inOrderedList = false;
+          }
+        };
+
+        lines.forEach((line) => {
+          const trimmed = line.trim();
+
+          if (/^```/.test(trimmed)) {
+            closeParagraph();
+            closeLists();
+            if (!inCodeBlock) {
+              codeFenceLanguage = trimmed.slice(3).trim();
+              html.push(codeFenceLanguage ? `<pre><code class="language-${escapeHtml(codeFenceLanguage)}">` : '<pre><code>');
+              inCodeBlock = true;
+            } else {
+              html.push('</code></pre>');
+              inCodeBlock = false;
+              codeFenceLanguage = '';
+            }
+            return;
+          }
+
+          if (inCodeBlock) {
+            html.push(`${escapeHtml(line)}\n`);
+            return;
+          }
+
+          if (!trimmed) {
+            closeParagraph();
+            closeLists();
+            return;
+          }
+
+          const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+          if (headingMatch) {
+            closeParagraph();
+            closeLists();
+            const level = headingMatch[1].length;
+            html.push(`<h${level}>${applyInlineMarkdown(headingMatch[2])}</h${level}>`);
+            return;
+          }
+
+          const blockquoteMatch = trimmed.match(/^>\s?(.+)$/);
+          if (blockquoteMatch) {
+            closeParagraph();
+            closeLists();
+            html.push(`<blockquote><p>${applyInlineMarkdown(blockquoteMatch[1])}</p></blockquote>`);
+            return;
+          }
+
+          const unorderedMatch = trimmed.match(/^[-*]\s+(.+)$/);
+          if (unorderedMatch) {
+            closeParagraph();
+            if (inOrderedList) {
+              html.push('</ol>');
+              inOrderedList = false;
+            }
+            if (!inUnorderedList) {
+              html.push('<ul>');
+              inUnorderedList = true;
+            }
+            html.push(`<li>${applyInlineMarkdown(unorderedMatch[1])}</li>`);
+            return;
+          }
+
+          const orderedMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+          if (orderedMatch) {
+            closeParagraph();
+            if (inUnorderedList) {
+              html.push('</ul>');
+              inUnorderedList = false;
+            }
+            if (!inOrderedList) {
+              html.push('<ol>');
+              inOrderedList = true;
+            }
+            html.push(`<li>${applyInlineMarkdown(orderedMatch[1])}</li>`);
+            return;
+          }
+
+          paragraphLines.push(trimmed);
+        });
+
+        closeParagraph();
+        closeLists();
+        if (inCodeBlock) {
+          html.push('</code></pre>');
+        }
+        return html.join('');
+      };
+
       const normalizePostBodyHtml = (value = '') => {
         const raw = String(value || '').trim();
         if (!raw) {
@@ -284,10 +408,7 @@
         if (containsHtml) {
           return raw;
         }
-        return raw
-          .split(/\n\s*\n/)
-          .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-          .join('');
+        return convertMarkdownToHtml(raw);
       };
       const formatPostCreatedDate = (value) => {
         if (!value) {

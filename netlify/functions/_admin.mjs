@@ -116,6 +116,7 @@ export async function ensureAdminSchema(sql) {
     hide_from_blog BOOLEAN NOT NULL DEFAULT FALSE,
     status TEXT NOT NULL DEFAULT 'published',
     published_at TIMESTAMPTZ,
+    scheduled_publish_at TIMESTAMPTZ,
     created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -193,6 +194,9 @@ export async function ensureAdminSchema(sql) {
 
   await sql`ALTER TABLE posts
     ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`;
+
+  await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS scheduled_publish_at TIMESTAMPTZ`;
 
   await sql`UPDATE posts
     SET published_at = COALESCE(published_at, created_at)
@@ -425,6 +429,7 @@ export function formatPost(row) {
     hideFromBlog: row.hide_from_blog,
     status: row.status,
     publishedAt: row.published_at,
+    scheduledPublishAt: row.scheduled_publish_at,
     createdAt: row.created_at,
   };
 }

@@ -195,6 +195,7 @@
                 <a class="btn btn-sm btn-outline-primary mb-3" href="/admin-posts.html">Go to manage all posts</a>
                 <form id="postForm" class="row g-3">
                   <input id="postId" type="hidden" />
+                  <input id="postStatus" type="hidden" value="published" />
                   <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
                   <div class="col-md-6"><label class="form-label" for="postTag">Tags</label><input id="postTag" class="form-control" placeholder="Research Workflow, Name Analysis" /><div class="form-text">Use commas to add multiple tags.</div><div id="postTagsInUse" class="small text-muted mt-2">Tags in use: none yet.</div></div>
                   <div class="col-md-6"><label class="form-label" for="postReadTime">Read time</label><input id="postReadTime" class="form-control" placeholder="5 minute read" /></div>
@@ -228,9 +229,11 @@
                     </div>
                   </div>
                   <div class="col-12"><label class="form-label" for="postSummary">Summary</label><textarea id="postSummary" class="form-control" rows="2" required></textarea></div>
-                  <div class="col-12"><label class="form-label" for="postBody">Body</label><textarea id="postBody" class="form-control" rows="7" placeholder="HTML is supported for formatting (for example: <p>, <strong>, <ul>, <a>). Plain text still works with blank lines." required></textarea></div>
+                  <div class="col-md-6"><label class="form-label" for="postScheduledPublishAt">Schedule publish date/time (optional)</label><input id="postScheduledPublishAt" class="form-control" type="datetime-local" /><div class="form-text">If set to a future date/time, the post is saved as draft and publishes automatically at that time.</div></div>
+                  <div class="col-12"><label class="form-label" for="postBody">Body</label><textarea id="postBody" class="form-control" rows="7" placeholder="Markdown and HTML are supported (headings, lists, links, bold, italics, code blocks). Plain text still works with blank lines." required></textarea></div>
                   <div class="col-12 d-flex flex-column flex-sm-row gap-2">
-                    <button id="postSubmitButton" class="btn btn-primary flex-fill" type="submit">Publish blog post</button>
+                    <button id="postSubmitButton" class="btn btn-primary flex-fill" type="submit" data-post-status="published">Publish blog post</button>
+                    <button id="postSaveDraftButton" class="btn btn-outline-warning flex-fill" type="submit" data-post-status="draft">Save without publishing</button>
                     <button id="postCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
                   </div>
                 </form>
@@ -665,6 +668,19 @@
         setPostImageMeta(`Image ready (${file.name}). URL created automatically.`);
       }
 
+      function createGeneratedPostImageDataUrl(title = '', tag = '') {
+        const baseTitle = String(title || '').trim() || 'Untitled Post';
+        const baseTag = String(tag || '').trim() || 'Saved in admin';
+        const palette = ['#1f2937', '#3b82f6', '#f59e0b', '#7c3aed', '#0ea5e9', '#ef4444'];
+        const hash = Array.from(`${baseTitle}|${baseTag}`).reduce((acc, char) => ((acc * 31) + char.charCodeAt(0)) % 2147483647, 7);
+        const start = palette[hash % palette.length];
+        const end = palette[(hash + 3) % palette.length];
+        const safeTitle = escapeHtml(baseTitle.slice(0, 72));
+        const safeTag = escapeHtml(baseTag.slice(0, 56));
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="${safeTitle}"><defs><linearGradient id="post-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${start}"/><stop offset="100%" stop-color="${end}"/></linearGradient></defs><rect width="1600" height="900" fill="url(#post-bg)"/><rect x="90" y="120" width="1420" height="660" rx="32" fill="rgba(255,255,255,0.08)"/><text x="140" y="360" fill="#ffffff" font-size="68" font-family="Inter, Arial, sans-serif" font-weight="700">${safeTitle}</text><text x="140" y="450" fill="#e5e7eb" font-size="34" font-family="Inter, Arial, sans-serif">${safeTag}</text><text x="140" y="760" fill="#dbeafe" font-size="28" font-family="Inter, Arial, sans-serif">EndTimes.Today</text></svg>`;
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+      }
+
       function renderRecoveryPreview(label) {
         adminRecoveryResult.innerHTML = `<span class="text-muted">${escapeHtml(label)}</span>`;
       }
@@ -716,11 +732,14 @@
         state.editingPostId = null;
         document.getElementById('postForm').reset();
         document.getElementById('postId').value = '';
+        document.getElementById('postStatus').value = 'published';
         document.getElementById('postSubmitButton').textContent = 'Publish blog post';
+        document.getElementById('postSaveDraftButton').textContent = 'Save without publishing';
         document.getElementById('postCancelButton').classList.add('d-none');
         document.getElementById('postSliderImageUrl').value = '';
         document.getElementById('postShowOnHomepage').checked = false;
         document.getElementById('postHideFromBlog').checked = false;
+        document.getElementById('postScheduledPublishAt').value = '';
         setPostImageMeta('');
         renderPostImagePreview('');
       }
@@ -737,9 +756,14 @@
         document.getElementById('postSliderImageUrl').value = post.sliderImageUrl || '';
         document.getElementById('postShowOnHomepage').checked = Boolean(post.showOnHomepage);
         document.getElementById('postHideFromBlog').checked = Boolean(post.hideFromBlog);
+        const scheduledPublishAt = String(post.scheduledPublishAt || '').trim();
+        document.getElementById('postScheduledPublishAt').value = scheduledPublishAt ? new Date(scheduledPublishAt).toISOString().slice(0, 16) : '';
         document.getElementById('postSummary').value = post.summary || '';
         document.getElementById('postBody').value = post.body || '';
-        document.getElementById('postSubmitButton').textContent = 'Update blog post';
+        const isDraft = String(post.status || '').toLowerCase() === 'draft';
+        document.getElementById('postStatus').value = isDraft ? 'draft' : 'published';
+        document.getElementById('postSubmitButton').textContent = isDraft ? 'Publish post' : 'Update published post';
+        document.getElementById('postSaveDraftButton').textContent = isDraft ? 'Update saved draft' : 'Save as draft';
         document.getElementById('postCancelButton').classList.remove('d-none');
         setPostImageMeta(post.imageUrl ? 'Using saved image URL.' : '');
         renderPostImagePreview(post.imageUrl || '');
@@ -1232,24 +1256,40 @@
         clearMessage(errorMessage);
         try {
           const postId = document.getElementById('postId').value;
+          let requestedStatus = String(event.submitter?.dataset?.postStatus || document.getElementById('postStatus').value || 'published').toLowerCase() === 'draft' ? 'draft' : 'published';
+          const postTitle = document.getElementById('postTitle').value;
+          const postTag = document.getElementById('postTag').value;
+          const providedImageUrl = document.getElementById('postImageUrl').value;
+          const resolvedImageUrl = String(providedImageUrl || '').trim() || createGeneratedPostImageDataUrl(postTitle, postTag);
+          const scheduledPublishAtInput = String(document.getElementById('postScheduledPublishAt').value || '').trim();
+          const scheduledPublishAtValue = scheduledPublishAtInput ? new Date(scheduledPublishAtInput).toISOString() : '';
+          const isScheduledForFuture = Boolean(scheduledPublishAtValue) && new Date(scheduledPublishAtValue).getTime() > Date.now();
+          if (isScheduledForFuture) {
+            requestedStatus = 'draft';
+          }
           await request('/api/admin-posts', {
             method: postId ? 'PUT' : 'POST',
             body: JSON.stringify({
               id: postId || undefined,
-              title: document.getElementById('postTitle').value,
-              tag: document.getElementById('postTag').value,
+              title: postTitle,
+              tag: postTag,
               readTime: document.getElementById('postReadTime').value,
-              imageUrl: document.getElementById('postImageUrl').value,
+              imageUrl: resolvedImageUrl,
               sliderImageUrl: document.getElementById('postSliderImageUrl').value,
               showOnHomepage: document.getElementById('postShowOnHomepage').checked,
               hideFromBlog: document.getElementById('postHideFromBlog').checked,
               summary: document.getElementById('postSummary').value,
               body: document.getElementById('postBody').value,
-              status: 'published'
+              status: requestedStatus,
+              scheduledPublishAt: scheduledPublishAtValue || null
             })
           });
           resetPostForm();
-          showMessage(saveMessage, postId ? 'Blog post updated.' : 'Blog post published.');
+          showMessage(saveMessage, isScheduledForFuture
+            ? 'Blog post scheduled and saved but not published yet.'
+            : (requestedStatus === 'draft'
+              ? 'Blog post saved but not published.'
+              : 'Blog post published.'));
           await refreshDashboard();
           collapseAdminSection('postSectionBody');
         } catch (error) {

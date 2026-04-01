@@ -38,6 +38,19 @@ export async function handler(event) {
         AND COALESCE(NULLIF(BTRIM(image_url), ''), NULL) IS NOT NULL
     `;
 
+    await sql`
+      UPDATE posts
+      SET
+        status = 'published',
+        published_at = COALESCE(published_at, scheduled_publish_at, NOW()),
+        scheduled_publish_at = NULL,
+        updated_at = NOW()
+      WHERE
+        COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
+        AND scheduled_publish_at IS NOT NULL
+        AND scheduled_publish_at <= NOW()
+    `;
+
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit }),
       route: 'public-posts',

@@ -444,7 +444,10 @@
             <details class="admin-post-details admin-item-card p-3" ${isEditing ? 'open' : ''}>
               <summary class="admin-post-summary">
                 <span class="fw-semibold admin-post-summary-title">${escapeHtml(post.title)}</span>
-                <span class="small text-muted admin-post-summary-meta">${escapeHtml(formatCreatedOnLabel(post.createdAt || post.publishedAt))}</span>
+                <span class="admin-post-summary-trailing">
+                  <span class="badge ${String(post.status || '').toLowerCase() === 'draft' ? 'text-bg-secondary' : 'text-bg-success'} admin-post-summary-status">${escapeHtml(formatPostStatusLabel(post.status))}</span>
+                  <span class="small text-muted admin-post-summary-meta">${escapeHtml(post.scheduledPublishAt ? formatScheduledLabel(post.scheduledPublishAt) : formatCreatedOnLabel(post.createdAt || post.publishedAt))}</span>
+                </span>
               </summary>
               <div class="pt-3">
                 <p class="mb-2"><span class="badge ${String(post.status || '').toLowerCase() === 'draft' ? 'text-bg-secondary' : 'text-bg-success'}">${escapeHtml(formatPostStatusLabel(post.status))}</span></p>

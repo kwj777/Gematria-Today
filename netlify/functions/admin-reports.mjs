@@ -113,7 +113,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -263,27 +263,88 @@ export async function handler(event) {
         FROM unique_visitors, free_memberships, premium_conversions
       `,
       sql`
+        WITH filtered_requests AS (
+          SELECT
+            CASE
+              WHEN route = '/' THEN '/index.html'
+              ELSE route
+            END AS route,
+            request_fingerprint,
+            COALESCE(NULLIF(TRIM(metadata->>'country'), ''), 'Unknown') AS country
+          FROM request_audit_log
+          WHERE created_at >= NOW() - (${days} || ' days')::interval
+            AND route NOT LIKE 'admin-%'
+            AND route NOT LIKE 'member-%'
+            AND route <> 'security-retention'
+        ),
+        route_totals AS (
+          SELECT
+            route,
+            COUNT(*)::int AS total_requests,
+            COUNT(DISTINCT request_fingerprint)::int AS unique_page_views
+          FROM filtered_requests
+          GROUP BY route
+        ),
+        route_country_totals AS (
+          SELECT
+            route,
+            country,
+            COUNT(*)::int AS total_requests,
+            COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
+          FROM filtered_requests
+          GROUP BY route, country
+        ),
+        ranked_countries AS (
+          SELECT
+            route,
+            country,
+            total_requests,
+            unique_visitors,
+            ROW_NUMBER() OVER (
+              PARTITION BY route
+              ORDER BY unique_visitors DESC, total_requests DESC, country ASC
+            ) AS rank
+          FROM route_country_totals
+        )
         SELECT
-          CASE
-            WHEN route = '/' THEN '/index.html'
-            ELSE route
-          END AS route,
+          route_totals.route,
+          route_totals.total_requests,
+          route_totals.unique_page_views,
+          COALESCE(
+            JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'country', ranked_countries.country,
+                'unique_visitors', ranked_countries.unique_visitors,
+                'total_requests', ranked_countries.total_requests
+              )
+              ORDER BY ranked_countries.rank
+            ) FILTER (WHERE ranked_countries.rank <= 3),
+            '[]'::json
+          ) AS top_countries
+        FROM route_totals
+        LEFT JOIN ranked_countries
+          ON ranked_countries.route = route_totals.route
+          AND ranked_countries.rank <= 3
+        GROUP BY route_totals.route, route_totals.total_requests, route_totals.unique_page_views
+        ORDER BY route_totals.unique_page_views DESC, route_totals.total_requests DESC, route_totals.route ASC
+        LIMIT 25
+      `,
+      sql`
+        SELECT
           COUNT(*)::int AS total_requests,
-          COUNT(DISTINCT request_fingerprint)::int AS unique_page_views
+          COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
         FROM request_audit_log
         WHERE created_at >= NOW() - (${days} || ' days')::interval
           AND route NOT LIKE 'admin-%'
           AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
-        GROUP BY 1
-        ORDER BY unique_page_views DESC, total_requests DESC, route ASC
-        LIMIT 25
       `,
     ]);
 
     const overview = overviewRows[0] || {};
     const faqCoverage = faqRows[0] || { published: 0, unpublished: 0, total: 0 };
     const feedCoverage = feedRows[0] || { active: 0, inactive: 0, total: 0 };
+    const publicTrafficSummary = publicTrafficSummaryRows[0] || { total_requests: 0, unique_visitors: 0 };
 
     const trafficSpikeMap = new Map(trafficSpikeRows.map((row) => [row.route, row]));
     const trafficAlerts = MONITORED_ROUTE_CONFIG.map((config) => buildTrafficAlert({
@@ -362,7 +423,18 @@ export async function handler(event) {
         route: row.route,
         totalRequests: Number(row.total_requests || 0),
         uniquePageViews: Number(row.unique_page_views || 0),
+        topCountries: Array.isArray(row.top_countries)
+          ? row.top_countries.map((countryRow) => ({
+            country: countryRow.country || 'Unknown',
+            uniqueVisitors: Number(countryRow.unique_visitors || 0),
+            totalRequests: Number(countryRow.total_requests || 0),
+          }))
+          : [],
       })),
+      publicTrafficSummary: {
+        totalRequests: Number(publicTrafficSummary.total_requests || 0),
+        uniqueVisitors: Number(publicTrafficSummary.unique_visitors || 0),
+      },
       securityEvents: securityRows.map((row) => ({
         route: row.route,
         action: row.action,

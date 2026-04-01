@@ -71,7 +71,7 @@
             <div class="col-md-6"><label class="form-label" for="createPostReadTime">Read time</label><input id="createPostReadTime" class="form-control" placeholder="5 minute read" /></div>
             <div class="col-12"><label class="form-label" for="createPostSummary">Summary</label><textarea id="createPostSummary" class="form-control" rows="2" required></textarea></div>
             <div class="col-12"><label class="form-label" for="createPostBody">Body</label><textarea id="createPostBody" class="form-control" rows="7" required></textarea></div>
-            <div class="col-md-6"><label class="form-label" for="createPostStatus">Publish status</label><select id="createPostStatus" class="form-select"><option value="published">Publish now</option><option value="draft">Save as draft</option></select></div>
+            <div class="col-md-6"><label class="form-label" for="createPostStatus">Publish status</label><select id="createPostStatus" class="form-select"><option value="published">Publish now</option><option value="scheduled">Publish later</option><option value="draft">Save as draft</option></select></div>
             <div class="col-md-6"><label class="form-label" for="createPostScheduledPublishAt">Schedule publish date/time (optional)</label><input id="createPostScheduledPublishAt" class="form-control" type="datetime-local" /></div>
             <div class="col-12 d-flex gap-2">
               <button class="btn btn-primary" type="submit">Create post</button>
@@ -321,7 +321,9 @@
       }
 
       function formatPostStatusLabel(status) {
-        return String(status || '').toLowerCase() === 'draft' ? 'Saved but not published' : 'Published';
+        const normalizedStatus = String(status || '').toLowerCase();
+        if (normalizedStatus === 'scheduled') return 'Publish later';
+        return normalizedStatus === 'draft' ? 'Saved but not published' : 'Published';
       }
 
       function formatScheduledLabel(value) {
@@ -348,6 +350,26 @@
         const offsetMs = parsed.getTimezoneOffset() * 60000;
         const localDate = new Date(parsed.getTime() - offsetMs);
         return localDate.toISOString().slice(0, 16);
+      }
+
+      function isFutureScheduledDate(value) {
+        const isoValue = localDateTimeInputToIso(value);
+        if (!isoValue) return false;
+        return new Date(isoValue).getTime() > Date.now();
+      }
+
+      function getCreatePostRequestStatus() {
+        const selectedStatus = document.getElementById('createPostStatus').value;
+        return selectedStatus === 'scheduled' ? 'draft' : selectedStatus;
+      }
+
+      function syncCreatePostStatusToSchedule() {
+        const scheduleInput = document.getElementById('createPostScheduledPublishAt');
+        const statusSelect = document.getElementById('createPostStatus');
+        if (!scheduleInput || !statusSelect) return;
+        if (isFutureScheduledDate(scheduleInput.value)) {
+          statusSelect.value = 'scheduled';
+        }
       }
 
       function showMessage(target, message) {
@@ -386,7 +408,7 @@
         const previewBody = document.getElementById('previewCreatePostBody');
         const metadata = [tag ? `Tags: ${tag}` : '', readTime ? `Read time: ${readTime}` : ''].filter(Boolean).join(' • ');
 
-        previewStatus.className = `badge ${status === 'draft' ? 'text-bg-secondary' : 'text-bg-success'}`;
+        previewStatus.className = `badge ${status === 'draft' || status === 'scheduled' ? 'text-bg-secondary' : 'text-bg-success'}`;
         previewStatus.textContent = formatPostStatusLabel(status);
         previewCreatedOn.textContent = scheduledPublishAt ? formatScheduledLabel(scheduledPublishAt) : 'Created on: now';
         previewTitle.textContent = title;
@@ -512,6 +534,11 @@
         renderCreatePostPreview();
       });
 
+      document.getElementById('createPostScheduledPublishAt').addEventListener('change', () => {
+        syncCreatePostStatusToSchedule();
+        renderCreatePostPreview();
+      });
+
       importMdFileButton.addEventListener('click', () => {
         importMdFileInput.click();
       });
@@ -568,7 +595,7 @@
               readTime: readTimeField.value,
               summary: document.getElementById('createPostSummary').value,
               body: bodyValue,
-              status: document.getElementById('createPostStatus').value,
+              status: getCreatePostRequestStatus(),
               scheduledPublishAt: localDateTimeInputToIso(document.getElementById('createPostScheduledPublishAt').value)
             })
           });

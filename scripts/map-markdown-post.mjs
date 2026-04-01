@@ -1,0 +1,250 @@
+#!/usr/bin/env node
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+function parseArgs(argv) {
+  const options = {
+    file: '',
+    output: 'json',
+    status: 'draft',
+    showOnHomepage: false,
+    hideFromBlog: false
+  };
+
+  for (let i = 2; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if ((arg === '--file' || arg === '-f') && argv[i + 1]) {
+      options.file = argv[i + 1];
+      i += 1;
+      continue;
+    }
+    if (arg === '--status' && argv[i + 1]) {
+      options.status = argv[i + 1];
+      i += 1;
+      continue;
+    }
+    if (arg === '--output' && argv[i + 1]) {
+      options.output = argv[i + 1];
+      i += 1;
+      continue;
+    }
+    if (arg === '--show-on-homepage') {
+      options.showOnHomepage = true;
+      continue;
+    }
+    if (arg === '--hide-from-blog') {
+      options.hideFromBlog = true;
+      continue;
+    }
+    if (arg === '--help' || arg === '-h') {
+      options.help = true;
+      continue;
+    }
+    throw new Error(`Unknown argument: ${arg}`);
+  }
+
+  return options;
+}
+
+function markdownToHtml(markdown = '') {
+  const lines = String(markdown || '').replaceAll('\r', '').split('\n');
+  const htmlParts = [];
+  let inList = false;
+
+  const flushList = () => {
+    if (inList) {
+      htmlParts.push('</ul>');
+      inList = false;
+    }
+  };
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      flushList();
+      return;
+    }
+
+    if (trimmed.startsWith('### ')) {
+      flushList();
+      htmlParts.push(`<h3>${trimmed.slice(4).trim()}</h3>`);
+      return;
+    }
+
+    if (trimmed.startsWith('## ')) {
+      flushList();
+      htmlParts.push(`<h2>${trimmed.slice(3).trim()}</h2>`);
+      return;
+    }
+
+    if (trimmed.startsWith('# ')) {
+      flushList();
+      htmlParts.push(`<h1>${trimmed.slice(2).trim()}</h1>`);
+      return;
+    }
+
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      if (!inList) {
+        htmlParts.push('<ul>');
+        inList = true;
+      }
+      htmlParts.push(`<li>${trimmed.slice(2).trim()}</li>`);
+      return;
+    }
+
+    flushList();
+    htmlParts.push(`<p>${trimmed}</p>`);
+  });
+
+  flushList();
+  return htmlParts.join('\n').trim();
+}
+
+function extractMarkdownDocument(markdown = '') {
+  const normalized = String(markdown || '').replaceAll('\r', '');
+  const lines = normalized.split('\n');
+  const frontmatter = {};
+  let bodyStartIndex = 0;
+
+  const seoPrefixMap = {
+    '**seo-friendly title:**': 'title',
+    '**meta description (≤160 chars):**': 'summary',
+    '**tags (3-5):**': 'tag',
+    '**suggested word count:**': 'suggestedWordCount'
+  };
+
+  const cleanInlineMarkers = (value = '') => value.replaceAll('**', '').trim();
+
+  const seoPrefixEntries = Object.entries(seoPrefixMap);
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return;
+    }
+    const lowerLine = trimmed.toLowerCase();
+    seoPrefixEntries.forEach(([prefix, mappedKey]) => {
+      if (!lowerLine.startsWith(prefix)) {
+        return;
+      }
+      const rawValue = trimmed.slice(prefix.length).trim();
+      frontmatter[mappedKey] = cleanInlineMarkers(rawValue);
+      if (mappedKey === 'suggestedWordCount') {
+        bodyStartIndex = index + 1;
+      }
+    });
+  });
+
+  let bodyMarkdown = lines.slice(bodyStartIndex).join('\n').trim();
+  if (!bodyMarkdown) {
+    bodyMarkdown = normalized;
+  }
+
+  const bodyLines = bodyMarkdown.split('\n').map((line) => line.trim()).filter(Boolean);
+  const firstHeading = bodyLines.find((line) => line.startsWith('# '));
+  const titleFromHeading = firstHeading ? firstHeading.slice(2).trim() : '';
+  const title = frontmatter.title || titleFromHeading;
+  const summary = frontmatter.summary || '';
+  const normalizedTags = String(frontmatter.tag || '')
+    .split(/[;,]/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .join(', ');
+  const tag = normalizedTags;
+  const imageUrl = '';
+  const sliderImageUrl = '';
+
+  const bodyWordCount = bodyMarkdown
+    .replace(/[`*_>#-]/g, ' ')
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean).length;
+  const estimatedReadMinutes = Math.max(1, Math.ceil(bodyWordCount / 200));
+  const readTime = `${estimatedReadMinutes} min read`;
+
+  return {
+    title,
+    summary,
+    tag,
+    readTime,
+    imageUrl,
+    sliderImageUrl,
+    suggestedWordCount: frontmatter.suggestedWordCount || '',
+    bodyMarkdown,
+    body: markdownToHtml(bodyMarkdown)
+  };
+}
+
+function formatCurlPayload(payload) {
+  const escaped = JSON.stringify(payload, null, 2).replaceAll("'", "'\\''");
+  return `curl -X POST http://localhost:8888/api/admin-posts \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: admin_session=<your_admin_cookie>' \\\n  --data '${escaped}'`;
+}
+
+function printHelp() {
+  console.log(`Map a blog markdown file to the /api/admin-posts payload.
+
+Usage:
+  node scripts/map-markdown-post.mjs --file ./post.md [--status draft|published] [--output json|curl]
+
+Options:
+  -f, --file             Path to the markdown file (required)
+      --status           Post status in payload (default: draft)
+      --output           Output format: json or curl (default: json)
+      --show-on-homepage Set showOnHomepage=true
+      --hide-from-blog   Set hideFromBlog=true
+  -h, --help             Show this help message
+
+Mapping notes:
+  **SEO-friendly title:** = title
+  **Meta description (≤160 chars):** = summary
+  **Tags (3-5):** = tag
+  Anything after **Suggested word count:** = body
+  readTime is estimated from body word count (~200 words/minute)
+`);
+}
+
+async function main() {
+  const options = parseArgs(process.argv);
+
+  if (options.help) {
+    printHelp();
+    return;
+  }
+
+  if (!options.file) {
+    throw new Error('Missing --file argument. Example: --file ./my-post.md');
+  }
+
+  const fullPath = path.resolve(process.cwd(), options.file);
+  const rawMarkdown = await readFile(fullPath, 'utf8');
+  const extracted = extractMarkdownDocument(rawMarkdown);
+
+  if (!extracted.title) {
+    throw new Error('Unable to infer a title. Add frontmatter `title:` or a first-level markdown heading.');
+  }
+
+  const payload = {
+    title: extracted.title,
+    summary: extracted.summary,
+    tag: extracted.tag,
+    readTime: extracted.readTime,
+    imageUrl: extracted.imageUrl,
+    sliderImageUrl: extracted.sliderImageUrl,
+    body: extracted.body,
+    status: options.status === 'published' ? 'published' : 'draft',
+    showOnHomepage: options.showOnHomepage,
+    hideFromBlog: options.hideFromBlog
+  };
+
+  if (options.output === 'curl') {
+    console.log(formatCurlPayload(payload));
+    return;
+  }
+
+  console.log(JSON.stringify(payload, null, 2));
+}
+
+main().catch((error) => {
+  console.error(`Error: ${error.message}`);
+  process.exitCode = 1;
+});

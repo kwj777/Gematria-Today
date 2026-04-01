@@ -167,6 +167,11 @@
             </div>
           </div>
         </section>
+
+        <section class="content-panel p-4">
+          <h2 class="h5 mb-3">Public page views (non-authenticated)</h2>
+          <div id="publicPageViews" class="d-grid gap-2"></div>
+        </section>
       </div>
     </main>
 
@@ -347,6 +352,33 @@
         `).join('');
       }
 
+      function renderPublicPageViews(rows) {
+        const target = document.getElementById('publicPageViews');
+        if (!rows || !rows.length) {
+          target.innerHTML = '<p class="on-light-muted small mb-0">No public page-view data available for this window.</p>';
+          return;
+        }
+
+        const maxUnique = Math.max(...rows.map((row) => Number(row.uniquePageViews || 0)), 1);
+        target.innerHTML = rows.map((row) => {
+          const uniqueViews = Number(row.uniquePageViews || 0);
+          const totalRequests = Number(row.totalRequests || 0);
+          const barWidth = Math.max(2, Math.round((uniqueViews / maxUnique) * 100));
+
+          return `
+            <article class="border rounded p-2">
+              <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+                <p class="mb-0"><strong>${escapeHtml(row.route)}</strong></p>
+                <p class="mb-0 small">Unique views: <strong>${formatNumber(uniqueViews)}</strong> · Requests: <strong>${formatNumber(totalRequests)}</strong></p>
+              </div>
+              <div class="progress report-bar" role="img" aria-label="${escapeHtml(row.route)} unique views ${uniqueViews}">
+                <div class="progress-bar bg-info" style="width: ${barWidth}%"></div>
+              </div>
+            </article>
+          `;
+        }).join('');
+      }
+
       function renderConversionFunnel(funnel) {
         const target = document.getElementById('conversionFunnel');
         if (!funnel) {
@@ -414,6 +446,7 @@
         renderBars('topTags', reports.topTags.map((row) => ({ ...row, tag: `#${row.tag}` })), 'total', 'tag');
         renderCoverage(reports);
         renderConversionFunnel(reports.conversionFunnel);
+        renderPublicPageViews(reports.publicPageViews);
         renderSecurityEvents(reports.securityEvents);
 
         const generated = new Date(reports.generatedAt).toLocaleString();

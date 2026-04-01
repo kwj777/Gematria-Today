@@ -113,7 +113,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -262,6 +262,20 @@ export async function handler(event) {
           premium_conversions.total AS premium_conversions
         FROM unique_visitors, free_memberships, premium_conversions
       `,
+      sql`
+        SELECT
+          route,
+          COUNT(*)::int AS total_requests,
+          COUNT(DISTINCT request_fingerprint)::int AS unique_page_views
+        FROM request_audit_log
+        WHERE created_at >= NOW() - (${days} || ' days')::interval
+          AND route NOT LIKE 'admin-%'
+          AND route NOT LIKE 'member-%'
+          AND route <> 'security-retention'
+        GROUP BY route
+        ORDER BY unique_page_views DESC, total_requests DESC, route ASC
+        LIMIT 25
+      `,
     ]);
 
     const overview = overviewRows[0] || {};
@@ -341,6 +355,11 @@ export async function handler(event) {
         visitorsToFreeRate,
         freeToPremiumRate,
       },
+      publicPageViews: publicPageViewRows.map((row) => ({
+        route: row.route,
+        totalRequests: Number(row.total_requests || 0),
+        uniquePageViews: Number(row.unique_page_views || 0),
+      })),
       securityEvents: securityRows.map((row) => ({
         route: row.route,
         action: row.action,

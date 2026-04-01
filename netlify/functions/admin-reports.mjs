@@ -264,7 +264,10 @@ export async function handler(event) {
       `,
       sql`
         SELECT
-          route,
+          CASE
+            WHEN route = '/' THEN '/index.html'
+            ELSE route
+          END AS route,
           COUNT(*)::int AS total_requests,
           COUNT(DISTINCT request_fingerprint)::int AS unique_page_views
         FROM request_audit_log
@@ -272,7 +275,7 @@ export async function handler(event) {
           AND route NOT LIKE 'admin-%'
           AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
-        GROUP BY route
+        GROUP BY 1
         ORDER BY unique_page_views DESC, total_requests DESC, route ASC
         LIMIT 25
       `,

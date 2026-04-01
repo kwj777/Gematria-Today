@@ -144,11 +144,11 @@ export async function handler(event) {
           hide_from_blog = ${hideFromBlog},
           status = ${status},
           published_at = CASE
-            WHEN ${status} = 'published' THEN COALESCE(published_at, ${scheduledPublishAt}, NOW())
+            WHEN ${status} = 'published' THEN COALESCE(published_at, ${scheduledPublishAt}::timestamptz, NOW())
             ELSE NULL
           END,
           scheduled_publish_at = CASE
-            WHEN ${status} = 'draft' THEN ${scheduledPublishAt}
+            WHEN ${status} = 'draft' THEN ${scheduledPublishAt}::timestamptz
             ELSE NULL
           END,
           updated_at = NOW()

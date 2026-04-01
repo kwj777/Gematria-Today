@@ -75,9 +75,26 @@
             <div class="col-md-6"><label class="form-label" for="createPostScheduledPublishAt">Schedule publish date/time (optional)</label><input id="createPostScheduledPublishAt" class="form-control" type="datetime-local" /></div>
             <div class="col-12 d-flex gap-2">
               <button class="btn btn-primary" type="submit">Create post</button>
+              <button id="importMdFileButton" class="btn btn-outline-dark" type="button">Import MD file</button>
+              <input id="importMdFileInput" class="d-none" type="file" accept=".md,text/markdown" />
+              <button id="generateHeroImageButton" class="btn btn-outline-success" type="button">Create hero image</button>
+              <button id="previewCreatePostButton" class="btn btn-outline-primary" type="button">Preview post</button>
               <button class="btn btn-outline-secondary" type="reset">Reset</button>
             </div>
           </form>
+          <section id="createPostPreviewSection" class="mt-4 d-none" aria-live="polite">
+            <h3 class="h5 mb-3">Post preview</h3>
+            <article class="admin-item-card p-3">
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span id="previewCreatePostStatus" class="badge text-bg-success">Published</span>
+                <span id="previewCreatePostCreatedOn" class="small text-muted">Created on: now</span>
+              </div>
+              <h4 id="previewCreatePostTitle" class="h4 mb-2"></h4>
+              <p id="previewCreatePostMeta" class="small text-muted mb-2"></p>
+              <p id="previewCreatePostSummary" class="mb-3"></p>
+              <article id="previewCreatePostBody" class="small mb-0"></article>
+            </article>
+          </section>
         </section>
 
         <section class="content-panel p-4">
@@ -97,6 +114,11 @@
       const saveMessage = document.getElementById('saveMessage');
       const errorMessage = document.getElementById('errorMessage');
       const createPostForm = document.getElementById('createPostForm');
+      const importMdFileButton = document.getElementById('importMdFileButton');
+      const importMdFileInput = document.getElementById('importMdFileInput');
+      const generateHeroImageButton = document.getElementById('generateHeroImageButton');
+      const previewCreatePostButton = document.getElementById('previewCreatePostButton');
+      const createPostPreviewSection = document.getElementById('createPostPreviewSection');
       const state = { posts: [], editingPostId: null };
 
       const escapeHtml = (value = '') => String(value)
@@ -105,6 +127,149 @@
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
+
+      const escapeXml = (value = '') => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+
+      function applyInlineMarkdown(value = '') {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>')
+          .replace(/`(.+?)`/g, '<code>$1</code>');
+      }
+
+      function markdownToHtml(markdown = '') {
+        const lines = String(markdown || '').replaceAll('\r', '').split('\n');
+        const htmlBlocks = [];
+        let paragraphLines = [];
+        let listItems = [];
+
+        function flushParagraph() {
+          if (!paragraphLines.length) return;
+          const paragraphText = paragraphLines.join(' ').trim();
+          if (paragraphText) {
+            htmlBlocks.push(`<p>${applyInlineMarkdown(paragraphText)}</p>`);
+          }
+          paragraphLines = [];
+        }
+
+        function flushList() {
+          if (!listItems.length) return;
+          htmlBlocks.push(`<ul>${listItems.map((item) => `<li>${applyInlineMarkdown(item)}</li>`).join('')}</ul>`);
+          listItems = [];
+        }
+
+        lines.forEach((line) => {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            flushParagraph();
+            flushList();
+            return;
+          }
+          if (trimmed.startsWith('### ')) {
+            flushParagraph();
+            flushList();
+            htmlBlocks.push(`<h3>${applyInlineMarkdown(trimmed.slice(4).trim())}</h3>`);
+            return;
+          }
+          if (trimmed.startsWith('## ')) {
+            flushParagraph();
+            flushList();
+            htmlBlocks.push(`<h2>${applyInlineMarkdown(trimmed.slice(3).trim())}</h2>`);
+            return;
+          }
+          if (trimmed.startsWith('# ')) {
+            flushParagraph();
+            flushList();
+            htmlBlocks.push(`<h1>${applyInlineMarkdown(trimmed.slice(2).trim())}</h1>`);
+            return;
+          }
+          if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            flushParagraph();
+            listItems.push(trimmed.slice(2).trim());
+            return;
+          }
+          flushList();
+          paragraphLines.push(trimmed);
+        });
+
+        flushParagraph();
+        flushList();
+        return htmlBlocks.join('\n');
+      }
+
+      function extractMarkdownDocument(markdown = '') {
+        const normalized = String(markdown || '').replaceAll('\r', '');
+        const frontmatterMatch = normalized.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+        const frontmatter = {};
+        let bodyMarkdown = normalized;
+
+        if (frontmatterMatch) {
+          const frontmatterLines = frontmatterMatch[1].split('\n');
+          bodyMarkdown = frontmatterMatch[2] || '';
+          frontmatterLines.forEach((line) => {
+            const separatorIndex = line.indexOf(':');
+            if (separatorIndex === -1) return;
+            const key = line.slice(0, separatorIndex).trim().toLowerCase();
+            const value = line.slice(separatorIndex + 1).trim();
+            if (key) frontmatter[key] = value;
+          });
+        }
+
+        const titleFromHeading = bodyMarkdown.match(/^\s*#\s+(.+)$/m)?.[1]?.trim() || '';
+        const title = frontmatter.title || titleFromHeading;
+        const summary = frontmatter.summary || bodyMarkdown.split('\n').map((line) => line.trim()).find((line) => line && !line.startsWith('#')) || '';
+        const tag = frontmatter.tags || frontmatter.tag || '';
+        const readTime = frontmatter.readtime || frontmatter['read-time'] || '';
+
+        return { title, summary, tag, readTime, bodyMarkdown };
+      }
+
+      function createHeroImageMarkup() {
+        const rawTitle = document.getElementById('createPostTitle').value.trim() || 'Untitled Post';
+        const rawSummary = document.getElementById('createPostSummary').value.trim() || 'Draft summary preview';
+        const title = rawTitle.slice(0, 90);
+        const summary = rawSummary.slice(0, 140);
+        const titleLineOne = title.slice(0, 45);
+        const titleLineTwo = title.slice(45);
+        const summaryLineOne = summary.slice(0, 70);
+        const summaryLineTwo = summary.slice(70);
+        const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Generated blog post hero image">
+  <defs>
+    <linearGradient id="heroBackground" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1f3a" />
+      <stop offset="100%" stop-color="#355f8c" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#heroBackground)" />
+  <text x="120" y="300" fill="#ffffff" font-family="Arial, sans-serif" font-size="68" font-weight="700">${escapeXml(titleLineOne)}</text>
+  <text x="120" y="390" fill="#ffffff" font-family="Arial, sans-serif" font-size="68" font-weight="700">${escapeXml(titleLineTwo)}</text>
+  <text x="120" y="520" fill="#d6e7ff" font-family="Arial, sans-serif" font-size="38">${escapeXml(summaryLineOne)}</text>
+  <text x="120" y="575" fill="#d6e7ff" font-family="Arial, sans-serif" font-size="38">${escapeXml(summaryLineTwo)}</text>
+  <text x="120" y="790" fill="#ffffff" font-family="Arial, sans-serif" font-size="32" opacity="0.9">EndTimes.Today • Blog</text>
+</svg>`.trim();
+        const encodedSvg = encodeURIComponent(svg);
+        const dataUrl = `data:image/svg+xml;charset=UTF-8,${encodedSvg}`;
+        return `<!-- auto-generated-hero -->\n<p><img src="${dataUrl}" alt="${escapeHtml(rawTitle)} hero image" style="width:100%;height:auto;border-radius:12px;" /></p>\n<!-- /auto-generated-hero -->`;
+      }
+
+      function injectGeneratedHeroImage() {
+        const bodyField = document.getElementById('createPostBody');
+        const heroMarkup = createHeroImageMarkup();
+        const existingBody = bodyField.value.trim();
+        const heroBlockPattern = /<!-- auto-generated-hero -->[\s\S]*?<!-- \/auto-generated-hero -->\s*/;
+        const bodyWithoutOldHero = existingBody.replace(heroBlockPattern, '').trim();
+        bodyField.value = bodyWithoutOldHero ? `${heroMarkup}\n\n${bodyWithoutOldHero}` : heroMarkup;
+      }
 
       function formatCreatedOnLabel(value) {
         if (!value) return 'Created on: —';
@@ -128,6 +293,32 @@
       function showMessage(target, message) {
         target.textContent = message;
         target.classList.remove('d-none');
+      }
+
+      function renderCreatePostPreview() {
+        const title = document.getElementById('createPostTitle').value.trim() || 'Untitled draft';
+        const tag = document.getElementById('createPostTag').value.trim();
+        const readTime = document.getElementById('createPostReadTime').value.trim();
+        const summary = document.getElementById('createPostSummary').value.trim() || 'No summary added yet.';
+        const body = document.getElementById('createPostBody').value.trim() || '<p>No body content added yet.</p>';
+        const status = document.getElementById('createPostStatus').value;
+        const scheduledPublishAt = document.getElementById('createPostScheduledPublishAt').value || null;
+        const previewStatus = document.getElementById('previewCreatePostStatus');
+        const previewCreatedOn = document.getElementById('previewCreatePostCreatedOn');
+        const previewTitle = document.getElementById('previewCreatePostTitle');
+        const previewMeta = document.getElementById('previewCreatePostMeta');
+        const previewSummary = document.getElementById('previewCreatePostSummary');
+        const previewBody = document.getElementById('previewCreatePostBody');
+        const metadata = [tag ? `Tags: ${tag}` : '', readTime ? `Read time: ${readTime}` : ''].filter(Boolean).join(' • ');
+
+        previewStatus.className = `badge ${status === 'draft' ? 'text-bg-secondary' : 'text-bg-success'}`;
+        previewStatus.textContent = formatPostStatusLabel(status);
+        previewCreatedOn.textContent = scheduledPublishAt ? formatScheduledLabel(scheduledPublishAt) : 'Created on: now';
+        previewTitle.textContent = title;
+        previewMeta.textContent = metadata || 'No tags or read time yet.';
+        previewSummary.textContent = summary;
+        previewBody.innerHTML = body;
+        createPostPreviewSection.classList.remove('d-none');
       }
 
       function clearMessage(target) {
@@ -240,6 +431,47 @@
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
+      });
+
+      previewCreatePostButton.addEventListener('click', () => {
+        renderCreatePostPreview();
+      });
+
+      importMdFileButton.addEventListener('click', () => {
+        importMdFileInput.click();
+      });
+
+      importMdFileInput.addEventListener('change', async () => {
+        const file = importMdFileInput.files?.[0];
+        if (!file) return;
+        clearMessage(errorMessage);
+        clearMessage(saveMessage);
+        try {
+          const markdownContent = await file.text();
+          const extracted = extractMarkdownDocument(markdownContent);
+          document.getElementById('createPostTitle').value = extracted.title || file.name.replace(/\.md$/i, '');
+          document.getElementById('createPostTag').value = extracted.tag || '';
+          document.getElementById('createPostReadTime').value = extracted.readTime || '';
+          document.getElementById('createPostSummary').value = extracted.summary || '';
+          document.getElementById('createPostBody').value = markdownToHtml(extracted.bodyMarkdown);
+          renderCreatePostPreview();
+          showMessage(saveMessage, `Imported ${file.name} into the post editor.`);
+        } catch (error) {
+          showMessage(errorMessage, error.message || 'Unable to import markdown file.');
+        } finally {
+          importMdFileInput.value = '';
+        }
+      });
+
+      generateHeroImageButton.addEventListener('click', () => {
+        injectGeneratedHeroImage();
+        showMessage(saveMessage, 'Generated hero image inserted into the post body.');
+        clearMessage(errorMessage);
+        renderCreatePostPreview();
+      });
+
+      createPostForm.addEventListener('reset', () => {
+        createPostPreviewSection.classList.add('d-none');
       });
 
 

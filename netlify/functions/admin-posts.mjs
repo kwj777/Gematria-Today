@@ -133,11 +133,11 @@ export async function handler(event) {
           body = ${String(body.body ?? '').trim()},
           read_time = ${String(body.readTime ?? '').trim() || null},
           image_url = CASE
-            WHEN ${hasImageUrl} THEN ${imageUrl}
+            WHEN ${hasImageUrl ? 1 : 0} = 1 THEN ${imageUrl}
             ELSE image_url
           END,
           slider_image_url = CASE
-            WHEN ${hasSliderImageUrl} THEN ${sliderImageUrl}
+            WHEN ${hasSliderImageUrl ? 1 : 0} = 1 THEN ${sliderImageUrl}
             ELSE slider_image_url
           END,
           show_on_homepage = ${showOnHomepage},

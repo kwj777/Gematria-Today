@@ -371,13 +371,33 @@
         }
 
         const maxUnique = Math.max(...rows.map((row) => Number(row.uniquePageViews || 0)), 1);
-        target.innerHTML = rows.map((row) => {
+        target.innerHTML = rows.map((row, rowIndex) => {
           const uniqueViews = Number(row.uniquePageViews || 0);
           const totalRequests = Number(row.totalRequests || 0);
           const barWidth = Math.max(2, Math.round((uniqueViews / maxUnique) * 100));
-          const countrySummary = Array.isArray(row.topCountries) && row.topCountries.length
-            ? row.topCountries.map((countryRow) => `${escapeHtml(countryRow.country)} (${formatNumber(countryRow.uniqueVisitors)})`).join(' · ')
+          const topCountries = Array.isArray(row.topCountries) ? row.topCountries : [];
+          const countrySummary = topCountries.length
+            ? topCountries.map((countryRow, countryIndex) => {
+              const panelId = `countryLocations-${rowIndex}-${countryIndex}`;
+              return `
+                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-country-toggle="${panelId}" aria-expanded="false">
+                  ${escapeHtml(countryRow.country)} (${formatNumber(countryRow.uniqueVisitors)})
+                </button>
+              `;
+            }).join(' · ')
             : 'Unknown';
+          const locationPanels = topCountries.map((countryRow, countryIndex) => {
+            const panelId = `countryLocations-${rowIndex}-${countryIndex}`;
+            const topLocations = Array.isArray(countryRow.topLocations) ? countryRow.topLocations : [];
+            const locationSummary = topLocations.length
+              ? topLocations.map((locationRow) => `${escapeHtml(locationRow.location)} (${formatNumber(locationRow.uniqueVisitors)})`).join(' · ')
+              : 'No location breakdown available.';
+            return `
+              <div id="${panelId}" class="country-location-panel small on-light-muted mt-1 d-none">
+                Top locations in <strong>${escapeHtml(countryRow.country)}</strong>: ${locationSummary}
+              </div>
+            `;
+          }).join('');
 
           return `
             <article class="border rounded p-2">
@@ -389,9 +409,22 @@
                 <div class="progress-bar bg-info" style="width: ${barWidth}%"></div>
               </div>
               <p class="small on-light-muted mb-0 mt-2">Top visitor countries: ${countrySummary}</p>
+              ${locationPanels}
             </article>
           `;
         }).join('');
+
+        target.querySelectorAll('[data-country-toggle]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const panelId = button.getAttribute('data-country-toggle');
+            if (!panelId) return;
+            const panel = target.querySelector(`#${CSS.escape(panelId)}`);
+            if (!panel) return;
+            const isHidden = panel.classList.contains('d-none');
+            panel.classList.toggle('d-none', !isHidden);
+            button.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+          });
+        });
       }
 
       function renderConversionFunnel(funnel) {

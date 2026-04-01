@@ -73,6 +73,7 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
               <select id="windowSelect" class="form-select form-select-sm" aria-label="Reporting window">
+                <option value="1h">Last hour (1h)</option>
                 <option value="1">Daily (24h)</option>
                 <option value="7">Weekly (7d)</option>
                 <option value="30" selected>Last 30 days</option>
@@ -177,7 +178,7 @@
     </main>
 
     <script>
-      const state = { reports: null, days: 30, user: null };
+      const state = { reports: null, windowQuery: 'days=30', windowLabel: 'last 30 days', user: null };
       const adminReportsLoadingOverlay = document.getElementById('adminReportsLoadingOverlay');
       let reportsBootstrapped = false;
 
@@ -411,7 +412,7 @@
         const stepWidth = (value, base) => Math.max(8, Math.round((Math.max(value, 0) / Math.max(base, 1)) * 100));
 
         target.innerHTML = `
-          <p class="small on-light-muted mb-0">Window: <strong>${escapeHtml(funnel.windowLabel || `Last ${state.days} days`)}</strong></p>
+          <p class="small on-light-muted mb-0">Window: <strong>${escapeHtml(funnel.windowLabel || state.windowLabel)}</strong></p>
           <div class="row g-3 align-items-stretch">
             <div class="col-lg-4">
               <article class="funnel-card funnel-stage p-3 h-100">
@@ -464,18 +465,31 @@
         renderSecurityEvents(reports.securityEvents);
 
         const generated = new Date(reports.generatedAt).toLocaleString();
-        document.getElementById('metaLine').textContent = `Signed in as ${reports.user.username}. Window: last ${reports.days} days. Last refresh: ${generated}.`;
+        document.getElementById('metaLine').textContent = `Signed in as ${reports.user.username}. Window: ${reports.windowLabel || state.windowLabel}. Last refresh: ${generated}.`;
+      }
+
+      function parseWindowSelection(rawValue) {
+        const value = String(rawValue || '').trim().toLowerCase();
+        if (value === '1h') {
+          return { query: 'hours=1', label: 'last 1 hour' };
+        }
+        const days = Number.parseInt(value, 10) || 30;
+        return {
+          query: `days=${days}`,
+          label: days === 1 ? 'last 24 hours' : `last ${days} days`,
+        };
       }
 
       async function loadReports() {
         clearError();
         const select = document.getElementById('windowSelect');
-        const days = Number.parseInt(select.value, 10) || 30;
-        state.days = days;
+        const selectedWindow = parseWindowSelection(select.value);
+        state.windowQuery = selectedWindow.query;
+        state.windowLabel = selectedWindow.label;
 
         try {
           await request('/api/admin-session');
-          const reports = await request(`/api/admin-reports?days=${days}`);
+          const reports = await request(`/api/admin-reports?${selectedWindow.query}`);
           state.reports = reports;
           state.user = reports.user;
           renderReports(reports);

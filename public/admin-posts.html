@@ -436,6 +436,19 @@
         return payload;
       }
 
+
+      function normalizePostBodyHtml(value = '') {
+        const raw = String(value || '').trim();
+        if (!raw) {
+          return '<p></p>';
+        }
+        const containsHtml = /<\/?[a-z][\s\S]*>/i.test(raw);
+        if (containsHtml) {
+          return raw;
+        }
+        return markdownToHtml(raw);
+      }
+
       function renderPosts() {
         postCount.textContent = String(state.posts.length);
         postList.innerHTML = state.posts.length ? state.posts.map((post) => {
@@ -453,7 +466,7 @@
                 <p class="mb-2"><span class="badge ${String(post.status || '').toLowerCase() === 'draft' ? 'text-bg-secondary' : 'text-bg-success'}">${escapeHtml(formatPostStatusLabel(post.status))}</span></p>
                 ${post.scheduledPublishAt ? `<p class="small text-muted mb-2">${escapeHtml(formatScheduledLabel(post.scheduledPublishAt))}</p>` : ''}
                 <p class="small text-muted mb-2">${escapeHtml(post.summary || '')}</p>
-                <article class="small mb-3" style="white-space: pre-wrap;">${escapeHtml(post.body || '')}</article>
+                <article class="small mb-3">${normalizePostBodyHtml(post.body || '')}</article>
                 <div class="d-flex flex-wrap gap-2 mb-3">
                   <button class="btn btn-sm btn-outline-primary" type="button" data-edit-post="${post.id}">Edit</button>
                   <button class="btn btn-sm btn-outline-danger" type="button" data-delete-post="${post.id}">Delete</button>

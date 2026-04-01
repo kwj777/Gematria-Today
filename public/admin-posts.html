@@ -618,22 +618,24 @@
         event.preventDefault();
         clearMessage(errorMessage);
         const postId = form.dataset.editForm;
+        const getField = (fieldName) => form.querySelector(`[id="${fieldName}-${postId}"]`);
+        const getFieldValue = (fieldName) => getField(fieldName)?.value || '';
         try {
           await request('/api/admin-posts', {
             method: 'PUT',
             body: JSON.stringify({
               id: postId,
-              title: document.getElementById(`editTitle-${postId}`).value,
-              tag: document.getElementById(`editTag-${postId}`).value,
-              readTime: document.getElementById(`editReadTime-${postId}`).value,
-              imageUrl: document.getElementById(`editImageUrl-${postId}`).value,
-              sliderImageUrl: document.getElementById(`editSliderImageUrl-${postId}`).value,
-              showOnHomepage: document.getElementById(`editHomepage-${postId}`).checked,
-              hideFromBlog: document.getElementById(`editHideFromBlog-${postId}`).checked,
-              summary: document.getElementById(`editSummary-${postId}`).value,
-              body: document.getElementById(`editBody-${postId}`).value,
-              status: document.getElementById(`editStatus-${postId}`).value,
-              scheduledPublishAt: localDateTimeInputToIso(document.getElementById(`editScheduledPublishAt-${postId}`).value)
+              title: getFieldValue('editTitle'),
+              tag: getFieldValue('editTag'),
+              readTime: getFieldValue('editReadTime'),
+              imageUrl: getFieldValue('editImageUrl'),
+              sliderImageUrl: getFieldValue('editSliderImageUrl'),
+              showOnHomepage: Boolean(getField('editHomepage')?.checked),
+              hideFromBlog: Boolean(getField('editHideFromBlog')?.checked),
+              summary: getFieldValue('editSummary'),
+              body: getFieldValue('editBody'),
+              status: getFieldValue('editStatus'),
+              scheduledPublishAt: localDateTimeInputToIso(getFieldValue('editScheduledPublishAt'))
             })
           });
           state.editingPostId = null;

@@ -61,11 +61,12 @@
         <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
         <section class="content-panel p-4 mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h4 mb-0">Create blog post</h2>
-            <span class="badge text-bg-warning">Publishing</span>
-          </div>
-          <form id="createPostForm" class="row g-3">
+          <details id="createPostDetails">
+            <summary class="d-flex justify-content-between align-items-center">
+              <h2 class="h4 mb-0">Create blog post</h2>
+              <span class="badge text-bg-warning">Publishing</span>
+            </summary>
+            <form id="createPostForm" class="row g-3 pt-3">
             <div class="col-12"><label class="form-label" for="createPostTitle">Title</label><input id="createPostTitle" class="form-control" required /></div>
             <div class="col-md-6"><label class="form-label" for="createPostTag">Tags</label><input id="createPostTag" class="form-control" placeholder="Research Workflow, Name Analysis" /></div>
             <div class="col-md-6"><label class="form-label" for="createPostReadTime">Read time</label><input id="createPostReadTime" class="form-control" placeholder="5 minute read" /></div>
@@ -81,26 +82,56 @@
               <button id="previewCreatePostButton" class="btn btn-outline-primary" type="button">Preview/Refresh</button>
               <button class="btn btn-outline-secondary" type="reset">Reset</button>
             </div>
-          </form>
-          <section id="createPostPreviewSection" class="mt-4 d-none" aria-live="polite">
-            <h3 class="h5 mb-3">Post preview</h3>
-            <article class="admin-item-card p-3">
-              <div class="d-flex flex-wrap gap-2 mb-2">
-                <span id="previewCreatePostStatus" class="badge text-bg-success">Published</span>
-                <span id="previewCreatePostCreatedOn" class="small text-muted">Created on: now</span>
-              </div>
-              <h4 id="previewCreatePostTitle" class="h4 mb-2"></h4>
-              <p id="previewCreatePostMeta" class="small text-muted mb-2"></p>
-              <p id="previewCreatePostSummary" class="mb-3"></p>
-              <article id="previewCreatePostBody" class="small mb-0"></article>
-            </article>
-          </section>
+            </form>
+            <section id="createPostPreviewSection" class="mt-4 d-none" aria-live="polite">
+              <h3 class="h5 mb-3">Post preview</h3>
+              <article class="admin-item-card p-3">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span id="previewCreatePostStatus" class="badge text-bg-success">Published</span>
+                  <span id="previewCreatePostCreatedOn" class="small text-muted">Created on: now</span>
+                </div>
+                <h4 id="previewCreatePostTitle" class="h4 mb-2"></h4>
+                <p id="previewCreatePostMeta" class="small text-muted mb-2"></p>
+                <p id="previewCreatePostSummary" class="mb-3"></p>
+                <article id="previewCreatePostBody" class="small mb-0"></article>
+              </article>
+            </section>
+          </details>
         </section>
 
         <section class="content-panel p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h4 mb-0">Posts</h2>
             <span id="postCount" class="badge text-bg-secondary">0</span>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-3">
+              <label class="form-label" for="filterStatus">Status</label>
+              <select id="filterStatus" class="form-select">
+                <option value="all">All statuses</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="scheduled">Scheduled</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="filterDateField">Date field</label>
+              <select id="filterDateField" class="form-select">
+                <option value="publishedAt">Date published</option>
+                <option value="createdAt">Date created</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label" for="filterDateFrom">From</label>
+              <input id="filterDateFrom" class="form-control" type="date" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label" for="filterDateTo">To</label>
+              <input id="filterDateTo" class="form-control" type="date" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button id="clearPostFiltersButton" class="btn btn-outline-secondary w-100" type="button">Clear filters</button>
+            </div>
           </div>
           <div id="postList" class="d-grid gap-3"></div>
         </section>
@@ -119,7 +150,16 @@
       const generateHeroImageButton = document.getElementById('generateHeroImageButton');
       const previewCreatePostButton = document.getElementById('previewCreatePostButton');
       const createPostPreviewSection = document.getElementById('createPostPreviewSection');
-      const state = { posts: [], editingPostId: null };
+      const filterStatus = document.getElementById('filterStatus');
+      const filterDateField = document.getElementById('filterDateField');
+      const filterDateFrom = document.getElementById('filterDateFrom');
+      const filterDateTo = document.getElementById('filterDateTo');
+      const clearPostFiltersButton = document.getElementById('clearPostFiltersButton');
+      const state = {
+        posts: [],
+        editingPostId: null,
+        filters: { status: 'all', dateField: 'publishedAt', dateFrom: '', dateTo: '' }
+      };
 
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
@@ -449,9 +489,53 @@
         return markdownToHtml(raw);
       }
 
+      function getComputedPostStatus(post) {
+        const normalized = String(post?.status || '').toLowerCase();
+        if (normalized === 'scheduled') return 'scheduled';
+        if (normalized === 'draft' && String(post?.scheduledPublishAt || '').trim()) return 'scheduled';
+        return normalized || 'published';
+      }
+
+      function getDateFilterTimestamp(value, isEndOfDay = false) {
+        if (!value) return null;
+        const date = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return null;
+        if (!isEndOfDay) return date.getTime();
+        date.setHours(23, 59, 59, 999);
+        return date.getTime();
+      }
+
+      function getPostDateValue(post, dateField) {
+        const source = post?.[dateField];
+        if (!source) return null;
+        const parsed = new Date(source);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return parsed.getTime();
+      }
+
+      function getFilteredPosts() {
+        const startTime = getDateFilterTimestamp(state.filters.dateFrom, false);
+        const endTime = getDateFilterTimestamp(state.filters.dateTo, true);
+        return state.posts.filter((post) => {
+          const status = getComputedPostStatus(post);
+          if (state.filters.status !== 'all' && status !== state.filters.status) {
+            return false;
+          }
+          if (!startTime && !endTime) {
+            return true;
+          }
+          const postDate = getPostDateValue(post, state.filters.dateField);
+          if (!postDate) return false;
+          if (startTime && postDate < startTime) return false;
+          if (endTime && postDate > endTime) return false;
+          return true;
+        });
+      }
+
       function renderPosts() {
-        postCount.textContent = String(state.posts.length);
-        postList.innerHTML = state.posts.length ? state.posts.map((post) => {
+        const filteredPosts = getFilteredPosts();
+        postCount.textContent = `${filteredPosts.length}/${state.posts.length}`;
+        postList.innerHTML = filteredPosts.length ? filteredPosts.map((post) => {
           const isEditing = state.editingPostId === post.id;
           return `
             <details class="admin-post-details admin-item-card p-3" ${isEditing ? 'open' : ''}>
@@ -501,7 +585,7 @@
                 </form>
               </div>
             </details>`;
-        }).join('') : '<p class="text-muted small mb-0">No blog posts found.</p>';
+        }).join('') : '<p class="text-muted small mb-0">No blog posts match the selected filters.</p>';
       }
 
       async function loadSession() {
@@ -545,6 +629,26 @@
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
+      });
+
+      function syncFiltersFromInputs() {
+        state.filters.status = filterStatus.value;
+        state.filters.dateField = filterDateField.value;
+        state.filters.dateFrom = filterDateFrom.value;
+        state.filters.dateTo = filterDateTo.value;
+        renderPosts();
+      }
+
+      [filterStatus, filterDateField, filterDateFrom, filterDateTo].forEach((control) => {
+        control.addEventListener('change', syncFiltersFromInputs);
+      });
+
+      clearPostFiltersButton.addEventListener('click', () => {
+        filterStatus.value = 'all';
+        filterDateField.value = 'publishedAt';
+        filterDateFrom.value = '';
+        filterDateTo.value = '';
+        syncFiltersFromInputs();
       });
 
       previewCreatePostButton.addEventListener('click', () => {

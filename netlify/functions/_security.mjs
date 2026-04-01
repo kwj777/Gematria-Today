@@ -204,6 +204,11 @@ export async function applyRateLimit(sql, source, {
 
 export async function logRequestAudit(sql, source, { route, action, outcome, metadata = {} } = {}) {
   await ensureSecuritySchema(sql);
+  const visitorLocationMetadata = getVisitorLocationMetadata(source);
+  const mergedMetadata = {
+    ...visitorLocationMetadata,
+    ...(metadata && typeof metadata === 'object' ? metadata : {}),
+  };
   await sql`
     INSERT INTO request_audit_log (id, route, ip_address, request_fingerprint, action, outcome, metadata)
     VALUES (
@@ -213,9 +218,45 @@ export async function logRequestAudit(sql, source, { route, action, outcome, met
       ${getFingerprint(source, { route })},
       ${String(action || 'request')},
       ${String(outcome || 'ok')},
-      ${JSON.stringify(metadata)}::jsonb
+      ${JSON.stringify(mergedMetadata)}::jsonb
     )
   `;
+}
+
+function getVisitorLocationMetadata(source) {
+  const headers = source?.headers || {};
+  const getHeader = (name) => headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || '';
+  const normalizedCountry = normalizeGeoValue(
+    getHeader('x-country')
+      || getHeader('cf-ipcountry')
+      || getHeader('x-vercel-ip-country')
+      || source?.geo?.country?.code
+      || source?.geo?.country
+  );
+  const normalizedRegion = normalizeGeoValue(
+    getHeader('x-region')
+      || getHeader('x-vercel-ip-country-region')
+      || source?.geo?.subdivision?.code
+      || source?.geo?.region
+  );
+  const normalizedCity = normalizeGeoValue(
+    getHeader('x-city')
+      || getHeader('x-vercel-ip-city')
+      || source?.geo?.city
+  );
+
+  const locationMetadata = {};
+  if (normalizedCountry) locationMetadata.country = normalizedCountry;
+  if (normalizedRegion) locationMetadata.region = normalizedRegion;
+  if (normalizedCity) locationMetadata.city = normalizedCity;
+  return locationMetadata;
+}
+
+function normalizeGeoValue(value) {
+  if (!value) return '';
+  const normalized = String(value).trim();
+  if (!normalized || normalized.toLowerCase() === 'unknown') return '';
+  return normalized;
 }
 
 export function securityHeaders(extraHeaders = {}) {

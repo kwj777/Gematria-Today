@@ -170,6 +170,7 @@
 
         <section class="content-panel p-4">
           <h2 class="h5 mb-3">Public page views (non-authenticated)</h2>
+          <div id="publicTrafficSummary" class="mb-3"></div>
           <div id="publicPageViews" class="d-grid gap-2"></div>
         </section>
       </div>
@@ -352,8 +353,17 @@
         `).join('');
       }
 
-      function renderPublicPageViews(rows) {
+      function renderPublicPageViews(rows, summary) {
         const target = document.getElementById('publicPageViews');
+        const summaryTarget = document.getElementById('publicTrafficSummary');
+        const uniqueVisitors = Number(summary?.uniqueVisitors || 0);
+        const totalRequests = Number(summary?.totalRequests || 0);
+        summaryTarget.innerHTML = `
+          <div class="report-card">
+            <p class="mb-0">Unique visitors to site: <strong>${formatNumber(uniqueVisitors)}</strong> · Total public requests: <strong>${formatNumber(totalRequests)}</strong></p>
+          </div>
+        `;
+
         if (!rows || !rows.length) {
           target.innerHTML = '<p class="on-light-muted small mb-0">No public page-view data available for this window.</p>';
           return;
@@ -364,6 +374,9 @@
           const uniqueViews = Number(row.uniquePageViews || 0);
           const totalRequests = Number(row.totalRequests || 0);
           const barWidth = Math.max(2, Math.round((uniqueViews / maxUnique) * 100));
+          const countrySummary = Array.isArray(row.topCountries) && row.topCountries.length
+            ? row.topCountries.map((countryRow) => `${escapeHtml(countryRow.country)} (${formatNumber(countryRow.uniqueVisitors)})`).join(' · ')
+            : 'Unknown';
 
           return `
             <article class="border rounded p-2">
@@ -374,6 +387,7 @@
               <div class="progress report-bar" role="img" aria-label="${escapeHtml(row.route)} unique views ${uniqueViews}">
                 <div class="progress-bar bg-info" style="width: ${barWidth}%"></div>
               </div>
+              <p class="small on-light-muted mb-0 mt-2">Top visitor countries: ${countrySummary}</p>
             </article>
           `;
         }).join('');
@@ -446,7 +460,7 @@
         renderBars('topTags', reports.topTags.map((row) => ({ ...row, tag: `#${row.tag}` })), 'total', 'tag');
         renderCoverage(reports);
         renderConversionFunnel(reports.conversionFunnel);
-        renderPublicPageViews(reports.publicPageViews);
+        renderPublicPageViews(reports.publicPageViews, reports.publicTrafficSummary);
         renderSecurityEvents(reports.securityEvents);
 
         const generated = new Date(reports.generatedAt).toLocaleString();

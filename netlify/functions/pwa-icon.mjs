@@ -130,23 +130,18 @@ function normalizeSize(value) {
   return 180;
 }
 
-export default async () => {
-  return { statusCode: 405, body: 'Method Not Allowed' };
-};
-
-export async function handler(event) {
-  const size = normalizeSize(event.queryStringParameters?.size);
-  const variant = String(event.queryStringParameters?.variant || 'default');
+export default async (request) => {
+  const url = new URL(request.url);
+  const size = normalizeSize(url.searchParams.get('size'));
+  const variant = String(url.searchParams.get('variant') || 'default');
   const maskable = variant === 'maskable';
   const image = encodePng(size, maskable);
 
-  return {
-    statusCode: 200,
+  return new Response(image, {
+    status: 200,
     headers: {
       'Content-Type': 'image/png',
       'Cache-Control': 'public, max-age=31536000, immutable'
-    },
-    isBase64Encoded: true,
-    body: image.toString('base64')
-  };
-}
+    }
+  });
+};

@@ -475,8 +475,6 @@
                   <div class="col-12"><label class="form-label" for="editTitle-${post.id}">Title</label><input id="editTitle-${post.id}" class="form-control" value="${escapeHtml(post.title || '')}" required /></div>
                   <div class="col-12"><label class="form-label" for="editTag-${post.id}">Tags</label><input id="editTag-${post.id}" class="form-control" value="${escapeHtml(post.tag || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editReadTime-${post.id}">Read time</label><input id="editReadTime-${post.id}" class="form-control" value="${escapeHtml(post.readTime || '')}" /></div>
-                  <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Post image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
-                  <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Home slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /><div class="form-text">Optional: only used on the home slider.</div></div>
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
                   <div class="col-12"><label class="form-label" for="editBody-${post.id}">Body</label><textarea id="editBody-${post.id}" class="form-control" rows="6" required>${escapeHtml(post.body || '')}</textarea></div>
                   <div class="col-12">
@@ -641,8 +639,6 @@
               title: getFieldValue('editTitle'),
               tag: getFieldValue('editTag'),
               readTime: readTimeValue,
-              imageUrl: getFieldValue('editImageUrl'),
-              sliderImageUrl: getFieldValue('editSliderImageUrl'),
               showOnHomepage: Boolean(getField('editHomepage')?.checked),
               hideFromBlog: Boolean(getField('editHideFromBlog')?.checked),
               summary: getFieldValue('editSummary'),

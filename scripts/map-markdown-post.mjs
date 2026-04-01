@@ -107,29 +107,43 @@ function extractMarkdownDocument(markdown = '') {
   const frontmatter = {};
   let bodyStartIndex = 0;
 
-  const seoPrefixMap = {
-    '**seo-friendly title:**': 'title',
-    '**meta description (≤160 chars):**': 'summary',
-    '**tags (3-5):**': 'tag',
-    '**suggested word count:**': 'suggestedWordCount'
-  };
+  const seoPrefixPatterns = [
+    {
+      key: 'title',
+      pattern: /^\\?\*\\?\*\s*seo-friendly title\s*:\s*\\?\*\\?\*\s*(.+)$/i
+    },
+    {
+      key: 'summary',
+      pattern: /^\\?\*\\?\*\s*meta description(?:\s*\((?:≤|<=|<)\s*160\s*chars\))?\s*:\s*\\?\*\\?\*\s*(.+)$/i
+    },
+    {
+      key: 'tag',
+      pattern: /^\\?\*\\?\*\s*tags?\s*\(3-5\)\s*:\s*\\?\*\\?\*\s*(.+)$/i
+    },
+    {
+      key: 'suggestedWordCount',
+      pattern: /^\\?\*\\?\*\s*suggested word count\s*:\s*\\?\*\\?\*\s*(.+)$/i
+    }
+  ];
 
-  const cleanInlineMarkers = (value = '') => value.replaceAll('**', '').trim();
+  const cleanInlineMarkers = (value = '') => value
+    .replaceAll('\\*\\*', '')
+    .replaceAll('**', '')
+    .trim();
 
-  const seoPrefixEntries = Object.entries(seoPrefixMap);
   lines.forEach((line, index) => {
     const trimmed = line.trim();
     if (!trimmed) {
       return;
     }
-    const lowerLine = trimmed.toLowerCase();
-    seoPrefixEntries.forEach(([prefix, mappedKey]) => {
-      if (!lowerLine.startsWith(prefix)) {
+    seoPrefixPatterns.forEach(({ key, pattern }) => {
+      const match = trimmed.match(pattern);
+      if (!match) {
         return;
       }
-      const rawValue = trimmed.slice(prefix.length).trim();
-      frontmatter[mappedKey] = cleanInlineMarkers(rawValue);
-      if (mappedKey === 'suggestedWordCount') {
+      const rawValue = match[1] || '';
+      frontmatter[key] = cleanInlineMarkers(rawValue);
+      if (key === 'suggestedWordCount') {
         bodyStartIndex = index + 1;
       }
     });

@@ -10,7 +10,8 @@
     "sync-root-pages": "node scripts/sync-root-pages.mjs --write",
     "check-root-pages": "node scripts/sync-root-pages.mjs --check",
     "audit:accessibility": "node scripts/accessibility-audit.mjs",
-    "screenshot": "node scripts/capture-screenshot.mjs"
+    "screenshot": "node scripts/capture-screenshot.mjs",
+    "map:markdown-post": "node scripts/map-markdown-post.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0"

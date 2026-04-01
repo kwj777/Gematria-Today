@@ -61,6 +61,29 @@ npm run count-lines
 
 2. Deploy to [Netlify](https://netlify.com) or run locally with the [Netlify CLI](https://docs.netlify.com/cli/get-started/).
 
+## Importing a blog post from Markdown
+
+Use the mapping helper script to convert a markdown file into the JSON payload expected by `/api/admin-posts`:
+
+```bash
+npm run map:markdown-post -- --file ./my-post.md
+```
+
+Useful flags:
+
+- `--status published` to output a publish-ready payload (`draft` by default)
+- `--show-on-homepage` to set `showOnHomepage=true`
+- `--hide-from-blog` to set `hideFromBlog=true`
+- `--output curl` to output a copy/paste `curl` request template
+
+Expected source format is the editorial template style:
+
+- `**SEO-friendly title:** ...` → `title`
+- `**Meta description (≤160 chars):** ...` → `summary`
+- `**Tags (3-5):** ...` → `tag` (normalized to comma-separated values)
+- `**Suggested word count:** ...` → marks where body extraction begins
+- Everything after `**Suggested word count:**` is treated as the body and used to calculate estimated `readTime`
+
 
 ## Screenshot fallback (repo-local)
 

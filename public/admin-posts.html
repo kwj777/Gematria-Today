@@ -332,6 +332,24 @@
         return `Scheduled publish: ${parsed.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
       }
 
+      function localDateTimeInputToIso(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return null;
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return parsed.toISOString();
+      }
+
+      function isoToLocalDateTimeInput(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) return '';
+        const offsetMs = parsed.getTimezoneOffset() * 60000;
+        const localDate = new Date(parsed.getTime() - offsetMs);
+        return localDate.toISOString().slice(0, 16);
+      }
+
       function showMessage(target, message) {
         target.textContent = message;
         target.classList.remove('d-none');
@@ -422,7 +440,7 @@
                   <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Post image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Home slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /><div class="form-text">Optional: only used on the home slider.</div></div>
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
-                  <div class="col-md-6"><label class="form-label" for="editScheduledPublishAt-${post.id}">Schedule publish date/time</label><input id="editScheduledPublishAt-${post.id}" class="form-control" type="datetime-local" value="${post.scheduledPublishAt ? escapeHtml(new Date(post.scheduledPublishAt).toISOString().slice(0, 16)) : ''}" /><div class="form-text">Future schedule keeps the post as saved but not published.</div></div>
+                  <div class="col-md-6"><label class="form-label" for="editScheduledPublishAt-${post.id}">Schedule publish date/time</label><input id="editScheduledPublishAt-${post.id}" class="form-control" type="datetime-local" value="${post.scheduledPublishAt ? escapeHtml(isoToLocalDateTimeInput(post.scheduledPublishAt)) : ''}" /><div class="form-text">Future schedule keeps the post as saved but not published.</div></div>
                   <div class="col-12"><label class="form-label" for="editBody-${post.id}">Body</label><textarea id="editBody-${post.id}" class="form-control" rows="6" required>${escapeHtml(post.body || '')}</textarea></div>
                   <div class="col-md-6"><label class="form-label" for="editStatus-${post.id}">Publish status</label><select id="editStatus-${post.id}" class="form-select"><option value="published" ${String(post.status || '').toLowerCase() === 'published' ? 'selected' : ''}>Published</option><option value="draft" ${String(post.status || '').toLowerCase() === 'draft' ? 'selected' : ''}>Saved but not published</option></select></div>
                   <div class="col-12">
@@ -551,7 +569,7 @@
               summary: document.getElementById('createPostSummary').value,
               body: bodyValue,
               status: document.getElementById('createPostStatus').value,
-              scheduledPublishAt: document.getElementById('createPostScheduledPublishAt').value || null
+              scheduledPublishAt: localDateTimeInputToIso(document.getElementById('createPostScheduledPublishAt').value)
             })
           });
           createPostForm.reset();
@@ -585,7 +603,7 @@
               summary: document.getElementById(`editSummary-${postId}`).value,
               body: document.getElementById(`editBody-${postId}`).value,
               status: document.getElementById(`editStatus-${postId}`).value,
-              scheduledPublishAt: document.getElementById(`editScheduledPublishAt-${postId}`).value || null
+              scheduledPublishAt: localDateTimeInputToIso(document.getElementById(`editScheduledPublishAt-${postId}`).value)
             })
           });
           state.editingPostId = null;

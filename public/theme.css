@@ -1245,8 +1245,18 @@ body.admin-render-pending footer {
 
 .admin-post-summary-meta {
   flex-shrink: 0;
-  min-width: 11.5rem;
   text-align: right;
+}
+
+.admin-post-summary-trailing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.admin-post-summary-status {
+  flex-shrink: 0;
 }
 
 .admin-post-summary::after {
@@ -1257,6 +1267,21 @@ body.admin-render-pending footer {
 
 .admin-post-details[open] .admin-post-summary::after {
   transform: rotate(180deg);
+}
+
+@media (max-width: 640px) {
+  .admin-post-details summary {
+    flex-wrap: wrap;
+  }
+
+  .admin-post-summary-trailing {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-post-summary-meta {
+    text-align: left;
+  }
 }
 
 @media (min-width: 768px) {

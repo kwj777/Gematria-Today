@@ -119,6 +119,8 @@ export async function handler(event) {
       const showOnHomepage = Boolean(body.showOnHomepage);
       const hideFromBlog = Boolean(body.hideFromBlog);
       const normalizedTagValue = normalizePostTags(body.tag, body.tags);
+      const hasImageUrl = Object.prototype.hasOwnProperty.call(body, 'imageUrl');
+      const hasSliderImageUrl = Object.prototype.hasOwnProperty.call(body, 'sliderImageUrl');
       const imageUrl = String(body.imageUrl ?? '').trim() || null;
       const sliderImageUrl = String(body.sliderImageUrl ?? '').trim() || null;
       const rows = await sql`
@@ -130,8 +132,14 @@ export async function handler(event) {
           summary = ${String(body.summary ?? '').trim()},
           body = ${String(body.body ?? '').trim()},
           read_time = ${String(body.readTime ?? '').trim() || null},
-          image_url = ${imageUrl},
-          slider_image_url = ${sliderImageUrl},
+          image_url = CASE
+            WHEN ${hasImageUrl} THEN ${imageUrl}
+            ELSE image_url
+          END,
+          slider_image_url = CASE
+            WHEN ${hasSliderImageUrl} THEN ${sliderImageUrl}
+            ELSE slider_image_url
+          END,
           show_on_homepage = ${showOnHomepage},
           hide_from_blog = ${hideFromBlog},
           status = ${status},

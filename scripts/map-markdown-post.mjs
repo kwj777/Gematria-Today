@@ -101,11 +101,70 @@ function markdownToHtml(markdown = '') {
   return htmlParts.join('\n').trim();
 }
 
+function parseSimpleFrontmatter(lines = []) {
+  const frontmatter = {};
+  let currentKey = '';
+
+  const normalizeScalarValue = (value = '') => {
+    const trimmed = String(value ?? '').trim();
+    const singleQuoted = trimmed.match(/^'(.*)'$/);
+    if (singleQuoted) {
+      return singleQuoted[1];
+    }
+    const doubleQuoted = trimmed.match(/^"(.*)"$/);
+    if (doubleQuoted) {
+      return doubleQuoted[1];
+    }
+    return trimmed;
+  };
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) {
+      return;
+    }
+
+    const listMatch = trimmed.match(/^-\s+(.+)$/);
+    if (listMatch && currentKey) {
+      if (!Array.isArray(frontmatter[currentKey])) {
+        const existingValue = frontmatter[currentKey];
+        frontmatter[currentKey] = [];
+        if (typeof existingValue === 'string' && existingValue) {
+          frontmatter[currentKey].push(existingValue);
+        }
+      }
+      frontmatter[currentKey].push(normalizeScalarValue(listMatch[1]));
+      return;
+    }
+
+    const keyValueMatch = trimmed.match(/^([A-Za-z0-9_-]+)\s*:\s*(.*)$/);
+    if (!keyValueMatch) {
+      return;
+    }
+
+    const [, rawKey, rawValue = ''] = keyValueMatch;
+    currentKey = rawKey;
+    frontmatter[currentKey] = normalizeScalarValue(rawValue);
+  });
+
+  return frontmatter;
+}
+
 function extractMarkdownDocument(markdown = '') {
   const normalized = String(markdown || '').replaceAll('\r', '');
   const lines = normalized.split('\n');
   const frontmatter = {};
   let bodyStartIndex = 0;
+
+  if (lines[0]?.trim() === '---') {
+    const frontmatterEndIndex = lines.slice(1).findIndex((line) => line.trim() === '---');
+    if (frontmatterEndIndex >= 0) {
+      const rawFrontmatterLines = lines.slice(1, frontmatterEndIndex + 1);
+      const parsedFrontmatter = parseSimpleFrontmatter(rawFrontmatterLines);
+      Object.assign(frontmatter, parsedFrontmatter);
+      bodyStartIndex = frontmatterEndIndex + 2;
+    }
+  }
 
   const seoPrefixPatterns = [
     {
@@ -143,7 +202,7 @@ function extractMarkdownDocument(markdown = '') {
       }
       const rawValue = match[1] || '';
       frontmatter[key] = cleanInlineMarkers(rawValue);
-      if (key === 'suggestedWordCount') {
+      if (!bodyStartIndex && key === 'suggestedWordCount') {
         bodyStartIndex = index + 1;
       }
     });
@@ -158,8 +217,8 @@ function extractMarkdownDocument(markdown = '') {
   const firstHeading = bodyLines.find((line) => line.startsWith('# '));
   const titleFromHeading = firstHeading ? firstHeading.slice(2).trim() : '';
   const title = frontmatter.title || titleFromHeading;
-  const summary = frontmatter.summary || '';
-  const normalizedTags = String(frontmatter.tag || '')
+  const summary = frontmatter.summary || frontmatter.description || '';
+  const normalizedTags = (Array.isArray(frontmatter.tags) ? frontmatter.tags.join(', ') : String(frontmatter.tag || frontmatter.tags || ''))
     .split(/[;,]/)
     .map((token) => token.trim())
     .filter(Boolean)
@@ -178,8 +237,11 @@ function extractMarkdownDocument(markdown = '') {
 
   return {
     title,
+    slug: frontmatter.slug || '',
     summary,
     tag,
+    category: frontmatter.category || '',
+    date: frontmatter.date || '',
     readTime,
     imageUrl,
     sliderImageUrl,
@@ -239,6 +301,7 @@ async function main() {
 
   const payload = {
     title: extracted.title,
+    slug: extracted.slug,
     summary: extracted.summary,
     tag: extracted.tag,
     readTime: extracted.readTime,

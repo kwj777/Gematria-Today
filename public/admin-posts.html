@@ -60,6 +60,26 @@
         <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
         <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
+        <section class="content-panel p-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">Create blog post</h2>
+            <span class="badge text-bg-warning">Publishing</span>
+          </div>
+          <form id="createPostForm" class="row g-3">
+            <div class="col-12"><label class="form-label" for="createPostTitle">Title</label><input id="createPostTitle" class="form-control" required /></div>
+            <div class="col-md-6"><label class="form-label" for="createPostTag">Tags</label><input id="createPostTag" class="form-control" placeholder="Research Workflow, Name Analysis" /></div>
+            <div class="col-md-6"><label class="form-label" for="createPostReadTime">Read time</label><input id="createPostReadTime" class="form-control" placeholder="5 minute read" /></div>
+            <div class="col-12"><label class="form-label" for="createPostSummary">Summary</label><textarea id="createPostSummary" class="form-control" rows="2" required></textarea></div>
+            <div class="col-12"><label class="form-label" for="createPostBody">Body</label><textarea id="createPostBody" class="form-control" rows="7" required></textarea></div>
+            <div class="col-md-6"><label class="form-label" for="createPostStatus">Publish status</label><select id="createPostStatus" class="form-select"><option value="published">Publish now</option><option value="draft">Save as draft</option></select></div>
+            <div class="col-md-6"><label class="form-label" for="createPostScheduledPublishAt">Schedule publish date/time (optional)</label><input id="createPostScheduledPublishAt" class="form-control" type="datetime-local" /></div>
+            <div class="col-12 d-flex gap-2">
+              <button class="btn btn-primary" type="submit">Create post</button>
+              <button class="btn btn-outline-secondary" type="reset">Reset</button>
+            </div>
+          </form>
+        </section>
+
         <section class="content-panel p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h4 mb-0">Posts</h2>
@@ -76,6 +96,7 @@
       const sessionMeta = document.getElementById('sessionMeta');
       const saveMessage = document.getElementById('saveMessage');
       const errorMessage = document.getElementById('errorMessage');
+      const createPostForm = document.getElementById('createPostForm');
       const state = { posts: [], editingPostId: null };
 
       const escapeHtml = (value = '') => String(value)
@@ -216,6 +237,32 @@
             state.editingPostId = null;
             await loadPosts();
           }
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+
+      createPostForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        clearMessage(saveMessage);
+        try {
+          await request('/api/admin-posts', {
+            method: 'POST',
+            body: JSON.stringify({
+              title: document.getElementById('createPostTitle').value,
+              tag: document.getElementById('createPostTag').value,
+              readTime: document.getElementById('createPostReadTime').value,
+              summary: document.getElementById('createPostSummary').value,
+              body: document.getElementById('createPostBody').value,
+              status: document.getElementById('createPostStatus').value,
+              scheduledPublishAt: document.getElementById('createPostScheduledPublishAt').value || null
+            })
+          });
+          createPostForm.reset();
+          showMessage(saveMessage, 'Blog post created.');
+          await loadPosts();
         } catch (error) {
           showMessage(errorMessage, error.message);
         }

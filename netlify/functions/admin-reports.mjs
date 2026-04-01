@@ -282,7 +282,9 @@ export async function handler(event) {
               ELSE route
             END AS route,
             request_fingerprint,
-            COALESCE(NULLIF(TRIM(metadata->>'country'), ''), 'Unknown') AS country
+            COALESCE(NULLIF(TRIM(metadata->>'country'), ''), 'Unknown') AS country,
+            COALESCE(NULLIF(TRIM(metadata->>'region'), ''), 'Unknown') AS region,
+            COALESCE(NULLIF(TRIM(metadata->>'city'), ''), 'Unknown') AS city
           FROM request_audit_log
           WHERE created_at >= NOW() - ${windowInterval}::interval
             AND route NOT LIKE 'admin-%'
@@ -306,6 +308,21 @@ export async function handler(event) {
           FROM filtered_requests
           GROUP BY route, country
         ),
+        route_country_location_totals AS (
+          SELECT
+            route,
+            country,
+            CASE
+              WHEN city <> 'Unknown' AND region <> 'Unknown' THEN city || ', ' || region
+              WHEN city <> 'Unknown' THEN city
+              WHEN region <> 'Unknown' THEN region
+              ELSE 'Unknown'
+            END AS location,
+            COUNT(*)::int AS total_requests,
+            COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
+          FROM filtered_requests
+          GROUP BY route, country, location
+        ),
         ranked_countries AS (
           SELECT
             route,
@@ -317,6 +334,19 @@ export async function handler(event) {
               ORDER BY unique_visitors DESC, total_requests DESC, country ASC
             ) AS rank
           FROM route_country_totals
+        ),
+        ranked_locations AS (
+          SELECT
+            route,
+            country,
+            location,
+            total_requests,
+            unique_visitors,
+            ROW_NUMBER() OVER (
+              PARTITION BY route, country
+              ORDER BY unique_visitors DESC, total_requests DESC, location ASC
+            ) AS rank
+          FROM route_country_location_totals
         )
         SELECT
           route_totals.route,
@@ -327,7 +357,24 @@ export async function handler(event) {
               JSON_BUILD_OBJECT(
                 'country', ranked_countries.country,
                 'unique_visitors', ranked_countries.unique_visitors,
-                'total_requests', ranked_countries.total_requests
+                'total_requests', ranked_countries.total_requests,
+                'top_locations', COALESCE(
+                  (
+                    SELECT JSON_AGG(
+                      JSON_BUILD_OBJECT(
+                        'location', ranked_locations.location,
+                        'unique_visitors', ranked_locations.unique_visitors,
+                        'total_requests', ranked_locations.total_requests
+                      )
+                      ORDER BY ranked_locations.rank
+                    )
+                    FROM ranked_locations
+                    WHERE ranked_locations.route = ranked_countries.route
+                      AND ranked_locations.country = ranked_countries.country
+                      AND ranked_locations.rank <= 5
+                  ),
+                  '[]'::json
+                )
               )
               ORDER BY ranked_countries.rank
             ) FILTER (WHERE ranked_countries.rank <= 3),
@@ -441,6 +488,13 @@ export async function handler(event) {
             country: countryRow.country || 'Unknown',
             uniqueVisitors: Number(countryRow.unique_visitors || 0),
             totalRequests: Number(countryRow.total_requests || 0),
+            topLocations: Array.isArray(countryRow.top_locations)
+              ? countryRow.top_locations.map((locationRow) => ({
+                location: locationRow.location || 'Unknown',
+                uniqueVisitors: Number(locationRow.unique_visitors || 0),
+                totalRequests: Number(locationRow.total_requests || 0),
+              }))
+              : [],
           }))
           : [],
       })),

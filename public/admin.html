@@ -197,7 +197,7 @@
                   <input id="postId" type="hidden" />
                   <input id="postStatus" type="hidden" value="published" />
                   <div class="col-12"><label class="form-label" for="postTitle">Title</label><input id="postTitle" class="form-control" required /></div>
-                  <div class="col-md-6"><label class="form-label" for="postTag">Tags</label><input id="postTag" class="form-control" placeholder="Research Workflow, Name Analysis" /><div class="form-text">Use commas to add multiple tags.</div><div id="postTagsInUse" class="small text-muted mt-2">Tags in use: none yet.</div></div>
+                  <div class="col-md-6"><label class="form-label" for="postTag">Tags</label><input id="postTag" class="form-control" placeholder="Research Workflow, Name Analysis" /><div class="form-text">Use commas or semicolons to add multiple tags.</div><div id="postTagsInUse" class="small text-muted mt-2">Tags in use: none yet.</div></div>
                   <div class="col-md-6"><label class="form-label" for="postReadTime">Read time</label><input id="postReadTime" class="form-control" placeholder="5 minute read" /></div>
                   <div class="col-12">
                     <label class="form-label" for="postImageUrl">Cover image URL</label>
@@ -521,6 +521,7 @@
       const postImagePreview = document.getElementById('postImagePreview');
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
+      const TAG_SEPARATOR_PATTERN = /[;,]/;
       const state = { user: null, feeds: [], posts: [], proposals: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
@@ -547,7 +548,7 @@
         }
 
         if (typeof post.tag === 'string') {
-          post.tag.split(',').forEach((tagValue) => addTag(tagValue));
+          post.tag.split(TAG_SEPARATOR_PATTERN).forEach((tagValue) => addTag(tagValue));
         }
 
         return tags;
@@ -574,7 +575,7 @@
       function addTagToPostField(tagValue) {
         const input = document.getElementById('postTag');
         const tags = input.value
-          .split(',')
+          .split(TAG_SEPARATOR_PATTERN)
           .map((tag) => tag.trim())
           .filter(Boolean);
         if (!tags.some((tag) => tag.toLowerCase() === String(tagValue).trim().toLowerCase())) {

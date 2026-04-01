@@ -3,6 +3,7 @@ import { formatPost, getAuthenticatedUser, jsonResponse, parseBody, slugify } fr
 import { clearCachedJson } from './_security.mjs';
 
 function normalizePostTags(tagInput, tagsInput) {
+  const tagSeparatorPattern = /[;,]/;
   const tagTokens = [];
   const addTag = (tagValue) => {
     const normalizedTag = String(tagValue ?? '').trim();
@@ -20,7 +21,7 @@ function normalizePostTags(tagInput, tagsInput) {
   }
 
   if (typeof tagInput === 'string') {
-    tagInput.split(',').forEach((tagValue) => addTag(tagValue));
+    tagInput.split(tagSeparatorPattern).forEach((tagValue) => addTag(tagValue));
   } else if (tagInput != null) {
     addTag(tagInput);
   }

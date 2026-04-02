@@ -89,6 +89,10 @@
               <label class="form-label" for="fieldCtaUrl">CTA URL</label>
               <input id="fieldCtaUrl" class="form-control" maxlength="500" />
             </div>
+            <div class="col-12" data-field="allStaticContent">
+              <label class="form-label" for="fieldAllStaticContent">All static page content</label>
+              <textarea id="fieldAllStaticContent" class="form-control" rows="10" maxlength="20000"></textarea>
+            </div>
             <div class="col-md-6" data-field="buttonLabel">
               <label class="form-label" for="fieldButtonLabel">Element button label</label>
               <input id="fieldButtonLabel" class="form-control" maxlength="80" />
@@ -127,6 +131,7 @@
         heroBody: document.getElementById('fieldHeroBody'),
         ctaLabel: document.getElementById('fieldCtaLabel'),
         ctaUrl: document.getElementById('fieldCtaUrl'),
+        allStaticContent: document.getElementById('fieldAllStaticContent'),
         heading: document.getElementById('fieldHeading'),
         body: document.getElementById('fieldBody'),
         buttonLabel: document.getElementById('fieldButtonLabel'),
@@ -137,6 +142,7 @@
         pageDefinitions: [],
         elementDefinitions: [],
         workspace: null,
+        pageSourceContent: {},
       };
 
       function showMessage(node, message) {
@@ -166,7 +172,7 @@
         const isPage = targetType.value === 'page';
         document.querySelectorAll('[data-field]').forEach((node) => {
           const key = node.getAttribute('data-field');
-          const pageFields = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'ctaLabel', 'ctaUrl'];
+          const pageFields = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'ctaLabel', 'ctaUrl', 'allStaticContent'];
           const elementFields = ['heading', 'body', 'buttonLabel', 'buttonUrl'];
           const show = isPage ? pageFields.includes(key) : elementFields.includes(key);
           node.classList.toggle('d-none', !show);
@@ -180,16 +186,93 @@
           .map((item) => `<option value="${item.id}">${item.label}${item.path ? ` (${item.path})` : ''}</option>`)
           .join('');
         updateFieldVisibility();
-        fillForm();
+        void fillForm();
+      }
+
+      function hasPageContent(content = {}) {
+        return ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'ctaLabel', 'ctaUrl', 'allStaticContent']
+          .some((field) => String(content[field] || '').trim().length > 0);
+      }
+
+      function extractPageSourceContent(html = '') {
+        if (!html) return {};
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const title = doc.querySelector('title')?.textContent?.trim() || '';
+        const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
+
+        const heroContainer = doc.querySelector('main section') || doc.querySelector('main') || doc.body;
+        const heroHeadline = heroContainer?.querySelector('h1')?.textContent?.trim() || '';
+
+        let heroBody = '';
+        if (heroContainer) {
+          const heroParagraphs = Array.from(heroContainer.querySelectorAll('p'));
+          heroBody = (heroParagraphs.find((node) => String(node.textContent || '').trim())?.textContent || '').trim();
+        }
+
+        const ctaNode = heroContainer?.querySelector('a[href]');
+        const ctaLabel = ctaNode?.textContent?.trim() || '';
+        const ctaUrl = ctaNode?.getAttribute('href')?.trim() || '';
+        const staticTextNodes = Array.from((doc.querySelector('main') || doc.body).querySelectorAll('h1, h2, h3, p, li, a.btn, button'))
+          .map((node) => String(node.textContent || '').replace(/\s+/g, ' ').trim())
+          .filter((text) => text.length > 0);
+        const dedupedStaticText = [...new Set(staticTextNodes)];
+
+        return {
+          seoTitle: title,
+          metaDescription,
+          heroHeadline,
+          heroBody,
+          ctaLabel,
+          ctaUrl,
+          allStaticContent: dedupedStaticText.join('\n\n'),
+        };
+      }
+
+      async function loadPageSourceContent(definition) {
+        if (!definition?.id || !definition?.path || state.pageSourceContent[definition.id]) {
+          return;
+        }
+
+        try {
+          const response = await fetch(definition.path, { credentials: 'same-origin' });
+          if (!response.ok) {
+            return;
+          }
+          const html = await response.text();
+          state.pageSourceContent[definition.id] = extractPageSourceContent(html);
+        } catch {
+          state.pageSourceContent[definition.id] = {};
+        }
+      }
+
+      async function loadCurrentTargetSourceContent() {
+        if (targetType.value !== 'page') {
+          return;
+        }
+        const selected = state.pageDefinitions.find((item) => item.id === targetId.value);
+        await loadPageSourceContent(selected);
       }
 
       function getCurrentContent() {
         const isPage = targetType.value === 'page';
         if (!state.workspace) return {};
-        return isPage ? (state.workspace.pages[targetId.value] || {}) : (state.workspace.elements[targetId.value] || {});
+        const workspaceContent = isPage ? (state.workspace.pages[targetId.value] || {}) : (state.workspace.elements[targetId.value] || {});
+        if (isPage) {
+          const sourceContent = state.pageSourceContent[targetId.value] || {};
+          if (!hasPageContent(workspaceContent)) {
+            return sourceContent;
+          }
+          return Object.fromEntries(
+            ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'ctaLabel', 'ctaUrl', 'allStaticContent']
+              .map((field) => [field, workspaceContent[field] || sourceContent[field] || '']),
+          );
+        }
+        return workspaceContent;
       }
 
-      function fillForm() {
+      async function fillForm() {
+        await loadCurrentTargetSourceContent();
         const content = getCurrentContent();
         Object.entries(fields).forEach(([key, node]) => {
           node.value = content[key] || '';
@@ -237,6 +320,7 @@
                 heroBody: fields.heroBody.value,
                 ctaLabel: fields.ctaLabel.value,
                 ctaUrl: fields.ctaUrl.value,
+                allStaticContent: fields.allStaticContent.value,
               }
             : {
                 heading: fields.heading.value,
@@ -255,7 +339,7 @@
           });
 
           state.workspace = payload.workspace;
-          fillForm();
+          void fillForm();
           showMessage(saveMessage, 'Static content saved.');
         } catch (error) {
           showMessage(errorMessage, error.message);
@@ -274,7 +358,9 @@
       });
 
       targetType.addEventListener('change', setTargetOptions);
-      targetId.addEventListener('change', fillForm);
+      targetId.addEventListener('change', () => {
+        void fillForm();
+      });
 
       Promise.all([loadSession(), loadWorkspace()]).catch((error) => {
         showMessage(errorMessage, error.message || 'Failed to load workspace.');

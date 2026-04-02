@@ -30,12 +30,11 @@
         </button>
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
-            <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
-            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item"><a class="nav-link" href="/member.html">Membership</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/admin.html">Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Operations Home</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/admin-posts.html">Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="/blog.html">View Public Site</a></li>
           </ul>
         </div>
       </div>
@@ -58,6 +57,7 @@
         </section>
 
         <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
+        <div id="proposalLoadMessage" class="alert alert-info d-none" role="status"></div>
         <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
         <section class="content-panel p-4 mb-4">
@@ -607,6 +607,31 @@
         renderPosts();
       }
 
+      async function loadProposalFromQueryParam() {
+        const proposalId = new URLSearchParams(window.location.search).get('loadProposal');
+        if (!proposalId) {
+          return;
+        }
+        const payload = await request('/api/admin-blog-proposals');
+        const proposal = (payload.items || []).find((item) => String(item.id) === String(proposalId));
+        if (!proposal) {
+          showMessage(errorMessage, 'The selected proposal could not be found. It may have been removed.');
+          return;
+        }
+        document.getElementById('createPostTitle').value = proposal.title || '';
+        document.getElementById('createPostTag').value = proposal.suggestedTags || '';
+        document.getElementById('createPostSummary').value = proposal.summary || '';
+        document.getElementById('createPostBody').value = proposal.body || '';
+        const details = document.getElementById('createPostDetails');
+        details?.setAttribute('open', 'open');
+        renderCreatePostPreview();
+        const proposalLoadMessage = document.getElementById('proposalLoadMessage');
+        if (proposalLoadMessage) {
+          showMessage(proposalLoadMessage, `Loaded proposal into the publishing workspace: ${proposal.title || 'Untitled proposal'}.`);
+        }
+      }
+
+
       document.addEventListener('click', async (event) => {
         const { editPost, deletePost, cancelEdit } = event.target.dataset;
         if (!editPost && !deletePost && !cancelEdit) {
@@ -787,7 +812,10 @@
         }
       });
 
-      loadSession().then(loadPosts).catch((error) => showMessage(errorMessage, error.message));
+      loadSession()
+        .then(loadPosts)
+        .then(loadProposalFromQueryParam)
+        .catch((error) => showMessage(errorMessage, error.message));
     </script>
   </body>
 </html>

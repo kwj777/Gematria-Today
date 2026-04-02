@@ -1084,6 +1084,16 @@ body.admin-render-pending footer {
   transform: rotate(0deg);
 }
 
+
+.admin-danger-zone {
+  border: 1px solid rgba(176, 34, 34, 0.25);
+  background: linear-gradient(180deg, rgba(255, 245, 245, 0.92), rgba(255, 255, 255, 0.96));
+}
+
+.admin-danger-zone .section-kicker {
+  color: #8b1f1f;
+}
+
 .admin-section-body {
   border-top: 1px solid rgba(53, 65, 79, 0.08);
   padding-top: 1.25rem;

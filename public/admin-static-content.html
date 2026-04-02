@@ -295,6 +295,38 @@
         }
       }
 
+      function withPreviewBaseHref(html, baseHref) {
+        if (typeof html !== 'string' || !html.trim()) {
+          return html;
+        }
+        if (/<base\s/i.test(html)) {
+          return html;
+        }
+        if (/<head[^>]*>/i.test(html)) {
+          return html.replace(/<head([^>]*)>/i, `<head$1><base href="${baseHref}">`);
+        }
+        return `<base href="${baseHref}">${html}`;
+      }
+
+      async function refreshPreviewFromNetwork(pagePath) {
+        const liveUrl = new URL(buildPreviewFrameUrl(pagePath), window.location.origin);
+        const response = await fetch(liveUrl.toString(), {
+          cache: 'no-store',
+          headers: {
+            'cache-control': 'no-cache',
+            pragma: 'no-cache',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Preview request failed (${response.status}).`);
+        }
+
+        const html = await response.text();
+        const htmlWithBase = withPreviewBaseHref(html, `${window.location.origin}/`);
+        pagePreviewFrame.srcdoc = htmlWithBase;
+      }
+
       function getElementFieldForPreviewSelection(elementId) {
         if (elementId === 'homepage_hero_cta' || elementId === 'support_cta') {
           return 'buttonLabel';
@@ -357,6 +389,7 @@
         if (targetType.value !== 'page') {
           pagePreviewPanel.classList.add('d-none');
           pagePreviewFrame.src = 'about:blank';
+          pagePreviewFrame.srcdoc = '';
           pagePreviewFrame.dataset.pagePath = '';
           refreshPreviewButton.disabled = true;
           return;
@@ -367,6 +400,7 @@
         if (!pagePath) {
           pagePreviewPanel.classList.remove('d-none');
           pagePreviewFrame.src = 'about:blank';
+          pagePreviewFrame.srcdoc = '';
           pagePreviewFrame.dataset.pagePath = '';
           refreshPreviewButton.disabled = true;
           pagePreviewMeta.textContent = 'No page path is available for this target.';
@@ -377,6 +411,7 @@
         refreshPreviewButton.disabled = false;
         pagePreviewFrame.dataset.pagePath = pagePath;
         pagePreviewMeta.textContent = `Selection mode: ${selected.label} (${pagePath}). Click text/buttons in this preview to load the matching static element in the form. Scroll over hero sliders to reach secondary hero content.`;
+        pagePreviewFrame.srcdoc = '';
         pagePreviewFrame.src = buildPreviewFrameUrl(pagePath);
       }
 
@@ -1028,10 +1063,12 @@
         clearMessage(errorMessage);
         try {
           await clearClientCachesForPreview();
-          pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);
+          await refreshPreviewFromNetwork(currentPagePath);
           showMessage(saveMessage, 'Screenshot refreshed with browser and service-worker caches cleared.');
         } catch (error) {
-          showMessage(errorMessage, error.message || 'Unable to clear cache before refreshing screenshot preview.');
+          pagePreviewFrame.srcdoc = '';
+          pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);
+          showMessage(errorMessage, error.message || 'Unable to force a no-cache refresh, loaded best available live preview instead.');
         } finally {
           refreshPreviewButton.disabled = false;
         }

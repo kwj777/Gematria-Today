@@ -43,9 +43,6 @@
           <a class="btn btn-outline-secondary align-self-start" href="/admin.html">Back to dashboard</a>
         </div>
 
-        <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
-        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
-
         <section class="content-panel p-4 mb-4">
           <div class="row g-3 align-items-end">
             <div class="col-lg-4">
@@ -122,7 +119,24 @@
               <button id="copyJsonButton" class="btn btn-outline-secondary" type="button">Copy JSON for implementation</button>
             </div>
             <div class="col-12">
+              <div id="saveMessage" class="alert alert-success d-none mb-0" role="status"></div>
+              <div id="errorMessage" class="alert alert-danger d-none mb-0 mt-2" role="alert"></div>
+            </div>
+            <div class="col-12">
               <div class="small text-muted" id="lastUpdatedMeta">Not saved yet.</div>
+            </div>
+            <div class="col-12">
+              <div class="row g-2 align-items-end">
+                <div class="col-lg-8">
+                  <label class="form-label mb-1" for="revisionId">Recent saves (up to 3)</label>
+                  <select id="revisionId" class="form-select form-select-sm" disabled>
+                    <option value="">No previous saves available yet.</option>
+                  </select>
+                </div>
+                <div class="col-lg-4 d-grid">
+                  <button id="revertButton" class="btn btn-outline-warning btn-sm" type="button" disabled>Revert to selected save</button>
+                </div>
+              </div>
             </div>
           </form>
         </section>
@@ -158,6 +172,8 @@
       const sessionMeta = document.getElementById('sessionMeta');
       const lastUpdatedMeta = document.getElementById('lastUpdatedMeta');
       const copyJsonButton = document.getElementById('copyJsonButton');
+      const revisionId = document.getElementById('revisionId');
+      const revertButton = document.getElementById('revertButton');
       const pagePreviewPanel = document.getElementById('pagePreviewPanel');
       const pagePreviewMeta = document.getElementById('pagePreviewMeta');
       const pagePreviewFrame = document.getElementById('pagePreviewFrame');
@@ -186,6 +202,27 @@
         pageSourceContent: {},
         elementSourceContent: {},
       };
+
+      function renderRevisionOptions() {
+        const revisions = Array.isArray(state.workspace?.revisions) ? state.workspace.revisions : [];
+        if (!revisions.length) {
+          revisionId.innerHTML = '<option value="">No previous saves available yet.</option>';
+          revisionId.disabled = true;
+          revertButton.disabled = true;
+          return;
+        }
+
+        revisionId.innerHTML = revisions
+          .map((revision) => {
+            const revisionDate = revision.createdAt ? new Date(revision.createdAt).toLocaleString() : 'Unknown time';
+            const actor = revision.createdBy || 'Unknown user';
+            const scopeLabel = revision.targetType && revision.targetId ? `${revision.targetType}:${revision.targetId}` : 'workspace';
+            return `<option value="${revision.id}">${revisionDate} · ${actor} · ${scopeLabel}</option>`;
+          })
+          .join('');
+        revisionId.disabled = false;
+        revertButton.disabled = false;
+      }
 
       function updatePagePreview() {
         if (targetType.value !== 'page') {
@@ -477,6 +514,7 @@
         state.pageDefinitions = payload.pageDefinitions || [];
         state.elementDefinitions = payload.elementDefinitions || [];
         state.workspace = payload.workspace || { pages: {}, elements: {} };
+        renderRevisionOptions();
         setTargetOptions();
       }
 
@@ -515,6 +553,7 @@
           });
 
           state.workspace = payload.workspace;
+          renderRevisionOptions();
           void fillForm();
           showMessage(saveMessage, 'Static content saved.');
         } catch (error) {
@@ -530,6 +569,31 @@
           clearMessage(errorMessage);
         } catch (error) {
           showMessage(errorMessage, 'Could not copy to clipboard in this browser.');
+        }
+      });
+
+      revertButton.addEventListener('click', async () => {
+        const selectedRevisionId = revisionId.value;
+        if (!selectedRevisionId) {
+          showMessage(errorMessage, 'Select a saved revision to revert.');
+          return;
+        }
+        clearMessage(saveMessage);
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-static-content', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'revert',
+              revisionId: selectedRevisionId,
+            }),
+          });
+          state.workspace = payload.workspace;
+          renderRevisionOptions();
+          await fillForm();
+          showMessage(saveMessage, 'Reverted to selected save.');
+        } catch (error) {
+          showMessage(errorMessage, error.message || 'Unable to revert selected save.');
         }
       });
 

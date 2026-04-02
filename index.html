@@ -83,35 +83,86 @@
     </nav>
     <main id="homePageContent" class="py-5" aria-busy="false">
       <div class="container">
-        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
-          <div class="row align-items-center g-4">
-            <div class="col-lg-7">
-              <h1 id="homeHeroTitle" class="display-4 fw-bold mb-3">Start the beginner path with one clear next step.</h1>
-              <p id="homeHeroLead" class="lead mb-4">Follow the Level 0→4 sequence with account setup first, then calculators and pattern validation.</p>
-              <div class="d-flex flex-wrap gap-2">
-                <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg" href="/gematria-account-setup.html">Start Beginner Path (Level 0)</a>
-                <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html">I just want to try calculator</a>
-              </div>
+        <section id="homeHeroCarousel" class="carousel slide mb-5" data-bs-ride="carousel" data-bs-interval="9000" data-bs-pause="hover" aria-label="Homepage highlights">
+          <div class="carousel-indicators mb-0">
+            <button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Beginner path highlight"></button>
+            <button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="1" aria-label="Eschatology highlight"></button>
+          </div>
+          <div class="carousel-inner">
+            <div class="carousel-item active">
+              <section class="hero-panel hero-panel--compact p-4 p-lg-5">
+                <div class="row align-items-center g-4">
+                  <div class="col-lg-7">
+                    <h1 id="homeHeroTitle" class="display-4 fw-bold mb-3">Start the beginner path with one clear next step.</h1>
+                    <p id="homeHeroLead" class="lead mb-4">Follow the Level 0→4 sequence with account setup first, then calculators and pattern validation.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                      <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg" href="/gematria-account-setup.html">Start Beginner Path (Level 0)</a>
+                      <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html">I just want to try calculator</a>
+                    </div>
+                  </div>
+                  <div class="col-lg-5">
+                    <a class="content-panel hero-selling-points-panel hero-why-gematria-link p-0 overflow-hidden h-100 text-decoration-none" href="/why-english-gematria.html" aria-label="Read Why English Gematria?">
+                      <img
+                        class="hero-selling-points-image"
+                        src="/assets/why-english-gematria-backdrop-16x9.svg"
+                        alt="Abstract geometric backdrop used behind the Why English Gematria card without wording."
+                        width="1600"
+                        height="900"
+                        loading="eager"
+                        decoding="async"
+                      />
+                      <span class="hero-why-gematria-overlay">
+                        <span class="hero-why-gematria-title">Why English Gematria?</span>
+                        <span class="hero-why-gematria-excerpt">In this project, English gematria is used as a pattern-analysis tool to create a structured comparison system that can be checked, repeated, and challenged.</span>
+                        <span class="btn btn-warning btn-sm hero-why-gematria-readmore" aria-hidden="true">Read more</span>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </section>
             </div>
-            <div class="col-lg-5">
-              <a class="content-panel hero-selling-points-panel hero-why-gematria-link p-0 overflow-hidden h-100 text-decoration-none" href="/why-english-gematria.html" aria-label="Read Why English Gematria?">
-                <img
-                  class="hero-selling-points-image"
-                  src="/assets/why-english-gematria-backdrop-16x9.svg"
-                  alt="Abstract geometric backdrop used behind the Why English Gematria card without wording."
-                  width="1600"
-                  height="900"
-                  loading="eager"
-                  decoding="async"
-                />
-                <span class="hero-why-gematria-overlay">
-                  <span class="hero-why-gematria-title">Why English Gematria?</span>
-                  <span class="hero-why-gematria-excerpt">In this project, English gematria is used as a pattern-analysis tool to create a structured comparison system that can be checked, repeated, and challenged.</span>
-                  <span class="btn btn-warning btn-sm hero-why-gematria-readmore" aria-hidden="true">Read more</span>
-                </span>
-              </a>
+            <div class="carousel-item">
+              <section class="hero-panel hero-panel--compact p-4 p-lg-5">
+                <div class="row align-items-center g-4">
+                  <div class="col-lg-7">
+                    <p class="section-kicker mb-2">Eschatology Focus</p>
+                    <h2 class="display-5 fw-bold mb-3">Track end-times signals with structured eschatology research.</h2>
+                    <p class="lead mb-4">Explore prophecy-centered articles, compare symbol patterns, and follow current-event context from our eschatology coverage.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                      <a id="homeEschatologyCta" class="btn btn-warning btn-lg touch-target-lg" href="/blog.html">Explore Eschatology Blog</a>
+                      <a class="btn btn-outline-light btn-lg touch-target-lg" href="/news.html">See related news</a>
+                    </div>
+                  </div>
+                  <div class="col-lg-5">
+                    <a class="content-panel hero-selling-points-panel hero-why-gematria-link p-0 overflow-hidden h-100 text-decoration-none" href="/blog.html" aria-label="Read eschatology content">
+                      <img
+                        class="hero-selling-points-image"
+                        src="/assets/beast-identity-rev13-hero-16x9.svg"
+                        alt="Symbolic beast-themed illustration used for eschatology content."
+                        width="1600"
+                        height="900"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <span class="hero-why-gematria-overlay">
+                        <span class="hero-why-gematria-title">Eschatology Research</span>
+                        <span class="hero-why-gematria-excerpt">Deep dives on prophetic themes, symbolic identities, and timeline interpretations with transparent reasoning.</span>
+                        <span class="btn btn-warning btn-sm hero-why-gematria-readmore" aria-hidden="true">Read more</span>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#homeHeroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#homeHeroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
         </section>
 
         <section class="content-panel p-4 p-lg-5 mb-5">
@@ -255,6 +306,13 @@
         window.endTimesTracking?.track('beginner_path_try_calculator_click', {
           source: 'home_hero_secondary_cta',
           destination: '/calculator.html',
+        });
+      });
+
+      document.getElementById('homeEschatologyCta')?.addEventListener('click', () => {
+        window.endTimesTracking?.track('home_eschatology_cta_click', {
+          source: 'home_hero_eschatology_slide',
+          destination: '/blog.html',
         });
       });
 

@@ -250,10 +250,25 @@
         const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
 
         const heroContainer = doc.querySelector('main section') || doc.querySelector('main') || doc.body;
-        const heroHeadline = heroContainer?.querySelector('h1')?.textContent?.trim() || '';
+        const homeHeroSlides = Array.from(doc.querySelectorAll('#homeHeroCarousel .carousel-item'));
+        const slideHeadlines = homeHeroSlides
+          .map((slide) => String(slide.querySelector('h1')?.textContent || '').trim())
+          .filter((text) => text.length > 0);
+        const slideBodies = homeHeroSlides
+          .map((slide) => {
+            const paragraphs = Array.from(slide.querySelectorAll('p'));
+            return (paragraphs.find((node) => String(node.textContent || '').trim())?.textContent || '').trim();
+          })
+          .filter((text) => text.length > 0);
 
-        let heroBody = '';
-        if (heroContainer) {
+        let heroHeadline = slideHeadlines.join('\n\n');
+        let heroBody = slideBodies.join('\n\n');
+
+        if (!heroHeadline) {
+          heroHeadline = heroContainer?.querySelector('h1')?.textContent?.trim() || '';
+        }
+
+        if (!heroBody && heroContainer) {
           const heroParagraphs = Array.from(heroContainer.querySelectorAll('p'));
           heroBody = (heroParagraphs.find((node) => String(node.textContent || '').trim())?.textContent || '').trim();
         }

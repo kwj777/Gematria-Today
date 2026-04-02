@@ -1278,19 +1278,33 @@ body.admin-render-pending footer {
 
 @media (max-width: 640px) {
   .admin-post-details summary {
-    flex-wrap: wrap;
-    align-items: flex-start;
+    display: block;
+    padding-right: 1.6rem;
+  }
+
+  .admin-post-summary-title {
+    display: block;
+    width: 100%;
+    margin-right: 0;
+    overflow-wrap: anywhere;
   }
 
   .admin-post-summary-trailing {
+    display: flex;
     width: 100%;
+    margin-top: 0.35rem;
     justify-content: flex-start;
+    align-items: flex-start;
     gap: 0.4rem 0.65rem;
   }
 
   .admin-post-summary-meta {
     text-align: left;
     width: 100%;
+  }
+
+  .admin-post-summary-status {
+    flex-shrink: 0;
   }
 }
 

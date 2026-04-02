@@ -128,6 +128,7 @@
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
             </div>
           </div>
+          <div id="cacheMessage" class="alert alert-success d-none mb-4" role="status"></div>
 
           <div class="row g-4 mb-4">
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Feeds</div><div id="feedCount" class="metric-value text-primary">0</div><p class="mb-0 text-muted">Configured RSS sources in the database.</p></div></div>
@@ -514,6 +515,7 @@
       const dashboardPanel = document.getElementById('dashboardPanel');
       const authMessage = document.getElementById('authMessage');
       const saveMessage = document.getElementById('saveMessage');
+      const cacheMessage = document.getElementById('cacheMessage');
       const errorMessage = document.getElementById('errorMessage');
       const feedCount = document.getElementById('feedCount');
       const postCount = document.getElementById('postCount');
@@ -1358,13 +1360,14 @@
 
       async function clearSiteCache(targetButton) {
         clearMessage(errorMessage);
+        clearMessage(saveMessage);
         try {
           targetButton.disabled = true;
           const payload = await request('/api/admin-settings', {
             method: 'POST',
             body: JSON.stringify({ action: 'clear-cache' })
           });
-          showMessage(saveMessage, `Server cache cleared. ${payload.deletedCount || 0} entr${payload.deletedCount === 1 ? 'y was' : 'ies were'} removed.`);
+          showMessage(cacheMessage, `Server cache cleared. ${payload.deletedCount || 0} entr${payload.deletedCount === 1 ? 'y was' : 'ies were'} removed.`);
         } catch (error) {
           showMessage(errorMessage, error.message);
         } finally {

@@ -468,7 +468,7 @@
           }
           return Object.fromEntries(
             ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'allStaticContent']
-              .map((field) => [field, workspaceContent[field] || sourceContent[field] || '']),
+              .map((field) => [field, workspaceContent[field] ?? sourceContent[field] ?? '']),
           );
         }
         const sourceContent = state.elementSourceContent[targetId.value] || {};
@@ -477,7 +477,7 @@
         }
         return Object.fromEntries(
           ['heading', 'body', 'buttonLabel', 'buttonUrl']
-            .map((field) => [field, workspaceContent[field] || sourceContent[field] || '']),
+            .map((field) => [field, workspaceContent[field] ?? sourceContent[field] ?? '']),
         );
       }
 

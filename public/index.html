@@ -363,6 +363,16 @@
               secondaryBodyNode.textContent = content.heroBodySecondary;
             }
           }
+
+          const primaryCtaNode = document.getElementById('homeJoinCta');
+          if (primaryCtaNode) {
+            if (content.ctaLabel) {
+              primaryCtaNode.textContent = content.ctaLabel;
+            }
+            if (content.ctaUrl) {
+              primaryCtaNode.setAttribute('href', content.ctaUrl);
+            }
+          }
         })
         .catch(() => {});
 

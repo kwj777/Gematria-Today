@@ -91,6 +91,20 @@ body {
   border-radius: 1.5rem;
 }
 
+.hero-panel .btn-outline-primary {
+  --bs-btn-color: #ffffff;
+  --bs-btn-border-color: rgba(255, 255, 255, 0.85);
+  --bs-btn-hover-color: #103a60;
+  --bs-btn-hover-bg: #ffffff;
+  --bs-btn-hover-border-color: #ffffff;
+  --bs-btn-focus-shadow-rgb: 255, 255, 255;
+  --bs-btn-active-color: #103a60;
+  --bs-btn-active-bg: #eef6ff;
+  --bs-btn-active-border-color: #ffffff;
+  background-color: rgba(16, 58, 96, 0.2);
+  backdrop-filter: blur(1px);
+}
+
 .content-panel,
 .feature-card,
 .faq-card,

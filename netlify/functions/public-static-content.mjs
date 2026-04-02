@@ -1,4 +1,4 @@
-import { withAdminSql, jsonResponse } from './_admin.mjs';
+import { getSqlClient, jsonResponse } from './_admin.mjs';
 
 const STATIC_CONTENT_SETTINGS_KEY = 'static_content_workspace';
 
@@ -57,7 +57,7 @@ export async function handler(event) {
       return jsonResponse(400, { error: 'page query parameter is required' });
     }
 
-    const sql = withAdminSql();
+    const sql = getSqlClient();
     const rows = await sql`
       SELECT setting_value, updated_at
       FROM admin_settings

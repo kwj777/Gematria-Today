@@ -37,6 +37,9 @@ function defaultWorkspace() {
     ctaUrlTertiary: '',
     ctaLabelQuaternary: '',
     ctaUrlQuaternary: '',
+    staticHeadings: '',
+    staticParagraphs: '',
+    staticListItems: '',
     allStaticContent: '',
   }]));
   const elements = Object.fromEntries(ELEMENT_DEFINITIONS.map((item) => [item.id, { heading: '', body: '', buttonLabel: '', buttonUrl: '' }]));
@@ -72,6 +75,9 @@ function normalizePageInput(input = {}) {
     ctaUrlTertiary: normalizeText(input.ctaUrlTertiary, 500),
     ctaLabelQuaternary: normalizeText(input.ctaLabelQuaternary, 80),
     ctaUrlQuaternary: normalizeText(input.ctaUrlQuaternary, 500),
+    staticHeadings: normalizeText(input.staticHeadings, 6000),
+    staticParagraphs: normalizeText(input.staticParagraphs, 12000),
+    staticListItems: normalizeText(input.staticListItems, 8000),
     allStaticContent: normalizeText(input.allStaticContent, 20000),
   };
 }

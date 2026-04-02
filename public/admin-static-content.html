@@ -133,9 +133,17 @@
               <label class="form-label" for="fieldCtaUrlQuaternary">CTA URL (quaternary)</label>
               <input id="fieldCtaUrlQuaternary" class="form-control" maxlength="500" />
             </div>
-            <div class="col-12" data-field="allStaticContent">
-              <label class="form-label" for="fieldAllStaticContent">All static page content</label>
-              <textarea id="fieldAllStaticContent" class="form-control" rows="10" maxlength="20000"></textarea>
+            <div class="col-12" data-field="staticHeadings">
+              <label class="form-label" for="fieldStaticHeadings">Static headings (outside hero)</label>
+              <textarea id="fieldStaticHeadings" class="form-control" rows="4" maxlength="6000" placeholder="One heading per line"></textarea>
+            </div>
+            <div class="col-12" data-field="staticParagraphs">
+              <label class="form-label" for="fieldStaticParagraphs">Static paragraphs (outside hero)</label>
+              <textarea id="fieldStaticParagraphs" class="form-control" rows="6" maxlength="12000" placeholder="One paragraph per line"></textarea>
+            </div>
+            <div class="col-12" data-field="staticListItems">
+              <label class="form-label" for="fieldStaticListItems">Static list items (outside hero)</label>
+              <textarea id="fieldStaticListItems" class="form-control" rows="5" maxlength="8000" placeholder="One list item per line"></textarea>
             </div>
             <div class="col-md-6" data-field="buttonLabel">
               <label class="form-label" for="fieldButtonLabel">Element button label</label>
@@ -175,6 +183,7 @@
         <section id="pagePreviewPanel" class="content-panel p-4 mt-4 d-none">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h5 mb-0">Page selection preview</h2>
+            <button id="refreshPreviewButton" class="btn btn-outline-secondary btn-sm" type="button">Refresh screenshot</button>
           </div>
           <p id="pagePreviewMeta" class="small text-muted mb-3">
             Select a static page, then click text or buttons in this frozen preview to jump to the matching editor field. Scroll over hero sliders to move between slides.
@@ -208,6 +217,7 @@
       const pagePreviewPanel = document.getElementById('pagePreviewPanel');
       const pagePreviewMeta = document.getElementById('pagePreviewMeta');
       const pagePreviewFrame = document.getElementById('pagePreviewFrame');
+      const refreshPreviewButton = document.getElementById('refreshPreviewButton');
 
       const fields = {
         seoTitle: document.getElementById('fieldSeoTitle'),
@@ -224,12 +234,16 @@
         ctaUrlTertiary: document.getElementById('fieldCtaUrlTertiary'),
         ctaLabelQuaternary: document.getElementById('fieldCtaLabelQuaternary'),
         ctaUrlQuaternary: document.getElementById('fieldCtaUrlQuaternary'),
-        allStaticContent: document.getElementById('fieldAllStaticContent'),
+        staticHeadings: document.getElementById('fieldStaticHeadings'),
+        staticParagraphs: document.getElementById('fieldStaticParagraphs'),
+        staticListItems: document.getElementById('fieldStaticListItems'),
         heading: document.getElementById('fieldHeading'),
         body: document.getElementById('fieldBody'),
         buttonLabel: document.getElementById('fieldButtonLabel'),
         buttonUrl: document.getElementById('fieldButtonUrl'),
       };
+
+      const PAGE_FIELD_KEYS = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'ctaLabelSecondary', 'ctaUrlSecondary', 'ctaLabelTertiary', 'ctaUrlTertiary', 'ctaLabelQuaternary', 'ctaUrlQuaternary', 'staticHeadings', 'staticParagraphs', 'staticListItems'];
 
       const state = {
         pageDefinitions: [],
@@ -239,6 +253,14 @@
         elementSourceContent: {},
       };
       let highlightedFieldTimeout = null;
+
+      function buildPreviewFrameUrl(pagePath) {
+        if (!pagePath) {
+          return 'about:blank';
+        }
+        const separator = pagePath.includes('?') ? '&' : '?';
+        return `${pagePath}${separator}previewRefresh=${Date.now()}`;
+      }
 
       function getElementFieldForPreviewSelection(elementId) {
         if (elementId === 'homepage_hero_cta' || elementId === 'support_cta') {
@@ -302,6 +324,8 @@
         if (targetType.value !== 'page') {
           pagePreviewPanel.classList.add('d-none');
           pagePreviewFrame.src = 'about:blank';
+          pagePreviewFrame.dataset.pagePath = '';
+          refreshPreviewButton.disabled = true;
           return;
         }
 
@@ -310,13 +334,17 @@
         if (!pagePath) {
           pagePreviewPanel.classList.remove('d-none');
           pagePreviewFrame.src = 'about:blank';
+          pagePreviewFrame.dataset.pagePath = '';
+          refreshPreviewButton.disabled = true;
           pagePreviewMeta.textContent = 'No page path is available for this target.';
           return;
         }
 
         pagePreviewPanel.classList.remove('d-none');
+        refreshPreviewButton.disabled = false;
+        pagePreviewFrame.dataset.pagePath = pagePath;
         pagePreviewMeta.textContent = `Selection mode: ${selected.label} (${pagePath}). Click text/buttons in this preview to load the matching static element in the form. Scroll over hero sliders to reach secondary hero content.`;
-        pagePreviewFrame.src = pagePath;
+        pagePreviewFrame.src = buildPreviewFrameUrl(pagePath);
       }
 
       function mapClickedNodeToElementId(node) {
@@ -329,7 +357,7 @@
           return 'footer_note';
         }
 
-        const heroButtonNode = node.closest('#homeHeroCarousel .carousel-item a[href], main section a.btn');
+        const heroButtonNode = node.closest('#homeHeroCarousel .carousel-item a[href], main .hero-panel a[href], main a.btn[href], main a.btn');
         if (heroButtonNode) {
           return 'homepage_hero_cta';
         }
@@ -344,6 +372,30 @@
           return 'site_announcement';
         }
 
+        return null;
+      }
+
+      function getHeroCtaPageFieldForClickedNode(frameDocument, node) {
+        if (!frameDocument || !node || !(node instanceof Element)) {
+          return null;
+        }
+
+        const anchor = node.closest('a[href]');
+        if (!anchor) {
+          return null;
+        }
+
+        const heroScope = anchor.closest('#homeHeroCarousel .carousel-item, main .hero-panel');
+        if (!heroScope) {
+          return null;
+        }
+
+        const ctaNodes = Array.from(frameDocument.querySelectorAll('#homeHeroCarousel .carousel-item a.btn[href], main section a.btn[href]'));
+        const ctaIndex = ctaNodes.indexOf(anchor);
+        if (ctaIndex === 0) return 'ctaLabel';
+        if (ctaIndex === 1) return 'ctaLabelSecondary';
+        if (ctaIndex === 2) return 'ctaLabelTertiary';
+        if (ctaIndex === 3) return 'ctaLabelQuaternary';
         return null;
       }
 
@@ -426,6 +478,18 @@
             return;
           }
 
+          const matchedHeroPageField = getHeroCtaPageFieldForClickedNode(frameDocument, clickTarget);
+          if (matchedHeroPageField) {
+            targetType.value = 'page';
+            setTargetOptions();
+            targetId.value = 'home';
+            await fillForm();
+            focusAndHighlightField(matchedHeroPageField);
+            showMessage(saveMessage, 'Loaded selected homepage hero CTA field in editor.');
+            clearMessage(errorMessage);
+            return;
+          }
+
           const matchedElementId = mapClickedNodeToElementId(clickTarget);
           if (!matchedElementId) {
             showMessage(errorMessage, 'That area is not mapped yet. Click a hero/support button, announcement, or footer note to edit it.');
@@ -497,9 +561,8 @@
         const isPage = targetType.value === 'page';
         document.querySelectorAll('[data-field]').forEach((node) => {
           const key = node.getAttribute('data-field');
-          const pageFields = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'ctaLabelSecondary', 'ctaUrlSecondary', 'ctaLabelTertiary', 'ctaUrlTertiary', 'ctaLabelQuaternary', 'ctaUrlQuaternary', 'allStaticContent'];
           const elementFields = ['heading', 'body', 'buttonLabel', 'buttonUrl'];
-          const show = isPage ? pageFields.includes(key) : elementFields.includes(key);
+          const show = isPage ? PAGE_FIELD_KEYS.includes(key) : elementFields.includes(key);
           node.classList.toggle('d-none', !show);
         });
       }
@@ -515,13 +578,63 @@
       }
 
       function hasPageContent(content = {}) {
-        return ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'ctaLabelSecondary', 'ctaUrlSecondary', 'ctaLabelTertiary', 'ctaUrlTertiary', 'ctaLabelQuaternary', 'ctaUrlQuaternary', 'allStaticContent']
+        return PAGE_FIELD_KEYS
           .some((field) => String(content[field] || '').trim().length > 0);
       }
 
       function hasElementContent(content = {}) {
         return ['heading', 'body', 'buttonLabel', 'buttonUrl']
           .some((field) => String(content[field] || '').trim().length > 0);
+      }
+
+      function listToLines(values = []) {
+        return values
+          .map((value) => String(value || '').replace(/\s+/g, ' ').trim())
+          .filter((value) => value.length > 0)
+          .join('\n');
+      }
+
+      function linesToUniqueList(value = '') {
+        const lines = String(value || '')
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0);
+        return [...new Set(lines)];
+      }
+
+      function parseLegacyStaticContent(allStaticContent = '') {
+        const headings = [];
+        const paragraphs = [];
+        const listItems = [];
+
+        String(allStaticContent || '')
+          .split(/\n{2,}/)
+          .map((chunk) => chunk.trim())
+          .filter((chunk) => chunk.length > 0)
+          .forEach((chunk) => {
+            if (chunk.length <= 90 && !/[.!?]/.test(chunk)) {
+              headings.push(chunk);
+              return;
+            }
+            if (chunk.startsWith('- ') || chunk.startsWith('• ')) {
+              listItems.push(chunk.replace(/^[-•]\s*/, '').trim());
+              return;
+            }
+            paragraphs.push(chunk);
+          });
+
+        return {
+          staticHeadings: listToLines(headings),
+          staticParagraphs: listToLines(paragraphs),
+          staticListItems: listToLines(listItems),
+        };
+      }
+
+      function buildAllStaticContentFromSections(content = {}) {
+        const headings = linesToUniqueList(content.staticHeadings);
+        const paragraphs = linesToUniqueList(content.staticParagraphs);
+        const listItems = linesToUniqueList(content.staticListItems);
+        return [...headings, ...paragraphs, ...listItems.map((item) => `- ${item}`)].join('\n\n');
       }
 
       function extractPageSourceContent(html = '') {
@@ -572,10 +685,22 @@
         const ctaUrlTertiary = ctaNodes[2]?.getAttribute('href')?.trim() || '';
         const ctaLabelQuaternary = ctaNodes[3]?.textContent?.trim() || '';
         const ctaUrlQuaternary = ctaNodes[3]?.getAttribute('href')?.trim() || '';
-        const staticTextNodes = Array.from((doc.querySelector('main') || doc.body).querySelectorAll('h1, h2, h3, p, li, a.btn, button'))
-          .map((node) => String(node.textContent || '').replace(/\s+/g, ' ').trim())
-          .filter((text) => text.length > 0);
-        const dedupedStaticText = [...new Set(staticTextNodes)];
+        const mainRoot = doc.querySelector('main') || doc.body;
+        const staticHeadings = listToLines(
+          Array.from(mainRoot.querySelectorAll('h2, h3'))
+            .filter((node) => !node.closest('#homeHeroCarousel'))
+            .map((node) => node.textContent),
+        );
+        const staticParagraphs = listToLines(
+          Array.from(mainRoot.querySelectorAll('p'))
+            .filter((node) => !node.closest('#homeHeroCarousel'))
+            .map((node) => node.textContent),
+        );
+        const staticListItems = listToLines(
+          Array.from(mainRoot.querySelectorAll('li'))
+            .filter((node) => !node.closest('nav, #homeHeroCarousel'))
+            .map((node) => node.textContent),
+        );
 
         return {
           seoTitle: title,
@@ -592,7 +717,9 @@
           ctaUrlTertiary,
           ctaLabelQuaternary,
           ctaUrlQuaternary,
-          allStaticContent: dedupedStaticText.join('\n\n'),
+          staticHeadings,
+          staticParagraphs,
+          staticListItems,
         };
       }
 
@@ -697,12 +824,21 @@
         if (isPage) {
           const sourceContent = state.pageSourceContent[targetId.value] || {};
           if (!hasPageContent(workspaceContent)) {
+            if (!sourceContent.staticHeadings && !sourceContent.staticParagraphs && !sourceContent.staticListItems && sourceContent.allStaticContent) {
+              return { ...sourceContent, ...parseLegacyStaticContent(sourceContent.allStaticContent) };
+            }
             return sourceContent;
           }
-          return Object.fromEntries(
-            ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'ctaLabelSecondary', 'ctaUrlSecondary', 'ctaLabelTertiary', 'ctaUrlTertiary', 'ctaLabelQuaternary', 'ctaUrlQuaternary', 'allStaticContent']
-              .map((field) => [field, workspaceContent[field] ?? sourceContent[field] ?? '']),
+          const merged = Object.fromEntries(
+            PAGE_FIELD_KEYS.map((field) => [field, workspaceContent[field] ?? sourceContent[field] ?? '']),
           );
+          if (!merged.staticHeadings && !merged.staticParagraphs && !merged.staticListItems) {
+            const legacy = workspaceContent.allStaticContent || sourceContent.allStaticContent || '';
+            if (legacy) {
+              return { ...merged, ...parseLegacyStaticContent(legacy) };
+            }
+          }
+          return merged;
         }
         const sourceContent = state.elementSourceContent[targetId.value] || {};
         if (!hasElementContent(workspaceContent)) {
@@ -773,7 +909,14 @@
                 ctaUrlTertiary: fields.ctaUrlTertiary.value,
                 ctaLabelQuaternary: fields.ctaLabelQuaternary.value,
                 ctaUrlQuaternary: fields.ctaUrlQuaternary.value,
-                allStaticContent: fields.allStaticContent.value,
+                staticHeadings: fields.staticHeadings.value,
+                staticParagraphs: fields.staticParagraphs.value,
+                staticListItems: fields.staticListItems.value,
+                allStaticContent: buildAllStaticContentFromSections({
+                  staticHeadings: fields.staticHeadings.value,
+                  staticParagraphs: fields.staticParagraphs.value,
+                  staticListItems: fields.staticListItems.value,
+                }),
               }
             : {
                 heading: fields.heading.value,
@@ -839,6 +982,15 @@
       targetType.addEventListener('change', setTargetOptions);
       targetId.addEventListener('change', () => {
         void fillForm();
+      });
+      refreshPreviewButton.addEventListener('click', () => {
+        const currentPagePath = pagePreviewFrame.dataset.pagePath || '';
+        if (!currentPagePath) {
+          showMessage(errorMessage, 'Select a page target before refreshing the screenshot preview.');
+          return;
+        }
+        pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);
+        clearMessage(errorMessage);
       });
       pagePreviewFrame.addEventListener('load', () => {
         bindPreviewClickHandler();

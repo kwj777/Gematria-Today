@@ -136,6 +136,7 @@
             <div class="col-12" data-field="staticHeadings">
               <label class="form-label" for="fieldStaticHeadings">Static headings (outside hero)</label>
               <textarea id="fieldStaticHeadings" class="form-control" rows="4" maxlength="6000" placeholder="One heading per line"></textarea>
+              <div class="form-text">Do not include button CTA text here. CTA labels are managed in the dedicated CTA fields above.</div>
             </div>
             <div class="col-12" data-field="staticParagraphs">
               <label class="form-label" for="fieldStaticParagraphs">Static paragraphs (outside hero)</label>
@@ -637,6 +638,18 @@
         return [...headings, ...paragraphs, ...listItems.map((item) => `- ${item}`)].join('\n\n');
       }
 
+      function removeCtaLinesFromStaticHeadings(staticHeadings = '', ctaLabels = []) {
+        const excluded = new Set(
+          ctaLabels
+            .map((label) => String(label || '').trim().toLowerCase())
+            .filter((label) => label.length > 0),
+        );
+        return listToLines(
+          linesToUniqueList(staticHeadings)
+            .filter((line) => !excluded.has(String(line || '').trim().toLowerCase())),
+        );
+      }
+
       function extractPageSourceContent(html = '') {
         if (!html) return {};
         const parser = new DOMParser();
@@ -893,6 +906,12 @@
         clearMessage(errorMessage);
         try {
           const isPage = targetType.value === 'page';
+          const staticHeadingsWithoutCtas = removeCtaLinesFromStaticHeadings(fields.staticHeadings.value, [
+            fields.ctaLabel.value,
+            fields.ctaLabelSecondary.value,
+            fields.ctaLabelTertiary.value,
+            fields.ctaLabelQuaternary.value,
+          ]);
           const content = isPage
             ? {
                 seoTitle: fields.seoTitle.value,
@@ -909,11 +928,11 @@
                 ctaUrlTertiary: fields.ctaUrlTertiary.value,
                 ctaLabelQuaternary: fields.ctaLabelQuaternary.value,
                 ctaUrlQuaternary: fields.ctaUrlQuaternary.value,
-                staticHeadings: fields.staticHeadings.value,
+                staticHeadings: staticHeadingsWithoutCtas,
                 staticParagraphs: fields.staticParagraphs.value,
                 staticListItems: fields.staticListItems.value,
                 allStaticContent: buildAllStaticContentFromSections({
-                  staticHeadings: fields.staticHeadings.value,
+                  staticHeadings: staticHeadingsWithoutCtas,
                   staticParagraphs: fields.staticParagraphs.value,
                   staticListItems: fields.staticListItems.value,
                 }),

@@ -625,6 +625,12 @@
             return;
           }
           if (deletePost) {
+            const postToDelete = state.posts.find((post) => String(post.id) === String(deletePost));
+            const postTitle = postToDelete?.title ? ` "${postToDelete.title}"` : '';
+            const confirmed = window.confirm(`Delete blog post${postTitle}? This action cannot be undone.`);
+            if (!confirmed) {
+              return;
+            }
             await request(`/api/admin-posts?id=${encodeURIComponent(deletePost)}`, { method: 'DELETE' });
             showMessage(saveMessage, 'Blog post removed.');
             state.editingPostId = null;

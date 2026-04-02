@@ -258,8 +258,73 @@
         if (!pagePath) {
           return 'about:blank';
         }
-        const separator = pagePath.includes('?') ? '&' : '?';
-        return `${pagePath}${separator}previewRefresh=${Date.now()}`;
+        const url = new URL(pagePath, window.location.origin);
+        url.searchParams.set('previewRefresh', Date.now().toString());
+        url.searchParams.set('previewNoCache', '1');
+        return `${url.pathname}${url.search}`;
+      }
+
+      async function requestServiceWorkerCacheRefresh(registration) {
+        const worker = registration?.active || registration?.waiting || registration?.installing;
+        if (!worker) {
+          return;
+        }
+
+        await new Promise((resolve) => {
+          const channel = new MessageChannel();
+          const timeout = window.setTimeout(resolve, 1500);
+
+          channel.port1.onmessage = () => {
+            window.clearTimeout(timeout);
+            resolve();
+          };
+
+          worker.postMessage({ type: 'REFRESH_CACHE' }, [channel.port2]);
+        });
+      }
+
+      async function clearClientCachesForPreview() {
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => requestServiceWorkerCacheRefresh(registration)));
+        }
+
+        if ('caches' in window) {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+        }
+      }
+
+      function withPreviewBaseHref(html, baseHref) {
+        if (typeof html !== 'string' || !html.trim()) {
+          return html;
+        }
+        if (/<base\s/i.test(html)) {
+          return html;
+        }
+        if (/<head[^>]*>/i.test(html)) {
+          return html.replace(/<head([^>]*)>/i, `<head$1><base href="${baseHref}">`);
+        }
+        return `<base href="${baseHref}">${html}`;
+      }
+
+      async function refreshPreviewFromNetwork(pagePath) {
+        const liveUrl = new URL(buildPreviewFrameUrl(pagePath), window.location.origin);
+        const response = await fetch(liveUrl.toString(), {
+          cache: 'no-store',
+          headers: {
+            'cache-control': 'no-cache',
+            pragma: 'no-cache',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Preview request failed (${response.status}).`);
+        }
+
+        const html = await response.text();
+        const htmlWithBase = withPreviewBaseHref(html, `${window.location.origin}/`);
+        pagePreviewFrame.srcdoc = htmlWithBase;
       }
 
       function getElementFieldForPreviewSelection(elementId) {
@@ -324,6 +389,7 @@
         if (targetType.value !== 'page') {
           pagePreviewPanel.classList.add('d-none');
           pagePreviewFrame.src = 'about:blank';
+          pagePreviewFrame.srcdoc = '';
           pagePreviewFrame.dataset.pagePath = '';
           refreshPreviewButton.disabled = true;
           return;
@@ -334,6 +400,7 @@
         if (!pagePath) {
           pagePreviewPanel.classList.remove('d-none');
           pagePreviewFrame.src = 'about:blank';
+          pagePreviewFrame.srcdoc = '';
           pagePreviewFrame.dataset.pagePath = '';
           refreshPreviewButton.disabled = true;
           pagePreviewMeta.textContent = 'No page path is available for this target.';
@@ -344,6 +411,7 @@
         refreshPreviewButton.disabled = false;
         pagePreviewFrame.dataset.pagePath = pagePath;
         pagePreviewMeta.textContent = `Selection mode: ${selected.label} (${pagePath}). Click text/buttons in this preview to load the matching static element in the form. Scroll over hero sliders to reach secondary hero content.`;
+        pagePreviewFrame.srcdoc = '';
         pagePreviewFrame.src = buildPreviewFrameUrl(pagePath);
       }
 
@@ -983,14 +1051,27 @@
       targetId.addEventListener('change', () => {
         void fillForm();
       });
-      refreshPreviewButton.addEventListener('click', () => {
+      refreshPreviewButton.addEventListener('click', async () => {
         const currentPagePath = pagePreviewFrame.dataset.pagePath || '';
         if (!currentPagePath) {
           showMessage(errorMessage, 'Select a page target before refreshing the screenshot preview.');
           return;
         }
-        pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);
+
+        refreshPreviewButton.disabled = true;
+        clearMessage(saveMessage);
         clearMessage(errorMessage);
+        try {
+          await clearClientCachesForPreview();
+          await refreshPreviewFromNetwork(currentPagePath);
+          showMessage(saveMessage, 'Screenshot refreshed with browser and service-worker caches cleared.');
+        } catch (error) {
+          pagePreviewFrame.srcdoc = '';
+          pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);
+          showMessage(errorMessage, error.message || 'Unable to force a no-cache refresh, loaded best available live preview instead.');
+        } finally {
+          refreshPreviewButton.disabled = false;
+        }
       });
       pagePreviewFrame.addEventListener('load', () => {
         bindPreviewClickHandler();

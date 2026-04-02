@@ -166,6 +166,7 @@
         elementDefinitions: [],
         workspace: null,
         pageSourceContent: {},
+        elementSourceContent: {},
       };
 
       function updatePagePreview() {
@@ -242,6 +243,11 @@
           .some((field) => String(content[field] || '').trim().length > 0);
       }
 
+      function hasElementContent(content = {}) {
+        return ['heading', 'body', 'buttonLabel', 'buttonUrl']
+          .some((field) => String(content[field] || '').trim().length > 0);
+      }
+
       function extractPageSourceContent(html = '') {
         if (!html) return {};
         const parser = new DOMParser();
@@ -292,6 +298,58 @@
         };
       }
 
+      function extractElementSourceContent(definition, html = '') {
+        if (!definition?.id || !html) {
+          return {};
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        if (definition.id === 'footer_note') {
+          const footerNotes = Array.from(doc.querySelectorAll('.site-footer .container > .d-flex > span'))
+            .map((node) => String(node.textContent || '').trim())
+            .filter((text) => text.length > 0);
+          return {
+            heading: footerNotes[0] || '',
+            body: footerNotes[1] || '',
+            buttonLabel: '',
+            buttonUrl: '',
+          };
+        }
+
+        if (definition.id === 'homepage_hero_cta') {
+          const heroButton = doc.querySelector('#homeHeroCarousel .carousel-item.active a.btn, #homeHeroCarousel .carousel-item a.btn, main section a.btn');
+          return {
+            heading: String(heroButton?.textContent || '').trim(),
+            body: '',
+            buttonLabel: String(heroButton?.textContent || '').trim(),
+            buttonUrl: String(heroButton?.getAttribute('href') || '').trim(),
+          };
+        }
+
+        if (definition.id === 'support_cta') {
+          const supportLink = doc.querySelector('a[href*="contact"], a[href*="support"], a[href*="donate"]');
+          return {
+            heading: supportLink ? 'Support' : '',
+            body: '',
+            buttonLabel: String(supportLink?.textContent || '').trim(),
+            buttonUrl: String(supportLink?.getAttribute('href') || '').trim(),
+          };
+        }
+
+        if (definition.id === 'site_announcement') {
+          const firstNotice = doc.querySelector('.alert, [role="status"], [data-announcement], main p');
+          return {
+            heading: 'Announcement',
+            body: String(firstNotice?.textContent || '').trim(),
+            buttonLabel: '',
+            buttonUrl: '',
+          };
+        }
+
+        return {};
+      }
+
       async function loadPageSourceContent(definition) {
         if (!definition?.id || !definition?.path || state.pageSourceContent[definition.id]) {
           return;
@@ -310,11 +368,28 @@
       }
 
       async function loadCurrentTargetSourceContent() {
-        if (targetType.value !== 'page') {
+        if (targetType.value === 'page') {
+          const selected = state.pageDefinitions.find((item) => item.id === targetId.value);
+          await loadPageSourceContent(selected);
           return;
         }
-        const selected = state.pageDefinitions.find((item) => item.id === targetId.value);
-        await loadPageSourceContent(selected);
+
+        const selected = state.elementDefinitions.find((item) => item.id === targetId.value);
+        if (!selected?.id || state.elementSourceContent[selected.id]) {
+          return;
+        }
+
+        try {
+          const response = await fetch('/index.html', { credentials: 'same-origin' });
+          if (!response.ok) {
+            state.elementSourceContent[selected.id] = {};
+            return;
+          }
+          const html = await response.text();
+          state.elementSourceContent[selected.id] = extractElementSourceContent(selected, html);
+        } catch {
+          state.elementSourceContent[selected.id] = {};
+        }
       }
 
       function getCurrentContent() {
@@ -331,7 +406,14 @@
               .map((field) => [field, workspaceContent[field] || sourceContent[field] || '']),
           );
         }
-        return workspaceContent;
+        const sourceContent = state.elementSourceContent[targetId.value] || {};
+        if (!hasElementContent(workspaceContent)) {
+          return sourceContent;
+        }
+        return Object.fromEntries(
+          ['heading', 'body', 'buttonLabel', 'buttonUrl']
+            .map((field) => [field, workspaceContent[field] || sourceContent[field] || '']),
+        );
       }
 
       async function fillForm() {

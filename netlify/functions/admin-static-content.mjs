@@ -19,7 +19,7 @@ const ELEMENT_DEFINITIONS = [
 ];
 
 function defaultWorkspace() {
-  const pages = Object.fromEntries(PAGE_DEFINITIONS.map((item) => [item.id, { seoTitle: '', metaDescription: '', heroHeadline: '', heroBody: '', ctaLabel: '', ctaUrl: '' }]));
+  const pages = Object.fromEntries(PAGE_DEFINITIONS.map((item) => [item.id, { seoTitle: '', metaDescription: '', heroHeadline: '', heroBody: '', ctaLabel: '', ctaUrl: '', allStaticContent: '' }]));
   const elements = Object.fromEntries(ELEMENT_DEFINITIONS.map((item) => [item.id, { heading: '', body: '', buttonLabel: '', buttonUrl: '' }]));
   return { pages, elements, updatedAt: null, updatedBy: null };
 }
@@ -45,6 +45,7 @@ function normalizePageInput(input = {}) {
     heroBody: normalizeText(input.heroBody, 2000),
     ctaLabel: normalizeText(input.ctaLabel, 80),
     ctaUrl: normalizeText(input.ctaUrl, 500),
+    allStaticContent: normalizeText(input.allStaticContent, 20000),
   };
 }
 

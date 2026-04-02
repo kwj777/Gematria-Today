@@ -398,20 +398,25 @@
           event.preventDefault();
           event.stopPropagation();
 
-          if (event.target.closest('#homeHeroCarousel .carousel-control-next, #homeHeroCarousel [data-bs-slide="next"]')) {
+          const clickTarget = event.target instanceof Element ? event.target : event.target?.parentElement;
+          if (!clickTarget) {
+            return;
+          }
+
+          if (clickTarget.closest('#homeHeroCarousel .carousel-control-next, #homeHeroCarousel [data-bs-slide="next"]')) {
             if (movePreviewCarouselSlide(frameDocument, 1)) {
               clearMessage(errorMessage);
             }
             return;
           }
-          if (event.target.closest('#homeHeroCarousel .carousel-control-prev, #homeHeroCarousel [data-bs-slide="prev"]')) {
+          if (clickTarget.closest('#homeHeroCarousel .carousel-control-prev, #homeHeroCarousel [data-bs-slide="prev"]')) {
             if (movePreviewCarouselSlide(frameDocument, -1)) {
               clearMessage(errorMessage);
             }
             return;
           }
 
-          const indicator = event.target.closest('#homeHeroCarousel [data-bs-slide-to]');
+          const indicator = clickTarget.closest('#homeHeroCarousel [data-bs-slide-to]');
           if (indicator) {
             const requestedIndex = Number.parseInt(indicator.getAttribute('data-bs-slide-to') || '', 10);
             if (Number.isFinite(requestedIndex)) {
@@ -421,7 +426,7 @@
             return;
           }
 
-          const matchedElementId = mapClickedNodeToElementId(event.target);
+          const matchedElementId = mapClickedNodeToElementId(clickTarget);
           if (!matchedElementId) {
             showMessage(errorMessage, 'That area is not mapped yet. Click a hero/support button, announcement, or footer note to edit it.');
             return;

@@ -320,9 +320,26 @@
                   </form>
                 </section>
                 <section id="premiumBlogProposalSection" class="content-panel p-4 h-100">
-                  <p class="section-kicker mb-2">Premium Blog Contributions</p>
-                  <h3 class="h4 mb-2">Propose a blog post</h3>
-                  <p class="text-muted mb-3">Premium members can submit post ideas for editorial review.</p>
+                  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3 mb-3">
+                    <div>
+                      <p class="section-kicker mb-2">Premium Blog Contributions</p>
+                      <h3 class="h4 mb-2">Propose a blog post</h3>
+                      <p class="text-muted mb-0">Premium members can submit post ideas for editorial review.</p>
+                    </div>
+                    <button
+                      id="premiumBlogProposalToggleButton"
+                      class="btn btn-outline-success d-inline-flex align-items-center gap-2"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#premiumBlogProposalContent"
+                      aria-expanded="false"
+                      aria-controls="premiumBlogProposalContent"
+                    >
+                      <span id="premiumBlogProposalToggleLabel">Expand</span>
+                      <span id="premiumBlogProposalToggleArrow" aria-hidden="true">▼</span>
+                    </button>
+                  </div>
+                  <div id="premiumBlogProposalContent" class="collapse">
                   <div id="premiumBlogProposalSuccessMessage" class="alert alert-success mb-3 d-none" role="status">Submission was successful.</div>
                   <div id="memberProposalFeedbackList" class="admin-list mb-3 d-none"></div>
                   <form id="premiumBlogProposalForm" class="row g-3 d-none">
@@ -362,6 +379,7 @@
                     </div>
                   </form>
                   <div id="premiumBlogProposalLockedMessage" class="alert alert-warning mb-0 d-none" role="alert">This form is available to premium members only. Upgrade your membership to submit proposed blog posts.</div>
+                  </div>
                 </section>
                 <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
                   <p class="section-kicker mb-2">Profile</p>
@@ -450,9 +468,14 @@
       const learningPathStep1Section = document.getElementById('learningPathStep1Section');
       const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
       const blogProposalNavButton = document.getElementById('blogProposalNavButton');
+      const premiumBlogProposalSection = document.getElementById('premiumBlogProposalSection');
       const premiumBlogProposalForm = document.getElementById('premiumBlogProposalForm');
       const premiumBlogProposalLockedMessage = document.getElementById('premiumBlogProposalLockedMessage');
       const premiumBlogProposalSuccessMessage = document.getElementById('premiumBlogProposalSuccessMessage');
+      const premiumBlogProposalContent = document.getElementById('premiumBlogProposalContent');
+      const premiumBlogProposalToggleButton = document.getElementById('premiumBlogProposalToggleButton');
+      const premiumBlogProposalToggleLabel = document.getElementById('premiumBlogProposalToggleLabel');
+      const premiumBlogProposalToggleArrow = document.getElementById('premiumBlogProposalToggleArrow');
       const memberProposalFeedbackList = document.getElementById('memberProposalFeedbackList');
       const blogProposalAttribution = document.getElementById('blogProposalAttribution');
       const blogSubscriptionSection = document.getElementById('blogSubscriptionSection');
@@ -1624,6 +1647,28 @@
       membershipUpgradeContent.addEventListener('hide.bs.collapse', () => {
         membershipUpgradeToggleArrow.textContent = '▼';
         membershipUpgradeToggleButton.setAttribute('aria-expanded', 'false');
+      });
+
+      premiumBlogProposalContent?.addEventListener('show.bs.collapse', () => {
+        premiumBlogProposalToggleLabel.textContent = 'Collapse';
+        premiumBlogProposalToggleArrow.textContent = '▲';
+        premiumBlogProposalToggleButton?.setAttribute('aria-expanded', 'true');
+      });
+
+      premiumBlogProposalContent?.addEventListener('hide.bs.collapse', () => {
+        premiumBlogProposalToggleLabel.textContent = 'Expand';
+        premiumBlogProposalToggleArrow.textContent = '▼';
+        premiumBlogProposalToggleButton?.setAttribute('aria-expanded', 'false');
+      });
+
+      blogProposalNavButton?.addEventListener('click', (event) => {
+        if (!premiumBlogProposalContent || typeof bootstrap === 'undefined' || !bootstrap.Collapse) {
+          return;
+        }
+        event.preventDefault();
+        const collapse = bootstrap.Collapse.getOrCreateInstance(premiumBlogProposalContent, { toggle: false });
+        collapse.show();
+        premiumBlogProposalSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
 
       goToLearningPathStep1Button?.addEventListener('click', () => {

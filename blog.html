@@ -437,6 +437,38 @@
         }
         return `${window.location.origin}${normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`}`;
       };
+      const getDefaultBlogHeroImageUrl = () => {
+        const heroImage = document.querySelector('.blog-hero-image');
+        return toAbsolutePostAssetUrl(heroImage?.getAttribute('src') || '');
+      };
+      const updateShareMetadata = (post) => {
+        const slug = String(post?.slug || '').trim();
+        const shareUrl = slug
+          ? `${window.location.origin}/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`
+          : `${window.location.origin}/blog.html`;
+        const title = String(post?.title || 'EndTimes.Today Blog').trim();
+        const description = String(post?.summary || 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.').trim();
+        const featuredImageUrl = toAbsolutePostAssetUrl(post?.imageUrl || post?.heroImageUrl || post?.sliderImageUrl) || getDefaultBlogHeroImageUrl();
+
+        document.title = title;
+        const canonicalEl = document.querySelector('link[rel="canonical"]');
+        if (canonicalEl) canonicalEl.setAttribute('href', shareUrl);
+
+        const setMetaContent = (selector, value) => {
+          const node = document.querySelector(selector);
+          if (node && value) {
+            node.setAttribute('content', value);
+          }
+        };
+        setMetaContent('meta[name="description"]', description);
+        setMetaContent('meta[property="og:title"]', title);
+        setMetaContent('meta[name="twitter:title"]', title);
+        setMetaContent('meta[property="og:description"]', description);
+        setMetaContent('meta[name="twitter:description"]', description);
+        setMetaContent('meta[property="og:url"]', shareUrl);
+        setMetaContent('meta[property="og:image"]', featuredImageUrl);
+        setMetaContent('meta[name="twitter:image"]', featuredImageUrl);
+      };
       const blobToPngFile = async (imageBlob, slug = 'blog-post') => {
         if (!(imageBlob instanceof Blob) || !imageBlob.type.startsWith('image/')) {
           return null;
@@ -471,7 +503,7 @@
         }
       };
       const fetchShareImageFile = async (post) => {
-        const heroImageUrl = toAbsolutePostAssetUrl(post.imageUrl || post.heroImageUrl || post.sliderImageUrl);
+        const heroImageUrl = toAbsolutePostAssetUrl(post.imageUrl || post.heroImageUrl || post.sliderImageUrl) || getDefaultBlogHeroImageUrl();
         if (!heroImageUrl || /^data:image\//i.test(heroImageUrl)) {
           return null;
         }
@@ -493,6 +525,7 @@
         }
       };
       const shareBlogPost = async (post) => {
+        updateShareMetadata(post);
         const shareUrl = `${window.location.origin}/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
         const summaryText = String(post.summary || '').trim();
         const shareText = summaryText.includes(shareUrl) ? summaryText : `${summaryText}\n\nRead: ${shareUrl}`.trim();
@@ -602,6 +635,10 @@
         post.classList.add('border-primary', 'border-2');
         post.scrollIntoView({ behavior: 'smooth', block: 'start' });
         syncBlogLocation(slug);
+        const selectedPost = latestPosts.find((entry) => entry.slug === slug);
+        if (selectedPost) {
+          updateShareMetadata(selectedPost);
+        }
       };
 
       let latestPosts = [];

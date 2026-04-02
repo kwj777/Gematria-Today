@@ -555,9 +555,9 @@
                 ${post.scheduledPublishAt ? `<p class="small text-muted mb-2">${escapeHtml(formatScheduledLabel(post.scheduledPublishAt))}</p>` : ''}
                 <p class="small text-muted mb-2">${escapeHtml(post.summary || '')}</p>
                 <article class="small mb-3">${normalizePostBodyHtml(post.body || '')}</article>
-                <div class="d-flex flex-wrap gap-2 mb-3">
+                <div class="d-flex flex-wrap gap-3 mb-3">
                   <button class="btn btn-sm btn-outline-primary" type="button" data-edit-post="${post.id}">Edit</button>
-                  <button class="btn btn-sm btn-outline-danger" type="button" data-delete-post="${post.id}">Delete</button>
+                  <button class="btn btn-sm btn-danger text-white" type="button" data-delete-post="${post.id}">Delete</button>
                 </div>
                 <form class="row g-2 ${isEditing ? '' : 'd-none'}" data-edit-form="${post.id}">
                   <div class="col-12"><label class="form-label" for="editTitle-${post.id}">Title</label><input id="editTitle-${post.id}" class="form-control" value="${escapeHtml(post.title || '')}" required /></div>

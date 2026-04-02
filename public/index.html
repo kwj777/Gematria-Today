@@ -130,7 +130,7 @@
                     <p id="homeHeroSecondaryLead" class="lead mb-4">Explore prophecy-centered articles, compare symbol patterns, and follow current-event context from our eschatology coverage.</p>
                     <div class="d-flex flex-wrap gap-2">
                       <a id="homeEschatologyCta" class="btn btn-warning btn-lg touch-target-lg" href="/blog.html">Explore Eschatology Blog</a>
-                      <a class="btn btn-outline-light btn-lg touch-target-lg" href="/news.html">See related news</a>
+                      <a id="homeNewsCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/news.html">See related news</a>
                     </div>
                   </div>
                   <div class="col-lg-5">
@@ -371,6 +371,36 @@
             }
             if (content.ctaUrl) {
               primaryCtaNode.setAttribute('href', content.ctaUrl);
+            }
+          }
+
+          const secondaryCtaNode = document.getElementById('homeCalculatorCta');
+          if (secondaryCtaNode) {
+            if (content.ctaLabelSecondary) {
+              secondaryCtaNode.textContent = content.ctaLabelSecondary;
+            }
+            if (content.ctaUrlSecondary) {
+              secondaryCtaNode.setAttribute('href', content.ctaUrlSecondary);
+            }
+          }
+
+          const tertiaryCtaNode = document.getElementById('homeEschatologyCta');
+          if (tertiaryCtaNode) {
+            if (content.ctaLabelTertiary) {
+              tertiaryCtaNode.textContent = content.ctaLabelTertiary;
+            }
+            if (content.ctaUrlTertiary) {
+              tertiaryCtaNode.setAttribute('href', content.ctaUrlTertiary);
+            }
+          }
+
+          const quaternaryCtaNode = document.getElementById('homeNewsCta');
+          if (quaternaryCtaNode) {
+            if (content.ctaLabelQuaternary) {
+              quaternaryCtaNode.textContent = content.ctaLabelQuaternary;
+            }
+            if (content.ctaUrlQuaternary) {
+              quaternaryCtaNode.setAttribute('href', content.ctaUrlQuaternary);
             }
           }
         })

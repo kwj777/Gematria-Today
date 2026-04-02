@@ -102,6 +102,30 @@
               <label class="form-label" for="fieldCtaUrl">CTA URL</label>
               <input id="fieldCtaUrl" class="form-control" maxlength="500" />
             </div>
+            <div class="col-md-6" data-field="ctaLabelSecondary">
+              <label class="form-label" for="fieldCtaLabelSecondary">CTA label (secondary)</label>
+              <input id="fieldCtaLabelSecondary" class="form-control" maxlength="80" />
+            </div>
+            <div class="col-md-6" data-field="ctaUrlSecondary">
+              <label class="form-label" for="fieldCtaUrlSecondary">CTA URL (secondary)</label>
+              <input id="fieldCtaUrlSecondary" class="form-control" maxlength="500" />
+            </div>
+            <div class="col-md-6" data-field="ctaLabelTertiary">
+              <label class="form-label" for="fieldCtaLabelTertiary">CTA label (tertiary)</label>
+              <input id="fieldCtaLabelTertiary" class="form-control" maxlength="80" />
+            </div>
+            <div class="col-md-6" data-field="ctaUrlTertiary">
+              <label class="form-label" for="fieldCtaUrlTertiary">CTA URL (tertiary)</label>
+              <input id="fieldCtaUrlTertiary" class="form-control" maxlength="500" />
+            </div>
+            <div class="col-md-6" data-field="ctaLabelQuaternary">
+              <label class="form-label" for="fieldCtaLabelQuaternary">CTA label (quaternary)</label>
+              <input id="fieldCtaLabelQuaternary" class="form-control" maxlength="80" />
+            </div>
+            <div class="col-md-6" data-field="ctaUrlQuaternary">
+              <label class="form-label" for="fieldCtaUrlQuaternary">CTA URL (quaternary)</label>
+              <input id="fieldCtaUrlQuaternary" class="form-control" maxlength="500" />
+            </div>
             <div class="col-12" data-field="allStaticContent">
               <label class="form-label" for="fieldAllStaticContent">All static page content</label>
               <textarea id="fieldAllStaticContent" class="form-control" rows="10" maxlength="20000"></textarea>
@@ -188,6 +212,12 @@
         heroBodySecondary: document.getElementById('fieldHeroBodySecondary'),
         ctaLabel: document.getElementById('fieldCtaLabel'),
         ctaUrl: document.getElementById('fieldCtaUrl'),
+        ctaLabelSecondary: document.getElementById('fieldCtaLabelSecondary'),
+        ctaUrlSecondary: document.getElementById('fieldCtaUrlSecondary'),
+        ctaLabelTertiary: document.getElementById('fieldCtaLabelTertiary'),
+        ctaUrlTertiary: document.getElementById('fieldCtaUrlTertiary'),
+        ctaLabelQuaternary: document.getElementById('fieldCtaLabelQuaternary'),
+        ctaUrlQuaternary: document.getElementById('fieldCtaUrlQuaternary'),
         allStaticContent: document.getElementById('fieldAllStaticContent'),
         heading: document.getElementById('fieldHeading'),
         body: document.getElementById('fieldBody'),
@@ -276,7 +306,7 @@
         const isPage = targetType.value === 'page';
         document.querySelectorAll('[data-field]').forEach((node) => {
           const key = node.getAttribute('data-field');
-          const pageFields = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'allStaticContent'];
+          const pageFields = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'ctaLabelSecondary', 'ctaUrlSecondary', 'ctaLabelTertiary', 'ctaUrlTertiary', 'ctaLabelQuaternary', 'ctaUrlQuaternary', 'allStaticContent'];
           const elementFields = ['heading', 'body', 'buttonLabel', 'buttonUrl'];
           const show = isPage ? pageFields.includes(key) : elementFields.includes(key);
           node.classList.toggle('d-none', !show);
@@ -294,7 +324,7 @@
       }
 
       function hasPageContent(content = {}) {
-        return ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'allStaticContent']
+        return ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'ctaLabelSecondary', 'ctaUrlSecondary', 'ctaLabelTertiary', 'ctaUrlTertiary', 'ctaLabelQuaternary', 'ctaUrlQuaternary', 'allStaticContent']
           .some((field) => String(content[field] || '').trim().length > 0);
       }
 
@@ -342,9 +372,15 @@
           heroBodySecondary = '';
         }
 
-        const ctaNode = heroContainer?.querySelector('a[href]');
-        const ctaLabel = ctaNode?.textContent?.trim() || '';
-        const ctaUrl = ctaNode?.getAttribute('href')?.trim() || '';
+        const ctaNodes = Array.from(doc.querySelectorAll('#homeHeroCarousel .carousel-item a.btn[href], main section a.btn[href]'));
+        const ctaLabel = ctaNodes[0]?.textContent?.trim() || '';
+        const ctaUrl = ctaNodes[0]?.getAttribute('href')?.trim() || '';
+        const ctaLabelSecondary = ctaNodes[1]?.textContent?.trim() || '';
+        const ctaUrlSecondary = ctaNodes[1]?.getAttribute('href')?.trim() || '';
+        const ctaLabelTertiary = ctaNodes[2]?.textContent?.trim() || '';
+        const ctaUrlTertiary = ctaNodes[2]?.getAttribute('href')?.trim() || '';
+        const ctaLabelQuaternary = ctaNodes[3]?.textContent?.trim() || '';
+        const ctaUrlQuaternary = ctaNodes[3]?.getAttribute('href')?.trim() || '';
         const staticTextNodes = Array.from((doc.querySelector('main') || doc.body).querySelectorAll('h1, h2, h3, p, li, a.btn, button'))
           .map((node) => String(node.textContent || '').replace(/\s+/g, ' ').trim())
           .filter((text) => text.length > 0);
@@ -359,6 +395,12 @@
           heroBodySecondary,
           ctaLabel,
           ctaUrl,
+          ctaLabelSecondary,
+          ctaUrlSecondary,
+          ctaLabelTertiary,
+          ctaUrlTertiary,
+          ctaLabelQuaternary,
+          ctaUrlQuaternary,
           allStaticContent: dedupedStaticText.join('\n\n'),
         };
       }
@@ -467,7 +509,7 @@
             return sourceContent;
           }
           return Object.fromEntries(
-            ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'allStaticContent']
+            ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'ctaLabelSecondary', 'ctaUrlSecondary', 'ctaLabelTertiary', 'ctaUrlTertiary', 'ctaLabelQuaternary', 'ctaUrlQuaternary', 'allStaticContent']
               .map((field) => [field, workspaceContent[field] ?? sourceContent[field] ?? '']),
           );
         }
@@ -534,6 +576,12 @@
                 heroBodySecondary: fields.heroBodySecondary.value,
                 ctaLabel: fields.ctaLabel.value,
                 ctaUrl: fields.ctaUrl.value,
+                ctaLabelSecondary: fields.ctaLabelSecondary.value,
+                ctaUrlSecondary: fields.ctaUrlSecondary.value,
+                ctaLabelTertiary: fields.ctaLabelTertiary.value,
+                ctaUrlTertiary: fields.ctaUrlTertiary.value,
+                ctaLabelQuaternary: fields.ctaLabelQuaternary.value,
+                ctaUrlQuaternary: fields.ctaUrlQuaternary.value,
                 allStaticContent: fields.allStaticContent.value,
               }
             : {

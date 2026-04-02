@@ -31,6 +31,12 @@ function defaultWorkspace() {
     heroBodySecondary: '',
     ctaLabel: '',
     ctaUrl: '',
+    ctaLabelSecondary: '',
+    ctaUrlSecondary: '',
+    ctaLabelTertiary: '',
+    ctaUrlTertiary: '',
+    ctaLabelQuaternary: '',
+    ctaUrlQuaternary: '',
     allStaticContent: '',
   }]));
   const elements = Object.fromEntries(ELEMENT_DEFINITIONS.map((item) => [item.id, { heading: '', body: '', buttonLabel: '', buttonUrl: '' }]));
@@ -60,6 +66,12 @@ function normalizePageInput(input = {}) {
     heroBodySecondary: normalizeText(input.heroBodySecondary, 2000),
     ctaLabel: normalizeText(input.ctaLabel, 80),
     ctaUrl: normalizeText(input.ctaUrl, 500),
+    ctaLabelSecondary: normalizeText(input.ctaLabelSecondary, 80),
+    ctaUrlSecondary: normalizeText(input.ctaUrlSecondary, 500),
+    ctaLabelTertiary: normalizeText(input.ctaLabelTertiary, 80),
+    ctaUrlTertiary: normalizeText(input.ctaUrlTertiary, 500),
+    ctaLabelQuaternary: normalizeText(input.ctaLabelQuaternary, 80),
+    ctaUrlQuaternary: normalizeText(input.ctaUrlQuaternary, 500),
     allStaticContent: normalizeText(input.allStaticContent, 20000),
   };
 }

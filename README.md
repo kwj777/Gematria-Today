@@ -107,6 +107,10 @@ If your Codex/agent session does not expose a browser screenshot tool, you can c
    ```
 
 The `--url` flag is required. `--output` defaults to `artifacts/screenshot.png`.
+Optional flags:
+
+- `--hide-selector ".css-selector"` can be passed multiple times to hide specific elements before capture.
+- `--blur-selector ".css-selector"` can be passed multiple times to blur specific elements before capture.
 
 ## Sync GitHub repo with Netlify
 

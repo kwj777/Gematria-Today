@@ -258,8 +258,41 @@
         if (!pagePath) {
           return 'about:blank';
         }
-        const separator = pagePath.includes('?') ? '&' : '?';
-        return `${pagePath}${separator}previewRefresh=${Date.now()}`;
+        const url = new URL(pagePath, window.location.origin);
+        url.searchParams.set('previewRefresh', Date.now().toString());
+        url.searchParams.set('previewNoCache', '1');
+        return `${url.pathname}${url.search}`;
+      }
+
+      async function requestServiceWorkerCacheRefresh(registration) {
+        const worker = registration?.active || registration?.waiting || registration?.installing;
+        if (!worker) {
+          return;
+        }
+
+        await new Promise((resolve) => {
+          const channel = new MessageChannel();
+          const timeout = window.setTimeout(resolve, 1500);
+
+          channel.port1.onmessage = () => {
+            window.clearTimeout(timeout);
+            resolve();
+          };
+
+          worker.postMessage({ type: 'REFRESH_CACHE' }, [channel.port2]);
+        });
+      }
+
+      async function clearClientCachesForPreview() {
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => requestServiceWorkerCacheRefresh(registration)));
+        }
+
+        if ('caches' in window) {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+        }
       }
 
       function getElementFieldForPreviewSelection(elementId) {
@@ -983,14 +1016,25 @@
       targetId.addEventListener('change', () => {
         void fillForm();
       });
-      refreshPreviewButton.addEventListener('click', () => {
+      refreshPreviewButton.addEventListener('click', async () => {
         const currentPagePath = pagePreviewFrame.dataset.pagePath || '';
         if (!currentPagePath) {
           showMessage(errorMessage, 'Select a page target before refreshing the screenshot preview.');
           return;
         }
-        pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);
+
+        refreshPreviewButton.disabled = true;
+        clearMessage(saveMessage);
         clearMessage(errorMessage);
+        try {
+          await clearClientCachesForPreview();
+          pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);
+          showMessage(saveMessage, 'Screenshot refreshed with browser and service-worker caches cleared.');
+        } catch (error) {
+          showMessage(errorMessage, error.message || 'Unable to clear cache before refreshing screenshot preview.');
+        } finally {
+          refreshPreviewButton.disabled = false;
+        }
       });
       pagePreviewFrame.addEventListener('load', () => {
         bindPreviewClickHandler();

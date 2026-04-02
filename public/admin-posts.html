@@ -363,7 +363,7 @@
       function formatPostStatusLabel(status) {
         const normalizedStatus = String(status || '').toLowerCase();
         if (normalizedStatus === 'scheduled') return 'Publish later';
-        return normalizedStatus === 'draft' ? 'Saved but not published' : 'Published';
+        return normalizedStatus === 'draft' ? 'Scheduled' : 'Published';
       }
 
       function formatScheduledLabel(value) {

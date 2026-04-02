@@ -258,7 +258,7 @@ const form = document.querySelector('#name-form');
       function createGematriaButton(total) {
         const link = document.createElement('a');
         link.className = 'inline-button';
-        const destination = new URL('/gematria-results.html', window.location.origin);
+        const destination = new URL('/', window.location.origin);
         destination.searchParams.set('gematria', String(total));
         destination.searchParams.set('returnTo', `${window.location.pathname}${window.location.search}${window.location.hash}`);
         link.href = `${destination.pathname}${destination.search}`;

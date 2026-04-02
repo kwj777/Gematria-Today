@@ -1,6 +1,7 @@
 import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
 
 const STATIC_CONTENT_SETTINGS_KEY = 'static_content_workspace';
+const MAX_REVISIONS = 3;
 
 const PAGE_DEFINITIONS = [
   { id: 'home', label: 'Home Page', path: '/index.html' },
@@ -33,7 +34,7 @@ function defaultWorkspace() {
     allStaticContent: '',
   }]));
   const elements = Object.fromEntries(ELEMENT_DEFINITIONS.map((item) => [item.id, { heading: '', body: '', buttonLabel: '', buttonUrl: '' }]));
-  return { pages, elements, updatedAt: null, updatedBy: null };
+  return { pages, elements, updatedAt: null, updatedBy: null, revisions: [] };
 }
 
 function safeJsonParse(input, fallback) {
@@ -82,7 +83,40 @@ function mergeWorkspace(saved = {}) {
   }
   workspace.updatedAt = saved?.updatedAt || null;
   workspace.updatedBy = saved?.updatedBy || null;
+  workspace.revisions = Array.isArray(saved?.revisions)
+    ? saved.revisions
+      .filter((revision) => revision && revision.snapshot)
+      .slice(0, MAX_REVISIONS)
+      .map((revision) => ({
+        id: String(revision.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+        createdAt: revision.createdAt || null,
+        createdBy: revision.createdBy || null,
+        targetType: revision.targetType || null,
+        targetId: revision.targetId || null,
+        snapshot: mergeWorkspace(revision.snapshot),
+      }))
+    : [];
   return workspace;
+}
+
+function cloneWorkspaceSnapshot(workspace = {}) {
+  return {
+    pages: workspace.pages || {},
+    elements: workspace.elements || {},
+    updatedAt: workspace.updatedAt || null,
+    updatedBy: workspace.updatedBy || null,
+  };
+}
+
+function createRevisionEntry(workspace, user, targetType, targetId) {
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+    createdAt: new Date().toISOString(),
+    createdBy: user?.username || user?.id || 'unknown',
+    targetType: targetType || null,
+    targetId: targetId || null,
+    snapshot: cloneWorkspaceSnapshot(workspace),
+  };
 }
 
 async function readWorkspace(sql) {
@@ -109,6 +143,44 @@ export async function handler(event) {
       });
     }
 
+    if (event.httpMethod === 'POST') {
+      const body = parseBody(event);
+      const workspace = await readWorkspace(sql);
+      const action = String(body.action || '').trim().toLowerCase();
+      if (action !== 'revert') {
+        return jsonResponse(400, { error: 'Unsupported action' });
+      }
+
+      const selectedRevisionId = String(body.revisionId || '').trim();
+      if (!selectedRevisionId) {
+        return jsonResponse(400, { error: 'revisionId is required' });
+      }
+
+      const selectedRevision = (workspace.revisions || []).find((revision) => revision.id === selectedRevisionId);
+      if (!selectedRevision?.snapshot) {
+        return jsonResponse(404, { error: 'Saved revision not found' });
+      }
+
+      const currentSnapshotRevision = createRevisionEntry(workspace, user, 'revert', selectedRevisionId);
+      const restoredWorkspace = mergeWorkspace(selectedRevision.snapshot);
+      restoredWorkspace.updatedBy = user.username || user.id;
+      restoredWorkspace.updatedAt = new Date().toISOString();
+      restoredWorkspace.revisions = [currentSnapshotRevision, ...(workspace.revisions || []).filter((revision) => revision.id !== selectedRevisionId)]
+        .slice(0, MAX_REVISIONS);
+
+      await sql`
+        INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
+        VALUES (${STATIC_CONTENT_SETTINGS_KEY}, ${JSON.stringify(restoredWorkspace)}, ${user.id}, NOW())
+        ON CONFLICT (setting_key)
+        DO UPDATE SET
+          setting_value = EXCLUDED.setting_value,
+          updated_by = EXCLUDED.updated_by,
+          updated_at = NOW()
+      `;
+
+      return jsonResponse(200, { saved: true, workspace: restoredWorkspace });
+    }
+
     if (event.httpMethod === 'PUT' || event.httpMethod === 'PATCH') {
       const body = parseBody(event);
       const workspace = await readWorkspace(sql);
@@ -119,6 +191,7 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'targetType and targetId are required' });
       }
 
+      const revisionEntry = createRevisionEntry(workspace, user, targetType, targetId);
       if (targetType === 'page') {
         const exists = PAGE_DEFINITIONS.some((item) => item.id === targetId);
         if (!exists) return jsonResponse(404, { error: 'Unknown static page target' });
@@ -133,6 +206,7 @@ export async function handler(event) {
 
       workspace.updatedBy = user.username || user.id;
       workspace.updatedAt = new Date().toISOString();
+      workspace.revisions = [revisionEntry, ...(workspace.revisions || [])].slice(0, MAX_REVISIONS);
 
       await sql`
         INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)

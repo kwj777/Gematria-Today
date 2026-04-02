@@ -297,6 +297,18 @@ body {
 }
 
 
+@media (min-width: 992px) {
+  .blog-hero-figure {
+    aspect-ratio: 21 / 9;
+    min-height: 0;
+  }
+
+  .blog-hero-image {
+    min-height: 0;
+  }
+}
+
+
 .admin-hero-figure {
   min-height: 180px;
 }

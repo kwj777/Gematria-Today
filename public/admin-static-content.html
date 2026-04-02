@@ -279,6 +279,59 @@
         pagePreviewLink.classList.remove('d-none');
       }
 
+      function mapClickedNodeToElementId(node) {
+        if (!node || !(node instanceof Element)) {
+          return null;
+        }
+
+        const footerNoteNode = node.closest('.site-footer .container > .d-flex > span');
+        if (footerNoteNode) {
+          return 'footer_note';
+        }
+
+        const heroButtonNode = node.closest('#homeHeroCarousel .carousel-item a.btn, main section a.btn');
+        if (heroButtonNode) {
+          return 'homepage_hero_cta';
+        }
+
+        const supportNode = node.closest('a[href*="contact"], a[href*="support"], a[href*="donate"]');
+        if (supportNode) {
+          return 'support_cta';
+        }
+
+        const announcementNode = node.closest('.alert, [role="status"], [data-announcement]');
+        if (announcementNode) {
+          return 'site_announcement';
+        }
+
+        return null;
+      }
+
+      function bindPreviewClickHandler() {
+        const frameDocument = pagePreviewFrame.contentDocument;
+        if (!frameDocument || frameDocument.__staticEditorClickBound) {
+          return;
+        }
+
+        frameDocument.addEventListener('click', (event) => {
+          const matchedElementId = mapClickedNodeToElementId(event.target);
+          if (!matchedElementId) {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+          targetType.value = 'element';
+          setTargetOptions();
+          targetId.value = matchedElementId;
+          void fillForm();
+          showMessage(saveMessage, 'Loaded selected static element in editor.');
+          clearMessage(errorMessage);
+        });
+
+        frameDocument.__staticEditorClickBound = true;
+      }
+
       function showMessage(node, message) {
         node.textContent = message;
         node.classList.remove('d-none');
@@ -648,6 +701,9 @@
       targetType.addEventListener('change', setTargetOptions);
       targetId.addEventListener('change', () => {
         void fillForm();
+      });
+      pagePreviewFrame.addEventListener('load', () => {
+        bindPreviewClickHandler();
       });
 
       Promise.all([loadSession(), loadWorkspace()]).catch((error) => {

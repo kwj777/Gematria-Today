@@ -76,6 +76,7 @@
             <div class="col-md-6"><label class="form-label" for="createPostScheduledPublishAt">Schedule publish date/time (optional)</label><input id="createPostScheduledPublishAt" class="form-control" type="datetime-local" /></div>
             <div class="col-12 d-flex gap-2">
               <button class="btn btn-primary" type="submit">Create post</button>
+              <button id="saveDraftButton" class="btn btn-outline-secondary" type="submit">Save Draft</button>
               <button id="importMdFileButton" class="btn btn-outline-dark" type="button">Import MD file</button>
               <input id="importMdFileInput" class="d-none" type="file" accept=".md,text/markdown" />
               <button id="generateHeroImageButton" class="btn btn-outline-success" type="button">Create hero image</button>
@@ -705,8 +706,12 @@
         try {
           const readTimeField = document.getElementById('createPostReadTime');
           const bodyValue = document.getElementById('createPostBody').value;
+          const isSaveDraftAction = event.submitter?.id === 'saveDraftButton';
           if (!String(readTimeField.value || '').trim()) {
             readTimeField.value = estimateReadTimeLabelFromContent(bodyValue);
+          }
+          if (isSaveDraftAction) {
+            document.getElementById('createPostStatus').value = 'draft';
           }
           await request('/api/admin-posts', {
             method: 'POST',
@@ -716,12 +721,12 @@
               readTime: readTimeField.value,
               summary: document.getElementById('createPostSummary').value,
               body: bodyValue,
-              status: getCreatePostRequestStatus(),
+              status: isSaveDraftAction ? 'draft' : getCreatePostRequestStatus(),
               scheduledPublishAt: localDateTimeInputToIso(document.getElementById('createPostScheduledPublishAt').value)
             })
           });
           createPostForm.reset();
-          showMessage(saveMessage, 'Blog post created.');
+          showMessage(saveMessage, isSaveDraftAction ? 'Draft post saved.' : 'Blog post created.');
           await loadPosts();
         } catch (error) {
           showMessage(errorMessage, error.message);

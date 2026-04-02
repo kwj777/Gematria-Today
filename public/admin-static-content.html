@@ -412,8 +412,13 @@
         refreshPreviewButton.disabled = false;
         pagePreviewFrame.dataset.pagePath = pagePath;
         pagePreviewMeta.textContent = `Selection mode: ${selected.label} (${pagePath}). Click text/buttons in this preview to load the matching static element in the form. Scroll over hero sliders to reach secondary hero content.`;
-        pagePreviewFrame.srcdoc = '';
-        pagePreviewFrame.src = buildPreviewFrameUrl(pagePath);
+        pagePreviewFrame.srcdoc = '<!doctype html><html><body style="font:14px system-ui;padding:1rem;color:#4b5563;">Loading live preview…</body></html>';
+
+        void refreshPreviewFromNetwork(pagePath)
+          .catch(() => {
+            pagePreviewFrame.srcdoc = '';
+            pagePreviewFrame.src = buildPreviewFrameUrl(pagePath);
+          });
       }
 
       function mapClickedNodeToElementId(node) {

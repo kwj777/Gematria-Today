@@ -174,11 +174,10 @@
 
         <section id="pagePreviewPanel" class="content-panel p-4 mt-4 d-none">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 class="h5 mb-0">Current page snapshot</h2>
-            <a id="pagePreviewLink" class="btn btn-sm btn-outline-secondary d-none" href="#" target="_blank" rel="noopener">Open live page</a>
+            <h2 class="h5 mb-0">Page selection preview</h2>
           </div>
           <p id="pagePreviewMeta" class="small text-muted mb-3">
-            Select a static page to load its latest screenshot-style preview.
+            Select a static page, then click text or buttons in this frozen preview to jump to the matching editor field. Scroll over hero sliders to move between slides.
           </p>
           <div class="ratio ratio-16x9 border rounded overflow-hidden bg-light">
             <iframe
@@ -187,6 +186,7 @@
               class="w-100 h-100 border-0"
               loading="lazy"
               referrerpolicy="same-origin"
+              sandbox="allow-same-origin"
             ></iframe>
           </div>
         </section>
@@ -208,7 +208,6 @@
       const pagePreviewPanel = document.getElementById('pagePreviewPanel');
       const pagePreviewMeta = document.getElementById('pagePreviewMeta');
       const pagePreviewFrame = document.getElementById('pagePreviewFrame');
-      const pagePreviewLink = document.getElementById('pagePreviewLink');
 
       const fields = {
         seoTitle: document.getElementById('fieldSeoTitle'),
@@ -303,7 +302,6 @@
         if (targetType.value !== 'page') {
           pagePreviewPanel.classList.add('d-none');
           pagePreviewFrame.src = 'about:blank';
-          pagePreviewLink.classList.add('d-none');
           return;
         }
 
@@ -313,15 +311,12 @@
           pagePreviewPanel.classList.remove('d-none');
           pagePreviewFrame.src = 'about:blank';
           pagePreviewMeta.textContent = 'No page path is available for this target.';
-          pagePreviewLink.classList.add('d-none');
           return;
         }
 
         pagePreviewPanel.classList.remove('d-none');
-        pagePreviewMeta.textContent = `Previewing ${selected.label} (${pagePath}).`;
+        pagePreviewMeta.textContent = `Selection mode: ${selected.label} (${pagePath}). Click text/buttons in this preview to load the matching static element in the form. Scroll over hero sliders to reach secondary hero content.`;
         pagePreviewFrame.src = pagePath;
-        pagePreviewLink.href = pagePath;
-        pagePreviewLink.classList.remove('d-none');
       }
 
       function mapClickedNodeToElementId(node) {
@@ -352,6 +347,47 @@
         return null;
       }
 
+
+      function getPreviewCarouselItems(frameDocument) {
+        if (!frameDocument) {
+          return [];
+        }
+        return Array.from(frameDocument.querySelectorAll('#homeHeroCarousel .carousel-item'));
+      }
+
+      function setPreviewCarouselSlide(frameDocument, nextIndex) {
+        const items = getPreviewCarouselItems(frameDocument);
+        if (!items.length) {
+          return false;
+        }
+
+        const normalizedIndex = ((nextIndex % items.length) + items.length) % items.length;
+        items.forEach((item, index) => {
+          const isActive = index === normalizedIndex;
+          item.classList.toggle('active', isActive);
+          item.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        });
+
+        const indicators = Array.from(frameDocument.querySelectorAll('#homeHeroCarousel [data-bs-slide-to]'));
+        indicators.forEach((indicator, index) => {
+          const isActive = index === normalizedIndex;
+          indicator.classList.toggle('active', isActive);
+          indicator.setAttribute('aria-current', isActive ? 'true' : 'false');
+          indicator.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        return true;
+      }
+
+      function movePreviewCarouselSlide(frameDocument, delta) {
+        const items = getPreviewCarouselItems(frameDocument);
+        if (!items.length) {
+          return false;
+        }
+        const activeIndex = Math.max(items.findIndex((item) => item.classList.contains('active')), 0);
+        return setPreviewCarouselSlide(frameDocument, activeIndex + delta);
+      }
+
       function bindPreviewClickHandler() {
         const frameDocument = pagePreviewFrame.contentDocument;
         if (!frameDocument || frameDocument.__staticEditorClickBound) {
@@ -359,13 +395,38 @@
         }
 
         frameDocument.addEventListener('click', async (event) => {
-          const matchedElementId = mapClickedNodeToElementId(event.target);
-          if (!matchedElementId) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (event.target.closest('#homeHeroCarousel .carousel-control-next, #homeHeroCarousel [data-bs-slide="next"]')) {
+            if (movePreviewCarouselSlide(frameDocument, 1)) {
+              clearMessage(errorMessage);
+            }
+            return;
+          }
+          if (event.target.closest('#homeHeroCarousel .carousel-control-prev, #homeHeroCarousel [data-bs-slide="prev"]')) {
+            if (movePreviewCarouselSlide(frameDocument, -1)) {
+              clearMessage(errorMessage);
+            }
             return;
           }
 
-          event.preventDefault();
-          event.stopPropagation();
+          const indicator = event.target.closest('#homeHeroCarousel [data-bs-slide-to]');
+          if (indicator) {
+            const requestedIndex = Number.parseInt(indicator.getAttribute('data-bs-slide-to') || '', 10);
+            if (Number.isFinite(requestedIndex)) {
+              setPreviewCarouselSlide(frameDocument, requestedIndex);
+              clearMessage(errorMessage);
+            }
+            return;
+          }
+
+          const matchedElementId = mapClickedNodeToElementId(event.target);
+          if (!matchedElementId) {
+            showMessage(errorMessage, 'That area is not mapped yet. Click a hero/support button, announcement, or footer note to edit it.');
+            return;
+          }
+
           targetType.value = 'element';
           setTargetOptions();
           targetId.value = matchedElementId;
@@ -373,6 +434,32 @@
           focusAndHighlightField(getElementFieldForPreviewSelection(matchedElementId));
           showMessage(saveMessage, 'Loaded selected static element in editor.');
           clearMessage(errorMessage);
+        });
+
+
+
+        const heroCarousel = frameDocument.getElementById('homeHeroCarousel');
+        if (heroCarousel) {
+          heroCarousel.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const direction = event.deltaY > 0 ? 1 : -1;
+            if (movePreviewCarouselSlide(frameDocument, direction)) {
+              clearMessage(errorMessage);
+            }
+          }, { passive: false });
+        }
+
+        frameDocument.addEventListener('submit', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        });
+
+        frameDocument.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+          }
         });
 
         frameDocument.__staticEditorClickBound = true;

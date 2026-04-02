@@ -19,7 +19,17 @@ const ELEMENT_DEFINITIONS = [
 ];
 
 function defaultWorkspace() {
-  const pages = Object.fromEntries(PAGE_DEFINITIONS.map((item) => [item.id, { seoTitle: '', metaDescription: '', heroHeadline: '', heroBody: '', ctaLabel: '', ctaUrl: '', allStaticContent: '' }]));
+  const pages = Object.fromEntries(PAGE_DEFINITIONS.map((item) => [item.id, {
+    seoTitle: '',
+    metaDescription: '',
+    heroHeadline: '',
+    heroBody: '',
+    heroHeadlineSecondary: '',
+    heroBodySecondary: '',
+    ctaLabel: '',
+    ctaUrl: '',
+    allStaticContent: '',
+  }]));
   const elements = Object.fromEntries(ELEMENT_DEFINITIONS.map((item) => [item.id, { heading: '', body: '', buttonLabel: '', buttonUrl: '' }]));
   return { pages, elements, updatedAt: null, updatedBy: null };
 }
@@ -43,6 +53,8 @@ function normalizePageInput(input = {}) {
     metaDescription: normalizeText(input.metaDescription, 300),
     heroHeadline: normalizeText(input.heroHeadline, 180),
     heroBody: normalizeText(input.heroBody, 2000),
+    heroHeadlineSecondary: normalizeText(input.heroHeadlineSecondary, 180),
+    heroBodySecondary: normalizeText(input.heroBodySecondary, 2000),
     ctaLabel: normalizeText(input.ctaLabel, 80),
     ctaUrl: normalizeText(input.ctaUrl, 500),
     allStaticContent: normalizeText(input.allStaticContent, 20000),

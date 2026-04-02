@@ -110,6 +110,25 @@
             </div>
           </form>
         </section>
+
+        <section id="pagePreviewPanel" class="content-panel p-4 mt-4 d-none">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h5 mb-0">Current page snapshot</h2>
+            <a id="pagePreviewLink" class="btn btn-sm btn-outline-secondary d-none" href="#" target="_blank" rel="noopener">Open live page</a>
+          </div>
+          <p id="pagePreviewMeta" class="small text-muted mb-3">
+            Select a static page to load its latest screenshot-style preview.
+          </p>
+          <div class="ratio ratio-16x9 border rounded overflow-hidden bg-light">
+            <iframe
+              id="pagePreviewFrame"
+              title="Selected static page preview"
+              class="w-100 h-100 border-0"
+              loading="lazy"
+              referrerpolicy="same-origin"
+            ></iframe>
+          </div>
+        </section>
       </div>
     </main>
 
@@ -123,6 +142,10 @@
       const sessionMeta = document.getElementById('sessionMeta');
       const lastUpdatedMeta = document.getElementById('lastUpdatedMeta');
       const copyJsonButton = document.getElementById('copyJsonButton');
+      const pagePreviewPanel = document.getElementById('pagePreviewPanel');
+      const pagePreviewMeta = document.getElementById('pagePreviewMeta');
+      const pagePreviewFrame = document.getElementById('pagePreviewFrame');
+      const pagePreviewLink = document.getElementById('pagePreviewLink');
 
       const fields = {
         seoTitle: document.getElementById('fieldSeoTitle'),
@@ -144,6 +167,31 @@
         workspace: null,
         pageSourceContent: {},
       };
+
+      function updatePagePreview() {
+        if (targetType.value !== 'page') {
+          pagePreviewPanel.classList.add('d-none');
+          pagePreviewFrame.src = 'about:blank';
+          pagePreviewLink.classList.add('d-none');
+          return;
+        }
+
+        const selected = state.pageDefinitions.find((item) => item.id === targetId.value);
+        const pagePath = selected?.path || '';
+        if (!pagePath) {
+          pagePreviewPanel.classList.remove('d-none');
+          pagePreviewFrame.src = 'about:blank';
+          pagePreviewMeta.textContent = 'No page path is available for this target.';
+          pagePreviewLink.classList.add('d-none');
+          return;
+        }
+
+        pagePreviewPanel.classList.remove('d-none');
+        pagePreviewMeta.textContent = `Previewing ${selected.label} (${pagePath}).`;
+        pagePreviewFrame.src = pagePath;
+        pagePreviewLink.href = pagePath;
+        pagePreviewLink.classList.remove('d-none');
+      }
 
       function showMessage(node, message) {
         node.textContent = message;
@@ -282,6 +330,7 @@
         const source = isPage ? state.pageDefinitions : state.elementDefinitions;
         const selected = source.find((item) => item.id === targetId.value);
         editorTitle.textContent = selected ? `Editing: ${selected.label}` : 'Editor';
+        updatePagePreview();
 
         if (state.workspace?.updatedAt) {
           const by = state.workspace.updatedBy ? ` by ${state.workspace.updatedBy}` : '';

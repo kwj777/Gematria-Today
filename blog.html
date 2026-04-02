@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<title>EndTimes.Today Blog</title>
-    <meta name="description" content="Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today." />
+<title id="pageSeoTitle">EndTimes.Today Blog</title>
+    <meta id="pageMetaDescription" name="description" content="Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today." />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <meta name="follow.it-verification-code" content="QWGmS98nmFeBXDqvPBr0" />
     <link rel="canonical" href="https://endtimes.today/blog.html" />
@@ -103,8 +103,9 @@
           <p class="section-kicker mb-3">Blog</p>
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
-              <h1 class="display-5 fw-bold mb-3">Insights, prophecy studies, and eschatology views for gematria research.</h1>
-              <p class="lead mb-0">Learn how words, numbers, and patterns connect through gematria insights, including posts on prophecy and related eschatology views.</p>
+              <h1 id="heroHeadlinePrimary" class="display-5 fw-bold mb-3">Insights, prophecy studies, and eschatology views for gematria research.</h1>
+              <p id="heroBodyPrimary" class="lead mb-0">Learn how words, numbers, and patterns connect through gematria insights, including posts on prophecy and related eschatology views.</p>
+              <p id="heroHeadlineSecondary" class="lead text-muted mt-3 mb-0 d-none"></p>
             </div>
             <div class="col-lg-4">
               <figure class="content-panel hero-media-panel hero-image-frame h-100 mb-0 overflow-hidden news-hero-figure">
@@ -905,6 +906,34 @@
         document.body.classList.remove('page-render-pending');
         document.getElementById('pageRenderOverlay')?.remove();
       };
+      const applyStaticContentPromise = fetch('/api/public-static-content?page=blog')
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load static content')))
+        .then((payload) => {
+          const content = payload?.content || {};
+          if (content.seoTitle) {
+            document.title = content.seoTitle;
+            const seoTitleNode = document.getElementById('pageSeoTitle');
+            if (seoTitleNode) seoTitleNode.textContent = content.seoTitle;
+          }
+          if (content.metaDescription) {
+            const metaNode = document.getElementById('pageMetaDescription');
+            if (metaNode) metaNode.setAttribute('content', content.metaDescription);
+          }
+          if (content.heroHeadline) {
+            const heroHeadlineNode = document.getElementById('heroHeadlinePrimary');
+            if (heroHeadlineNode) heroHeadlineNode.textContent = content.heroHeadline;
+          }
+          if (content.heroBody) {
+            const heroBodyNode = document.getElementById('heroBodyPrimary');
+            if (heroBodyNode) heroBodyNode.textContent = content.heroBody;
+          }
+          const heroHeadlineSecondaryNode = document.getElementById('heroHeadlineSecondary');
+          if (heroHeadlineSecondaryNode && content.heroHeadlineSecondary) {
+            heroHeadlineSecondaryNode.textContent = content.heroHeadlineSecondary;
+            heroHeadlineSecondaryNode.classList.remove('d-none');
+          }
+        })
+        .catch(() => {});
 
       const fetchPublishedPosts = async () => {
         const response = await fetch('/api/public-posts');
@@ -936,7 +965,7 @@
         return mergedPosts;
       };
 
-      Promise.race([
+      const renderPostsPromise = Promise.race([
         fetchPublishedPosts(),
         new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading published posts')), 4000))
       ])
@@ -949,7 +978,9 @@
         .catch(() => {
           selectedTag = getRequestedTag();
           renderPosts(fallbackPosts);
-        })
+        });
+
+      Promise.allSettled([applyStaticContentPromise, renderPostsPromise])
         .finally(() => {
           window.requestAnimationFrame(() => completeBlogPageRender());
         });

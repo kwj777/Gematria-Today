@@ -5,6 +5,8 @@ const STATIC_CONTENT_SETTINGS_KEY = 'static_content_workspace';
 const PAGE_DEFINITIONS = [
   { id: 'home', label: 'Home Page', path: '/index.html' },
   { id: 'about', label: 'About/Why English Gematria', path: '/why-english-gematria.html' },
+  { id: 'news', label: 'News Page', path: '/news.html' },
+  { id: 'blog', label: 'Blog Page', path: '/blog.html' },
   { id: 'faq', label: 'FAQ Page', path: '/faq.html' },
   { id: 'contact', label: 'Contact Page', path: '/contact.html' },
   { id: 'privacy', label: 'Privacy Policy', path: '/privacy.html' },

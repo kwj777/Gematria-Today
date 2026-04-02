@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<title>EndTimes.Today | Gematria Calculator, Name Meaning, News & Blog</title>
-    <meta name="description" content="Use EndTimes.Today to calculate English gematria values, compare names, explore related words, and read curated news and blog insights in one place." />
+<title id="pageSeoTitle">EndTimes.Today | Gematria Calculator, Name Meaning, News & Blog</title>
+    <meta id="pageMetaDescription" name="description" content="Use EndTimes.Today to calculate English gematria values, compare names, explore related words, and read curated news and blog insights in one place." />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://endtimes.today/" />
     <meta property="og:site_name" content="EndTimes.Today" />
@@ -126,8 +126,8 @@
                 <div class="row align-items-center g-4">
                   <div class="col-lg-7">
                     <p class="section-kicker mb-2">Eschatology Focus</p>
-                    <h2 class="display-5 fw-bold mb-3">Track end-times signals with structured eschatology research.</h2>
-                    <p class="lead mb-4">Explore prophecy-centered articles, compare symbol patterns, and follow current-event context from our eschatology coverage.</p>
+                    <h2 id="homeHeroSecondaryTitle" class="display-5 fw-bold mb-3">Track end-times signals with structured eschatology research.</h2>
+                    <p id="homeHeroSecondaryLead" class="lead mb-4">Explore prophecy-centered articles, compare symbol patterns, and follow current-event context from our eschatology coverage.</p>
                     <div class="d-flex flex-wrap gap-2">
                       <a id="homeEschatologyCta" class="btn btn-warning btn-lg touch-target-lg" href="/blog.html">Explore Eschatology Blog</a>
                       <a class="btn btn-outline-light btn-lg touch-target-lg" href="/news.html">See related news</a>
@@ -316,13 +316,64 @@
         });
       });
 
+      const applyStaticContentPromise = fetch('/api/public-static-content?page=home')
+        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load static content')))
+        .then((payload) => {
+          const content = payload?.content || {};
+
+          if (content.seoTitle) {
+            document.title = content.seoTitle;
+            const pageSeoTitleNode = document.getElementById('pageSeoTitle');
+            if (pageSeoTitleNode) {
+              pageSeoTitleNode.textContent = content.seoTitle;
+            }
+          }
+
+          if (content.metaDescription) {
+            const pageMetaDescriptionNode = document.getElementById('pageMetaDescription');
+            if (pageMetaDescriptionNode) {
+              pageMetaDescriptionNode.setAttribute('content', content.metaDescription);
+            }
+          }
+
+          if (content.heroHeadline) {
+            const primaryHeadlineNode = document.getElementById('homeHeroTitle');
+            if (primaryHeadlineNode) {
+              primaryHeadlineNode.textContent = content.heroHeadline;
+            }
+          }
+
+          if (content.heroBody) {
+            const primaryBodyNode = document.getElementById('homeHeroLead');
+            if (primaryBodyNode) {
+              primaryBodyNode.textContent = content.heroBody;
+            }
+          }
+
+          if (content.heroHeadlineSecondary) {
+            const secondaryHeadlineNode = document.getElementById('homeHeroSecondaryTitle');
+            if (secondaryHeadlineNode) {
+              secondaryHeadlineNode.textContent = content.heroHeadlineSecondary;
+            }
+          }
+
+          if (content.heroBodySecondary) {
+            const secondaryBodyNode = document.getElementById('homeHeroSecondaryLead');
+            if (secondaryBodyNode) {
+              secondaryBodyNode.textContent = content.heroBodySecondary;
+            }
+          }
+        })
+        .catch(() => {});
+
       Promise.all([
+        applyStaticContentPromise,
         Promise.race([
           fetchFeaturedPosts(),
           new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000))
         ]).catch(() => ({ items: [] })),
       ])
-      .then(([featuredPostsPayload]) => {
+      .then(([, featuredPostsPayload]) => {
         renderHomepageSlider(featuredPostsPayload?.items || []);
       });
     </script>

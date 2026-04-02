@@ -329,7 +329,7 @@
           return 'footer_note';
         }
 
-        const heroButtonNode = node.closest('#homeHeroCarousel .carousel-item a.btn, main section a.btn');
+        const heroButtonNode = node.closest('#homeHeroCarousel .carousel-item a[href], main section a.btn');
         if (heroButtonNode) {
           return 'homepage_hero_cta';
         }

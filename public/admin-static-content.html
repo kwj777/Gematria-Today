@@ -66,16 +66,24 @@
               <input id="fieldMetaDescription" class="form-control" maxlength="300" />
             </div>
             <div class="col-md-6" data-field="heroHeadline">
-              <label class="form-label" for="fieldHeroHeadline">Hero headline</label>
+              <label class="form-label" for="fieldHeroHeadline">Primary hero headline</label>
               <input id="fieldHeroHeadline" class="form-control" maxlength="180" />
+            </div>
+            <div class="col-md-6" data-field="heroHeadlineSecondary">
+              <label class="form-label" for="fieldHeroHeadlineSecondary">Secondary hero headline</label>
+              <input id="fieldHeroHeadlineSecondary" class="form-control" maxlength="180" />
             </div>
             <div class="col-md-6" data-field="heading">
               <label class="form-label" for="fieldHeading">Element heading</label>
               <input id="fieldHeading" class="form-control" maxlength="180" />
             </div>
             <div class="col-12" data-field="heroBody">
-              <label class="form-label" for="fieldHeroBody">Hero body copy</label>
+              <label class="form-label" for="fieldHeroBody">Primary hero body copy</label>
               <textarea id="fieldHeroBody" class="form-control" rows="4" maxlength="2000"></textarea>
+            </div>
+            <div class="col-12" data-field="heroBodySecondary">
+              <label class="form-label" for="fieldHeroBodySecondary">Secondary hero body copy</label>
+              <textarea id="fieldHeroBodySecondary" class="form-control" rows="4" maxlength="2000"></textarea>
             </div>
             <div class="col-12" data-field="body">
               <label class="form-label" for="fieldBody">Element body copy</label>
@@ -152,6 +160,8 @@
         metaDescription: document.getElementById('fieldMetaDescription'),
         heroHeadline: document.getElementById('fieldHeroHeadline'),
         heroBody: document.getElementById('fieldHeroBody'),
+        heroHeadlineSecondary: document.getElementById('fieldHeroHeadlineSecondary'),
+        heroBodySecondary: document.getElementById('fieldHeroBodySecondary'),
         ctaLabel: document.getElementById('fieldCtaLabel'),
         ctaUrl: document.getElementById('fieldCtaUrl'),
         allStaticContent: document.getElementById('fieldAllStaticContent'),
@@ -221,7 +231,7 @@
         const isPage = targetType.value === 'page';
         document.querySelectorAll('[data-field]').forEach((node) => {
           const key = node.getAttribute('data-field');
-          const pageFields = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'ctaLabel', 'ctaUrl', 'allStaticContent'];
+          const pageFields = ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'allStaticContent'];
           const elementFields = ['heading', 'body', 'buttonLabel', 'buttonUrl'];
           const show = isPage ? pageFields.includes(key) : elementFields.includes(key);
           node.classList.toggle('d-none', !show);
@@ -239,7 +249,7 @@
       }
 
       function hasPageContent(content = {}) {
-        return ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'ctaLabel', 'ctaUrl', 'allStaticContent']
+        return ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'allStaticContent']
           .some((field) => String(content[field] || '').trim().length > 0);
       }
 
@@ -258,25 +268,33 @@
         const heroContainer = doc.querySelector('main section') || doc.querySelector('main') || doc.body;
         const homeHeroSlides = Array.from(doc.querySelectorAll('#homeHeroCarousel .carousel-item'));
         const slideHeadlines = homeHeroSlides
-          .map((slide) => String(slide.querySelector('h1')?.textContent || '').trim())
-          .filter((text) => text.length > 0);
+          .map((slide) => String(slide.querySelector('h1, h2')?.textContent || '').trim());
         const slideBodies = homeHeroSlides
           .map((slide) => {
             const paragraphs = Array.from(slide.querySelectorAll('p'));
             return (paragraphs.find((node) => String(node.textContent || '').trim())?.textContent || '').trim();
-          })
-          .filter((text) => text.length > 0);
+          });
 
-        let heroHeadline = slideHeadlines.join('\n\n');
-        let heroBody = slideBodies.join('\n\n');
+        let heroHeadline = slideHeadlines[0] || '';
+        let heroBody = slideBodies[0] || '';
+        let heroHeadlineSecondary = slideHeadlines[1] || '';
+        let heroBodySecondary = slideBodies[1] || '';
 
         if (!heroHeadline) {
-          heroHeadline = heroContainer?.querySelector('h1')?.textContent?.trim() || '';
+          heroHeadline = heroContainer?.querySelector('h1, h2')?.textContent?.trim() || '';
         }
 
         if (!heroBody && heroContainer) {
           const heroParagraphs = Array.from(heroContainer.querySelectorAll('p'));
           heroBody = (heroParagraphs.find((node) => String(node.textContent || '').trim())?.textContent || '').trim();
+        }
+
+        if (!heroHeadlineSecondary) {
+          heroHeadlineSecondary = '';
+        }
+
+        if (!heroBodySecondary) {
+          heroBodySecondary = '';
         }
 
         const ctaNode = heroContainer?.querySelector('a[href]');
@@ -292,6 +310,8 @@
           metaDescription,
           heroHeadline,
           heroBody,
+          heroHeadlineSecondary,
+          heroBodySecondary,
           ctaLabel,
           ctaUrl,
           allStaticContent: dedupedStaticText.join('\n\n'),
@@ -402,7 +422,7 @@
             return sourceContent;
           }
           return Object.fromEntries(
-            ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'ctaLabel', 'ctaUrl', 'allStaticContent']
+            ['seoTitle', 'metaDescription', 'heroHeadline', 'heroBody', 'heroHeadlineSecondary', 'heroBodySecondary', 'ctaLabel', 'ctaUrl', 'allStaticContent']
               .map((field) => [field, workspaceContent[field] || sourceContent[field] || '']),
           );
         }
@@ -464,6 +484,8 @@
                 metaDescription: fields.metaDescription.value,
                 heroHeadline: fields.heroHeadline.value,
                 heroBody: fields.heroBody.value,
+                heroHeadlineSecondary: fields.heroHeadlineSecondary.value,
+                heroBodySecondary: fields.heroBodySecondary.value,
                 ctaLabel: fields.ctaLabel.value,
                 ctaUrl: fields.ctaUrl.value,
                 allStaticContent: fields.allStaticContent.value,

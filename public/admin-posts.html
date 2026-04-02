@@ -363,8 +363,9 @@
 
       function formatPostStatusLabel(status) {
         const normalizedStatus = String(status || '').toLowerCase();
-        if (normalizedStatus === 'scheduled') return 'Publish later';
-        return normalizedStatus === 'draft' ? 'Scheduled' : 'Published';
+        if (normalizedStatus === 'scheduled') return 'Scheduled';
+        if (normalizedStatus === 'draft') return 'Draft';
+        return 'Published';
       }
 
       function formatScheduledLabel(value) {
@@ -538,17 +539,19 @@
         postCount.textContent = `${filteredPosts.length}/${state.posts.length}`;
         postList.innerHTML = filteredPosts.length ? filteredPosts.map((post) => {
           const isEditing = state.editingPostId === post.id;
+          const computedStatus = getComputedPostStatus(post);
+          const statusBadgeClass = computedStatus === 'published' ? 'text-bg-success' : 'text-bg-secondary';
           return `
             <details class="admin-post-details admin-item-card p-3" ${isEditing ? 'open' : ''}>
               <summary class="admin-post-summary">
                 <span class="fw-semibold admin-post-summary-title">${escapeHtml(post.title)}</span>
                 <span class="admin-post-summary-trailing">
-                  <span class="badge ${String(post.status || '').toLowerCase() === 'draft' ? 'text-bg-secondary' : 'text-bg-success'} admin-post-summary-status">${escapeHtml(formatPostStatusLabel(post.status))}</span>
+                  <span class="badge ${statusBadgeClass} admin-post-summary-status">${escapeHtml(formatPostStatusLabel(computedStatus))}</span>
                   <span class="small text-muted admin-post-summary-meta">${escapeHtml(post.scheduledPublishAt ? formatScheduledLabel(post.scheduledPublishAt) : formatCreatedOnLabel(post.createdAt || post.publishedAt))}</span>
                 </span>
               </summary>
               <div class="pt-3">
-                <p class="mb-2"><span class="badge ${String(post.status || '').toLowerCase() === 'draft' ? 'text-bg-secondary' : 'text-bg-success'}">${escapeHtml(formatPostStatusLabel(post.status))}</span></p>
+                <p class="mb-2"><span class="badge ${statusBadgeClass}">${escapeHtml(formatPostStatusLabel(computedStatus))}</span></p>
                 ${post.scheduledPublishAt ? `<p class="small text-muted mb-2">${escapeHtml(formatScheduledLabel(post.scheduledPublishAt))}</p>` : ''}
                 <p class="small text-muted mb-2">${escapeHtml(post.summary || '')}</p>
                 <article class="small mb-3">${normalizePostBodyHtml(post.body || '')}</article>

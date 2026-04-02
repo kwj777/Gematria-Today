@@ -292,6 +292,98 @@
         return `<base href="${baseHref}">${html}`;
       }
 
+      function applyPageContentToHtml(html = '', content = {}) {
+        if (!html) {
+          return html;
+        }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        if (content.seoTitle) {
+          const titleNode = doc.querySelector('title');
+          if (titleNode) titleNode.textContent = content.seoTitle;
+        }
+
+        if (content.metaDescription) {
+          const descriptionNode = doc.querySelector('meta[name="description"]');
+          if (descriptionNode) descriptionNode.setAttribute('content', content.metaDescription);
+        }
+
+        const heroPrimaryNode = doc.querySelector('#heroHeadlinePrimary, #homeHeroHeadlinePrimary, #heroHeadline, main section h1, main h1');
+        if (heroPrimaryNode && content.heroHeadline) {
+          heroPrimaryNode.textContent = content.heroHeadline;
+        }
+
+        const heroSecondaryNode = doc.querySelector('#heroHeadlineSecondary, #homeHeroHeadlineSecondary, [data-hero-headline-secondary]');
+        if (heroSecondaryNode) {
+          if (content.heroHeadlineSecondary) {
+            heroSecondaryNode.textContent = content.heroHeadlineSecondary;
+            heroSecondaryNode.classList.remove('d-none');
+          } else {
+            heroSecondaryNode.textContent = '';
+            heroSecondaryNode.classList.add('d-none');
+          }
+        }
+
+        const heroBodyNode = doc.querySelector('#heroBodyPrimary, #homeHeroBodyPrimary, [data-hero-body], main section p');
+        if (heroBodyNode && content.heroBody) {
+          heroBodyNode.textContent = content.heroBody;
+        }
+
+        const heroBodySecondaryNode = doc.querySelector('#heroBodySecondary, #homeHeroBodySecondary, [data-hero-body-secondary]');
+        if (heroBodySecondaryNode) {
+          if (content.heroBodySecondary) {
+            heroBodySecondaryNode.textContent = content.heroBodySecondary;
+            heroBodySecondaryNode.classList.remove('d-none');
+          } else {
+            heroBodySecondaryNode.textContent = '';
+            heroBodySecondaryNode.classList.add('d-none');
+          }
+        }
+
+        const ctaNodes = Array.from(doc.querySelectorAll('#homeHeroCarousel .carousel-item a.btn[href], main section a.btn[href]'));
+        const ctas = [
+          [content.ctaLabel, content.ctaUrl],
+          [content.ctaLabelSecondary, content.ctaUrlSecondary],
+          [content.ctaLabelTertiary, content.ctaUrlTertiary],
+          [content.ctaLabelQuaternary, content.ctaUrlQuaternary],
+        ];
+        ctaNodes.forEach((node, index) => {
+          const [label, url] = ctas[index] || ['', ''];
+          if (label) node.textContent = label;
+          if (url) node.setAttribute('href', url);
+        });
+
+        const mainRoot = doc.querySelector('main') || doc.body;
+        const headingValues = linesToUniqueList(content.staticHeadings);
+        const paragraphValues = linesToUniqueList(content.staticParagraphs);
+        const listItemValues = linesToUniqueList(content.staticListItems);
+
+        const headingNodes = Array.from(mainRoot.querySelectorAll('h2, h3')).filter((node) => !node.closest('#homeHeroCarousel'));
+        headingNodes.forEach((node, index) => {
+          if (headingValues[index]) {
+            node.textContent = headingValues[index];
+          }
+        });
+
+        const paragraphNodes = Array.from(mainRoot.querySelectorAll('p')).filter((node) => !node.closest('#homeHeroCarousel'));
+        paragraphNodes.forEach((node, index) => {
+          if (paragraphValues[index]) {
+            node.textContent = paragraphValues[index];
+          }
+        });
+
+        const listNodes = Array.from(mainRoot.querySelectorAll('li')).filter((node) => !node.closest('nav, #homeHeroCarousel'));
+        listNodes.forEach((node, index) => {
+          if (listItemValues[index]) {
+            node.textContent = listItemValues[index];
+          }
+        });
+
+        return `<!doctype html>\n${doc.documentElement.outerHTML}`;
+      }
+
       async function refreshPreviewFromNetwork(pagePath) {
         const liveUrl = new URL(buildPreviewFrameUrl(pagePath), window.location.origin);
         const response = await fetch(liveUrl.toString(), {
@@ -307,7 +399,11 @@
         }
 
         const html = await response.text();
-        const htmlWithBase = withPreviewBaseHref(html, `${window.location.origin}/`);
+        const selectedDefinition = state.pageDefinitions.find((item) => item.path === pagePath);
+        const selectedPageId = selectedDefinition?.id || targetId.value;
+        const pageContent = state.workspace?.pages?.[selectedPageId] || {};
+        const htmlWithContent = applyPageContentToHtml(html, pageContent);
+        const htmlWithBase = withPreviewBaseHref(htmlWithContent, `${window.location.origin}/`);
         pagePreviewFrame.srcdoc = htmlWithBase;
       }
 

@@ -133,19 +133,6 @@
               <label class="form-label" for="fieldCtaUrlQuaternary">CTA URL (quaternary)</label>
               <input id="fieldCtaUrlQuaternary" class="form-control" maxlength="500" />
             </div>
-            <div class="col-12" data-field="staticHeadings">
-              <label class="form-label" for="fieldStaticHeadings">Static headings (outside hero)</label>
-              <textarea id="fieldStaticHeadings" class="form-control" rows="4" maxlength="6000" placeholder="One heading per line"></textarea>
-              <div class="form-text">Do not include button CTA text here. CTA labels are managed in the dedicated CTA fields above.</div>
-            </div>
-            <div class="col-12" data-field="staticParagraphs">
-              <label class="form-label" for="fieldStaticParagraphs">Static paragraphs (outside hero)</label>
-              <textarea id="fieldStaticParagraphs" class="form-control" rows="6" maxlength="12000" placeholder="One paragraph per line"></textarea>
-            </div>
-            <div class="col-12" data-field="staticListItems">
-              <label class="form-label" for="fieldStaticListItems">Static list items (outside hero)</label>
-              <textarea id="fieldStaticListItems" class="form-control" rows="5" maxlength="8000" placeholder="One list item per line"></textarea>
-            </div>
             <div class="col-md-6" data-field="buttonLabel">
               <label class="form-label" for="fieldButtonLabel">Element button label</label>
               <input id="fieldButtonLabel" class="form-control" maxlength="80" />
@@ -184,10 +171,10 @@
         <section id="pagePreviewPanel" class="content-panel p-4 mt-4 d-none">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h5 mb-0">Page selection preview</h2>
-            <button id="refreshPreviewButton" class="btn btn-outline-secondary btn-sm" type="button">Refresh screenshot</button>
+            <button id="refreshPreviewButton" class="btn btn-outline-secondary btn-sm" type="button">Refresh live preview</button>
           </div>
           <p id="pagePreviewMeta" class="small text-muted mb-3">
-            Select a static page, then click text or buttons in this frozen preview to jump to the matching editor field. Scroll over hero sliders to move between slides.
+            Live preview of the selected page. Navigation is locked in this frame so you can safely review hero content without leaving the current page.
           </p>
           <div class="ratio ratio-16x9 border rounded overflow-hidden bg-light">
             <iframe
@@ -196,7 +183,7 @@
               class="w-100 h-100 border-0"
               loading="lazy"
               referrerpolicy="same-origin"
-              sandbox="allow-same-origin"
+              sandbox="allow-same-origin allow-scripts"
             ></iframe>
           </div>
         </section>
@@ -235,9 +222,6 @@
         ctaUrlTertiary: document.getElementById('fieldCtaUrlTertiary'),
         ctaLabelQuaternary: document.getElementById('fieldCtaLabelQuaternary'),
         ctaUrlQuaternary: document.getElementById('fieldCtaUrlQuaternary'),
-        staticHeadings: document.getElementById('fieldStaticHeadings'),
-        staticParagraphs: document.getElementById('fieldStaticParagraphs'),
-        staticListItems: document.getElementById('fieldStaticListItems'),
         heading: document.getElementById('fieldHeading'),
         body: document.getElementById('fieldBody'),
         buttonLabel: document.getElementById('fieldButtonLabel'),
@@ -253,7 +237,6 @@
         pageSourceContent: {},
         elementSourceContent: {},
       };
-      let highlightedFieldTimeout = null;
 
       function buildPreviewFrameUrl(pagePath) {
         if (!pagePath) {
@@ -328,43 +311,6 @@
         pagePreviewFrame.srcdoc = htmlWithBase;
       }
 
-      function getElementFieldForPreviewSelection(elementId) {
-        if (elementId === 'homepage_hero_cta' || elementId === 'support_cta') {
-          return 'buttonLabel';
-        }
-        if (elementId === 'footer_note' || elementId === 'site_announcement') {
-          return 'body';
-        }
-        return null;
-      }
-
-      function focusAndHighlightField(fieldKey) {
-        const inputNode = fields[fieldKey];
-        if (!inputNode) {
-          return;
-        }
-
-        const fieldWrapper = inputNode.closest('[data-field]');
-        if (fieldWrapper?.classList.contains('d-none')) {
-          return;
-        }
-
-        if (typeof highlightedFieldTimeout === 'number') {
-          window.clearTimeout(highlightedFieldTimeout);
-          highlightedFieldTimeout = null;
-        }
-        Object.values(fields).forEach((node) => node.classList.remove('editor-field-highlight'));
-
-        inputNode.focus({ preventScroll: true });
-        inputNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        inputNode.classList.add('editor-field-highlight');
-
-        highlightedFieldTimeout = window.setTimeout(() => {
-          inputNode.classList.remove('editor-field-highlight');
-          highlightedFieldTimeout = null;
-        }, 2200);
-      }
-
       function renderRevisionOptions() {
         const revisions = Array.isArray(state.workspace?.revisions) ? state.workspace.revisions : [];
         if (!revisions.length) {
@@ -411,7 +357,7 @@
         pagePreviewPanel.classList.remove('d-none');
         refreshPreviewButton.disabled = false;
         pagePreviewFrame.dataset.pagePath = pagePath;
-        pagePreviewMeta.textContent = `Selection mode: ${selected.label} (${pagePath}). Click text/buttons in this preview to load the matching static element in the form. Scroll over hero sliders to reach secondary hero content.`;
+        pagePreviewMeta.textContent = `Live preview: ${selected.label} (${pagePath}). Navigation is disabled inside this frame.`;
         pagePreviewFrame.srcdoc = '<!doctype html><html><body style="font:14px system-ui;padding:1rem;color:#4b5563;">Loading live preview…</body></html>';
 
         void refreshPreviewFromNetwork(pagePath)
@@ -421,181 +367,33 @@
           });
       }
 
-      function mapClickedNodeToElementId(node) {
-        if (!node || !(node instanceof Element)) {
-          return null;
-        }
-
-        const footerNoteNode = node.closest('.site-footer .container > .d-flex > span');
-        if (footerNoteNode) {
-          return 'footer_note';
-        }
-
-        const heroButtonNode = node.closest('#homeHeroCarousel .carousel-item a[href], main .hero-panel a[href], main a.btn[href], main a.btn');
-        if (heroButtonNode) {
-          return 'homepage_hero_cta';
-        }
-
-        const supportNode = node.closest('a[href*="contact"], a[href*="support"], a[href*="donate"]');
-        if (supportNode) {
-          return 'support_cta';
-        }
-
-        const announcementNode = node.closest('.alert, [role="status"], [data-announcement]');
-        if (announcementNode) {
-          return 'site_announcement';
-        }
-
-        return null;
-      }
-
-      function getHeroCtaPageFieldForClickedNode(frameDocument, node) {
-        if (!frameDocument || !node || !(node instanceof Element)) {
-          return null;
-        }
-
-        const anchor = node.closest('a[href]');
-        if (!anchor) {
-          return null;
-        }
-
-        const heroScope = anchor.closest('#homeHeroCarousel .carousel-item, main .hero-panel');
-        if (!heroScope) {
-          return null;
-        }
-
-        const ctaNodes = Array.from(frameDocument.querySelectorAll('#homeHeroCarousel .carousel-item a.btn[href], main section a.btn[href]'));
-        const ctaIndex = ctaNodes.indexOf(anchor);
-        if (ctaIndex === 0) return 'ctaLabel';
-        if (ctaIndex === 1) return 'ctaLabelSecondary';
-        if (ctaIndex === 2) return 'ctaLabelTertiary';
-        if (ctaIndex === 3) return 'ctaLabelQuaternary';
-        return null;
-      }
-
-
-      function getPreviewCarouselItems(frameDocument) {
-        if (!frameDocument) {
-          return [];
-        }
-        return Array.from(frameDocument.querySelectorAll('#homeHeroCarousel .carousel-item'));
-      }
-
-      function setPreviewCarouselSlide(frameDocument, nextIndex) {
-        const items = getPreviewCarouselItems(frameDocument);
-        if (!items.length) {
-          return false;
-        }
-
-        const normalizedIndex = ((nextIndex % items.length) + items.length) % items.length;
-        items.forEach((item, index) => {
-          const isActive = index === normalizedIndex;
-          item.classList.toggle('active', isActive);
-          item.setAttribute('aria-hidden', isActive ? 'false' : 'true');
-        });
-
-        const indicators = Array.from(frameDocument.querySelectorAll('#homeHeroCarousel [data-bs-slide-to]'));
-        indicators.forEach((indicator, index) => {
-          const isActive = index === normalizedIndex;
-          indicator.classList.toggle('active', isActive);
-          indicator.setAttribute('aria-current', isActive ? 'true' : 'false');
-          indicator.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        });
-
-        return true;
-      }
-
-      function movePreviewCarouselSlide(frameDocument, delta) {
-        const items = getPreviewCarouselItems(frameDocument);
-        if (!items.length) {
-          return false;
-        }
-        const activeIndex = Math.max(items.findIndex((item) => item.classList.contains('active')), 0);
-        return setPreviewCarouselSlide(frameDocument, activeIndex + delta);
-      }
-
       function bindPreviewClickHandler() {
         const frameDocument = pagePreviewFrame.contentDocument;
         if (!frameDocument || frameDocument.__staticEditorClickBound) {
           return;
         }
 
-        frameDocument.addEventListener('click', async (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-
+        frameDocument.addEventListener('click', (event) => {
           const clickTarget = event.target instanceof Element ? event.target : event.target?.parentElement;
           if (!clickTarget) {
             return;
           }
-
-          if (clickTarget.closest('#homeHeroCarousel .carousel-control-next, #homeHeroCarousel [data-bs-slide="next"]')) {
-            if (movePreviewCarouselSlide(frameDocument, 1)) {
-              clearMessage(errorMessage);
-            }
+          const anchor = clickTarget.closest('a[href]');
+          if (!anchor) {
             return;
           }
-          if (clickTarget.closest('#homeHeroCarousel .carousel-control-prev, #homeHeroCarousel [data-bs-slide="prev"]')) {
-            if (movePreviewCarouselSlide(frameDocument, -1)) {
-              clearMessage(errorMessage);
-            }
+          if (anchor.hasAttribute('data-bs-slide') || anchor.hasAttribute('data-bs-target') || anchor.getAttribute('href') === '#') {
             return;
           }
-
-          const indicator = clickTarget.closest('#homeHeroCarousel [data-bs-slide-to]');
-          if (indicator) {
-            const requestedIndex = Number.parseInt(indicator.getAttribute('data-bs-slide-to') || '', 10);
-            if (Number.isFinite(requestedIndex)) {
-              setPreviewCarouselSlide(frameDocument, requestedIndex);
-              clearMessage(errorMessage);
-            }
-            return;
-          }
-
-          const matchedHeroPageField = getHeroCtaPageFieldForClickedNode(frameDocument, clickTarget);
-          if (matchedHeroPageField) {
-            targetType.value = 'page';
-            setTargetOptions();
-            targetId.value = 'home';
-            await fillForm();
-            focusAndHighlightField(matchedHeroPageField);
-            showMessage(saveMessage, 'Loaded selected homepage hero CTA field in editor.');
-            clearMessage(errorMessage);
-            return;
-          }
-
-          const matchedElementId = mapClickedNodeToElementId(clickTarget);
-          if (!matchedElementId) {
-            showMessage(errorMessage, 'That area is not mapped yet. Click a hero/support button, announcement, or footer note to edit it.');
-            return;
-          }
-
-          targetType.value = 'element';
-          setTargetOptions();
-          targetId.value = matchedElementId;
-          await fillForm();
-          focusAndHighlightField(getElementFieldForPreviewSelection(matchedElementId));
-          showMessage(saveMessage, 'Loaded selected static element in editor.');
-          clearMessage(errorMessage);
-        });
-
-
-
-        const heroCarousel = frameDocument.getElementById('homeHeroCarousel');
-        if (heroCarousel) {
-          heroCarousel.addEventListener('wheel', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const direction = event.deltaY > 0 ? 1 : -1;
-            if (movePreviewCarouselSlide(frameDocument, direction)) {
-              clearMessage(errorMessage);
-            }
-          }, { passive: false });
-        }
+          event.preventDefault();
+          event.stopPropagation();
+          showMessage(errorMessage, 'Navigation is disabled in preview mode. Change pages using the Target selector above.');
+        }, true);
 
         frameDocument.addEventListener('submit', (event) => {
           event.preventDefault();
           event.stopPropagation();
+          showMessage(errorMessage, 'Form submissions are disabled in preview mode.');
         });
 
         frameDocument.addEventListener('keydown', (event) => {
@@ -979,7 +777,8 @@
         clearMessage(errorMessage);
         try {
           const isPage = targetType.value === 'page';
-          const staticHeadingsWithoutCtas = removeCtaLinesFromStaticHeadings(fields.staticHeadings.value, [
+          const currentPageContent = getCurrentContent();
+          const staticHeadingsWithoutCtas = removeCtaLinesFromStaticHeadings(currentPageContent.staticHeadings || '', [
             fields.ctaLabel.value,
             fields.ctaLabelSecondary.value,
             fields.ctaLabelTertiary.value,
@@ -1002,12 +801,12 @@
                 ctaLabelQuaternary: fields.ctaLabelQuaternary.value,
                 ctaUrlQuaternary: fields.ctaUrlQuaternary.value,
                 staticHeadings: staticHeadingsWithoutCtas,
-                staticParagraphs: fields.staticParagraphs.value,
-                staticListItems: fields.staticListItems.value,
+                staticParagraphs: currentPageContent.staticParagraphs || '',
+                staticListItems: currentPageContent.staticListItems || '',
                 allStaticContent: buildAllStaticContentFromSections({
                   staticHeadings: staticHeadingsWithoutCtas,
-                  staticParagraphs: fields.staticParagraphs.value,
-                  staticListItems: fields.staticListItems.value,
+                  staticParagraphs: currentPageContent.staticParagraphs || '',
+                  staticListItems: currentPageContent.staticListItems || '',
                 }),
               }
             : {
@@ -1078,7 +877,7 @@
       refreshPreviewButton.addEventListener('click', async () => {
         const currentPagePath = pagePreviewFrame.dataset.pagePath || '';
         if (!currentPagePath) {
-          showMessage(errorMessage, 'Select a page target before refreshing the screenshot preview.');
+          showMessage(errorMessage, 'Select a page target before refreshing the live preview.');
           return;
         }
 
@@ -1088,7 +887,7 @@
         try {
           await clearClientCachesForPreview();
           await refreshPreviewFromNetwork(currentPagePath);
-          showMessage(saveMessage, 'Screenshot refreshed with browser and service-worker caches cleared.');
+          showMessage(saveMessage, 'Live preview refreshed with browser and service-worker caches cleared.');
         } catch (error) {
           pagePreviewFrame.srcdoc = '';
           pagePreviewFrame.src = buildPreviewFrameUrl(currentPagePath);

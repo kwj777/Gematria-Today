@@ -40,19 +40,11 @@
         </button>
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
-            <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
-            <li class="nav-item dropdown">
-              <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
-                <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
-                <li><a class="dropdown-item" href="/nameCalculator.html">Name Calculator</a></li>
-              </ul>
-            </li>
-            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item"><a class="nav-link" href="/member.html">Membership</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/admin.html">Admin</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/admin.html">Operations Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="/blog.html">View Public Site</a></li>
           </ul>
         </div>
       </div>
@@ -127,10 +119,9 @@
               <p id="sessionMeta" class="text-muted small mb-0"></p>
             </div>
             <div class="d-flex gap-2">
-              <a class="btn btn-outline-primary" href="/news.html">View News page</a>
-              <a class="btn btn-outline-primary" href="/blog.html">View Blog page</a>
-              <a class="btn btn-outline-primary" href="/admin-posts.html">Manage posts</a>
-              <a class="btn btn-outline-primary" href="/admin-reports.html">View Reports</a>
+              <a class="btn btn-primary" href="/admin-posts.html">Open publishing workspace</a>
+              <a class="btn btn-outline-primary" href="/admin-editorial.html">Open editorial queue</a>
+              <a class="btn btn-outline-primary" href="/admin-reports.html">Open reports workspace</a>
               <button id="refreshSiteCacheButton" class="btn btn-outline-warning" type="button">Refresh site cache</button>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
             </div>
@@ -150,11 +141,32 @@
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Tasks</div><div id="taskCount" class="metric-value text-warning">0</div><p class="mb-0 text-muted">Open administrative tasks still pending.</p></div></div>
           </div>
 
+
+
+          <section class="content-panel p-3 p-lg-4 mb-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+              <div>
+                <p class="section-kicker mb-1">Workspace</p>
+                <h3 class="h5 mb-0">Filter operational modules</h3>
+              </div>
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <label class="small text-muted" for="workspaceFilter">Show modules:</label>
+                <select id="workspaceFilter" class="form-select form-select-sm" style="min-width: 220px;">
+                  <option value="all">All modules</option>
+                  <option value="content">Content operations</option>
+                  <option value="members">Member operations</option>
+                  <option value="revenue">Revenue & messaging</option>
+                  <option value="system">System & security</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
           <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
           <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
           <div class="row g-4 admin-dashboard-masonry">
-            <div class="col-md-6 admin-dashboard-masonry-item">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feedSectionBody" aria-expanded="false" aria-controls="feedSectionBody">
                   <span>
@@ -179,7 +191,7 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item">
+            <div class="col-md-6 admin-dashboard-masonry-item d-none" data-admin-workspace="content" data-module="deprecated-post-form">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <a class="admin-section-toggle" href="/admin-posts.html" aria-label="Open blog post management page">
                   <span>
@@ -241,7 +253,7 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqSectionBody" aria-expanded="false" aria-controls="faqSectionBody">
                   <span>
@@ -269,7 +281,7 @@
                 </div>
               </section>
             </div>
-            <div class="col-md-6 admin-dashboard-masonry-item">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="members">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#membershipSectionBody" aria-expanded="false" aria-controls="membershipSectionBody">
                   <span>
@@ -292,8 +304,8 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="system">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#promotionSectionBody" aria-expanded="false" aria-controls="promotionSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Promotion</span>
@@ -315,8 +327,8 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#stripeSectionBody" aria-expanded="false" aria-controls="stripeSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Payments</span>
@@ -355,8 +367,8 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailSectionBody" aria-expanded="false" aria-controls="emailSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Account Recovery</span>
@@ -389,7 +401,7 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailTemplatesSectionBody" aria-expanded="false" aria-controls="emailTemplatesSectionBody">
                   <span>
@@ -423,7 +435,7 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="system">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#taskSectionBody" aria-expanded="false" aria-controls="taskSectionBody">
                   <span>
@@ -518,6 +530,18 @@
       const postImageDropzone = document.getElementById('postImageDropzone');
       const postImageFileInput = document.getElementById('postImageFile');
       const postImageUploadMeta = document.getElementById('postImageUploadMeta');
+      const workspaceFilter = document.getElementById('workspaceFilter');
+      const workspaceModules = Array.from(document.querySelectorAll('[data-admin-workspace]'));
+
+      function applyWorkspaceFilter() {
+        const selectedWorkspace = workspaceFilter?.value || 'all';
+        workspaceModules.forEach((module) => {
+          const moduleWorkspace = module.dataset.adminWorkspace || 'all';
+          const shouldShow = selectedWorkspace === 'all' || moduleWorkspace === selectedWorkspace;
+          module.classList.toggle('d-none', !shouldShow || module.dataset.module === 'deprecated-post-form');
+        });
+      }
+
       const postImagePreview = document.getElementById('postImagePreview');
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
@@ -1019,7 +1043,7 @@
                   <input id="proposalUseImage-${escapeHtml(proposal.id)}" class="form-check-input" type="checkbox" data-proposal-use-image="${escapeHtml(proposal.id)}" ${proposal.proposedImageUrl ? 'checked' : ''} ${proposal.proposedImageUrl ? '' : 'disabled'} />
                   <label class="form-check-label" for="proposalUseImage-${escapeHtml(proposal.id)}">Add proposed image to draft</label>
                 </div>
-                <button class="btn btn-sm btn-outline-primary" type="button" data-load-proposal="${escapeHtml(proposal.id)}">Load into post editor</button>
+                <a class="btn btn-sm btn-outline-primary" href="/admin-posts.html?loadProposal=${encodeURIComponent(proposal.id)}">Load into publishing workspace</a>
                 <button class="btn btn-sm btn-outline-success" type="button" data-mark-proposal-reviewed="${escapeHtml(proposal.id)}">Mark reviewed</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-proposal-pending="${escapeHtml(proposal.id)}">Set pending</button>
               </div>
@@ -1345,6 +1369,9 @@
           targetButton.disabled = false;
         }
       }
+
+      workspaceFilter?.addEventListener('change', applyWorkspaceFilter);
+      applyWorkspaceFilter();
 
       document.getElementById('refreshSiteCacheButton').addEventListener('click', async (event) => {
         await clearSiteCache(event.currentTarget);

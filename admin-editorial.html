@@ -17,7 +17,7 @@
           <div>
             <p class="section-kicker mb-2">Editorial Queue</p>
             <h1 class="h3 mb-1">Review proposed blog posts</h1>
-            <p class="text-muted small mb-0">Load a proposal into the post editor, then publish from the Create blog posts section.</p>
+            <p class="text-muted small mb-0">Load a proposal into the dedicated publishing workspace, then publish or save as draft there.</p>
           </div>
           <a class="btn btn-outline-secondary" href="/admin.html">Back to dashboard</a>
         </div>
@@ -112,7 +112,7 @@
                 </details>
               </div>
               <div class="d-flex flex-column gap-2" style="min-width: 220px;">
-                <a class="btn btn-sm btn-outline-primary" href="/admin.html?loadProposal=${encodeURIComponent(proposal.id)}">Load into post editor</a>
+                <a class="btn btn-sm btn-outline-primary" href="/admin-posts.html?loadProposal=${encodeURIComponent(proposal.id)}">Load into publishing workspace</a>
                 <button class="btn btn-sm btn-outline-success" type="button" data-mark-proposal-accepted="${escapeHtml(proposal.id)}">Mark accepted</button>
                 <button class="btn btn-sm btn-outline-primary" type="button" data-mark-proposal-reviewed="${escapeHtml(proposal.id)}">Mark reviewed</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-proposal-pending="${escapeHtml(proposal.id)}">Set pending</button>

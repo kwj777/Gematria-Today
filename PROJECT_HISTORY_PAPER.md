@@ -1,7 +1,7 @@
 # Building Gematria in Public: A Development History of the EndTimes.Today Project
 
 ## Abstract
-This paper documents the development history of the **Gematria** project (EndTimes.Today) from its first commit in February 2026 through the latest March 31, 2026 development cycle. Using the repository’s commit history and project documentation as evidence, it traces how a minimal static site evolved into a production-oriented web application with serverless APIs, database persistence, member accounts, premium research tooling, payment and recovery flows, editorial queue workflows, and layered abuse protections. The history also reveals a distinctive workflow: rapid, iterative, pull-request-driven delivery with frequent UI refinements and operational hardening.
+This paper documents the development history of the **Gematria** project (EndTimes.Today) from its first commit in February 2026 through the latest April 2, 2026 development cycle. Using the repository’s commit history and project documentation as evidence, it traces how a minimal static site evolved into a production-oriented web application with serverless APIs, database persistence, member accounts, premium research tooling, payment and recovery flows, editorial queue workflows, and layered abuse protections. The history also reveals a distinctive workflow: rapid, iterative, pull-request-driven delivery with frequent UI refinements and operational hardening.
 
 ## 1. Introduction
 Gematria began as a small web experiment and quickly transformed into a multi-surface platform. The repository history shows this transition clearly: from an “under construction” page to a full stack made up of front-end pages, Netlify functions, SQL schemas, and deployment configuration. The README identifies the core architecture as HTML/CSS/JavaScript on the front end and Netlify serverless functions backed by Neon/PostgreSQL on the backend.
@@ -17,7 +17,7 @@ This historical reconstruction is based on:
 - repository commit metadata (dates, subjects, and merge cadence), and
 - architectural and operational statements in `README.md`.
 
-At the time of writing (March 31, 2026), the repository records **1,095 commits** in total. Commit frequency was highly concentrated in late March 2026, with sustained high throughput from March 23–31.
+At the time of this revision (April 3, 2026), the repository records **1,266 commits** in total. Commit frequency remained highly concentrated in late March and early April 2026, with sustained high throughput from March 23 through April 2.
 
 ## 3. Phase I: Project Seeding and Early Calculation Logic (February 17–March 16, 2026)
 The earliest commits establish a minimal starting point: an initial commit plus an early under-construction front page. This is a common “scaffold first” pattern where deployment visibility is prioritized before core logic is complete.
@@ -102,7 +102,7 @@ March 27 introduced a concentrated product pass focused on membership-state UX a
 Historically, this sprint represents a maturity step in account-state orchestration: the same interface adapts to session context, role, and entitlement level with fewer visual flashes and fewer dead-end pathways.
 
 ## 10. Phase VIII: Editorial Workflow Expansion and Proposal Lifecycle Controls (March 28–31, 2026)
-The latest commit tranche (March 28–31) shows a focused expansion of member-to-admin editorial operations. Commit subjects indicate:
+The March 28–31 tranche shows a focused expansion of member-to-admin editorial operations. Commit subjects indicate:
 
 - routing premium member blog proposals into a dedicated admin editorial queue,
 - queue-state transitions for accepted/rejected/reviewed proposals,
@@ -112,19 +112,31 @@ The latest commit tranche (March 28–31) shows a focused expansion of member-to
 
 Historically, this phase adds structured content-governance capabilities to the platform. The system now supports not only content publishing and membership monetization, but also a moderated proposal pipeline with auditable state transitions and bi-directional communication loops.
 
-## 11. Process Characteristics Observed
+## 11. Phase IX: Static Content Operations, Share Media Refinement, and Funnel Tightening (April 1–2, 2026)
+The early-April cycle (April 1–2) reflects a new concentration on operational editorial tooling and distribution quality. Commit subjects indicate:
+
+- iterative upgrades to the admin static-content editor (preview scoping, refresh controls, cache-busting behavior, and editable-field boundaries),
+- homepage hero content experimentation and controlled rollback behavior,
+- blog social/share image correctness fixes and per-post hero image propagation,
+- responsive hero refinements for wide screens and visual consistency passes,
+- membership and premium-surface simplification (including removal of low-value CTA/comparison blocks),
+- removal of stale page links and lower-friction navigation from history and calculator-related surfaces.
+
+Historically, this phase is notable because improvements are less about net-new product pillars and more about **content operations reliability** and **distribution fidelity**: ensuring what editors preview, publish, and share is deterministic across channels and devices.
+
+## 12. Process Characteristics Observed
 Three process-level patterns stand out:
 
-### 11.1 High-frequency PR integration
+### 12.1 High-frequency PR integration
 A large proportion of commits are merge commits tied to numbered pull requests. This implies a branch-and-merge workflow with small to medium increments and fast review/merge turnaround.
 
-### 11.2 Corrective micro-iterations
+### 12.2 Corrective micro-iterations
 Many features were shipped with immediate follow-up fixes (naming, URL behavior, overlay visibility, duplicate prevention, return paths). This suggests a pragmatic feedback loop: ship, observe, adjust.
 
-### 11.3 Parallel tracks: feature and operations
+### 12.3 Parallel tracks: feature and operations
 Development did not follow a strict “features first, operations later” sequence. Instead, operational concerns (timeouts, rate limiting, account recovery, admin settings) evolved in tandem with UX features.
 
-## 12. Lessons from This Build History
+## 13. Lessons from This Build History
 The Gematria timeline suggests several reusable lessons for rapid web product development:
 
 1. **Start with deployability, not perfection.** Early under-construction scaffolds accelerated visible progress.
@@ -133,14 +145,14 @@ The Gematria timeline suggests several reusable lessons for rapid web product de
 4. **Operational hardening is a product feature.** Rate limits, audit logs, and timeouts are part of user trust and platform continuity.
 5. **Polish compounds late-stage value.** Navigation consistency, overlays, accessibility, and SEO materially improve usability and discoverability.
 
-## 13. Conclusion
+## 14. Conclusion
 Gematria’s history is a compact case study in accelerated full-stack evolution. In roughly six weeks, the project advanced from a minimal placeholder to a feature-rich, operationally aware platform combining computation, content, membership, payments, and protections.
 
 Just as importantly, the repository records not only what was built, but *how* it was built: through dense iterative cycles, aggressive merge cadence, and continuous refinement at the intersection of logic, UX, and reliability.
 
 ---
 
-### Appendix A: Commit-Volume Snapshot (through March 31, 2026)
-- Total commits: **1,095**
+### Appendix A: Commit-Volume Snapshot (through April 2, 2026)
+- Total commits: **1,266**
 - Earliest commit date: **2026-02-17**
 - Highest-volume day in this window: **2026-03-25** (120 commits)

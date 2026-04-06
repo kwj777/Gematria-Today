@@ -343,13 +343,12 @@ async function listThreads(sql, member, user, event) {
         (t.reply_count * 2 + t.view_count) AS popularity_score,
         c.access_tier AS category_access_tier,
         u.role AS author_role,
-        m.membership_level AS author_membership_level,
+        u.membership_level AS author_membership_level,
         COALESCE(r.points, 0) AS author_reputation,
         COALESCE(r.thread_count, 0) AS author_thread_count,
         COALESCE(r.reply_count, 0) AS author_reply_count
       FROM forum_threads t
       JOIN users u ON u.id = t.author_user_id
-      LEFT JOIN members m ON m.user_id = u.id
       JOIN forum_categories c ON c.id = t.category_id
       LEFT JOIN forum_member_reputation r ON r.user_id = u.id
       WHERE t.deleted_at IS NULL
@@ -370,13 +369,12 @@ async function listThreads(sql, member, user, event) {
         (t.reply_count * 2 + t.view_count) AS popularity_score,
         c.access_tier AS category_access_tier,
         u.role AS author_role,
-        m.membership_level AS author_membership_level,
+        u.membership_level AS author_membership_level,
         COALESCE(r.points, 0) AS author_reputation,
         COALESCE(r.thread_count, 0) AS author_thread_count,
         COALESCE(r.reply_count, 0) AS author_reply_count
       FROM forum_threads t
       JOIN users u ON u.id = t.author_user_id
-      LEFT JOIN members m ON m.user_id = u.id
       JOIN forum_categories c ON c.id = t.category_id
       LEFT JOIN forum_member_reputation r ON r.user_id = u.id
       WHERE t.deleted_at IS NULL
@@ -420,7 +418,7 @@ async function getThread(sql, member, user, event) {
   const threadRows = await sql`
     SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name, c.access_tier AS category_access_tier,
       u.role AS author_role,
-      m.membership_level AS author_membership_level,
+      u.membership_level AS author_membership_level,
       COALESCE(r.points, 0) AS author_reputation,
       COALESCE(r.thread_count, 0) AS author_thread_count,
       COALESCE(r.reply_count, 0) AS author_reply_count,
@@ -447,13 +445,12 @@ async function getThread(sql, member, user, event) {
   const replyRows = await sql`
     SELECT p.*, u.username AS author_username,
       u.role AS author_role,
-      m.membership_level AS author_membership_level,
+      u.membership_level AS author_membership_level,
       COALESCE(r.points, 0) AS author_reputation,
       COALESCE(r.thread_count, 0) AS author_thread_count,
       COALESCE(r.reply_count, 0) AS author_reply_count
     FROM forum_posts p
     JOIN users u ON u.id = p.author_user_id
-    LEFT JOIN members m ON m.user_id = u.id
     LEFT JOIN forum_member_reputation r ON r.user_id = u.id
     WHERE p.thread_id = ${threadId}
       AND p.deleted_at IS NULL

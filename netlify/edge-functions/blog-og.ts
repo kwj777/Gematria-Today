@@ -2,6 +2,8 @@ import type { Config, Context } from '@netlify/edge-functions';
 
 const SITE_ORIGIN = 'https://endtimes.today';
 const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/beast-identity-rev13-hero-16x9.svg`;
+const OGP_IMAGE_WIDTH = 1200;
+const OGP_IMAGE_FORMAT = 'jpg';
 const DEFAULT_TITLE = 'EndTimes.Today Blog';
 const DEFAULT_DESCRIPTION =
   'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.';
@@ -27,6 +29,18 @@ function toAbsoluteImageUrl(value?: string | null): string {
     return url;
   }
   return `${SITE_ORIGIN}${url.startsWith('/') ? url : `/${url}`}`;
+}
+
+function toShareImageUrl(value?: string | null): string {
+  const absoluteUrl = toAbsoluteImageUrl(value);
+  if (!absoluteUrl) {
+    return '';
+  }
+  if (/\.svg(?:$|[?#])/i.test(absoluteUrl)) {
+    const encoded = encodeURIComponent(absoluteUrl);
+    return `${SITE_ORIGIN}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
+  }
+  return absoluteUrl;
 }
 
 function escapeAttr(value: string): string {
@@ -79,10 +93,10 @@ export default async (req: Request, context: Context) => {
   const title = String(post.title || DEFAULT_TITLE).trim();
   const description = String(post.summary || DEFAULT_DESCRIPTION).trim();
   const imageUrl =
-    toAbsoluteImageUrl(post.heroImageUrl) ||
-    toAbsoluteImageUrl(post.imageUrl) ||
-    toAbsoluteImageUrl(post.sliderImageUrl) ||
-    DEFAULT_OG_IMAGE;
+    toShareImageUrl(post.heroImageUrl) ||
+    toShareImageUrl(post.imageUrl) ||
+    toShareImageUrl(post.sliderImageUrl) ||
+    toShareImageUrl(DEFAULT_OG_IMAGE);
   const shareUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(postSlug)}#${encodeURIComponent(postSlug)}`;
 
   // Replace title tag

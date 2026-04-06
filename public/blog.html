@@ -449,7 +449,7 @@
       const buildSharePostUrl = (slug = '') => {
         const cleanSlug = String(slug || '').trim();
         return cleanSlug
-          ? `${window.location.origin}/blog/${encodeURIComponent(cleanSlug)}`
+          ? `${window.location.origin}/blog/${encodeURIComponent(cleanSlug)}?post=${encodeURIComponent(cleanSlug)}`
           : `${window.location.origin}/blog.html`;
       };
       const updateShareMetadata = (post) => {

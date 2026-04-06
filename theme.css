@@ -631,6 +631,15 @@ footer.site-footer {
   box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
 }
 
+.blog-post-card--with-background {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.9)),
+    var(--blog-post-background-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
 .blog-post-image-frame {
   margin: 0;
   border-radius: 0.9rem;

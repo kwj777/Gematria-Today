@@ -72,7 +72,20 @@
             <div class="col-md-6"><label class="form-label" for="createPostTag">Tags</label><input id="createPostTag" class="form-control" placeholder="Research Workflow, Name Analysis" /></div>
             <div class="col-md-6"><label class="form-label" for="createPostReadTime">Read time</label><input id="createPostReadTime" class="form-control" placeholder="5 minute read" /></div>
             <div class="col-12"><label class="form-label" for="createPostSummary">Summary</label><textarea id="createPostSummary" class="form-control" rows="2" required></textarea></div>
-            <div class="col-12"><label class="form-label" for="createPostBody">Body</label><textarea id="createPostBody" class="form-control" rows="7" required></textarea></div>
+            <div class="col-12">
+              <label class="form-label" for="createPostBody">Body</label>
+              <div class="d-flex flex-wrap gap-2 mb-2" role="toolbar" aria-label="Create post editor toolbar">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="bold" data-editor-target="createPostBody"><strong>B</strong></button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="italic" data-editor-target="createPostBody"><em>I</em></button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="heading" data-editor-target="createPostBody">H2</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="link" data-editor-target="createPostBody">Link</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="unordered-list" data-editor-target="createPostBody">Bullets</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="ordered-list" data-editor-target="createPostBody">Numbered</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="quote" data-editor-target="createPostBody">Quote</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="code" data-editor-target="createPostBody">Code</button>
+              </div>
+              <textarea id="createPostBody" class="form-control" rows="7" required></textarea>
+            </div>
             <div class="col-md-6"><label class="form-label" for="createPostStatus">Publish status</label><select id="createPostStatus" class="form-select"><option value="published">Publish now</option><option value="scheduled">Publish later</option><option value="draft">Save as draft</option></select></div>
             <div class="col-md-6"><label class="form-label" for="createPostScheduledPublishAt">Schedule publish date/time (optional)</label><input id="createPostScheduledPublishAt" class="form-control" type="datetime-local" /></div>
             <div class="col-12 d-flex gap-2">
@@ -420,6 +433,62 @@
         target.classList.remove('d-none');
       }
 
+      function insertEditorText(targetId, before, after = '', placeholder = '') {
+        const field = document.getElementById(targetId);
+        if (!field) return;
+        field.focus();
+        const start = field.selectionStart ?? field.value.length;
+        const end = field.selectionEnd ?? field.value.length;
+        const selectedText = field.value.slice(start, end);
+        const replacement = `${before}${selectedText || placeholder}${after}`;
+        field.setRangeText(replacement, start, end, 'end');
+        const cursorPosition = start + replacement.length;
+        field.setSelectionRange(cursorPosition, cursorPosition);
+      }
+
+      function applyEditorAction(action, targetId) {
+        const targetField = document.getElementById(targetId);
+        if (!targetField) return;
+        switch (action) {
+          case 'bold':
+            insertEditorText(targetId, '<strong>', '</strong>', 'Bold text');
+            return;
+          case 'italic':
+            insertEditorText(targetId, '<em>', '</em>', 'Italic text');
+            return;
+          case 'heading':
+            insertEditorText(targetId, '\n<h2>', '</h2>\n', 'Section heading');
+            return;
+          case 'unordered-list':
+            insertEditorText(targetId, '\n<ul>\n  <li>', '</li>\n  <li>Another point</li>\n</ul>\n', 'List item');
+            return;
+          case 'ordered-list':
+            insertEditorText(targetId, '\n<ol>\n  <li>', '</li>\n  <li>Second item</li>\n</ol>\n', 'List item');
+            return;
+          case 'quote':
+            insertEditorText(targetId, '\n<blockquote>', '</blockquote>\n', 'Quoted text');
+            return;
+          case 'code':
+            insertEditorText(targetId, '<code>', '</code>', 'code');
+            return;
+          case 'link': {
+            const urlInput = window.prompt('Enter link URL (include https://):', 'https://');
+            if (!urlInput) return;
+            const safeUrl = urlInput.trim();
+            if (!/^https?:\/\//i.test(safeUrl)) {
+              showMessage(errorMessage, 'Please enter a valid link starting with http:// or https://');
+              return;
+            }
+            clearMessage(errorMessage);
+            const selectedText = targetField.value.slice(targetField.selectionStart ?? 0, targetField.selectionEnd ?? 0);
+            insertEditorText(targetId, `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">`, '</a>', selectedText || 'Link text');
+            return;
+          }
+          default:
+            return;
+        }
+      }
+
 
       function estimateReadTimeLabelFromContent(content) {
         const plainText = String(content || '')
@@ -568,7 +637,20 @@
                   <div class="col-md-6"><label class="form-label" for="editStatus-${post.id}">Publish status</label><select id="editStatus-${post.id}" class="form-select"><option value="published" ${String(post.status || '').toLowerCase() === 'published' ? 'selected' : ''}>Publish now</option><option value="draft" ${String(post.status || '').toLowerCase() === 'draft' ? 'selected' : ''}>Save as draft</option></select></div>
                   <div class="col-md-6"><label class="form-label" for="editScheduledPublishAt-${post.id}">Schedule publish date/time (optional)</label><input id="editScheduledPublishAt-${post.id}" class="form-control" type="datetime-local" value="${escapeHtml(isoToLocalDateTimeInput(post.scheduledPublishAt || ''))}" /></div>
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
-                  <div class="col-12"><label class="form-label" for="editBody-${post.id}">Body</label><textarea id="editBody-${post.id}" class="form-control" rows="6" required>${escapeHtml(post.body || '')}</textarea></div>
+                  <div class="col-12">
+                    <label class="form-label" for="editBody-${post.id}">Body</label>
+                    <div class="d-flex flex-wrap gap-2 mb-2" role="toolbar" aria-label="Edit post editor toolbar">
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="bold" data-editor-target="editBody-${post.id}"><strong>B</strong></button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="italic" data-editor-target="editBody-${post.id}"><em>I</em></button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="heading" data-editor-target="editBody-${post.id}">H2</button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="link" data-editor-target="editBody-${post.id}">Link</button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="unordered-list" data-editor-target="editBody-${post.id}">Bullets</button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="ordered-list" data-editor-target="editBody-${post.id}">Numbered</button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="quote" data-editor-target="editBody-${post.id}">Quote</button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="code" data-editor-target="editBody-${post.id}">Code</button>
+                    </div>
+                    <textarea id="editBody-${post.id}" class="form-control" rows="6" required>${escapeHtml(post.body || '')}</textarea>
+                  </div>
                   <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Hero image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Homepage slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /></div>
                   <div class="col-12">
@@ -634,6 +716,12 @@
 
 
       document.addEventListener('click', async (event) => {
+        const toolbarButton = event.target.closest('[data-editor-action][data-editor-target]');
+        if (toolbarButton) {
+          const { editorAction, editorTarget } = toolbarButton.dataset;
+          applyEditorAction(editorAction, editorTarget);
+          return;
+        }
         const { editPost, deletePost, cancelEdit } = event.target.dataset;
         if (!editPost && !deletePost && !cancelEdit) {
           return;

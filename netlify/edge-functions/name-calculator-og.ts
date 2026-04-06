@@ -34,7 +34,7 @@ export default async (req: Request, context: Context) => {
   const description = totals
     ? `Compare gematria totals (${totals}) for ${names.join(', ')}.`
     : `Compare gematria results for ${names.join(', ')} on EndTimes.Today.`;
-  const shareUrl = `${SITE_ORIGIN}/nameCalculator.html${requestUrl.search}`;
+  const shareUrl = `${SITE_ORIGIN}/name-calculator.html${requestUrl.search}`;
   const imageUrl = new URL('/.netlify/functions/calculator-share-image', SITE_ORIGIN);
   imageUrl.searchParams.set('type', 'name');
   names.forEach((name, index) => imageUrl.searchParams.set(`name${index + 1}`, name));
@@ -56,6 +56,6 @@ export default async (req: Request, context: Context) => {
 };
 
 export const config: Config = {
-  path: '/nameCalculator.html',
+  path: '/name-calculator.html',
   onError: 'bypass',
 };

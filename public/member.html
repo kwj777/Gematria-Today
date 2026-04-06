@@ -49,7 +49,7 @@
               <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
-                <li><a class="dropdown-item" href="/nameCalculator.html">Name Calculator</a></li>
+                <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
               </ul>
             </li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
@@ -1124,7 +1124,7 @@
       function getHistoryReopenUrl(item) {
         if (item.calculatorSource === 'name-calculator') {
           const names = Array.isArray(item.resultPayload?.names) ? item.resultPayload.names.filter(Boolean) : [];
-          const url = new URL('/nameCalculator.html', getCanonicalShareOrigin());
+          const url = new URL('/name-calculator.html', getCanonicalShareOrigin());
           names.slice(0, 3).forEach((name, index) => {
             url.searchParams.set(`name${index + 1}`, name);
           });
@@ -1269,7 +1269,7 @@
             </div>
           </article>
         `;
-        }).join('') : '<p class="text-muted mb-0">No saved calculations yet. Run a lookup on the <a href="/calculator.html">calculator</a> or <a href="/nameCalculator.html">name calculator</a> page and click <strong>Save result</strong>.</p>';
+        }).join('') : '<p class="text-muted mb-0">No saved calculations yet. Run a lookup on the <a href="/calculator.html">calculator</a> or <a href="/name-calculator.html">name calculator</a> page and click <strong>Save result</strong>.</p>';
 
         if (canExpandHistoryList) {
           historyListToggleWrap.classList.remove('d-none');

@@ -238,6 +238,16 @@ const form = document.querySelector('#name-form');
           : 'Desktop mode is active: results will appear below in three columns.';
       }
 
+      function focusNameFormFromHash() {
+        if (window.location.hash !== '#name-form') {
+          return;
+        }
+
+        form?.scrollIntoView({ block: 'center' });
+        const firstInput = document.querySelector('#name-1');
+        firstInput?.focus({ preventScroll: true });
+      }
+
       function resetResultsView() {
         resultsGrid.innerHTML = '';
         resultsActions.innerHTML = '';
@@ -351,6 +361,7 @@ const form = document.querySelector('#name-form');
         if (normalizedTotals.length) {
           url.searchParams.set('totals', normalizedTotals.join(','));
         }
+        url.hash = 'name-form';
         return url.toString();
       }
 
@@ -703,6 +714,7 @@ View results: ${shareUrl}`.trim(),
       window.addEventListener('DOMContentLoaded', async () => {
         showCalculatorLoadingOverlay();
         try {
+          focusNameFormFromHash();
           mobileNoteNode.textContent = getDefaultMobileNote();
           configureLearningPathReturn();
           await requestMemberSession().catch(() => null);

@@ -568,6 +568,22 @@
         return normalized || 'published';
       }
 
+      function slugifyForPreview(value = '') {
+        return String(value || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+
+      function getPostPreviewUrl(post) {
+        const slug = String(post?.slug || '').trim() || slugifyForPreview(post?.title || '');
+        if (!slug) {
+          return '/blog.html?preview=true';
+        }
+        return `/blog.html?preview=true&post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
+      }
+
       function getDateFilterTimestamp(value, isEndOfDay = false) {
         if (!value) return null;
         const date = new Date(`${value}T00:00:00`);
@@ -626,6 +642,7 @@
                 <p class="small text-muted mb-2">${escapeHtml(post.summary || '')}</p>
                 <article class="small mb-3">${normalizePostBodyHtml(post.body || '')}</article>
                 <div class="d-flex flex-wrap gap-3 mb-3">
+                  <a class="btn btn-sm btn-outline-secondary" href="${getPostPreviewUrl(post)}" target="_blank" rel="noopener noreferrer">Preview on Blog</a>
                   <button class="btn btn-sm btn-outline-primary" type="button" data-edit-post="${post.id}">Edit</button>
                   <button class="btn btn-sm btn-danger text-white" type="button" data-delete-post="${post.id}">Delete</button>
                 </div>

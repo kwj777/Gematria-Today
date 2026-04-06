@@ -25,6 +25,9 @@ export async function handler(event) {
     }
 
     const featuredOnly = event.queryStringParameters?.featured === 'true';
+    const previewRequested = event.queryStringParameters?.preview === 'true';
+    const previewMode = previewRequested && String(user?.role || '').toLowerCase() === 'admin';
+    const slugFilter = String(event.queryStringParameters?.slug || '').trim().toLowerCase();
     const limitValue = Number.parseInt(event.queryStringParameters?.limit || '', 10);
     const requestedLimit = Number.isFinite(limitValue) && limitValue > 0 ? Math.min(limitValue, 12) : null;
 
@@ -52,7 +55,7 @@ export async function handler(event) {
     `;
 
     const cacheResult = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit }),
+      cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit, previewMode, slugFilter: slugFilter || null }),
       route: 'public-posts',
       ttlSeconds: 120,
       compute: async () => {
@@ -73,18 +76,26 @@ export async function handler(event) {
         } else if (requestedLimit) {
           rows = await sql`
             SELECT * FROM posts
-            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+            WHERE (
+              COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+              OR (${previewMode ? 1 : 0} = 1 AND COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft')
+            )
+              AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
             ORDER BY COALESCE(published_at, created_at) DESC
             LIMIT ${requestedLimit}
           `;
         } else {
           rows = await sql`
             SELECT * FROM posts
-            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+            WHERE (
+              COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+              OR (${previewMode ? 1 : 0} = 1 AND COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft')
+            )
+              AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
             ORDER BY COALESCE(published_at, created_at) DESC
           `;
         }
-        return { items: rows.map(formatPost) };
+        return { items: rows.map(formatPost), previewMode };
       },
     });
 

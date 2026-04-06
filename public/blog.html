@@ -142,6 +142,9 @@
         </section>
 
         <section class="content-panel p-4 mb-5">
+          <div id="blogPreviewNotice" class="alert alert-warning d-none" role="status">
+            Preview mode is enabled. You are viewing content that may still be in draft and not yet published.
+          </div>
           <p class="section-kicker mb-2">Research Cluster</p>
           <h2 class="h4 mb-3">Build stronger studies with connected pages</h2>
           <div class="row g-3">
@@ -580,6 +583,10 @@
         const tag = String(params.get('tag') || '').trim();
         return tag ? tag.toLowerCase() : '';
       };
+      const isPreviewRequested = () => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('preview') === 'true';
+      };
       const syncBlogLocation = (slug) => {
         const url = new URL(window.location.href);
         if (slug) {
@@ -623,6 +630,7 @@
         return knownTags;
       };
       const isHiddenFromMainBlog = (post) => Boolean(post?.hideFromBlog);
+      const isDraftPost = (post) => String(post?.status || '').toLowerCase() === 'draft';
       const focusLinkedPost = (slug) => {
         if (!slug) {
           return;
@@ -643,6 +651,7 @@
 
       let latestPosts = [];
       let selectedTag = '';
+      let previewModeActive = false;
       const updateTagFilterOverflowState = () => {
         const tagFiltersEl = document.getElementById('blogTagFilters');
         const toggleEl = document.getElementById('blogTagFiltersToggle');
@@ -835,9 +844,20 @@
         </section>`;
 
       function renderPosts(posts) {
-        latestPosts = posts
-          .filter((post) => !isHiddenFromMainBlog(post))
-          .map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
+        latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
+        const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
+        const previewTargetPost = requestedPostSlug && previewModeActive
+          ? latestPosts.find((post) => String(post.slug || '').toLowerCase() === requestedPostSlug.toLowerCase())
+          : null;
+        latestPosts = latestPosts.filter((post) => {
+          if (previewTargetPost) {
+            return String(post.slug || '').toLowerCase() === String(previewTargetPost.slug || '').toLowerCase();
+          }
+          if (previewModeActive) {
+            return true;
+          }
+          return !isHiddenFromMainBlog(post);
+        });
         renderTagFilters(latestPosts);
 
         const filteredPosts = getVisiblePosts();
@@ -862,9 +882,16 @@
           const bodyHtml = `${bodyLinkResult.html}${fallbackRelatedLinks}`;
           const createdOn = formatPostCreatedDate(post.publishedAt || post.createdAt || '');
           const tags = getPostTags(post);
-          const tagMarkup = tags.length
-            ? tags.map((tag) => `<button type="button" class="badge text-bg-warning border-0 blog-post-tag" data-tag-filter="${escapeHtml(tag.toLowerCase())}">${escapeHtml(tag)}</button>`).join(' ')
-            : '<span class="badge text-bg-warning">Blog Post</span>';
+          const tagBadges = [];
+          if (previewModeActive && isDraftPost(post)) {
+            tagBadges.push('<span class="badge text-bg-secondary">Draft preview</span>');
+          }
+          if (tags.length) {
+            tagBadges.push(...tags.map((tag) => `<button type="button" class="badge text-bg-warning border-0 blog-post-tag" data-tag-filter="${escapeHtml(tag.toLowerCase())}">${escapeHtml(tag)}</button>`));
+          } else {
+            tagBadges.push('<span class="badge text-bg-warning">Blog Post</span>');
+          }
+          const tagMarkup = tagBadges.join(' ');
           const coverImageUrl = normalizePostImageUrl(post.heroImageUrl || post.imageUrl || post.sliderImageUrl);
           const coverImageMarkup = coverImageUrl
             ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`
@@ -976,7 +1003,15 @@
         .catch(() => {});
 
       const fetchPublishedPosts = async () => {
-        const response = await fetch('/api/public-posts');
+        const requestUrl = new URL('/api/public-posts', window.location.origin);
+        const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
+        if (isPreviewRequested()) {
+          requestUrl.searchParams.set('preview', 'true');
+          if (requestedPostSlug) {
+            requestUrl.searchParams.set('slug', requestedPostSlug);
+          }
+        }
+        const response = await fetch(requestUrl.toString());
         if (!response.ok) {
           throw new Error('Failed to load published posts');
         }
@@ -1011,11 +1046,19 @@
       ])
         .then((payload) => {
           const publishedItems = Array.isArray(payload?.items) ? payload.items : [];
+          previewModeActive = Boolean(payload?.previewMode);
+          const previewNotice = document.getElementById('blogPreviewNotice');
+          if (previewNotice) {
+            previewNotice.classList.toggle('d-none', !previewModeActive);
+          }
           const mergedPosts = mergeWithFallbackPosts(publishedItems);
           selectedTag = getRequestedTag();
-          renderPosts(mergedPosts.length ? mergedPosts : fallbackPosts);
+          const hasRequestedPost = Boolean(getRequestedPostSlug());
+          const fallbackSet = previewModeActive || hasRequestedPost ? [] : fallbackPosts;
+          renderPosts(mergedPosts.length ? mergedPosts : fallbackSet);
         })
         .catch(() => {
+          previewModeActive = false;
           selectedTag = getRequestedTag();
           renderPosts(fallbackPosts);
         });

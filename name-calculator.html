@@ -484,23 +484,6 @@ View results: ${shareUrl}`.trim(),
         );
         article.appendChild(meta);
 
-        const cardActions = document.createElement('div');
-        cardActions.className = 'd-flex flex-wrap gap-2 mb-3';
-        const shareButton = document.createElement('button');
-        shareButton.type = 'button';
-        shareButton.className = 'btn btn-sm btn-warning fw-semibold share-action-button';
-        shareButton.textContent = 'Share this name result';
-        shareButton.addEventListener('click', async () => {
-          const url = createNameShareUrl([name], [result.gematria.gematria.total]);
-          await shareUrl({
-            title: `Gematria result for ${name}`,
-            text: `Gematria value ${result.gematria.gematria.total} for ${name}`,
-            url,
-          });
-        });
-        cardActions.appendChild(shareButton);
-        article.appendChild(cardActions);
-
         const relationships = dedupeRelatedWords(name, Array.isArray(result.related?.data) ? result.related.data : []);
         const relatedSection = document.createElement('section');
         relatedSection.className = 'section';

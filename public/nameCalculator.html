@@ -342,6 +342,18 @@ const form = document.querySelector('#name-form');
         return `${getCanonicalShareOrigin()}${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
 
+      function createNameShareUrl(names = [], totals = []) {
+        const url = new URL('/nameCalculator.html', getCanonicalShareOrigin());
+        names.filter(Boolean).slice(0, 3).forEach((name, index) => {
+          url.searchParams.set(`name${index + 1}`, String(name).trim());
+        });
+        const normalizedTotals = totals.map((value) => String(value || '').trim()).filter(Boolean);
+        if (normalizedTotals.length) {
+          url.searchParams.set('totals', normalizedTotals.join(','));
+        }
+        return url.toString();
+      }
+
       async function shareUrl(payload) {
         const shareUrl = toCanonicalShareUrl(payload.url || window.location.href);
         const shareText = payload.text || '';
@@ -465,7 +477,7 @@ View results: ${shareUrl}`.trim(),
         shareButton.className = 'btn btn-sm btn-warning fw-semibold share-action-button';
         shareButton.textContent = 'Share this name result';
         shareButton.addEventListener('click', async () => {
-          const url = `${window.location.origin}/nameCalculator.html?name1=${encodeURIComponent(name)}`;
+          const url = createNameShareUrl([name], [result.gematria.gematria.total]);
           await shareUrl({
             title: `Gematria result for ${name}`,
             text: `Gematria value ${result.gematria.gematria.total} for ${name}`,
@@ -606,18 +618,19 @@ View results: ${shareUrl}`.trim(),
         const results = await Promise.all(names.map((name) => fetchNameResult(name)));
         resultsActions.innerHTML = '';
         if (names.length) {
+          const successfulTotals = results
+            .filter((result) => !result.error && result.gematria?.gematria?.total != null)
+            .map((result) => result.gematria.gematria.total);
           const shareAllButton = document.createElement('button');
           shareAllButton.type = 'button';
           shareAllButton.className = 'btn btn-sm btn-warning fw-semibold share-action-button';
           shareAllButton.textContent = 'Share comparison';
           shareAllButton.setAttribute('aria-label', 'Share this comparison');
           shareAllButton.addEventListener('click', async () => {
-            const url = new URL('/nameCalculator.html', window.location.origin);
-            names.forEach((name, index) => url.searchParams.set(`name${index + 1}`, name));
             await shareUrl({
               title: `Name calculator comparison: ${names.join(', ')}`,
               text: 'Compare these gematria name results.',
-              url: url.toString(),
+              url: createNameShareUrl(names, successfulTotals),
             });
           });
           resultsActions.appendChild(shareAllButton);

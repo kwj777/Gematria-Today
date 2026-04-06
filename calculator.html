@@ -188,6 +188,15 @@ const lookupForm = document.querySelector('#lookup-form');
         return `${getCanonicalShareOrigin()}${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
 
+      function createLookupShareUrl(searchGematria) {
+        const shareUrl = new URL('/calculator.html', getCanonicalShareOrigin());
+        shareUrl.searchParams.set('query', String(searchGematria.word || '').trim());
+        shareUrl.searchParams.set('total', String(searchGematria.gematria?.total ?? ''));
+        shareUrl.searchParams.set('digitalRoot', String(searchGematria.gematria?.digitalRoot ?? ''));
+        shareUrl.searchParams.set('isBaseRoot', String(Boolean(searchGematria.isBaseRoot)));
+        return shareUrl.toString();
+      }
+
       async function sharePage(payload) {
         const shareUrl = toCanonicalShareUrl(payload.url || window.location.href);
         const shareText = payload.text || '';
@@ -699,7 +708,7 @@ View results: ${shareUrl}`.trim(),
         shareButton.type = 'button';
         shareButton.className = 'btn btn-warning btn-sm mt-2 fw-semibold share-action-button';
         shareButton.textContent = 'Share this lookup';
-        const shareUrl = `${window.location.origin}/calculator.html?query=${encodeURIComponent(searchGematria.word)}`;
+        const shareUrl = createLookupShareUrl(searchGematria);
         shareButton.addEventListener('click', async () => {
           await sharePage({
             title: `Gematria lookup for ${searchGematria.word}`,
@@ -770,7 +779,7 @@ View results: ${shareUrl}`.trim(),
           await sharePage({
             title: `Gematria related words for ${payload.query}`,
             text: formatCalculationSharePreview(payload.query, searchGematria.gematria.total),
-            url: `${window.location.origin}/calculator.html?query=${encodeURIComponent(payload.query)}`,
+            url: createLookupShareUrl(searchGematria),
           });
         });
         meta.append(document.createElement('br'), shareSearchButton);

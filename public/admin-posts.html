@@ -94,6 +94,7 @@
               <button id="importMdFileButton" class="btn btn-outline-dark" type="button">Import MD file</button>
               <input id="importMdFileInput" class="d-none" type="file" accept=".md,text/markdown" />
               <button id="generateHeroImageButton" class="btn btn-outline-success" type="button">Create hero image</button>
+              <button id="removeHeroImageButton" class="btn btn-outline-warning" type="button">Remove hero image</button>
               <button id="previewCreatePostButton" class="btn btn-outline-primary" type="button">Preview/Refresh</button>
               <button class="btn btn-outline-secondary" type="reset">Reset</button>
             </div>
@@ -163,6 +164,7 @@
       const importMdFileButton = document.getElementById('importMdFileButton');
       const importMdFileInput = document.getElementById('importMdFileInput');
       const generateHeroImageButton = document.getElementById('generateHeroImageButton');
+      const removeHeroImageButton = document.getElementById('removeHeroImageButton');
       const previewCreatePostButton = document.getElementById('previewCreatePostButton');
       const createPostPreviewSection = document.getElementById('createPostPreviewSection');
       const filterStatus = document.getElementById('filterStatus');
@@ -366,6 +368,18 @@
         const heroBlockPattern = /<!-- auto-generated-hero -->[\s\S]*?<!-- \/auto-generated-hero -->\s*/;
         const bodyWithoutOldHero = existingBody.replace(heroBlockPattern, '').trim();
         bodyField.value = bodyWithoutOldHero ? `${heroMarkup}\n\n${bodyWithoutOldHero}` : heroMarkup;
+      }
+
+      function removeGeneratedHeroImage() {
+        const bodyField = document.getElementById('createPostBody');
+        const existingBody = bodyField.value || '';
+        const heroBlockPattern = /<!-- auto-generated-hero -->[\s\S]*?<!-- \/auto-generated-hero -->\s*/;
+        const bodyWithoutHero = existingBody.replace(heroBlockPattern, '').trim();
+        if (bodyWithoutHero === existingBody.trim()) {
+          return false;
+        }
+        bodyField.value = bodyWithoutHero;
+        return true;
       }
 
       function formatCreatedOnLabel(value) {
@@ -831,6 +845,18 @@
         injectGeneratedHeroImage();
         showMessage(saveMessage, 'Generated hero image inserted into the post body.');
         clearMessage(errorMessage);
+        renderCreatePostPreview();
+      });
+
+      removeHeroImageButton.addEventListener('click', () => {
+        const didRemove = removeGeneratedHeroImage();
+        if (didRemove) {
+          showMessage(saveMessage, 'Generated hero image removed from the post body.');
+          clearMessage(errorMessage);
+        } else {
+          showMessage(errorMessage, 'No generated hero image was found in the post body.');
+          clearMessage(saveMessage);
+        }
         renderCreatePostPreview();
       });
 

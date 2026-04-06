@@ -12,12 +12,12 @@
 <title>Name Calculator | EndTimes.Today</title>
     <meta name="description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the EndTimes.Today Name Calculator." />
     <meta name="robots" content="index,follow" />
-    <link rel="canonical" href="https://endtimes.today/nameCalculator.html" />
+    <link rel="canonical" href="https://endtimes.today/name-calculator.html" />
     <meta property="og:site_name" content="EndTimes.Today" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Name Calculator | EndTimes.Today" />
     <meta property="og:description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the EndTimes.Today Name Calculator." />
-    <meta property="og:url" content="https://endtimes.today/nameCalculator.html" />
+    <meta property="og:url" content="https://endtimes.today/name-calculator.html" />
     <meta property="og:image" content="https://endtimes.today/assets/name-calculator-hero-identity.svg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Name Calculator | EndTimes.Today" />
@@ -45,7 +45,7 @@
               <button class="nav-link dropdown-toggle active" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
-                <li><a class="dropdown-item active" href="/nameCalculator.html">Name Calculator</a></li>
+                <li><a class="dropdown-item active" href="/name-calculator.html">Name Calculator</a></li>
               </ul>
             </li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
@@ -356,7 +356,7 @@ const form = document.querySelector('#name-form');
       }
 
       function createNameShareUrl(names = [], totals = []) {
-        const url = new URL('/nameCalculator.html', getCanonicalShareOrigin());
+        const url = new URL('/name-calculator.html', getCanonicalShareOrigin());
         names.filter(Boolean).slice(0, 3).forEach((name, index) => {
           url.searchParams.set(`name${index + 1}`, String(name).trim());
         });

@@ -88,7 +88,7 @@
               <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
-                <li><a class="dropdown-item" href="/nameCalculator.html">Name Calculator</a></li>
+                <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
               </ul>
             </li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
@@ -149,7 +149,7 @@
           <h2 class="h4 mb-3">Build stronger studies with connected pages</h2>
           <div class="row g-3">
             <div class="col-md-6"><a class="news-inline-link" href="/calculator.html">Use the Word/Phrase Calculator to test blog hypotheses</a></div>
-            <div class="col-md-6"><a class="news-inline-link" href="/nameCalculator.html">Run name-focused comparisons for author and figure studies</a></div>
+            <div class="col-md-6"><a class="news-inline-link" href="/name-calculator.html">Run name-focused comparisons for author and figure studies</a></div>
             <div class="col-md-6"><a class="news-inline-link" href="/">Validate repeated totals in the gematria results archive</a></div>
             <div class="col-md-6"><a class="news-inline-link" href="/news.html">Cross-check active headlines in the news feed before publishing interpretations</a></div>
             <div class="col-md-6"><a class="news-inline-link" href="/faq.html">Review FAQ methodology safeguards to reduce confirmation bias</a></div>
@@ -740,9 +740,9 @@
           { phrase: 'Word/Phrase Calculator', href: '/calculator.html' },
           { phrase: 'gematria calculator', href: '/calculator.html' },
           { phrase: 'calculator', href: '/calculator.html' },
-          { phrase: 'name lookup page', href: '/nameCalculator.html' },
-          { phrase: 'name calculator', href: '/nameCalculator.html' },
-          { phrase: 'names', href: '/nameCalculator.html' },
+          { phrase: 'name lookup page', href: '/name-calculator.html' },
+          { phrase: 'name calculator', href: '/name-calculator.html' },
+          { phrase: 'names', href: '/name-calculator.html' },
           { phrase: 'news feed', href: '/news.html' },
           { phrase: 'FAQ', href: '/faq.html' },
           { phrase: 'premium research tools', href: '/premium-research.html' },
@@ -901,7 +901,7 @@
         const postMarkup = filteredPosts.map((post) => {
           const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
           const bodyLinkResult = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);
-          const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/nameCalculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a> · <a class="news-inline-link" href="/blog.html">More Blog Posts</a></p>`;
+          const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/name-calculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a> · <a class="news-inline-link" href="/blog.html">More Blog Posts</a></p>`;
           const bodyHtml = `${bodyLinkResult.html}${fallbackRelatedLinks}`;
           const createdOn = formatPostCreatedDate(post.publishedAt || post.createdAt || '');
           const tags = getPostTags(post);

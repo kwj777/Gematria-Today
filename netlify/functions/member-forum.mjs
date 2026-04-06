@@ -2,9 +2,11 @@ import crypto from 'node:crypto';
 import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
 
 const DEFAULT_CATEGORIES = [
-  { slug: 'interpretations', name: 'Interpretations', description: 'Share and discuss gematria interpretations.', sortOrder: 1 },
-  { slug: 'questions', name: 'Questions', description: 'Ask for help with patterns, calculations, or meanings.', sortOrder: 2 },
-  { slug: 'show-and-tell', name: 'Show & Tell', description: 'Post findings, workflows, and project updates.', sortOrder: 3 },
+  { slug: 'member-lounge', name: 'Member Lounge', description: 'General discussion area for all signed-in members.', sortOrder: 1, accessTier: 'free' },
+  { slug: 'member-questions', name: 'Member Questions', description: 'Ask for help with patterns, calculations, or meanings.', sortOrder: 2, accessTier: 'free' },
+  { slug: 'interpretations', name: 'Interpretations', description: 'Share and discuss deeper gematria interpretations.', sortOrder: 101, accessTier: 'premium' },
+  { slug: 'premium-questions', name: 'Premium Questions', description: 'Premium-only Q&A with focused discussion.', sortOrder: 102, accessTier: 'premium' },
+  { slug: 'show-and-tell', name: 'Show & Tell', description: 'Post findings, workflows, and project updates.', sortOrder: 103, accessTier: 'premium' },
 ];
 
 const REPORT_REASONS = new Set(['spam', 'harassment', 'off-topic', 'abuse', 'other']);
@@ -15,9 +17,25 @@ async function ensureForumSchema(sql) {
     slug TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     description TEXT,
+    access_tier TEXT NOT NULL DEFAULT 'free',
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+
+  await sql`ALTER TABLE forum_categories
+    ADD COLUMN IF NOT EXISTS access_tier TEXT NOT NULL DEFAULT 'free'`;
+
+  await sql`DO $$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint WHERE conname = 'forum_categories_access_tier_check'
+    ) THEN
+      ALTER TABLE forum_categories
+        ADD CONSTRAINT forum_categories_access_tier_check
+        CHECK (access_tier IN ('free', 'premium'));
+    END IF;
+  END
+  $$`;
 
   await sql`CREATE TABLE IF NOT EXISTS forum_threads (
     id TEXT PRIMARY KEY,
@@ -124,22 +142,26 @@ async function ensureForumSchema(sql) {
 
   for (const category of DEFAULT_CATEGORIES) {
     await sql`
-      INSERT INTO forum_categories (id, slug, name, description, sort_order)
-      VALUES (${crypto.randomUUID()}, ${category.slug}, ${category.name}, ${category.description}, ${category.sortOrder})
+      INSERT INTO forum_categories (id, slug, name, description, access_tier, sort_order)
+      VALUES (${crypto.randomUUID()}, ${category.slug}, ${category.name}, ${category.description}, ${category.accessTier}, ${category.sortOrder})
       ON CONFLICT (slug)
       DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
+        access_tier = EXCLUDED.access_tier,
         sort_order = EXCLUDED.sort_order
     `;
   }
 }
 
-function assertForumAccess(member, user) {
-  const isPremium = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
-  const isAdmin = user?.role === 'admin';
-  if (!isPremium && !isAdmin) {
-    throw Object.assign(new Error('Premium membership is required for forum access'), { statusCode: 403 });
+function isPremiumMember(member, user) {
+  const hasPaidMembership = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
+  return hasPaidMembership || user?.role === 'admin';
+}
+
+function assertPremiumAreaAccess(member, user) {
+  if (!isPremiumMember(member, user)) {
+    throw Object.assign(new Error('Premium membership is required for this forum area'), { statusCode: 403 });
   }
 }
 
@@ -152,6 +174,11 @@ function assertAdmin(user) {
 function normalizeSort(value) {
   const normalized = String(value || 'newest').trim().toLowerCase();
   return normalized === 'popular' ? 'popular' : 'newest';
+}
+
+function normalizeArea(value) {
+  const normalized = String(value || 'free').trim().toLowerCase();
+  return normalized === 'premium' ? 'premium' : 'free';
 }
 
 function parseUrl(event) {
@@ -205,6 +232,7 @@ function mapThreadRow(row) {
     categoryId: row.category_id,
     categorySlug: row.category_slug,
     categoryName: row.category_name,
+    categoryAccessTier: row.category_access_tier,
     authorUserId: row.author_user_id,
     authorUsername: row.author_username,
     title: row.title,
@@ -233,16 +261,21 @@ function mapReplyRow(row) {
   };
 }
 
-async function listThreads(sql, event) {
+async function listThreads(sql, member, user, event) {
   const url = parseUrl(event);
+  const area = normalizeArea(url.searchParams.get('area'));
+  if (area === 'premium') {
+    assertPremiumAreaAccess(member, user);
+  }
   const category = String(url.searchParams.get('category') || '').trim().toLowerCase();
   const sort = normalizeSort(url.searchParams.get('sort'));
   const limitRaw = Number.parseInt(String(url.searchParams.get('limit') || '25'), 10);
   const limit = Number.isInteger(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 25;
 
   const categories = await sql`
-    SELECT id, slug, name, description, sort_order
+    SELECT id, slug, name, description, access_tier, sort_order
     FROM forum_categories
+    WHERE access_tier = ${area}
     ORDER BY sort_order ASC, name ASC
   `;
 
@@ -251,22 +284,26 @@ async function listThreads(sql, event) {
     threadRows = category
       ? await sql`
         SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score
+          (t.reply_count * 2 + t.view_count) AS popularity_score,
+          c.access_tier AS category_access_tier
         FROM forum_threads t
         JOIN users u ON u.id = t.author_user_id
         JOIN forum_categories c ON c.id = t.category_id
         WHERE t.deleted_at IS NULL
           AND c.slug = ${category}
+          AND c.access_tier = ${area}
         ORDER BY popularity_score DESC, t.last_activity_at DESC
         LIMIT ${limit}
       `
       : await sql`
         SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score
+          (t.reply_count * 2 + t.view_count) AS popularity_score,
+          c.access_tier AS category_access_tier
         FROM forum_threads t
         JOIN users u ON u.id = t.author_user_id
         JOIN forum_categories c ON c.id = t.category_id
         WHERE t.deleted_at IS NULL
+          AND c.access_tier = ${area}
         ORDER BY popularity_score DESC, t.last_activity_at DESC
         LIMIT ${limit}
       `;
@@ -274,22 +311,26 @@ async function listThreads(sql, event) {
     threadRows = category
       ? await sql`
         SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score
+          (t.reply_count * 2 + t.view_count) AS popularity_score,
+          c.access_tier AS category_access_tier
         FROM forum_threads t
         JOIN users u ON u.id = t.author_user_id
         JOIN forum_categories c ON c.id = t.category_id
         WHERE t.deleted_at IS NULL
           AND c.slug = ${category}
+          AND c.access_tier = ${area}
         ORDER BY t.last_activity_at DESC, t.created_at DESC
         LIMIT ${limit}
       `
       : await sql`
         SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score
+          (t.reply_count * 2 + t.view_count) AS popularity_score,
+          c.access_tier AS category_access_tier
         FROM forum_threads t
         JOIN users u ON u.id = t.author_user_id
         JOIN forum_categories c ON c.id = t.category_id
         WHERE t.deleted_at IS NULL
+          AND c.access_tier = ${area}
         ORDER BY t.last_activity_at DESC, t.created_at DESC
         LIMIT ${limit}
       `;
@@ -301,15 +342,17 @@ async function listThreads(sql, event) {
       slug: row.slug,
       name: row.name,
       description: row.description,
+      accessTier: row.access_tier,
       sortOrder: Number(row.sort_order || 0),
     })),
+    area,
     sort,
     category: category || null,
     threads: threadRows.map(mapThreadRow),
   };
 }
 
-async function getThread(sql, event) {
+async function getThread(sql, member, user, event) {
   const url = parseUrl(event);
   const threadId = String(url.searchParams.get('threadId') || '').trim();
   if (!threadId) {
@@ -317,7 +360,7 @@ async function getThread(sql, event) {
   }
 
   const threadRows = await sql`
-    SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+    SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name, c.access_tier AS category_access_tier,
       (t.reply_count * 2 + t.view_count) AS popularity_score
     FROM forum_threads t
     JOIN users u ON u.id = t.author_user_id
@@ -329,6 +372,9 @@ async function getThread(sql, event) {
 
   if (!threadRows.length) {
     throw Object.assign(new Error('Thread not found'), { statusCode: 404 });
+  }
+  if (threadRows[0].category_access_tier === 'premium') {
+    assertPremiumAreaAccess(member, user);
   }
 
   await sql`UPDATE forum_threads SET view_count = view_count + 1, updated_at = NOW() WHERE id = ${threadId}`;
@@ -352,7 +398,7 @@ async function getThread(sql, event) {
   };
 }
 
-async function createThread(sql, member, event) {
+async function createThread(sql, member, user, event) {
   const body = parseBody(event);
   const title = String(body.title || '').trim();
   const content = String(body.body || '').trim();
@@ -368,8 +414,11 @@ async function createThread(sql, member, event) {
   assertNotSpam(content, 'body');
   await assertPostingCooldown(sql, member.id);
 
-  const categories = await sql`SELECT id FROM forum_categories WHERE slug = ${categorySlug} LIMIT 1`;
+  const categories = await sql`SELECT id, access_tier FROM forum_categories WHERE slug = ${categorySlug} LIMIT 1`;
   if (!categories.length) throw Object.assign(new Error('Invalid categorySlug'), { statusCode: 400 });
+  if (categories[0].access_tier === 'premium') {
+    assertPremiumAreaAccess(member, user);
+  }
 
   const threadId = crypto.randomUUID();
   const rows = await sql`
@@ -382,10 +431,19 @@ async function createThread(sql, member, event) {
     RETURNING *
   `;
 
-  return { thread: mapThreadRow({ ...rows[0], category_slug: categorySlug, category_name: null, author_username: member.username, popularity_score: 0 }) };
+  return {
+    thread: mapThreadRow({
+      ...rows[0],
+      category_slug: categorySlug,
+      category_name: null,
+      category_access_tier: categories[0].access_tier,
+      author_username: member.username,
+      popularity_score: 0,
+    }),
+  };
 }
 
-async function createReply(sql, member, event) {
+async function createReply(sql, member, user, event) {
   const body = parseBody(event);
   const threadId = String(body.threadId || '').trim();
   const content = String(body.body || '').trim();
@@ -396,8 +454,18 @@ async function createReply(sql, member, event) {
   assertNotSpam(content, 'body');
   await assertPostingCooldown(sql, member.id);
 
-  const threads = await sql`SELECT id, is_locked FROM forum_threads WHERE id = ${threadId} AND deleted_at IS NULL LIMIT 1`;
+  const threads = await sql`
+    SELECT t.id, t.is_locked, c.access_tier
+    FROM forum_threads t
+    JOIN forum_categories c ON c.id = t.category_id
+    WHERE t.id = ${threadId}
+      AND t.deleted_at IS NULL
+    LIMIT 1
+  `;
   if (!threads.length) throw Object.assign(new Error('Thread not found'), { statusCode: 404 });
+  if (threads[0].access_tier === 'premium') {
+    assertPremiumAreaAccess(member, user);
+  }
   if (threads[0].is_locked) throw Object.assign(new Error('This thread is locked by moderators'), { statusCode: 403 });
 
   const replyId = crypto.randomUUID();
@@ -418,7 +486,7 @@ async function createReply(sql, member, event) {
   return { reply: mapReplyRow({ ...rows[0], author_username: member.username }) };
 }
 
-async function reportContent(sql, member, event) {
+async function reportContent(sql, member, user, event) {
   const body = parseBody(event);
   const reason = String(body.reason || 'other').trim().toLowerCase();
   const details = String(body.details || '').trim().slice(0, 800);
@@ -433,13 +501,30 @@ async function reportContent(sql, member, event) {
   }
 
   if (threadId) {
-    const threadRows = await sql`SELECT id FROM forum_threads WHERE id = ${threadId} AND deleted_at IS NULL LIMIT 1`;
+    const threadRows = await sql`
+      SELECT t.id, c.access_tier
+      FROM forum_threads t
+      JOIN forum_categories c ON c.id = t.category_id
+      WHERE t.id = ${threadId}
+        AND t.deleted_at IS NULL
+      LIMIT 1
+    `;
     if (!threadRows.length) throw Object.assign(new Error('Thread not found'), { statusCode: 404 });
+    if (threadRows[0].access_tier === 'premium') assertPremiumAreaAccess(member, user);
   }
 
   if (postId) {
-    const postRows = await sql`SELECT id FROM forum_posts WHERE id = ${postId} AND deleted_at IS NULL LIMIT 1`;
+    const postRows = await sql`
+      SELECT p.id, c.access_tier
+      FROM forum_posts p
+      JOIN forum_threads t ON t.id = p.thread_id
+      JOIN forum_categories c ON c.id = t.category_id
+      WHERE p.id = ${postId}
+        AND p.deleted_at IS NULL
+      LIMIT 1
+    `;
     if (!postRows.length) throw Object.assign(new Error('Reply not found'), { statusCode: 404 });
+    if (postRows[0].access_tier === 'premium') assertPremiumAreaAccess(member, user);
   }
 
   await sql`
@@ -528,21 +613,20 @@ export async function handler(event) {
     const { sql, user, member } = await getAuthenticatedMember(event, { requireAuth: true });
     if (!member || !user) throw Object.assign(new Error('Unauthorized'), { statusCode: 401 });
 
-    assertForumAccess(member, user);
     await ensureForumSchema(sql);
 
     if (event.httpMethod === 'GET') {
       const action = String(parseUrl(event).searchParams.get('action') || 'threads').trim().toLowerCase();
-      if (action === 'threads') return jsonResponse(200, await listThreads(sql, event));
-      if (action === 'thread') return jsonResponse(200, await getThread(sql, event));
+      if (action === 'threads') return jsonResponse(200, await listThreads(sql, member, user, event));
+      if (action === 'thread') return jsonResponse(200, await getThread(sql, member, user, event));
       if (action === 'reports') return jsonResponse(200, await listReports(sql, user));
       throw Object.assign(new Error('Unsupported action. Use one of: threads, thread, reports'), { statusCode: 400 });
     }
 
     const action = String(parseBody(event).action || '').trim().toLowerCase();
-    if (action === 'create_thread') return jsonResponse(201, await createThread(sql, member, event));
-    if (action === 'create_reply') return jsonResponse(201, await createReply(sql, member, event));
-    if (action === 'report_thread' || action === 'report_reply') return jsonResponse(201, await reportContent(sql, member, event));
+    if (action === 'create_thread') return jsonResponse(201, await createThread(sql, member, user, event));
+    if (action === 'create_reply') return jsonResponse(201, await createReply(sql, member, user, event));
+    if (action === 'report_thread' || action === 'report_reply') return jsonResponse(201, await reportContent(sql, member, user, event));
     if (action === 'lock_thread') return jsonResponse(200, await moderateThread(sql, user, event, 'lock'));
     if (action === 'unlock_thread') return jsonResponse(200, await moderateThread(sql, user, event, 'unlock'));
     if (action === 'delete_thread') return jsonResponse(200, await moderateThread(sql, user, event, 'delete'));

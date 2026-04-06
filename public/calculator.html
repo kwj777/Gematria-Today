@@ -194,17 +194,19 @@ const lookupForm = document.querySelector('#lookup-form');
         shareUrl.searchParams.set('total', String(searchGematria.gematria?.total ?? ''));
         shareUrl.searchParams.set('digitalRoot', String(searchGematria.gematria?.digitalRoot ?? ''));
         shareUrl.searchParams.set('isBaseRoot', String(Boolean(searchGematria.isBaseRoot)));
-        shareUrl.hash = 'lookup-form';
+        shareUrl.hash = 'gematria-result';
         return shareUrl.toString();
       }
 
       function focusLookupAreaFromHash() {
-        if (window.location.hash !== '#lookup-form') {
+        if (window.location.hash === '#gematria-result') {
+          gematriaResult?.scrollIntoView({ block: 'center' });
           return;
         }
-
-        lookupForm?.scrollIntoView({ block: 'center' });
-        lookupInput?.focus({ preventScroll: true });
+        if (window.location.hash === '#lookup-form') {
+          lookupForm?.scrollIntoView({ block: 'center' });
+          lookupInput?.focus({ preventScroll: true });
+        }
       }
 
       async function sharePage(payload) {
@@ -942,9 +944,12 @@ View results: ${shareUrl}`.trim(),
           currentSearchPayload = null;
           updateMemberSaveState();
         } finally {
+          focusLookupAreaFromHash();
           hideCalculatorLoadingOverlay();
           lookupForm.reset();
-          lookupInput.focus();
+          if (window.location.hash !== '#gematria-result') {
+            lookupInput.focus();
+          }
         }
       });
 

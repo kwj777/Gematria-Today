@@ -905,16 +905,11 @@
             tagBadges.push('<span class="badge text-bg-warning">Blog Post</span>');
           }
           const tagMarkup = tagBadges.join(' ');
-          const coverImageUrl = normalizePostImageUrl(post.heroImageUrl || post.imageUrl || post.sliderImageUrl || post.backgroundImageUrl);
-          const postBackgroundImageUrl = normalizePostImageUrl(post.backgroundImageUrl);
-          const postBackgroundClass = postBackgroundImageUrl ? ' blog-post-card--with-background' : '';
-          const postBackgroundStyle = postBackgroundImageUrl
-            ? ` style="--blog-post-background-image:url('${escapeHtml(postBackgroundImageUrl).replace(/'/g, '%27')}');"`
-            : '';
+          const coverImageUrl = normalizePostImageUrl(post.heroImageUrl || post.imageUrl || post.backgroundImageUrl || post.sliderImageUrl);
           const coverImageMarkup = coverImageUrl
             ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`
             : '';
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card${postBackgroundClass}"${postBackgroundStyle}><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(createdOn ? `Created on: ${createdOn}` : '')}</p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4"><p class="mb-0 small text-muted">${escapeHtml(createdOn ? `Created on: ${createdOn}` : '')}</p><div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         });
         if (postMarkup.length > 2) {
           postMarkup.splice(2, 0, inlineFollowFormMarkup);

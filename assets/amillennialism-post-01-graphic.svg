@@ -108,8 +108,8 @@
   </g>
 
   <!-- bottom-right badge -->
-  <g transform="translate(1195 742)" filter="url(#cardShadow)">
-    <rect x="0" y="0" rx="18" ry="18" width="270" height="58" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.16"/>
+  <g transform="translate(1160 742)" filter="url(#cardShadow)">
+    <rect x="0" y="0" rx="18" ry="18" width="320" height="58" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.16"/>
     <text x="28" y="38" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Amillennialism Series</text>
   </g>
 </svg>

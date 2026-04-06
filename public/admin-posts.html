@@ -86,6 +86,9 @@
               </div>
               <textarea id="createPostBody" class="form-control" rows="7" required></textarea>
             </div>
+            <div class="col-12"><label class="form-label" for="createPostImageUrl">Hero image URL</label><input id="createPostImageUrl" class="form-control" /></div>
+            <div class="col-12"><label class="form-label" for="createPostSliderImageUrl">Homepage slider image URL</label><input id="createPostSliderImageUrl" class="form-control" /></div>
+            <div class="col-12"><label class="form-label" for="createPostBackgroundImageUrl">Background image URL</label><input id="createPostBackgroundImageUrl" class="form-control" /></div>
             <div class="col-md-6"><label class="form-label" for="createPostStatus">Publish status</label><select id="createPostStatus" class="form-select"><option value="published">Publish now</option><option value="scheduled">Publish later</option><option value="draft">Save as draft</option></select></div>
             <div class="col-md-6"><label class="form-label" for="createPostScheduledPublishAt">Schedule publish date/time (optional)</label><input id="createPostScheduledPublishAt" class="form-control" type="datetime-local" /></div>
             <div class="col-12 d-flex gap-2">
@@ -684,6 +687,7 @@
                   </div>
                   <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Hero image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Homepage slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /></div>
+                  <div class="col-12"><label class="form-label" for="editBackgroundImageUrl-${post.id}">Background image URL</label><input id="editBackgroundImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.backgroundImageUrl || '')}" /></div>
                   <div class="col-12">
                     <div class="form-check">
                       <input id="editHomepage-${post.id}" class="form-check-input" type="checkbox" ${post.showOnHomepage ? 'checked' : ''} />
@@ -887,6 +891,9 @@
               readTime: readTimeField.value,
               summary: document.getElementById('createPostSummary').value,
               body: bodyValue,
+              imageUrl: document.getElementById('createPostImageUrl').value,
+              sliderImageUrl: document.getElementById('createPostSliderImageUrl').value,
+              backgroundImageUrl: document.getElementById('createPostBackgroundImageUrl').value,
               status: isSaveDraftAction ? 'draft' : getCreatePostRequestStatus(),
               scheduledPublishAt: localDateTimeInputToIso(document.getElementById('createPostScheduledPublishAt').value)
             })
@@ -922,6 +929,7 @@
               readTime: readTimeValue,
               imageUrl: getFieldValue('editImageUrl'),
               sliderImageUrl: getFieldValue('editSliderImageUrl'),
+              backgroundImageUrl: getFieldValue('editBackgroundImageUrl'),
               showOnHomepage: Boolean(getField('editHomepage')?.checked),
               hideFromBlog: Boolean(getField('editHideFromBlog')?.checked),
               summary: getFieldValue('editSummary'),

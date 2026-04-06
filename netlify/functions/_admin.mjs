@@ -154,6 +154,9 @@ export async function ensureAdminSchema(sql) {
     ADD COLUMN IF NOT EXISTS slider_image_url TEXT`;
 
   await sql`ALTER TABLE posts
+    ADD COLUMN IF NOT EXISTS background_image_url TEXT`;
+
+  await sql`ALTER TABLE posts
     ADD COLUMN IF NOT EXISTS show_on_homepage BOOLEAN NOT NULL DEFAULT FALSE`;
 
   await sql`ALTER TABLE posts
@@ -425,6 +428,7 @@ export function formatPost(row) {
     readTime: row.read_time,
     imageUrl: row.image_url,
     sliderImageUrl: row.slider_image_url,
+    backgroundImageUrl: row.background_image_url,
     showOnHomepage: row.show_on_homepage,
     hideFromBlog: row.hide_from_blog,
     status: row.status,

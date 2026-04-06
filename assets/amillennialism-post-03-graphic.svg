@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Revelation 20 Explained</title>
+  <desc id="desc">A 16 by 9 header graphic for article 3 in the Amillennialism series.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="50%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="#60a5fa" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#c084fc" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.35"/>
+    </linearGradient>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="cardShadow" x="-20%" y="-20%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+
+  <g opacity="0.08">
+    <path d="M0 150H1600M0 300H1600M0 450H1600M0 600H1600M0 750H1600" stroke="#ffffff" stroke-width="1"/>
+    <path d="M200 0V900M400 0V900M600 0V900M800 0V900M1000 0V900M1200 0V900M1400 0V900" stroke="#ffffff" stroke-width="1"/>
+  </g>
+
+  <g transform="translate(110 92)" filter="url(#cardShadow)">
+    <rect x="0" y="0" rx="28" ry="28" width="245" height="62" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.16"/>
+    <circle cx="30" cy="31" r="7" fill="#c084fc"/>
+    <text x="52" y="39" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="2.5">PART 3</text>
+  </g>
+
+  <g transform="translate(108 220)">
+    <text x="0" y="0" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="96" font-weight="800">Revelation 20</text>
+    <text x="0" y="108" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="96" font-weight="800">Explained</text>
+    <text x="4" y="180" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="500">Binding, resurrection, and the thousand years</text>
+  </g>
+
+  <g transform="translate(112 640)">
+    <line x1="0" y1="0" x2="800" y2="0" stroke="url(#lineGrad)" stroke-width="6" stroke-linecap="round" filter="url(#softGlow)"/>
+    <g>
+      <circle cx="80" cy="0" r="14" fill="#60a5fa"/>
+      <circle cx="80" cy="0" r="28" fill="#60a5fa" fill-opacity="0.12"/>
+      <text x="34" y="56" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Article</text>
+    </g>
+    <g>
+      <circle cx="390" cy="0" r="14" fill="#c084fc"/>
+      <circle cx="390" cy="0" r="32" fill="#c084fc" fill-opacity="0.14"/>
+      <text x="335" y="56" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Series</text>
+      <text x="308" y="88" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="20">Theology and Scripture</text>
+    </g>
+    <g>
+      <circle cx="720" cy="0" r="14" fill="#c084fc"/>
+      <circle cx="720" cy="0" r="32" fill="#c084fc" fill-opacity="0.14"/>
+      <text x="677" y="56" fill="#e5e7eb" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Hope</text>
+    </g>
+  </g>
+
+  
+        <g transform="translate(1115 220)">
+          <circle cx="170" cy="160" r="184" fill="#ffffff" fill-opacity="0.03"/>
+          <circle cx="170" cy="160" r="136" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08"/>
+          <g transform="translate(48 34)">
+            <rect x="34" y="36" width="242" height="252" rx="22" fill="#f8fafc" fill-opacity="0.94"/>
+            <rect x="20" y="22" width="28" height="280" rx="14" fill="#60a5fa"/>
+            <rect x="262" y="22" width="28" height="280" rx="14" fill="#c084fc"/>
+            <circle cx="34" cy="22" r="18" fill="#60a5fa"/>
+            <circle cx="276" cy="22" r="18" fill="#c084fc"/>
+            <circle cx="34" cy="302" r="18" fill="#60a5fa"/>
+            <circle cx="276" cy="302" r="18" fill="#c084fc"/>
+            <path d="M78 86H234M78 122H234M78 158H214M78 212H228" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+            <path d="M86 242c24-34 62-34 86 0 24-34 62-34 86 0" fill="none" stroke="#c084fc" stroke-width="8" stroke-linecap="round"/>
+          </g>
+        </g>
+        
+
+  <g transform="translate(1195 770)" filter="url(#cardShadow)">
+    <rect x="0" y="0" rx="18" ry="18" width="270" height="58" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.16"/>
+    <text x="28" y="38" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Amillennialism Series</text>
+  </g>
+</svg>

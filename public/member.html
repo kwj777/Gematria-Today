@@ -1104,10 +1104,24 @@
       }
 
 
+      function getCanonicalShareOrigin() {
+        const host = window.location.hostname.toLowerCase();
+        if (host === 'localhost' || host === '127.0.0.1') {
+          return window.location.origin;
+        }
+        return 'https://endtimes.today';
+      }
+
+      function toCanonicalShareUrl(pathOrUrl) {
+        const source = String(pathOrUrl || '').trim() || window.location.href;
+        const parsed = new URL(source, window.location.origin);
+        return `${getCanonicalShareOrigin()}${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
       function getHistoryReopenUrl(item) {
         if (item.calculatorSource === 'name-calculator') {
           const names = Array.isArray(item.resultPayload?.names) ? item.resultPayload.names.filter(Boolean) : [];
-          const url = new URL('/nameCalculator.html', window.location.origin);
+          const url = new URL('/nameCalculator.html', getCanonicalShareOrigin());
           names.slice(0, 3).forEach((name, index) => {
             url.searchParams.set(`name${index + 1}`, name);
           });
@@ -1120,7 +1134,7 @@
 
       async function shareHistoryItem(item) {
         const reopenPath = getHistoryReopenUrl(item);
-        const shareUrl = `${window.location.origin}${reopenPath}`;
+        const shareUrl = toCanonicalShareUrl(reopenPath);
         const sharePayload = {
           title: 'EndTimes.Today saved search',
           text: `Saved search: ${item.queryText || 'Gematria lookup'}\nView results: ${shareUrl}`,

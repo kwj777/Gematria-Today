@@ -246,24 +246,53 @@ async function listThreads(sql, event) {
     ORDER BY sort_order ASC, name ASC
   `;
 
-  const baseSelect = sql`
-    SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-      (t.reply_count * 2 + t.view_count) AS popularity_score
-    FROM forum_threads t
-    JOIN users u ON u.id = t.author_user_id
-    JOIN forum_categories c ON c.id = t.category_id
-    WHERE t.deleted_at IS NULL
-  `;
-
   let threadRows;
   if (sort === 'popular') {
     threadRows = category
-      ? await sql`${baseSelect} AND c.slug = ${category} ORDER BY popularity_score DESC, t.last_activity_at DESC LIMIT ${limit}`
-      : await sql`${baseSelect} ORDER BY popularity_score DESC, t.last_activity_at DESC LIMIT ${limit}`;
+      ? await sql`
+        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+          (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        JOIN forum_categories c ON c.id = t.category_id
+        WHERE t.deleted_at IS NULL
+          AND c.slug = ${category}
+        ORDER BY popularity_score DESC, t.last_activity_at DESC
+        LIMIT ${limit}
+      `
+      : await sql`
+        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+          (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        JOIN forum_categories c ON c.id = t.category_id
+        WHERE t.deleted_at IS NULL
+        ORDER BY popularity_score DESC, t.last_activity_at DESC
+        LIMIT ${limit}
+      `;
   } else {
     threadRows = category
-      ? await sql`${baseSelect} AND c.slug = ${category} ORDER BY t.last_activity_at DESC, t.created_at DESC LIMIT ${limit}`
-      : await sql`${baseSelect} ORDER BY t.last_activity_at DESC, t.created_at DESC LIMIT ${limit}`;
+      ? await sql`
+        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+          (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        JOIN forum_categories c ON c.id = t.category_id
+        WHERE t.deleted_at IS NULL
+          AND c.slug = ${category}
+        ORDER BY t.last_activity_at DESC, t.created_at DESC
+        LIMIT ${limit}
+      `
+      : await sql`
+        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+          (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        JOIN forum_categories c ON c.id = t.category_id
+        WHERE t.deleted_at IS NULL
+        ORDER BY t.last_activity_at DESC, t.created_at DESC
+        LIMIT ${limit}
+      `;
   }
 
   return {

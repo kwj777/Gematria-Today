@@ -24,9 +24,9 @@
 
     <main class="container py-5">
       <header class="content-panel p-4 p-lg-5 mb-4">
-        <p class="section-kicker mb-2">Premium Forum</p>
+        <p class="section-kicker mb-2">Premium Forum · Phase 2</p>
         <h1 class="h2 mb-3">Discuss interpretations with other premium members</h1>
-        <p class="text-muted mb-0">Phase 1 includes categories, threads + replies, and sorting by newest or popular. Forum access is limited to premium or lifetime members.</p>
+        <p class="text-muted mb-0">Phase 2 adds moderation controls (report/lock/delete) and anti-spam safeguards in addition to categories, threads, replies, newest sort, and popular sort.</p>
       </header>
 
       <section id="forumAlert" class="alert d-none" role="alert"></section>
@@ -80,7 +80,14 @@
         </section>
 
         <section id="threadDetail" class="content-panel p-4 d-none">
-          <h2 id="threadDetailTitle" class="h4 mb-2"></h2>
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+            <h2 id="threadDetailTitle" class="h4 mb-0"></h2>
+            <div class="d-flex gap-2">
+              <button id="reportThreadButton" class="btn btn-outline-warning btn-sm" type="button">Report thread</button>
+              <button id="lockThreadButton" class="btn btn-outline-secondary btn-sm d-none" type="button">Lock</button>
+              <button id="deleteThreadButton" class="btn btn-outline-danger btn-sm d-none" type="button">Delete</button>
+            </div>
+          </div>
           <p id="threadDetailMeta" class="small text-muted"></p>
           <article id="threadDetailBody" class="mb-4"></article>
 
@@ -94,9 +101,14 @@
               <textarea id="newReplyBody" class="form-control" rows="3" maxlength="5000" required></textarea>
             </div>
             <div class="col-12 d-grid d-md-flex justify-content-md-end">
-              <button class="btn btn-outline-primary" type="submit">Post reply</button>
+              <button id="replySubmitButton" class="btn btn-outline-primary" type="submit">Post reply</button>
             </div>
           </form>
+        </section>
+
+        <section id="moderationSection" class="content-panel p-4 d-none mt-4">
+          <h2 class="h4 mb-3">Moderation queue</h2>
+          <div id="moderationList"></div>
         </section>
       </section>
     </main>
@@ -110,6 +122,11 @@
       const categoryFilterEl = document.getElementById('forumCategoryFilter');
       const categoryCreateEl = document.getElementById('newThreadCategory');
       const sortEl = document.getElementById('forumSort');
+      const moderationSectionEl = document.getElementById('moderationSection');
+      const moderationListEl = document.getElementById('moderationList');
+
+      let isAdmin = false;
+      let currentThread = null;
 
       function showAlert(message, type = 'danger') {
         alertEl.className = `alert alert-${type}`;
@@ -124,9 +141,7 @@
       async function apiGet(url) {
         const response = await fetch(url, { credentials: 'include' });
         const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload.error || 'Request failed');
-        }
+        if (!response.ok) throw new Error(payload.error || 'Request failed');
         return payload;
       }
 
@@ -138,9 +153,7 @@
           body: JSON.stringify(body),
         });
         const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload.error || 'Request failed');
-        }
+        if (!response.ok) throw new Error(payload.error || 'Request failed');
         return payload;
       }
 
@@ -152,7 +165,7 @@
       function renderCategories(categories) {
         for (const select of [categoryFilterEl, categoryCreateEl]) {
           const keepAll = select === categoryFilterEl ? '<option value="">All categories</option>' : '';
-          select.innerHTML = keepAll + categories.map((category) => (`<option value="${category.slug}">${category.name}</option>`)).join('');
+          select.innerHTML = keepAll + categories.map((category) => `<option value="${category.slug}">${category.name}</option>`).join('');
         }
       }
 
@@ -166,8 +179,8 @@
           <button type="button" class="list-group-item list-group-item-action" data-thread-id="${thread.id}">
             <div class="d-flex justify-content-between align-items-start gap-3">
               <div>
-                <h3 class="h6 mb-1">${thread.title}</h3>
-                <p class="small text-muted mb-1">By ${thread.authorUsername} · ${thread.replyCount} replies · ${thread.viewCount} views</p>
+                <h3 class="h6 mb-1">${thread.title} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
+                <p class="small text-muted mb-1">${thread.categoryName || 'Category'} · By ${thread.authorUsername} · ${thread.replyCount} replies · ${thread.viewCount} views</p>
                 <p class="small mb-0">${thread.body.slice(0, 180)}</p>
               </div>
               <span class="badge text-bg-secondary">${thread.popularityScore}</span>
@@ -187,11 +200,51 @@
         }
 
         replyListEl.innerHTML = replies.map((reply) => `
-          <article class="border rounded p-3 mb-3">
-            <p class="small text-muted mb-2">${reply.authorUsername} · ${formatDate(reply.createdAt)}</p>
+          <article class="border rounded p-3 mb-3" data-reply-id="${reply.id}">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+              <p class="small text-muted mb-0">${reply.authorUsername} · ${formatDate(reply.createdAt)}</p>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-warning btn-sm" type="button" data-report-reply="${reply.id}">Report</button>
+                <button class="btn btn-outline-danger btn-sm ${isAdmin ? '' : 'd-none'}" type="button" data-delete-reply="${reply.id}">Delete</button>
+              </div>
+            </div>
             <p class="mb-0">${reply.body}</p>
           </article>
         `).join('');
+
+        replyListEl.querySelectorAll('[data-report-reply]').forEach((button) => {
+          button.addEventListener('click', () => reportReply(button.dataset.reportReply));
+        });
+
+        replyListEl.querySelectorAll('[data-delete-reply]').forEach((button) => {
+          button.addEventListener('click', () => deleteReply(button.dataset.deleteReply));
+        });
+      }
+
+      function updateModeratorButtons(thread) {
+        const lockButton = document.getElementById('lockThreadButton');
+        const deleteButton = document.getElementById('deleteThreadButton');
+        const replySubmitButton = document.getElementById('replySubmitButton');
+        const replyBox = document.getElementById('newReplyBody');
+
+        if (isAdmin) {
+          lockButton.classList.remove('d-none');
+          deleteButton.classList.remove('d-none');
+          lockButton.textContent = thread.isLocked ? 'Unlock' : 'Lock';
+          lockButton.dataset.mode = thread.isLocked ? 'unlock_thread' : 'lock_thread';
+        } else {
+          lockButton.classList.add('d-none');
+          deleteButton.classList.add('d-none');
+        }
+
+        const locked = Boolean(thread.isLocked);
+        replySubmitButton.disabled = locked;
+        replyBox.disabled = locked;
+        if (locked) {
+          replyBox.placeholder = 'Thread is locked by moderators.';
+        } else {
+          replyBox.placeholder = '';
+        }
       }
 
       async function loadThreads() {
@@ -199,7 +252,6 @@
         const query = new URLSearchParams({ action: 'threads', sort: sortEl.value });
         if (categoryFilterEl.value) query.set('category', categoryFilterEl.value);
         const payload = await apiGet(`/api/member-forum?${query.toString()}`);
-
         renderCategories(payload.categories || []);
         categoryFilterEl.value = payload.category || '';
         sortEl.value = payload.sort || 'newest';
@@ -210,19 +262,86 @@
         clearAlert();
         const payload = await apiGet(`/api/member-forum?action=thread&threadId=${encodeURIComponent(threadId)}`);
         const thread = payload.thread;
+        currentThread = thread;
 
         document.getElementById('threadDetailTitle').textContent = thread.title;
         document.getElementById('threadDetailMeta').textContent = `${thread.categoryName} · ${thread.authorUsername} · ${thread.replyCount} replies · ${thread.viewCount} views`;
         document.getElementById('threadDetailBody').textContent = thread.body;
         document.getElementById('replyThreadId').value = thread.id;
         renderReplies(payload.replies || []);
+        updateModeratorButtons(thread);
+
         threadDetailEl.classList.remove('d-none');
         threadDetailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      async function reportThread() {
+        if (!currentThread) return;
+        const reason = prompt('Report reason (spam, harassment, off-topic, abuse, other):', 'spam');
+        if (!reason) return;
+        await apiPost({ action: 'report_thread', threadId: currentThread.id, reason });
+        showAlert('Thread report submitted.', 'success');
+      }
+
+      async function reportReply(replyId) {
+        const reason = prompt('Report reason (spam, harassment, off-topic, abuse, other):', 'spam');
+        if (!reason) return;
+        await apiPost({ action: 'report_reply', postId: replyId, reason });
+        showAlert('Reply report submitted.', 'success');
+      }
+
+      async function deleteReply(replyId) {
+        if (!confirm('Delete this reply?')) return;
+        await apiPost({ action: 'delete_reply', replyId });
+        await loadThread(currentThread.id);
+        await loadThreads();
+        showAlert('Reply deleted.', 'success');
+      }
+
+      async function moderateThread(mode) {
+        if (!currentThread) return;
+        if (!confirm(`Confirm ${mode === 'delete_thread' ? 'deleting' : mode === 'lock_thread' ? 'locking' : 'unlocking'} this thread?`)) return;
+        await apiPost({ action: mode, threadId: currentThread.id });
+        if (mode === 'delete_thread') {
+          threadDetailEl.classList.add('d-none');
+          currentThread = null;
+        } else {
+          await loadThread(currentThread.id);
+        }
+        await loadThreads();
+        showAlert('Moderation action completed.', 'success');
+      }
+
+      async function loadModerationQueue() {
+        if (!isAdmin) return;
+        moderationSectionEl.classList.remove('d-none');
+        const payload = await apiGet('/api/member-forum?action=reports');
+        const reports = payload.reports || [];
+        if (!reports.length) {
+          moderationListEl.innerHTML = '<p class="text-muted mb-0">No open reports.</p>';
+          return;
+        }
+
+        moderationListEl.innerHTML = reports.map((report) => `
+          <article class="border rounded p-3 mb-3">
+            <p class="mb-1"><strong>${report.reason}</strong> · by ${report.reporterUsername} · ${formatDate(report.createdAt)}</p>
+            <p class="small text-muted mb-1">Thread: ${report.threadId || 'n/a'} · Reply: ${report.postId || 'n/a'}</p>
+            <p class="mb-0">${report.details || 'No additional details.'}</p>
+          </article>
+        `).join('');
       }
 
       document.getElementById('forumRefreshButton').addEventListener('click', () => loadThreads().catch((error) => showAlert(error.message)));
       sortEl.addEventListener('change', () => loadThreads().catch((error) => showAlert(error.message)));
       categoryFilterEl.addEventListener('change', () => loadThreads().catch((error) => showAlert(error.message)));
+      document.getElementById('reportThreadButton').addEventListener('click', () => reportThread().catch((error) => showAlert(error.message)));
+
+      document.getElementById('lockThreadButton').addEventListener('click', (event) => {
+        const mode = event.currentTarget.dataset.mode || 'lock_thread';
+        moderateThread(mode).catch((error) => showAlert(error.message));
+      });
+
+      document.getElementById('deleteThreadButton').addEventListener('click', () => moderateThread('delete_thread').catch((error) => showAlert(error.message)));
 
       document.getElementById('createThreadForm').addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -247,11 +366,7 @@
         try {
           clearAlert();
           const threadId = document.getElementById('replyThreadId').value;
-          await apiPost({
-            action: 'create_reply',
-            threadId,
-            body: document.getElementById('newReplyBody').value,
-          });
+          await apiPost({ action: 'create_reply', threadId, body: document.getElementById('newReplyBody').value });
           document.getElementById('newReplyBody').value = '';
           await loadThread(threadId);
           await loadThreads();
@@ -263,7 +378,10 @@
 
       async function init() {
         try {
+          const session = await apiGet('/api/member-session');
+          isAdmin = session?.user?.role === 'admin';
           await loadThreads();
+          await loadModerationQueue();
           forumAppEl.classList.remove('d-none');
         } catch (error) {
           if (error.message.includes('Premium membership is required')) {

@@ -326,6 +326,9 @@ async function listThreads(sql, member, user, event) {
   const category = String(url.searchParams.get('category') || '').trim().toLowerCase();
   const sort = normalizeSort(url.searchParams.get('sort'));
   const searchQuery = String(url.searchParams.get('q') || '').trim();
+  const hasCategoryFilter = category.length > 0;
+  const hasSearchFilter = searchQuery.length > 0;
+  const searchPattern = `%${searchQuery.toLowerCase()}%`;
   const limitRaw = Number.parseInt(String(url.searchParams.get('limit') || '25'), 10);
   const limit = Number.isInteger(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 25;
 
@@ -353,12 +356,12 @@ async function listThreads(sql, member, user, event) {
       LEFT JOIN forum_member_reputation r ON r.user_id = u.id
       WHERE t.deleted_at IS NULL
         AND c.access_tier = ${area}
-        AND (${category || null} IS NULL OR c.slug = ${category || null})
+        AND (${hasCategoryFilter} = FALSE OR c.slug = ${category})
         AND (
-          ${searchQuery || null} IS NULL
-          OR to_tsvector('simple', COALESCE(t.title, '') || ' ' || COALESCE(t.body, '')) @@ plainto_tsquery('simple', ${searchQuery || ''})
-          OR LOWER(t.title) LIKE ${`%${searchQuery.toLowerCase()}%`}
-          OR LOWER(t.body) LIKE ${`%${searchQuery.toLowerCase()}%`}
+          ${hasSearchFilter} = FALSE
+          OR to_tsvector('simple', COALESCE(t.title, '') || ' ' || COALESCE(t.body, '')) @@ plainto_tsquery('simple', ${searchQuery})
+          OR LOWER(t.title) LIKE ${searchPattern}
+          OR LOWER(t.body) LIKE ${searchPattern}
         )
       ORDER BY popularity_score DESC, t.last_activity_at DESC
       LIMIT ${limit}
@@ -379,12 +382,12 @@ async function listThreads(sql, member, user, event) {
       LEFT JOIN forum_member_reputation r ON r.user_id = u.id
       WHERE t.deleted_at IS NULL
         AND c.access_tier = ${area}
-        AND (${category || null} IS NULL OR c.slug = ${category || null})
+        AND (${hasCategoryFilter} = FALSE OR c.slug = ${category})
         AND (
-          ${searchQuery || null} IS NULL
-          OR to_tsvector('simple', COALESCE(t.title, '') || ' ' || COALESCE(t.body, '')) @@ plainto_tsquery('simple', ${searchQuery || ''})
-          OR LOWER(t.title) LIKE ${`%${searchQuery.toLowerCase()}%`}
-          OR LOWER(t.body) LIKE ${`%${searchQuery.toLowerCase()}%`}
+          ${hasSearchFilter} = FALSE
+          OR to_tsvector('simple', COALESCE(t.title, '') || ' ' || COALESCE(t.body, '')) @@ plainto_tsquery('simple', ${searchQuery})
+          OR LOWER(t.title) LIKE ${searchPattern}
+          OR LOWER(t.body) LIKE ${searchPattern}
         )
       ORDER BY t.last_activity_at DESC, t.created_at DESC
       LIMIT ${limit}

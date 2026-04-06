@@ -48,7 +48,9 @@ function buildShareHtml(post) {
   const description = getShareDescription(post);
   const canonicalUrl = `${SITE_ORIGIN}/blog/${encodeURIComponent(slug)}`;
   const appUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
-  const imageUrl = toAbsoluteUrl(post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl || FALLBACK_IMAGE) || `${SITE_ORIGIN}${FALLBACK_IMAGE}`;
+  const imageUrl = toAbsoluteUrl(
+    post?.heroImageUrl || post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl || FALLBACK_IMAGE,
+  ) || `${SITE_ORIGIN}${FALLBACK_IMAGE}`;
   const publishedIso = post?.publishedAt || post?.createdAt || new Date().toISOString();
 
   return `<!doctype html>

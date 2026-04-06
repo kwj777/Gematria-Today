@@ -308,11 +308,11 @@ View results: ${shareUrl}`.trim(),
         try {
           payload = JSON.parse(rawBody);
         } catch {
-          payload = { error: rawBody || 'Non-JSON response from server.' };
+          throw new Error('Unexpected non-JSON response from server. Please retry in a moment.');
         }
 
-        if (!response.ok) {
-          const message = payload.error || payload.message || payload.errorMessage || `HTTP ${response.status}`;
+        if (!response.ok || payload?.error) {
+          const message = payload?.error || payload?.message || payload?.errorMessage || `HTTP ${response.status}`;
           throw new Error(message);
         }
 

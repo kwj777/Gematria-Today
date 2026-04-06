@@ -195,11 +195,11 @@ const form = document.querySelector('#name-form');
         try {
           payload = JSON.parse(rawBody);
         } catch {
-          payload = { error: rawBody || 'Non-JSON response from server.' };
+          throw new Error('Unexpected non-JSON response from server. Please retry in a moment.');
         }
 
-        if (!response.ok) {
-          throw new Error(payload.error || payload.message || `HTTP ${response.status}`);
+        if (!response.ok || payload?.error) {
+          throw new Error(payload?.error || payload?.message || `HTTP ${response.status}`);
         }
 
         return payload;

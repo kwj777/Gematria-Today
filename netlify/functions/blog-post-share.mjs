@@ -1,0 +1,166 @@
+import { ensureAdminSchema, formatPost, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
+import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
+
+const SITE_ORIGIN = 'https://endtimes.today';
+const FALLBACK_IMAGE = '/assets/blog-hero-insights-16x9.svg';
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function stripHtml(value = '') {
+  return String(value)
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function toAbsoluteUrl(value = '') {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('//')) return `https:${raw}`;
+  return `${SITE_ORIGIN}${raw.startsWith('/') ? raw : `/${raw}`}`;
+}
+
+function getShareDescription(post) {
+  const summary = stripHtml(post?.summary || '');
+  if (summary) {
+    return summary.length > 220 ? `${summary.slice(0, 220).trimEnd()}…` : summary;
+  }
+  const body = stripHtml(post?.body || '');
+  if (body) {
+    return body.length > 220 ? `${body.slice(0, 220).trimEnd()}…` : body;
+  }
+  return 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.';
+}
+
+function buildShareHtml(post) {
+  const slug = String(post?.slug || '').trim();
+  const title = String(post?.title || 'EndTimes.Today Blog').trim();
+  const description = getShareDescription(post);
+  const canonicalUrl = `${SITE_ORIGIN}/blog/${encodeURIComponent(slug)}`;
+  const appUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
+  const imageUrl = toAbsoluteUrl(post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl || FALLBACK_IMAGE) || `${SITE_ORIGIN}${FALLBACK_IMAGE}`;
+  const publishedIso = post?.publishedAt || post?.createdAt || new Date().toISOString();
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(title)} | EndTimes.Today Blog</title>
+    <meta name="description" content="${escapeHtml(description)}" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+
+    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
+    <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
+    <meta property="og:image" content="${escapeHtml(imageUrl)}" />
+    <meta property="og:image:alt" content="${escapeHtml(title)}" />
+    <meta property="article:published_time" content="${escapeHtml(new Date(publishedIso).toISOString())}" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapeHtml(title)}" />
+    <meta name="twitter:description" content="${escapeHtml(description)}" />
+    <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
+    <meta name="twitter:image:alt" content="${escapeHtml(title)}" />
+
+    <meta http-equiv="refresh" content="0;url=${escapeHtml(appUrl)}" />
+    <script>window.location.replace(${JSON.stringify(appUrl)});</script>
+  </head>
+  <body>
+    <main>
+      <p>Redirecting to <a href="${escapeHtml(appUrl)}">${escapeHtml(title)}</a>…</p>
+    </main>
+  </body>
+</html>`;
+}
+
+export async function handler(event) {
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
+      headers: { allow: 'GET' },
+      body: 'Method not allowed',
+    };
+  }
+
+  try {
+    assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'blog-post-share' });
+    const slug = String(event.pathParameters?.slug || '').trim().toLowerCase();
+    if (!slug) {
+      return {
+        statusCode: 302,
+        headers: { location: '/blog.html' },
+        body: '',
+      };
+    }
+
+    const sql = getSqlClient();
+    await ensureAdminSchema(sql);
+    await syncBootstrapAdminUser(sql);
+
+    await applyRateLimit(sql, event, {
+      scope: 'blog-post-share-ip',
+      key: getClientIp(event),
+      limit: 90,
+      windowMs: 60_000,
+      blockMs: 5 * 60_000,
+      message: 'Too many requests for blog post metadata.',
+    });
+
+    const rows = await sql`
+      SELECT * FROM posts
+      WHERE
+        COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+        AND LOWER(COALESCE(slug, '')) = ${slug}
+      ORDER BY COALESCE(published_at, created_at) DESC
+      LIMIT 1
+    `;
+
+    const post = rows[0] ? formatPost(rows[0]) : null;
+    if (!post) {
+      return {
+        statusCode: 302,
+        headers: { location: '/blog.html' },
+        body: '',
+      };
+    }
+
+    await logRequestAudit(sql, event, {
+      route: 'blog-post-share',
+      action: 'read',
+      outcome: 'origin_hit',
+      metadata: { slug },
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'content-type': 'text/html; charset=UTF-8',
+        'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+      },
+      body: buildShareHtml(post),
+    };
+  } catch (error) {
+    return {
+      statusCode: error.statusCode || 500,
+      headers: {
+        'content-type': 'text/plain; charset=UTF-8',
+        ...(error.headers || {}),
+      },
+      body: error.message || 'Failed to render blog post sharing metadata',
+    };
+  }
+}

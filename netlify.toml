@@ -17,6 +17,10 @@
   to = "/.netlify/functions/blog-rss"
   status = 200
 
+[[redirects]]
+  from = "/blog/:slug"
+  to = "/.netlify/functions/blog-post-share/:slug"
+  status = 200
 
 [[redirects]]
   from = "/apple-touch-icon.png"

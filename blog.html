@@ -442,6 +442,16 @@
         }
         return `${window.location.origin}${normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`}`;
       };
+      const toSharePreviewImageUrl = (value = '') => {
+        const absoluteUrl = toAbsolutePostAssetUrl(value);
+        if (!absoluteUrl) {
+          return '';
+        }
+        if (/\.svg(?:$|[?#])/i.test(absoluteUrl)) {
+          return `${window.location.origin}/.netlify/images?url=${encodeURIComponent(absoluteUrl)}&w=1200&fm=jpg`;
+        }
+        return absoluteUrl;
+      };
       const getDefaultBlogHeroImageUrl = () => {
         const heroImage = document.querySelector('.blog-hero-image');
         return toAbsolutePostAssetUrl(heroImage?.getAttribute('src') || '');
@@ -457,7 +467,7 @@
         const shareUrl = buildSharePostUrl(slug);
         const title = String(post?.title || 'EndTimes.Today Blog').trim();
         const description = String(post?.summary || 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.').trim();
-        const featuredImageUrl = toAbsolutePostAssetUrl(post?.heroImageUrl || post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl) || getDefaultBlogHeroImageUrl();
+        const featuredImageUrl = toSharePreviewImageUrl(post?.heroImageUrl || post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl) || toSharePreviewImageUrl(getDefaultBlogHeroImageUrl());
 
         document.title = title;
         const canonicalEl = document.querySelector('link[rel="canonical"]');

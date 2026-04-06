@@ -425,6 +425,7 @@ async function getThread(sql, member, user, event) {
       (t.reply_count * 2 + t.view_count) AS popularity_score
     FROM forum_threads t
     JOIN users u ON u.id = t.author_user_id
+    LEFT JOIN members m ON m.user_id = u.id
     JOIN forum_categories c ON c.id = t.category_id
     LEFT JOIN forum_member_reputation r ON r.user_id = u.id
     WHERE t.id = ${threadId}

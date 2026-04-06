@@ -263,23 +263,25 @@
 
       const normalizePostImageUrl = (value = '') => {
         const raw = String(value || '').trim();
-        if (!raw || /\s/.test(raw)) {
+        if (!raw) {
           return '';
         }
-        if (/^data:image\//i.test(raw)) {
-          return raw;
+
+        const encodedRaw = /\s/.test(raw) ? encodeURI(raw) : raw;
+        if (/^data:image\//i.test(encodedRaw)) {
+          return encodedRaw;
         }
-        if (raw.startsWith('//')) {
-          return `https:${raw}`;
+        if (encodedRaw.startsWith('//')) {
+          return `https:${encodedRaw}`;
         }
 
-        const explicitScheme = raw.match(/^([a-z][a-z0-9+.-]*):/i);
+        const explicitScheme = encodedRaw.match(/^([a-z][a-z0-9+.-]*):/i);
         if (explicitScheme) {
           const scheme = explicitScheme[1].toLowerCase();
-          return scheme === 'http' || scheme === 'https' ? raw : '';
+          return scheme === 'http' || scheme === 'https' ? encodedRaw : '';
         }
 
-        return `/${raw.replace(/^\.?\//, '')}`;
+        return `/${encodedRaw.replace(/^\.?\//, '')}`;
       };
 
       const applyInlineMarkdown = (value = '') => {

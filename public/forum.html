@@ -24,7 +24,7 @@
 
     <main class="container py-5">
       <header class="content-panel p-4 p-lg-5 mb-4">
-        <p class="section-kicker mb-2">Member Forum · Phase 2</p>
+        <p class="section-kicker mb-2">Member Forum · Phase 3</p>
         <h1 class="h2 mb-3">Join the forum: free member area + premium member area</h1>
         <p class="text-muted mb-0">All signed-in members can use the free area. Premium members (and admins) also get access to the premium-only area.</p>
       </header>
@@ -34,14 +34,14 @@
       <section id="forumApp" class="d-none">
         <div class="content-panel p-4 mb-4">
           <div class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label" for="forumArea">Forum area</label>
               <select id="forumArea" class="form-select">
                 <option value="free">Free member area</option>
                 <option value="premium">Premium members only</option>
               </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label" for="forumCategoryFilter">Category</label>
               <select id="forumCategoryFilter" class="form-select">
                 <option value="">All categories</option>
@@ -54,7 +54,11 @@
                 <option value="popular">Popular</option>
               </select>
             </div>
-            <div class="col-md-2 d-grid">
+            <div class="col-md-3">
+              <label class="form-label" for="forumSearch">Search</label>
+              <input id="forumSearch" class="form-control" maxlength="120" placeholder="Search title/body" />
+            </div>
+            <div class="col-md-1 d-grid">
               <button id="forumRefreshButton" class="btn btn-outline-primary">Refresh threads</button>
             </div>
           </div>
@@ -132,6 +136,7 @@
       const moderationSectionEl = document.getElementById('moderationSection');
       const moderationListEl = document.getElementById('moderationList');
       const areaEl = document.getElementById('forumArea');
+      const searchEl = document.getElementById('forumSearch');
 
       let isAdmin = false;
       let isPremium = false;
@@ -189,7 +194,7 @@
             <div class="d-flex justify-content-between align-items-start gap-3">
               <div>
                 <h3 class="h6 mb-1">${thread.title} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
-                <p class="small text-muted mb-1">${thread.categoryName || 'Category'} · By ${thread.authorUsername} · ${thread.replyCount} replies · ${thread.viewCount} views</p>
+                <p class="small text-muted mb-1">${thread.categoryName || 'Category'} · By ${thread.authorUsername} (${thread.authorReputation || 0} rep) ${renderBadges(thread.authorBadges)} · ${thread.replyCount} replies · ${thread.viewCount} views</p>
                 <p class="small mb-0">${thread.body.slice(0, 180)}</p>
               </div>
               <span class="badge text-bg-secondary">${thread.popularityScore}</span>
@@ -211,7 +216,7 @@
         replyListEl.innerHTML = replies.map((reply) => `
           <article class="border rounded p-3 mb-3" data-reply-id="${reply.id}">
             <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-              <p class="small text-muted mb-0">${reply.authorUsername} · ${formatDate(reply.createdAt)}</p>
+              <p class="small text-muted mb-0">${reply.authorUsername} (${reply.authorReputation || 0} rep) ${renderBadges(reply.authorBadges)} · ${formatDate(reply.createdAt)}</p>
               <div class="d-flex gap-2">
                 <button class="btn btn-outline-warning btn-sm" type="button" data-report-reply="${reply.id}">Report</button>
                 <button class="btn btn-outline-danger btn-sm ${isAdmin ? '' : 'd-none'}" type="button" data-delete-reply="${reply.id}">Delete</button>
@@ -256,16 +261,23 @@
         }
       }
 
+      function renderBadges(badges) {
+        if (!Array.isArray(badges) || !badges.length) return '';
+        return badges.map((badge) => `<span class="badge rounded-pill text-bg-light border ms-1">${badge}</span>`).join('');
+      }
+
       async function loadThreads() {
         clearAlert();
         const query = new URLSearchParams({ action: 'threads', sort: sortEl.value });
         query.set('area', areaEl.value);
         if (categoryFilterEl.value) query.set('category', categoryFilterEl.value);
+        if (searchEl.value.trim()) query.set('q', searchEl.value.trim());
         const payload = await apiGet(`/api/member-forum?${query.toString()}`);
         renderCategories(payload.categories || []);
         categoryFilterEl.value = payload.category || '';
         sortEl.value = payload.sort || 'newest';
         areaEl.value = payload.area || 'free';
+        searchEl.value = payload.searchQuery || '';
         renderThreads(payload.threads || []);
       }
 
@@ -276,7 +288,7 @@
         currentThread = thread;
 
         document.getElementById('threadDetailTitle').textContent = thread.title;
-        document.getElementById('threadDetailMeta').textContent = `${thread.categoryName} · ${thread.authorUsername} · ${thread.replyCount} replies · ${thread.viewCount} views`;
+        document.getElementById('threadDetailMeta').textContent = `${thread.categoryName} · ${thread.authorUsername} (${thread.authorReputation || 0} rep) · ${thread.replyCount} replies · ${thread.viewCount} views`;
         document.getElementById('threadDetailBody').textContent = thread.body;
         document.getElementById('replyThreadId').value = thread.id;
         renderReplies(payload.replies || []);
@@ -345,6 +357,11 @@
       document.getElementById('forumRefreshButton').addEventListener('click', () => loadThreads().catch((error) => showAlert(error.message)));
       sortEl.addEventListener('change', () => loadThreads().catch((error) => showAlert(error.message)));
       categoryFilterEl.addEventListener('change', () => loadThreads().catch((error) => showAlert(error.message)));
+      searchEl.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        loadThreads().catch((error) => showAlert(error.message));
+      });
       areaEl.addEventListener('change', () => {
         threadDetailEl.classList.add('d-none');
         currentThread = null;

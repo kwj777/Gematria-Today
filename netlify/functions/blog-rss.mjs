@@ -48,7 +48,7 @@ function extractDescription(post) {
 }
 
 function buildItem(post) {
-  const postUrl = toAbsoluteUrl(`/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`);
+  const postUrl = toAbsoluteUrl(`/blog/${encodeURIComponent(post.slug)}`);
   const description = extractDescription(post);
   const publishedAt = post.publishedAt || post.createdAt;
   return `<item>

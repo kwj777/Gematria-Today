@@ -446,11 +446,15 @@
         const heroImage = document.querySelector('.blog-hero-image');
         return toAbsolutePostAssetUrl(heroImage?.getAttribute('src') || '');
       };
+      const buildSharePostUrl = (slug = '') => {
+        const cleanSlug = String(slug || '').trim();
+        return cleanSlug
+          ? `${window.location.origin}/blog/${encodeURIComponent(cleanSlug)}`
+          : `${window.location.origin}/blog.html`;
+      };
       const updateShareMetadata = (post) => {
         const slug = String(post?.slug || '').trim();
-        const shareUrl = slug
-          ? `${window.location.origin}/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`
-          : `${window.location.origin}/blog.html`;
+        const shareUrl = buildSharePostUrl(slug);
         const title = String(post?.title || 'EndTimes.Today Blog').trim();
         const description = String(post?.summary || 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.').trim();
         const featuredImageUrl = toAbsolutePostAssetUrl(post?.heroImageUrl || post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl) || getDefaultBlogHeroImageUrl();
@@ -531,7 +535,7 @@
       };
       const shareBlogPost = async (post) => {
         updateShareMetadata(post);
-        const shareUrl = `${window.location.origin}/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+        const shareUrl = buildSharePostUrl(post.slug);
         const summaryText = String(post.summary || '').trim();
         const shareText = summaryText.includes(shareUrl) ? summaryText : `${summaryText}\n\nRead: ${shareUrl}`.trim();
         const payload = {
@@ -578,7 +582,12 @@
       };
       const getRequestedPostSlug = () => {
         const params = new URLSearchParams(window.location.search);
-        return params.get('post') || window.location.hash.slice(1);
+        const queryOrHashSlug = params.get('post') || window.location.hash.slice(1);
+        if (queryOrHashSlug) {
+          return queryOrHashSlug;
+        }
+        const pathMatch = window.location.pathname.match(/^\/blog\/([^/?#]+)/i);
+        return pathMatch ? decodeURIComponent(pathMatch[1]) : '';
       };
       const getRequestedTag = () => {
         const params = new URLSearchParams(window.location.search);
@@ -592,9 +601,11 @@
       const syncBlogLocation = (slug) => {
         const url = new URL(window.location.href);
         if (slug) {
-          url.searchParams.set('post', slug);
-          url.hash = slug;
+          url.pathname = `/blog/${encodeURIComponent(slug)}`;
+          url.searchParams.delete('post');
+          url.hash = '';
         } else {
+          url.pathname = '/blog.html';
           url.searchParams.delete('post');
           url.hash = '';
         }
@@ -740,7 +751,7 @@
           }
           targets.push({
             phrase: title,
-            href: `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`
+            href: `/blog/${encodeURIComponent(post.slug)}`
           });
         });
 
@@ -870,7 +881,7 @@
         document.getElementById('blogSidebarLinks').innerHTML = filteredPosts.map((post) => {
           const plainSummary = escapeHtml(post.summary || '');
           return `
-          <a class="blog-mini-link text-decoration-none" href="/blog.html?post=${encodeURIComponent(post.slug)}#${escapeHtml(post.slug)}">
+          <a class="blog-mini-link text-decoration-none" href="/blog/${encodeURIComponent(post.slug)}">
             <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
             <span class="text-muted small">${plainSummary}</span>
           </a>`;
@@ -962,15 +973,17 @@
           }
           return;
         }
-        const postLink = event.target.closest('a[href*="/blog.html?post="], a[href^="#"]');
+        const postLink = event.target.closest('a[href*="/blog.html?post="], a[href^="/blog/"], a[href^="#"]');
         if (!postLink) {
           return;
         }
         const url = new URL(postLink.href, window.location.origin);
-        if (url.pathname !== '/blog.html') {
+        const pathMatch = url.pathname.match(/^\/blog\/([^/?#]+)/i);
+        if (url.pathname !== '/blog.html' && !pathMatch) {
           return;
         }
-        window.setTimeout(() => focusLinkedPost(url.searchParams.get('post') || url.hash.slice(1)), 0);
+        const linkedSlug = pathMatch ? decodeURIComponent(pathMatch[1]) : (url.searchParams.get('post') || url.hash.slice(1));
+        window.setTimeout(() => focusLinkedPost(linkedSlug), 0);
       });
       window.addEventListener('resize', () => window.requestAnimationFrame(updateTagFilterOverflowState));
 

@@ -10,6 +10,10 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const REPORT_REASONS = new Set(['spam', 'harassment', 'off-topic', 'abuse', 'other']);
+const REPUTATION_POINTS = {
+  thread: 10,
+  reply: 4,
+};
 
 async function ensureForumSchema(sql) {
   await sql`CREATE TABLE IF NOT EXISTS forum_categories (
@@ -128,6 +132,13 @@ async function ensureForumSchema(sql) {
     status TEXT NOT NULL DEFAULT 'open',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+  await sql`CREATE TABLE IF NOT EXISTS forum_member_reputation (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    points INTEGER NOT NULL DEFAULT 0,
+    thread_count INTEGER NOT NULL DEFAULT 0,
+    reply_count INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
 
   await sql`CREATE INDEX IF NOT EXISTS forum_threads_category_last_activity_idx
     ON forum_threads (category_id, last_activity_at DESC)
@@ -139,6 +150,9 @@ async function ensureForumSchema(sql) {
     ON forum_posts (thread_id, created_at ASC)`;
   await sql`CREATE INDEX IF NOT EXISTS forum_reports_status_created_idx
     ON forum_reports (status, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS forum_threads_search_idx
+    ON forum_threads USING GIN (to_tsvector('simple', COALESCE(title, '') || ' ' || COALESCE(body, '')))
+    WHERE deleted_at IS NULL`;
 
   for (const category of DEFAULT_CATEGORIES) {
     await sql`
@@ -227,6 +241,7 @@ async function assertPostingCooldown(sql, userId) {
 }
 
 function mapThreadRow(row) {
+  const authorReputation = Number(row.author_reputation || 0);
   return {
     id: row.id,
     categoryId: row.category_id,
@@ -235,6 +250,13 @@ function mapThreadRow(row) {
     categoryAccessTier: row.category_access_tier,
     authorUserId: row.author_user_id,
     authorUsername: row.author_username,
+    authorReputation,
+    authorBadges: deriveBadges(authorReputation, {
+      threadCount: Number(row.author_thread_count || 0),
+      replyCount: Number(row.author_reply_count || 0),
+      isAdmin: row.author_role === 'admin',
+      isPremium: row.author_membership_level === 'premium' || row.author_membership_level === 'lifetime',
+    }),
     title: row.title,
     body: row.body,
     replyCount: Number(row.reply_count || 0),
@@ -250,15 +272,49 @@ function mapThreadRow(row) {
 }
 
 function mapReplyRow(row) {
+  const authorReputation = Number(row.author_reputation || 0);
   return {
     id: row.id,
     threadId: row.thread_id,
     authorUserId: row.author_user_id,
     authorUsername: row.author_username,
+    authorReputation,
+    authorBadges: deriveBadges(authorReputation, {
+      threadCount: Number(row.author_thread_count || 0),
+      replyCount: Number(row.author_reply_count || 0),
+      isAdmin: row.author_role === 'admin',
+      isPremium: row.author_membership_level === 'premium' || row.author_membership_level === 'lifetime',
+    }),
     body: row.body,
     deletedAt: row.deleted_at,
     createdAt: row.created_at,
   };
+}
+
+function deriveBadges(points, { threadCount, replyCount, isAdmin, isPremium }) {
+  const badges = [];
+  if (isAdmin) badges.push('Moderator');
+  if (isPremium) badges.push('Premium');
+  if (threadCount >= 1 && replyCount >= 1) badges.push('Contributor');
+  if (points >= 50) badges.push('Trusted');
+  if (points >= 200) badges.push('Sage');
+  return badges;
+}
+
+async function awardReputation(sql, userId, updates) {
+  const points = Number(updates.points || 0);
+  const threadDelta = Number(updates.threadCount || 0);
+  const replyDelta = Number(updates.replyCount || 0);
+  await sql`
+    INSERT INTO forum_member_reputation (user_id, points, thread_count, reply_count, updated_at)
+    VALUES (${userId}, ${points}, ${threadDelta}, ${replyDelta}, NOW())
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+      points = forum_member_reputation.points + ${points},
+      thread_count = forum_member_reputation.thread_count + ${threadDelta},
+      reply_count = forum_member_reputation.reply_count + ${replyDelta},
+      updated_at = NOW()
+  `;
 }
 
 async function listThreads(sql, member, user, event) {
@@ -269,6 +325,7 @@ async function listThreads(sql, member, user, event) {
   }
   const category = String(url.searchParams.get('category') || '').trim().toLowerCase();
   const sort = normalizeSort(url.searchParams.get('sort'));
+  const searchQuery = String(url.searchParams.get('q') || '').trim();
   const limitRaw = Number.parseInt(String(url.searchParams.get('limit') || '25'), 10);
   const limit = Number.isInteger(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 25;
 
@@ -281,59 +338,59 @@ async function listThreads(sql, member, user, event) {
 
   let threadRows;
   if (sort === 'popular') {
-    threadRows = category
-      ? await sql`
-        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score,
-          c.access_tier AS category_access_tier
-        FROM forum_threads t
-        JOIN users u ON u.id = t.author_user_id
-        JOIN forum_categories c ON c.id = t.category_id
-        WHERE t.deleted_at IS NULL
-          AND c.slug = ${category}
-          AND c.access_tier = ${area}
-        ORDER BY popularity_score DESC, t.last_activity_at DESC
-        LIMIT ${limit}
-      `
-      : await sql`
-        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score,
-          c.access_tier AS category_access_tier
-        FROM forum_threads t
-        JOIN users u ON u.id = t.author_user_id
-        JOIN forum_categories c ON c.id = t.category_id
-        WHERE t.deleted_at IS NULL
-          AND c.access_tier = ${area}
-        ORDER BY popularity_score DESC, t.last_activity_at DESC
-        LIMIT ${limit}
-      `;
+    threadRows = await sql`
+      SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+        (t.reply_count * 2 + t.view_count) AS popularity_score,
+        c.access_tier AS category_access_tier,
+        u.role AS author_role,
+        m.membership_level AS author_membership_level,
+        COALESCE(r.points, 0) AS author_reputation,
+        COALESCE(r.thread_count, 0) AS author_thread_count,
+        COALESCE(r.reply_count, 0) AS author_reply_count
+      FROM forum_threads t
+      JOIN users u ON u.id = t.author_user_id
+      LEFT JOIN members m ON m.user_id = u.id
+      JOIN forum_categories c ON c.id = t.category_id
+      LEFT JOIN forum_member_reputation r ON r.user_id = u.id
+      WHERE t.deleted_at IS NULL
+        AND c.access_tier = ${area}
+        AND (${category || null} IS NULL OR c.slug = ${category || null})
+        AND (
+          ${searchQuery || null} IS NULL
+          OR to_tsvector('simple', COALESCE(t.title, '') || ' ' || COALESCE(t.body, '')) @@ plainto_tsquery('simple', ${searchQuery || ''})
+          OR LOWER(t.title) LIKE ${`%${searchQuery.toLowerCase()}%`}
+          OR LOWER(t.body) LIKE ${`%${searchQuery.toLowerCase()}%`}
+        )
+      ORDER BY popularity_score DESC, t.last_activity_at DESC
+      LIMIT ${limit}
+    `;
   } else {
-    threadRows = category
-      ? await sql`
-        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score,
-          c.access_tier AS category_access_tier
-        FROM forum_threads t
-        JOIN users u ON u.id = t.author_user_id
-        JOIN forum_categories c ON c.id = t.category_id
-        WHERE t.deleted_at IS NULL
-          AND c.slug = ${category}
-          AND c.access_tier = ${area}
-        ORDER BY t.last_activity_at DESC, t.created_at DESC
-        LIMIT ${limit}
-      `
-      : await sql`
-        SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
-          (t.reply_count * 2 + t.view_count) AS popularity_score,
-          c.access_tier AS category_access_tier
-        FROM forum_threads t
-        JOIN users u ON u.id = t.author_user_id
-        JOIN forum_categories c ON c.id = t.category_id
-        WHERE t.deleted_at IS NULL
-          AND c.access_tier = ${area}
-        ORDER BY t.last_activity_at DESC, t.created_at DESC
-        LIMIT ${limit}
-      `;
+    threadRows = await sql`
+      SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+        (t.reply_count * 2 + t.view_count) AS popularity_score,
+        c.access_tier AS category_access_tier,
+        u.role AS author_role,
+        m.membership_level AS author_membership_level,
+        COALESCE(r.points, 0) AS author_reputation,
+        COALESCE(r.thread_count, 0) AS author_thread_count,
+        COALESCE(r.reply_count, 0) AS author_reply_count
+      FROM forum_threads t
+      JOIN users u ON u.id = t.author_user_id
+      LEFT JOIN members m ON m.user_id = u.id
+      JOIN forum_categories c ON c.id = t.category_id
+      LEFT JOIN forum_member_reputation r ON r.user_id = u.id
+      WHERE t.deleted_at IS NULL
+        AND c.access_tier = ${area}
+        AND (${category || null} IS NULL OR c.slug = ${category || null})
+        AND (
+          ${searchQuery || null} IS NULL
+          OR to_tsvector('simple', COALESCE(t.title, '') || ' ' || COALESCE(t.body, '')) @@ plainto_tsquery('simple', ${searchQuery || ''})
+          OR LOWER(t.title) LIKE ${`%${searchQuery.toLowerCase()}%`}
+          OR LOWER(t.body) LIKE ${`%${searchQuery.toLowerCase()}%`}
+        )
+      ORDER BY t.last_activity_at DESC, t.created_at DESC
+      LIMIT ${limit}
+    `;
   }
 
   return {
@@ -348,6 +405,7 @@ async function listThreads(sql, member, user, event) {
     area,
     sort,
     category: category || null,
+    searchQuery: searchQuery || null,
     threads: threadRows.map(mapThreadRow),
   };
 }
@@ -361,10 +419,17 @@ async function getThread(sql, member, user, event) {
 
   const threadRows = await sql`
     SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name, c.access_tier AS category_access_tier,
+      u.role AS author_role,
+      m.membership_level AS author_membership_level,
+      COALESCE(r.points, 0) AS author_reputation,
+      COALESCE(r.thread_count, 0) AS author_thread_count,
+      COALESCE(r.reply_count, 0) AS author_reply_count,
       (t.reply_count * 2 + t.view_count) AS popularity_score
     FROM forum_threads t
     JOIN users u ON u.id = t.author_user_id
+    LEFT JOIN members m ON m.user_id = u.id
     JOIN forum_categories c ON c.id = t.category_id
+    LEFT JOIN forum_member_reputation r ON r.user_id = u.id
     WHERE t.id = ${threadId}
       AND t.deleted_at IS NULL
     LIMIT 1
@@ -380,9 +445,16 @@ async function getThread(sql, member, user, event) {
   await sql`UPDATE forum_threads SET view_count = view_count + 1, updated_at = NOW() WHERE id = ${threadId}`;
 
   const replyRows = await sql`
-    SELECT p.*, u.username AS author_username
+    SELECT p.*, u.username AS author_username,
+      u.role AS author_role,
+      m.membership_level AS author_membership_level,
+      COALESCE(r.points, 0) AS author_reputation,
+      COALESCE(r.thread_count, 0) AS author_thread_count,
+      COALESCE(r.reply_count, 0) AS author_reply_count
     FROM forum_posts p
     JOIN users u ON u.id = p.author_user_id
+    LEFT JOIN members m ON m.user_id = u.id
+    LEFT JOIN forum_member_reputation r ON r.user_id = u.id
     WHERE p.thread_id = ${threadId}
       AND p.deleted_at IS NULL
     ORDER BY p.created_at ASC
@@ -430,6 +502,7 @@ async function createThread(sql, member, user, event) {
     )
     RETURNING *
   `;
+  await awardReputation(sql, member.id, { points: REPUTATION_POINTS.thread, threadCount: 1 });
 
   return {
     thread: mapThreadRow({
@@ -474,6 +547,7 @@ async function createReply(sql, member, user, event) {
     VALUES (${replyId}, ${threadId}, ${member.id}, ${content})
     RETURNING *
   `;
+  await awardReputation(sql, member.id, { points: REPUTATION_POINTS.reply, replyCount: 1 });
 
   await sql`
     UPDATE forum_threads

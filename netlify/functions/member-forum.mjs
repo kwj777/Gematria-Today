@@ -115,25 +115,44 @@ async function listThreads(sql, event) {
     ORDER BY sort_order ASC, name ASC
   `;
 
-  const threadRows = sort === 'popular'
-    ? await sql`
-      SELECT t.*, u.username AS author_username, (t.reply_count * 2 + t.view_count) AS popularity_score
-      FROM forum_threads t
-      JOIN users u ON u.id = t.author_user_id
-      ${category ? sql`JOIN forum_categories c ON c.id = t.category_id` : sql``}
-      ${category ? sql`WHERE c.slug = ${category}` : sql``}
-      ORDER BY popularity_score DESC, t.last_activity_at DESC
-      LIMIT ${limit}
-    `
-    : await sql`
-      SELECT t.*, u.username AS author_username, (t.reply_count * 2 + t.view_count) AS popularity_score
-      FROM forum_threads t
-      JOIN users u ON u.id = t.author_user_id
-      ${category ? sql`JOIN forum_categories c ON c.id = t.category_id` : sql``}
-      ${category ? sql`WHERE c.slug = ${category}` : sql``}
-      ORDER BY t.last_activity_at DESC, t.created_at DESC
-      LIMIT ${limit}
-    `;
+  let threadRows;
+  if (sort === 'popular') {
+    threadRows = category
+      ? await sql`
+        SELECT t.*, u.username AS author_username, (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        JOIN forum_categories c ON c.id = t.category_id
+        WHERE c.slug = ${category}
+        ORDER BY popularity_score DESC, t.last_activity_at DESC
+        LIMIT ${limit}
+      `
+      : await sql`
+        SELECT t.*, u.username AS author_username, (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        ORDER BY popularity_score DESC, t.last_activity_at DESC
+        LIMIT ${limit}
+      `;
+  } else {
+    threadRows = category
+      ? await sql`
+        SELECT t.*, u.username AS author_username, (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        JOIN forum_categories c ON c.id = t.category_id
+        WHERE c.slug = ${category}
+        ORDER BY t.last_activity_at DESC, t.created_at DESC
+        LIMIT ${limit}
+      `
+      : await sql`
+        SELECT t.*, u.username AS author_username, (t.reply_count * 2 + t.view_count) AS popularity_score
+        FROM forum_threads t
+        JOIN users u ON u.id = t.author_user_id
+        ORDER BY t.last_activity_at DESC, t.created_at DESC
+        LIMIT ${limit}
+      `;
+  }
 
   return {
     categories: categories.map((row) => ({

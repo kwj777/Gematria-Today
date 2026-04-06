@@ -77,8 +77,9 @@ export async function handler(event) {
       const normalizedTagValue = normalizePostTags(body.tag, body.tags);
       const imageUrl = String(body.imageUrl ?? '').trim() || null;
       const sliderImageUrl = String(body.sliderImageUrl ?? '').trim() || null;
+      const backgroundImageUrl = String(body.backgroundImageUrl ?? '').trim() || null;
       const rows = await sql`
-        INSERT INTO posts (id, title, slug, tag, summary, body, read_time, image_url, slider_image_url, show_on_homepage, hide_from_blog, status, published_at, scheduled_publish_at, created_by, updated_at)
+        INSERT INTO posts (id, title, slug, tag, summary, body, read_time, image_url, slider_image_url, background_image_url, show_on_homepage, hide_from_blog, status, published_at, scheduled_publish_at, created_by, updated_at)
         VALUES (
           ${crypto.randomUUID()},
           ${title},
@@ -89,6 +90,7 @@ export async function handler(event) {
           ${String(body.readTime ?? '').trim() || null},
           ${imageUrl},
           ${sliderImageUrl},
+          ${backgroundImageUrl},
           ${showOnHomepage},
           ${hideFromBlog},
           ${status},
@@ -121,8 +123,10 @@ export async function handler(event) {
       const normalizedTagValue = normalizePostTags(body.tag, body.tags);
       const hasImageUrl = Object.prototype.hasOwnProperty.call(body, 'imageUrl');
       const hasSliderImageUrl = Object.prototype.hasOwnProperty.call(body, 'sliderImageUrl');
+      const hasBackgroundImageUrl = Object.prototype.hasOwnProperty.call(body, 'backgroundImageUrl');
       const imageUrl = String(body.imageUrl ?? '').trim() || null;
       const sliderImageUrl = String(body.sliderImageUrl ?? '').trim() || null;
+      const backgroundImageUrl = String(body.backgroundImageUrl ?? '').trim() || null;
       const rows = await sql`
         UPDATE posts
         SET
@@ -139,6 +143,10 @@ export async function handler(event) {
           slider_image_url = CASE
             WHEN ${hasSliderImageUrl ? 1 : 0} = 1 THEN ${sliderImageUrl}
             ELSE slider_image_url
+          END,
+          background_image_url = CASE
+            WHEN ${hasBackgroundImageUrl ? 1 : 0} = 1 THEN ${backgroundImageUrl}
+            ELSE background_image_url
           END,
           show_on_homepage = ${showOnHomepage},
           hide_from_blog = ${hideFromBlog},

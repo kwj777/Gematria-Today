@@ -451,7 +451,7 @@
           : `${window.location.origin}/blog.html`;
         const title = String(post?.title || 'EndTimes.Today Blog').trim();
         const description = String(post?.summary || 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.').trim();
-        const featuredImageUrl = toAbsolutePostAssetUrl(post?.heroImageUrl || post?.imageUrl || post?.sliderImageUrl) || getDefaultBlogHeroImageUrl();
+        const featuredImageUrl = toAbsolutePostAssetUrl(post?.heroImageUrl || post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl) || getDefaultBlogHeroImageUrl();
 
         document.title = title;
         const canonicalEl = document.querySelector('link[rel="canonical"]');
@@ -506,7 +506,7 @@
         }
       };
       const fetchShareImageFile = async (post) => {
-        const heroImageUrl = toAbsolutePostAssetUrl(post.heroImageUrl || post.imageUrl || post.sliderImageUrl) || getDefaultBlogHeroImageUrl();
+        const heroImageUrl = toAbsolutePostAssetUrl(post.heroImageUrl || post.imageUrl || post.backgroundImageUrl || post.sliderImageUrl) || getDefaultBlogHeroImageUrl();
         if (!heroImageUrl || /^data:image\//i.test(heroImageUrl)) {
           return null;
         }
@@ -892,7 +892,7 @@
             tagBadges.push('<span class="badge text-bg-warning">Blog Post</span>');
           }
           const tagMarkup = tagBadges.join(' ');
-          const coverImageUrl = normalizePostImageUrl(post.heroImageUrl || post.imageUrl || post.sliderImageUrl);
+          const coverImageUrl = normalizePostImageUrl(post.heroImageUrl || post.imageUrl || post.backgroundImageUrl || post.sliderImageUrl);
           const coverImageMarkup = coverImageUrl
             ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`
             : '';

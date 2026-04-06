@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <title>Premium Forum | EndTimes.Today</title>
+    <meta name="description" content="Premium member forum for interpretations, questions, and show-and-tell discussions." />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <div class="ms-auto d-flex gap-2">
+          <a href="/member.html" class="btn btn-outline-light btn-sm">Membership</a>
+          <a href="/premium-research.html" class="btn btn-light btn-sm">Premium Research</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-5">
+      <header class="content-panel p-4 p-lg-5 mb-4">
+        <p class="section-kicker mb-2">Premium Forum</p>
+        <h1 class="h2 mb-3">Discuss interpretations with other premium members</h1>
+        <p class="text-muted mb-0">Phase 1 includes categories, threads + replies, and sorting by newest or popular. Forum access is limited to premium or lifetime members.</p>
+      </header>
+
+      <section id="forumAlert" class="alert d-none" role="alert"></section>
+
+      <section id="forumApp" class="d-none">
+        <div class="content-panel p-4 mb-4">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label" for="forumCategoryFilter">Category</label>
+              <select id="forumCategoryFilter" class="form-select">
+                <option value="">All categories</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="forumSort">Sort</label>
+              <select id="forumSort" class="form-select">
+                <option value="newest">Newest</option>
+                <option value="popular">Popular</option>
+              </select>
+            </div>
+            <div class="col-md-4 d-grid">
+              <button id="forumRefreshButton" class="btn btn-outline-primary">Refresh threads</button>
+            </div>
+          </div>
+        </div>
+
+        <section class="content-panel p-4 mb-4">
+          <h2 class="h4 mb-3">Create thread</h2>
+          <form id="createThreadForm" class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="newThreadCategory">Category</label>
+              <select id="newThreadCategory" class="form-select" required></select>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label" for="newThreadTitle">Title</label>
+              <input id="newThreadTitle" class="form-control" maxlength="160" required />
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="newThreadBody">Thread body</label>
+              <textarea id="newThreadBody" class="form-control" rows="4" maxlength="5000" required></textarea>
+            </div>
+            <div class="col-12 d-grid d-md-flex justify-content-md-end">
+              <button class="btn btn-primary" type="submit">Post thread</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="content-panel p-4 mb-4">
+          <h2 class="h4 mb-3">Threads</h2>
+          <div id="threadList" class="list-group"></div>
+        </section>
+
+        <section id="threadDetail" class="content-panel p-4 d-none">
+          <h2 id="threadDetailTitle" class="h4 mb-2"></h2>
+          <p id="threadDetailMeta" class="small text-muted"></p>
+          <article id="threadDetailBody" class="mb-4"></article>
+
+          <h3 class="h5">Replies</h3>
+          <div id="replyList" class="mb-4"></div>
+
+          <form id="createReplyForm" class="row g-3">
+            <input id="replyThreadId" type="hidden" />
+            <div class="col-12">
+              <label class="form-label" for="newReplyBody">Add reply</label>
+              <textarea id="newReplyBody" class="form-control" rows="3" maxlength="5000" required></textarea>
+            </div>
+            <div class="col-12 d-grid d-md-flex justify-content-md-end">
+              <button class="btn btn-outline-primary" type="submit">Post reply</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const alertEl = document.getElementById('forumAlert');
+      const forumAppEl = document.getElementById('forumApp');
+      const threadListEl = document.getElementById('threadList');
+      const threadDetailEl = document.getElementById('threadDetail');
+      const replyListEl = document.getElementById('replyList');
+      const categoryFilterEl = document.getElementById('forumCategoryFilter');
+      const categoryCreateEl = document.getElementById('newThreadCategory');
+      const sortEl = document.getElementById('forumSort');
+
+      function showAlert(message, type = 'danger') {
+        alertEl.className = `alert alert-${type}`;
+        alertEl.textContent = message;
+        alertEl.classList.remove('d-none');
+      }
+
+      function clearAlert() {
+        alertEl.classList.add('d-none');
+      }
+
+      async function apiGet(url) {
+        const response = await fetch(url, { credentials: 'include' });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Request failed');
+        }
+        return payload;
+      }
+
+      async function apiPost(body) {
+        const response = await fetch('/api/member-forum', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Request failed');
+        }
+        return payload;
+      }
+
+      function formatDate(value) {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+      }
+
+      function renderCategories(categories) {
+        for (const select of [categoryFilterEl, categoryCreateEl]) {
+          const keepAll = select === categoryFilterEl ? '<option value="">All categories</option>' : '';
+          select.innerHTML = keepAll + categories.map((category) => (`<option value="${category.slug}">${category.name}</option>`)).join('');
+        }
+      }
+
+      function renderThreads(threads) {
+        if (!threads.length) {
+          threadListEl.innerHTML = '<p class="text-muted mb-0">No threads yet in this view.</p>';
+          return;
+        }
+
+        threadListEl.innerHTML = threads.map((thread) => `
+          <button type="button" class="list-group-item list-group-item-action" data-thread-id="${thread.id}">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <h3 class="h6 mb-1">${thread.title}</h3>
+                <p class="small text-muted mb-1">By ${thread.authorUsername} · ${thread.replyCount} replies · ${thread.viewCount} views</p>
+                <p class="small mb-0">${thread.body.slice(0, 180)}</p>
+              </div>
+              <span class="badge text-bg-secondary">${thread.popularityScore}</span>
+            </div>
+          </button>
+        `).join('');
+
+        threadListEl.querySelectorAll('[data-thread-id]').forEach((button) => {
+          button.addEventListener('click', () => loadThread(button.dataset.threadId));
+        });
+      }
+
+      function renderReplies(replies) {
+        if (!replies.length) {
+          replyListEl.innerHTML = '<p class="text-muted">No replies yet.</p>';
+          return;
+        }
+
+        replyListEl.innerHTML = replies.map((reply) => `
+          <article class="border rounded p-3 mb-3">
+            <p class="small text-muted mb-2">${reply.authorUsername} · ${formatDate(reply.createdAt)}</p>
+            <p class="mb-0">${reply.body}</p>
+          </article>
+        `).join('');
+      }
+
+      async function loadThreads() {
+        clearAlert();
+        const query = new URLSearchParams({ action: 'threads', sort: sortEl.value });
+        if (categoryFilterEl.value) query.set('category', categoryFilterEl.value);
+        const payload = await apiGet(`/api/member-forum?${query.toString()}`);
+
+        renderCategories(payload.categories || []);
+        categoryFilterEl.value = payload.category || '';
+        sortEl.value = payload.sort || 'newest';
+        renderThreads(payload.threads || []);
+      }
+
+      async function loadThread(threadId) {
+        clearAlert();
+        const payload = await apiGet(`/api/member-forum?action=thread&threadId=${encodeURIComponent(threadId)}`);
+        const thread = payload.thread;
+
+        document.getElementById('threadDetailTitle').textContent = thread.title;
+        document.getElementById('threadDetailMeta').textContent = `${thread.categoryName} · ${thread.authorUsername} · ${thread.replyCount} replies · ${thread.viewCount} views`;
+        document.getElementById('threadDetailBody').textContent = thread.body;
+        document.getElementById('replyThreadId').value = thread.id;
+        renderReplies(payload.replies || []);
+        threadDetailEl.classList.remove('d-none');
+        threadDetailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      document.getElementById('forumRefreshButton').addEventListener('click', () => loadThreads().catch((error) => showAlert(error.message)));
+      sortEl.addEventListener('change', () => loadThreads().catch((error) => showAlert(error.message)));
+      categoryFilterEl.addEventListener('change', () => loadThreads().catch((error) => showAlert(error.message)));
+
+      document.getElementById('createThreadForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+          clearAlert();
+          await apiPost({
+            action: 'create_thread',
+            categorySlug: categoryCreateEl.value,
+            title: document.getElementById('newThreadTitle').value,
+            body: document.getElementById('newThreadBody').value,
+          });
+          document.getElementById('createThreadForm').reset();
+          await loadThreads();
+          showAlert('Thread posted.', 'success');
+        } catch (error) {
+          showAlert(error.message);
+        }
+      });
+
+      document.getElementById('createReplyForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+          clearAlert();
+          const threadId = document.getElementById('replyThreadId').value;
+          await apiPost({
+            action: 'create_reply',
+            threadId,
+            body: document.getElementById('newReplyBody').value,
+          });
+          document.getElementById('newReplyBody').value = '';
+          await loadThread(threadId);
+          await loadThreads();
+          showAlert('Reply posted.', 'success');
+        } catch (error) {
+          showAlert(error.message);
+        }
+      });
+
+      async function init() {
+        try {
+          await loadThreads();
+          forumAppEl.classList.remove('d-none');
+        } catch (error) {
+          if (error.message.includes('Premium membership is required')) {
+            showAlert('This forum is premium-only. Upgrade your membership to access it.', 'warning');
+          } else if (error.message.toLowerCase().includes('unauthorized')) {
+            showAlert('Please sign in with your premium account to access the forum.', 'warning');
+          } else {
+            showAlert(error.message);
+          }
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

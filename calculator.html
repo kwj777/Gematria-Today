@@ -191,6 +191,16 @@ const lookupForm = document.querySelector('#lookup-form');
         return `${getCanonicalShareOrigin()}${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
 
+      function toShareImageAssetUrl(urlCandidate) {
+        const source = String(urlCandidate || '').trim();
+        if (!source || /^data:image\//i.test(source)) {
+          return source;
+        }
+        const absoluteUrl = toCanonicalShareUrl(source);
+        const encoded = encodeURIComponent(absoluteUrl);
+        return `${getCanonicalShareOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
+      }
+
       function createLookupShareUrl(searchGematria) {
         const shareUrl = new URL('/calculator.html', getCanonicalShareOrigin());
         shareUrl.searchParams.set('query', String(searchGematria.word || '').trim());
@@ -755,7 +765,7 @@ View results: ${shareUrl}`.trim(),
             title: `Gematria lookup for ${searchGematria.word}`,
             text: formatCalculationSharePreview(searchGematria.word, searchGematria.gematria.total),
             url: shareUrl,
-            imageUrl: shareImageUrl.toString(),
+            imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
           });
         });
 
@@ -828,7 +838,7 @@ View results: ${shareUrl}`.trim(),
             title: `Gematria related words for ${payload.query}`,
             text: formatCalculationSharePreview(payload.query, searchGematria.gematria.total),
             url: createLookupShareUrl(searchGematria),
-            imageUrl: shareImageUrl.toString(),
+            imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
           });
         });
         meta.append(document.createElement('br'), shareSearchButton);

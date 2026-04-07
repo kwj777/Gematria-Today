@@ -1,6 +1,18 @@
 import type { Config, Context } from '@netlify/edge-functions';
 
 const SITE_ORIGIN = 'https://endtimes.today';
+const OGP_IMAGE_WIDTH = 1200;
+const OGP_IMAGE_FORMAT = 'jpg';
+
+
+function toShareImageUrl(value: string): string {
+  const absoluteUrl = String(value || '').trim();
+  if (!absoluteUrl || /^data:image\//i.test(absoluteUrl)) {
+    return '';
+  }
+  const encoded = encodeURIComponent(absoluteUrl);
+  return `${SITE_ORIGIN}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
+}
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -55,10 +67,12 @@ export default async (req: Request, context: Context) => {
   html = replaceMetaContent(html, 'meta[property="og:title"]', title);
   html = replaceMetaContent(html, 'meta[property="og:description"]', description);
   html = replaceMetaContent(html, 'meta[property="og:url"]', shareUrl);
-  html = replaceMetaContent(html, 'meta[property="og:image"]', imageUrl.toString());
+  const shareImageUrl = toShareImageUrl(imageUrl.toString()) || imageUrl.toString();
+
+  html = replaceMetaContent(html, 'meta[property="og:image"]', shareImageUrl);
   html = replaceMetaContent(html, 'meta[name="twitter:title"]', title);
   html = replaceMetaContent(html, 'meta[name="twitter:description"]', description);
-  html = replaceMetaContent(html, 'meta[name="twitter:image"]', imageUrl.toString());
+  html = replaceMetaContent(html, 'meta[name="twitter:image"]', shareImageUrl);
 
   return new Response(html, { headers: response.headers });
 };

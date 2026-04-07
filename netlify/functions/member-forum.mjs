@@ -291,6 +291,8 @@ function mapThreadRow(row) {
     categorySlug: row.category_slug,
     categoryName: row.category_name,
     categoryAccessTier: row.category_access_tier,
+    categoryColorBadge: row.category_color_badge,
+    categoryIconName: row.category_icon_name,
     authorUserId: row.author_user_id,
     authorUsername: row.author_username,
     authorReputation,
@@ -376,7 +378,7 @@ async function listThreads(sql, member, user, event) {
   const limit = Number.isInteger(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 25;
 
   const categories = await sql`
-    SELECT id, slug, name, description, access_tier, sort_order
+    SELECT id, slug, name, description, access_tier, sort_order, color_badge, icon_name
     FROM forum_categories
     WHERE access_tier = ${area}
     ORDER BY sort_order ASC, name ASC
@@ -388,6 +390,8 @@ async function listThreads(sql, member, user, event) {
       SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
         (t.reply_count * 2 + t.view_count) AS popularity_score,
         c.access_tier AS category_access_tier,
+        c.color_badge AS category_color_badge,
+        c.icon_name AS category_icon_name,
         u.role AS author_role,
         u.membership_level AS author_membership_level,
         COALESCE(r.points, 0) AS author_reputation,
@@ -414,6 +418,8 @@ async function listThreads(sql, member, user, event) {
       SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
         (t.reply_count * 2 + t.view_count) AS popularity_score,
         c.access_tier AS category_access_tier,
+        c.color_badge AS category_color_badge,
+        c.icon_name AS category_icon_name,
         u.role AS author_role,
         u.membership_level AS author_membership_level,
         COALESCE(r.points, 0) AS author_reputation,
@@ -445,6 +451,8 @@ async function listThreads(sql, member, user, event) {
       description: row.description,
       accessTier: row.access_tier,
       sortOrder: Number(row.sort_order || 0),
+      colorBadge: row.color_badge,
+      iconName: row.icon_name,
     })),
     area,
     sort,
@@ -463,6 +471,8 @@ async function getThread(sql, member, user, event) {
 
   const threadRows = await sql`
     SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name, c.access_tier AS category_access_tier,
+      c.color_badge AS category_color_badge,
+      c.icon_name AS category_icon_name,
       u.role AS author_role,
       u.membership_level AS author_membership_level,
       COALESCE(r.points, 0) AS author_reputation,

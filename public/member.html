@@ -589,6 +589,74 @@
           .replace(/'/g, '&#39;');
       }
 
+      function formatTranscriptEntryHtml(text) {
+        const normalizedText = String(text || '').replace(/\r\n?/g, '\n').trim();
+        if (!normalizedText) {
+          return '<p class="mb-0 text-muted">No message text provided.</p>';
+        }
+
+        const blocks = normalizedText.split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
+        return blocks.map((block, index) => {
+          const marginClass = index === blocks.length - 1 ? 'mb-0' : 'mb-2';
+          return `<p class="${marginClass}">${escapeHtml(block).replace(/\n/g, '<br>')}</p>`;
+        }).join('');
+      }
+
+      function createChatSessionHtmlDocument(sessionItem = {}) {
+        const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
+        const createdAt = sessionItem.createdAt ? new Date(sessionItem.createdAt).toLocaleString() : 'Unknown save time';
+        const messagesHtml = transcriptEntries.length
+          ? transcriptEntries.map((entry) => `
+              <article class="message ${entry.role === 'assistant' ? 'assistant' : 'user'}">
+                <h3>${entry.role === 'assistant' ? 'Gematria AI Agent' : 'You'}</h3>
+                <div>${formatTranscriptEntryHtml(entry.text || '')}</div>
+              </article>
+            `).join('')
+          : '<p>No transcript messages were saved in this session.</p>';
+
+        return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(sessionItem.title || 'Gematria AI Agent session')}</title>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.5; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; }
+      h1 { margin-bottom: 0.25rem; }
+      .meta { color: #6b7280; margin-bottom: 1.5rem; }
+      .message { border: 1px solid #d1d5db; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; background: #ffffff; }
+      .message.assistant { background: #f8fafc; }
+      .message h3 { margin-top: 0; margin-bottom: 0.5rem; font-size: 1rem; }
+      p { margin-top: 0; }
+    </style>
+  </head>
+  <body>
+    <h1>${escapeHtml(sessionItem.title || 'Gematria AI Agent session')}</h1>
+    <p class="meta">Topic: ${escapeHtml(sessionItem.topic || 'General chat')} · Saved ${escapeHtml(createdAt)}</p>
+    ${messagesHtml}
+  </body>
+</html>`;
+      }
+
+      function downloadChatSessionHtml(sessionItem = {}) {
+        const htmlContent = createChatSessionHtmlDocument(sessionItem);
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const fallbackName = `gematria-chat-session-${sessionItem.id || 'export'}`;
+        const safeName = (sessionItem.title || fallbackName)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || fallbackName;
+
+        link.href = objectUrl;
+        link.download = `${safeName}.html`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(objectUrl);
+      }
+
       function showRegisterPasswordMismatchAlert() {
         registerPasswordMismatchAlert.classList.remove('d-none');
       }
@@ -1434,15 +1502,15 @@
         chatSessionList.innerHTML = chatSessions.length ? chatSessions.map((sessionItem) => {
           const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
           const transcriptSummary = transcriptEntries.slice(0, 8).map((entry) => `
-            <li><strong>${entry.role === 'assistant' ? 'Agent' : 'You'}:</strong> ${entry.text}</li>
+            <li><strong>${entry.role === 'assistant' ? 'Agent' : 'You'}:</strong><div class="mt-1">${formatTranscriptEntryHtml(entry.text || '')}</div></li>
           `).join('');
 
           return `
             <article class="admin-item-card member-history-card mb-3 p-3">
               <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div class="flex-grow-1">
-                  <h4 class="h6 mb-1">${sessionItem.title || 'Gematria AI Agent session'}</h4>
-                  <p class="small text-muted mb-2">${sessionItem.topic || 'General chat'} · Saved ${new Date(sessionItem.createdAt).toLocaleString()}</p>
+                  <h4 class="h6 mb-1">${escapeHtml(sessionItem.title || 'Gematria AI Agent session')}</h4>
+                  <p class="small text-muted mb-2">${escapeHtml(sessionItem.topic || 'General chat')} · Saved ${new Date(sessionItem.createdAt).toLocaleString()}</p>
                   <details>
                     <summary>View transcript (${transcriptEntries.length} message${transcriptEntries.length === 1 ? '' : 's'})</summary>
                     <ol class="small mt-2 mb-0">
@@ -1450,13 +1518,26 @@
                     </ol>
                   </details>
                 </div>
-                <div>
+                <div class="d-flex flex-wrap gap-2">
+                  <button class="btn btn-outline-secondary btn-sm" type="button" data-export-chat-session-id="${sessionItem.id}">Download HTML</button>
                   <button class="btn btn-outline-danger btn-sm" type="button" data-delete-chat-session-id="${sessionItem.id}">Delete</button>
                 </div>
               </div>
             </article>
           `;
         }).join('') : '<p class="text-muted mb-0">No saved AI agent chat sessions yet. Open the <a href="/ai-agent.html">Gematria AI Agent</a> and click <strong>Save chat to dashboard</strong>.</p>';
+
+        chatSessionList.querySelectorAll('[data-export-chat-session-id]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const selected = chatSessions.find((item) => String(item.id) === String(button.dataset.exportChatSessionId));
+            if (!selected) {
+              showAlert('Chat session could not be found.');
+              return;
+            }
+
+            downloadChatSessionHtml(selected);
+          });
+        });
 
         chatSessionList.querySelectorAll('[data-delete-chat-session-id]').forEach((button) => {
           button.addEventListener('click', async () => {

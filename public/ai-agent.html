@@ -459,9 +459,17 @@
 
           return `
             <p class="mb-2"><strong>Database words with gematria value ${gematriaValue}</strong></p>
-            <p class="mb-2">Found ${wordsList.length} match${wordsList.length === 1 ? '' : 'es'}.</p>
+            <p class="mb-2">Found ${wordsList.length} match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full agent lookup for it.</p>
             <ul class="mb-0">
-              ${wordsList.map((word) => `<li>${escapeHtml(word)}</li>`).join('')}
+              ${wordsList.map((word) => `
+                <li>
+                  <button
+                    type="button"
+                    class="btn btn-link p-0 align-baseline agent-word-lookup-button"
+                    data-word="${escapeHtml(word)}"
+                  >${escapeHtml(word)}</button>
+                </li>
+              `).join('')}
             </ul>
           `;
         }
@@ -632,6 +640,18 @@
       });
 
       chatLog.addEventListener('click', async (event) => {
+        const wordLookupButton = event.target.closest('.agent-word-lookup-button');
+        if (wordLookupButton) {
+          const selectedWord = String(wordLookupButton.dataset.word || '').trim();
+          if (!selectedWord) return;
+          addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`);
+          window.showWorkingOverlay?.();
+          const replyHtml = await buildAgentReply(selectedWord);
+          window.hideWorkingOverlay?.();
+          addMessage('assistant', replyHtml);
+          return;
+        }
+
         const actionButton = event.target.closest('.agent-share-button, .agent-save-history-button');
         if (!actionButton) return;
 

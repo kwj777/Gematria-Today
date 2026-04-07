@@ -622,6 +622,18 @@
         }
       }
 
+      async function fetchWordDatabaseStats() {
+        try {
+          const response = await fetch('/api/public-word-stats');
+          if (!response.ok) return null;
+          const payload = await response.json();
+          const totalWords = Number(payload?.totalWords);
+          return Number.isFinite(totalWords) ? totalWords : null;
+        } catch {
+          return null;
+        }
+      }
+
       async function fetchDefinitionSummary(topic) {
         try {
           const response = await fetch(`/api/wordnikDefinition?word=${encodeURIComponent(topic)}`);
@@ -713,6 +725,14 @@
           writeAgentMemory({ ...DEFAULT_MEMORY, enabled: memory.enabled });
           renderMemoryStatus();
           return '<p class="mb-0">Done — personal memory notes were cleared.</p>';
+        }
+
+        if (/\b(?:how many|number of|count|total)\b.*\bwords?\b.*\b(?:database|dataset|archive)\b/i.test(normalizedPrompt)) {
+          const totalWords = await fetchWordDatabaseStats();
+          if (Number.isFinite(totalWords)) {
+            return `<p class="mb-0">The current database has <strong>${totalWords.toLocaleString()}</strong> tracked word${totalWords === 1 ? '' : 's'}.</p>`;
+          }
+          return '<p class="mb-0">I could not load the live word count right now. Please try again in a moment.</p>';
         }
 
         if (gematriaValueLookupMatch && /\bwords?\b/i.test(normalizedPrompt)) {

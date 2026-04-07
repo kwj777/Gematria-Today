@@ -104,8 +104,14 @@ async function listDashboardData(sql, event) {
         AND (${category} = '' OR LOWER(COALESCE(c.name, '')) = ${category})
         AND (${status} = '' OR LOWER(r.status) = ${status})
         AND (${assignee} = '' OR LOWER(COALESCE(assignee.username, '')) = ${assignee})
-        AND (${dateFrom} = '' OR r.created_at >= ${dateFrom}::timestamptz)
-        AND (${dateTo} = '' OR r.created_at <= ${dateTo}::timestamptz)
+        AND (
+          NULLIF(${dateFrom}, '')::timestamptz IS NULL
+          OR r.created_at >= NULLIF(${dateFrom}, '')::timestamptz
+        )
+        AND (
+          NULLIF(${dateTo}, '')::timestamptz IS NULL
+          OR r.created_at <= NULLIF(${dateTo}, '')::timestamptz
+        )
         AND (${search} = ''
           OR LOWER(COALESCE(r.details, '')) LIKE ${`%${search}%`}
           OR LOWER(COALESCE(r.reason, '')) LIKE ${`%${search}%`}

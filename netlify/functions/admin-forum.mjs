@@ -149,7 +149,7 @@ async function listDashboardData(sql, event) {
   ]);
 
   const metrics = reports.reduce((acc, report) => {
-    const ageHours = (Date.now() - new Date(report.createdAt).getTime()) / 36e5;
+    const ageHours = (Date.now() - new Date(report.created_at).getTime()) / 36e5;
     if (Number.isFinite(ageHours)) {
       acc.totalAgeHours += ageHours;
       acc.count += 1;
@@ -343,7 +343,7 @@ export async function handler(event) {
     const { sql, user } = await getAuthenticatedUser(event);
     await ensureForumSchema(sql);
 
-    return routeByHttpMethod(event, {
+    return await routeByHttpMethod(event, {
       GET: async () => jsonResponse(200, await listDashboardData(sql, event)),
       POST: async () => {
         const payload = await createCategory(sql, event);

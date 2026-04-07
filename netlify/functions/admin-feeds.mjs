@@ -4,7 +4,7 @@ import { formatFeed, getAuthenticatedUser, jsonResponse, parseBody, routeByHttpM
 export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
-    return routeByHttpMethod(event, {
+    return await routeByHttpMethod(event, {
       GET: async () => {
       const rows = await sql`SELECT * FROM feeds ORDER BY created_at DESC`;
       return jsonResponse(200, { items: rows.map(formatFeed) });

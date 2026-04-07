@@ -1,5 +1,6 @@
 const SITE_ORIGIN = 'https://endtimes.today';
 const IMAGE_WIDTH = 1200;
+const IMAGE_HEIGHT = 630;
 const IMAGE_FORMAT = 'jpg';
 
 function escapeHtml(value = '') {
@@ -11,17 +12,17 @@ function escapeHtml(value = '') {
     .replaceAll("'", '&#39;');
 }
 
-function toAbsoluteUrl(pathWithQuery = '') {
-  const path = String(pathWithQuery || '').trim();
-  if (!path) return SITE_ORIGIN;
-  return `${SITE_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
-}
-
 function trimValue(value, maxLength) {
   const text = String(value || '').trim();
   if (!text) return '';
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+
+function toTransformedImageUrl(sourceUrl) {
+  const encodedSource = encodeURIComponent(sourceUrl);
+  return `${SITE_ORIGIN}/.netlify/images?url=${encodedSource}&w=${IMAGE_WIDTH}&h=${IMAGE_HEIGHT}&fit=cover&fm=${IMAGE_FORMAT}`;
 }
 
 function buildShareHtml(params) {
@@ -38,15 +39,14 @@ function buildShareHtml(params) {
   appUrl.searchParams.set('sharedMatches', matches);
   appUrl.searchParams.set('sharedRounds', rounds);
 
-  const imageSource = new URL('/api/ai-agent-share-image', SITE_ORIGIN);
+  const imageSource = new URL('/.netlify/functions/ai-agent-share-image', SITE_ORIGIN);
   imageSource.searchParams.set('topic', topic);
   imageSource.searchParams.set('total', total);
   imageSource.searchParams.set('root', root);
   imageSource.searchParams.set('matches', matches);
   imageSource.searchParams.set('rounds', rounds);
 
-  const encodedSource = encodeURIComponent(imageSource.toString());
-  const imageUrl = `${SITE_ORIGIN}/.netlify/images?url=${encodedSource}&w=${IMAGE_WIDTH}&fm=${IMAGE_FORMAT}`;
+  const imageUrl = toTransformedImageUrl(imageSource.toString());
   const title = `Gematria AI Agent: ${topic}`;
   const description = `Gematria total ${total} • digital root ${root} • matches ${matches} • rounds ${rounds}`;
 
@@ -66,12 +66,17 @@ function buildShareHtml(params) {
     <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:url" content="${escapeHtml(appUrl.toString())}" />
     <meta property="og:image" content="${escapeHtml(imageUrl)}" />
+    <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="${IMAGE_WIDTH}" />
+    <meta property="og:image:height" content="${IMAGE_HEIGHT}" />
     <meta property="og:image:alt" content="${escapeHtml(title)}" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(title)}" />
     <meta name="twitter:description" content="${escapeHtml(description)}" />
     <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
+    <meta name="twitter:image:alt" content="${escapeHtml(title)}" />
 
     <meta http-equiv="refresh" content="0;url=${escapeHtml(appUrl.toString())}" />
     <script>window.location.replace(${JSON.stringify(appUrl.toString())});</script>

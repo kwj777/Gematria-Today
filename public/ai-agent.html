@@ -631,7 +631,7 @@
       }
 
       function buildAgentShareImageUrl({ topic, total, root, matches, rounds }) {
-        const imageUrl = new URL('/api/ai-agent-share-image', getCanonicalOrigin());
+        const imageUrl = new URL('/.netlify/functions/ai-agent-share-image', getCanonicalOrigin());
         imageUrl.searchParams.set('topic', topic);
         imageUrl.searchParams.set('total', String(total));
         imageUrl.searchParams.set('root', String(root));

@@ -23,6 +23,15 @@ export async function ensureForumSchema(sql) {
     description TEXT,
     access_tier TEXT NOT NULL DEFAULT 'free',
     sort_order INTEGER NOT NULL DEFAULT 0,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    is_locked BOOLEAN NOT NULL DEFAULT FALSE,
+    post_mode TEXT NOT NULL DEFAULT 'members',
+    require_approval BOOLEAN NOT NULL DEFAULT FALSE,
+    color_badge TEXT,
+    icon_name TEXT,
+    guidelines TEXT,
+    default_sort_mode TEXT NOT NULL DEFAULT 'newest',
+    thread_template_prompt TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
@@ -129,9 +138,43 @@ export async function ensureForumSchema(sql) {
     reporter_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     reason TEXT NOT NULL,
     details TEXT,
+    internal_note TEXT,
+    moderator_note TEXT,
+    canned_response TEXT,
+    action_taken TEXT,
+    assigned_moderator_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    resolved_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
     status TEXT NOT NULL DEFAULT 'open',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+  await sql`CREATE TABLE IF NOT EXISTS forum_admin_audit (
+    id TEXT PRIMARY KEY,
+    actor_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    target_type TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    details JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS is_locked BOOLEAN NOT NULL DEFAULT FALSE`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS post_mode TEXT NOT NULL DEFAULT 'members'`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS require_approval BOOLEAN NOT NULL DEFAULT FALSE`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS color_badge TEXT`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS icon_name TEXT`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS guidelines TEXT`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS default_sort_mode TEXT NOT NULL DEFAULT 'newest'`;
+  await sql`ALTER TABLE forum_categories ADD COLUMN IF NOT EXISTS thread_template_prompt TEXT`;
+  await sql`ALTER TABLE forum_reports ADD COLUMN IF NOT EXISTS internal_note TEXT`;
+  await sql`ALTER TABLE forum_reports ADD COLUMN IF NOT EXISTS moderator_note TEXT`;
+  await sql`ALTER TABLE forum_reports ADD COLUMN IF NOT EXISTS canned_response TEXT`;
+  await sql`ALTER TABLE forum_reports ADD COLUMN IF NOT EXISTS action_taken TEXT`;
+  await sql`ALTER TABLE forum_reports ADD COLUMN IF NOT EXISTS assigned_moderator_id TEXT REFERENCES users(id) ON DELETE SET NULL`;
+  await sql`ALTER TABLE forum_reports ADD COLUMN IF NOT EXISTS resolved_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL`;
+  await sql`CREATE INDEX IF NOT EXISTS forum_reports_assigned_created_idx
+    ON forum_reports (assigned_moderator_id, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS forum_admin_audit_created_idx
+    ON forum_admin_audit (created_at DESC)`;
   await sql`CREATE TABLE IF NOT EXISTS forum_member_reputation (
     user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     points INTEGER NOT NULL DEFAULT 0,

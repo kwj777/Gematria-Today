@@ -335,6 +335,17 @@
         }
       }
 
+      async function fetchWordsByGematriaValue(gematriaValue) {
+        try {
+          const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(gematriaValue))}`);
+          if (!response.ok) return [];
+          const payload = await response.json();
+          return Array.isArray(payload?.words) ? payload.words : [];
+        } catch {
+          return [];
+        }
+      }
+
       async function fetchDefinitionSummary(topic) {
         try {
           const response = await fetch(`/api/wordnikDefinition?word=${encodeURIComponent(topic)}`);
@@ -409,6 +420,7 @@
         const normalizedPrompt = normalizeCandidate(prompt);
         const memory = readAgentMemory();
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
+        const gematriaValueLookupMatch = normalizedPrompt.match(/\b(?:gematria\s+value|value|number|calculation)\s*(?:of|for|=|is)?\s*(\d+)\b/i);
 
         const rememberMatch = normalizedPrompt.match(/(?:remember|save)\s+(?:that\s+)?(.+)/i);
         if (rememberMatch) {
@@ -424,6 +436,42 @@
           writeAgentMemory({ ...DEFAULT_MEMORY, enabled: memory.enabled });
           renderMemoryStatus();
           return '<p class="mb-0">Done — personal memory notes were cleared.</p>';
+        }
+
+        if (gematriaValueLookupMatch && /\bwords?\b/i.test(normalizedPrompt)) {
+          const gematriaValue = Number(gematriaValueLookupMatch[1]);
+          if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) {
+            return '<p class="mb-0">Please provide a positive gematria number so I can search the word database.</p>';
+          }
+
+          if (gematriaValue % 6 !== 0) {
+            return '<p class="mb-0">I can only run this database word-list lookup for gematria values that are multiples of 6.</p>';
+          }
+
+          const words = await fetchWordsByGematriaValue(gematriaValue);
+          if (!words.length) {
+            return `<p class="mb-0">I found no words in the current database for gematria value <strong>${gematriaValue}</strong>.</p>`;
+          }
+
+          const wordsList = words
+            .map((entry) => String(entry?.word || '').trim())
+            .filter(Boolean);
+
+          return `
+            <p class="mb-2"><strong>Database words with gematria value ${gematriaValue}</strong></p>
+            <p class="mb-2">Found ${wordsList.length} match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full agent lookup for it.</p>
+            <ul class="mb-0">
+              ${wordsList.map((word) => `
+                <li>
+                  <button
+                    type="button"
+                    class="btn btn-link p-0 align-baseline agent-word-lookup-button"
+                    data-word="${escapeHtml(word)}"
+                  >${escapeHtml(word)}</button>
+                </li>
+              `).join('')}
+            </ul>
+          `;
         }
 
         const calculationTargets = extractCalculationTargets(normalizedPrompt);
@@ -592,6 +640,18 @@
       });
 
       chatLog.addEventListener('click', async (event) => {
+        const wordLookupButton = event.target.closest('.agent-word-lookup-button');
+        if (wordLookupButton) {
+          const selectedWord = String(wordLookupButton.dataset.word || '').trim();
+          if (!selectedWord) return;
+          addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`);
+          window.showWorkingOverlay?.();
+          const replyHtml = await buildAgentReply(selectedWord);
+          window.hideWorkingOverlay?.();
+          addMessage('assistant', replyHtml);
+          return;
+        }
+
         const actionButton = event.target.closest('.agent-share-button, .agent-save-history-button');
         if (!actionButton) return;
 

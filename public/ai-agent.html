@@ -381,8 +381,8 @@
         const rawPrompt = normalizeCandidate(prompt);
         if (!rawPrompt) return [];
 
-        return [...rawPrompt.matchAll(/"([^"]+)"|'([^']+)'/g)]
-          .flatMap((match) => normalizeCandidate(match[1] || match[2])
+        return [...rawPrompt.matchAll(/"([^"]+)"|'([^']+)'|“([^”]+)”|‘([^’]+)’/g)]
+          .flatMap((match) => normalizeCandidate(match[1] || match[2] || match[3] || match[4])
             .split(',')
             .map((target) => normalizeCandidate(target))
           )

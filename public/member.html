@@ -301,6 +301,15 @@
                   <button id="historyListToggleButton" class="btn btn-outline-primary btn-sm" type="button">View all saved calculations</button>
                 </div>
               </section>
+              <section class="content-panel p-4 mt-4">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">AI Agent Sessions</p>
+                    <h3 class="h4 mb-0">Saved chat sessions</h3>
+                  </div>
+                </div>
+                <div id="chatSessionList" class="admin-list"></div>
+              </section>
             </div>
 
             <div class="col-xl-5">
@@ -449,6 +458,7 @@
       const historyList = document.getElementById('historyList');
       const historyListToggleWrap = document.getElementById('historyListToggleWrap');
       const historyListToggleButton = document.getElementById('historyListToggleButton');
+      const chatSessionList = document.getElementById('chatSessionList');
       const membershipUpgradeSection = document.getElementById('membershipUpgradeSection');
       const membershipUpgradeToggleButton = document.getElementById('membershipUpgradeToggleButton');
       const membershipUpgradeToggleLabel = document.getElementById('membershipUpgradeToggleLabel');
@@ -507,6 +517,7 @@
       let membershipHeroReady = false;
       let memberProposals = [];
       let recentForumThreads = [];
+      let chatSessions = [];
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
 
 
@@ -1418,6 +1429,50 @@
         });
       }
 
+      function renderChatSessions() {
+        chatSessionList.innerHTML = chatSessions.length ? chatSessions.map((sessionItem) => {
+          const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
+          const transcriptSummary = transcriptEntries.slice(0, 8).map((entry) => `
+            <li><strong>${entry.role === 'assistant' ? 'Agent' : 'You'}:</strong> ${entry.text}</li>
+          `).join('');
+
+          return `
+            <article class="admin-item-card member-history-card mb-3 p-3">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div class="flex-grow-1">
+                  <h4 class="h6 mb-1">${sessionItem.title || 'Gematria AI Agent session'}</h4>
+                  <p class="small text-muted mb-2">${sessionItem.topic || 'General chat'} · Saved ${new Date(sessionItem.createdAt).toLocaleString()}</p>
+                  <details>
+                    <summary>View transcript (${transcriptEntries.length} message${transcriptEntries.length === 1 ? '' : 's'})</summary>
+                    <ol class="small mt-2 mb-0">
+                      ${transcriptSummary || '<li>No transcript preview available.</li>'}
+                    </ol>
+                  </details>
+                </div>
+                <div>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-chat-session-id="${sessionItem.id}">Delete</button>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('') : '<p class="text-muted mb-0">No saved AI agent chat sessions yet. Open the <a href="/ai-agent.html">Gematria AI Agent</a> and click <strong>Save chat to dashboard</strong>.</p>';
+
+        chatSessionList.querySelectorAll('[data-delete-chat-session-id]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            try {
+              await request('/api/member-chat-sessions', {
+                method: 'DELETE',
+                body: JSON.stringify({ id: button.dataset.deleteChatSessionId }),
+              });
+              showAlert('Chat session deleted.', 'success');
+              await loadChatSessions();
+            } catch (error) {
+              showAlert(error.message || 'Unable to delete chat session.');
+            }
+          });
+        });
+      }
+
       function populateProfile(member, profile, user = null) {
         memberMeta.textContent = `Signed in as ${member.displayName || member.username} (${member.email})`;
         membershipLevel.textContent = member.membershipLevel;
@@ -1446,6 +1501,12 @@
         });
         persistFavoriteHistoryIds();
         renderHistory();
+      }
+
+      async function loadChatSessions() {
+        const payload = await request('/api/member-chat-sessions');
+        chatSessions = Array.isArray(payload.sessions) ? payload.sessions : [];
+        renderChatSessions();
       }
 
       historyListToggleButton.addEventListener('click', () => {
@@ -1484,6 +1545,7 @@
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
           await loadHistory();
+          await loadChatSessions();
           await loadMemberProposals();
 
           if (paymentState === 'success' && stripeSessionId) {
@@ -1498,6 +1560,8 @@
           setLoggedIn(false);
           historyItems = [];
           renderHistory();
+          chatSessions = [];
+          renderChatSessions();
           await loadMemberProposals();
           if (paymentState === 'success') {
             showAlert('Sign in to finish activating your Stripe payment.', 'warning');
@@ -1590,6 +1654,7 @@
           populateProfile(session.member, session.profile, session.user);
           maybeOpenFollowItAfterVerifiedSignIn(session);
           await loadHistory();
+          await loadChatSessions();
           await loadMemberProposals();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
@@ -1710,6 +1775,8 @@
           session = null;
           favoriteHistoryIds = new Set();
           setLoggedIn(false);
+          chatSessions = [];
+          renderChatSessions();
           await loadMemberProposals();
         }
       });
@@ -1751,6 +1818,7 @@
         clearAlert();
         try {
           await loadHistory();
+          await loadChatSessions();
           showAlert('History refreshed.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to refresh history.');

@@ -60,6 +60,8 @@
             <div class="col-12">
               <label for="agentPrompt" class="form-label fw-semibold">Your message</label>
               <textarea id="agentPrompt" class="form-control" rows="3" placeholder="Example: Analyze \"New Jerusalem\" and suggest what to compare next." required></textarea>
+              <p class="form-text mb-0">Use quotes around the word(s) you want calculated.</p>
+              <p class="form-text mb-0">To calculate multiple individual words, separate them with commas inside the quotes (example: "pilot, process").</p>
             </div>
             <div class="col-md-6 col-lg-4">
               <label for="improvementDepth" class="form-label fw-semibold">Recursive improvement rounds</label>
@@ -331,7 +333,10 @@
         if (!rawPrompt) return [];
 
         const quotedTargets = [...rawPrompt.matchAll(/"([^"]+)"|'([^']+)'/g)]
-          .map((match) => normalizeCandidate(match[1] || match[2]))
+          .flatMap((match) => normalizeCandidate(match[1] || match[2])
+            .split(',')
+            .map((target) => normalizeCandidate(target))
+          )
           .filter(Boolean);
         if (quotedTargets.length) {
           return [...new Set(quotedTargets)];

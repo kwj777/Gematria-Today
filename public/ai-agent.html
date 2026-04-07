@@ -99,6 +99,7 @@
             <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
               <button type="submit" class="btn btn-primary">Ask agent</button>
               <button type="button" id="clearConversation" class="btn btn-outline-secondary">Clear conversation</button>
+              <button type="button" id="saveConversation" class="btn btn-outline-success">Save chat to dashboard</button>
               <div class="form-check ms-lg-2">
                 <input class="form-check-input" type="checkbox" id="memoryToggle" />
                 <label class="form-check-label" for="memoryToggle">Enable personal memory (optional)</label>
@@ -116,6 +117,7 @@
       const improvementDepthInput = document.getElementById('improvementDepth');
       const chatLog = document.getElementById('chatLog');
       const clearConversationButton = document.getElementById('clearConversation');
+      const saveConversationButton = document.getElementById('saveConversation');
       const memoryToggle = document.getElementById('memoryToggle');
       const clearMemoryButton = document.getElementById('clearMemory');
       const memoryStatus = document.getElementById('memoryStatus');
@@ -540,11 +542,56 @@
 
       function addMessage(role, contentHtml) {
         const wrapper = document.createElement('article');
+        wrapper.dataset.role = role === 'assistant' ? 'assistant' : 'user';
         wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
         wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'Gematria AI Agent' : 'You'}</p>${contentHtml}`;
         chatLog.append(wrapper);
         scrollChatToBottom();
         return wrapper;
+      }
+
+      function readChatTranscriptFromDom() {
+        return [...chatLog.querySelectorAll('article[data-role]')]
+          .map((article) => {
+            const role = String(article.dataset.role || '').trim();
+            const text = normalizeCandidate(article.innerText.replace(/^Gematria AI Agent|^You/, ''));
+            if (!text || (role !== 'assistant' && role !== 'user')) {
+              return null;
+            }
+            return { role, text };
+          })
+          .filter(Boolean);
+      }
+
+      async function saveChatSessionToDashboard() {
+        const transcript = readChatTranscriptFromDom();
+        if (!transcript.length) {
+          throw new Error('No chat messages found. Ask the agent first, then save the session.');
+        }
+
+        const firstUserMessage = transcript.find((entry) => entry.role === 'user')?.text || 'Gematria AI Agent session';
+        const title = firstUserMessage.length > 80 ? `${firstUserMessage.slice(0, 77)}...` : firstUserMessage;
+        const response = await fetch('/api/member-chat-sessions', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            topic: firstUserMessage,
+            transcript,
+            metadata: {
+              source: 'ai_agent',
+              rounds: Number(improvementDepthInput?.value || 0) || null,
+            },
+          }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || 'Unable to save this chat session right now.');
+        }
+
+        return 'Chat session saved to your membership dashboard.';
       }
 
       function attachResultFeedbackUi(messageElement, originalPrompt) {
@@ -1114,6 +1161,21 @@ View results: ${shareUrl}`.trim(),
       clearConversationButton.addEventListener('click', () => {
         chatLog.innerHTML = '';
         promptInput.focus();
+      });
+
+      saveConversationButton.addEventListener('click', async () => {
+        saveConversationButton.disabled = true;
+        const originalText = saveConversationButton.textContent;
+        saveConversationButton.textContent = 'Saving...';
+        try {
+          const message = await saveChatSessionToDashboard();
+          window.alert(message);
+        } catch (error) {
+          window.alert(error.message || 'Unable to save chat session.');
+        } finally {
+          saveConversationButton.disabled = false;
+          saveConversationButton.textContent = originalText;
+        }
       });
 
       memoryToggle.addEventListener('change', () => {

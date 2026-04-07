@@ -93,6 +93,20 @@ CREATE INDEX IF NOT EXISTS calculation_history_query_type_idx
 CREATE INDEX IF NOT EXISTS calculation_history_calculator_source_idx
   ON calculation_history (calculator_source, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS member_chat_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  topic TEXT,
+  transcript JSONB NOT NULL,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS member_chat_sessions_user_created_at_idx
+  ON member_chat_sessions (user_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS member_email_verification_requests (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

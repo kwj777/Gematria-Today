@@ -70,12 +70,18 @@
                 <option value="4">4 rounds (most thorough)</option>
               </select>
             </div>
-            <div class="col-12 d-flex flex-wrap gap-2">
+            <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
               <button type="submit" class="btn btn-primary">Ask agent</button>
               <button type="button" id="clearConversation" class="btn btn-outline-secondary">Clear conversation</button>
+              <div class="form-check ms-lg-2">
+                <input class="form-check-input" type="checkbox" id="memoryToggle" />
+                <label class="form-check-label" for="memoryToggle">Enable personal memory (optional)</label>
+              </div>
+              <button type="button" id="clearMemory" class="btn btn-outline-danger btn-sm" title="Delete saved memory">Forget saved memory</button>
             </div>
           </form>
 
+          <div id="memoryStatus" class="alert alert-secondary small mb-4" hidden></div>
           <div id="chatLog" class="d-flex flex-column gap-3" aria-live="polite"></div>
         </section>
       </div>
@@ -87,9 +93,17 @@
       const improvementDepthInput = document.getElementById('improvementDepth');
       const chatLog = document.getElementById('chatLog');
       const clearConversationButton = document.getElementById('clearConversation');
+      const memoryToggle = document.getElementById('memoryToggle');
+      const clearMemoryButton = document.getElementById('clearMemory');
+      const memoryStatus = document.getElementById('memoryStatus');
       const premiumGate = document.getElementById('premiumGate');
       const sharedResultBanner = document.getElementById('sharedResultBanner');
       let premiumAccess = false;
+      const AGENT_MEMORY_KEY = 'gematriaAgentPersonalMemory.v1';
+      const DEFAULT_MEMORY = {
+        enabled: false,
+        facts: []
+      };
 
       function escapeHtml(value) {
         return String(value || '')
@@ -121,6 +135,60 @@
 
       function normalizeCandidate(value) {
         return String(value || '').replace(/\s+/g, ' ').trim();
+      }
+
+      function readAgentMemory() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(AGENT_MEMORY_KEY) || 'null');
+          if (!parsed || typeof parsed !== 'object') return { ...DEFAULT_MEMORY };
+          const facts = Array.isArray(parsed.facts)
+            ? parsed.facts
+              .map((fact) => normalizeCandidate(fact))
+              .filter(Boolean)
+              .slice(0, 8)
+            : [];
+          return {
+            enabled: Boolean(parsed.enabled),
+            facts
+          };
+        } catch {
+          return { ...DEFAULT_MEMORY };
+        }
+      }
+
+      function writeAgentMemory(memory) {
+        localStorage.setItem(AGENT_MEMORY_KEY, JSON.stringify({
+          enabled: Boolean(memory?.enabled),
+          facts: Array.isArray(memory?.facts) ? memory.facts.slice(0, 8) : []
+        }));
+      }
+
+      function rememberFact(rawFact) {
+        const fact = normalizeCandidate(rawFact);
+        if (!fact) return;
+        const memory = readAgentMemory();
+        if (!memory.enabled) return;
+        const deduped = [fact, ...memory.facts.filter((entry) => entry.toLowerCase() !== fact.toLowerCase())];
+        memory.facts = deduped.slice(0, 8);
+        writeAgentMemory(memory);
+      }
+
+      function renderMemoryStatus() {
+        const memory = readAgentMemory();
+        memoryToggle.checked = memory.enabled;
+        if (!memory.enabled) {
+          memoryStatus.hidden = false;
+          memoryStatus.innerHTML = '<strong>Memory is off.</strong> The agent will not keep personal context between prompts.';
+          return;
+        }
+
+        memoryStatus.hidden = false;
+        if (!memory.facts.length) {
+          memoryStatus.innerHTML = '<strong>Memory is on.</strong> No facts saved yet. Ask the agent to remember a preference (for example: "remember I prefer concise replies").';
+          return;
+        }
+
+        memoryStatus.innerHTML = `<strong>Memory is on.</strong> Saved notes: ${escapeHtml(memory.facts.join(' • '))}`;
       }
 
       function cleanSegmentForTargets(segment) {
@@ -258,8 +326,71 @@
         }
       }
 
+      async function saveCalculationToDashboard(meta) {
+        const queryText = normalizeCandidate(meta?.topic);
+        if (!queryText) {
+          throw new Error('A calculation topic is required before saving.');
+        }
+
+        const total = Number(meta?.total);
+        const root = Number(meta?.root);
+        const matches = Number(meta?.matches);
+        const rounds = Number(meta?.rounds);
+        const payload = {
+          queryText,
+          queryType: 'word',
+          calculatorSource: 'ai_agent',
+          gematriaTotal: Number.isFinite(total) ? total : null,
+          digitalRoot: Number.isFinite(root) ? root : null,
+          isBaseRoot: Number.isFinite(total) ? (total >= 6 && (total - 6) % 54 === 0) : null,
+          resultPayload: {
+            topic: queryText,
+            total: Number.isFinite(total) ? total : null,
+            digitalRoot: Number.isFinite(root) ? root : null,
+            matchCount: Number.isFinite(matches) ? matches : null,
+            rounds: Number.isFinite(rounds) ? rounds : null,
+            source: 'Gematria AI Agent'
+          }
+        };
+
+        const response = await fetch('/api/member-history', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data?.error || 'Unable to save this calculation right now.');
+        }
+
+        return data?.duplicate
+          ? 'This calculation is already saved in your membership dashboard.'
+          : 'Saved to your membership dashboard history.';
+      }
+
       async function buildAgentReply(prompt) {
-        const calculationTargets = extractCalculationTargets(prompt);
+        const normalizedPrompt = normalizeCandidate(prompt);
+        const memory = readAgentMemory();
+
+        const rememberMatch = normalizedPrompt.match(/(?:remember|save)\s+(?:that\s+)?(.+)/i);
+        if (rememberMatch) {
+          rememberFact(rememberMatch[1]);
+          renderMemoryStatus();
+          const refreshedMemory = readAgentMemory();
+          return refreshedMemory.enabled
+            ? `<p class="mb-0">Saved to personal memory: <strong>${escapeHtml(normalizeCandidate(rememberMatch[1]))}</strong>.</p>`
+            : '<p class="mb-0">Memory is currently off. Turn on "Enable personal memory" to save notes.</p>';
+        }
+
+        if (/\b(forget|clear)\s+memory\b/i.test(normalizedPrompt)) {
+          writeAgentMemory({ ...DEFAULT_MEMORY, enabled: memory.enabled });
+          renderMemoryStatus();
+          return '<p class="mb-0">Done — personal memory notes were cleared.</p>';
+        }
+
+        const calculationTargets = extractCalculationTargets(normalizedPrompt);
         const topic = calculationTargets[0] || '';
         if (!topic) {
           return '<p class="mb-0">Please share a word, phrase, or name so I can calculate and discuss it.</p>';
@@ -275,6 +406,9 @@
         ]);
 
         const iterations = Math.max(1, Math.min(4, Number(improvementDepthInput?.value || 2)));
+        const memoryContext = memory.enabled && memory.facts.length
+          ? `Personal memory cues: ${memory.facts.join('; ')}.`
+          : '';
 
         function refineAnalysis(previousStep, round) {
           const nuance = matchCount === null
@@ -293,7 +427,7 @@
               ? 'Establish numeric baseline.'
               : `Improve round ${round} by stress-testing the previous interpretation for bias and missing context.`,
             critique: `Prior step recap: ${previousStep.focus} ${previousStep.critique || ''}`.trim(),
-            upgrade: `${nuance} ${confidence}`,
+            upgrade: `${nuance} ${confidence} ${memoryContext}`.trim(),
             nextAction: round % 2 === 0
               ? 'Run at least 3 semantic neighbors and compare both full totals and digital roots.'
               : 'Run spelling/title variants and document non-matches equally with matches.'
@@ -330,6 +464,17 @@
             <li><strong>Base-root pattern:</strong> ${isBaseRoot ? 'Yes' : 'No'}</li>
             <li><strong>Current archived matches:</strong> ${Number.isFinite(matchCount) ? matchCount : 'Unavailable right now'}</li>
           </ul>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-success mb-3 agent-save-history-button"
+            data-topic="${escapeHtml(topic)}"
+            data-total="${total}"
+            data-root="${root}"
+            data-matches="${Number.isFinite(matchCount) ? matchCount : ''}"
+            data-rounds="${iterations}"
+          >
+            Save to membership dashboard
+          </button>
           ${comparisonTargets.length ? `
             <p class="mb-2"><strong>Additional quick calculations</strong></p>
             <ul class="mb-3">
@@ -389,17 +534,46 @@
         promptInput.focus();
       });
 
+      memoryToggle.addEventListener('change', () => {
+        const memory = readAgentMemory();
+        writeAgentMemory({ ...memory, enabled: memoryToggle.checked });
+        renderMemoryStatus();
+      });
+
+      clearMemoryButton.addEventListener('click', () => {
+        const memory = readAgentMemory();
+        writeAgentMemory({ ...DEFAULT_MEMORY, enabled: memory.enabled });
+        renderMemoryStatus();
+      });
+
       chatLog.addEventListener('click', async (event) => {
-        const button = event.target.closest('.agent-share-button');
-        if (!button) return;
+        const actionButton = event.target.closest('.agent-share-button, .agent-save-history-button');
+        if (!actionButton) return;
 
         const meta = {
-          topic: String(button.dataset.topic || '').trim(),
-          total: String(button.dataset.total || '').trim(),
-          root: String(button.dataset.root || '').trim(),
-          matches: String(button.dataset.matches || '').trim(),
-          rounds: String(button.dataset.rounds || '').trim()
+          topic: String(actionButton.dataset.topic || '').trim(),
+          total: String(actionButton.dataset.total || '').trim(),
+          root: String(actionButton.dataset.root || '').trim(),
+          matches: String(actionButton.dataset.matches || '').trim(),
+          rounds: String(actionButton.dataset.rounds || '').trim()
         };
+
+        if (actionButton.classList.contains('agent-save-history-button')) {
+          actionButton.disabled = true;
+          const originalText = actionButton.textContent;
+          actionButton.textContent = 'Saving...';
+          try {
+            const savedMessage = await saveCalculationToDashboard(meta);
+            window.alert(savedMessage);
+          } catch (error) {
+            window.alert(error.message || 'Unable to save to membership dashboard.');
+          } finally {
+            actionButton.disabled = false;
+            actionButton.textContent = originalText;
+          }
+          return;
+        }
+
         const shareUrl = buildAgentShareUrl(meta);
         const shareText = `Gematria AI Agent: ${meta.topic} → total ${meta.total}, root ${meta.root}`;
 
@@ -420,6 +594,7 @@
         }
       });
 
+      renderMemoryStatus();
       ensurePremiumAccess();
       showSharedResultIfPresent();
     </script>

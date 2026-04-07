@@ -119,10 +119,47 @@
         return root;
       }
 
-      function extractPrimaryText(prompt) {
-        const quoted = String(prompt || '').match(/"([^"]+)"|'([^']+)'/);
-        const candidate = quoted ? (quoted[1] || quoted[2]) : String(prompt || '');
-        return candidate.replace(/\s+/g, ' ').trim();
+      function normalizeCandidate(value) {
+        return String(value || '').replace(/\s+/g, ' ').trim();
+      }
+
+      function cleanSegmentForTargets(segment) {
+        const conversationalWords = new Set([
+          'a', 'an', 'and', 'about', 'also', 'are', 'be', 'can', 'could', 'do', 'for', 'from', 'give', 'hello', 'help', 'hey', 'hi',
+          'i', 'ideas', 'im', 'in', 'into', 'is', 'it', 'lets', 'me', 'my', 'of', 'on', 'or', 'please', 'should', 'suggest', 'tell',
+          'thanks', 'that', 'the', 'this', 'to', 'us', 'we', 'what', 'with', 'you', 'your', 'agent', 'ai', 'analyze', 'analysis',
+          'calculate', 'calculation', 'check', 'compare', 'compute', 'find', 'gematria', 'lookup', 'look', 'mean', 'meaning',
+          'next', 'prompt', 'prompts', 'research', 'show', 'value', 'versus', 'vs'
+        ]);
+
+        const tokens = normalizeCandidate(segment)
+          .match(/[A-Za-z][A-Za-z'-]*/g) || [];
+        const filtered = tokens.filter((token) => !conversationalWords.has(token.toLowerCase()));
+        return normalizeCandidate(filtered.join(' '));
+      }
+
+      function extractCalculationTargets(prompt) {
+        const rawPrompt = normalizeCandidate(prompt);
+        if (!rawPrompt) return [];
+
+        const quotedTargets = [...rawPrompt.matchAll(/"([^"]+)"|'([^']+)'/g)]
+          .map((match) => normalizeCandidate(match[1] || match[2]))
+          .filter(Boolean);
+        if (quotedTargets.length) {
+          return [...new Set(quotedTargets)];
+        }
+
+        const segments = rawPrompt
+          .split(/\b(?:and|vs|versus|,)\b|[;?!]+/i)
+          .map((segment) => cleanSegmentForTargets(segment))
+          .filter(Boolean);
+
+        if (segments.length) {
+          return [...new Set(segments)];
+        }
+
+        const fallback = cleanSegmentForTargets(rawPrompt);
+        return fallback ? [fallback] : [];
       }
 
       function addMessage(role, contentHtml) {
@@ -222,7 +259,8 @@
       }
 
       async function buildAgentReply(prompt) {
-        const topic = extractPrimaryText(prompt);
+        const calculationTargets = extractCalculationTargets(prompt);
+        const topic = calculationTargets[0] || '';
         if (!topic) {
           return '<p class="mb-0">Please share a word, phrase, or name so I can calculate and discuss it.</p>';
         }
@@ -277,8 +315,14 @@
         }
 
         const finalStep = recursiveSteps[recursiveSteps.length - 1];
+        const comparisonTargets = calculationTargets.slice(1, 6).map((target) => ({
+          target,
+          total: englishGematria(target),
+          root: digitalRoot(englishGematria(target))
+        }));
 
         return `
+          <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
           <p class="mb-2">For <strong>${escapeHtml(topic)}</strong>, here is the current gematria snapshot:</p>
           <ul class="mb-3">
             <li><strong>Total:</strong> ${total}</li>
@@ -286,6 +330,12 @@
             <li><strong>Base-root pattern:</strong> ${isBaseRoot ? 'Yes' : 'No'}</li>
             <li><strong>Current archived matches:</strong> ${Number.isFinite(matchCount) ? matchCount : 'Unavailable right now'}</li>
           </ul>
+          ${comparisonTargets.length ? `
+            <p class="mb-2"><strong>Additional quick calculations</strong></p>
+            <ul class="mb-3">
+              ${comparisonTargets.map((entry) => `<li>${escapeHtml(entry.target)} → total ${entry.total}, digital root ${entry.root}</li>`).join('')}
+            </ul>
+          ` : ''}
           <p class="mb-2"><strong>Recursive improvement trail (${iterations} round${iterations === 1 ? '' : 's'})</strong></p>
           <ol class="mb-3">
             ${recursiveSteps.map((step) => `<li><strong>Round ${step.round}:</strong> ${escapeHtml(step.focus)} ${escapeHtml(step.upgrade)}</li>`).join('')}

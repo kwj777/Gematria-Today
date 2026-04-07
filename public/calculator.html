@@ -215,6 +215,7 @@ const lookupForm = document.querySelector('#lookup-form');
       async function sharePage(payload) {
         const shareUrl = toCanonicalShareUrl(payload.url || window.location.href);
         const shareText = payload.text || '';
+        const shareImageUrl = String(payload.imageUrl || '').trim();
         const sharePayload = {
           title: payload.title || document.title,
           text: shareText.includes(shareUrl) ? shareText : `${shareText}
@@ -222,10 +223,29 @@ const lookupForm = document.querySelector('#lookup-form');
 View results: ${shareUrl}`.trim(),
           url: shareUrl,
         };
+        let sharePayloadWithImage = sharePayload;
+
+        if (shareImageUrl && !/^data:image\//i.test(shareImageUrl)) {
+          try {
+            const response = await fetch(shareImageUrl, { mode: 'cors' });
+            if (response.ok) {
+              const imageBlob = await response.blob();
+              if (imageBlob.type.startsWith('image/')) {
+                const extension = imageBlob.type.split('/')[1] || 'png';
+                const imageFile = new File([imageBlob], `gematria-result.${extension}`, { type: imageBlob.type });
+                sharePayloadWithImage = { ...sharePayload, files: [imageFile] };
+              }
+            }
+          } catch {}
+        }
 
         if (navigator.share) {
           try {
-            await navigator.share(sharePayload);
+            if (sharePayloadWithImage.files && navigator.canShare?.({ files: sharePayloadWithImage.files })) {
+              await navigator.share(sharePayloadWithImage);
+            } else {
+              await navigator.share(sharePayload);
+            }
             return;
           } catch (error) {
           window.endTimesTracking?.track('calculator_usage_error', {
@@ -724,11 +744,18 @@ View results: ${shareUrl}`.trim(),
         shareButton.className = 'btn btn-warning btn-sm mt-2 fw-semibold share-action-button';
         shareButton.textContent = 'Share this lookup';
         const shareUrl = createLookupShareUrl(searchGematria);
+        const shareImageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalShareOrigin());
+        shareImageUrl.searchParams.set('type', 'word');
+        shareImageUrl.searchParams.set('query', String(searchGematria.word || '').trim());
+        shareImageUrl.searchParams.set('total', String(searchGematria.gematria?.total ?? ''));
+        shareImageUrl.searchParams.set('digitalRoot', String(searchGematria.gematria?.digitalRoot ?? ''));
+        shareImageUrl.searchParams.set('isBaseRoot', String(Boolean(searchGematria.isBaseRoot)));
         shareButton.addEventListener('click', async () => {
           await sharePage({
             title: `Gematria lookup for ${searchGematria.word}`,
             text: formatCalculationSharePreview(searchGematria.word, searchGematria.gematria.total),
             url: shareUrl,
+            imageUrl: shareImageUrl.toString(),
           });
         });
 
@@ -791,10 +818,17 @@ View results: ${shareUrl}`.trim(),
         shareSearchButton.className = 'btn btn-warning btn-sm mt-2 fw-semibold share-action-button';
         shareSearchButton.textContent = 'Share results';
         shareSearchButton.addEventListener('click', async () => {
+          const shareImageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalShareOrigin());
+          shareImageUrl.searchParams.set('type', 'word');
+          shareImageUrl.searchParams.set('query', String(payload.query || '').trim());
+          shareImageUrl.searchParams.set('total', String(searchGematria.gematria?.total ?? ''));
+          shareImageUrl.searchParams.set('digitalRoot', String(searchGematria.gematria?.digitalRoot ?? ''));
+          shareImageUrl.searchParams.set('isBaseRoot', String(Boolean(searchGematria.isBaseRoot)));
           await sharePage({
             title: `Gematria related words for ${payload.query}`,
             text: formatCalculationSharePreview(payload.query, searchGematria.gematria.total),
             url: createLookupShareUrl(searchGematria),
+            imageUrl: shareImageUrl.toString(),
           });
         });
         meta.append(document.createElement('br'), shareSearchButton);

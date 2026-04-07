@@ -632,6 +632,76 @@
         return shareUrl.toString();
       }
 
+      function toShareImageAssetUrl(url) {
+        const source = String(url || '').trim();
+        if (!source || /^data:image\//i.test(source)) {
+          return source;
+        }
+        const encoded = encodeURIComponent(source);
+        return `${getCanonicalOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
+      }
+
+      async function sharePage(payload, fallbackShareUrl) {
+        const shareUrl = String(payload.url || '').trim();
+        const shareText = String(payload.text || '').trim();
+        const shareImageUrl = String(payload.imageUrl || '').trim();
+        const sharePayload = {
+          title: payload.title || document.title,
+          text: shareText.includes(shareUrl) ? shareText : `${shareText}\n\nView results: ${shareUrl}`.trim(),
+          url: shareUrl
+        };
+        let sharePayloadWithImage = sharePayload;
+
+        if (shareImageUrl && !/^data:image\//i.test(shareImageUrl)) {
+          try {
+            const response = await fetch(shareImageUrl, { mode: 'cors' });
+            if (response.ok) {
+              const imageBlob = await response.blob();
+              if (imageBlob.type.startsWith('image/')) {
+                const extension = imageBlob.type.split('/')[1] || 'png';
+                const imageFile = new File([imageBlob], `gematria-agent-result.${extension}`, { type: imageBlob.type });
+                sharePayloadWithImage = { ...sharePayload, files: [imageFile] };
+              }
+            }
+          } catch {
+            // Ignore and continue with URL/text share.
+          }
+        }
+
+        if (navigator.share) {
+          try {
+            if (sharePayloadWithImage.files && navigator.canShare?.({ files: sharePayloadWithImage.files })) {
+              await navigator.share(sharePayloadWithImage);
+            } else {
+              await navigator.share(sharePayload);
+            }
+            return true;
+          } catch (error) {
+            if (error && error.name === 'AbortError') {
+              return false;
+            }
+          }
+        }
+
+        if (navigator.clipboard?.writeText) {
+          try {
+            await navigator.clipboard.writeText(sharePayload.url);
+            window.alert('Share link copied to clipboard.');
+            return true;
+          } catch {
+            // Fall through to popup/prompt fallback.
+          }
+        }
+
+        if (fallbackShareUrl) {
+          window.open(fallbackShareUrl, '_blank', 'noopener,noreferrer');
+          return true;
+        }
+
+        window.prompt('Copy this link to share:', sharePayload.url);
+        return false;
+      }
+
       async function ensurePremiumAccess() {
         try {
           const response = await fetch('/api/member-session', { credentials: 'include' });
@@ -1154,15 +1224,29 @@
 
         const shareUrl = buildAgentShareUrl(meta);
         const shareText = `Gematria lookup: ${meta.topic} → total ${meta.total}, digital root ${meta.root}`;
+        const shareImageUrl = new URL('/.netlify/functions/ai-agent-share-image', getCanonicalOrigin());
+        shareImageUrl.searchParams.set('topic', meta.topic);
+        shareImageUrl.searchParams.set('total', String(meta.total));
+        shareImageUrl.searchParams.set('root', String(meta.root));
         const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
         const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
 
         if (actionButton.classList.contains('agent-share-twitter-button')) {
-          window.open(twitterShareUrl, '_blank', 'noopener,noreferrer');
+          await sharePage({
+            title: 'Gematria AI Agent Result',
+            text: shareText,
+            url: shareUrl,
+            imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
+          }, twitterShareUrl);
           return;
         }
         if (actionButton.classList.contains('agent-share-facebook-button')) {
-          window.open(facebookShareUrl, '_blank', 'noopener,noreferrer');
+          await sharePage({
+            title: 'Gematria AI Agent Result',
+            text: shareText,
+            url: shareUrl,
+            imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
+          }, facebookShareUrl);
           return;
         }
       });

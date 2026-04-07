@@ -15,7 +15,7 @@ const REPUTATION_POINTS = {
   reply: 4,
 };
 
-async function ensureForumSchema(sql) {
+export async function ensureForumSchema(sql) {
   await sql`CREATE TABLE IF NOT EXISTS forum_categories (
     id TEXT PRIMARY KEY,
     slug TEXT NOT NULL UNIQUE,

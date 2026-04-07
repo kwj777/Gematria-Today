@@ -480,6 +480,16 @@
         return shareUrl.toString();
       }
 
+      function buildAgentShareImageUrl({ topic, total, root, matches, rounds }) {
+        const imageUrl = new URL('/api/ai-agent-share-image', getCanonicalOrigin());
+        imageUrl.searchParams.set('topic', topic);
+        imageUrl.searchParams.set('total', String(total));
+        imageUrl.searchParams.set('root', String(root));
+        imageUrl.searchParams.set('matches', String(matches ?? ''));
+        imageUrl.searchParams.set('rounds', String(rounds));
+        return imageUrl.toString();
+      }
+
       async function ensurePremiumAccess() {
         try {
           const response = await fetch('/api/member-session', { credentials: 'include' });
@@ -784,7 +794,15 @@
           <p class="mb-2"><strong>Suggested next lookups</strong></p>
           <ul class="mb-0">
             <li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary lookup page for "${escapeHtml(topic)}"</a>${definitionSummary ? ` — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}` : ''}</li>
-            <li><a href="/api/wordnikRelatedWords?word=${encodeURIComponent(topic)}&limit=25" target="_blank" rel="noopener noreferrer">Related words lookup (JSON)</a>${relatedWords.length ? ` — Try these first: ${escapeHtml(relatedWords.join(', '))}` : ''}</li>
+            <li>
+              Related words lookup:
+              ${relatedWords.length ? `
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  ${relatedWords.map((word) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(word)}">${escapeHtml(word)}</button>`).join('')}
+                </div>
+              ` : '<span> No related terms were found right now.</span>'}
+              <div class="mt-2"><a href="/api/wordnikRelatedWords?word=${encodeURIComponent(topic)}&limit=25" target="_blank" rel="noopener noreferrer">View raw related-word API response</a></div>
+            </li>
             <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(topic)}"</a></li>
           </ul>
           <button
@@ -796,7 +814,7 @@
             data-matches="${Number.isFinite(matchCount) ? matchCount : ''}"
             data-rounds="${iterations}"
           >
-            Share result card (OG JPG)
+            Share
           </button>
         `;
       }
@@ -875,11 +893,26 @@
         }
 
         const shareUrl = buildAgentShareUrl(meta);
+        const shareImageUrl = buildAgentShareImageUrl(meta);
         const shareText = `Gematria AI Agent: ${meta.topic} → total ${meta.total}, root ${meta.root}`;
 
         if (navigator.share) {
           try {
-            await navigator.share({ title: 'Gematria AI Agent result', text: shareText, url: shareUrl });
+            let files = [];
+            try {
+              const imageResponse = await fetch(shareImageUrl);
+              if (imageResponse.ok) {
+                const imageBlob = await imageResponse.blob();
+                const shareFile = new File([imageBlob], 'gematria-agent-share.jpg', { type: imageBlob.type || 'image/jpeg' });
+                if (!navigator.canShare || navigator.canShare({ files: [shareFile] })) {
+                  files = [shareFile];
+                }
+              }
+            } catch {
+              files = [];
+            }
+
+            await navigator.share({ title: 'Gematria AI Agent result', text: shareText, url: shareUrl, ...(files.length ? { files } : {}) });
             return;
           } catch {
             // fall through to clipboard

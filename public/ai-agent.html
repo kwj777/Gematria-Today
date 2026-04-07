@@ -632,49 +632,20 @@
         return shareUrl.toString();
       }
 
-      function toShareImageAssetUrl(url) {
-        const source = String(url || '').trim();
-        if (!source || /^data:image\//i.test(source)) {
-          return source;
-        }
-        const encoded = encodeURIComponent(source);
-        return `${getCanonicalOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
-      }
-
       async function sharePage(payload, fallbackShareUrl) {
         const shareUrl = String(payload.url || '').trim();
         const shareText = String(payload.text || '').trim();
-        const shareImageUrl = String(payload.imageUrl || '').trim();
         const sharePayload = {
           title: payload.title || document.title,
-          text: shareText.includes(shareUrl) ? shareText : `${shareText}\n\nView results: ${shareUrl}`.trim(),
+          text: shareText.includes(shareUrl) ? shareText : `${shareText}
+
+View results: ${shareUrl}`.trim(),
           url: shareUrl
         };
-        let sharePayloadWithImage = sharePayload;
-
-        if (shareImageUrl && !/^data:image\//i.test(shareImageUrl)) {
-          try {
-            const response = await fetch(shareImageUrl, { mode: 'cors' });
-            if (response.ok) {
-              const imageBlob = await response.blob();
-              if (imageBlob.type.startsWith('image/')) {
-                const extension = imageBlob.type.split('/')[1] || 'png';
-                const imageFile = new File([imageBlob], `gematria-agent-result.${extension}`, { type: imageBlob.type });
-                sharePayloadWithImage = { ...sharePayload, files: [imageFile] };
-              }
-            }
-          } catch {
-            // Ignore and continue with URL/text share.
-          }
-        }
 
         if (navigator.share) {
           try {
-            if (sharePayloadWithImage.files && navigator.canShare?.({ files: sharePayloadWithImage.files })) {
-              await navigator.share(sharePayloadWithImage);
-            } else {
-              await navigator.share(sharePayload);
-            }
+            await navigator.share(sharePayload);
             return true;
           } catch (error) {
             if (error && error.name === 'AbortError') {
@@ -1215,27 +1186,10 @@
 
         const shareUrl = buildAgentShareUrl(meta);
         const shareText = `Gematria lookup: ${meta.topic} → total ${meta.total}, digital root ${meta.root}`;
-        const resultCard = actionButton.closest('article');
-        let lookupSummary = '';
-        if (resultCard) {
-          const cardCopy = resultCard.cloneNode(true);
-          cardCopy.querySelectorAll('button, .feedback-followup, .feedback-status, [data-feedback]').forEach((element) => {
-            element.remove();
-          });
-          lookupSummary = normalizeCandidate(cardCopy.innerText || '').slice(0, 520);
-        }
-        const shareImageUrl = new URL('/.netlify/functions/ai-agent-share-image', getCanonicalOrigin());
-        shareImageUrl.searchParams.set('topic', meta.topic);
-        shareImageUrl.searchParams.set('total', String(meta.total));
-        shareImageUrl.searchParams.set('root', String(meta.root));
-        if (lookupSummary) {
-          shareImageUrl.searchParams.set('summary', lookupSummary);
-        }
         await sharePage({
           title: 'Gematria AI Agent Result',
           text: shareText,
           url: shareUrl,
-          imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
         });
       });
 

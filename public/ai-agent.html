@@ -230,6 +230,41 @@
         return fallback ? [fallback] : [];
       }
 
+      function buildCloseSpellingVariants(word) {
+        const normalized = normalizeCandidate(word).toLowerCase();
+        if (!normalized) return [];
+
+        const variants = new Set();
+        const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
+        variants.add(normalized);
+
+        for (let i = 0; i < normalized.length; i += 1) {
+          const char = normalized[i];
+
+          if (vowels.includes(char)) {
+            for (const vowel of vowels) {
+              if (vowel !== char) {
+                variants.add(`${normalized.slice(0, i)}${vowel}${normalized.slice(i + 1)}`);
+              }
+            }
+          }
+
+          if (i > 0 && char === normalized[i - 1]) {
+            variants.add(`${normalized.slice(0, i)}${normalized.slice(i + 1)}`);
+          }
+        }
+
+        if (normalized.includes('ph')) variants.add(normalized.replaceAll('ph', 'f'));
+        if (normalized.includes('f')) variants.add(normalized.replaceAll('f', 'ph'));
+        if (normalized.includes('c')) variants.add(normalized.replaceAll('c', 'k'));
+        if (normalized.includes('k')) variants.add(normalized.replaceAll('k', 'c'));
+        if (normalized.endsWith('y')) variants.add(`${normalized.slice(0, -1)}i`);
+        if (normalized.endsWith('i')) variants.add(`${normalized.slice(0, -1)}y`);
+
+        variants.delete(normalized);
+        return [...variants].filter((value) => /^[a-z][a-z'-]+$/.test(value)).slice(0, 12);
+      }
+
       function addMessage(role, contentHtml) {
         const wrapper = document.createElement('article');
         wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
@@ -373,6 +408,7 @@
       async function buildAgentReply(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt);
         const memory = readAgentMemory();
+        const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
 
         const rememberMatch = normalizedPrompt.match(/(?:remember|save)\s+(?:that\s+)?(.+)/i);
         if (rememberMatch) {
@@ -454,6 +490,7 @@
           total: englishGematria(target),
           root: digitalRoot(englishGematria(target))
         }));
+        const closeSpellingVariants = buildCloseSpellingVariants(topic);
 
         return `
           <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
@@ -494,6 +531,14 @@
             <li>Group semantically related words to test whether the number repeats in a real theme.</li>
             <li>After each new finding, rerun ${iterations > 1 ? 'another' : 'a'} recursive pass to challenge your own conclusion.</li>
           </ol>
+          ${requestedSpellingVariantLookup ? `
+            <p class="mt-3 mb-2"><strong>Close spelling-variant lookup for "${escapeHtml(topic)}"</strong></p>
+            ${closeSpellingVariants.length ? `
+              <ul class="mb-0">
+                ${closeSpellingVariants.map((variant) => `<li>${escapeHtml(variant)} → total ${englishGematria(variant)}, digital root ${digitalRoot(englishGematria(variant))}</li>`).join('')}
+              </ul>
+            ` : '<p class="mb-0">No close spelling variants were generated from this input. Try a single-word topic for variant lookups.</p>'}
+          ` : ''}
           <hr />
           <p class="mb-2"><strong>Suggested next lookups</strong></p>
           <ul class="mb-0">

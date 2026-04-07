@@ -29,26 +29,20 @@ function buildShareHtml(params) {
   const topic = trimValue(params.get('topic') || 'Gematria Agent Result', 90);
   const total = trimValue(params.get('total') || '?', 24);
   const root = trimValue(params.get('root') || '?', 24);
-  const matches = trimValue(params.get('matches') || 'n/a', 24) || 'n/a';
-  const rounds = trimValue(params.get('rounds') || '2', 8);
 
   const appUrl = new URL('/ai-agent.html', SITE_ORIGIN);
   appUrl.searchParams.set('sharedTopic', topic);
   appUrl.searchParams.set('sharedTotal', total);
   appUrl.searchParams.set('sharedRoot', root);
-  appUrl.searchParams.set('sharedMatches', matches);
-  appUrl.searchParams.set('sharedRounds', rounds);
 
   const imageSource = new URL('/.netlify/functions/ai-agent-share-image', SITE_ORIGIN);
   imageSource.searchParams.set('topic', topic);
   imageSource.searchParams.set('total', total);
   imageSource.searchParams.set('root', root);
-  imageSource.searchParams.set('matches', matches);
-  imageSource.searchParams.set('rounds', rounds);
 
   const imageUrl = toTransformedImageUrl(imageSource.toString());
   const title = `Gematria AI Agent: ${topic}`;
-  const description = `Gematria total ${total} • digital root ${root} • matches ${matches} • rounds ${rounds}`;
+  const description = `Gematria lookup for ${topic}: total ${total} • digital root ${root}`;
 
   return `<!doctype html>
 <html lang="en">

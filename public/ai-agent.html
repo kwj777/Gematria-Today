@@ -1026,19 +1026,7 @@
               ${comparisonTargets.map((entry) => `<li>${escapeHtml(entry.target)} → total ${entry.total}, digital root ${entry.root}, base-root ${entry.isBaseRoot ? 'Yes' : 'No'}</li>`).join('')}
             </ul>
           ` : ''}
-          <p class="mb-2"><strong>Recursive improvement trail (${iterations} round${iterations === 1 ? '' : 's'})</strong></p>
-          <ol class="mb-3">
-            ${recursiveSteps.map((step) => `<li><strong>Round ${step.round}:</strong> ${escapeHtml(step.focus)} ${escapeHtml(step.upgrade)}</li>`).join('')}
-          </ol>
-          <p class="mb-2"><strong>Current best pass (round ${finalStep.round})</strong></p>
           <p class="mb-3">${escapeHtml(finalStep.nextAction)}</p>
-          <p class="mb-2"><strong>Discussion prompts</strong></p>
-          <ol class="mb-0">
-            <li>Try close spelling variants of <strong>${escapeHtml(topic)}</strong>.</li>
-            <li>Compare total + digital root together before drawing conclusions.</li>
-            <li>Group semantically related words to test whether the number repeats in a real theme.</li>
-            <li>After each new finding, rerun ${iterations > 1 ? 'another' : 'a'} recursive pass to challenge your own conclusion.</li>
-          </ol>
           ${requestedSpellingVariantLookup ? `
             <p class="mt-3 mb-2"><strong>Close spelling-variant lookup for "${escapeHtml(topic)}"</strong></p>
             ${closeSpellingVariants.length ? `
@@ -1058,7 +1046,6 @@
                   ${relatedWordsWithTotals.map((entry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(entry.word)}">${escapeHtml(entry.word)} (${entry.isBaseRoot ? 'base-root' : 'not base-root'})</button>`).join('')}
                 </div>
               ` : '<span> No related terms were found right now.</span>'}
-              <div class="mt-2"><a href="/api/wordnikRelatedWords?word=${encodeURIComponent(topic)}&limit=25" data-json-preview="wordnik-related">View raw related-word API response</a></div>
             </li>
             <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(topic)}"</a></li>
           </ul>
@@ -1167,6 +1154,17 @@
         const shareUrl = buildAgentShareUrl(meta);
         const shareImageUrl = buildAgentShareImageUrl(meta);
         const shareText = `Gematria AI Agent: ${meta.topic} → total ${meta.total}, root ${meta.root}`;
+        const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+        const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+
+        const copyShareUrl = async () => {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+            window.alert('Share link copied to clipboard.');
+          } else {
+            window.prompt('Copy this share link:', shareUrl);
+          }
+        };
 
         if (navigator.share) {
           try {
@@ -1187,16 +1185,23 @@
             await navigator.share({ title: 'Gematria AI Agent result', text: shareText, url: shareUrl, ...(files.length ? { files } : {}) });
             return;
           } catch {
-            // fall through to clipboard
+            // fall through to social + clipboard options
           }
         }
 
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(shareUrl);
-          window.alert('Share link copied to clipboard.');
-        } else {
-          window.prompt('Copy this share link:', shareUrl);
+        const shareOnTwitter = window.confirm('Share on X/Twitter? Press Cancel for Facebook or copy-link options.');
+        if (shareOnTwitter) {
+          window.open(twitterShareUrl, '_blank', 'noopener,noreferrer');
+          return;
         }
+
+        const shareOnFacebook = window.confirm('Share on Facebook? Press Cancel to copy the share link.');
+        if (shareOnFacebook) {
+          window.open(facebookShareUrl, '_blank', 'noopener,noreferrer');
+          return;
+        }
+
+        await copyShareUrl();
       });
 
       renderMemoryStatus();

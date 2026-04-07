@@ -118,6 +118,16 @@
         loaded: false,
         entries: []
       };
+      const WORDNIK_RELATIONSHIP_OPTIONS = [
+        { type: 'antonym', label: 'Antonym' },
+        { type: 'synonym', label: 'Synonym' },
+        { type: 'equivalent', label: 'Equivalent' },
+        { type: 'cross-reference', label: 'Cross-reference' },
+        { type: 'hypernym', label: 'Hypernym' },
+        { type: 'hyponym', label: 'Hyponym' },
+        { type: 'variant', label: 'Variant' },
+        { type: 'same-context', label: 'Same context' }
+      ];
 
       function escapeHtml(value) {
         return String(value || '')
@@ -351,14 +361,29 @@
           return quotedTargets[0];
         }
 
-        const keywordMatch = normalizedPrompt.match(/\b(?:synonyms?|antonyms?|definitions?|related words?|wordnik)\b(?:\s+(?:for|of))?\s+([A-Za-z][A-Za-z' -]*)/i);
+        const keywordMatch = normalizedPrompt.match(/\b(?:synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context|definitions?|related words?|wordnik)\b(?:\s+(?:for|of))?\s+([A-Za-z][A-Za-z' -]*)/i);
         if (!keywordMatch) return '';
         const cleaned = normalizeCandidate(keywordMatch[1]).replace(/[?.!,;:]+$/g, '');
         return cleaned;
       }
 
+      function extractWordnikRelationshipType(prompt) {
+        const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
+        if (!normalizedPrompt) return 'synonym';
+        if (/\bantonyms?\b/.test(normalizedPrompt)) return 'antonym';
+        if (/\bsynonyms?\b/.test(normalizedPrompt)) return 'synonym';
+        if (/\bequivalents?\b/.test(normalizedPrompt)) return 'equivalent';
+        if (/\bcross(?: |-)?references?\b/.test(normalizedPrompt)) return 'cross-reference';
+        if (/\bhypernyms?\b/.test(normalizedPrompt)) return 'hypernym';
+        if (/\bhyponyms?\b/.test(normalizedPrompt)) return 'hyponym';
+        if (/\bvariants?\b/.test(normalizedPrompt)) return 'variant';
+        if (/\bsame context\b/.test(normalizedPrompt)) return 'same-context';
+        if (/\brelated words?\b/.test(normalizedPrompt)) return 'synonym';
+        return 'synonym';
+      }
+
       function buildMemberAccessLinks(normalizedPrompt) {
-        const wantsWordnik = /\b(wordnik|synonyms?|antonyms?|definitions?|related words?)\b/i.test(normalizedPrompt);
+        const wantsWordnik = /\b(wordnik|synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context|definitions?|related words?)\b/i.test(normalizedPrompt);
         const wantsResearch = /\b(premium research|research tools?|premium tools?)\b/i.test(normalizedPrompt);
         const wantsReports = /\b(member reports?|reports?|dashboard|history)\b/i.test(normalizedPrompt);
 
@@ -376,12 +401,16 @@
             actions.push(`<li><a href="/api/wordnikDefinition?word=${encodeURIComponent(lookupWord)}" data-json-preview="wordnik-definition">Definition lookup for "${escapeHtml(lookupWord)}"</a>.</li>`);
             actions.push(`
               <li>
-                <button
-                  type="button"
-                  class="btn btn-link p-0 align-baseline agent-synonym-request-button"
-                  data-word="${escapeHtml(lookupWord)}"
-                >Synonym lookup for "${escapeHtml(lookupWord)}"</button>
-                via Wordnik related words in the next agent response.
+                Relationship lookups for "${escapeHtml(lookupWord)}":
+                <div class="d-flex flex-wrap gap-2 mt-1">
+                  ${WORDNIK_RELATIONSHIP_OPTIONS.map((entry) => `
+                    <a
+                      href="/api/wordnikRelatedWords?word=${encodeURIComponent(lookupWord)}&relationshipType=${encodeURIComponent(entry.type)}&limit=8"
+                      data-json-preview="wordnik-related"
+                      class="btn btn-sm btn-outline-secondary"
+                    >${escapeHtml(entry.label)}</a>
+                  `).join('')}
+                </div>
               </li>
             `);
           } else {
@@ -413,15 +442,19 @@
         const learnedCue = learnedResponse
           ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>`
           : '';
-        const synonymLookupWord = /\bsynonyms?\b/i.test(normalizedPrompt) ? extractWordnikLookupWord(normalizedPrompt) : '';
-        const synonymWords = synonymLookupWord ? await fetchRelatedWordsSummary(synonymLookupWord) : [];
-        const synonymResponseBlock = synonymLookupWord
+        const relatedLookupWord = /\b(?:synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context|related words?)\b/i.test(normalizedPrompt)
+          ? extractWordnikLookupWord(normalizedPrompt)
+          : '';
+        const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
+        const relatedWords = relatedLookupWord ? await fetchRelatedWordsSummary(relatedLookupWord, relationshipType) : [];
+        const relationshipTitle = relationshipType.replace('-', ' ');
+        const synonymResponseBlock = relatedLookupWord
           ? `
-            <p class="mb-2"><strong>Synonyms for "${escapeHtml(synonymLookupWord)}"</strong></p>
-            ${synonymWords.length ? `
+            <p class="mb-2"><strong>${escapeHtml(relationshipTitle)} results for "${escapeHtml(relatedLookupWord)}"</strong></p>
+            ${relatedWords.length ? `
               <p class="mb-2">Click any word for a quick agent lookup:</p>
               <div class="d-flex flex-wrap gap-2 mb-2">
-                ${synonymWords.map((word) => `
+                ${relatedWords.map((word) => `
                   <button
                     type="button"
                     class="btn btn-sm btn-outline-secondary agent-word-lookup-button"
@@ -429,7 +462,7 @@
                   >${escapeHtml(word)}</button>
                 `).join('')}
               </div>
-            ` : '<p class="mb-2">I could not find related synonyms right now. Please try again in a moment.</p>'}
+            ` : `<p class="mb-2">I could not find related ${escapeHtml(relationshipTitle)} results right now. Please try again in a moment.</p>`}
           `
           : '';
 
@@ -691,9 +724,9 @@
         }
       }
 
-      async function fetchRelatedWordsSummary(topic) {
+      async function fetchRelatedWordsSummary(topic, relationshipType = 'synonym') {
         try {
-          const response = await fetch(`/api/wordnikRelatedWords?word=${encodeURIComponent(topic)}&limit=8`);
+          const response = await fetch(`/api/wordnikRelatedWords?word=${encodeURIComponent(topic)}&relationshipType=${encodeURIComponent(relationshipType)}&limit=8`);
           if (!response.ok) return [];
           const payload = await response.json();
           const buckets = Array.isArray(payload?.data) ? payload.data : [];
@@ -708,6 +741,7 @@
         const parsedUrl = new URL(url, window.location.origin);
         const previewType = explicitPreviewType || String(parsedUrl.searchParams.get('preview') || '').trim();
         const word = normalizeCandidate(parsedUrl.searchParams.get('word') || '');
+        const relationshipType = normalizeCandidate(parsedUrl.searchParams.get('relationshipType') || 'synonym').toLowerCase();
 
         if (!word) {
           return '<p class="mb-0">I could not determine which word to preview from that JSON link.</p>';
@@ -727,10 +761,11 @@
         }
 
         if (previewType === 'wordnik-related' || parsedUrl.pathname.includes('/wordnikRelatedWords')) {
-          const relatedWords = await fetchRelatedWordsSummary(word);
+          const relatedWords = await fetchRelatedWordsSummary(word, relationshipType);
+          const relationshipLabel = relationshipType.replace('-', ' ');
           return relatedWords.length
             ? `
-              <p class="mb-2"><strong>Related words for "${escapeHtml(word)}"</strong></p>
+              <p class="mb-2"><strong>${escapeHtml(relationshipLabel)} words for "${escapeHtml(word)}"</strong></p>
               <p class="mb-2">Click any word for a quick agent lookup:</p>
               <div class="d-flex flex-wrap gap-2 mb-0">
                 ${relatedWords.map((entry) => `
@@ -1069,19 +1104,6 @@
           window.hideWorkingOverlay?.();
           const assistantMessage = addMessage('assistant', replyHtml);
           attachResultFeedbackUi(assistantMessage, href);
-          return;
-        }
-
-        const synonymRequestButton = event.target.closest('.agent-synonym-request-button');
-        if (synonymRequestButton) {
-          const selectedWord = String(synonymRequestButton.dataset.word || '').trim();
-          if (!selectedWord) return;
-          addMessage('user', `<p class="mb-0">show me the synonyms for ${escapeHtml(selectedWord)}</p>`);
-          window.showWorkingOverlay?.();
-          const replyHtml = await buildAgentReply(`show me the synonyms for ${selectedWord}`);
-          window.hideWorkingOverlay?.();
-          const assistantMessage = addMessage('assistant', replyHtml);
-          attachResultFeedbackUi(assistantMessage, `show me the synonyms for ${selectedWord}`);
           return;
         }
 

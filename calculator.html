@@ -225,7 +225,6 @@ const lookupForm = document.querySelector('#lookup-form');
       async function sharePage(payload) {
         const shareUrl = toCanonicalShareUrl(payload.url || window.location.href);
         const shareText = payload.text || '';
-        const shareImageUrl = String(payload.imageUrl || '').trim();
         const sharePayload = {
           title: payload.title || document.title,
           text: shareText.includes(shareUrl) ? shareText : `${shareText}
@@ -233,29 +232,10 @@ const lookupForm = document.querySelector('#lookup-form');
 View results: ${shareUrl}`.trim(),
           url: shareUrl,
         };
-        let sharePayloadWithImage = sharePayload;
-
-        if (shareImageUrl && !/^data:image\//i.test(shareImageUrl)) {
-          try {
-            const response = await fetch(shareImageUrl, { mode: 'cors' });
-            if (response.ok) {
-              const imageBlob = await response.blob();
-              if (imageBlob.type.startsWith('image/')) {
-                const extension = imageBlob.type.split('/')[1] || 'png';
-                const imageFile = new File([imageBlob], `gematria-result.${extension}`, { type: imageBlob.type });
-                sharePayloadWithImage = { ...sharePayload, files: [imageFile] };
-              }
-            }
-          } catch {}
-        }
 
         if (navigator.share) {
           try {
-            if (sharePayloadWithImage.files && navigator.canShare?.({ files: sharePayloadWithImage.files })) {
-              await navigator.share(sharePayloadWithImage);
-            } else {
-              await navigator.share(sharePayload);
-            }
+            await navigator.share(sharePayload);
             return;
           } catch (error) {
           window.endTimesTracking?.track('calculator_usage_error', {

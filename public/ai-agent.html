@@ -768,12 +768,6 @@ View results: ${shareUrl}`.trim(),
 
         if (navigator.share) {
           try {
-            if (payload.imageUrl) {
-              const imageFile = await fetchShareImageFile(payload.imageUrl);
-              if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-                sharePayload.files = [imageFile];
-              }
-            }
             await navigator.share(sharePayload);
             return true;
           } catch (error) {

@@ -36,52 +36,36 @@
               <tr>
                 <th scope="col">Reputation</th>
                 <th scope="col">Tier name</th>
-                <th scope="col">Typical capabilities</th>
-                <th scope="col">Moderation notes</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><code>&lt; 0</code></td>
                 <td>Restricted</td>
-                <td>Read-only access or temporary posting limits.</td>
-                <td>Auto-review all posts; repeated abuse may trigger suspension.</td>
               </tr>
               <tr>
                 <td><code>0–24</code></td>
                 <td>Newcomer</td>
-                <td>Basic posting, commenting, and reactions.</td>
-                <td>First-time user education prompts recommended.</td>
               </tr>
               <tr>
                 <td><code>25–99</code></td>
                 <td>Contributor</td>
-                <td>Can post links/media with standard rate limits.</td>
-                <td>Watch for low-quality burst posting.</td>
               </tr>
               <tr>
                 <td><code>100–249</code></td>
                 <td>Regular</td>
-                <td>Higher daily limits, can flag content, can upvote/downvote.</td>
-                <td>Prioritize their flags in queue scoring.</td>
               </tr>
               <tr>
                 <td><code>250–499</code></td>
                 <td>Trusted</td>
-                <td>Access to tag edits, wiki-style post edits, and topic recategorization.</td>
-                <td>Audit edit reversions for quality trends.</td>
               </tr>
               <tr>
                 <td><code>500–999</code></td>
                 <td>Senior</td>
-                <td>Can close duplicate threads and assist with basic moderation workflows.</td>
-                <td>Spot-check closure accuracy weekly.</td>
               </tr>
               <tr>
                 <td><code>1000+</code></td>
                 <td>Steward</td>
-                <td>Eligible for community moderator nomination and policy feedback councils.</td>
-                <td>Include in governance and release feedback loops.</td>
               </tr>
             </tbody>
           </table>
@@ -101,25 +85,6 @@
         </ul>
       </section>
 
-      <section class="content-panel p-4 mb-4" aria-labelledby="guardrailsHeading">
-        <h2 id="guardrailsHeading" class="h4 mb-3">Operational guardrails</h2>
-        <ul class="mb-0">
-          <li>Apply rate limits per tier to reduce spam pressure.</li>
-          <li>Require account age + reputation for sensitive capabilities.</li>
-          <li>Use decay only on inactivity (optional), not on punitive cycles.</li>
-          <li>Never grant irreversible moderation powers from score alone; require human approval.</li>
-        </ul>
-      </section>
-
-      <section class="content-panel p-4" aria-labelledby="reviewHeading">
-        <h2 id="reviewHeading" class="h4 mb-3">Suggested review cadence</h2>
-        <ul class="mb-3">
-          <li><strong>Weekly:</strong> Evaluate false-positive flags, top contributors, and abuse clusters.</li>
-          <li><strong>Monthly:</strong> Rebalance score weights to match community goals.</li>
-          <li><strong>Quarterly:</strong> Review tier thresholds and moderation burden.</li>
-        </ul>
-        <p class="mb-0 text-muted">Implementation note: if your forum already stores trust levels, map tiers directly and keep reputation as the transparent, user-facing score.</p>
-      </section>
     </main>
   </body>
 </html>

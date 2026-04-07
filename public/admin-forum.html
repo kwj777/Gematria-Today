@@ -99,8 +99,14 @@
           <div class="col-md-2"><label class="form-label" for="createSort">Sort order</label><input id="createSort" class="form-control" type="number" value="0" /></div>
           <div class="col-md-2"><label class="form-label" for="createPostMode">Post mode</label><select id="createPostMode" class="form-select"><option value="members">Members</option><option value="moderators">Moderators only</option></select></div>
           <div class="col-md-3"><label class="form-label" for="createDefaultSortMode">Default thread sort</label><select id="createDefaultSortMode" class="form-select"><option value="newest">Newest</option><option value="popular">Popular</option></select></div>
-          <div class="col-md-3"><label class="form-label" for="createColorBadge">Badge color</label><input id="createColorBadge" class="form-control" placeholder="#563d7c" /></div>
-          <div class="col-md-3"><label class="form-label" for="createIconName">Icon name</label><input id="createIconName" class="form-control" placeholder="megaphone" /></div>
+          <div class="col-md-3">
+            <label class="form-label" for="createColorBadge">Badge color</label>
+            <div class="input-group">
+              <input id="createColorBadge" class="form-control" placeholder="#563d7c" />
+              <input id="createColorBadgePicker" class="form-control form-control-color" type="color" value="#563d7c" title="Pick badge color" />
+            </div>
+          </div>
+          <div class="col-md-3"><label class="form-label" for="createIconName">Icon</label><select id="createIconName" class="form-select"></select></div>
           <div class="col-md-3"><label class="form-label" for="createDescription">Description</label><input id="createDescription" class="form-control" maxlength="240" /></div>
           <div class="col-md-6"><label class="form-label" for="createGuidelines">Posting guidelines</label><textarea id="createGuidelines" class="form-control" rows="2"></textarea></div>
           <div class="col-md-6"><label class="form-label" for="createThreadTemplatePrompt">Thread template prompt</label><textarea id="createThreadTemplatePrompt" class="form-control" rows="2"></textarea></div>
@@ -134,11 +140,45 @@
         no_violation: 'After review, we found no policy violation and closed this report.',
         content_removed: 'This content was removed due to policy violations.',
       };
+      const suggestedIcons = [
+        { value: '', label: 'No icon' },
+        { value: 'megaphone', label: '📢 Megaphone' },
+        { value: 'chat', label: '💬 Chat' },
+        { value: 'book-open', label: '📖 Study' },
+        { value: 'heart-handshake', label: '🤝 Fellowship' },
+        { value: 'shield-check', label: '🛡️ Moderated' },
+        { value: 'lightbulb', label: '💡 Ideas' },
+        { value: 'sparkles', label: '✨ Highlights' },
+        { value: 'praying-hands', label: '🙏 Prayer' },
+      ];
 
       function showAlert(message, type = 'danger') { alertEl.className = `alert alert-${type}`; alertEl.textContent = message; alertEl.classList.remove('d-none'); }
       function hideAlert() { alertEl.classList.add('d-none'); }
       function formatDate(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(); }
       function esc(value) { return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char])); }
+      function isHexColor(value) { return /^#[0-9a-f]{6}$/i.test(String(value || '').trim()); }
+      function sanitizeColor(value, fallback = '#563d7c') { return isHexColor(value) ? String(value).trim() : fallback; }
+      function iconOptionsMarkup(selectedIcon = '') {
+        const selected = String(selectedIcon || '').trim();
+        const iconSet = new Set(suggestedIcons.map((icon) => icon.value));
+        const options = [...suggestedIcons];
+        if (selected && !iconSet.has(selected)) options.push({ value: selected, label: `⭐ Custom (${selected})` });
+        return options.map((icon) => `<option value="${esc(icon.value)}" ${icon.value === selected ? 'selected' : ''}>${esc(icon.label)}</option>`).join('');
+      }
+      function wireColorInputPair(textInput, colorInput) {
+        if (!textInput || !colorInput) return;
+        colorInput.value = sanitizeColor(textInput.value, colorInput.value || '#563d7c');
+        textInput.addEventListener('input', () => {
+          if (!isHexColor(textInput.value)) return;
+          colorInput.value = sanitizeColor(textInput.value, colorInput.value || '#563d7c');
+        });
+        colorInput.addEventListener('input', () => { textInput.value = colorInput.value; });
+      }
+      function wireColorInputPairs(scope = document) {
+        scope.querySelectorAll('[data-color-pair]').forEach((group) => {
+          wireColorInputPair(group.querySelector('[data-color-text]'), group.querySelector('[data-color-picker]'));
+        });
+      }
 
       function normalizeNetlifyFunctionPath(url) {
         return url.startsWith('/api/') ? `/.netlify/functions/${url.slice('/api/'.length)}` : url;
@@ -295,8 +335,14 @@
               <div class="col-md-2"><label class="form-label small">Sort</label><input class="form-control" name="sortOrder" type="number" value="${category.sortOrder}" /></div>
               <div class="col-md-2"><label class="form-label small">Post mode</label><select class="form-select" name="postMode"><option value="members" ${category.postMode === 'members' ? 'selected' : ''}>Members</option><option value="moderators" ${category.postMode === 'moderators' ? 'selected' : ''}>Moderators</option></select></div>
               <div class="col-md-2"><label class="form-label small">Default sort</label><select class="form-select" name="defaultSortMode"><option value="newest" ${category.defaultSortMode === 'newest' ? 'selected' : ''}>Newest</option><option value="popular" ${category.defaultSortMode === 'popular' ? 'selected' : ''}>Popular</option></select></div>
-              <div class="col-md-2"><label class="form-label small">Color badge</label><input class="form-control" name="colorBadge" value="${esc(category.colorBadge || '')}" /></div>
-              <div class="col-md-2"><label class="form-label small">Icon</label><input class="form-control" name="iconName" value="${esc(category.iconName || '')}" /></div>
+              <div class="col-md-2">
+                <label class="form-label small">Color badge</label>
+                <div class="input-group" data-color-pair>
+                  <input class="form-control" name="colorBadge" data-color-text value="${esc(category.colorBadge || '')}" />
+                  <input class="form-control form-control-color" type="color" data-color-picker value="${esc(sanitizeColor(category.colorBadge || ''))}" title="Pick badge color" />
+                </div>
+              </div>
+              <div class="col-md-2"><label class="form-label small">Icon</label><select class="form-select" name="iconName">${iconOptionsMarkup(category.iconName || '')}</select></div>
               <div class="col-md-3"><label class="form-label small">Description</label><input class="form-control" name="description" value="${esc(category.description || '')}" /></div>
               <div class="col-md-5"><label class="form-label small">Guidelines</label><input class="form-control" name="guidelines" value="${esc(category.guidelines || '')}" /></div>
               <div class="col-md-12"><label class="form-label small">Thread template prompt</label><input class="form-control" name="threadTemplatePrompt" value="${esc(category.threadTemplatePrompt || '')}" /></div>
@@ -327,6 +373,7 @@
             catch (error) { showAlert(error.message); }
           });
         });
+        wireColorInputPairs(categoriesListEl);
       }
 
       function renderAuditTrail(entries) {
@@ -361,6 +408,8 @@
         try { hideAlert(); await updateReports({ ids: [...selectedReports], status: 'resolved', actionTaken: 'resolve' }, 'Selected reports resolved.'); selectedReports = new Set(); }
         catch (error) { showAlert(error.message); }
       });
+      document.getElementById('createIconName').innerHTML = iconOptionsMarkup('');
+      wireColorInputPair(document.getElementById('createColorBadge'), document.getElementById('createColorBadgePicker'));
 
       document.getElementById('createCategoryForm').addEventListener('submit', async (event) => {
         event.preventDefault();

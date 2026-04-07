@@ -281,6 +281,18 @@
             </div>
           </div>
 
+          <section id="forumNotificationSection" class="content-panel p-4 mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+              <div>
+                <p class="section-kicker mb-2">Forum Notifications</p>
+                <h3 class="h4 mb-1">Don’t miss what’s happening in the forum</h3>
+                <p id="forumNotificationSummary" class="text-muted mb-0">Sign in to view your latest forum updates and responses.</p>
+              </div>
+              <a id="forumNotificationLink" class="btn btn-primary" href="/forum.html">Open Forum</a>
+            </div>
+            <div id="forumNotificationList" class="admin-list"></div>
+          </section>
+
           <div class="row g-4 mb-4">
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p id="membershipPlanMeta" class="mb-0 text-muted">Current membership tier.</p></div></div>
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Status</div><div id="membershipStatus" class="metric-value text-success">active</div><p class="mb-0 text-muted">Account state for sign-in access.</p></div></div>
@@ -482,6 +494,10 @@
       const blogSubscriptionForm = document.getElementById('blogSubscriptionForm');
       const blogSubscriptionEmail = document.getElementById('blogSubscriptionEmail');
       const blogSubscriptionButton = document.getElementById('blogSubscriptionButton');
+      const forumNotificationSection = document.getElementById('forumNotificationSection');
+      const forumNotificationSummary = document.getElementById('forumNotificationSummary');
+      const forumNotificationList = document.getElementById('forumNotificationList');
+      const forumNotificationLink = document.getElementById('forumNotificationLink');
 
       let session = null;
       let historyItems = [];
@@ -490,6 +506,7 @@
       let paymentConfirmationInFlight = false;
       let membershipHeroReady = false;
       let memberProposals = [];
+      let recentForumThreads = [];
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
 
 
@@ -881,6 +898,7 @@
         syncPremiumResearchLink(isLoggedIn ? session?.member : null);
         syncAdminPageButton(isLoggedIn ? session?.member : null, isLoggedIn ? session?.user : null);
         syncBlogProposalForm(isLoggedIn ? session?.member : null);
+        renderForumNotifications();
         membershipPageContent.classList.remove('d-none');
       }
 
@@ -974,6 +992,7 @@
         if (!session?.member) {
           memberProposals = [];
           renderMemberProposalFeedback();
+          renderForumNotifications();
           return;
         }
 
@@ -984,6 +1003,88 @@
           memberProposals = [];
         }
         renderMemberProposalFeedback();
+        await loadForumNotifications();
+      }
+
+      function getForumNotificationEntries() {
+        const entries = [];
+        const reviewedProposals = memberProposals.filter((proposal) => {
+          const status = String(proposal.status || '').toLowerCase();
+          return status === 'approved' || status === 'rejected' || Boolean(proposal.rejectionExplanation);
+        });
+        if (reviewedProposals.length) {
+          entries.push({
+            tone: 'warning',
+            title: `${reviewedProposals.length} proposal update${reviewedProposals.length === 1 ? '' : 's'} from admin`,
+            body: 'You have response messages on your submitted blog proposals. Open your proposal panel to review and archive them.',
+          });
+        }
+
+        const activeThreadCount = recentForumThreads.filter((thread) => {
+          if (!thread?.lastActivityAt) {
+            return false;
+          }
+          const ageMs = Date.now() - new Date(thread.lastActivityAt).getTime();
+          return Number.isFinite(ageMs) && ageMs >= 0 && ageMs <= (72 * 60 * 60 * 1000);
+        }).length;
+        if (activeThreadCount) {
+          entries.push({
+            tone: 'info',
+            title: `${activeThreadCount} active forum thread${activeThreadCount === 1 ? '' : 's'} in the last 72 hours`,
+            body: 'Fresh replies and conversations are active now. Jump into the forum to read updates and respond.',
+          });
+        }
+
+        entries.push({
+          tone: 'primary',
+          title: 'Check your forum mentions, replies, and member updates',
+          body: 'Use the forum regularly to catch conversations, moderator updates, and new responses from the community.',
+        });
+
+        return entries;
+      }
+
+      function renderForumNotifications() {
+        if (!forumNotificationSection || !forumNotificationSummary || !forumNotificationList) {
+          return;
+        }
+
+        if (!session?.member) {
+          forumNotificationSummary.textContent = 'Sign in to view your latest forum updates and responses.';
+          forumNotificationLink.href = '/member.html#authSection';
+          forumNotificationLink.textContent = 'Sign in to unlock forum alerts';
+          forumNotificationList.innerHTML = '<p class="text-muted mb-0">Forum alerts will appear here after you sign in.</p>';
+          return;
+        }
+
+        const entries = getForumNotificationEntries();
+        forumNotificationSummary.textContent = entries.length > 1
+          ? `You currently have ${entries.length} forum notification highlights.`
+          : 'You currently have 1 forum notification highlight.';
+        forumNotificationLink.href = '/forum.html';
+        forumNotificationLink.textContent = 'Open Forum';
+        forumNotificationList.innerHTML = entries.map((entry) => `
+          <article class="alert alert-${escapeHtml(entry.tone)} mb-2">
+            <strong>${escapeHtml(entry.title)}</strong>
+            <p class="mb-0 mt-1">${escapeHtml(entry.body)}</p>
+          </article>
+        `).join('');
+      }
+
+      async function loadForumNotifications() {
+        if (!session?.member) {
+          recentForumThreads = [];
+          renderForumNotifications();
+          return;
+        }
+
+        try {
+          const payload = await request('/api/member-forum?limit=12&sort=newest', { method: 'GET' });
+          recentForumThreads = Array.isArray(payload.threads) ? payload.threads : [];
+        } catch (_) {
+          recentForumThreads = [];
+        }
+        renderForumNotifications();
       }
 
       async function archiveProposal(proposalId) {

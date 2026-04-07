@@ -789,6 +789,17 @@ View results: ${shareUrl}`.trim(),
           url: shareUrl
         };
 
+        const imageUrl = String(payload.imageUrl || '').trim();
+        if (imageUrl) {
+          const imageFile = await fetchShareImageFile(imageUrl);
+          if (imageFile) {
+            const filePayload = { ...sharePayload, files: [imageFile] };
+            if (typeof navigator.canShare !== 'function' || navigator.canShare({ files: [imageFile] })) {
+              Object.assign(sharePayload, filePayload);
+            }
+          }
+        }
+
         if (navigator.share) {
           try {
             await navigator.share(sharePayload);

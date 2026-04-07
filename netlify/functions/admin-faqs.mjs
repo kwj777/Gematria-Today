@@ -4,7 +4,7 @@ import { formatFaq, getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMe
 export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
-    return routeByHttpMethod(event, {
+    return await routeByHttpMethod(event, {
       GET: async () => {
       const rows = await sql`SELECT * FROM faqs ORDER BY sort_order ASC, created_at ASC`;
       return jsonResponse(200, { items: rows.map(formatFaq) });

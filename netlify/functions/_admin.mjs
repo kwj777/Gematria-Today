@@ -409,7 +409,7 @@ export async function routeByHttpMethod(event, handlers = {}, { methodNotAllowed
   if (!handler) {
     return methodNotAllowed();
   }
-  return handler();
+  return await handler();
 }
 
 export function formatPost(row) {

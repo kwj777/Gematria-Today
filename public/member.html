@@ -598,7 +598,29 @@
 
         const blocks = normalizedText.split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
         return blocks.map((block, index) => {
+          const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
           const marginClass = index === blocks.length - 1 ? 'mb-0' : 'mb-2';
+
+          const unorderedMatch = lines.every((line) => /^[*-]\s+/.test(line));
+          if (unorderedMatch) {
+            const items = lines.map((line) => `<li>${escapeHtml(line.replace(/^[*-]\s+/, ''))}</li>`).join('');
+            return `<ul class="${marginClass} ps-4">${items}</ul>`;
+          }
+
+          const orderedMatch = lines.every((line) => /^\d+[.)]\s+/.test(line));
+          if (orderedMatch) {
+            const items = lines.map((line) => `<li>${escapeHtml(line.replace(/^\d+[.)]\s+/, ''))}</li>`).join('');
+            return `<ol class="${marginClass} ps-4">${items}</ol>`;
+          }
+
+          if (lines.length === 1) {
+            const headingMatch = lines[0].match(/^(#{1,3})\s+(.+)$/);
+            if (headingMatch) {
+              const level = Math.min(6, headingMatch[1].length + 2);
+              return `<h${level} class="${marginClass}">${escapeHtml(headingMatch[2])}</h${level}>`;
+            }
+          }
+
           return `<p class="${marginClass}">${escapeHtml(block).replace(/\n/g, '<br>')}</p>`;
         }).join('');
       }

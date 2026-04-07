@@ -128,8 +128,12 @@
       function esc(value) { return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char])); }
 
       async function request(url, options = {}) {
-        const response = await fetch(url, { credentials: 'include', headers: { 'content-type': 'application/json' }, ...options });
-        const payload = await response.json();
+        const response = await fetch(url, {
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+          ...options
+        });
+        const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || 'Request failed');
         return payload;
       }
@@ -350,7 +354,8 @@
       });
 
       load().catch((error) => {
-        if (error.message.toLowerCase().includes('unauthorized')) return showAlert('Sign in to the admin dashboard first.', 'warning');
+        const message = String(error?.message || '').toLowerCase();
+        if (message.includes('unauthorized') || message.includes('authentication')) return showAlert('Sign in to the admin dashboard first.', 'warning');
         showAlert(error.message);
       });
     </script>

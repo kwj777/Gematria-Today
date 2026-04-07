@@ -32,34 +32,78 @@
       <header class="content-panel p-4 p-lg-5 mb-4">
         <p class="section-kicker mb-2">Moderation</p>
         <h1 class="h3 mb-2">Forum admin area</h1>
-        <p class="text-muted mb-0">Review reported content and manage forum categories.</p>
+        <p class="text-muted mb-0">Moderate reports, manage categories, review abuse signals, and track admin actions.</p>
       </header>
 
       <section id="alert" class="alert d-none" role="alert"></section>
 
       <section class="content-panel p-4 mb-4">
+        <h2 class="h4 mb-3">Moderation summary</h2>
+        <div id="summaryCards" class="row g-3"></div>
+      </section>
+
+      <section class="content-panel p-4 mb-4">
+        <h2 class="h4 mb-3">Report filters</h2>
+        <form id="reportFilters" class="row g-3 align-items-end">
+          <div class="col-md-2"><label class="form-label" for="filterReason">Reason</label><input id="filterReason" class="form-control" /></div>
+          <div class="col-md-2"><label class="form-label" for="filterCategory">Category</label><input id="filterCategory" class="form-control" /></div>
+          <div class="col-md-2"><label class="form-label" for="filterStatus">Status</label><select id="filterStatus" class="form-select"><option value="">All</option><option value="open">Open</option><option value="in_review">In review</option><option value="actioned">Actioned</option><option value="dismissed">Dismissed</option><option value="resolved">Resolved</option></select></div>
+          <div class="col-md-2"><label class="form-label" for="filterAssignee">Assignee</label><input id="filterAssignee" class="form-control" placeholder="username" /></div>
+          <div class="col-md-2"><label class="form-label" for="filterFrom">From</label><input id="filterFrom" class="form-control" type="date" /></div>
+          <div class="col-md-2"><label class="form-label" for="filterTo">To</label><input id="filterTo" class="form-control" type="date" /></div>
+          <div class="col-md-8"><label class="form-label" for="filterSearch">Search</label><input id="filterSearch" class="form-control" placeholder="report text, details, thread title" /></div>
+          <div class="col-md-2 form-check ms-2"><input class="form-check-input" type="checkbox" id="filterUnresolved" checked /><label class="form-check-label" for="filterUnresolved">Unresolved only</label></div>
+          <div class="col-md-2 d-grid"><button class="btn btn-outline-primary" type="submit">Apply filters</button></div>
+        </form>
+      </section>
+
+      <section class="content-panel p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
           <h2 class="h4 mb-0">Reported posts and threads</h2>
-          <button id="refreshButton" class="btn btn-outline-primary btn-sm" type="button">Refresh</button>
+          <div class="d-flex gap-2">
+            <button id="bulkReviewButton" class="btn btn-outline-secondary btn-sm" type="button">Bulk: In review</button>
+            <button id="bulkResolveButton" class="btn btn-outline-success btn-sm" type="button">Bulk: Resolve</button>
+            <button id="refreshButton" class="btn btn-outline-primary btn-sm" type="button">Refresh</button>
+          </div>
         </div>
         <div id="reportsList"></div>
+      </section>
+
+      <section class="content-panel p-4 mb-4">
+        <h2 class="h4 mb-3">Abuse signals (last 30 days)</h2>
+        <div class="row g-3">
+          <div class="col-md-6"><h3 class="h6">Top reasons</h3><div id="topReasons"></div></div>
+          <div class="col-md-6"><h3 class="h6">Top reporters</h3><div id="topReporters"></div></div>
+        </div>
       </section>
 
       <section class="content-panel p-4 mb-4">
         <h2 class="h4 mb-3">Create category</h2>
         <form id="createCategoryForm" class="row g-3">
           <div class="col-md-4"><label class="form-label" for="createName">Name</label><input id="createName" class="form-control" maxlength="80" required /></div>
-          <div class="col-md-3"><label class="form-label" for="createSlug">Slug</label><input id="createSlug" class="form-control" maxlength="80" placeholder="optional-auto-from-name" /></div>
+          <div class="col-md-2"><label class="form-label" for="createSlug">Slug</label><input id="createSlug" class="form-control" maxlength="80" /></div>
           <div class="col-md-2"><label class="form-label" for="createTier">Access</label><select id="createTier" class="form-select"><option value="free">Free</option><option value="premium">Premium</option></select></div>
-          <div class="col-md-3"><label class="form-label" for="createSort">Sort order</label><input id="createSort" class="form-control" type="number" value="0" /></div>
-          <div class="col-12"><label class="form-label" for="createDescription">Description</label><textarea id="createDescription" class="form-control" rows="2" maxlength="240"></textarea></div>
-          <div class="col-12 d-grid d-md-flex justify-content-md-end"><button class="btn btn-primary" type="submit">Create category</button></div>
+          <div class="col-md-2"><label class="form-label" for="createSort">Sort order</label><input id="createSort" class="form-control" type="number" value="0" /></div>
+          <div class="col-md-2"><label class="form-label" for="createPostMode">Post mode</label><select id="createPostMode" class="form-select"><option value="members">Members</option><option value="moderators">Moderators only</option></select></div>
+          <div class="col-md-3"><label class="form-label" for="createDefaultSortMode">Default thread sort</label><select id="createDefaultSortMode" class="form-select"><option value="newest">Newest</option><option value="popular">Popular</option></select></div>
+          <div class="col-md-3"><label class="form-label" for="createColorBadge">Badge color</label><input id="createColorBadge" class="form-control" placeholder="#563d7c" /></div>
+          <div class="col-md-3"><label class="form-label" for="createIconName">Icon name</label><input id="createIconName" class="form-control" placeholder="megaphone" /></div>
+          <div class="col-md-3"><label class="form-label" for="createDescription">Description</label><input id="createDescription" class="form-control" maxlength="240" /></div>
+          <div class="col-md-6"><label class="form-label" for="createGuidelines">Posting guidelines</label><textarea id="createGuidelines" class="form-control" rows="2"></textarea></div>
+          <div class="col-md-6"><label class="form-label" for="createThreadTemplatePrompt">Thread template prompt</label><textarea id="createThreadTemplatePrompt" class="form-control" rows="2"></textarea></div>
+          <div class="col-md-6 d-flex gap-4"><div class="form-check"><input class="form-check-input" type="checkbox" id="createArchived" /><label class="form-check-label" for="createArchived">Archive category</label></div><div class="form-check"><input class="form-check-input" type="checkbox" id="createLocked" /><label class="form-check-label" for="createLocked">Lock new threads</label></div><div class="form-check"><input class="form-check-input" type="checkbox" id="createRequireApproval" /><label class="form-check-label" for="createRequireApproval">Require approval</label></div></div>
+          <div class="col-md-6 d-grid d-md-flex justify-content-md-end"><button class="btn btn-primary" type="submit">Create category</button></div>
         </form>
       </section>
 
-      <section class="content-panel p-4">
+      <section class="content-panel p-4 mb-4">
         <h2 class="h4 mb-3">Categories</h2>
         <div id="categoriesList"></div>
+      </section>
+
+      <section class="content-panel p-4">
+        <h2 class="h4 mb-3">Admin audit trail</h2>
+        <div id="auditTrail"></div>
       </section>
     </main>
 
@@ -67,16 +111,21 @@
       const alertEl = document.getElementById('alert');
       const reportsListEl = document.getElementById('reportsList');
       const categoriesListEl = document.getElementById('categoriesList');
+      const summaryCardsEl = document.getElementById('summaryCards');
+      const topReasonsEl = document.getElementById('topReasons');
+      const topReportersEl = document.getElementById('topReporters');
+      const auditTrailEl = document.getElementById('auditTrail');
+      let selectedReports = new Set();
+      const cannedReplies = {
+        policy_warning: 'Your content violated forum policy. Please review the community guidelines before posting again.',
+        no_violation: 'After review, we found no policy violation and closed this report.',
+        content_removed: 'This content was removed due to policy violations.',
+      };
 
-      function showAlert(message, type = 'danger') {
-        alertEl.className = `alert alert-${type}`;
-        alertEl.textContent = message;
-        alertEl.classList.remove('d-none');
-      }
-
-      function hideAlert() {
-        alertEl.classList.add('d-none');
-      }
+      function showAlert(message, type = 'danger') { alertEl.className = `alert alert-${type}`; alertEl.textContent = message; alertEl.classList.remove('d-none'); }
+      function hideAlert() { alertEl.classList.add('d-none'); }
+      function formatDate(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(); }
+      function esc(value) { return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char])); }
 
       async function request(url, options = {}) {
         const response = await fetch(url, { credentials: 'include', headers: { 'content-type': 'application/json' }, ...options });
@@ -85,63 +134,144 @@
         return payload;
       }
 
-      function formatDate(value) {
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+      function queryFromFilters() {
+        const params = new URLSearchParams();
+        const pairs = [
+          ['reason', document.getElementById('filterReason').value],
+          ['category', document.getElementById('filterCategory').value],
+          ['status', document.getElementById('filterStatus').value],
+          ['assignee', document.getElementById('filterAssignee').value],
+          ['search', document.getElementById('filterSearch').value],
+          ['dateFrom', document.getElementById('filterFrom').value],
+          ['dateTo', document.getElementById('filterTo').value],
+          ['onlyUnresolved', document.getElementById('filterUnresolved').checked ? 'true' : 'false'],
+        ];
+        pairs.forEach(([key, value]) => { if (value) params.set(key, value); });
+        return params.toString();
+      }
+
+      function renderSummary(summary = {}) {
+        const cards = [
+          ['Total reports', summary.total_reports || 0],
+          ['Unresolved', summary.unresolved_reports || 0],
+          ['Actioned', summary.actioned_reports || 0],
+          ['Dismissed', summary.dismissed_reports || 0],
+          ['Last 7 days', summary.reports_last_7_days || 0],
+          ['Avg age (hours)', summary.avgReportAgeHours || 0],
+        ];
+        summaryCardsEl.innerHTML = cards.map(([label, value]) => `<div class="col-sm-6 col-lg-4"><article class="border rounded p-3"><p class="small text-muted mb-1">${label}</p><p class="h4 mb-0">${value}</p></article></div>`).join('');
+      }
+
+      function renderAbuseSignals(signals = {}) {
+        const reasons = signals.topReasons || [];
+        const reporters = signals.topReporters || [];
+        topReasonsEl.innerHTML = reasons.length ? `<ul class="mb-0">${reasons.map((row) => `<li>${esc(row.reason)}: ${row.total}</li>`).join('')}</ul>` : '<p class="text-muted mb-0">No reason spikes.</p>';
+        topReportersEl.innerHTML = reporters.length ? `<ul class="mb-0">${reporters.map((row) => `<li>${esc(row.username)}: ${row.total}</li>`).join('')}</ul>` : '<p class="text-muted mb-0">No reporter concentration.</p>';
+      }
+
+      function reportActionButtons(reportId) {
+        return [
+          ['In review', 'in_review', 'none'],
+          ['Resolve', 'resolved', 'resolve'],
+          ['Dismiss', 'dismissed', 'dismiss'],
+          ['Remove post', 'actioned', 'remove_post'],
+          ['Hide thread', 'actioned', 'hide_thread'],
+          ['Warn user', 'actioned', 'warn_user'],
+          ['Suspend', 'actioned', 'suspend_user'],
+          ['Escalate', 'in_review', 'escalate'],
+        ].map(([label, status, action]) => `<button class="btn btn-outline-secondary btn-sm" data-report-action="${reportId}" data-status="${status}" data-action="${action}" type="button">${label}</button>`).join('');
+      }
+
+      async function updateReports(payload, successMessage) {
+        await request('/api/admin-forum', { method: 'PUT', body: JSON.stringify(payload) });
+        await load();
+        showAlert(successMessage, 'success');
       }
 
       function renderReports(reports) {
-        if (!reports.length) {
-          reportsListEl.innerHTML = '<p class="text-muted mb-0">No open reports.</p>';
-          return;
-        }
+        if (!reports.length) { reportsListEl.innerHTML = '<p class="text-muted mb-0">No reports match this filter.</p>'; return; }
 
         reportsListEl.innerHTML = reports.map((report) => `
-          <article class="border rounded p-3 mb-3">
+          <article class="border rounded p-3 mb-3" data-report-id="${report.id}">
             <div class="d-flex justify-content-between align-items-start gap-3">
-              <div>
-                <p class="mb-1"><strong>${report.reason}</strong> · by ${report.reporterUsername} · ${formatDate(report.createdAt)}</p>
-                <p class="small text-muted mb-1">Category: ${report.categoryName || 'Unknown'} · Thread: ${report.threadTitle || report.threadId || 'Unknown'} · Reply: ${report.postId || 'n/a'}</p>
-                <p class="mb-0">${(report.details || report.reportedBodyPreview || 'No details').slice(0, 240)}</p>
+              <div class="w-100">
+                <div class="d-flex gap-2 align-items-center mb-1">
+                  <input type="checkbox" class="form-check-input" data-select-report="${report.id}" ${selectedReports.has(report.id) ? 'checked' : ''} />
+                  <p class="mb-0"><strong>${esc(report.reason)}</strong> · by ${esc(report.reporterUsername)} · ${formatDate(report.createdAt)}</p>
+                </div>
+                <p class="small text-muted mb-1">Status: ${esc(report.status)} · Action: ${esc(report.actionTaken || 'none')} · Assignee: ${esc(report.assignedModeratorUsername || 'unassigned')}</p>
+                <p class="small text-muted mb-1">Category: ${esc(report.categoryName || 'Unknown')} · Thread: ${esc(report.threadTitle || report.threadId || 'Unknown')} · Reply: ${esc(report.postId || 'n/a')}</p>
+                <p class="mb-2">${esc((report.details || report.reportedBodyPreview || 'No details').slice(0, 260))}</p>
+                <div class="row g-2 mb-2">
+                  <div class="col-md-3"><input class="form-control form-control-sm" placeholder="Assign moderator" data-assign-input="${report.id}" value="${esc(report.assignedModeratorUsername || '')}" /></div>
+                  <div class="col-md-3"><select class="form-select form-select-sm" data-canned-template="${report.id}"><option value="">Canned reply</option><option value="policy_warning">Policy warning</option><option value="no_violation">No violation</option><option value="content_removed">Content removed</option></select></div>
+                  <div class="col-md-3"><input class="form-control form-control-sm" placeholder="Moderator note" data-moderator-note="${report.id}" value="${esc(report.moderatorNote || '')}" /></div>
+                  <div class="col-md-3"><input class="form-control form-control-sm" placeholder="Internal note" data-internal-note="${report.id}" value="${esc(report.internalNote || '')}" /></div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">${reportActionButtons(report.id)}</div>
               </div>
-              <button class="btn btn-outline-success btn-sm" type="button" data-resolve-report="${report.id}">Resolve</button>
             </div>
           </article>
         `).join('');
 
-        reportsListEl.querySelectorAll('[data-resolve-report]').forEach((button) => {
+        reportsListEl.querySelectorAll('[data-select-report]').forEach((check) => {
+          check.addEventListener('change', () => {
+            if (check.checked) selectedReports.add(check.dataset.selectReport); else selectedReports.delete(check.dataset.selectReport);
+          });
+        });
+
+        reportsListEl.querySelectorAll('[data-canned-template]').forEach((select) => {
+          select.addEventListener('change', () => {
+            const reportId = select.dataset.cannedTemplate;
+            const canned = cannedReplies[select.value] || '';
+            if (canned) {
+              const target = reportsListEl.querySelector(`[data-moderator-note="${reportId}"]`);
+              if (target) target.value = canned;
+            }
+          });
+        });
+
+        reportsListEl.querySelectorAll('[data-report-action]').forEach((button) => {
           button.addEventListener('click', async () => {
             try {
               hideAlert();
-              await request('/api/admin-forum', { method: 'PUT', body: JSON.stringify({ id: button.dataset.resolveReport }) });
-              await load();
-              showAlert('Report marked as resolved.', 'success');
-            } catch (error) {
-              showAlert(error.message);
-            }
+              const reportId = button.dataset.reportAction;
+              await updateReports({
+                id: reportId,
+                status: button.dataset.status,
+                actionTaken: button.dataset.action,
+                assignTo: reportsListEl.querySelector(`[data-assign-input="${reportId}"]`)?.value || '',
+                moderatorNote: reportsListEl.querySelector(`[data-moderator-note="${reportId}"]`)?.value || '',
+                internalNote: reportsListEl.querySelector(`[data-internal-note="${reportId}"]`)?.value || '',
+              }, 'Report updated.');
+            } catch (error) { showAlert(error.message); }
           });
         });
       }
 
       function renderCategories(categories) {
-        if (!categories.length) {
-          categoriesListEl.innerHTML = '<p class="text-muted mb-0">No categories found.</p>';
-          return;
-        }
-
+        if (!categories.length) { categoriesListEl.innerHTML = '<p class="text-muted mb-0">No categories found.</p>'; return; }
         categoriesListEl.innerHTML = categories.map((category) => `
           <form class="border rounded p-3 mb-3" data-category-form="${category.id}">
             <input type="hidden" name="id" value="${category.id}" />
             <div class="row g-2 align-items-end">
-              <div class="col-md-3"><label class="form-label small" for="name-${category.id}">Name</label><input id="name-${category.id}" class="form-control" name="name" value="${category.name}" required /></div>
-              <div class="col-md-2"><label class="form-label small" for="slug-${category.id}">Slug</label><input id="slug-${category.id}" class="form-control" name="slug" value="${category.slug}" required /></div>
-              <div class="col-md-2"><label class="form-label small" for="tier-${category.id}">Access</label><select id="tier-${category.id}" class="form-select" name="accessTier"><option value="free" ${category.accessTier === 'free' ? 'selected' : ''}>Free</option><option value="premium" ${category.accessTier === 'premium' ? 'selected' : ''}>Premium</option></select></div>
-              <div class="col-md-2"><label class="form-label small" for="sort-${category.id}">Sort</label><input id="sort-${category.id}" class="form-control" name="sortOrder" type="number" value="${category.sortOrder}" /></div>
-              <div class="col-md-3"><label class="form-label small" for="description-${category.id}">Description</label><input id="description-${category.id}" class="form-control" name="description" value="${category.description || ''}" /></div>
-              <div class="col-12 d-flex justify-content-end gap-2 mt-2">
-                <button class="btn btn-outline-primary btn-sm" type="submit">Save</button>
-                <button class="btn btn-outline-danger btn-sm" type="button" data-delete-category="${category.id}">Delete</button>
+              <div class="col-md-2"><label class="form-label small">Name</label><input class="form-control" name="name" value="${esc(category.name)}" required /></div>
+              <div class="col-md-2"><label class="form-label small">Slug</label><input class="form-control" name="slug" value="${esc(category.slug)}" required /></div>
+              <div class="col-md-2"><label class="form-label small">Access</label><select class="form-select" name="accessTier"><option value="free" ${category.accessTier === 'free' ? 'selected' : ''}>Free</option><option value="premium" ${category.accessTier === 'premium' ? 'selected' : ''}>Premium</option></select></div>
+              <div class="col-md-2"><label class="form-label small">Sort</label><input class="form-control" name="sortOrder" type="number" value="${category.sortOrder}" /></div>
+              <div class="col-md-2"><label class="form-label small">Post mode</label><select class="form-select" name="postMode"><option value="members" ${category.postMode === 'members' ? 'selected' : ''}>Members</option><option value="moderators" ${category.postMode === 'moderators' ? 'selected' : ''}>Moderators</option></select></div>
+              <div class="col-md-2"><label class="form-label small">Default sort</label><select class="form-select" name="defaultSortMode"><option value="newest" ${category.defaultSortMode === 'newest' ? 'selected' : ''}>Newest</option><option value="popular" ${category.defaultSortMode === 'popular' ? 'selected' : ''}>Popular</option></select></div>
+              <div class="col-md-2"><label class="form-label small">Color badge</label><input class="form-control" name="colorBadge" value="${esc(category.colorBadge || '')}" /></div>
+              <div class="col-md-2"><label class="form-label small">Icon</label><input class="form-control" name="iconName" value="${esc(category.iconName || '')}" /></div>
+              <div class="col-md-3"><label class="form-label small">Description</label><input class="form-control" name="description" value="${esc(category.description || '')}" /></div>
+              <div class="col-md-5"><label class="form-label small">Guidelines</label><input class="form-control" name="guidelines" value="${esc(category.guidelines || '')}" /></div>
+              <div class="col-md-12"><label class="form-label small">Thread template prompt</label><input class="form-control" name="threadTemplatePrompt" value="${esc(category.threadTemplatePrompt || '')}" /></div>
+              <div class="col-12 d-flex flex-wrap gap-3 mt-2">
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="isArchived" ${category.isArchived ? 'checked' : ''}><label class="form-check-label">Archived</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="isLocked" ${category.isLocked ? 'checked' : ''}><label class="form-check-label">Locked</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="requireApproval" ${category.requireApproval ? 'checked' : ''}><label class="form-check-label">Require approval</label></div>
               </div>
+              <div class="col-12 d-flex justify-content-end gap-2 mt-2"><button class="btn btn-outline-primary btn-sm" type="submit">Save</button><button class="btn btn-outline-danger btn-sm" type="button" data-delete-category="${category.id}">Delete</button></div>
             </div>
           </form>
         `).join('');
@@ -150,68 +280,77 @@
           form.addEventListener('submit', async (event) => {
             event.preventDefault();
             const formData = new FormData(form);
-            const payload = Object.fromEntries(formData.entries());
-            try {
-              hideAlert();
-              await request('/api/admin-forum', { method: 'PATCH', body: JSON.stringify(payload) });
-              await load();
-              showAlert('Category updated.', 'success');
-            } catch (error) {
-              showAlert(error.message);
-            }
+            ['isArchived', 'isLocked', 'requireApproval'].forEach((name) => formData.set(name, form.querySelector(`[name="${name}"]`).checked ? 'true' : 'false'));
+            try { hideAlert(); await request('/api/admin-forum', { method: 'PATCH', body: JSON.stringify(Object.fromEntries(formData.entries())) }); await load(); showAlert('Category updated.', 'success'); }
+            catch (error) { showAlert(error.message); }
           });
         });
 
         categoriesListEl.querySelectorAll('[data-delete-category]').forEach((button) => {
           button.addEventListener('click', async () => {
             if (!confirm('Delete this category? This only works when no active threads exist in it.')) return;
-            try {
-              hideAlert();
-              await request(`/api/admin-forum?id=${encodeURIComponent(button.dataset.deleteCategory)}`, { method: 'DELETE' });
-              await load();
-              showAlert('Category deleted.', 'success');
-            } catch (error) {
-              showAlert(error.message);
-            }
+            try { hideAlert(); await request(`/api/admin-forum?id=${encodeURIComponent(button.dataset.deleteCategory)}`, { method: 'DELETE' }); await load(); showAlert('Category deleted.', 'success'); }
+            catch (error) { showAlert(error.message); }
           });
         });
       }
 
-      async function load() {
-        const payload = await request('/api/admin-forum');
-        renderReports(payload.reports || []);
-        renderCategories(payload.categories || []);
+      function renderAuditTrail(entries) {
+        if (!entries?.length) { auditTrailEl.innerHTML = '<p class="text-muted mb-0">No admin actions logged yet.</p>'; return; }
+        auditTrailEl.innerHTML = `<div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>When</th><th>Action</th><th>Target</th><th>Actor</th></tr></thead><tbody>${entries.map((entry) => `<tr><td>${formatDate(entry.created_at)}</td><td>${esc(entry.action)}</td><td>${esc(entry.target_type)}:${esc(entry.target_id)}</td><td>${esc(entry.actor_user_id)}</td></tr>`).join('')}</tbody></table></div>`;
       }
 
+      async function load() {
+        const query = queryFromFilters();
+        const payload = await request(`/api/admin-forum${query ? `?${query}` : ''}`);
+        renderSummary(payload.moderationSummary || {});
+        renderReports(payload.reports || []);
+        renderCategories(payload.categories || []);
+        renderAbuseSignals(payload.abuseSignals || {});
+        renderAuditTrail(payload.auditTrail || []);
+      }
+
+      document.getElementById('reportFilters').addEventListener('submit', (event) => { event.preventDefault(); load().catch((error) => showAlert(error.message)); });
       document.getElementById('refreshButton').addEventListener('click', () => load().catch((error) => showAlert(error.message)));
+      document.getElementById('bulkReviewButton').addEventListener('click', async () => {
+        if (!selectedReports.size) return showAlert('Select reports first.', 'warning');
+        try { hideAlert(); await updateReports({ ids: [...selectedReports], status: 'in_review', actionTaken: 'none' }, 'Selected reports moved to in review.'); selectedReports = new Set(); }
+        catch (error) { showAlert(error.message); }
+      });
+      document.getElementById('bulkResolveButton').addEventListener('click', async () => {
+        if (!selectedReports.size) return showAlert('Select reports first.', 'warning');
+        try { hideAlert(); await updateReports({ ids: [...selectedReports], status: 'resolved', actionTaken: 'resolve' }, 'Selected reports resolved.'); selectedReports = new Set(); }
+        catch (error) { showAlert(error.message); }
+      });
 
       document.getElementById('createCategoryForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         try {
           hideAlert();
-          await request('/api/admin-forum', {
-            method: 'POST',
-            body: JSON.stringify({
-              name: document.getElementById('createName').value,
-              slug: document.getElementById('createSlug').value,
-              accessTier: document.getElementById('createTier').value,
-              sortOrder: document.getElementById('createSort').value,
-              description: document.getElementById('createDescription').value,
-            }),
-          });
+          await request('/api/admin-forum', { method: 'POST', body: JSON.stringify({
+            name: document.getElementById('createName').value,
+            slug: document.getElementById('createSlug').value,
+            accessTier: document.getElementById('createTier').value,
+            sortOrder: document.getElementById('createSort').value,
+            postMode: document.getElementById('createPostMode').value,
+            defaultSortMode: document.getElementById('createDefaultSortMode').value,
+            colorBadge: document.getElementById('createColorBadge').value,
+            iconName: document.getElementById('createIconName').value,
+            description: document.getElementById('createDescription').value,
+            guidelines: document.getElementById('createGuidelines').value,
+            threadTemplatePrompt: document.getElementById('createThreadTemplatePrompt').value,
+            isArchived: document.getElementById('createArchived').checked ? 'true' : 'false',
+            isLocked: document.getElementById('createLocked').checked ? 'true' : 'false',
+            requireApproval: document.getElementById('createRequireApproval').checked ? 'true' : 'false',
+          }) });
           event.target.reset();
           await load();
           showAlert('Category created.', 'success');
-        } catch (error) {
-          showAlert(error.message);
-        }
+        } catch (error) { showAlert(error.message); }
       });
 
       load().catch((error) => {
-        if (error.message.toLowerCase().includes('unauthorized')) {
-          showAlert('Sign in to the admin dashboard first.', 'warning');
-          return;
-        }
+        if (error.message.toLowerCase().includes('unauthorized')) return showAlert('Sign in to the admin dashboard first.', 'warning');
         showAlert(error.message);
       });
     </script>

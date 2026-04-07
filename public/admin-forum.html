@@ -127,12 +127,25 @@
       function formatDate(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString(); }
       function esc(value) { return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char])); }
 
+      function normalizeNetlifyFunctionPath(url) {
+        return url.startsWith('/api/') ? `/.netlify/functions/${url.slice('/api/'.length)}` : url;
+      }
+
       async function request(url, options = {}) {
-        const response = await fetch(url, {
+        const requestOptions = {
           credentials: 'same-origin',
           headers: { 'content-type': 'application/json', ...(options.headers || {}) },
           ...options
-        });
+        };
+
+        const response = await fetch(url, requestOptions);
+        if ((response.status === 404 || response.status === 405) && url.startsWith('/api/')) {
+          const fallbackResponse = await fetch(normalizeNetlifyFunctionPath(url), requestOptions);
+          const fallbackPayload = await fallbackResponse.json().catch(() => ({}));
+          if (!fallbackResponse.ok) throw new Error(fallbackPayload.error || 'Request failed');
+          return fallbackPayload;
+        }
+
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || 'Request failed');
         return payload;

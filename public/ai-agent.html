@@ -101,6 +101,10 @@
       const premiumGate = document.getElementById('premiumGate');
       const sharedResultBanner = document.getElementById('sharedResultBanner');
       let premiumAccess = false;
+      const memberSession = {
+        authenticated: false,
+        membershipLevel: ''
+      };
       const AGENT_MEMORY_KEY = 'gematriaAgentPersonalMemory.v1';
       const AGENT_LEARNING_KEY = 'gematriaAgentLearnedResponses.v1';
       const DEFAULT_MEMORY = {
@@ -317,46 +321,98 @@
         memoryStatus.innerHTML = `<strong>Memory is on.</strong> Saved notes: ${escapeHtml(memory.facts.join(' • '))}`;
       }
 
-      function cleanSegmentForTargets(segment) {
-        const conversationalWords = new Set([
-          'a', 'an', 'and', 'about', 'also', 'are', 'be', 'can', 'could', 'do', 'for', 'from', 'give', 'hello', 'help', 'hey', 'hi',
-          'i', 'ideas', 'im', 'in', 'into', 'is', 'it', 'lets', 'me', 'my', 'of', 'on', 'or', 'please', 'should', 'suggest', 'tell',
-          'thanks', 'that', 'the', 'this', 'to', 'us', 'we', 'what', 'with', 'you', 'your', 'agent', 'ai', 'analyze', 'analysis',
-          'calculate', 'calculation', 'check', 'compare', 'compute', 'find', 'gematria', 'lookup', 'look', 'mean', 'meaning',
-          'next', 'prompt', 'prompts', 'research', 'show', 'value', 'versus', 'vs'
-        ]);
-
-        const tokens = normalizeCandidate(segment)
-          .match(/[A-Za-z][A-Za-z'-]*/g) || [];
-        const filtered = tokens.filter((token) => !conversationalWords.has(token.toLowerCase()));
-        return normalizeCandidate(filtered.join(' '));
-      }
-
-      function extractCalculationTargets(prompt) {
+      function extractQuotedTargets(prompt) {
         const rawPrompt = normalizeCandidate(prompt);
         if (!rawPrompt) return [];
 
-        const quotedTargets = [...rawPrompt.matchAll(/"([^"]+)"|'([^']+)'/g)]
+        return [...rawPrompt.matchAll(/"([^"]+)"|'([^']+)'/g)]
           .flatMap((match) => normalizeCandidate(match[1] || match[2])
             .split(',')
             .map((target) => normalizeCandidate(target))
           )
           .filter(Boolean);
+      }
+
+      function extractCalculationTargets(prompt) {
+        const quotedTargets = extractQuotedTargets(prompt);
         if (quotedTargets.length) {
           return [...new Set(quotedTargets)];
         }
 
-        const segments = rawPrompt
-          .split(/\b(?:and|vs|versus|,)\b|[;?!]+/i)
-          .map((segment) => cleanSegmentForTargets(segment))
-          .filter(Boolean);
+        return [];
+      }
 
-        if (segments.length) {
-          return [...new Set(segments)];
+      function extractWordnikLookupWord(prompt) {
+        const normalizedPrompt = normalizeCandidate(prompt);
+        if (!normalizedPrompt) return '';
+
+        const quotedTargets = extractQuotedTargets(normalizedPrompt);
+        if (quotedTargets.length) {
+          return quotedTargets[0];
         }
 
-        const fallback = cleanSegmentForTargets(rawPrompt);
-        return fallback ? [fallback] : [];
+        const keywordMatch = normalizedPrompt.match(/\b(?:synonyms?|antonyms?|definitions?|related words?|wordnik)\b(?:\s+(?:for|of))?\s+([A-Za-z][A-Za-z' -]*)/i);
+        if (!keywordMatch) return '';
+        const cleaned = normalizeCandidate(keywordMatch[1]).replace(/[?.!,;:]+$/g, '');
+        return cleaned;
+      }
+
+      function buildMemberAccessLinks(normalizedPrompt) {
+        const wantsWordnik = /\b(wordnik|synonyms?|antonyms?|definitions?|related words?)\b/i.test(normalizedPrompt);
+        const wantsResearch = /\b(premium research|research tools?|premium tools?)\b/i.test(normalizedPrompt);
+        const wantsReports = /\b(member reports?|reports?|dashboard|history)\b/i.test(normalizedPrompt);
+
+        if (!wantsWordnik && !wantsResearch && !wantsReports) {
+          return '';
+        }
+
+        const lookupWord = extractWordnikLookupWord(normalizedPrompt);
+        const levelLabel = memberSession.membershipLevel || 'premium';
+        const actions = [];
+
+        if (wantsWordnik) {
+          actions.push('<li><a href="/premium-research.html" target="_blank" rel="noopener noreferrer">Open Premium Research Wordnik panel</a> for synonym/antonym/equivalent lookups.</li>');
+          if (lookupWord) {
+            actions.push(`<li><a href="/api/wordnikDefinition?word=${encodeURIComponent(lookupWord)}" target="_blank" rel="noopener noreferrer">Definition lookup for "${escapeHtml(lookupWord)}"</a>.</li>`);
+            actions.push(`<li><a href="/api/wordnikRelatedWords?word=${encodeURIComponent(lookupWord)}&limit=25" target="_blank" rel="noopener noreferrer">Synonym lookup for "${escapeHtml(lookupWord)}"</a> via Wordnik related words.</li>`);
+          } else {
+            actions.push('<li>Add a word after your keyword (example: <code>synonyms for covenant</code>) for direct Wordnik links.</li>');
+          }
+        }
+
+        if (wantsResearch) {
+          actions.push('<li><a href="/premium-research.html" target="_blank" rel="noopener noreferrer">Premium research items</a> (Wordnik relationship mapping, stats, and gematria dataset tools).</li>');
+        }
+
+        if (wantsReports) {
+          actions.push('<li><a href="/member.html" target="_blank" rel="noopener noreferrer">Membership dashboard</a> for saved AI-agent calculations and account-level history.</li>');
+          actions.push('<li><a href="/forum.html" target="_blank" rel="noopener noreferrer">Forum reports view</a> to review moderation reports tied to your member account permissions.</li>');
+        }
+
+        return `
+          <p class="mb-2"><strong>Quick access (${escapeHtml(levelLabel)} account):</strong></p>
+          <ul class="mb-2">
+            ${actions.join('')}
+          </ul>
+        `;
+      }
+
+      function buildGeneralChatReply(normalizedPrompt, memory, learnedResponse) {
+        const memoryCue = memory.enabled && memory.facts.length
+          ? `<p class="mb-2"><strong>Saved preferences:</strong> ${escapeHtml(memory.facts.join(' • '))}</p>`
+          : '';
+        const learnedCue = learnedResponse
+          ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>`
+          : '';
+
+        return `
+          ${learnedCue}
+          ${memoryCue}
+          <p class="mb-2">I switched to general chat mode because no quoted calculation target was detected.</p>
+          <p class="mb-2">If you want gematria math, wrap one or more targets in quotes (example: <code>"new jerusalem"</code> or <code>"pilot, process"</code>).</p>
+          ${buildMemberAccessLinks(normalizedPrompt)}
+          <p class="mb-0">General response: ${escapeHtml(normalizedPrompt || 'Share a question and I can help.')}</p>
+        `;
       }
 
       function buildCloseSpellingVariants(word) {
@@ -510,8 +566,12 @@
           const response = await fetch('/api/member-session', { credentials: 'include' });
           const payload = await response.json();
           const level = String(payload?.member?.membershipLevel || '').toLowerCase();
+          memberSession.authenticated = Boolean(payload?.authenticated);
+          memberSession.membershipLevel = level;
           premiumAccess = Boolean(payload?.authenticated) && (level === 'premium' || level === 'lifetime');
         } catch {
+          memberSession.authenticated = false;
+          memberSession.membershipLevel = '';
           premiumAccess = false;
         }
 
@@ -692,6 +752,10 @@
         }
 
         const calculationTargets = extractCalculationTargets(normalizedPrompt);
+        if (!calculationTargets.length) {
+          return buildGeneralChatReply(normalizedPrompt, memory, learnedResponse);
+        }
+
         const topic = calculationTargets[0] || '';
         if (!topic) {
           return '<p class="mb-0">Please share a word, phrase, or name so I can calculate and discuss it.</p>';
@@ -891,7 +955,7 @@
           if (!selectedWord) return;
           addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`);
           window.showWorkingOverlay?.();
-          const replyHtml = await buildAgentReply(selectedWord);
+          const replyHtml = await buildAgentReply(`"${selectedWord}"`);
           window.hideWorkingOverlay?.();
           const assistantMessage = addMessage('assistant', replyHtml);
           attachResultFeedbackUi(assistantMessage, selectedWord);

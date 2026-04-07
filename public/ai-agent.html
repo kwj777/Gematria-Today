@@ -100,9 +100,13 @@
       const sharedResultBanner = document.getElementById('sharedResultBanner');
       let premiumAccess = false;
       const AGENT_MEMORY_KEY = 'gematriaAgentPersonalMemory.v1';
+      const AGENT_LEARNING_KEY = 'gematriaAgentLearnedResponses.v1';
       const DEFAULT_MEMORY = {
         enabled: false,
         facts: []
+      };
+      const DEFAULT_LEARNINGS = {
+        entries: []
       };
 
       function escapeHtml(value) {
@@ -161,6 +165,54 @@
           enabled: Boolean(memory?.enabled),
           facts: Array.isArray(memory?.facts) ? memory.facts.slice(0, 8) : []
         }));
+      }
+
+      function readAgentLearnings() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(AGENT_LEARNING_KEY) || 'null');
+          if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.entries)) return { ...DEFAULT_LEARNINGS };
+          const entries = parsed.entries
+            .map((entry) => ({
+              prompt: normalizeCandidate(entry?.prompt),
+              explanation: normalizeCandidate(entry?.explanation)
+            }))
+            .filter((entry) => entry.prompt && entry.explanation)
+            .slice(0, 12);
+          return { entries };
+        } catch {
+          return { ...DEFAULT_LEARNINGS };
+        }
+      }
+
+      function writeAgentLearnings(learnings) {
+        const entries = Array.isArray(learnings?.entries)
+          ? learnings.entries
+            .map((entry) => ({
+              prompt: normalizeCandidate(entry?.prompt),
+              explanation: normalizeCandidate(entry?.explanation)
+            }))
+            .filter((entry) => entry.prompt && entry.explanation)
+            .slice(0, 12)
+          : [];
+        localStorage.setItem(AGENT_LEARNING_KEY, JSON.stringify({ entries }));
+      }
+
+      function saveLearnedResponse(prompt, explanation) {
+        const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
+        const normalizedExplanation = normalizeCandidate(explanation);
+        if (!normalizedPrompt || !normalizedExplanation) return;
+
+        const learnings = readAgentLearnings();
+        const filtered = learnings.entries.filter((entry) => entry.prompt.toLowerCase() !== normalizedPrompt);
+        filtered.unshift({ prompt: normalizedPrompt, explanation: normalizedExplanation });
+        writeAgentLearnings({ entries: filtered });
+      }
+
+      function findLearnedResponse(prompt) {
+        const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
+        if (!normalizedPrompt) return null;
+        const learnings = readAgentLearnings();
+        return learnings.entries.find((entry) => normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)) || null;
       }
 
       function rememberFact(rawFact) {
@@ -270,6 +322,74 @@
         wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
         wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'Gematria AI Agent' : 'You'}</p>${contentHtml}`;
         chatLog.prepend(wrapper);
+        return wrapper;
+      }
+
+      function attachResultFeedbackUi(messageElement, originalPrompt) {
+        if (!messageElement || !originalPrompt) return;
+
+        const feedbackContainer = document.createElement('div');
+        feedbackContainer.className = 'mt-3 border-top pt-3';
+        const detailsId = `feedbackDetails-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        feedbackContainer.innerHTML = `
+          <p class="mb-2 small fw-semibold">Were these results what you expected?</p>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <button type="button" class="btn btn-sm btn-outline-success" data-feedback="yes">Yes</button>
+            <button type="button" class="btn btn-sm btn-outline-warning" data-feedback="no">No</button>
+          </div>
+          <div class="feedback-followup" hidden>
+            <label class="form-label small" for="${detailsId}">Please explain what you expected so I can learn for similar prompts.</label>
+            <textarea id="${detailsId}" class="form-control form-control-sm mb-2" rows="2" placeholder="Example: For prompts about names, start with a short summary before the full breakdown."></textarea>
+            <button type="button" class="btn btn-sm btn-primary" data-feedback="save">Save learning</button>
+          </div>
+          <p class="small mb-0 text-muted feedback-status" hidden></p>
+        `;
+
+        const followup = feedbackContainer.querySelector('.feedback-followup');
+        const status = feedbackContainer.querySelector('.feedback-status');
+        const detailsInput = feedbackContainer.querySelector('textarea');
+        const yesButton = feedbackContainer.querySelector('[data-feedback="yes"]');
+        const noButton = feedbackContainer.querySelector('[data-feedback="no"]');
+        const saveButton = feedbackContainer.querySelector('[data-feedback="save"]');
+
+        yesButton?.addEventListener('click', () => {
+          yesButton.disabled = true;
+          if (noButton) noButton.disabled = true;
+          if (followup) followup.hidden = true;
+          if (status) {
+            status.hidden = false;
+            status.textContent = 'Great — thanks for confirming.';
+          }
+        });
+
+        noButton?.addEventListener('click', () => {
+          if (followup) followup.hidden = false;
+          if (status) {
+            status.hidden = false;
+            status.textContent = 'Thanks for the correction. Share what you expected, then save learning.';
+          }
+        });
+
+        saveButton?.addEventListener('click', () => {
+          const explanation = normalizeCandidate(detailsInput?.value || '');
+          if (!explanation) {
+            if (status) {
+              status.hidden = false;
+              status.textContent = 'Please add a short explanation so I can learn from it.';
+            }
+            return;
+          }
+          saveLearnedResponse(originalPrompt, explanation);
+          if (status) {
+            status.hidden = false;
+            status.textContent = 'Saved. I will use this guidance for similar prompts.';
+          }
+          if (followup) followup.hidden = true;
+          if (yesButton) yesButton.disabled = true;
+          if (noButton) noButton.disabled = true;
+        });
+
+        messageElement.appendChild(feedbackContainer);
       }
 
       function getCanonicalOrigin() {
@@ -419,6 +539,7 @@
       async function buildAgentReply(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt);
         const memory = readAgentMemory();
+        const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
         const gematriaValueLookupMatch = normalizedPrompt.match(/\b(?:gematria\s+value|value|number|calculation)\s*(?:of|for|=|is)?\s*(\d+)\b/i);
 
@@ -541,6 +662,7 @@
         const closeSpellingVariants = buildCloseSpellingVariants(topic);
 
         return `
+          ${learnedResponse ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
           <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
           <p class="mb-2">For <strong>${escapeHtml(topic)}</strong>, here is the current gematria snapshot:</p>
           <ul class="mb-3">
@@ -619,7 +741,8 @@
         window.showWorkingOverlay?.();
         const replyHtml = await buildAgentReply(prompt);
         window.hideWorkingOverlay?.();
-        addMessage('assistant', replyHtml);
+        const assistantMessage = addMessage('assistant', replyHtml);
+        attachResultFeedbackUi(assistantMessage, prompt);
       });
 
       clearConversationButton.addEventListener('click', () => {
@@ -648,7 +771,8 @@
           window.showWorkingOverlay?.();
           const replyHtml = await buildAgentReply(selectedWord);
           window.hideWorkingOverlay?.();
-          addMessage('assistant', replyHtml);
+          const assistantMessage = addMessage('assistant', replyHtml);
+          attachResultFeedbackUi(assistantMessage, selectedWord);
           return;
         }
 

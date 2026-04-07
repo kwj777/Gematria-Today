@@ -1,7 +1,6 @@
 const SITE_ORIGIN = 'https://endtimes.today';
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
-const IMAGE_FORMAT = 'jpg';
 
 function escapeHtml(value = '') {
   return String(value)
@@ -20,9 +19,12 @@ function trimValue(value, maxLength) {
 }
 
 
-function toTransformedImageUrl(sourceUrl) {
-  const encodedSource = encodeURIComponent(sourceUrl);
-  return `${SITE_ORIGIN}/.netlify/images?url=${encodedSource}&w=${IMAGE_WIDTH}&h=${IMAGE_HEIGHT}&fit=cover&fm=${IMAGE_FORMAT}`;
+function toImageUrl(topic, total, root) {
+  const imageUrl = new URL('/api/ai-agent-share-image', SITE_ORIGIN);
+  imageUrl.searchParams.set('topic', topic);
+  imageUrl.searchParams.set('total', total);
+  imageUrl.searchParams.set('root', root);
+  return imageUrl.toString();
 }
 
 function buildShareHtml(params) {
@@ -35,12 +37,7 @@ function buildShareHtml(params) {
   appUrl.searchParams.set('sharedTotal', total);
   appUrl.searchParams.set('sharedRoot', root);
 
-  const imageSource = new URL('/.netlify/functions/ai-agent-share-image', SITE_ORIGIN);
-  imageSource.searchParams.set('topic', topic);
-  imageSource.searchParams.set('total', total);
-  imageSource.searchParams.set('root', root);
-
-  const imageUrl = toTransformedImageUrl(imageSource.toString());
+  const imageUrl = toImageUrl(topic, total, root);
   const title = `Gematria AI Agent: ${topic}`;
   const description = `Gematria lookup for ${topic}: total ${total} • digital root ${root}`;
 
@@ -61,7 +58,7 @@ function buildShareHtml(params) {
     <meta property="og:url" content="${escapeHtml(appUrl.toString())}" />
     <meta property="og:image" content="${escapeHtml(imageUrl)}" />
     <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />
-    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="${IMAGE_WIDTH}" />
     <meta property="og:image:height" content="${IMAGE_HEIGHT}" />
     <meta property="og:image:alt" content="${escapeHtml(title)}" />

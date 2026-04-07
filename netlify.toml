@@ -82,6 +82,16 @@
     Cache-Control = "public, max-age=300"
 
 [[headers]]
+  for = "/api/ai-agent-share"
+  [headers.values]
+    Cache-Control = "public, max-age=300, stale-while-revalidate=120"
+
+[[headers]]
+  for = "/api/ai-agent-share-image"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"

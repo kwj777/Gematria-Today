@@ -633,17 +633,11 @@
       }
 
       function buildAgentShareImageUrl({ topic, total, root }) {
-        const imageSource = new URL('/.netlify/functions/ai-agent-share-image', getCanonicalOrigin());
-        imageSource.searchParams.set('topic', topic);
-        imageSource.searchParams.set('total', String(total));
-        imageSource.searchParams.set('root', String(root));
-        const transformed = new URL('/.netlify/images', getCanonicalOrigin());
-        transformed.searchParams.set('url', imageSource.toString());
-        transformed.searchParams.set('w', '1200');
-        transformed.searchParams.set('h', '630');
-        transformed.searchParams.set('fit', 'cover');
-        transformed.searchParams.set('fm', 'jpg');
-        return transformed.toString();
+        const imageUrl = new URL('/api/ai-agent-share-image', getCanonicalOrigin());
+        imageUrl.searchParams.set('topic', topic);
+        imageUrl.searchParams.set('total', String(total));
+        imageUrl.searchParams.set('root', String(root));
+        return imageUrl.toString();
       }
 
       async function fetchShareImageFile(imageUrl) {
@@ -651,10 +645,67 @@
           const response = await fetch(imageUrl);
           if (!response.ok) return null;
           const blob = await response.blob();
-          return new File([blob], 'gematria-lookup.jpg', { type: 'image/jpeg' });
+          return new File([blob], 'gematria-lookup.png', { type: 'image/png' });
         } catch {
           return null;
         }
+      }
+
+      function showSharePicker(shareUrl, shareText) {
+        const existing = document.getElementById('sharePickerOverlay');
+        if (existing) existing.remove();
+
+        const encodedUrl = encodeURIComponent(shareUrl);
+        const encodedText = encodeURIComponent(shareText);
+
+        const overlay = document.createElement('div');
+        overlay.id = 'sharePickerOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
+
+        const dialog = document.createElement('div');
+        dialog.style.cssText = 'background:#fff;border-radius:12px;padding:24px;max-width:320px;width:90%;text-align:center;font-family:inherit;';
+        dialog.innerHTML = `
+          <h5 style="margin:0 0 16px;font-size:1.1rem;">Share this lookup</h5>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <a href="https://x.com/intent/tweet?text=${encodedText}&url=${encodedUrl}"
+               target="_blank" rel="noopener noreferrer"
+               class="btn btn-dark btn-sm fw-semibold" style="text-decoration:none;">
+              Share on X
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}"
+               target="_blank" rel="noopener noreferrer"
+               class="btn btn-primary btn-sm fw-semibold" style="text-decoration:none;">
+              Share on Facebook
+            </a>
+            <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" id="sharePickerCopy">
+              Copy link
+            </button>
+            <button type="button" class="btn btn-link btn-sm text-muted" id="sharePickerClose">
+              Cancel
+            </button>
+          </div>
+        `;
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) overlay.remove();
+        });
+        dialog.querySelector('#sharePickerClose').addEventListener('click', function() {
+          overlay.remove();
+        });
+        dialog.querySelector('#sharePickerCopy').addEventListener('click', async function() {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            this.textContent = 'Copied!';
+            setTimeout(function() { overlay.remove(); }, 1200);
+          } catch {
+            window.prompt('Copy this link to share:', shareUrl);
+            overlay.remove();
+          }
+        });
+
+        return overlay;
       }
 
       async function sharePage(payload, fallbackShareUrl) {
@@ -685,25 +736,8 @@ View results: ${shareUrl}`.trim(),
           }
         }
 
-        if (fallbackShareUrl) {
-          const popup = window.open(fallbackShareUrl, '_blank', 'noopener,noreferrer');
-          if (popup) {
-            return true;
-          }
-        }
-
-        if (navigator.clipboard?.writeText) {
-          try {
-            await navigator.clipboard.writeText(sharePayload.url);
-            window.alert('Share link copied to clipboard.');
-            return true;
-          } catch {
-            // Fall through to prompt fallback.
-          }
-        }
-
-        window.prompt('Copy this link to share:', sharePayload.url);
-        return false;
+        showSharePicker(shareUrl, shareText);
+        return true;
       }
 
       async function ensurePremiumAccess() {

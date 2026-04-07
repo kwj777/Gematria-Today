@@ -16,11 +16,53 @@ function truncate(value, max = 70) {
   return `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
+function normalizeSummaryLines(value = '', maxLines = 3, maxLineLength = 60) {
+  const compact = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!compact) return [];
+
+  const words = compact.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (candidate.length <= maxLineLength) {
+      currentLine = candidate;
+      continue;
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    currentLine = word;
+    if (lines.length >= maxLines) break;
+  }
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length === maxLines && words.join(' ').length > lines.join(' ').length) {
+    lines[maxLines - 1] = truncate(lines[maxLines - 1], Math.max(12, maxLineLength - 1));
+  }
+
+  return lines.map((line) => escapeXml(line));
+}
+
 export default async function onRequest(request) {
   const url = new URL(request.url);
   const topic = truncate(url.searchParams.get('topic') || 'Gematria Agent Result', 48);
   const total = String(url.searchParams.get('total') || '?').trim();
   const root = String(url.searchParams.get('root') || '?').trim();
+  const summaryLines = normalizeSummaryLines(url.searchParams.get('summary') || '');
+  const summaryBlock = summaryLines.length
+    ? summaryLines
+      .map((line, index) => `<text x="120" y="${485 + (index * 34)}" fill="#c7d9ee" font-size="30" font-family="Inter, Arial, sans-serif">${line}</text>`)
+      .join('\n')
+    : '<text x="120" y="485" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Generated from AI Agent lookup</text>';
+  const summaryPanelHeight = summaryLines.length ? 280 + (summaryLines.length * 24) : 250;
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
@@ -37,10 +79,10 @@ export default async function onRequest(request) {
   <text x="80" y="220" fill="#ffd66e" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="800">
     ${escapeXml(topic)}
   </text>
-  <rect x="80" y="280" rx="16" ry="16" width="1040" height="250" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
+  <rect x="80" y="280" rx="16" ry="16" width="1040" height="${summaryPanelHeight}" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
   <text x="120" y="360" fill="#f3f6fb" font-size="46" font-family="Inter, Arial, sans-serif" font-weight="700">Gematria: ${escapeXml(total)}</text>
   <text x="120" y="425" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${escapeXml(root)}</text>
-  <text x="120" y="485" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Generated from AI Agent lookup</text>
+  ${summaryBlock}
   <text x="80" y="590" fill="#9fc1e8" font-size="28" font-family="Inter, Arial, sans-serif">endtimes.today</text>
 </svg>`;
 

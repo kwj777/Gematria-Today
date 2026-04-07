@@ -108,6 +108,10 @@
       const DEFAULT_LEARNINGS = {
         entries: []
       };
+      const globalLearningsState = {
+        loaded: false,
+        entries: []
+      };
 
       function escapeHtml(value) {
         return String(value || '')
@@ -197,21 +201,85 @@
         localStorage.setItem(AGENT_LEARNING_KEY, JSON.stringify({ entries }));
       }
 
-      function saveLearnedResponse(prompt, explanation) {
+      function mergeLearnings(localEntries = [], globalEntries = []) {
+        const deduped = new Map();
+        [...globalEntries, ...localEntries].forEach((entry) => {
+          const prompt = normalizeCandidate(entry?.prompt).toLowerCase();
+          const explanation = normalizeCandidate(entry?.explanation);
+          if (!prompt || !explanation || deduped.has(prompt)) return;
+          deduped.set(prompt, { prompt, explanation });
+        });
+        return [...deduped.values()];
+      }
+
+      function readCombinedLearnings() {
+        const localLearnings = readAgentLearnings();
+        return {
+          entries: mergeLearnings(localLearnings.entries, globalLearningsState.entries)
+        };
+      }
+
+      async function loadGlobalLearnings() {
+        try {
+          const response = await fetch('/api/ai-agent-learnings', { credentials: 'same-origin' });
+          if (!response.ok) {
+            globalLearningsState.loaded = true;
+            return;
+          }
+          const payload = await response.json();
+          const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+          globalLearningsState.entries = entries
+            .map((entry) => ({
+              prompt: normalizeCandidate(entry?.prompt).toLowerCase(),
+              explanation: normalizeCandidate(entry?.explanation)
+            }))
+            .filter((entry) => entry.prompt && entry.explanation)
+            .slice(0, 200);
+          globalLearningsState.loaded = true;
+        } catch {
+          globalLearningsState.loaded = true;
+        }
+      }
+
+      async function saveLearnedResponse(prompt, explanation) {
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         const normalizedExplanation = normalizeCandidate(explanation);
-        if (!normalizedPrompt || !normalizedExplanation) return;
+        if (!normalizedPrompt || !normalizedExplanation) return false;
 
         const learnings = readAgentLearnings();
         const filtered = learnings.entries.filter((entry) => entry.prompt.toLowerCase() !== normalizedPrompt);
         filtered.unshift({ prompt: normalizedPrompt, explanation: normalizedExplanation });
         writeAgentLearnings({ entries: filtered });
+        try {
+          const response = await fetch('/api/ai-agent-learnings', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ prompt: normalizedPrompt, explanation: normalizedExplanation })
+          });
+          if (!response.ok) {
+            return false;
+          }
+          const payload = await response.json().catch(() => ({}));
+          const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+          globalLearningsState.entries = entries
+            .map((entry) => ({
+              prompt: normalizeCandidate(entry?.prompt).toLowerCase(),
+              explanation: normalizeCandidate(entry?.explanation)
+            }))
+            .filter((entry) => entry.prompt && entry.explanation)
+            .slice(0, 200);
+          globalLearningsState.loaded = true;
+          return true;
+        } catch {
+          return false;
+        }
       }
 
       function findLearnedResponse(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         if (!normalizedPrompt) return null;
-        const learnings = readAgentLearnings();
+        const learnings = readCombinedLearnings();
         return learnings.entries.find((entry) => normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)) || null;
       }
 
@@ -370,7 +438,7 @@
           }
         });
 
-        saveButton?.addEventListener('click', () => {
+        saveButton?.addEventListener('click', async () => {
           const explanation = normalizeCandidate(detailsInput?.value || '');
           if (!explanation) {
             if (status) {
@@ -379,10 +447,13 @@
             }
             return;
           }
-          saveLearnedResponse(originalPrompt, explanation);
+          saveButton.disabled = true;
+          const savedGlobally = await saveLearnedResponse(originalPrompt, explanation);
           if (status) {
             status.hidden = false;
-            status.textContent = 'Saved. I will use this guidance for similar prompts.';
+            status.textContent = savedGlobally
+              ? 'Saved globally. I will use this guidance for everyone on similar prompts.'
+              : 'Saved on this device. Global sync failed right now, so this guidance is local only for now.';
           }
           if (followup) followup.hidden = true;
           if (yesButton) yesButton.disabled = true;
@@ -824,6 +895,7 @@
       });
 
       renderMemoryStatus();
+      loadGlobalLearnings();
       ensurePremiumAccess();
       showSharedResultIfPresent();
     </script>

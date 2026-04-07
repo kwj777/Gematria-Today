@@ -46,20 +46,30 @@
           <h2 id="forumRulesHeading" class="h4 mb-0">Forum rules</h2>
           <div class="d-flex flex-wrap gap-2">
             <a class="btn btn-outline-secondary btn-sm" href="/forum-reputation-scale.html" target="_blank" rel="noopener noreferrer">View public reputation scale</a>
-            <a class="btn btn-outline-primary btn-sm" href="#forumRulesList">Read rules</a>
+            <button
+              id="toggleForumRulesButton"
+              class="btn btn-outline-primary btn-sm"
+              type="button"
+              aria-expanded="false"
+              aria-controls="forumRulesContent"
+            >
+              Read rules
+            </button>
           </div>
         </div>
-        <p class="text-muted mb-3">Please read and follow these rules before posting threads or replies.</p>
-        <ol id="forumRulesList" class="mb-0">
-          <li class="mb-2"><strong>Be respectful.</strong> Treat members with courtesy; no harassment, slurs, or personal attacks.</li>
-          <li class="mb-2"><strong>Stay on topic.</strong> Keep content relevant to the selected category and the discussion at hand.</li>
-          <li class="mb-2"><strong>No spam or self-promotion.</strong> Do not flood threads, advertise products, or post repetitive links.</li>
-          <li class="mb-2"><strong>Protect privacy.</strong> Do not share personal, private, or confidential information about yourself or others.</li>
-          <li class="mb-2"><strong>No illegal or harmful content.</strong> Avoid threats, explicit violence, piracy instructions, malware, or fraud-related material.</li>
-          <li class="mb-2"><strong>Use clear, honest titles.</strong> Thread titles should summarize the content and avoid clickbait.</li>
-          <li class="mb-2"><strong>Report issues; do not escalate.</strong> Use the report button for rule-breaking instead of starting arguments.</li>
-          <li><strong>Moderation decisions apply.</strong> Admins may edit, lock, or remove content that violates these rules.</li>
-        </ol>
+        <div id="forumRulesContent" class="d-none" hidden>
+          <p class="text-muted mb-3">Please read and follow these rules before posting threads or replies.</p>
+          <ol id="forumRulesList" class="mb-0">
+            <li class="mb-2"><strong>Be respectful.</strong> Treat members with courtesy; no harassment, slurs, or personal attacks.</li>
+            <li class="mb-2"><strong>Stay on topic.</strong> Keep content relevant to the selected category and the discussion at hand.</li>
+            <li class="mb-2"><strong>No spam or self-promotion.</strong> Do not flood threads, advertise products, or post repetitive links.</li>
+            <li class="mb-2"><strong>Protect privacy.</strong> Do not share personal, private, or confidential information about yourself or others.</li>
+            <li class="mb-2"><strong>No illegal or harmful content.</strong> Avoid threats, explicit violence, piracy instructions, malware, or fraud-related material.</li>
+            <li class="mb-2"><strong>Use clear, honest titles.</strong> Thread titles should summarize the content and avoid clickbait.</li>
+            <li class="mb-2"><strong>Report issues; do not escalate.</strong> Use the report button for rule-breaking instead of starting arguments.</li>
+            <li><strong>Moderation decisions apply.</strong> Admins may edit, lock, or remove content that violates these rules.</li>
+          </ol>
+        </div>
       </section>
 
       <section id="forumAlert" class="alert d-none" role="alert"></section>
@@ -170,6 +180,8 @@
       const moderationListEl = document.getElementById('moderationList');
       const areaEl = document.getElementById('forumArea');
       const searchEl = document.getElementById('forumSearch');
+      const toggleForumRulesButtonEl = document.getElementById('toggleForumRulesButton');
+      const forumRulesContentEl = document.getElementById('forumRulesContent');
 
       let isAdmin = false;
       let isPremium = false;
@@ -218,6 +230,18 @@
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
       }
+
+      function setForumRulesExpanded(expanded) {
+        toggleForumRulesButtonEl.setAttribute('aria-expanded', String(expanded));
+        toggleForumRulesButtonEl.textContent = expanded ? 'Hide rules' : 'Read rules';
+        forumRulesContentEl.hidden = !expanded;
+        forumRulesContentEl.classList.toggle('d-none', !expanded);
+      }
+
+      toggleForumRulesButtonEl?.addEventListener('click', () => {
+        const isExpanded = toggleForumRulesButtonEl.getAttribute('aria-expanded') === 'true';
+        setForumRulesExpanded(!isExpanded);
+      });
 
       function esc(value) {
         return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));

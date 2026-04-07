@@ -366,14 +366,15 @@
             event.preventDefault();
             const formData = new FormData(form);
             ['isArchived', 'isLocked', 'requireApproval'].forEach((name) => formData.set(name, form.querySelector(`[name="${name}"]`).checked ? 'true' : 'false'));
-            try { hideAlert(); await request('/api/admin-forum', { method: 'PATCH', body: JSON.stringify(Object.fromEntries(formData.entries())) }); await load(); showAlert('Category updated.', 'success'); }
+            try { hideAlert(); await request('/api/admin-forum', { method: 'PATCH', body: JSON.stringify(Object.fromEntries(formData.entries())) }); await load(); showAlert('Category updated.', 'success'); window.alert('Category changes saved successfully.'); }
             catch (error) { showAlert(error.message); }
           });
         });
 
         categoriesListEl.querySelectorAll('[data-delete-category]').forEach((button) => {
           button.addEventListener('click', async () => {
-            if (!confirm('Delete this category? This only works when no active threads exist in it.')) return;
+            const categoryName = button.closest('form')?.querySelector('[name="name"]')?.value?.trim() || 'this category';
+            if (!window.confirm(`Warning: you are about to permanently delete ${categoryName}. This only works when no active threads exist in it.`)) return;
             try { hideAlert(); await request(`/api/admin-forum?id=${encodeURIComponent(button.dataset.deleteCategory)}`, { method: 'DELETE' }); await load(); showAlert('Category deleted.', 'success'); }
             catch (error) { showAlert(error.message); }
           });

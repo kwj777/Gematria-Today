@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <meta name="theme-color" content="#2d547c" />
+    <title>Gematria AI Agent | EndTimes.Today</title>
+    <meta name="description" content="Discuss gematria patterns with an AI-style assistant that calculates English gematria totals and suggests follow-up research prompts." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://endtimes.today/ai-agent.html" />
+    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Gematria AI Agent | EndTimes.Today" />
+    <meta property="og:description" content="Run English gematria calculations and discuss possible pattern interpretations with a guided AI-style workflow." />
+    <meta property="og:url" content="https://endtimes.today/ai-agent.html" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Gematria AI Agent | EndTimes.Today" />
+    <meta name="twitter:description" content="Run English gematria calculations and discuss possible pattern interpretations with a guided AI-style workflow." />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <script defer src="/ui-feedback.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/calculator.html">Calculator</a></li>
+            <li class="nav-item"><a class="nav-link" href="/name-calculator.html">Name Calculator</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/ai-agent.html">AI Agent</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <section class="hero-panel p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-2">Assistant</p>
+          <h1 class="display-6 fw-bold mb-2">Gematria AI Agent</h1>
+          <p class="lead mb-0">Ask for gematria calculations, comparison ideas, or interpretation prompts. The assistant computes English gematria (A=6, B=12 ... Z=156), digital root, and optional match counts.</p>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5">
+          <div id="sharedResultBanner" class="alert alert-info mb-4" hidden></div>
+          <div id="premiumGate" class="alert alert-warning mb-4" hidden></div>
+          <form id="agentForm" class="row g-3 mb-4" aria-label="Gematria AI Agent input">
+            <div class="col-12">
+              <label for="agentPrompt" class="form-label fw-semibold">Your message</label>
+              <textarea id="agentPrompt" class="form-control" rows="3" placeholder="Example: Analyze \"New Jerusalem\" and suggest what to compare next." required></textarea>
+            </div>
+            <div class="col-md-6 col-lg-4">
+              <label for="improvementDepth" class="form-label fw-semibold">Recursive improvement rounds</label>
+              <select id="improvementDepth" class="form-select">
+                <option value="1">1 round (fast)</option>
+                <option value="2" selected>2 rounds (balanced)</option>
+                <option value="3">3 rounds (deeper)</option>
+                <option value="4">4 rounds (most thorough)</option>
+              </select>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+              <button type="submit" class="btn btn-primary">Ask agent</button>
+              <button type="button" id="clearConversation" class="btn btn-outline-secondary">Clear conversation</button>
+            </div>
+          </form>
+
+          <div id="chatLog" class="d-flex flex-column gap-3" aria-live="polite"></div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const form = document.getElementById('agentForm');
+      const promptInput = document.getElementById('agentPrompt');
+      const improvementDepthInput = document.getElementById('improvementDepth');
+      const chatLog = document.getElementById('chatLog');
+      const clearConversationButton = document.getElementById('clearConversation');
+      const premiumGate = document.getElementById('premiumGate');
+      const sharedResultBanner = document.getElementById('sharedResultBanner');
+      let premiumAccess = false;
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function englishGematria(text) {
+        let total = 0;
+        for (const char of String(text || '').toUpperCase()) {
+          const code = char.charCodeAt(0);
+          if (code >= 65 && code <= 90) {
+            total += (code - 64) * 6;
+          }
+        }
+        return total;
+      }
+
+      function digitalRoot(numberValue) {
+        let root = Math.abs(Math.trunc(Number(numberValue) || 0));
+        while (root >= 10) {
+          root = String(root).split('').reduce((sum, digit) => sum + Number(digit), 0);
+        }
+        return root;
+      }
+
+      function extractPrimaryText(prompt) {
+        const quoted = String(prompt || '').match(/"([^"]+)"|'([^']+)'/);
+        const candidate = quoted ? (quoted[1] || quoted[2]) : String(prompt || '');
+        return candidate.replace(/\s+/g, ' ').trim();
+      }
+
+      function addMessage(role, contentHtml) {
+        const wrapper = document.createElement('article');
+        wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
+        wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'Gematria AI Agent' : 'You'}</p>${contentHtml}`;
+        chatLog.prepend(wrapper);
+      }
+
+      function getCanonicalOrigin() {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return window.location.origin;
+        }
+        return window.location.protocol === 'https:' ? window.location.origin : `https://${window.location.host}`;
+      }
+
+      function buildAgentShareUrl({ topic, total, root, matches, rounds }) {
+        const shareUrl = new URL('/api/ai-agent-share', getCanonicalOrigin());
+        shareUrl.searchParams.set('topic', topic);
+        shareUrl.searchParams.set('total', String(total));
+        shareUrl.searchParams.set('root', String(root));
+        shareUrl.searchParams.set('matches', String(matches ?? ''));
+        shareUrl.searchParams.set('rounds', String(rounds));
+        return shareUrl.toString();
+      }
+
+      async function ensurePremiumAccess() {
+        try {
+          const response = await fetch('/api/member-session', { credentials: 'include' });
+          const payload = await response.json();
+          const level = String(payload?.member?.membershipLevel || '').toLowerCase();
+          premiumAccess = Boolean(payload?.authenticated) && (level === 'premium' || level === 'lifetime');
+        } catch {
+          premiumAccess = false;
+        }
+
+        if (!premiumAccess) {
+          premiumGate.hidden = false;
+          premiumGate.innerHTML = 'Gematria AI Agent is a <strong>premium member feature</strong>. Please <a href="/member.html" class="alert-link">log in or upgrade your membership</a> to use agent analysis and sharing.';
+          form.querySelectorAll('textarea, select, button[type=\"submit\"]').forEach((field) => {
+            field.disabled = true;
+          });
+          return;
+        }
+
+        premiumGate.hidden = true;
+      }
+
+      function showSharedResultIfPresent() {
+        const params = new URLSearchParams(window.location.search);
+        const topic = String(params.get('sharedTopic') || '').trim();
+        const total = String(params.get('sharedTotal') || '').trim();
+        const root = String(params.get('sharedRoot') || '').trim();
+        const matches = String(params.get('sharedMatches') || '').trim();
+        const rounds = String(params.get('sharedRounds') || '').trim();
+        if (!topic || !total) return;
+
+        sharedResultBanner.hidden = false;
+        sharedResultBanner.innerHTML = `<strong>Shared agent result:</strong> ${escapeHtml(topic)} → total ${escapeHtml(total)}, digital root ${escapeHtml(root || '?')}, matches ${escapeHtml(matches || 'n/a')}, rounds ${escapeHtml(rounds || 'n/a')}.`;
+      }
+
+      async function fetchMatchCount(total) {
+        try {
+          const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(total))}`);
+          if (!response.ok) return null;
+          const payload = await response.json();
+          return Number(payload?.count);
+        } catch {
+          return null;
+        }
+      }
+
+      async function fetchDefinitionSummary(topic) {
+        try {
+          const response = await fetch(`/api/wordnikDefinition?word=${encodeURIComponent(topic)}`);
+          if (!response.ok) return null;
+          const payload = await response.json();
+          const firstDefinition = Array.isArray(payload?.definitions) ? payload.definitions[0] : null;
+          const definitionText = String(firstDefinition?.text || '').replace(/\s+/g, ' ').trim();
+          return definitionText || null;
+        } catch {
+          return null;
+        }
+      }
+
+      async function fetchRelatedWordsSummary(topic) {
+        try {
+          const response = await fetch(`/api/wordnikRelatedWords?word=${encodeURIComponent(topic)}&limit=8`);
+          if (!response.ok) return [];
+          const payload = await response.json();
+          const buckets = Array.isArray(payload?.data) ? payload.data : [];
+          const words = buckets.flatMap((bucket) => Array.isArray(bucket?.words) ? bucket.words : []);
+          return [...new Set(words.map((word) => String(word || '').trim()).filter(Boolean))].slice(0, 6);
+        } catch {
+          return [];
+        }
+      }
+
+      async function buildAgentReply(prompt) {
+        const topic = extractPrimaryText(prompt);
+        if (!topic) {
+          return '<p class="mb-0">Please share a word, phrase, or name so I can calculate and discuss it.</p>';
+        }
+
+        const total = englishGematria(topic);
+        const root = digitalRoot(total);
+        const isBaseRoot = total >= 6 && (total - 6) % 54 === 0;
+        const [matchCount, definitionSummary, relatedWords] = await Promise.all([
+          fetchMatchCount(total),
+          fetchDefinitionSummary(topic),
+          fetchRelatedWordsSummary(topic)
+        ]);
+
+        const iterations = Math.max(1, Math.min(4, Number(improvementDepthInput?.value || 2)));
+
+        function refineAnalysis(previousStep, round) {
+          const nuance = matchCount === null
+            ? 'Archive count is temporarily unavailable, so prioritize manual grouping checks this round.'
+            : matchCount === 0
+              ? 'No archived matches yet; this could be a new lead, so validate with spelling variants and adjacent concepts.'
+              : `There ${matchCount === 1 ? 'is' : 'are'} ${matchCount} archived ${matchCount === 1 ? 'match' : 'matches'}; inspect semantic quality, not only numeric overlap.`;
+
+          const confidence = isBaseRoot
+            ? 'Moderate: base-root alignment can signal structure, but context still decides meaning.'
+            : 'Provisional: no base-root alignment, so require stronger thematic evidence.';
+
+          return {
+            round,
+            focus: round === 1
+              ? 'Establish numeric baseline.'
+              : `Improve round ${round} by stress-testing the previous interpretation for bias and missing context.`,
+            critique: `Prior step recap: ${previousStep.focus} ${previousStep.critique || ''}`.trim(),
+            upgrade: `${nuance} ${confidence}`,
+            nextAction: round % 2 === 0
+              ? 'Run at least 3 semantic neighbors and compare both full totals and digital roots.'
+              : 'Run spelling/title variants and document non-matches equally with matches.'
+          };
+        }
+
+        const recursiveSteps = [];
+        let currentStep = {
+          round: 0,
+          focus: 'Starting point from your prompt.',
+          critique: 'No prior critique yet.',
+          upgrade: 'Will improve recursively.',
+          nextAction: 'Generate baseline.'
+        };
+
+        for (let round = 1; round <= iterations; round += 1) {
+          currentStep = refineAnalysis(currentStep, round);
+          recursiveSteps.push(currentStep);
+        }
+
+        const finalStep = recursiveSteps[recursiveSteps.length - 1];
+
+        return `
+          <p class="mb-2">For <strong>${escapeHtml(topic)}</strong>, here is the current gematria snapshot:</p>
+          <ul class="mb-3">
+            <li><strong>Total:</strong> ${total}</li>
+            <li><strong>Digital root:</strong> ${root}</li>
+            <li><strong>Base-root pattern:</strong> ${isBaseRoot ? 'Yes' : 'No'}</li>
+            <li><strong>Current archived matches:</strong> ${Number.isFinite(matchCount) ? matchCount : 'Unavailable right now'}</li>
+          </ul>
+          <p class="mb-2"><strong>Recursive improvement trail (${iterations} round${iterations === 1 ? '' : 's'})</strong></p>
+          <ol class="mb-3">
+            ${recursiveSteps.map((step) => `<li><strong>Round ${step.round}:</strong> ${escapeHtml(step.focus)} ${escapeHtml(step.upgrade)}</li>`).join('')}
+          </ol>
+          <p class="mb-2"><strong>Current best pass (round ${finalStep.round})</strong></p>
+          <p class="mb-3">${escapeHtml(finalStep.nextAction)}</p>
+          <p class="mb-2"><strong>Discussion prompts</strong></p>
+          <ol class="mb-0">
+            <li>Try close spelling variants of <strong>${escapeHtml(topic)}</strong>.</li>
+            <li>Compare total + digital root together before drawing conclusions.</li>
+            <li>Group semantically related words to test whether the number repeats in a real theme.</li>
+            <li>After each new finding, rerun ${iterations > 1 ? 'another' : 'a'} recursive pass to challenge your own conclusion.</li>
+          </ol>
+          <hr />
+          <p class="mb-2"><strong>Suggested next lookups</strong></p>
+          <ul class="mb-0">
+            <li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary lookup page for "${escapeHtml(topic)}"</a>${definitionSummary ? ` — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}` : ''}</li>
+            <li><a href="/api/wordnikRelatedWords?word=${encodeURIComponent(topic)}&limit=25" target="_blank" rel="noopener noreferrer">Related words lookup (JSON)</a>${relatedWords.length ? ` — Try these first: ${escapeHtml(relatedWords.join(', '))}` : ''}</li>
+            <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(topic)}"</a></li>
+          </ul>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary mt-3 agent-share-button"
+            data-topic="${escapeHtml(topic)}"
+            data-total="${total}"
+            data-root="${root}"
+            data-matches="${Number.isFinite(matchCount) ? matchCount : ''}"
+            data-rounds="${iterations}"
+          >
+            Share result card (OG JPG)
+          </button>
+        `;
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!premiumAccess) return;
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
+        addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`);
+        promptInput.value = '';
+
+        window.showWorkingOverlay?.();
+        const replyHtml = await buildAgentReply(prompt);
+        window.hideWorkingOverlay?.();
+        addMessage('assistant', replyHtml);
+      });
+
+      clearConversationButton.addEventListener('click', () => {
+        chatLog.innerHTML = '';
+        promptInput.focus();
+      });
+
+      chatLog.addEventListener('click', async (event) => {
+        const button = event.target.closest('.agent-share-button');
+        if (!button) return;
+
+        const meta = {
+          topic: String(button.dataset.topic || '').trim(),
+          total: String(button.dataset.total || '').trim(),
+          root: String(button.dataset.root || '').trim(),
+          matches: String(button.dataset.matches || '').trim(),
+          rounds: String(button.dataset.rounds || '').trim()
+        };
+        const shareUrl = buildAgentShareUrl(meta);
+        const shareText = `Gematria AI Agent: ${meta.topic} → total ${meta.total}, root ${meta.root}`;
+
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: 'Gematria AI Agent result', text: shareText, url: shareUrl });
+            return;
+          } catch {
+            // fall through to clipboard
+          }
+        }
+
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(shareUrl);
+          window.alert('Share link copied to clipboard.');
+        } else {
+          window.prompt('Copy this share link:', shareUrl);
+        }
+      });
+
+      ensurePremiumAccess();
+      showSharedResultIfPresent();
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>

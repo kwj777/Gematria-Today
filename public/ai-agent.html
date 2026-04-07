@@ -683,19 +683,21 @@
           }
         }
 
+        if (fallbackShareUrl) {
+          const popup = window.open(fallbackShareUrl, '_blank', 'noopener,noreferrer');
+          if (popup) {
+            return true;
+          }
+        }
+
         if (navigator.clipboard?.writeText) {
           try {
             await navigator.clipboard.writeText(sharePayload.url);
             window.alert('Share link copied to clipboard.');
             return true;
           } catch {
-            // Fall through to popup/prompt fallback.
+            // Fall through to prompt fallback.
           }
-        }
-
-        if (fallbackShareUrl) {
-          window.open(fallbackShareUrl, '_blank', 'noopener,noreferrer');
-          return true;
         }
 
         window.prompt('Copy this link to share:', sharePayload.url);

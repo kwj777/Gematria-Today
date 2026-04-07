@@ -21,8 +21,6 @@ export default async function onRequest(request) {
   const topic = truncate(url.searchParams.get('topic') || 'Gematria Agent Result', 72);
   const total = String(url.searchParams.get('total') || '?').trim();
   const root = String(url.searchParams.get('root') || '?').trim();
-  const matches = String(url.searchParams.get('matches') || 'n/a').trim() || 'n/a';
-  const rounds = String(url.searchParams.get('rounds') || '2').trim();
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
@@ -38,8 +36,7 @@ export default async function onRequest(request) {
   <rect x="72" y="240" rx="18" ry="18" width="1056" height="280" fill="rgba(8,16,28,.45)" stroke="rgba(190,214,238,.45)" />
   <text x="112" y="320" fill="#f4f8fc" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700">Gematria Total: ${escapeXml(total)}</text>
   <text x="112" y="382" fill="#d4e4f6" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${escapeXml(root)}</text>
-  <text x="112" y="438" fill="#d4e4f6" font-size="36" font-family="Inter, Arial, sans-serif">Archive Matches: ${escapeXml(matches)}</text>
-  <text x="112" y="494" fill="#d4e4f6" font-size="36" font-family="Inter, Arial, sans-serif">Recursive Rounds: ${escapeXml(rounds)}</text>
+  <text x="112" y="438" fill="#d4e4f6" font-size="32" font-family="Inter, Arial, sans-serif">Shared from endtimes.today/ai-agent lookup</text>
   <text x="72" y="586" fill="#a8c4e4" font-size="28" font-family="Inter, Arial, sans-serif">endtimes.today</text>
 </svg>`;
 

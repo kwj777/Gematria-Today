@@ -51,23 +51,31 @@ function tokenize(input = '') {
 function scoreDocument(query, terms, document) {
   const haystack = `${document.title} ${document.text}`.toLowerCase();
   let score = 0;
+  const matchedTerms = new Set();
 
   for (const term of terms) {
     const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`, 'g');
     const matches = haystack.match(regex);
     if (matches) {
       score += matches.length;
+      matchedTerms.add(term);
       if (document.title.toLowerCase().includes(term)) {
         score += 2;
       }
     }
   }
 
+  let hasExactPhraseMatch = false;
   if (query.length >= 6 && haystack.includes(query.toLowerCase())) {
     score += 4;
+    hasExactPhraseMatch = true;
   }
 
-  return score;
+  return {
+    score,
+    matchedTerms: matchedTerms.size,
+    hasExactPhraseMatch,
+  };
 }
 
 function buildSnippet(text, terms) {
@@ -201,14 +209,19 @@ export async function handler(event) {
     const corpus = await loadCorpus(sql);
     const ranked = corpus
       .map((entry) => {
-        const score = scoreDocument(query, terms, entry);
+        const { score, matchedTerms, hasExactPhraseMatch } = scoreDocument(query, terms, entry);
+        const minTermMatches = terms.length >= 2 ? 2 : 1;
+        const passesRelevanceGate = hasExactPhraseMatch || matchedTerms >= minTermMatches;
         return {
           ...entry,
           score,
+          matchedTerms,
+          hasExactPhraseMatch,
+          passesRelevanceGate,
           snippet: buildSnippet(entry.text, terms),
         };
       })
-      .filter((entry) => entry.score > 0)
+      .filter((entry) => entry.score > 0 && entry.passesRelevanceGate)
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_RESULTS)
       .map((entry) => ({

@@ -29,7 +29,7 @@ export async function handler(event) {
       route: 'public-faqs',
       ttlSeconds: 300,
       compute: async () => {
-        const rows = await sql`SELECT * FROM faqs WHERE is_published = TRUE ORDER BY sort_order ASC, created_at ASC`;
+        const rows = await sql`SELECT * FROM faqs WHERE is_published = TRUE ORDER BY sort_order ASC, created_at ASC LIMIT 1000`;
         return { items: rows.map(formatFaq) };
       },
     });

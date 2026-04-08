@@ -1,12 +1,13 @@
 import crypto from 'node:crypto';
 import { formatFaq, getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMethod } from './_admin.mjs';
+import { clearCachedJson } from './_security.mjs';
 
 export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
     return await routeByHttpMethod(event, {
       GET: async () => {
-      const rows = await sql`SELECT * FROM faqs ORDER BY sort_order ASC, created_at ASC`;
+      const rows = await sql`SELECT * FROM faqs ORDER BY sort_order ASC, created_at ASC LIMIT 1000`;
       return jsonResponse(200, { items: rows.map(formatFaq) });
       },
 
@@ -31,6 +32,7 @@ export async function handler(event) {
         )
         RETURNING *
       `;
+      await clearCachedJson(sql, { route: 'public-faqs' });
       return jsonResponse(201, { item: formatFaq(rows[0]) });
       },
 
@@ -61,6 +63,7 @@ export async function handler(event) {
         return jsonResponse(404, { error: 'FAQ entry not found' });
       }
 
+      await clearCachedJson(sql, { route: 'public-faqs' });
       return jsonResponse(200, { item: formatFaq(rows[0]) });
       },
 
@@ -70,6 +73,7 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'Missing FAQ id' });
       }
       await sql`DELETE FROM faqs WHERE id = ${id}`;
+      await clearCachedJson(sql, { route: 'public-faqs' });
       return jsonResponse(200, { deleted: true });
       },
     });

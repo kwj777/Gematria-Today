@@ -63,6 +63,21 @@
             <p id="answerText" class="mb-4"></p>
             <h3 class="h6 text-uppercase text-muted">Sources</h3>
             <ul id="sourceList" class="list-group"></ul>
+            <section id="resultFeedbackPanel" class="mt-4 border rounded p-3 bg-light d-none">
+              <h3 class="h6 mb-2">Were these the expected results?</h3>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <button id="feedbackYesButton" type="button" class="btn btn-sm btn-outline-success">Yes</button>
+                <button id="feedbackNoButton" type="button" class="btn btn-sm btn-outline-danger">No</button>
+              </div>
+              <div id="feedbackNoForm" class="d-none">
+                <label class="form-label small fw-semibold" for="feedbackText">What was off about the search results?</label>
+                <textarea id="feedbackText" class="form-control form-control-sm" rows="3" maxlength="1500" placeholder="Example: It matched the wrong topic and missed the FAQ section I expected."></textarea>
+                <div class="mt-2 d-flex gap-2">
+                  <button id="submitFeedbackButton" type="button" class="btn btn-sm btn-primary">Send feedback to admin panel</button>
+                </div>
+              </div>
+              <p id="feedbackStatus" class="small text-muted mt-2 mb-0"></p>
+            </section>
           </article>
         </section>
       </div>
@@ -76,6 +91,14 @@
       const answerText = document.getElementById('answerText');
       const sourceList = document.getElementById('sourceList');
       const clearResultsButton = document.getElementById('clearResults');
+      const resultFeedbackPanel = document.getElementById('resultFeedbackPanel');
+      const feedbackYesButton = document.getElementById('feedbackYesButton');
+      const feedbackNoButton = document.getElementById('feedbackNoButton');
+      const feedbackNoForm = document.getElementById('feedbackNoForm');
+      const feedbackText = document.getElementById('feedbackText');
+      const submitFeedbackButton = document.getElementById('submitFeedbackButton');
+      const feedbackStatus = document.getElementById('feedbackStatus');
+      let latestSearchPayload = null;
 
       function escapeHtml(value) {
         return String(value || '')
@@ -98,6 +121,48 @@
           const safeSnippet = escapeHtml(source.snippet || '');
           return `<li class="list-group-item"><div class="fw-semibold">${safeTitle}</div><a href="${safeUrl}" class="small" target="_blank" rel="noopener">${safeUrl}</a><p class="small text-muted mb-0 mt-2">${safeSnippet}</p></li>`;
         }).join('');
+      }
+
+      async function submitFeedback(wasExpected) {
+        if (!latestSearchPayload?.query) return;
+        const message = String(feedbackText?.value || '').trim();
+        if (wasExpected === false && !message) {
+          feedbackStatus.className = 'small text-danger mt-2 mb-0';
+          feedbackStatus.textContent = 'Please share what you expected so the admin panel gets actionable feedback.';
+          return;
+        }
+
+        feedbackStatus.className = 'small text-muted mt-2 mb-0';
+        feedbackStatus.textContent = 'Sending feedback…';
+
+        try {
+          const response = await fetch('/api/admin-chatbot-feedback', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              query: latestSearchPayload.query,
+              cleanedQuery: latestSearchPayload.query,
+              answerText: latestSearchPayload.answer || '',
+              sources: latestSearchPayload.sources || [],
+              wasExpected,
+              feedbackText: wasExpected ? '' : message,
+            }),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload?.error || 'Unable to send feedback.');
+
+          feedbackStatus.className = 'small text-success mt-2 mb-0';
+          feedbackStatus.textContent = wasExpected
+            ? 'Thanks for confirming these results were expected.'
+            : 'Thanks. Your feedback was sent to the admin dashboard panel.';
+          if (wasExpected === false) {
+            feedbackNoForm.classList.add('d-none');
+          }
+        } catch (error) {
+          feedbackStatus.className = 'small text-danger mt-2 mb-0';
+          feedbackStatus.textContent = error.message || 'Unable to send feedback right now.';
+        }
       }
 
       async function verifySession() {
@@ -147,6 +212,12 @@
           answerText.textContent = payload.answer || 'No response generated.';
           renderSources(payload.sources || []);
           chatResult.classList.remove('d-none');
+          latestSearchPayload = payload;
+          feedbackNoForm.classList.add('d-none');
+          feedbackText.value = '';
+          feedbackStatus.className = 'small text-muted mt-2 mb-0';
+          feedbackStatus.textContent = 'Please confirm whether these were the expected results.';
+          resultFeedbackPanel.classList.remove('d-none');
 
           statusMessage.className = 'alert alert-success';
           statusMessage.textContent = `Search complete. Indexed entries: ${Number(payload.corpusSize || 0)}.`;
@@ -160,10 +231,25 @@
         chatQuestion.value = '';
         sourceList.innerHTML = '';
         answerText.textContent = '';
+        latestSearchPayload = null;
+        feedbackText.value = '';
+        feedbackNoForm.classList.add('d-none');
+        resultFeedbackPanel.classList.add('d-none');
+        feedbackStatus.className = 'small text-muted mt-2 mb-0';
+        feedbackStatus.textContent = '';
         chatResult.classList.add('d-none');
         statusMessage.className = 'alert alert-success';
         statusMessage.textContent = 'Ready for the next search.';
       });
+
+      feedbackYesButton?.addEventListener('click', () => submitFeedback(true));
+      feedbackNoButton?.addEventListener('click', () => {
+        feedbackNoForm.classList.remove('d-none');
+        feedbackStatus.className = 'small text-muted mt-2 mb-0';
+        feedbackStatus.textContent = 'Tell us what you expected, then send feedback.';
+        feedbackText.focus();
+      });
+      submitFeedbackButton?.addEventListener('click', () => submitFeedback(false));
 
       verifySession();
     </script>

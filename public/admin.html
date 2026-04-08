@@ -214,6 +214,25 @@
               </section>
             </div>
 
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#chatbotFeedbackBody" aria-expanded="false" aria-controls="chatbotFeedbackBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Site Chatbot</span>
+                    <span class="h4 mb-0 d-block">Search feedback panel</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span id="chatbotFeedbackPendingBadge" class="badge text-bg-danger">0 new</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="chatbotFeedbackBody" class="collapse admin-section-body mt-4">
+                  <p class="text-muted small">Review search-quality feedback from chatbot sessions and reply directly. Replies appear in the member dashboard feedback panel.</p>
+                  <div id="chatbotFeedbackList" class="admin-list"></div>
+                </div>
+              </section>
+            </div>
+
             <div class="col-md-6 admin-dashboard-masonry-item d-none" data-admin-workspace="content" data-module="deprecated-post-form">
               <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <a class="admin-section-toggle" href="/admin-posts.html" aria-label="Open blog post management page">
@@ -567,7 +586,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -1149,11 +1168,42 @@
           </article>`).join('') : '<p class="text-muted small mb-0">No proposals yet.</p>';
       }
 
+      function renderChatbotFeedback() {
+        const list = document.getElementById('chatbotFeedbackList');
+        const pendingBadge = document.getElementById('chatbotFeedbackPendingBadge');
+        const newCount = state.chatbotFeedback.filter((item) => (item.status || 'new') === 'new').length;
+        if (pendingBadge) {
+          pendingBadge.textContent = `${newCount} new`;
+        }
+        if (!list) return;
+
+        list.innerHTML = state.chatbotFeedback.length ? state.chatbotFeedback.map((item) => `
+          <article class="admin-item-card mb-3 p-3">
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span class="badge ${(item.status || 'new') === 'new' ? 'text-bg-danger' : 'text-bg-secondary'}">${escapeHtml(item.status || 'new')}</span>
+              <span class="badge text-bg-light">${escapeHtml(new Date(item.createdAt).toLocaleString())}</span>
+              ${typeof item.wasExpected === 'boolean' ? `<span class="badge ${item.wasExpected ? 'text-bg-success' : 'text-bg-warning'}">${item.wasExpected ? 'expected' : 'unexpected'}</span>` : ''}
+            </div>
+            <p class="small mb-1"><strong>Query:</strong> ${escapeHtml(item.query || '')}</p>
+            ${item.feedbackText ? `<p class="small mb-1"><strong>Member feedback:</strong> ${escapeHtml(item.feedbackText)}</p>` : '<p class="small text-muted mb-1">No free-text notes were provided.</p>'}
+            ${item.adminReply ? `<p class="small mb-1"><strong>Current admin reply:</strong> ${escapeHtml(item.adminReply)}</p>` : ''}
+            <label class="form-label form-label-sm mt-2" for="feedbackReply-${escapeHtml(item.id)}">Reply for member dashboard</label>
+            <textarea id="feedbackReply-${escapeHtml(item.id)}" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Write a response that the member will see in their dashboard.">${escapeHtml(item.adminReply || '')}</textarea>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm btn-primary" type="button" data-submit-feedback-reply="${escapeHtml(item.id)}">Save reply</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-feedback-reviewed="${escapeHtml(item.id)}">Mark reviewed</button>
+              <button class="btn btn-sm btn-outline-dark" type="button" data-mark-feedback-closed="${escapeHtml(item.id)}">Close</button>
+            </div>
+          </article>
+        `).join('') : '<p class="text-muted small mb-0">No chatbot feedback submitted yet.</p>';
+      }
+
       async function refreshDashboard() {
-        const [feeds, posts, proposals, faqs, tasks, settings, schemaFaqEntries] = await Promise.all([
+        const [feeds, posts, proposals, chatbotFeedback, faqs, tasks, settings, schemaFaqEntries] = await Promise.all([
           request('/api/admin-feeds'),
           request('/api/admin-posts'),
           request('/api/admin-blog-proposals'),
+          request('/api/admin-chatbot-feedback'),
           request('/api/admin-faqs'),
           request('/api/admin-tasks'),
           request('/api/admin-settings'),
@@ -1162,6 +1212,7 @@
         state.feeds = feeds.items || [];
         state.posts = posts.items || [];
         state.proposals = proposals.items || [];
+        state.chatbotFeedback = chatbotFeedback.items || [];
         state.faqs = faqs.items || [];
         state.schemaFaqs = schemaFaqEntries || [];
         state.tasks = tasks.items || [];
@@ -1171,6 +1222,7 @@
         renderFeeds();
         renderPosts();
         renderBlogProposals();
+        renderChatbotFeedback();
         renderFaqs();
         renderTasks();
         renderStripeSettings();
@@ -1667,7 +1719,10 @@
           editEmailTemplate,
           loadProposal,
           markProposalReviewed,
-          markProposalPending
+          markProposalPending,
+          submitFeedbackReply,
+          markFeedbackReviewed,
+          markFeedbackClosed
         } = event.target.dataset;
         if (enableSecret) {
           const stateKey = ({ stripeSecretKey: 'replaceStripeSecretKey', stripeWebhookSigningSecret: 'replaceStripeWebhookSigningSecret', sendgridApiKey: 'replaceSendgridApiKey' })[enableSecret];
@@ -1680,7 +1735,7 @@
           }
           return;
         }
-        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate && !loadProposal && !markProposalReviewed && !markProposalPending) {
+        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate && !loadProposal && !markProposalReviewed && !markProposalPending && !submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed) {
           return;
         }
         clearMessage(errorMessage);
@@ -1728,6 +1783,27 @@
               body: JSON.stringify({ id: proposalId, status: nextStatus }),
             });
             showMessage(saveMessage, `Proposal marked as ${nextStatus}.`);
+          }
+          if (submitFeedbackReply) {
+            const replyField = document.getElementById(`feedbackReply-${submitFeedbackReply}`);
+            const adminReply = String(replyField?.value || '').trim();
+            if (!adminReply) {
+              throw new Error('Please enter a reply before saving.');
+            }
+            await request('/api/admin-chatbot-feedback', {
+              method: 'PATCH',
+              body: JSON.stringify({ id: submitFeedbackReply, adminReply }),
+            });
+            showMessage(saveMessage, 'Feedback reply saved and posted to the member dashboard.');
+          }
+          if (markFeedbackReviewed || markFeedbackClosed) {
+            const feedbackId = markFeedbackReviewed || markFeedbackClosed;
+            const status = markFeedbackReviewed ? 'reviewed' : 'closed';
+            await request('/api/admin-chatbot-feedback', {
+              method: 'PATCH',
+              body: JSON.stringify({ id: feedbackId, status }),
+            });
+            showMessage(saveMessage, `Feedback marked as ${status}.`);
           }
           if (deleteFeed) {
             await request(`/api/admin-feeds?id=${encodeURIComponent(deleteFeed)}`, { method: 'DELETE' });

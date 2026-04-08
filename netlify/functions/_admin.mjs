@@ -261,6 +261,59 @@ export async function ensureAdminSchema(sql) {
   await sql`CREATE INDEX IF NOT EXISTS blog_post_proposals_status_created_idx
     ON blog_post_proposals (status, created_at DESC)`;
 
+  await sql`CREATE TABLE IF NOT EXISTS chatbot_search_feedback (
+    id TEXT PRIMARY KEY,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    query TEXT NOT NULL,
+    cleaned_query TEXT,
+    answer_text TEXT,
+    sources_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    was_expected BOOLEAN,
+    feedback_text TEXT,
+    status TEXT NOT NULL DEFAULT 'new',
+    admin_reply TEXT,
+    replied_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    replied_at TIMESTAMPTZ,
+    archived_by_member_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+
+  await sql`ALTER TABLE chatbot_search_feedback
+    ADD COLUMN IF NOT EXISTS cleaned_query TEXT,
+    ADD COLUMN IF NOT EXISTS answer_text TEXT,
+    ADD COLUMN IF NOT EXISTS sources_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    ADD COLUMN IF NOT EXISTS was_expected BOOLEAN,
+    ADD COLUMN IF NOT EXISTS feedback_text TEXT,
+    ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'new',
+    ADD COLUMN IF NOT EXISTS admin_reply TEXT,
+    ADD COLUMN IF NOT EXISTS replied_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS replied_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS archived_by_member_at TIMESTAMPTZ`;
+
+  await sql`UPDATE chatbot_search_feedback
+    SET status = 'new'
+    WHERE status IS NULL OR BTRIM(status) = ''`;
+
+  await sql`DO $$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conname = 'chatbot_search_feedback_status_check'
+    ) THEN
+      ALTER TABLE chatbot_search_feedback
+      ADD CONSTRAINT chatbot_search_feedback_status_check
+      CHECK (status IN ('new', 'reviewed', 'replied', 'closed'));
+    END IF;
+  END
+  $$`;
+
+  await sql`CREATE INDEX IF NOT EXISTS chatbot_search_feedback_created_idx
+    ON chatbot_search_feedback (status, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS chatbot_search_feedback_user_created_idx
+    ON chatbot_search_feedback (user_id, created_at DESC)`;
+
   await sql`CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,

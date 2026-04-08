@@ -404,6 +404,15 @@
                   </div>
                 </section>
                 <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
+                  <p class="section-kicker mb-2">Site Chatbot Feedback</p>
+                  <h3 class="h4 mb-2">Search quality feedback</h3>
+                  <p class="text-muted mb-3">Tell us when the site chatbot misses your intent. Admin replies appear in your dashboard.</p>
+                  <form id="chatbotFeedbackForm" class="row g-3 mb-3">
+                    <div class="col-12"><label class="form-label" for="chatbotFeedbackQuery">Search query</label><input id="chatbotFeedbackQuery" class="form-control" maxlength="400" placeholder="What did you search for?" required /></div>
+                    <div class="col-12"><label class="form-label" for="chatbotFeedbackText">What should improve?</label><textarea id="chatbotFeedbackText" class="form-control" rows="3" maxlength="1500" placeholder="Describe what was missing or incorrect." required></textarea></div>
+                    <div class="col-12 d-grid"><button id="chatbotFeedbackSubmitButton" class="btn btn-outline-primary" type="submit">Send chatbot feedback</button></div>
+                  </form>
+                  <div id="memberChatbotFeedbackList" class="admin-list mb-4"></div>
                   <p class="section-kicker mb-2">Profile</p>
                   <h3 class="h4 mb-3">Preferences</h3>
                   <form id="profileForm" class="row g-3">
@@ -501,6 +510,9 @@
       const premiumBlogProposalToggleLabel = document.getElementById('premiumBlogProposalToggleLabel');
       const premiumBlogProposalToggleArrow = document.getElementById('premiumBlogProposalToggleArrow');
       const memberProposalFeedbackList = document.getElementById('memberProposalFeedbackList');
+      const memberChatbotFeedbackList = document.getElementById('memberChatbotFeedbackList');
+      const chatbotFeedbackForm = document.getElementById('chatbotFeedbackForm');
+      const chatbotFeedbackSubmitButton = document.getElementById('chatbotFeedbackSubmitButton');
       const blogProposalAttribution = document.getElementById('blogProposalAttribution');
       const blogSubscriptionSection = document.getElementById('blogSubscriptionSection');
       const blogSubscriptionForm = document.getElementById('blogSubscriptionForm');
@@ -518,6 +530,7 @@
       let paymentConfirmationInFlight = false;
       let membershipHeroReady = false;
       let memberProposals = [];
+      let memberChatbotFeedback = [];
       let recentForumThreads = [];
       let chatSessions = [];
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
@@ -1091,6 +1104,49 @@
         }).join('');
       }
 
+      function renderMemberChatbotFeedback() {
+        if (!memberChatbotFeedbackList) {
+          return;
+        }
+
+        memberChatbotFeedbackList.innerHTML = memberChatbotFeedback.length ? memberChatbotFeedback.map((item) => {
+          const hasReply = Boolean(item.adminReply);
+          const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleString() : '';
+          const repliedAt = item.repliedAt ? new Date(item.repliedAt).toLocaleString() : '';
+          return `
+            <article class="admin-item-card p-3 mb-2">
+              <div class="d-flex justify-content-between align-items-center gap-2">
+                <strong>${escapeHtml(item.query || 'Search feedback')}</strong>
+                <span class="badge text-bg-${hasReply ? 'success' : 'secondary'}">${hasReply ? 'replied' : 'pending'}</span>
+              </div>
+              ${item.feedbackText ? `<p class="small mb-1 mt-2"><strong>Your feedback:</strong> ${escapeHtml(item.feedbackText)}</p>` : ''}
+              ${hasReply
+                ? `<div class="alert alert-info small mb-2 mt-2"><strong>Admin reply:</strong> ${escapeHtml(item.adminReply)}</div>`
+                : '<p class="small text-muted mb-2 mt-2">Awaiting admin reply.</p>'}
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="small text-muted">${hasReply && repliedAt ? `Replied: ${escapeHtml(repliedAt)}` : `Submitted: ${escapeHtml(createdAt)}`}</span>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-archive-chatbot-feedback="${escapeHtml(item.id)}">Archive</button>
+              </div>
+            </article>
+          `;
+        }).join('') : '<p class="text-muted mb-0">No chatbot feedback submitted yet.</p>';
+      }
+
+      async function loadMemberChatbotFeedback() {
+        if (!session?.member) {
+          memberChatbotFeedback = [];
+          renderMemberChatbotFeedback();
+          return;
+        }
+        try {
+          const payload = await request('/api/member-chatbot-feedback', { method: 'GET' });
+          memberChatbotFeedback = Array.isArray(payload.items) ? payload.items : [];
+        } catch (_) {
+          memberChatbotFeedback = [];
+        }
+        renderMemberChatbotFeedback();
+      }
+
       async function loadMemberProposals() {
         if (!session?.member) {
           memberProposals = [];
@@ -1120,6 +1176,15 @@
             tone: 'warning',
             title: `${reviewedProposals.length} proposal update${reviewedProposals.length === 1 ? '' : 's'} from admin`,
             body: 'You have response messages on your submitted blog proposals. Open your proposal panel to review and archive them.',
+          });
+        }
+
+        const repliedFeedbackCount = memberChatbotFeedback.filter((item) => Boolean(item.adminReply)).length;
+        if (repliedFeedbackCount) {
+          entries.push({
+            tone: 'success',
+            title: `${repliedFeedbackCount} chatbot feedback repl${repliedFeedbackCount === 1 ? 'y' : 'ies'} from admin`,
+            body: 'Open your Search quality feedback panel to read admin responses.',
           });
         }
 
@@ -1652,6 +1717,7 @@
           await loadHistory();
           await loadChatSessions();
           await loadMemberProposals();
+          await loadMemberChatbotFeedback();
 
           if (paymentState === 'success' && stripeSessionId) {
             await confirmStripePayment(stripeSessionId);
@@ -1668,6 +1734,7 @@
           chatSessions = [];
           renderChatSessions();
           await loadMemberProposals();
+          await loadMemberChatbotFeedback();
           if (paymentState === 'success') {
             showAlert('Sign in to finish activating your Stripe payment.', 'warning');
           }
@@ -1761,6 +1828,7 @@
           await loadHistory();
           await loadChatSessions();
           await loadMemberProposals();
+          await loadMemberChatbotFeedback();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
         }
@@ -1869,6 +1937,56 @@
         }
       });
 
+      memberChatbotFeedbackList?.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-archive-chatbot-feedback]');
+        if (!button) {
+          return;
+        }
+        clearAlert();
+        button.disabled = true;
+        try {
+          await request('/api/member-chatbot-feedback', {
+            method: 'PATCH',
+            body: JSON.stringify({ id: button.dataset.archiveChatbotFeedback, action: 'archive' }),
+          });
+          memberChatbotFeedback = memberChatbotFeedback.filter((item) => item.id !== button.dataset.archiveChatbotFeedback);
+          renderMemberChatbotFeedback();
+          renderForumNotifications();
+          showAlert('Chatbot feedback archived.', 'success');
+        } catch (error) {
+          showAlert(error.message || 'Unable to archive chatbot feedback.');
+          button.disabled = false;
+        }
+      });
+
+      chatbotFeedbackForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearAlert();
+        if (!session?.member) {
+          showAlert('Sign in before sending chatbot feedback.', 'warning');
+          return;
+        }
+        chatbotFeedbackSubmitButton.disabled = true;
+        try {
+          await request('/api/member-chatbot-feedback', {
+            method: 'POST',
+            body: JSON.stringify({
+              query: document.getElementById('chatbotFeedbackQuery').value.trim(),
+              feedbackText: document.getElementById('chatbotFeedbackText').value.trim(),
+              wasExpected: false,
+            }),
+          });
+          chatbotFeedbackForm.reset();
+          await loadMemberChatbotFeedback();
+          renderForumNotifications();
+          showAlert('Chatbot feedback sent to the admin panel.', 'success');
+        } catch (error) {
+          showAlert(error.message || 'Unable to send chatbot feedback.');
+        } finally {
+          chatbotFeedbackSubmitButton.disabled = false;
+        }
+      });
+
       document.getElementById('logoutButton').addEventListener('click', async () => {
         clearAlert();
         try {
@@ -1883,6 +2001,7 @@
           chatSessions = [];
           renderChatSessions();
           await loadMemberProposals();
+          await loadMemberChatbotFeedback();
         }
       });
 
@@ -1924,6 +2043,7 @@
         try {
           await loadHistory();
           await loadChatSessions();
+          await loadMemberChatbotFeedback();
           showAlert('History refreshed.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to refresh history.');

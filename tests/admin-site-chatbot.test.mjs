@@ -15,3 +15,10 @@ test('stripConversationalPrefix removes stacked prefixes while preserving meanin
     'the millennium kingdom'
   );
 });
+
+test('tokenize removes stop words and low-signal terms so topical terms drive ranking', () => {
+  assert.deepEqual(
+    __testUtils.tokenize('do you have any articles on postmillennialism'),
+    ['postmillennialism']
+  );
+});

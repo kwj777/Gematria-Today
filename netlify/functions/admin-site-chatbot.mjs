@@ -28,6 +28,29 @@ const CONVERSATIONAL_PREFIXES = [
   'give me info on',
   'give me information on',
 ];
+const SEARCH_STOP_WORDS = new Set([
+  'a', 'an', 'and', 'any', 'are', 'as', 'at',
+  'be', 'by',
+  'can',
+  'do',
+  'for', 'from',
+  'have',
+  'i', 'in', 'is', 'it',
+  'me', 'my',
+  'of', 'on', 'or',
+  'please',
+  'search', 'show',
+  'tell', 'that', 'the', 'this', 'to',
+  'up',
+  'what', 'where', 'who', 'with',
+  'you', 'your',
+]);
+const LOW_SIGNAL_TERMS = new Set([
+  'article', 'articles',
+  'info', 'information',
+  'page', 'pages',
+  'post', 'posts',
+]);
 
 function escapeRegExp(value = '') {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -74,6 +97,8 @@ function tokenize(input = '') {
       .split(/\s+/)
       .map((token) => token.trim())
       .filter((token) => token.length >= 3)
+      .filter((token) => !SEARCH_STOP_WORDS.has(token))
+      .filter((token) => !LOW_SIGNAL_TERMS.has(token))
   ));
 }
 
@@ -112,6 +137,7 @@ function stripConversationalPrefix(rawQuery = '') {
 
 export const __testUtils = {
   stripConversationalPrefix,
+  tokenize,
 };
 
 function scoreDocument(query, terms, document) {

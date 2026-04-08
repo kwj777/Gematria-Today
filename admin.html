@@ -169,7 +169,7 @@
 
           <div class="row g-4 admin-dashboard-masonry">
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feedSectionBody" aria-expanded="false" aria-controls="feedSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">News Sources</span>
@@ -194,7 +194,7 @@
             </div>
 
             <div class="col-md-6 admin-dashboard-masonry-item d-none" data-admin-workspace="content" data-module="deprecated-post-form">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <a class="admin-section-toggle" href="/admin-posts.html" aria-label="Open blog post management page">
                   <span>
                     <span class="section-kicker d-block mb-2">Publishing</span>
@@ -256,7 +256,7 @@
             </div>
 
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqSectionBody" aria-expanded="false" aria-controls="faqSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Help Center</span>
@@ -284,7 +284,7 @@
               </section>
             </div>
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="members">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#membershipSectionBody" aria-expanded="false" aria-controls="membershipSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Memberships</span>
@@ -404,7 +404,7 @@
             </div>
 
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailTemplatesSectionBody" aria-expanded="false" aria-controls="emailTemplatesSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Messaging</span>
@@ -438,7 +438,7 @@
             </div>
 
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="system">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#taskSectionBody" aria-expanded="false" aria-controls="taskSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Operations</span>
@@ -546,7 +546,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], faqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -723,6 +723,72 @@
         return payload;
       }
 
+      function normalizeFaqText(value = '') {
+        return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      }
+
+      async function loadSchemaFaqEntries() {
+        try {
+          const response = await fetch('/faq.html', { credentials: 'same-origin' });
+          if (!response.ok) {
+            return [];
+          }
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const jsonLdScripts = Array.from(doc.querySelectorAll('script[type="application/ld+json"]'));
+          const schemaEntries = [];
+          for (const script of jsonLdScripts) {
+            const scriptText = script.textContent || '';
+            if (!scriptText.trim()) {
+              continue;
+            }
+            let payload;
+            try {
+              payload = JSON.parse(scriptText);
+            } catch (_error) {
+              continue;
+            }
+            const nodes = Array.isArray(payload) ? payload : [payload];
+            nodes.forEach((node) => {
+              const mainEntity = node?.mainEntity;
+              if (!Array.isArray(mainEntity)) {
+                return;
+              }
+              mainEntity.forEach((item, index) => {
+                const question = String(item?.name || '').trim();
+                const answer = String(item?.acceptedAnswer?.text || '').trim();
+                if (!question || !answer) {
+                  return;
+                }
+                schemaEntries.push({
+                  id: `schema-faq-${schemaEntries.length + index}` ,
+                  question,
+                  answer,
+                  sortOrder: Number.isFinite(Number(index)) ? index : 0,
+                  isPublished: true,
+                  source: 'schema'
+                });
+              });
+            });
+          }
+
+          const dedupedEntries = [];
+          const seenKeys = new Set();
+          schemaEntries.forEach((entry) => {
+            const key = `${normalizeFaqText(entry.question)}::${normalizeFaqText(entry.answer)}`;
+            if (seenKeys.has(key)) {
+              return;
+            }
+            seenKeys.add(key);
+            dedupedEntries.push(entry);
+          });
+          return dedupedEntries;
+        } catch (_error) {
+          return [];
+        }
+      }
+
       function setLoggedIn(isLoggedIn) {
         authPanel.classList.toggle('d-none', isLoggedIn);
         dashboardPanel.classList.toggle('d-none', !isLoggedIn);
@@ -794,23 +860,37 @@
 
       function renderFaqs() {
         const list = document.getElementById('faqList');
-        list.innerHTML = state.faqs.length ? state.faqs.map((faq) => `
+        const managedKeys = new Set(state.faqs.map((faq) => `${normalizeFaqText(faq.question)}::${normalizeFaqText(faq.answer)}`));
+        const schemaOnlyFaqs = state.schemaFaqs.filter((faq) => !managedKeys.has(`${normalizeFaqText(faq.question)}::${normalizeFaqText(faq.answer)}`));
+        const allFaqs = [...state.faqs, ...schemaOnlyFaqs];
+        allFaqs.sort((left, right) => {
+          const leftOrder = Number(left.sortOrder ?? 0);
+          const rightOrder = Number(right.sortOrder ?? 0);
+          if (leftOrder !== rightOrder) {
+            return leftOrder - rightOrder;
+          }
+          return String(left.question || '').localeCompare(String(right.question || ''));
+        });
+        list.innerHTML = allFaqs.length ? allFaqs.map((faq) => {
+          const isSchemaOnly = faq.source === 'schema';
+          return `
           <article class="admin-item-card mb-3 p-3">
             <div class="d-flex justify-content-between gap-3">
               <div>
                 <div class="d-flex flex-wrap gap-2 mb-2">
                   <span class="badge text-bg-light">Order ${escapeHtml(faq.sortOrder)}</span>
                   <span class="badge ${faq.isPublished ? 'text-bg-info' : 'text-bg-secondary'}">${faq.isPublished ? 'Published' : 'Draft'}</span>
+                  ${isSchemaOnly ? '<span class="badge text-bg-warning">FAQ page schema</span>' : ''}
                 </div>
                 <h4 class="h6 mb-1">${escapeHtml(faq.question)}</h4>
                 <p class="small mb-0">${escapeHtml(faq.answer)}</p>
               </div>
               <div class="d-flex flex-column gap-2">
-                <button class="btn btn-sm btn-outline-primary" type="button" data-edit-faq="${faq.id}">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" type="button" data-delete-faq="${faq.id}">Delete</button>
+                ${isSchemaOnly ? '<button class="btn btn-sm btn-outline-secondary" type="button" disabled title="Schema FAQ entries are managed in faq.html JSON-LD.">Edit</button><button class="btn btn-sm btn-outline-secondary" type="button" disabled title="Schema FAQ entries are managed in faq.html JSON-LD.">Delete</button>' : `<button class="btn btn-sm btn-outline-primary" type="button" data-edit-faq="${faq.id}">Edit</button><button class="btn btn-sm btn-outline-danger" type="button" data-delete-faq="${faq.id}">Delete</button>`}
               </div>
             </div>
-          </article>`).join('') : '<p class="text-muted small mb-0">No FAQ entries saved yet.</p>';
+          </article>`;
+        }).join('') : '<p class="text-muted small mb-0">No FAQ entries saved yet.</p>';
       }
 
       function resetFaqForm() {
@@ -1049,18 +1129,20 @@
       }
 
       async function refreshDashboard() {
-        const [feeds, posts, proposals, faqs, tasks, settings] = await Promise.all([
+        const [feeds, posts, proposals, faqs, tasks, settings, schemaFaqEntries] = await Promise.all([
           request('/api/admin-feeds'),
           request('/api/admin-posts'),
           request('/api/admin-blog-proposals'),
           request('/api/admin-faqs'),
           request('/api/admin-tasks'),
-          request('/api/admin-settings')
+          request('/api/admin-settings'),
+          loadSchemaFaqEntries()
         ]);
         state.feeds = feeds.items || [];
         state.posts = posts.items || [];
         state.proposals = proposals.items || [];
         state.faqs = faqs.items || [];
+        state.schemaFaqs = schemaFaqEntries || [];
         state.tasks = tasks.items || [];
         state.stripeSettings = settings.settings || null;
         state.emailSettings = settings.settings || null;

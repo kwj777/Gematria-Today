@@ -275,9 +275,7 @@
             <div class="d-flex gap-2 flex-wrap">
               <a class="btn btn-outline-primary" href="/calculator.html">Open calculator</a>
               <a id="premiumResearchLink" class="btn btn-outline-secondary premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
-              <a id="blogProposalNavButton" class="btn btn-outline-success d-none" href="#premiumBlogProposalSection">Submit blog post</a>
-              <button id="messageCenterOpenButton" class="btn btn-outline-dark d-none" type="button">Message Center</button>
-              <button id="refreshHistoryButton" class="btn btn-outline-secondary" type="button">Refresh history</button>
+                            <button id="messageCenterOpenButton" class="btn btn-outline-dark d-none" type="button">Message Center</button>
               <a id="adminPageButton" class="btn btn-outline-dark d-none" href="/admin.html">Admin page</a>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Sign out</button>
             </div>
@@ -373,8 +371,22 @@
                     <p class="section-kicker mb-2">AI Agent Sessions</p>
                     <h3 class="h4 mb-0">Saved chat sessions</h3>
                   </div>
+                  <button
+                    id="chatSessionSectionToggleButton"
+                    class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#chatSessionSectionContent"
+                    aria-expanded="false"
+                    aria-controls="chatSessionSectionContent"
+                  >
+                    <span id="chatSessionSectionToggleLabel">Expand</span>
+                    <span id="chatSessionSectionToggleArrow" aria-hidden="true">▼</span>
+                  </button>
                 </div>
-                <div id="chatSessionList" class="admin-list"></div>
+                <div id="chatSessionSectionContent" class="collapse">
+                  <div id="chatSessionList" class="admin-list"></div>
+                </div>
               </section>
             </div>
 
@@ -457,13 +469,31 @@
                   </div>
                 </section>
                 <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
-                  <p class="section-kicker mb-2">Profile</p>
-                  <h3 class="h4 mb-3">Preferences</h3>
-                  <form id="profileForm" class="row g-3">
-                    <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
-                    <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
-                    <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save profile</button></div>
-                  </form>
+                  <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                    <div>
+                      <p class="section-kicker mb-2">Profile</p>
+                      <h3 class="h4 mb-0">Preferences</h3>
+                    </div>
+                    <button
+                      id="profileSectionToggleButton"
+                      class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#profileSectionContent"
+                      aria-expanded="false"
+                      aria-controls="profileSectionContent"
+                    >
+                      <span id="profileSectionToggleLabel">Expand</span>
+                      <span id="profileSectionToggleArrow" aria-hidden="true">▼</span>
+                    </button>
+                  </div>
+                  <div id="profileSectionContent" class="collapse">
+                    <form id="profileForm" class="row g-3">
+                      <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
+                      <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
+                      <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save profile</button></div>
+                    </form>
+                  </div>
                 </section>
               </div>
             </div>
@@ -520,6 +550,14 @@
       const historySectionToggleLabel = document.getElementById('historySectionToggleLabel');
       const historySectionToggleArrow = document.getElementById('historySectionToggleArrow');
       const chatSessionList = document.getElementById('chatSessionList');
+      const chatSessionSectionContent = document.getElementById('chatSessionSectionContent');
+      const chatSessionSectionToggleButton = document.getElementById('chatSessionSectionToggleButton');
+      const chatSessionSectionToggleLabel = document.getElementById('chatSessionSectionToggleLabel');
+      const chatSessionSectionToggleArrow = document.getElementById('chatSessionSectionToggleArrow');
+      const profileSectionContent = document.getElementById('profileSectionContent');
+      const profileSectionToggleButton = document.getElementById('profileSectionToggleButton');
+      const profileSectionToggleLabel = document.getElementById('profileSectionToggleLabel');
+      const profileSectionToggleArrow = document.getElementById('profileSectionToggleArrow');
       const membershipUpgradeSection = document.getElementById('membershipUpgradeSection');
       const membershipUpgradeToggleButton = document.getElementById('membershipUpgradeToggleButton');
       const membershipUpgradeToggleLabel = document.getElementById('membershipUpgradeToggleLabel');
@@ -550,7 +588,6 @@
       const comparisonPremiumColumns = comparisonSection.querySelectorAll('.comparison-col--premium');
       const learningPathStep1Section = document.getElementById('learningPathStep1Section');
       const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
-      const blogProposalNavButton = document.getElementById('blogProposalNavButton');
       const messageCenterOpenButton = document.getElementById('messageCenterOpenButton');
       const messageCenterSection = document.getElementById('messageCenterSection');
       const messageCenterCloseButton = document.getElementById('messageCenterCloseButton');
@@ -1117,8 +1154,8 @@
       function syncPremiumResearchLink(member = session?.member) {
         const isPremium = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
         premiumResearchLink.classList.toggle('disabled', !isPremium);
-        premiumResearchLink.classList.toggle('btn-warning', isPremium);
-        premiumResearchLink.classList.toggle('btn-outline-secondary', !isPremium);
+        premiumResearchLink.classList.add('btn-outline-secondary');
+        premiumResearchLink.classList.remove('btn-warning');
         premiumResearchLink.setAttribute('aria-disabled', isPremium ? 'false' : 'true');
         premiumResearchLink.tabIndex = isPremium ? 0 : -1;
         premiumResearchLink.textContent = isPremium ? 'Premium research' : 'Premium research (locked)';
@@ -1138,7 +1175,6 @@
         premiumBlogProposalForm.classList.toggle('d-none', !isPremium);
         premiumBlogProposalLockedMessage.classList.toggle('d-none', isPremium);
         premiumBlogProposalSuccessMessage.classList.add('d-none');
-        blogProposalNavButton.classList.toggle('d-none', !isPremium);
         blogProposalAttribution.value = member?.username || '';
       }
 
@@ -1934,7 +1970,9 @@
           loadHistory().catch((error) => {
             showAlert(error.message || 'Unable to load saved calculations.');
           });
-          await loadChatSessions();
+          loadChatSessions().catch((error) => {
+            showAlert(error.message || 'Unable to load chat sessions.');
+          });
           await loadMemberProposals();
           await loadMemberChatbotFeedback();
 
@@ -2288,18 +2326,6 @@
         }
       });
 
-      document.getElementById('refreshHistoryButton').addEventListener('click', async () => {
-        clearAlert();
-        try {
-          await loadHistory();
-          await loadChatSessions();
-          await loadMemberChatbotFeedback();
-          showAlert('History refreshed.', 'success');
-        } catch (error) {
-          showAlert(error.message || 'Unable to refresh history.');
-        }
-      });
-
       messageCenterOpenButton?.addEventListener('click', () => {
         if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
           showAlert('Message Center is available to premium members only.', 'warning');
@@ -2369,14 +2395,28 @@
         historySectionToggleButton?.setAttribute('aria-expanded', 'false');
       });
 
-      blogProposalNavButton?.addEventListener('click', (event) => {
-        if (!premiumBlogProposalContent || typeof bootstrap === 'undefined' || !bootstrap.Collapse) {
-          return;
-        }
-        event.preventDefault();
-        const collapse = bootstrap.Collapse.getOrCreateInstance(premiumBlogProposalContent, { toggle: false });
-        collapse.show();
-        premiumBlogProposalSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      chatSessionSectionContent?.addEventListener('show.bs.collapse', () => {
+        chatSessionSectionToggleLabel.textContent = 'Collapse';
+        chatSessionSectionToggleArrow.textContent = '▲';
+        chatSessionSectionToggleButton?.setAttribute('aria-expanded', 'true');
+      });
+
+      chatSessionSectionContent?.addEventListener('hide.bs.collapse', () => {
+        chatSessionSectionToggleLabel.textContent = 'Expand';
+        chatSessionSectionToggleArrow.textContent = '▼';
+        chatSessionSectionToggleButton?.setAttribute('aria-expanded', 'false');
+      });
+
+      profileSectionContent?.addEventListener('show.bs.collapse', () => {
+        profileSectionToggleLabel.textContent = 'Collapse';
+        profileSectionToggleArrow.textContent = '▲';
+        profileSectionToggleButton?.setAttribute('aria-expanded', 'true');
+      });
+
+      profileSectionContent?.addEventListener('hide.bs.collapse', () => {
+        profileSectionToggleLabel.textContent = 'Expand';
+        profileSectionToggleArrow.textContent = '▼';
+        profileSectionToggleButton?.setAttribute('aria-expanded', 'false');
       });
 
       goToLearningPathStep1Button?.addEventListener('click', () => {

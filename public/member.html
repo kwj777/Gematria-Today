@@ -347,10 +347,24 @@
                     <p class="section-kicker mb-2">History</p>
                     <h3 class="h4 mb-0">Saved calculations</h3>
                   </div>
+                  <button
+                    id="historySectionToggleButton"
+                    class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#historySectionContent"
+                    aria-expanded="false"
+                    aria-controls="historySectionContent"
+                  >
+                    <span id="historySectionToggleLabel">Expand</span>
+                    <span id="historySectionToggleArrow" aria-hidden="true">▼</span>
+                  </button>
                 </div>
-                <div id="historyList" class="admin-list"></div>
-                <div id="historyListToggleWrap" class="mt-3 d-none">
-                  <button id="historyListToggleButton" class="btn btn-outline-primary btn-sm" type="button">View all saved calculations</button>
+                <div id="historySectionContent" class="collapse">
+                  <div id="historyList" class="admin-list"></div>
+                  <div id="historyListToggleWrap" class="mt-3 d-none">
+                    <button id="historyListToggleButton" class="btn btn-outline-primary btn-sm" type="button">View all saved calculations</button>
+                  </div>
                 </div>
               </section>
               <section class="content-panel p-4 mt-4">
@@ -501,6 +515,10 @@
       const historyList = document.getElementById('historyList');
       const historyListToggleWrap = document.getElementById('historyListToggleWrap');
       const historyListToggleButton = document.getElementById('historyListToggleButton');
+      const historySectionContent = document.getElementById('historySectionContent');
+      const historySectionToggleButton = document.getElementById('historySectionToggleButton');
+      const historySectionToggleLabel = document.getElementById('historySectionToggleLabel');
+      const historySectionToggleArrow = document.getElementById('historySectionToggleArrow');
       const chatSessionList = document.getElementById('chatSessionList');
       const membershipUpgradeSection = document.getElementById('membershipUpgradeSection');
       const membershipUpgradeToggleButton = document.getElementById('membershipUpgradeToggleButton');
@@ -1913,7 +1931,9 @@
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
           loadForumNotificationsInBackground();
-          await loadHistory();
+          loadHistory().catch((error) => {
+            showAlert(error.message || 'Unable to load saved calculations.');
+          });
           await loadChatSessions();
           await loadMemberProposals();
           await loadMemberChatbotFeedback();
@@ -2335,6 +2355,18 @@
         forumNotificationToggleLabel.textContent = 'Expand';
         forumNotificationToggleArrow.textContent = '▼';
         forumNotificationToggleButton?.setAttribute('aria-expanded', 'false');
+      });
+
+      historySectionContent?.addEventListener('show.bs.collapse', () => {
+        historySectionToggleLabel.textContent = 'Collapse';
+        historySectionToggleArrow.textContent = '▲';
+        historySectionToggleButton?.setAttribute('aria-expanded', 'true');
+      });
+
+      historySectionContent?.addEventListener('hide.bs.collapse', () => {
+        historySectionToggleLabel.textContent = 'Expand';
+        historySectionToggleArrow.textContent = '▼';
+        historySectionToggleButton?.setAttribute('aria-expanded', 'false');
       });
 
       blogProposalNavButton?.addEventListener('click', (event) => {

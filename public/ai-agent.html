@@ -1194,15 +1194,6 @@ View results: ${shareUrl}`.trim(),
             >
               Save to membership dashboard
             </button>
-            <button
-              type="button"
-              class="btn btn-warning btn-sm fw-semibold share-action-button agent-share-button"
-              data-topic="${escapeHtml(topic)}"
-              data-total="${total}"
-              data-root="${root}"
-            >
-              Share this lookup
-            </button>
           </div>
           ${comparisonTargets.length ? `
             <p class="mb-2"><strong>Additional quick calculations</strong></p>
@@ -1312,7 +1303,7 @@ View results: ${shareUrl}`.trim(),
           return;
         }
 
-        const actionButton = event.target.closest('.agent-save-history-button, .agent-share-button');
+        const actionButton = event.target.closest('.agent-save-history-button');
         if (!actionButton) return;
 
         const meta = {
@@ -1339,15 +1330,6 @@ View results: ${shareUrl}`.trim(),
           return;
         }
 
-        const shareUrl = buildAgentShareUrl(meta);
-        const shareImageUrl = buildAgentShareImageUrl(meta);
-        const shareText = `Gematria lookup: ${meta.topic} → total ${meta.total}, digital root ${meta.root}`;
-        await sharePage({
-          title: 'Gematria AI Agent Result',
-          text: shareText,
-          url: shareUrl,
-          imageUrl: shareImageUrl,
-        });
       });
 
       renderMemoryStatus();

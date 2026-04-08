@@ -110,16 +110,39 @@
           .replaceAll("'", '&#39;');
       }
 
-      function renderSources(sources) {
+      function highlightTerm(value, term) {
+        const sourceText = String(value || '');
+        const normalizedTerm = String(term || '').trim();
+        if (!normalizedTerm) return escapeHtml(sourceText);
+
+        const escapedTerm = normalizedTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedTerm, 'ig');
+        const matches = Array.from(sourceText.matchAll(regex));
+        if (!matches.length) return escapeHtml(sourceText);
+
+        let cursor = 0;
+        let html = '';
+        for (const match of matches) {
+          const index = Number(match.index || 0);
+          const nextCursor = index + match[0].length;
+          html += escapeHtml(sourceText.slice(cursor, index));
+          html += `<mark>${escapeHtml(sourceText.slice(index, nextCursor))}</mark>`;
+          cursor = nextCursor;
+        }
+        html += escapeHtml(sourceText.slice(cursor));
+        return html;
+      }
+
+      function renderSources(sources, queryTerm = '') {
         if (!Array.isArray(sources) || !sources.length) {
           sourceList.innerHTML = '<li class="list-group-item text-muted">No matching source links found.</li>';
           return;
         }
 
         sourceList.innerHTML = sources.map((source) => {
-          const safeTitle = escapeHtml(source.title || 'Source');
+          const safeTitle = highlightTerm(source.title || 'Source', queryTerm);
           const safeUrl = escapeHtml(source.url || '/');
-          const safeSnippet = escapeHtml(source.snippet || '');
+          const safeSnippet = highlightTerm(source.snippet || '', queryTerm);
           return `<li class="list-group-item"><div class="fw-semibold">${safeTitle}</div><a href="${safeUrl}" class="small" target="_blank" rel="noopener">${safeUrl}</a><p class="small text-muted mb-0 mt-2">${safeSnippet}</p></li>`;
         }).join('');
       }
@@ -211,7 +234,7 @@
           }
 
           answerText.textContent = payload.answer || 'No response generated.';
-          renderSources(payload.sources || []);
+          renderSources(payload.sources || [], query);
           chatResult.classList.remove('d-none');
           latestSearchPayload = payload;
           feedbackNoForm.classList.add('d-none');

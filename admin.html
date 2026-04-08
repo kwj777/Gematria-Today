@@ -729,7 +729,7 @@
 
       async function loadSchemaFaqEntries() {
         try {
-          const response = await fetch('/faq.html', { credentials: 'same-origin' });
+          const response = await fetch(`/faq.html?ts=${Date.now()}`, { credentials: 'same-origin', cache: 'no-store' });
           if (!response.ok) {
             return [];
           }

@@ -357,9 +357,25 @@
             </div>
           </section>
 
-          <div class="row g-4 align-items-start">
-            <div class="col-xl-7">
-              <section class="content-panel p-4 h-100">
+
+          <section id="blogSubscriptionSection" class="content-panel p-4 h-100 d-none mb-4">
+            <p class="section-kicker mb-2">Blog Updates</p>
+            <h3 class="h4 mb-2">Subscribe with your membership email</h3>
+            <p class="text-muted mb-3">Get notified when new blog posts are published.</p>
+            <form id="blogSubscriptionForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label" for="blogSubscriptionEmail">Membership email</label>
+                <input id="blogSubscriptionEmail" class="form-control" type="email" readonly />
+              </div>
+              <div class="col-12 d-grid">
+                <button id="blogSubscriptionButton" class="btn btn-outline-primary" type="submit">Subscribe to blog updates</button>
+              </div>
+            </form>
+          </section>
+
+          <div class="row g-4 row-cols-1 row-cols-xl-2 align-items-stretch">
+            <div class="col d-flex">
+              <section class="content-panel p-4 h-100 w-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
                     <p class="section-kicker mb-2">History</p>
@@ -385,7 +401,9 @@
                   </div>
                 </div>
               </section>
-              <section class="content-panel p-4 mt-4">
+            </div>
+            <div class="col d-flex">
+              <section class="content-panel p-4 h-100 w-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
                     <p class="section-kicker mb-2">AI Agent Sessions</p>
@@ -409,112 +427,97 @@
                 </div>
               </section>
             </div>
-
-            <div class="col-xl-5">
-              <div class="d-grid gap-4 h-100">
-                <section id="blogSubscriptionSection" class="content-panel p-4 h-100 d-none">
-                  <p class="section-kicker mb-2">Blog Updates</p>
-                  <h3 class="h4 mb-2">Subscribe with your membership email</h3>
-                  <p class="text-muted mb-3">Get notified when new blog posts are published.</p>
-                  <form id="blogSubscriptionForm" class="row g-3">
-                    <div class="col-12">
-                      <label class="form-label" for="blogSubscriptionEmail">Membership email</label>
-                      <input id="blogSubscriptionEmail" class="form-control" type="email" readonly />
+            <div class="col d-flex">
+              <section id="premiumBlogProposalSection" class="content-panel p-4 h-100 w-100">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Premium Blog Contributions</p>
+                    <h3 class="h4 mb-2">Propose a blog post</h3>
+                  </div>
+                  <button
+                    id="premiumBlogProposalToggleButton"
+                    class="btn btn-outline-success d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#premiumBlogProposalContent"
+                    aria-expanded="false"
+                    aria-controls="premiumBlogProposalContent"
+                  >
+                    <span id="premiumBlogProposalToggleLabel">Expand</span>
+                    <span id="premiumBlogProposalToggleArrow" aria-hidden="true">▼</span>
+                  </button>
+                </div>
+                <div id="premiumBlogProposalContent" class="collapse">
+                <div id="premiumBlogProposalSuccessMessage" class="alert alert-success mb-3 d-none" role="status">Submission was successful.</div>
+                <div id="memberProposalFeedbackList" class="admin-list mb-3 d-none"></div>
+                <form id="premiumBlogProposalForm" class="row g-3 d-none">
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalTitle">Proposed title</label>
+                    <input id="blogProposalTitle" class="form-control" minlength="8" maxlength="140" required />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalSummary">Post summary</label>
+                    <textarea id="blogProposalSummary" class="form-control" rows="3" minlength="40" maxlength="500" required placeholder="Share the main thesis and why it matters for readers."></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalBody">Draft content</label>
+                    <textarea id="blogProposalBody" class="form-control" rows="6" minlength="120" required placeholder="Paste your full draft or detailed outline."></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalTags">Suggested tags</label>
+                    <input id="blogProposalTags" class="form-control" placeholder="prophecy, gematria, bible study" aria-describedby="blogProposalTagsHelp" required />
+                    <div id="blogProposalTagsHelp" class="form-text">Use commas to separate each tag.</div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalImageUrl">Suggested image URL (optional)</label>
+                    <input id="blogProposalImageUrl" class="form-control" type="url" placeholder="https://example.com/proposed-cover.jpg" />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalAttribution">Username attribution</label>
+                    <input id="blogProposalAttribution" class="form-control" readonly />
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input id="blogProposalPolicyAgreement" class="form-check-input" type="checkbox" required />
+                      <label class="form-check-label" for="blogProposalPolicyAgreement">I have read the <a href="/disclaimer.html" target="_blank" rel="noopener">Editorial Policy</a> and agree to it.</label>
                     </div>
-                    <div class="col-12 d-grid">
-                      <button id="blogSubscriptionButton" class="btn btn-outline-primary" type="submit">Subscribe to blog updates</button>
-                    </div>
+                  </div>
+                  <div class="col-12 d-grid">
+                    <button class="btn btn-success" type="submit">Send proposal</button>
+                  </div>
+                </form>
+                <div id="premiumBlogProposalLockedMessage" class="alert alert-warning mb-0 d-none" role="alert">This form is available to premium members only. Upgrade your membership to submit proposed blog posts.</div>
+                </div>
+              </section>
+            </div>
+            <div class="col d-flex">
+              <section class="content-panel p-4 h-100 w-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Profile</p>
+                    <h3 class="h4 mb-0">Preferences</h3>
+                  </div>
+                  <button
+                    id="profileSectionToggleButton"
+                    class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#profileSectionContent"
+                    aria-expanded="false"
+                    aria-controls="profileSectionContent"
+                  >
+                    <span id="profileSectionToggleLabel">Expand</span>
+                    <span id="profileSectionToggleArrow" aria-hidden="true">▼</span>
+                  </button>
+                </div>
+                <div id="profileSectionContent" class="collapse">
+                  <form id="profileForm" class="row g-3">
+                    <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
+                    <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
+                    <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save profile</button></div>
                   </form>
-                </section>
-                <section id="premiumBlogProposalSection" class="content-panel p-4 h-100">
-                  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3 mb-3">
-                    <div>
-                      <p class="section-kicker mb-2">Premium Blog Contributions</p>
-                      <h3 class="h4 mb-2">Propose a blog post</h3>
-                    </div>
-                    <button
-                      id="premiumBlogProposalToggleButton"
-                      class="btn btn-outline-success d-inline-flex align-items-center gap-2"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#premiumBlogProposalContent"
-                      aria-expanded="false"
-                      aria-controls="premiumBlogProposalContent"
-                    >
-                      <span id="premiumBlogProposalToggleLabel">Expand</span>
-                      <span id="premiumBlogProposalToggleArrow" aria-hidden="true">▼</span>
-                    </button>
-                  </div>
-                  <div id="premiumBlogProposalContent" class="collapse">
-                  <div id="premiumBlogProposalSuccessMessage" class="alert alert-success mb-3 d-none" role="status">Submission was successful.</div>
-                  <div id="memberProposalFeedbackList" class="admin-list mb-3 d-none"></div>
-                  <form id="premiumBlogProposalForm" class="row g-3 d-none">
-                    <div class="col-12">
-                      <label class="form-label" for="blogProposalTitle">Proposed title</label>
-                      <input id="blogProposalTitle" class="form-control" minlength="8" maxlength="140" required />
-                    </div>
-                    <div class="col-12">
-                      <label class="form-label" for="blogProposalSummary">Post summary</label>
-                      <textarea id="blogProposalSummary" class="form-control" rows="3" minlength="40" maxlength="500" required placeholder="Share the main thesis and why it matters for readers."></textarea>
-                    </div>
-                    <div class="col-12">
-                      <label class="form-label" for="blogProposalBody">Draft content</label>
-                      <textarea id="blogProposalBody" class="form-control" rows="6" minlength="120" required placeholder="Paste your full draft or detailed outline."></textarea>
-                    </div>
-                    <div class="col-12">
-                      <label class="form-label" for="blogProposalTags">Suggested tags</label>
-                      <input id="blogProposalTags" class="form-control" placeholder="prophecy, gematria, bible study" aria-describedby="blogProposalTagsHelp" required />
-                      <div id="blogProposalTagsHelp" class="form-text">Use commas to separate each tag.</div>
-                    </div>
-                    <div class="col-12">
-                      <label class="form-label" for="blogProposalImageUrl">Suggested image URL (optional)</label>
-                      <input id="blogProposalImageUrl" class="form-control" type="url" placeholder="https://example.com/proposed-cover.jpg" />
-                    </div>
-                    <div class="col-12">
-                      <label class="form-label" for="blogProposalAttribution">Username attribution</label>
-                      <input id="blogProposalAttribution" class="form-control" readonly />
-                    </div>
-                    <div class="col-12">
-                      <div class="form-check">
-                        <input id="blogProposalPolicyAgreement" class="form-check-input" type="checkbox" required />
-                        <label class="form-check-label" for="blogProposalPolicyAgreement">I have read the <a href="/disclaimer.html" target="_blank" rel="noopener">Editorial Policy</a> and agree to it.</label>
-                      </div>
-                    </div>
-                    <div class="col-12 d-grid">
-                      <button class="btn btn-success" type="submit">Send proposal</button>
-                    </div>
-                  </form>
-                  <div id="premiumBlogProposalLockedMessage" class="alert alert-warning mb-0 d-none" role="alert">This form is available to premium members only. Upgrade your membership to submit proposed blog posts.</div>
-                  </div>
-                </section>
-                <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
-                  <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                    <div>
-                      <p class="section-kicker mb-2">Profile</p>
-                      <h3 class="h4 mb-0">Preferences</h3>
-                    </div>
-                    <button
-                      id="profileSectionToggleButton"
-                      class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#profileSectionContent"
-                      aria-expanded="false"
-                      aria-controls="profileSectionContent"
-                    >
-                      <span id="profileSectionToggleLabel">Expand</span>
-                      <span id="profileSectionToggleArrow" aria-hidden="true">▼</span>
-                    </button>
-                  </div>
-                  <div id="profileSectionContent" class="collapse">
-                    <form id="profileForm" class="row g-3">
-                      <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
-                      <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
-                      <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save profile</button></div>
-                    </form>
-                  </div>
-                </section>
-              </div>
+                </div>
+              </section>
             </div>
           </div>
           </div>

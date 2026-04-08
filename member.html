@@ -308,7 +308,17 @@
           <div id="dashboardMainContent">
           <div class="row g-4 mb-4">
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p id="membershipPlanMeta" class="mb-0 text-muted">Current membership tier.</p></div></div>
-            <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Status</div><div id="membershipStatus" class="metric-value text-success">active</div><p class="mb-0 text-muted">Account state for sign-in access.</p></div></div>
+            <div class="col-md-4">
+              <div class="stat-card p-4 h-100">
+                <div class="section-kicker mb-2">Forum Notifications</div>
+                <div id="forumNotificationCountTop" class="metric-value text-info">0</div>
+                <p id="forumNotificationCountMetaTop" class="mb-3 text-muted">Sign in to view your latest forum notification highlights.</p>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button id="forumNotificationQuickViewButton" class="btn btn-outline-primary btn-sm" type="button">See Notifications</button>
+                  <a id="forumNotificationTopLink" class="btn btn-primary btn-sm" href="/forum.html">Open Forum</a>
+                </div>
+              </div>
+            </div>
             <div class="col-md-4"><button id="messageInboxCard" class="stat-card stat-card-button p-4 h-100 text-start w-100" type="button"><div class="section-kicker mb-2">Inbox Messages</div><div id="messageInboxCount" class="metric-value text-info">0</div><p id="messageInboxMeta" class="mb-0 text-muted">Admin replies waiting in your message center inbox.</p></button></div>
           </div>
 
@@ -532,7 +542,6 @@
       const memberAlert = document.getElementById('memberAlert');
       const memberMeta = document.getElementById('memberMeta');
       const membershipLevel = document.getElementById('membershipLevel');
-      const membershipStatus = document.getElementById('membershipStatus');
       const membershipPlanMeta = document.getElementById('membershipPlanMeta');
       const paymentButton = document.getElementById('paymentButton');
       const registerButton = document.querySelector('#registerForm button[type="submit"]');
@@ -618,6 +627,10 @@
       const forumNotificationSummary = document.getElementById('forumNotificationSummary');
       const forumNotificationList = document.getElementById('forumNotificationList');
       const forumNotificationLink = document.getElementById('forumNotificationLink');
+      const forumNotificationCountTop = document.getElementById('forumNotificationCountTop');
+      const forumNotificationCountMetaTop = document.getElementById('forumNotificationCountMetaTop');
+      const forumNotificationTopLink = document.getElementById('forumNotificationTopLink');
+      const forumNotificationQuickViewButton = document.getElementById('forumNotificationQuickViewButton');
       const forumNotificationContent = document.getElementById('forumNotificationContent');
       const forumNotificationToggleButton = document.getElementById('forumNotificationToggleButton');
       const forumNotificationToggleLabel = document.getElementById('forumNotificationToggleLabel');
@@ -1491,14 +1504,24 @@
           forumNotificationSummary.textContent = 'Sign in to view your latest forum updates and responses.';
           forumNotificationLink.href = '/member.html#authSection';
           forumNotificationLink.textContent = 'Sign in to unlock forum alerts';
+          forumNotificationCountTop.textContent = '0';
+          forumNotificationCountMetaTop.textContent = 'Sign in to view your latest forum notification highlights.';
+          forumNotificationTopLink.href = '/member.html#authSection';
+          forumNotificationTopLink.textContent = 'Sign in';
           forumNotificationList.innerHTML = '<p class="text-muted mb-0">Forum alerts will appear here after you sign in.</p>';
           return;
         }
 
         const entries = getForumNotificationEntries();
+        forumNotificationCountTop.textContent = String(entries.length);
+        forumNotificationCountMetaTop.textContent = entries.length === 1
+          ? 'You currently have 1 forum notification highlight.'
+          : `You currently have ${entries.length} forum notification highlights.`;
         forumNotificationSummary.textContent = entries.length > 1
           ? `You currently have ${entries.length} forum notification highlights.`
           : 'You currently have 1 forum notification highlight.';
+        forumNotificationTopLink.href = '/forum.html';
+        forumNotificationTopLink.textContent = 'Open Forum';
         forumNotificationLink.href = '/forum.html';
         forumNotificationLink.textContent = 'Open Forum';
         forumNotificationList.innerHTML = entries.map((entry) => `
@@ -1545,6 +1568,11 @@
         forumNotificationToggleLabel.textContent = 'Collapse';
         forumNotificationToggleArrow.textContent = '▲';
         forumNotificationToggleButton?.setAttribute('aria-expanded', 'true');
+      }
+
+      function openForumNotificationsFromTopCard() {
+        expandForumNotificationSection();
+        forumNotificationSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
       async function archiveProposal(proposalId) {
@@ -1932,7 +1960,6 @@
         memberMeta.textContent = `Signed in as ${member.displayName || member.username} (${member.email})`;
         membershipLevel.textContent = member.membershipLevel;
         membershipPlanMeta.textContent = formatMembershipWindow(member);
-        membershipStatus.textContent = member.status;
         updateMessageInboxSummary(getMessageCenterInboxItems().length);
         document.getElementById('profileDisplayName').value = member.displayName || '';
         document.getElementById('profileNotes').value = profile?.preferences?.notes || '';
@@ -2420,6 +2447,10 @@
         forumNotificationToggleLabel.textContent = 'Expand';
         forumNotificationToggleArrow.textContent = '▼';
         forumNotificationToggleButton?.setAttribute('aria-expanded', 'false');
+      });
+
+      forumNotificationQuickViewButton?.addEventListener('click', () => {
+        openForumNotificationsFromTopCard();
       });
 
       historySectionContent?.addEventListener('show.bs.collapse', () => {

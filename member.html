@@ -288,7 +288,10 @@
                 <h3 class="h4 mb-1">Admin messaging hub</h3>
                 <p class="text-muted mb-0">Review everything you have sent to admin and keep track of replies in your inbox.</p>
               </div>
-              <button id="messageCenterCloseButton" class="btn btn-outline-secondary" type="button">Close message center</button>
+              <div class="d-flex gap-2 flex-wrap">
+                <button id="messageCenterArchiveToggleButton" class="btn btn-outline-secondary" type="button">Open Archive</button>
+                <button id="messageCenterCloseButton" class="btn btn-outline-secondary" type="button">Close message center</button>
+              </div>
             </div>
             <div class="row g-4">
               <div class="col-xl-6">
@@ -296,7 +299,7 @@
                 <div id="messageCenterSentList" class="admin-list"></div>
               </div>
               <div class="col-xl-6">
-                <h4 class="h5 mb-3">Inbox (until archived)</h4>
+                <h4 id="messageCenterInboxHeading" class="h5 mb-3">Inbox (until archived)</h4>
                 <div id="messageCenterInboxList" class="admin-list"></div>
               </div>
             </div>
@@ -591,6 +594,8 @@
       const messageCenterOpenButton = document.getElementById('messageCenterOpenButton');
       const messageCenterSection = document.getElementById('messageCenterSection');
       const messageCenterCloseButton = document.getElementById('messageCenterCloseButton');
+      const messageCenterArchiveToggleButton = document.getElementById('messageCenterArchiveToggleButton');
+      const messageCenterInboxHeading = document.getElementById('messageCenterInboxHeading');
       const messageCenterSentList = document.getElementById('messageCenterSentList');
       const messageCenterInboxList = document.getElementById('messageCenterInboxList');
       const dashboardMainContent = document.getElementById('dashboardMainContent');
@@ -626,9 +631,12 @@
       let membershipHeroReady = false;
       let memberProposals = [];
       let memberChatbotFeedback = [];
+      let archivedMemberProposals = [];
+      let archivedMemberChatbotFeedback = [];
       let recentForumThreads = [];
       let chatSessions = [];
       let isMessageCenterOpen = false;
+      let isArchiveViewOpen = false;
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
 
 
@@ -1193,8 +1201,10 @@
         }
       }
 
-      function getMessageCenterSentItems() {
-        const proposalItems = memberProposals.map((proposal) => ({
+      function getMessageCenterSentItems({ archived = false } = {}) {
+        const proposals = archived ? archivedMemberProposals : memberProposals;
+        const feedback = archived ? archivedMemberChatbotFeedback : memberChatbotFeedback;
+        const proposalItems = proposals.map((proposal) => ({
           id: proposal.id,
           type: 'proposal',
           title: proposal.title || 'Untitled proposal',
@@ -1202,7 +1212,7 @@
           status: proposal.status || 'pending',
           createdAt: proposal.createdAt || proposal.updatedAt,
         }));
-        const chatbotItems = memberChatbotFeedback
+        const chatbotItems = feedback
           .filter((item) => item.wasExpected !== true)
           .map((item) => ({
             id: item.id,
@@ -1215,8 +1225,10 @@
         return [...proposalItems, ...chatbotItems].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       }
 
-      function getMessageCenterInboxItems() {
-        const proposalReplies = memberProposals
+      function getMessageCenterInboxItems({ archived = false } = {}) {
+        const proposals = archived ? archivedMemberProposals : memberProposals;
+        const feedback = archived ? archivedMemberChatbotFeedback : memberChatbotFeedback;
+        const proposalReplies = proposals
           .filter((proposal) => proposal.rejectionExplanation || proposal.status === 'approved' || proposal.status === 'rejected')
           .map((proposal) => ({
             id: proposal.id,
@@ -1225,7 +1237,7 @@
             reply: proposal.rejectionExplanation || `Your proposal was marked as ${proposal.status || 'reviewed'}.`,
             repliedAt: proposal.reviewedAt || proposal.updatedAt || proposal.createdAt,
           }));
-        const feedbackReplies = memberChatbotFeedback
+        const feedbackReplies = feedback
           .filter((item) => Boolean(item.adminReply))
           .map((item) => ({
             id: item.id,
@@ -1261,11 +1273,19 @@
         if (!messageCenterSentList || !messageCenterInboxList) {
           return;
         }
-        const sentItems = getMessageCenterSentItems();
-        const inboxItems = getMessageCenterInboxItems();
+        const sentItems = getMessageCenterSentItems({ archived: isArchiveViewOpen });
+        const inboxItems = getMessageCenterInboxItems({ archived: isArchiveViewOpen });
         const inboxCount = inboxItems.length;
-        messageCenterOpenButton.textContent = inboxCount ? `Message Center (${inboxCount})` : 'Message Center';
-        updateMessageInboxSummary(inboxCount);
+        if (!isArchiveViewOpen) {
+          messageCenterOpenButton.textContent = inboxCount ? `Message Center (${inboxCount})` : 'Message Center';
+          updateMessageInboxSummary(inboxCount);
+        }
+        if (messageCenterInboxHeading) {
+          messageCenterInboxHeading.textContent = isArchiveViewOpen ? 'Archived inbox messages' : 'Inbox (until archived)';
+        }
+        if (messageCenterArchiveToggleButton) {
+          messageCenterArchiveToggleButton.textContent = isArchiveViewOpen ? 'Back to Inbox' : 'Open Archive';
+        }
 
         messageCenterSentList.innerHTML = sentItems.length ? sentItems.map((item) => `
           <article class="admin-item-card p-3 mb-2">
@@ -1276,10 +1296,10 @@
             <p class="small mb-1 mt-2">${escapeHtml(item.body)}</p>
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
               <p class="small text-muted mb-0">Sent: ${escapeHtml(item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown date')}</p>
-              <button class="btn btn-sm btn-outline-secondary" type="button" ${item.type === 'proposal' ? `data-archive-proposal="${escapeHtml(item.id)}"` : `data-archive-chatbot-feedback="${escapeHtml(item.id)}"`}>Archive</button>
+              ${isArchiveViewOpen ? '' : `<button class="btn btn-sm btn-outline-secondary" type="button" ${item.type === 'proposal' ? `data-archive-proposal="${escapeHtml(item.id)}"` : `data-archive-chatbot-feedback="${escapeHtml(item.id)}"`}>Archive</button>`}
             </div>
           </article>
-        `).join('') : '<p class="text-muted mb-0">No messages have been sent to admin yet.</p>';
+        `).join('') : `<p class="text-muted mb-0">${isArchiveViewOpen ? 'No archived sent messages yet.' : 'No messages have been sent to admin yet.'}</p>`;
 
         messageCenterInboxList.innerHTML = inboxItems.length ? inboxItems.map((item) => `
           <article class="admin-item-card p-3 mb-2">
@@ -1290,10 +1310,10 @@
             <div class="alert alert-info small mb-2 mt-2"><strong>Admin message:</strong> ${escapeHtml(item.reply)}</div>
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
               <span class="small text-muted">Received: ${escapeHtml(item.repliedAt ? new Date(item.repliedAt).toLocaleString() : 'Unknown date')}</span>
-              <button class="btn btn-sm btn-outline-secondary" type="button" ${item.type === 'proposal' ? `data-archive-proposal="${escapeHtml(item.id)}"` : `data-archive-chatbot-feedback="${escapeHtml(item.id)}"`}>Archive</button>
+              ${isArchiveViewOpen ? '' : `<button class="btn btn-sm btn-outline-secondary" type="button" ${item.type === 'proposal' ? `data-archive-proposal="${escapeHtml(item.id)}"` : `data-archive-chatbot-feedback="${escapeHtml(item.id)}"`}>Archive</button>`}
             </div>
           </article>
-        `).join('') : '<p class="text-muted mb-0">Inbox is empty. Admin replies will appear here until archived.</p>';
+        `).join('') : `<p class="text-muted mb-0">${isArchiveViewOpen ? 'Archive is empty.' : 'Inbox is empty. Admin replies will appear here until archived.'}</p>`;
       }
 
       function renderMemberProposalFeedback() {
@@ -1373,14 +1393,20 @@
       async function loadMemberChatbotFeedback() {
         if (!session?.member) {
           memberChatbotFeedback = [];
+          archivedMemberChatbotFeedback = [];
           renderMemberChatbotFeedback();
           return;
         }
         try {
-          const payload = await request('/api/member-chatbot-feedback', { method: 'GET' });
-          memberChatbotFeedback = Array.isArray(payload.items) ? payload.items : [];
+          const [activePayload, archivedPayload] = await Promise.all([
+            request('/api/member-chatbot-feedback', { method: 'GET' }),
+            request('/api/member-chatbot-feedback?view=archived', { method: 'GET' }),
+          ]);
+          memberChatbotFeedback = Array.isArray(activePayload.items) ? activePayload.items : [];
+          archivedMemberChatbotFeedback = Array.isArray(archivedPayload.items) ? archivedPayload.items : [];
         } catch (_) {
           memberChatbotFeedback = [];
+          archivedMemberChatbotFeedback = [];
         }
         renderMemberChatbotFeedback();
       }
@@ -1388,16 +1414,22 @@
       async function loadMemberProposals() {
         if (!session?.member) {
           memberProposals = [];
+          archivedMemberProposals = [];
           renderMemberProposalFeedback();
           renderForumNotifications();
           return;
         }
 
         try {
-          const payload = await request('/api/member-blog-proposals', { method: 'GET' });
-          memberProposals = Array.isArray(payload.items) ? payload.items : [];
+          const [activePayload, archivedPayload] = await Promise.all([
+            request('/api/member-blog-proposals', { method: 'GET' }),
+            request('/api/member-blog-proposals?view=archived', { method: 'GET' }),
+          ]);
+          memberProposals = Array.isArray(activePayload.items) ? activePayload.items : [];
+          archivedMemberProposals = Array.isArray(archivedPayload.items) ? archivedPayload.items : [];
         } catch (error) {
           memberProposals = [];
+          archivedMemberProposals = [];
         }
         renderMemberProposalFeedback();
         renderForumNotifications();
@@ -2331,8 +2363,14 @@
           showAlert('Message Center is available to premium members only.', 'warning');
           return;
         }
+        isArchiveViewOpen = false;
         renderMessageCenter();
         setMessageCenterOpen(true);
+      });
+
+      messageCenterArchiveToggleButton?.addEventListener('click', () => {
+        isArchiveViewOpen = !isArchiveViewOpen;
+        renderMessageCenter();
       });
 
       messageCenterCloseButton?.addEventListener('click', () => {
@@ -2344,6 +2382,7 @@
           showAlert('Message Center is available to premium members only.', 'warning');
           return;
         }
+        isArchiveViewOpen = false;
         renderMessageCenter();
         setMessageCenterOpen(true);
         messageCenterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });

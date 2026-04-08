@@ -44,9 +44,32 @@ export async function handler(event) {
       const url = new URL(event.rawUrl || `http://localhost${event.path || '/.netlify/functions/admin-chatbot-feedback'}`);
       const status = String(url.searchParams.get('status') || '').trim().toLowerCase();
       const rows = status && status !== 'all'
-        ? await sql`SELECT * FROM chatbot_search_feedback WHERE status = ${status} ORDER BY created_at DESC LIMIT 300`
-        : await sql`SELECT * FROM chatbot_search_feedback ORDER BY created_at DESC LIMIT 300`;
-      return jsonResponse(200, { items: rows.map(formatFeedback) });
+        ? await sql`
+          SELECT * FROM chatbot_search_feedback
+          WHERE status = ${status}
+            AND COALESCE(was_expected, false) = false
+          ORDER BY created_at DESC
+          LIMIT 300
+        `
+        : await sql`
+          SELECT * FROM chatbot_search_feedback
+          WHERE COALESCE(was_expected, false) = false
+          ORDER BY created_at DESC
+          LIMIT 300
+        `;
+      const [stats] = await sql`
+        SELECT
+          COUNT(*) FILTER (WHERE was_expected = true) AS expected_count,
+          COUNT(*) FILTER (WHERE COALESCE(was_expected, false) = false) AS unexpected_count
+        FROM chatbot_search_feedback
+      `;
+      return jsonResponse(200, {
+        items: rows.map(formatFeedback),
+        stats: {
+          expected: Number(stats?.expected_count || 0),
+          unexpected: Number(stats?.unexpected_count || 0),
+        },
+      });
     }
 
     if (method === 'POST') {

@@ -50,6 +50,8 @@
             <div class="d-flex align-items-center gap-3">
               <span class="section-kicker mb-0">Chatbot feedback report</span>
               <span id="chatbotFeedbackPendingBadge" class="badge text-bg-danger">0 new</span>
+              <span id="chatbotFeedbackUnexpectedBadge" class="badge text-bg-warning">0 unexpected</span>
+              <span id="chatbotFeedbackExpectedBadge" class="badge text-bg-success">0 expected</span>
             </div>
             <label class="d-flex align-items-center gap-2 small text-muted" for="chatbotFeedbackStatusFilter">
               <span>Status filter</span>
@@ -67,9 +69,15 @@
     </main>
 
     <script>
-      const state = { feedbackItems: [], statusFilter: 'all' };
+      const state = {
+        feedbackItems: [],
+        statusFilter: 'all',
+        stats: { expected: 0, unexpected: 0 }
+      };
       const statusMessage = document.getElementById('statusMessage');
       const chatbotFeedbackPendingBadge = document.getElementById('chatbotFeedbackPendingBadge');
+      const chatbotFeedbackUnexpectedBadge = document.getElementById('chatbotFeedbackUnexpectedBadge');
+      const chatbotFeedbackExpectedBadge = document.getElementById('chatbotFeedbackExpectedBadge');
       const chatbotFeedbackList = document.getElementById('chatbotFeedbackList');
 
       function escapeHtml(value) {
@@ -105,6 +113,8 @@
       function renderFeedback() {
         const newCount = state.feedbackItems.filter((item) => (item.status || 'new') === 'new').length;
         chatbotFeedbackPendingBadge.textContent = `${newCount} new`;
+        chatbotFeedbackUnexpectedBadge.textContent = `${state.stats.unexpected} unexpected`;
+        chatbotFeedbackExpectedBadge.textContent = `${state.stats.expected} expected`;
 
         const filteredItems = state.statusFilter === 'all'
           ? state.feedbackItems
@@ -134,6 +144,10 @@
       async function refreshFeedback() {
         const payload = await request('/api/admin-chatbot-feedback');
         state.feedbackItems = payload.items || [];
+        state.stats = {
+          expected: Number(payload?.stats?.expected || 0),
+          unexpected: Number(payload?.stats?.unexpected || 0)
+        };
         renderFeedback();
       }
 

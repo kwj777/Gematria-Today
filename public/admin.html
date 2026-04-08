@@ -146,6 +146,7 @@
               <a class="stat-card p-4 h-100 d-block text-decoration-none" href="/admin-chatbot-feedback.html">
                 <div class="section-kicker mb-2 text-dark">Chatbot feedback</div>
                 <div id="chatbotFeedbackCount" class="metric-value text-danger">0</div>
+                <p id="chatbotFeedbackSplit" class="mb-1 small text-muted">Unexpected: 0 · Expected: 0</p>
                 <p class="mb-0 text-muted">Open feedback management page.</p>
               </a>
             </div>
@@ -555,7 +556,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -1139,9 +1140,15 @@
 
       function renderChatbotFeedback() {
         const feedbackCount = document.getElementById('chatbotFeedbackCount');
+        const feedbackSplit = document.getElementById('chatbotFeedbackSplit');
         const newCount = state.chatbotFeedback.filter((item) => (item.status || 'new') === 'new').length;
         if (feedbackCount) {
           feedbackCount.textContent = String(newCount);
+        }
+        if (feedbackSplit) {
+          const expectedCount = Number(state.chatbotFeedbackStats?.expected || 0);
+          const unexpectedCount = Number(state.chatbotFeedbackStats?.unexpected || 0);
+          feedbackSplit.textContent = `Unexpected: ${unexpectedCount} · Expected: ${expectedCount}`;
         }
       }
 
@@ -1160,6 +1167,7 @@
         state.posts = posts.items || [];
         state.proposals = proposals.items || [];
         state.chatbotFeedback = chatbotFeedback.items || [];
+        state.chatbotFeedbackStats = chatbotFeedback.stats || { expected: 0, unexpected: 0 };
         state.faqs = faqs.items || [];
         state.schemaFaqs = schemaFaqEntries || [];
         state.tasks = tasks.items || [];

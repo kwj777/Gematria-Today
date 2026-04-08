@@ -1824,6 +1824,15 @@
         renderChatSessions();
       }
 
+      async function loadDashboardCollections() {
+        await Promise.all([
+          loadHistory(),
+          loadChatSessions(),
+          loadMemberProposals(),
+          loadMemberChatbotFeedback(),
+        ]);
+      }
+
       historyListToggleButton.addEventListener('click', () => {
         showAllHistoryItems = !showAllHistoryItems;
         renderHistory();
@@ -1859,10 +1868,7 @@
           loadFavoriteHistoryIds();
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
-          await loadHistory();
-          await loadChatSessions();
-          await loadMemberProposals();
-          await loadMemberChatbotFeedback();
+          await loadDashboardCollections();
 
           if (paymentState === 'success' && stripeSessionId) {
             await confirmStripePayment(stripeSessionId);
@@ -1970,10 +1976,7 @@
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
           maybeOpenFollowItAfterVerifiedSignIn(session);
-          await loadHistory();
-          await loadChatSessions();
-          await loadMemberProposals();
-          await loadMemberChatbotFeedback();
+          await loadDashboardCollections();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
         }
@@ -2216,9 +2219,11 @@
       document.getElementById('refreshHistoryButton').addEventListener('click', async () => {
         clearAlert();
         try {
-          await loadHistory();
-          await loadChatSessions();
-          await loadMemberChatbotFeedback();
+          await Promise.all([
+            loadHistory(),
+            loadChatSessions(),
+            loadMemberChatbotFeedback(),
+          ]);
           showAlert('History refreshed.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to refresh history.');

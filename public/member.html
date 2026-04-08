@@ -319,7 +319,14 @@
                 </div>
               </div>
             </div>
-            <div class="col-md-4"><button id="messageInboxCard" class="stat-card stat-card-button p-4 h-100 text-start w-100" type="button"><div class="section-kicker mb-2">Inbox Messages</div><div id="messageInboxCount" class="metric-value text-info">0</div><p id="messageInboxMeta" class="mb-0 text-muted">Admin replies waiting in your message center inbox.</p></button></div>
+            <div class="col-md-4">
+              <div id="messageInboxCard" class="stat-card stat-card-button p-4 h-100 text-start w-100" role="button" tabindex="0">
+                <div class="section-kicker mb-2">Inbox Messages</div>
+                <div id="messageInboxCount" class="metric-value text-info">0</div>
+                <p id="messageInboxMeta" class="mb-3 text-muted">Admin replies waiting in your message center inbox.</p>
+                <button id="messageInboxOpenButton" class="btn btn-primary btn-sm" type="button">Open Message Center</button>
+              </div>
+            </div>
           </div>
 
           <section id="forumNotificationSection" class="content-panel p-4 mb-4">
@@ -424,7 +431,6 @@
                     <div>
                       <p class="section-kicker mb-2">Premium Blog Contributions</p>
                       <h3 class="h4 mb-2">Propose a blog post</h3>
-                      <p class="text-muted mb-0">Premium members can submit post ideas for editorial review.</p>
                     </div>
                     <button
                       id="premiumBlogProposalToggleButton"
@@ -552,6 +558,7 @@
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8';
       const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
       const messageInboxCard = document.getElementById('messageInboxCard');
+      const messageInboxOpenButton = document.getElementById('messageInboxOpenButton');
       const messageInboxCount = document.getElementById('messageInboxCount');
       const messageInboxMeta = document.getElementById('messageInboxMeta');
       const historyList = document.getElementById('historyList');
@@ -2412,6 +2419,18 @@
         renderMessageCenter();
         setMessageCenterOpen(true);
         messageCenterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
+      messageInboxCard?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          messageInboxCard.click();
+        }
+      });
+
+      messageInboxOpenButton?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        messageInboxCard?.click();
       });
 
       membershipUpgradeContent.addEventListener('show.bs.collapse', () => {

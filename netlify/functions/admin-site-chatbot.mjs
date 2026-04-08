@@ -3,6 +3,29 @@ import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
 const STATIC_CONTENT_SETTINGS_KEY = 'static_content_workspace';
 const MAX_QUERY_LENGTH = 400;
 const MAX_RESULTS = 5;
+const CONVERSATIONAL_PREFIXES = [
+  'what is',
+  'what are',
+  'who is',
+  'who are',
+  'where is',
+  'where are',
+  'tell me about',
+  'search for',
+  'search the site for',
+  'find',
+  'look up',
+  'show me',
+  'can you tell me about',
+  'can you find',
+  'can you search for',
+  'please find',
+  'please search for',
+  'i want to know about',
+  'i want to learn about',
+  'give me info on',
+  'give me information on',
+];
 
 const STATIC_PAGE_PATHS = {
   home: '/index.html',
@@ -46,6 +69,37 @@ function tokenize(input = '') {
       .map((token) => token.trim())
       .filter((token) => token.length >= 3)
   ));
+}
+
+function stripConversationalPrefix(rawQuery = '') {
+  const normalized = String(rawQuery || '').trim().replace(/\s+/g, ' ');
+  if (!normalized) return '';
+
+  let query = normalized;
+  let prefixRemoved = true;
+
+  while (prefixRemoved && query) {
+    prefixRemoved = false;
+    const lowered = query.toLowerCase();
+
+    for (const prefix of CONVERSATIONAL_PREFIXES) {
+      const normalizedPrefix = prefix.toLowerCase();
+      if (lowered === normalizedPrefix) {
+        query = '';
+        prefixRemoved = true;
+        break;
+      }
+
+      const prefixedWithSpace = `${normalizedPrefix} `;
+      if (lowered.startsWith(prefixedWithSpace)) {
+        query = query.slice(prefixedWithSpace.length).trim();
+        prefixRemoved = true;
+        break;
+      }
+    }
+  }
+
+  return query.replace(/^[\s,.:;!?-]+|[\s,.:;!?-]+$/g, '').trim();
 }
 
 function scoreDocument(query, terms, document) {
@@ -195,9 +249,10 @@ export async function handler(event) {
   try {
     const { sql } = await getAuthenticatedUser(event);
     const body = parseBody(event);
-    const query = String(body?.query || '').trim().slice(0, MAX_QUERY_LENGTH);
+    const rawQuery = String(body?.query || '').trim().slice(0, MAX_QUERY_LENGTH);
+    const query = stripConversationalPrefix(rawQuery);
 
-    if (!query) {
+    if (!rawQuery) {
       return jsonResponse(400, { error: 'query is required' });
     }
 

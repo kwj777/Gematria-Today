@@ -1111,14 +1111,16 @@
           status: proposal.status || 'pending',
           createdAt: proposal.createdAt || proposal.updatedAt,
         }));
-        const chatbotItems = memberChatbotFeedback.map((item) => ({
-          id: item.id,
-          type: 'chatbot-feedback',
-          title: item.query || 'Search feedback',
-          body: item.feedbackText || 'No feedback text submitted.',
-          status: item.adminReply ? 'replied' : 'pending',
-          createdAt: item.createdAt,
-        }));
+        const chatbotItems = memberChatbotFeedback
+          .filter((item) => item.wasExpected !== true)
+          .map((item) => ({
+            id: item.id,
+            type: 'chatbot-feedback',
+            title: item.query || 'Search feedback',
+            body: item.feedbackText || 'No feedback text submitted.',
+            status: item.adminReply ? 'replied' : 'pending',
+            createdAt: item.createdAt,
+          }));
         return [...proposalItems, ...chatbotItems].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       }
 
@@ -1160,7 +1162,10 @@
               <span class="badge text-bg-secondary text-uppercase">${escapeHtml(item.status)}</span>
             </div>
             <p class="small mb-1 mt-2">${escapeHtml(item.body)}</p>
-            <p class="small text-muted mb-0">Sent: ${escapeHtml(item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown date')}</p>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <p class="small text-muted mb-0">Sent: ${escapeHtml(item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown date')}</p>
+              <button class="btn btn-sm btn-outline-secondary" type="button" ${item.type === 'proposal' ? `data-archive-proposal="${escapeHtml(item.id)}"` : `data-archive-chatbot-feedback="${escapeHtml(item.id)}"`}>Archive</button>
+            </div>
           </article>
         `).join('') : '<p class="text-muted mb-0">No messages have been sent to admin yet.</p>';
 
@@ -2059,6 +2064,42 @@
         }
       });
 
+      async function archiveMessageCenterItem({ proposalId = null, feedbackId = null }) {
+        if (proposalId) {
+          await archiveProposal(proposalId);
+          return;
+        }
+
+        await request('/api/member-chatbot-feedback', {
+          method: 'PATCH',
+          body: JSON.stringify({ id: feedbackId, action: 'archive' }),
+        });
+        memberChatbotFeedback = memberChatbotFeedback.filter((item) => item.id !== feedbackId);
+        renderMemberChatbotFeedback();
+        renderForumNotifications();
+      }
+
+      messageCenterSentList?.addEventListener('click', async (event) => {
+        const proposalButton = event.target.closest('[data-archive-proposal]');
+        const feedbackButton = event.target.closest('[data-archive-chatbot-feedback]');
+        if (!proposalButton && !feedbackButton) {
+          return;
+        }
+        clearAlert();
+        const button = proposalButton || feedbackButton;
+        button.disabled = true;
+        try {
+          await archiveMessageCenterItem({
+            proposalId: proposalButton?.dataset.archiveProposal || null,
+            feedbackId: feedbackButton?.dataset.archiveChatbotFeedback || null,
+          });
+          showAlert('Message archived.', 'success');
+        } catch (error) {
+          showAlert(error.message || 'Unable to archive message.');
+          button.disabled = false;
+        }
+      });
+
       messageCenterInboxList?.addEventListener('click', async (event) => {
         const proposalButton = event.target.closest('[data-archive-proposal]');
         const feedbackButton = event.target.closest('[data-archive-chatbot-feedback]');
@@ -2069,19 +2110,10 @@
         const button = proposalButton || feedbackButton;
         button.disabled = true;
         try {
-          if (proposalButton) {
-            await archiveProposal(proposalButton.dataset.archiveProposal);
-            showAlert('Message archived.', 'success');
-            return;
-          }
-
-          await request('/api/member-chatbot-feedback', {
-            method: 'PATCH',
-            body: JSON.stringify({ id: feedbackButton.dataset.archiveChatbotFeedback, action: 'archive' }),
+          await archiveMessageCenterItem({
+            proposalId: proposalButton?.dataset.archiveProposal || null,
+            feedbackId: feedbackButton?.dataset.archiveChatbotFeedback || null,
           });
-          memberChatbotFeedback = memberChatbotFeedback.filter((item) => item.id !== feedbackButton.dataset.archiveChatbotFeedback);
-          renderMemberChatbotFeedback();
-          renderForumNotifications();
           showAlert('Message archived.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to archive message.');

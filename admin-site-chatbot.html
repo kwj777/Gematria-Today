@@ -63,22 +63,23 @@
             <p id="answerText" class="mb-4"></p>
             <h3 class="h6 text-uppercase text-muted">Sources</h3>
             <ul id="sourceList" class="list-group"></ul>
-            <section id="resultFeedbackPanel" class="mt-4 border rounded p-3 bg-light d-none">
-              <h3 class="h6 mb-2">Were these the expected results?</h3>
-              <div class="d-flex flex-wrap gap-2 mb-3">
-                <button id="feedbackYesButton" type="button" class="btn btn-sm btn-outline-success">Yes</button>
-                <button id="feedbackNoButton" type="button" class="btn btn-sm btn-outline-danger">No</button>
-              </div>
-              <div id="feedbackNoForm" class="d-none">
-                <label class="form-label small fw-semibold" for="feedbackText">What was off about the search results?</label>
-                <textarea id="feedbackText" class="form-control form-control-sm" rows="3" maxlength="1500" placeholder="Example: It matched the wrong topic and missed the FAQ section I expected."></textarea>
-                <div class="mt-2 d-flex gap-2">
-                  <button id="submitFeedbackButton" type="button" class="btn btn-sm btn-primary">Send feedback to admin panel</button>
-                </div>
-              </div>
-              <p id="feedbackStatus" class="small text-muted mt-2 mb-0"></p>
-            </section>
           </article>
+
+          <section id="resultFeedbackPanel" class="mt-4 border rounded p-3 bg-light d-none">
+            <h3 class="h6 mb-2">Were these the expected results?</h3>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <button id="feedbackYesButton" type="button" class="btn btn-sm btn-outline-success">Yes</button>
+              <button id="feedbackNoButton" type="button" class="btn btn-sm btn-outline-danger">No</button>
+            </div>
+            <div id="feedbackNoForm" class="d-none">
+              <label class="form-label small fw-semibold" for="feedbackText">What was off about the search results?</label>
+              <textarea id="feedbackText" class="form-control form-control-sm" rows="3" maxlength="1500" placeholder="Example: It matched the wrong topic and missed the FAQ section I expected."></textarea>
+              <div class="mt-2 d-flex gap-2">
+                <button id="submitFeedbackButton" type="button" class="btn btn-sm btn-primary">Send feedback to admin panel</button>
+              </div>
+            </div>
+            <p id="feedbackStatus" class="small text-muted mt-2 mb-0"></p>
+          </section>
         </section>
       </div>
     </main>

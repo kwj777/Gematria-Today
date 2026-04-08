@@ -142,6 +142,13 @@
                 <p class="mb-0 text-muted">Premium-member blog proposals awaiting review.</p>
               </a>
             </div>
+            <div class="col-md-6 col-xl-3">
+              <a class="stat-card p-4 h-100 d-block text-decoration-none" href="/admin-chatbot-feedback.html">
+                <div class="section-kicker mb-2 text-dark">Chatbot feedback</div>
+                <div id="chatbotFeedbackCount" class="metric-value text-danger">0</div>
+                <p class="mb-0 text-muted">Open feedback management page.</p>
+              </a>
+            </div>
             <div class="col-md-6 col-xl-3"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Tasks</div><div id="taskCount" class="metric-value text-warning">0</div><p class="mb-0 text-muted">Open administrative tasks still pending.</p></div></div>
           </div>
 
@@ -210,25 +217,6 @@
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save RSS feed</button></div>
                 </form>
                 <div id="feedList" class="admin-list mt-4"></div>
-                </div>
-              </section>
-            </div>
-
-            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
-              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
-                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#chatbotFeedbackBody" aria-expanded="false" aria-controls="chatbotFeedbackBody">
-                  <span>
-                    <span class="section-kicker d-block mb-2">Site Chatbot</span>
-                    <span class="h4 mb-0 d-block">Search feedback panel</span>
-                  </span>
-                  <span class="d-inline-flex align-items-center gap-3">
-                    <span id="chatbotFeedbackPendingBadge" class="badge text-bg-danger">0 new</span>
-                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
-                  </span>
-                </button>
-                <div id="chatbotFeedbackBody" class="collapse admin-section-body mt-4">
-                  <p class="text-muted small">Review search-quality feedback from chatbot sessions and reply directly. Replies appear in the member dashboard feedback panel.</p>
-                  <div id="chatbotFeedbackList" class="admin-list"></div>
                 </div>
               </section>
             </div>
@@ -1169,33 +1157,11 @@
       }
 
       function renderChatbotFeedback() {
-        const list = document.getElementById('chatbotFeedbackList');
-        const pendingBadge = document.getElementById('chatbotFeedbackPendingBadge');
+        const feedbackCount = document.getElementById('chatbotFeedbackCount');
         const newCount = state.chatbotFeedback.filter((item) => (item.status || 'new') === 'new').length;
-        if (pendingBadge) {
-          pendingBadge.textContent = `${newCount} new`;
+        if (feedbackCount) {
+          feedbackCount.textContent = String(newCount);
         }
-        if (!list) return;
-
-        list.innerHTML = state.chatbotFeedback.length ? state.chatbotFeedback.map((item) => `
-          <article class="admin-item-card mb-3 p-3">
-            <div class="d-flex flex-wrap gap-2 mb-2">
-              <span class="badge ${(item.status || 'new') === 'new' ? 'text-bg-danger' : 'text-bg-secondary'}">${escapeHtml(item.status || 'new')}</span>
-              <span class="badge text-bg-light">${escapeHtml(new Date(item.createdAt).toLocaleString())}</span>
-              ${typeof item.wasExpected === 'boolean' ? `<span class="badge ${item.wasExpected ? 'text-bg-success' : 'text-bg-warning'}">${item.wasExpected ? 'expected' : 'unexpected'}</span>` : ''}
-            </div>
-            <p class="small mb-1"><strong>Query:</strong> ${escapeHtml(item.query || '')}</p>
-            ${item.feedbackText ? `<p class="small mb-1"><strong>Member feedback:</strong> ${escapeHtml(item.feedbackText)}</p>` : '<p class="small text-muted mb-1">No free-text notes were provided.</p>'}
-            ${item.adminReply ? `<p class="small mb-1"><strong>Current admin reply:</strong> ${escapeHtml(item.adminReply)}</p>` : ''}
-            <label class="form-label form-label-sm mt-2" for="feedbackReply-${escapeHtml(item.id)}">Reply for member dashboard</label>
-            <textarea id="feedbackReply-${escapeHtml(item.id)}" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Write a response that the member will see in their dashboard.">${escapeHtml(item.adminReply || '')}</textarea>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-sm btn-primary" type="button" data-submit-feedback-reply="${escapeHtml(item.id)}">Save reply</button>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-feedback-reviewed="${escapeHtml(item.id)}">Mark reviewed</button>
-              <button class="btn btn-sm btn-outline-dark" type="button" data-mark-feedback-closed="${escapeHtml(item.id)}">Close</button>
-            </div>
-          </article>
-        `).join('') : '<p class="text-muted small mb-0">No chatbot feedback submitted yet.</p>';
       }
 
       async function refreshDashboard() {

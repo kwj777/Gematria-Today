@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Chatbot Feedback | EndTimes.Today</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+    <link rel="stylesheet" href="/theme.css" />
+    <script defer src="/ui-feedback.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg sticky-top" aria-label="Primary">
+      <div class="container">
+        <a class="navbar-brand" href="/admin.html">EndTimes.Today Admin</a>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <section class="hero-panel p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-2">Admin Tooling</p>
+          <h1 class="h2 mb-3">Chatbot feedback management</h1>
+          <p class="mb-0">Review site-search chatbot feedback, send replies to members, and close resolved items.</p>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5">
+          <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+            <div id="statusMessage" class="alert alert-info mb-0">Verifying admin access…</div>
+            <a class="btn btn-outline-secondary" href="/admin.html">Back to admin dashboard</a>
+          </div>
+          <div class="mb-3">
+            <span id="chatbotFeedbackPendingBadge" class="badge text-bg-danger">0 new</span>
+          </div>
+          <div id="chatbotFeedbackList" class="admin-list"></div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const statusMessage = document.getElementById('statusMessage');
+      const chatbotFeedbackPendingBadge = document.getElementById('chatbotFeedbackPendingBadge');
+      const chatbotFeedbackList = document.getElementById('chatbotFeedbackList');
+      let feedbackItems = [];
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      async function request(url, options = {}) {
+        const response = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          },
+          ...options
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Request failed');
+        }
+        return payload;
+      }
+
+      function renderFeedback() {
+        const newCount = feedbackItems.filter((item) => (item.status || 'new') === 'new').length;
+        chatbotFeedbackPendingBadge.textContent = `${newCount} new`;
+
+        chatbotFeedbackList.innerHTML = feedbackItems.length ? feedbackItems.map((item) => `
+          <article class="admin-item-card mb-3 p-3">
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span class="badge ${(item.status || 'new') === 'new' ? 'text-bg-danger' : 'text-bg-secondary'}">${escapeHtml(item.status || 'new')}</span>
+              <span class="badge text-bg-light">${escapeHtml(new Date(item.createdAt).toLocaleString())}</span>
+              ${typeof item.wasExpected === 'boolean' ? `<span class="badge ${item.wasExpected ? 'text-bg-success' : 'text-bg-warning'}">${item.wasExpected ? 'expected' : 'unexpected'}</span>` : ''}
+            </div>
+            <p class="small mb-1"><strong>Query:</strong> ${escapeHtml(item.query || '')}</p>
+            ${item.feedbackText ? `<p class="small mb-1"><strong>Member feedback:</strong> ${escapeHtml(item.feedbackText)}</p>` : '<p class="small text-muted mb-1">No free-text notes were provided.</p>'}
+            ${item.adminReply ? `<p class="small mb-1"><strong>Current admin reply:</strong> ${escapeHtml(item.adminReply)}</p>` : ''}
+            <label class="form-label form-label-sm mt-2" for="feedbackReply-${escapeHtml(item.id)}">Reply for member dashboard</label>
+            <textarea id="feedbackReply-${escapeHtml(item.id)}" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Write a response that the member will see in their dashboard.">${escapeHtml(item.adminReply || '')}</textarea>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-sm btn-primary" type="button" data-submit-feedback-reply="${escapeHtml(item.id)}">Save reply</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-feedback-reviewed="${escapeHtml(item.id)}">Mark reviewed</button>
+              <button class="btn btn-sm btn-outline-dark" type="button" data-mark-feedback-closed="${escapeHtml(item.id)}">Close</button>
+            </div>
+          </article>
+        `).join('') : '<p class="text-muted small mb-0">No chatbot feedback submitted yet.</p>';
+      }
+
+      async function refreshFeedback() {
+        const payload = await request('/api/admin-chatbot-feedback');
+        feedbackItems = payload.items || [];
+        renderFeedback();
+      }
+
+      async function loadSession() {
+        const payload = await request('/api/admin-session', { method: 'GET' });
+        statusMessage.className = 'alert alert-success mb-0';
+        statusMessage.textContent = `Signed in as ${payload.user?.username || 'admin'}.`;
+      }
+
+      document.addEventListener('click', async (event) => {
+        const submitFeedbackReply = event.target.closest('[data-submit-feedback-reply]')?.dataset?.submitFeedbackReply;
+        const markFeedbackReviewed = event.target.closest('[data-mark-feedback-reviewed]')?.dataset?.markFeedbackReviewed;
+        const markFeedbackClosed = event.target.closest('[data-mark-feedback-closed]')?.dataset?.markFeedbackClosed;
+
+        if (!submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed) return;
+
+        try {
+          if (submitFeedbackReply) {
+            const replyField = document.getElementById(`feedbackReply-${submitFeedbackReply}`);
+            const adminReply = String(replyField?.value || '').trim();
+            if (!adminReply) {
+              throw new Error('Please add a reply before saving.');
+            }
+            await request('/api/admin-chatbot-feedback', {
+              method: 'PATCH',
+              body: JSON.stringify({ id: submitFeedbackReply, adminReply })
+            });
+          } else {
+            const feedbackId = markFeedbackReviewed || markFeedbackClosed;
+            const status = markFeedbackReviewed ? 'reviewed' : 'closed';
+            await request('/api/admin-chatbot-feedback', {
+              method: 'PATCH',
+              body: JSON.stringify({ id: feedbackId, status })
+            });
+          }
+
+          await refreshFeedback();
+        } catch (error) {
+          statusMessage.className = 'alert alert-danger mb-0';
+          statusMessage.textContent = error.message || 'Unable to update feedback right now.';
+        }
+      });
+
+      (async () => {
+        try {
+          await loadSession();
+          await refreshFeedback();
+        } catch (error) {
+          statusMessage.className = 'alert alert-danger mb-0';
+          statusMessage.textContent = error.message || 'Admin access is required.';
+        }
+      })();
+    </script>
+  </body>
+</html>

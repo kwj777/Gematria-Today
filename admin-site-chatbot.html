@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#355f8c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <title>Admin Site Chatbot | EndTimes.Today</title>
+    <meta name="description" content="Admin-only site search chatbot for EndTimes.Today content." />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="canonical" href="https://endtimes.today/admin-site-chatbot.html" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <script defer src="/ui-feedback.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Blog Content</a></li>
+            <li class="nav-item"><a class="nav-link active" aria-current="page" href="/admin-site-chatbot.html">Site Chatbot</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <section class="hero-panel p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-2">Admin Tooling</p>
+          <h1 class="h2 mb-3">Site-only chatbot workspace</h1>
+          <p class="mb-0">Ask questions and get answers only from your published FAQs, blog posts, and static page content. This page is not linked from public navigation and requires an active admin session.</p>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5">
+          <div id="statusMessage" class="alert alert-info">Verifying admin access…</div>
+          <form id="chatForm" class="row g-3 d-none" aria-label="Site chatbot form">
+            <div class="col-12">
+              <label class="form-label fw-semibold" for="chatQuestion">Ask a site question</label>
+              <textarea id="chatQuestion" class="form-control" rows="3" maxlength="400" placeholder="Example: What does the FAQ say about matching values?" required></textarea>
+            </div>
+            <div class="col-12 d-flex flex-wrap gap-2">
+              <button class="btn btn-primary" type="submit">Search site knowledge</button>
+              <button class="btn btn-outline-secondary" type="button" id="clearResults">Clear</button>
+            </div>
+          </form>
+
+          <article id="chatResult" class="mt-4 d-none" aria-live="polite">
+            <h2 class="h5">Answer</h2>
+            <p id="answerText" class="mb-4"></p>
+            <h3 class="h6 text-uppercase text-muted">Sources</h3>
+            <ul id="sourceList" class="list-group"></ul>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const statusMessage = document.getElementById('statusMessage');
+      const chatForm = document.getElementById('chatForm');
+      const chatQuestion = document.getElementById('chatQuestion');
+      const chatResult = document.getElementById('chatResult');
+      const answerText = document.getElementById('answerText');
+      const sourceList = document.getElementById('sourceList');
+      const clearResultsButton = document.getElementById('clearResults');
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function renderSources(sources) {
+        if (!Array.isArray(sources) || !sources.length) {
+          sourceList.innerHTML = '<li class="list-group-item text-muted">No matching source links found.</li>';
+          return;
+        }
+
+        sourceList.innerHTML = sources.map((source) => {
+          const safeTitle = escapeHtml(source.title || 'Source');
+          const safeUrl = escapeHtml(source.url || '/');
+          const safeSnippet = escapeHtml(source.snippet || '');
+          return `<li class="list-group-item"><div class="fw-semibold">${safeTitle}</div><a href="${safeUrl}" class="small" target="_blank" rel="noopener">${safeUrl}</a><p class="small text-muted mb-0 mt-2">${safeSnippet}</p></li>`;
+        }).join('');
+      }
+
+      async function verifySession() {
+        try {
+          const response = await fetch('/.netlify/functions/admin-session', { credentials: 'same-origin' });
+          if (!response.ok) {
+            window.location.assign('/admin.html');
+            return;
+          }
+
+          const payload = await response.json();
+          if (!payload?.authenticated) {
+            window.location.assign('/admin.html');
+            return;
+          }
+
+          statusMessage.className = 'alert alert-success';
+          statusMessage.textContent = `Signed in as ${payload.user?.username || 'admin'}. This chatbot only searches site content.`;
+          chatForm.classList.remove('d-none');
+        } catch (error) {
+          statusMessage.className = 'alert alert-danger';
+          statusMessage.textContent = 'Could not verify admin session. Please refresh and sign in again.';
+        }
+      }
+
+      chatForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const query = chatQuestion.value.trim();
+        if (!query) return;
+
+        statusMessage.className = 'alert alert-info';
+        statusMessage.textContent = 'Searching published site content…';
+
+        try {
+          const response = await fetch('/.netlify/functions/admin-site-chatbot', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ query })
+          });
+
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload?.error || 'Search request failed');
+          }
+
+          answerText.textContent = payload.answer || 'No response generated.';
+          renderSources(payload.sources || []);
+          chatResult.classList.remove('d-none');
+
+          statusMessage.className = 'alert alert-success';
+          statusMessage.textContent = `Search complete. Indexed entries: ${Number(payload.corpusSize || 0)}.`;
+        } catch (error) {
+          statusMessage.className = 'alert alert-danger';
+          statusMessage.textContent = error.message || 'Unable to search site content right now.';
+        }
+      });
+
+      clearResultsButton?.addEventListener('click', () => {
+        chatQuestion.value = '';
+        sourceList.innerHTML = '';
+        answerText.textContent = '';
+        chatResult.classList.add('d-none');
+        statusMessage.className = 'alert alert-success';
+        statusMessage.textContent = 'Ready for the next search.';
+      });
+
+      verifySession();
+    </script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>

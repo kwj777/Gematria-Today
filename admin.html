@@ -46,6 +46,7 @@
             <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-forum.html">Forum Admin</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-site-chatbot.html">Site Chatbot</a></li>
             <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
           </ul>
         </div>
@@ -126,6 +127,7 @@
               <a class="btn btn-outline-primary" href="/admin-editorial.html">Editorial Queue</a>
               <a class="btn btn-outline-primary" href="/admin-forum.html">Forum Admin</a>
               <a class="btn btn-outline-primary" href="/admin-reports.html">Reports</a>
+              <a class="btn btn-outline-primary" href="/admin-site-chatbot.html">Site Chatbot</a>
               <button id="refreshSiteCacheButton" class="btn btn-outline-warning" type="button">Refresh site cache</button>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
             </div>
@@ -168,6 +170,25 @@
           <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
           <div class="row g-4 admin-dashboard-masonry">
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
+              <section class="content-panel p-4 h-100 admin-dashboard-section">
+                <a class="admin-section-toggle" href="/admin-site-chatbot.html" aria-label="Open admin site-only chatbot page">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Internal Assistant</span>
+                    <span class="h4 mb-0 d-block">Site-only chatbot</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-primary">Search</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </a>
+                <div class="admin-section-body mt-4">
+                  <p class="text-muted mb-3">Run admin-only Q&A against published FAQs, blog posts, and static pages without exposing the chatbot publicly.</p>
+                  <a class="btn btn-sm btn-outline-primary" href="/admin-site-chatbot.html">Open site chatbot</a>
+                </div>
+              </section>
+            </div>
+
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
               <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feedSectionBody" aria-expanded="false" aria-controls="feedSectionBody">

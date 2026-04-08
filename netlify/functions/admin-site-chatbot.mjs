@@ -27,6 +27,12 @@ const CONVERSATIONAL_PREFIXES = [
   'i want to learn about',
   'give me info on',
   'give me information on',
+  'do you have any articles on',
+  'do you have articles on',
+  'do you have any posts on',
+  'do you have posts on',
+  'do you have anything on',
+  'do you have info on',
 ];
 const SEARCH_STOP_WORDS = new Set([
   'a', 'an', 'and', 'any', 'are', 'as', 'at',
@@ -329,6 +335,7 @@ export async function handler(event) {
       answer: buildAnswer(query, ranked),
       sources: ranked,
       query,
+      highlightTerms: terms,
       corpusSize: corpus.length,
       siteOnly: true,
     });

@@ -110,13 +110,18 @@
           .replaceAll("'", '&#39;');
       }
 
-      function highlightTerm(value, term) {
+      function highlightTerm(value, terms = []) {
         const sourceText = String(value || '');
-        const normalizedTerm = String(term || '').trim();
-        if (!normalizedTerm) return escapeHtml(sourceText);
+        const normalizedTerms = Array.from(new Set((Array.isArray(terms) ? terms : [terms])
+          .map((term) => String(term || '').trim())
+          .filter(Boolean)))
+          .sort((a, b) => b.length - a.length);
+        if (!normalizedTerms.length) return escapeHtml(sourceText);
 
-        const escapedTerm = normalizedTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(escapedTerm, 'ig');
+        const escapedAlternates = normalizedTerms
+          .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+          .join('|');
+        const regex = new RegExp(`(${escapedAlternates})`, 'ig');
         const matches = Array.from(sourceText.matchAll(regex));
         if (!matches.length) return escapeHtml(sourceText);
 
@@ -133,16 +138,16 @@
         return html;
       }
 
-      function renderSources(sources, queryTerm = '') {
+      function renderSources(sources, queryTerms = []) {
         if (!Array.isArray(sources) || !sources.length) {
           sourceList.innerHTML = '<li class="list-group-item text-muted">No matching source links found.</li>';
           return;
         }
 
         sourceList.innerHTML = sources.map((source) => {
-          const safeTitle = highlightTerm(source.title || 'Source', queryTerm);
+          const safeTitle = highlightTerm(source.title || 'Source', queryTerms);
           const safeUrl = escapeHtml(source.url || '/');
-          const safeSnippet = highlightTerm(source.snippet || '', queryTerm);
+          const safeSnippet = highlightTerm(source.snippet || '', queryTerms);
           return `<li class="list-group-item"><div class="fw-semibold">${safeTitle}</div><a href="${safeUrl}" class="small" target="_blank" rel="noopener">${safeUrl}</a><p class="small text-muted mb-0 mt-2">${safeSnippet}</p></li>`;
         }).join('');
       }
@@ -233,10 +238,12 @@
             throw new Error(payload?.error || 'Search request failed');
           }
 
-          const highlightQuery = String(payload.query || query || '').trim();
+          const highlightTerms = Array.isArray(payload.highlightTerms) && payload.highlightTerms.length
+            ? payload.highlightTerms
+            : [String(payload.query || query || '').trim()].filter(Boolean);
 
           answerText.textContent = payload.answer || 'No response generated.';
-          renderSources(payload.sources || [], highlightQuery);
+          renderSources(payload.sources || [], highlightTerms);
           chatResult.classList.remove('d-none');
           latestSearchPayload = payload;
           feedbackNoForm.classList.add('d-none');

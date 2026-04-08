@@ -308,7 +308,7 @@
           <div class="row g-4 mb-4">
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p id="membershipPlanMeta" class="mb-0 text-muted">Current membership tier.</p></div></div>
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Status</div><div id="membershipStatus" class="metric-value text-success">active</div><p class="mb-0 text-muted">Account state for sign-in access.</p></div></div>
-            <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Saved Searches</div><div id="historyCount" class="metric-value text-info">0</div><p id="historyCountMeta" class="mb-0 text-muted">Calculation history items currently stored.</p></div></div>
+            <div class="col-md-4"><button id="messageInboxCard" class="stat-card stat-card-button p-4 h-100 text-start w-100" type="button"><div class="section-kicker mb-2">Inbox Messages</div><div id="messageInboxCount" class="metric-value text-info">0</div><p id="messageInboxMeta" class="mb-0 text-muted">Admin replies waiting in your message center inbox.</p></button></div>
           </div>
 
           <section id="forumNotificationSection" class="content-panel p-4 mb-4">
@@ -479,8 +479,9 @@
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8';
       const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
-      const historyCount = document.getElementById('historyCount');
-      const historyCountMeta = document.getElementById('historyCountMeta');
+      const messageInboxCard = document.getElementById('messageInboxCard');
+      const messageInboxCount = document.getElementById('messageInboxCount');
+      const messageInboxMeta = document.getElementById('messageInboxMeta');
       const historyList = document.getElementById('historyList');
       const historyListToggleWrap = document.getElementById('historyListToggleWrap');
       const historyListToggleButton = document.getElementById('historyListToggleButton');
@@ -1091,6 +1092,7 @@
       function syncMessageCenterAccess(member = session?.member) {
         const isPremium = isPremiumMembershipLevel(member?.membershipLevel);
         messageCenterOpenButton.classList.toggle('d-none', !isPremium);
+        messageInboxCard?.classList.toggle('is-locked', !isPremium);
         if (!isPremium) {
           setMessageCenterOpen(false);
         }
@@ -1140,6 +1142,26 @@
         return [...proposalReplies, ...feedbackReplies].sort((a, b) => new Date(b.repliedAt || 0).getTime() - new Date(a.repliedAt || 0).getTime());
       }
 
+      function updateMessageInboxSummary(inboxCount = 0) {
+        const normalizedCount = Number.isFinite(inboxCount) ? Math.max(0, inboxCount) : 0;
+        const isPremium = isPremiumMembershipLevel(session?.member?.membershipLevel);
+        if (messageInboxCount) {
+          messageInboxCount.textContent = String(normalizedCount);
+        }
+        if (!messageInboxMeta) {
+          return;
+        }
+
+        if (!isPremium) {
+          messageInboxMeta.textContent = 'Upgrade to premium to open your message center inbox.';
+          return;
+        }
+
+        messageInboxMeta.textContent = normalizedCount
+          ? `Admin replies waiting in your message center inbox (${normalizedCount}).`
+          : 'No unread admin replies in your message center inbox.';
+      }
+
       function renderMessageCenter() {
         if (!messageCenterSentList || !messageCenterInboxList) {
           return;
@@ -1148,6 +1170,7 @@
         const inboxItems = getMessageCenterInboxItems();
         const inboxCount = inboxItems.length;
         messageCenterOpenButton.textContent = inboxCount ? `Message Center (${inboxCount})` : 'Message Center';
+        updateMessageInboxSummary(inboxCount);
 
         messageCenterSentList.innerHTML = sentItems.length ? sentItems.map((item) => `
           <article class="admin-item-card p-3 mb-2">
@@ -1623,13 +1646,6 @@
           ? sortedHistoryItems
           : sortedHistoryItems.slice(0, FREE_MEMBERSHIP_SAVE_LIMIT);
 
-        historyCount.textContent = String(historyItems.length);
-        if (!isPremiumMember) {
-          historyCountMeta.textContent = `Calculation history items currently stored (${historyItems.length}/${FREE_MEMBERSHIP_SAVE_LIMIT} free saves used).`;
-        } else {
-          historyCountMeta.textContent = 'Calculation history items currently stored.';
-        }
-
         historyList.innerHTML = visibleHistoryItems.length ? visibleHistoryItems.map((item) => {
           const favorited = isFavorited(item);
           return `
@@ -1768,9 +1784,7 @@
         membershipLevel.textContent = member.membershipLevel;
         membershipPlanMeta.textContent = formatMembershipWindow(member);
         membershipStatus.textContent = member.status;
-        historyCountMeta.textContent = member.membershipLevel === 'free'
-          ? `Calculation history items currently stored (${historyItems.length}/${FREE_MEMBERSHIP_SAVE_LIMIT} free saves used).`
-          : 'Calculation history items currently stored.';
+        updateMessageInboxSummary(getMessageCenterInboxItems().length);
         document.getElementById('profileDisplayName').value = member.displayName || '';
         document.getElementById('profileNotes').value = profile?.preferences?.notes || '';
         syncPaymentButton(member);
@@ -2212,6 +2226,16 @@
 
       messageCenterCloseButton?.addEventListener('click', () => {
         setMessageCenterOpen(false);
+      });
+
+      messageInboxCard?.addEventListener('click', () => {
+        if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
+          showAlert('Message Center is available to premium members only.', 'warning');
+          return;
+        }
+        renderMessageCenter();
+        setMessageCenterOpen(true);
+        messageCenterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
 
       membershipUpgradeContent.addEventListener('show.bs.collapse', () => {

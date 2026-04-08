@@ -4,6 +4,8 @@ const STATIC_CONTENT_SETTINGS_KEY = 'static_content_workspace';
 const MAX_QUERY_LENGTH = 400;
 const MAX_RESULTS = 5;
 const CONVERSATIONAL_PREFIXES = [
+  'what about',
+  'how about',
   'what is',
   'what are',
   'who is',
@@ -26,6 +28,10 @@ const CONVERSATIONAL_PREFIXES = [
   'give me info on',
   'give me information on',
 ];
+
+function escapeRegExp(value = '') {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 const STATIC_PAGE_PATHS = {
   home: '/index.html',
@@ -84,15 +90,17 @@ function stripConversationalPrefix(rawQuery = '') {
 
     for (const prefix of CONVERSATIONAL_PREFIXES) {
       const normalizedPrefix = prefix.toLowerCase();
-      if (lowered === normalizedPrefix) {
+      const exactPrefixPattern = new RegExp(`^${escapeRegExp(normalizedPrefix)}$`, 'i');
+      const prefixedPattern = new RegExp(`^${escapeRegExp(normalizedPrefix)}[\\s,.:;!?-]+`, 'i');
+
+      if (exactPrefixPattern.test(lowered)) {
         query = '';
         prefixRemoved = true;
         break;
       }
 
-      const prefixedWithSpace = `${normalizedPrefix} `;
-      if (lowered.startsWith(prefixedWithSpace)) {
-        query = query.slice(prefixedWithSpace.length).trim();
+      if (prefixedPattern.test(query)) {
+        query = query.replace(prefixedPattern, '').trim();
         prefixRemoved = true;
         break;
       }
@@ -101,6 +109,10 @@ function stripConversationalPrefix(rawQuery = '') {
 
   return query.replace(/^[\s,.:;!?-]+|[\s,.:;!?-]+$/g, '').trim();
 }
+
+export const __testUtils = {
+  stripConversationalPrefix,
+};
 
 function scoreDocument(query, terms, document) {
   const haystack = `${document.title} ${document.text}`.toLowerCase();

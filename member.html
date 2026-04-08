@@ -1877,15 +1877,6 @@
         renderChatSessions();
       }
 
-      async function loadDashboardCollections() {
-        await Promise.all([
-          loadHistory(),
-          loadChatSessions(),
-          loadMemberProposals(),
-          loadMemberChatbotFeedback(),
-        ]);
-      }
-
       historyListToggleButton.addEventListener('click', () => {
         showAllHistoryItems = !showAllHistoryItems;
         renderHistory();
@@ -1922,7 +1913,10 @@
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
           loadForumNotificationsInBackground();
-          await loadDashboardCollections();
+          await loadHistory();
+          await loadChatSessions();
+          await loadMemberProposals();
+          await loadMemberChatbotFeedback();
 
           if (paymentState === 'success' && stripeSessionId) {
             await confirmStripePayment(stripeSessionId);
@@ -2029,8 +2023,12 @@
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
+          loadForumNotificationsInBackground();
           maybeOpenFollowItAfterVerifiedSignIn(session);
-          await loadDashboardCollections();
+          await loadHistory();
+          await loadChatSessions();
+          await loadMemberProposals();
+          await loadMemberChatbotFeedback();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
         }
@@ -2273,11 +2271,9 @@
       document.getElementById('refreshHistoryButton').addEventListener('click', async () => {
         clearAlert();
         try {
-          await Promise.all([
-            loadHistory(),
-            loadChatSessions(),
-            loadMemberChatbotFeedback(),
-          ]);
+          await loadHistory();
+          await loadChatSessions();
+          await loadMemberChatbotFeedback();
           showAlert('History refreshed.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to refresh history.');

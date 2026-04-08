@@ -276,12 +276,35 @@
               <a class="btn btn-outline-primary" href="/calculator.html">Open calculator</a>
               <a id="premiumResearchLink" class="btn btn-outline-secondary premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
               <a id="blogProposalNavButton" class="btn btn-outline-success d-none" href="#premiumBlogProposalSection">Submit blog post</a>
+              <button id="messageCenterOpenButton" class="btn btn-outline-dark d-none" type="button">Message Center</button>
               <button id="refreshHistoryButton" class="btn btn-outline-secondary" type="button">Refresh history</button>
               <a id="adminPageButton" class="btn btn-outline-dark d-none" href="/admin.html">Admin page</a>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Sign out</button>
             </div>
           </div>
 
+          <section id="messageCenterSection" class="content-panel p-4 p-lg-5 mb-4 d-none">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+              <div>
+                <p class="section-kicker mb-2">Premium Message Center</p>
+                <h3 class="h4 mb-1">Admin messaging hub</h3>
+                <p class="text-muted mb-0">Review everything you have sent to admin and keep track of replies in your inbox.</p>
+              </div>
+              <button id="messageCenterCloseButton" class="btn btn-outline-secondary" type="button">Close message center</button>
+            </div>
+            <div class="row g-4">
+              <div class="col-xl-6">
+                <h4 class="h5 mb-3">Sent to admin</h4>
+                <div id="messageCenterSentList" class="admin-list"></div>
+              </div>
+              <div class="col-xl-6">
+                <h4 class="h5 mb-3">Inbox (until archived)</h4>
+                <div id="messageCenterInboxList" class="admin-list"></div>
+              </div>
+            </div>
+          </section>
+
+          <div id="dashboardMainContent">
           <div class="row g-4 mb-4">
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p id="membershipPlanMeta" class="mb-0 text-muted">Current membership tier.</p></div></div>
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Status</div><div id="membershipStatus" class="metric-value text-success">active</div><p class="mb-0 text-muted">Account state for sign-in access.</p></div></div>
@@ -421,6 +444,7 @@
               </div>
             </div>
           </div>
+          </div>
 
         </section>
       </div>
@@ -498,6 +522,12 @@
       const learningPathStep1Section = document.getElementById('learningPathStep1Section');
       const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
       const blogProposalNavButton = document.getElementById('blogProposalNavButton');
+      const messageCenterOpenButton = document.getElementById('messageCenterOpenButton');
+      const messageCenterSection = document.getElementById('messageCenterSection');
+      const messageCenterCloseButton = document.getElementById('messageCenterCloseButton');
+      const messageCenterSentList = document.getElementById('messageCenterSentList');
+      const messageCenterInboxList = document.getElementById('messageCenterInboxList');
+      const dashboardMainContent = document.getElementById('dashboardMainContent');
       const premiumBlogProposalSection = document.getElementById('premiumBlogProposalSection');
       const premiumBlogProposalForm = document.getElementById('premiumBlogProposalForm');
       const premiumBlogProposalLockedMessage = document.getElementById('premiumBlogProposalLockedMessage');
@@ -528,6 +558,7 @@
       let memberChatbotFeedback = [];
       let recentForumThreads = [];
       let chatSessions = [];
+      let isMessageCenterOpen = false;
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
 
 
@@ -1009,6 +1040,8 @@
         syncPremiumResearchLink(isLoggedIn ? session?.member : null);
         syncAdminPageButton(isLoggedIn ? session?.member : null, isLoggedIn ? session?.user : null);
         syncBlogProposalForm(isLoggedIn ? session?.member : null);
+        syncMessageCenterAccess(isLoggedIn ? session?.member : null);
+        renderMessageCenter();
         renderForumNotifications();
         membershipPageContent.classList.remove('d-none');
       }
@@ -1055,6 +1088,97 @@
         blogProposalAttribution.value = member?.username || '';
       }
 
+      function setMessageCenterOpen(isOpen) {
+        isMessageCenterOpen = Boolean(isOpen);
+        messageCenterSection.classList.toggle('d-none', !isMessageCenterOpen);
+        dashboardMainContent.classList.toggle('d-none', isMessageCenterOpen);
+      }
+
+      function syncMessageCenterAccess(member = session?.member) {
+        const isPremium = isPremiumMembershipLevel(member?.membershipLevel);
+        messageCenterOpenButton.classList.toggle('d-none', !isPremium);
+        if (!isPremium) {
+          setMessageCenterOpen(false);
+        }
+      }
+
+      function getMessageCenterSentItems() {
+        const proposalItems = memberProposals.map((proposal) => ({
+          id: proposal.id,
+          type: 'proposal',
+          title: proposal.title || 'Untitled proposal',
+          body: proposal.summary || proposal.body || 'No proposal content provided.',
+          status: proposal.status || 'pending',
+          createdAt: proposal.createdAt || proposal.updatedAt,
+        }));
+        const chatbotItems = memberChatbotFeedback.map((item) => ({
+          id: item.id,
+          type: 'chatbot-feedback',
+          title: item.query || 'Search feedback',
+          body: item.feedbackText || 'No feedback text submitted.',
+          status: item.adminReply ? 'replied' : 'pending',
+          createdAt: item.createdAt,
+        }));
+        return [...proposalItems, ...chatbotItems].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      }
+
+      function getMessageCenterInboxItems() {
+        const proposalReplies = memberProposals
+          .filter((proposal) => proposal.rejectionExplanation || proposal.status === 'approved' || proposal.status === 'rejected')
+          .map((proposal) => ({
+            id: proposal.id,
+            type: 'proposal',
+            title: proposal.title || 'Untitled proposal',
+            reply: proposal.rejectionExplanation || `Your proposal was marked as ${proposal.status || 'reviewed'}.`,
+            repliedAt: proposal.reviewedAt || proposal.updatedAt || proposal.createdAt,
+          }));
+        const feedbackReplies = memberChatbotFeedback
+          .filter((item) => Boolean(item.adminReply))
+          .map((item) => ({
+            id: item.id,
+            type: 'chatbot-feedback',
+            title: item.query || 'Search feedback',
+            reply: item.adminReply,
+            repliedAt: item.repliedAt || item.updatedAt || item.createdAt,
+          }));
+        return [...proposalReplies, ...feedbackReplies].sort((a, b) => new Date(b.repliedAt || 0).getTime() - new Date(a.repliedAt || 0).getTime());
+      }
+
+      function renderMessageCenter() {
+        if (!messageCenterSentList || !messageCenterInboxList) {
+          return;
+        }
+        const sentItems = getMessageCenterSentItems();
+        const inboxItems = getMessageCenterInboxItems();
+        const inboxCount = inboxItems.length;
+        messageCenterOpenButton.textContent = inboxCount ? `Message Center (${inboxCount})` : 'Message Center';
+
+        messageCenterSentList.innerHTML = sentItems.length ? sentItems.map((item) => `
+          <article class="admin-item-card p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span class="badge text-bg-secondary text-uppercase">${escapeHtml(item.status)}</span>
+            </div>
+            <p class="small mb-1 mt-2">${escapeHtml(item.body)}</p>
+            <p class="small text-muted mb-0">Sent: ${escapeHtml(item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown date')}</p>
+          </article>
+        `).join('') : '<p class="text-muted mb-0">No messages have been sent to admin yet.</p>';
+
+        messageCenterInboxList.innerHTML = inboxItems.length ? inboxItems.map((item) => `
+          <article class="admin-item-card p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span class="badge text-bg-success">reply</span>
+            </div>
+            <div class="alert alert-info small mb-2 mt-2"><strong>Admin message:</strong> ${escapeHtml(item.reply)}</div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <span class="small text-muted">Received: ${escapeHtml(item.repliedAt ? new Date(item.repliedAt).toLocaleString() : 'Unknown date')}</span>
+              <button class="btn btn-sm btn-outline-secondary" type="button" ${item.type === 'proposal' ? `data-archive-proposal="${escapeHtml(item.id)}"` : `data-archive-chatbot-feedback="${escapeHtml(item.id)}"`}>Archive</button>
+            </div>
+          </article>
+        `).join('') : '<p class="text-muted mb-0">Inbox is empty. Admin replies will appear here until archived.</p>';
+      }
+
       function renderMemberProposalFeedback() {
         if (!memberProposalFeedbackList) {
           return;
@@ -1097,6 +1221,7 @@
             </article>
           `;
         }).join('');
+        renderMessageCenter();
       }
 
       function renderMemberChatbotFeedback() {
@@ -1125,6 +1250,7 @@
             </article>
           `;
         }).join('') : '<p class="text-muted mb-0">No chatbot feedback submitted yet.</p>';
+        renderMessageCenter();
       }
 
       async function loadMemberChatbotFeedback() {
@@ -1653,6 +1779,7 @@
         syncPremiumResearchLink(member);
         syncAdminPageButton(member, user);
         syncBlogProposalForm(member);
+        syncMessageCenterAccess(member);
         syncBlogSubscriptionSection(member, profile);
       }
 
@@ -1932,6 +2059,36 @@
         }
       });
 
+      messageCenterInboxList?.addEventListener('click', async (event) => {
+        const proposalButton = event.target.closest('[data-archive-proposal]');
+        const feedbackButton = event.target.closest('[data-archive-chatbot-feedback]');
+        if (!proposalButton && !feedbackButton) {
+          return;
+        }
+        clearAlert();
+        const button = proposalButton || feedbackButton;
+        button.disabled = true;
+        try {
+          if (proposalButton) {
+            await archiveProposal(proposalButton.dataset.archiveProposal);
+            showAlert('Message archived.', 'success');
+            return;
+          }
+
+          await request('/api/member-chatbot-feedback', {
+            method: 'PATCH',
+            body: JSON.stringify({ id: feedbackButton.dataset.archiveChatbotFeedback, action: 'archive' }),
+          });
+          memberChatbotFeedback = memberChatbotFeedback.filter((item) => item.id !== feedbackButton.dataset.archiveChatbotFeedback);
+          renderMemberChatbotFeedback();
+          renderForumNotifications();
+          showAlert('Message archived.', 'success');
+        } catch (error) {
+          showAlert(error.message || 'Unable to archive message.');
+          button.disabled = false;
+        }
+      });
+
       memberChatbotFeedbackList?.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-archive-chatbot-feedback]');
         if (!button) {
@@ -2016,6 +2173,19 @@
         } catch (error) {
           showAlert(error.message || 'Unable to refresh history.');
         }
+      });
+
+      messageCenterOpenButton?.addEventListener('click', () => {
+        if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
+          showAlert('Message Center is available to premium members only.', 'warning');
+          return;
+        }
+        renderMessageCenter();
+        setMessageCenterOpen(true);
+      });
+
+      messageCenterCloseButton?.addEventListener('click', () => {
+        setMessageCenterOpen(false);
       });
 
       membershipUpgradeContent.addEventListener('show.bs.collapse', () => {

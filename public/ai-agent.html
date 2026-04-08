@@ -588,11 +588,18 @@
         const removeTranscriptUiLines = (text) => String(text || '')
           .replace(/\bSave to membership dashboard\b/gi, '')
           .replace(/\bOpen calculator search for\s+"[^"\n]*"/gi, '')
+          .replace(/\bDictionary lookup page for\s+"[^"\n]*"(?:\s+—\s+Preview:[^\n]*)?/gi, '')
           .replace(/\bRun at least 3 semantic neighbors and compare both full totals and digital roots\./gi, '')
           .replace(
             /(Detected calculation targets?:\s*[^\n]+)\s+(For\s+"[^"\n]+"[^.\n]*gematria snapshot:)/gi,
             '$1\n$2',
-          );
+          )
+          .replace(/\s+(Total:\s*\d+)/gi, '\n$1')
+          .replace(/\s+(Digital root:\s*\d+)/gi, '\n$1')
+          .replace(/\s+(Base-root pattern:\s*(?:Yes|No))/gi, '\n$1')
+          .replace(/\s+(Current archived matches:\s*[^\n]+)/gi, '\n$1')
+          .replace(/\s+(Suggested next lookups)/gi, '\n$1')
+          .replace(/\s+(Related words lookup:)/gi, '\n$1');
 
         return [...chatLog.querySelectorAll('article[data-role]')]
           .map((article) => {

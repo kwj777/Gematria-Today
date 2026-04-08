@@ -9,15 +9,25 @@ export async function handler(event) {
   try {
     const method = String(event?.httpMethod || '').toUpperCase();
     const { sql, member } = await getAuthenticatedMember(event, { requireAuth: true });
+    const requestUrl = new URL(event.rawUrl || `https://example.com${event.path || ''}`);
+    const archiveView = requestUrl.searchParams.get('view') === 'archived';
 
     if (method === 'GET') {
-      const rows = await sql`
-        SELECT id, title, summary, status, rejection_explanation, reviewed_at, created_at, updated_at
-        FROM blog_post_proposals
-        WHERE user_id = ${member.id}
-          AND archived_by_member_at IS NULL
-        ORDER BY created_at DESC
-      `;
+      const rows = archiveView
+        ? await sql`
+          SELECT id, title, summary, status, rejection_explanation, reviewed_at, created_at, updated_at
+          FROM blog_post_proposals
+          WHERE user_id = ${member.id}
+            AND archived_by_member_at IS NOT NULL
+          ORDER BY created_at DESC
+        `
+        : await sql`
+          SELECT id, title, summary, status, rejection_explanation, reviewed_at, created_at, updated_at
+          FROM blog_post_proposals
+          WHERE user_id = ${member.id}
+            AND archived_by_member_at IS NULL
+          ORDER BY created_at DESC
+        `;
       return jsonResponse(200, {
         items: rows.map((row) => ({
           id: row.id,

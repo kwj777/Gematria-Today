@@ -30,18 +30,18 @@
   </g>
 
   <g stroke="url(#line)" stroke-width="3" stroke-linecap="round" opacity="0.9">
-    <path d="M174 136L324 102L500 184L676 150L860 214L1016 170"/>
+    <path d="M214 176L364 142L540 224L676 150L860 214L1016 170"/>
     <path d="M258 250L420 220L610 292L768 264L966 322"/>
     <path d="M146 412L318 368L488 454L646 420L842 488L1016 450"/>
-    <path d="M324 102L420 220L318 368" opacity="0.55"/>
+    <path d="M364 142L420 220L318 368" opacity="0.55"/>
     <path d="M676 150L610 292L646 420" opacity="0.55"/>
     <path d="M860 214L768 264L842 488" opacity="0.55"/>
   </g>
 
   <g fill="#DDF4FF">
-    <circle cx="174" cy="136" r="9"/>
-    <circle cx="324" cy="102" r="8"/>
-    <circle cx="500" cy="184" r="8"/>
+    <circle cx="214" cy="176" r="9"/>
+    <circle cx="364" cy="142" r="8"/>
+    <circle cx="540" cy="224" r="8"/>
     <circle cx="676" cy="150" r="8"/>
     <circle cx="860" cy="214" r="8"/>
     <circle cx="1016" cy="170" r="8"/>
@@ -64,7 +64,7 @@
   </g>
 
   <g font-family="JetBrains Mono, Consolas, monospace" font-size="24" font-weight="700" fill="#FFFFFF" opacity="0.9">
-    <text x="145" y="164">LIGHT • 312</text>
+    <text x="185" y="204">LIGHT • 312</text>
     <text x="396" y="247">WISDOM • 486</text>
     <text x="630" y="177">KINGDOM • 450</text>
     <text x="876" y="239">CROWN • 462</text>

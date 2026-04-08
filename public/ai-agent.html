@@ -574,10 +574,21 @@
       }
 
       function readChatTranscriptFromDom() {
+        const normalizeTranscriptLine = (line) => String(line || '').replace(/\s+/g, ' ').trim();
+
         return [...chatLog.querySelectorAll('article[data-role]')]
           .map((article) => {
             const role = String(article.dataset.role || '').trim();
-            const text = normalizeCandidate(article.innerText.replace(/^Gematria AI Agent|^You/, ''));
+            const rawText = String(article.innerText || '')
+              .replace(/^\s*(Gematria AI Agent|You)\s*\n?/i, '')
+              .replace(/\r\n?/g, '\n')
+              .trim();
+            const text = rawText
+              .split('\n')
+              .map((line) => normalizeTranscriptLine(line))
+              .join('\n')
+              .replace(/\n{3,}/g, '\n\n')
+              .trim();
             if (!text || (role !== 'assistant' && role !== 'user')) {
               return null;
             }

@@ -57,7 +57,7 @@
               <span>Status filter</span>
               <select id="chatbotFeedbackStatusFilter" class="form-select form-select-sm" style="min-width: 180px;">
                 <option value="all">Show all statuses</option>
-                <option value="new">New only</option>
+                <option value="new" selected>New only</option>
                 <option value="reviewed">Reviewed only</option>
                 <option value="closed">Closed only</option>
               </select>
@@ -71,7 +71,7 @@
     <script>
       const state = {
         feedbackItems: [],
-        statusFilter: 'all',
+        statusFilter: 'new',
         stats: { expected: 0, unexpected: 0 }
       };
       const statusMessage = document.getElementById('statusMessage');
@@ -203,7 +203,7 @@
       });
 
       document.getElementById('chatbotFeedbackStatusFilter').addEventListener('change', (event) => {
-        state.statusFilter = event.target.value || 'all';
+        state.statusFilter = event.target.value || 'new';
         renderFeedback();
       });
 

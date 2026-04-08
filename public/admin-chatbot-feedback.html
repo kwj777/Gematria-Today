@@ -1,37 +1,65 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin Chatbot Feedback | EndTimes.Today</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <title>Chatbot Feedback Queue | EndTimes.Today Admin</title>
     <meta name="robots" content="noindex,nofollow" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="stylesheet" href="/theme.css" />
     <script defer src="/ui-feedback.js"></script>
   </head>
   <body>
-    <a class="skip-link" href="#mainContent">Skip to main content</a>
-    <nav class="navbar navbar-expand-lg sticky-top" aria-label="Primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand" href="/admin.html">EndTimes.Today Admin</a>
+        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Blog Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/admin-chatbot-feedback.html">Chatbot Feedback</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
+          </ul>
+        </div>
       </div>
     </nav>
 
-    <main id="mainContent" class="py-5">
-      <div class="container">
-        <section class="hero-panel p-4 p-lg-5 mb-4">
-          <p class="section-kicker mb-2">Admin Tooling</p>
-          <h1 class="h2 mb-3">Chatbot feedback management</h1>
-          <p class="mb-0">Review site-search chatbot feedback, send replies to members, and close resolved items.</p>
-        </section>
-
-        <section class="content-panel p-4 p-lg-5">
-          <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-            <div id="statusMessage" class="alert alert-info mb-0">Verifying admin access…</div>
-            <a class="btn btn-outline-secondary" href="/admin.html">Back to admin dashboard</a>
+    <main class="py-5">
+      <div class="container" style="max-width: 980px;">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+          <div>
+            <p class="section-kicker mb-2">Editorial Queue</p>
+            <h1 class="h3 mb-1">Review chatbot feedback</h1>
+            <p class="text-muted small mb-0">Review site-search chatbot feedback, reply to members, and close resolved threads.</p>
           </div>
-          <div class="mb-3">
-            <span id="chatbotFeedbackPendingBadge" class="badge text-bg-danger">0 new</span>
+          <a class="btn btn-outline-secondary" href="/admin.html">Back to dashboard</a>
+        </div>
+
+        <div id="statusMessage" class="alert alert-info" role="status">Verifying admin access…</div>
+
+        <section class="content-panel p-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div class="d-flex align-items-center gap-3">
+              <span class="section-kicker mb-0">Chatbot feedback report</span>
+              <span id="chatbotFeedbackPendingBadge" class="badge text-bg-danger">0 new</span>
+            </div>
+            <label class="d-flex align-items-center gap-2 small text-muted" for="chatbotFeedbackStatusFilter">
+              <span>Status filter</span>
+              <select id="chatbotFeedbackStatusFilter" class="form-select form-select-sm" style="min-width: 180px;">
+                <option value="all">Show all statuses</option>
+                <option value="new">New only</option>
+                <option value="reviewed">Reviewed only</option>
+                <option value="closed">Closed only</option>
+              </select>
+            </label>
           </div>
           <div id="chatbotFeedbackList" class="admin-list"></div>
         </section>
@@ -39,10 +67,10 @@
     </main>
 
     <script>
+      const state = { feedbackItems: [], statusFilter: 'all' };
       const statusMessage = document.getElementById('statusMessage');
       const chatbotFeedbackPendingBadge = document.getElementById('chatbotFeedbackPendingBadge');
       const chatbotFeedbackList = document.getElementById('chatbotFeedbackList');
-      let feedbackItems = [];
 
       function escapeHtml(value) {
         return String(value || '')
@@ -55,6 +83,7 @@
 
       async function request(url, options = {}) {
         const response = await fetch(url, {
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
             ...(options.headers || {})
@@ -68,11 +97,20 @@
         return payload;
       }
 
+      function setStatusMessage(message, tone = 'success') {
+        statusMessage.className = `alert alert-${tone}`;
+        statusMessage.textContent = message;
+      }
+
       function renderFeedback() {
-        const newCount = feedbackItems.filter((item) => (item.status || 'new') === 'new').length;
+        const newCount = state.feedbackItems.filter((item) => (item.status || 'new') === 'new').length;
         chatbotFeedbackPendingBadge.textContent = `${newCount} new`;
 
-        chatbotFeedbackList.innerHTML = feedbackItems.length ? feedbackItems.map((item) => `
+        const filteredItems = state.statusFilter === 'all'
+          ? state.feedbackItems
+          : state.feedbackItems.filter((item) => (item.status || 'new') === state.statusFilter);
+
+        chatbotFeedbackList.innerHTML = filteredItems.length ? filteredItems.map((item) => `
           <article class="admin-item-card mb-3 p-3">
             <div class="d-flex flex-wrap gap-2 mb-2">
               <span class="badge ${(item.status || 'new') === 'new' ? 'text-bg-danger' : 'text-bg-secondary'}">${escapeHtml(item.status || 'new')}</span>
@@ -90,19 +128,18 @@
               <button class="btn btn-sm btn-outline-dark" type="button" data-mark-feedback-closed="${escapeHtml(item.id)}">Close</button>
             </div>
           </article>
-        `).join('') : '<p class="text-muted small mb-0">No chatbot feedback submitted yet.</p>';
+        `).join('') : '<p class="text-muted small mb-0">No feedback entries match the selected status.</p>';
       }
 
       async function refreshFeedback() {
         const payload = await request('/api/admin-chatbot-feedback');
-        feedbackItems = payload.items || [];
+        state.feedbackItems = payload.items || [];
         renderFeedback();
       }
 
       async function loadSession() {
         const payload = await request('/api/admin-session', { method: 'GET' });
-        statusMessage.className = 'alert alert-success mb-0';
-        statusMessage.textContent = `Signed in as ${payload.user?.username || 'admin'}.`;
+        setStatusMessage(`Signed in as ${payload.user?.username || 'admin'}.`, 'success');
       }
 
       document.addEventListener('click', async (event) => {
@@ -123,6 +160,7 @@
               method: 'PATCH',
               body: JSON.stringify({ id: submitFeedbackReply, adminReply })
             });
+            setStatusMessage('Reply saved.', 'success');
           } else {
             const feedbackId = markFeedbackReviewed || markFeedbackClosed;
             const status = markFeedbackReviewed ? 'reviewed' : 'closed';
@@ -130,13 +168,18 @@
               method: 'PATCH',
               body: JSON.stringify({ id: feedbackId, status })
             });
+            setStatusMessage(`Feedback marked as ${status}.`, 'success');
           }
 
           await refreshFeedback();
         } catch (error) {
-          statusMessage.className = 'alert alert-danger mb-0';
-          statusMessage.textContent = error.message || 'Unable to update feedback right now.';
+          setStatusMessage(error.message || 'Unable to update feedback right now.', 'danger');
         }
+      });
+
+      document.getElementById('chatbotFeedbackStatusFilter').addEventListener('change', (event) => {
+        state.statusFilter = event.target.value || 'all';
+        renderFeedback();
       });
 
       (async () => {
@@ -144,8 +187,7 @@
           await loadSession();
           await refreshFeedback();
         } catch (error) {
-          statusMessage.className = 'alert alert-danger mb-0';
-          statusMessage.textContent = error.message || 'Admin access is required.';
+          setStatusMessage(error.message || 'Admin access is required.', 'danger');
         }
       })();
     </script>

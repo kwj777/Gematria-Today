@@ -97,21 +97,23 @@ export async function handler(event) {
       }
 
       const nextStatus = adminReply ? 'replied' : (status || null);
+      const hasReplyUpdate = adminReplyRaw != null;
+      const hasNonEmptyReply = typeof adminReply === 'string' && adminReply.trim().length > 0;
 
       const rows = await sql`
         UPDATE chatbot_search_feedback
         SET
           status = COALESCE(${nextStatus}, status),
           admin_reply = CASE
-            WHEN ${adminReplyRaw == null} THEN admin_reply
+            WHEN ${!hasReplyUpdate} THEN admin_reply
             ELSE ${adminReply}
           END,
           replied_by = CASE
-            WHEN ${adminReply} IS NULL OR BTRIM(${adminReply}::text) = '' THEN replied_by
+            WHEN ${!hasNonEmptyReply} THEN replied_by
             ELSE ${user.id}
           END,
           replied_at = CASE
-            WHEN ${adminReply} IS NULL OR BTRIM(${adminReply}::text) = '' THEN replied_at
+            WHEN ${!hasNonEmptyReply} THEN replied_at
             ELSE NOW()
           END,
           updated_at = NOW()

@@ -628,7 +628,7 @@
         const normalizedText = String(text || '')
           .replace(/\r\n?/g, '\n')
           .replace(/\bDictionary lookup page for\s+"[^"\n]*"(?:\s+—\s+Preview:[^\n]*)?/gi, '')
-          .replace(/\s+(For\s+"[^"\n]+"[^.\n]*gematria snapshot:)/gi, '\n\n$1')
+          .replace(/\s+(For\s+(?:"[^"\n]+"|[^,\n]+),\s+here\s+is\s+the\s+current\s+gematria\s+snapshot:)/gi, '\n\n$1')
           .replace(/\s+(Total:\s*\d+)/gi, '\n$1')
           .replace(/\s+(Digital root:\s*\d+)/gi, '\n$1')
           .replace(/\s+(Base-root pattern:\s*(?:Yes|No))/gi, '\n$1')

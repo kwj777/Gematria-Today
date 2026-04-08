@@ -172,6 +172,22 @@
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
 
+      const schemaFaqItems = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+        .flatMap((scriptElement) => {
+          try {
+            const schema = JSON.parse(scriptElement.textContent || '{}');
+            const entities = Array.isArray(schema?.mainEntity) ? schema.mainEntity : [];
+            return entities
+              .map((entry) => ({
+                question: entry?.name,
+                answer: entry?.acceptedAnswer?.text
+              }))
+              .filter((entry) => entry.question && entry.answer);
+          } catch {
+            return [];
+          }
+        });
+
       fetch('/api/public-faqs')
         .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
         .then(({ ok, payload }) => {
@@ -179,7 +195,21 @@
             throw new Error(payload.error || 'Failed to load FAQ entries');
           }
 
-          const items = payload.items || [];
+          const publishedItems = payload.items || [];
+          const uniqueByQuestion = new Map();
+
+          [...publishedItems, ...schemaFaqItems].forEach((item) => {
+            const question = String(item?.question || '').trim();
+            const answer = String(item?.answer || '').trim();
+            if (!question || !answer) {
+              return;
+            }
+            if (!uniqueByQuestion.has(question.toLowerCase())) {
+              uniqueByQuestion.set(question.toLowerCase(), { question, answer });
+            }
+          });
+
+          const items = Array.from(uniqueByQuestion.values());
           if (!items.length) {
             faqLoading.textContent = 'No FAQ entries have been published yet.';
             return;

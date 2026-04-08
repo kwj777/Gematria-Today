@@ -318,9 +318,25 @@
                 <h3 class="h4 mb-1">Don’t miss what’s happening in the forum</h3>
                 <p id="forumNotificationSummary" class="text-muted mb-0">Sign in to view your latest forum updates and responses.</p>
               </div>
-              <a id="forumNotificationLink" class="btn btn-primary" href="/forum.html">Open Forum</a>
+              <div class="d-flex gap-2 flex-wrap">
+                <button
+                  id="forumNotificationToggleButton"
+                  class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#forumNotificationContent"
+                  aria-expanded="false"
+                  aria-controls="forumNotificationContent"
+                >
+                  <span id="forumNotificationToggleLabel">Expand</span>
+                  <span id="forumNotificationToggleArrow" aria-hidden="true">▼</span>
+                </button>
+                <a id="forumNotificationLink" class="btn btn-primary" href="/forum.html">Open Forum</a>
+              </div>
             </div>
-            <div id="forumNotificationList" class="admin-list"></div>
+            <div id="forumNotificationContent" class="collapse">
+              <div id="forumNotificationList" class="admin-list"></div>
+            </div>
           </section>
 
           <div class="row g-4 align-items-start">
@@ -542,6 +558,10 @@
       const forumNotificationSummary = document.getElementById('forumNotificationSummary');
       const forumNotificationList = document.getElementById('forumNotificationList');
       const forumNotificationLink = document.getElementById('forumNotificationLink');
+      const forumNotificationContent = document.getElementById('forumNotificationContent');
+      const forumNotificationToggleButton = document.getElementById('forumNotificationToggleButton');
+      const forumNotificationToggleLabel = document.getElementById('forumNotificationToggleLabel');
+      const forumNotificationToggleArrow = document.getElementById('forumNotificationToggleArrow');
 
       let session = null;
       let historyItems = [];
@@ -1326,7 +1346,7 @@
           memberProposals = [];
         }
         renderMemberProposalFeedback();
-        await loadForumNotifications();
+        renderForumNotifications();
       }
 
       function getForumNotificationEntries() {
@@ -1417,6 +1437,28 @@
           recentForumThreads = [];
         }
         renderForumNotifications();
+        expandForumNotificationSection();
+      }
+
+      function loadForumNotificationsInBackground() {
+        loadForumNotifications().catch(() => {});
+      }
+
+      function expandForumNotificationSection() {
+        if (!forumNotificationContent || forumNotificationContent.classList.contains('show')) {
+          return;
+        }
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+          const collapse = bootstrap.Collapse.getOrCreateInstance(forumNotificationContent, { toggle: false });
+          collapse.show();
+          return;
+        }
+
+        forumNotificationContent.classList.add('show');
+        forumNotificationToggleLabel.textContent = 'Collapse';
+        forumNotificationToggleArrow.textContent = '▲';
+        forumNotificationToggleButton?.setAttribute('aria-expanded', 'true');
       }
 
       async function archiveProposal(proposalId) {
@@ -1870,6 +1912,7 @@
           loadFavoriteHistoryIds();
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
+          loadForumNotificationsInBackground();
           await loadHistory();
           await loadChatSessions();
           await loadMemberProposals();
@@ -1980,6 +2023,7 @@
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
+          loadForumNotificationsInBackground();
           maybeOpenFollowItAfterVerifiedSignIn(session);
           await loadHistory();
           await loadChatSessions();
@@ -2279,6 +2323,18 @@
         premiumBlogProposalToggleLabel.textContent = 'Expand';
         premiumBlogProposalToggleArrow.textContent = '▼';
         premiumBlogProposalToggleButton?.setAttribute('aria-expanded', 'false');
+      });
+
+      forumNotificationContent?.addEventListener('show.bs.collapse', () => {
+        forumNotificationToggleLabel.textContent = 'Collapse';
+        forumNotificationToggleArrow.textContent = '▲';
+        forumNotificationToggleButton?.setAttribute('aria-expanded', 'true');
+      });
+
+      forumNotificationContent?.addEventListener('hide.bs.collapse', () => {
+        forumNotificationToggleLabel.textContent = 'Expand';
+        forumNotificationToggleArrow.textContent = '▼';
+        forumNotificationToggleButton?.setAttribute('aria-expanded', 'false');
       });
 
       blogProposalNavButton?.addEventListener('click', (event) => {

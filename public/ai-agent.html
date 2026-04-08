@@ -567,20 +567,20 @@
         const wrapper = document.createElement('article');
         wrapper.dataset.role = role === 'assistant' ? 'assistant' : 'user';
         wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
-        wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'Gematria AI Agent' : 'You'}</p>${contentHtml}`;
+        wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'Gematria AI Agent' : 'You'}</p><div data-message-content>${contentHtml}</div>`;
         chatLog.append(wrapper);
         scrollChatToBottom();
         return wrapper;
       }
 
       function readChatTranscriptFromDom() {
-        const normalizeTranscriptLine = (line) => String(line || '').replace(/\s+/g, ' ').trim();
+        const normalizeTranscriptLine = (line) => String(line || '').replace(/[\t\f\v ]+/g, ' ').trim();
 
         return [...chatLog.querySelectorAll('article[data-role]')]
           .map((article) => {
             const role = String(article.dataset.role || '').trim();
-            const rawText = String(article.innerText || '')
-              .replace(/^\s*(Gematria AI Agent|You)\s*\n?/i, '')
+            const contentElement = article.querySelector('[data-message-content]') || article;
+            const rawText = String(contentElement.innerText || '')
               .replace(/\r\n?/g, '\n')
               .trim();
             const text = rawText

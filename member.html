@@ -655,6 +655,16 @@
             }
           }
 
+          if (lines.length === 1 && !block.includes('\n')) {
+            const sentenceChunks = block
+              .split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/)
+              .map((line) => line.trim())
+              .filter(Boolean);
+            if (sentenceChunks.length >= 3 && block.length >= 180) {
+              return `<p class="${marginClass}">${sentenceChunks.map((line) => escapeHtml(line)).join('<br>')}</p>`;
+            }
+          }
+
           return `<p class="${marginClass}">${escapeHtml(block).replace(/\n/g, '<br>')}</p>`;
         }).join('');
       }

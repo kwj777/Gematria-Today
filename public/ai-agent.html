@@ -563,13 +563,23 @@
         chatLog.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
 
-      function addMessage(role, contentHtml) {
+      function scrollMessageToTop(messageElement) {
+        if (!messageElement) return;
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function addMessage(role, contentHtml, options = {}) {
+        const pinToTop = Boolean(options.pinToTop);
         const wrapper = document.createElement('article');
         wrapper.dataset.role = role === 'assistant' ? 'assistant' : 'user';
         wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
         wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'Gematria AI Agent' : 'You'}</p><div data-message-content>${contentHtml}</div>`;
         chatLog.append(wrapper);
-        scrollChatToBottom();
+        if (pinToTop) {
+          scrollMessageToTop(wrapper);
+        } else {
+          scrollChatToBottom();
+        }
         return wrapper;
       }
 
@@ -1243,7 +1253,7 @@ View results: ${shareUrl}`.trim(),
         if (!premiumAccess) return;
         const prompt = promptInput.value.trim();
         if (!prompt) return;
-        addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`);
+        addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
         promptInput.value = '';
 
         window.showWorkingOverlay?.();
@@ -1292,7 +1302,7 @@ View results: ${shareUrl}`.trim(),
           const href = jsonPreviewLink.getAttribute('href') || '';
           if (!href) return;
           const previewType = String(jsonPreviewLink.dataset.jsonPreview || '').trim();
-          addMessage('user', `<p class="mb-0">${escapeHtml(jsonPreviewLink.textContent || 'Preview JSON link')}</p>`);
+          addMessage('user', `<p class="mb-0">${escapeHtml(jsonPreviewLink.textContent || 'Preview JSON link')}</p>`, { pinToTop: true });
           window.showWorkingOverlay?.();
           const replyHtml = await buildJsonLinkPreviewReply(href, previewType);
           window.hideWorkingOverlay?.();
@@ -1305,7 +1315,7 @@ View results: ${shareUrl}`.trim(),
         if (wordLookupButton) {
           const selectedWord = String(wordLookupButton.dataset.word || '').trim();
           if (!selectedWord) return;
-          addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`);
+          addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`, { pinToTop: true });
           window.showWorkingOverlay?.();
           const replyHtml = await buildAgentReply(`"${selectedWord}"`);
           window.hideWorkingOverlay?.();

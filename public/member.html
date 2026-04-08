@@ -625,7 +625,18 @@
       }
 
       function formatTranscriptEntryHtml(text) {
-        const normalizedText = String(text || '').replace(/\r\n?/g, '\n').trim();
+        const normalizedText = String(text || '')
+          .replace(/\r\n?/g, '\n')
+          .replace(/\bDictionary lookup page for\s+"[^"\n]*"(?:\s+—\s+Preview:[^\n]*)?/gi, '')
+          .replace(/\s+(For\s+"[^"\n]+"[^.\n]*gematria snapshot:)/gi, '\n$1')
+          .replace(/\s+(Total:\s*\d+)/gi, '\n$1')
+          .replace(/\s+(Digital root:\s*\d+)/gi, '\n$1')
+          .replace(/\s+(Base-root pattern:\s*(?:Yes|No))/gi, '\n$1')
+          .replace(/\s+(Current archived matches:\s*[^\n]+)/gi, '\n$1')
+          .replace(/\s+(Suggested next lookups)/gi, '\n$1')
+          .replace(/\s+(Related words lookup:)/gi, '\n$1')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
         if (!normalizedText) {
           return '<p class="mb-0 text-muted">No message text provided.</p>';
         }

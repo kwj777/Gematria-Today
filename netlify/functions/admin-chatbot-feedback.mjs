@@ -107,11 +107,11 @@ export async function handler(event) {
             ELSE ${adminReply}
           END,
           replied_by = CASE
-            WHEN ${adminReply} IS NULL OR BTRIM(${adminReply}) = '' THEN replied_by
+            WHEN ${adminReply} IS NULL OR BTRIM(${adminReply}::text) = '' THEN replied_by
             ELSE ${user.id}
           END,
           replied_at = CASE
-            WHEN ${adminReply} IS NULL OR BTRIM(${adminReply}) = '' THEN replied_at
+            WHEN ${adminReply} IS NULL OR BTRIM(${adminReply}::text) = '' THEN replied_at
             ELSE NOW()
           END,
           updated_at = NOW()

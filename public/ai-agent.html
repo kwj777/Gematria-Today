@@ -585,6 +585,14 @@
 
       function readChatTranscriptFromDom() {
         const normalizeTranscriptLine = (line) => String(line || '').replace(/[\t\f\v ]+/g, ' ').trim();
+        const removeTranscriptUiLines = (text) => String(text || '')
+          .replace(/\bSave to membership dashboard\b/gi, '')
+          .replace(/\bOpen calculator search for\s+"[^"\n]*"/gi, '')
+          .replace(/\bRun at least 3 semantic neighbors and compare both full totals and digital roots\./gi, '')
+          .replace(
+            /(Detected calculation targets?:\s*[^\n]+)\s+(For\s+"[^"\n]+"[^.\n]*gematria snapshot:)/gi,
+            '$1\n$2',
+          );
 
         return [...chatLog.querySelectorAll('article[data-role]')]
           .map((article) => {
@@ -598,11 +606,15 @@
               .map((line) => normalizeTranscriptLine(line))
               .join('\n')
               .replace(/\n{3,}/g, '\n\n')
+              .replace(/^\s*$/gm, '')
               .trim();
-            if (!text || (role !== 'assistant' && role !== 'user')) {
+            const cleanedText = removeTranscriptUiLines(text)
+              .replace(/\n{3,}/g, '\n\n')
+              .trim();
+            if (!cleanedText || (role !== 'assistant' && role !== 'user')) {
               return null;
             }
-            return { role, text };
+            return { role, text: cleanedText };
           })
           .filter(Boolean);
       }
@@ -1167,7 +1179,6 @@ View results: ${shareUrl}`.trim(),
           recursiveSteps.push(currentStep);
         }
 
-        const finalStep = recursiveSteps[recursiveSteps.length - 1];
         const comparisonTargets = calculationTargets.slice(1, 6).map((target) => ({
           target,
           total: englishGematria(target),
@@ -1222,7 +1233,6 @@ View results: ${shareUrl}`.trim(),
               ${comparisonTargets.map((entry) => `<li>${escapeHtml(entry.target)} → total ${entry.total}, digital root ${entry.root}, base-root ${entry.isBaseRoot ? 'Yes' : 'No'}</li>`).join('')}
             </ul>
           ` : ''}
-          <p class="mb-3">${escapeHtml(finalStep.nextAction)}</p>
           ${requestedSpellingVariantLookup ? `
             <p class="mt-3 mb-2"><strong>Close spelling-variant lookup for "${escapeHtml(topic)}"</strong></p>
             ${closeSpellingVariants.length ? `

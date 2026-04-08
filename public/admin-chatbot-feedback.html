@@ -151,6 +151,15 @@
         renderFeedback();
       }
 
+      function removeFeedbackFromCurrentScreen(feedbackId) {
+        const targetId = String(feedbackId || '');
+        if (!targetId) {
+          return;
+        }
+        state.feedbackItems = state.feedbackItems.filter((item) => String(item.id || '') !== targetId);
+        renderFeedback();
+      }
+
       async function loadSession() {
         const payload = await request('/api/admin-session', { method: 'GET' });
         setStatusMessage(`Signed in as ${payload.user?.username || 'admin'}.`, 'success');
@@ -183,9 +192,11 @@
               body: JSON.stringify({ id: feedbackId, status })
             });
             setStatusMessage(`Feedback marked as ${status}.`, 'success');
+            removeFeedbackFromCurrentScreen(feedbackId);
           }
-
-          await refreshFeedback();
+          if (submitFeedbackReply) {
+            await refreshFeedback();
+          }
         } catch (error) {
           setStatusMessage(error.message || 'Unable to update feedback right now.', 'danger');
         }

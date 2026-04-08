@@ -405,13 +405,8 @@
                 </section>
                 <section class="content-panel p-4 h-100 d-flex flex-column justify-content-end">
                   <p class="section-kicker mb-2">Site Chatbot Feedback</p>
-                  <h3 class="h4 mb-2">Search quality feedback</h3>
-                  <p class="text-muted mb-3">Tell us when the site chatbot misses your intent. Admin replies appear in your dashboard.</p>
-                  <form id="chatbotFeedbackForm" class="row g-3 mb-3">
-                    <div class="col-12"><label class="form-label" for="chatbotFeedbackQuery">Search query</label><input id="chatbotFeedbackQuery" class="form-control" maxlength="400" placeholder="What did you search for?" required /></div>
-                    <div class="col-12"><label class="form-label" for="chatbotFeedbackText">What should improve?</label><textarea id="chatbotFeedbackText" class="form-control" rows="3" maxlength="1500" placeholder="Describe what was missing or incorrect." required></textarea></div>
-                    <div class="col-12 d-grid"><button id="chatbotFeedbackSubmitButton" class="btn btn-outline-primary" type="submit">Send chatbot feedback</button></div>
-                  </form>
+                  <h3 class="h4 mb-2">Search quality feedback replies</h3>
+                  <p class="text-muted mb-3">Submit chatbot feedback on the chatbot page. Admin responses for unexpected results appear here.</p>
                   <div id="memberChatbotFeedbackList" class="admin-list mb-4"></div>
                   <p class="section-kicker mb-2">Profile</p>
                   <h3 class="h4 mb-3">Preferences</h3>
@@ -511,8 +506,6 @@
       const premiumBlogProposalToggleArrow = document.getElementById('premiumBlogProposalToggleArrow');
       const memberProposalFeedbackList = document.getElementById('memberProposalFeedbackList');
       const memberChatbotFeedbackList = document.getElementById('memberChatbotFeedbackList');
-      const chatbotFeedbackForm = document.getElementById('chatbotFeedbackForm');
-      const chatbotFeedbackSubmitButton = document.getElementById('chatbotFeedbackSubmitButton');
       const blogProposalAttribution = document.getElementById('blogProposalAttribution');
       const blogSubscriptionSection = document.getElementById('blogSubscriptionSection');
       const blogSubscriptionForm = document.getElementById('blogSubscriptionForm');
@@ -1959,33 +1952,6 @@
         }
       });
 
-      chatbotFeedbackForm?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearAlert();
-        if (!session?.member) {
-          showAlert('Sign in before sending chatbot feedback.', 'warning');
-          return;
-        }
-        chatbotFeedbackSubmitButton.disabled = true;
-        try {
-          await request('/api/member-chatbot-feedback', {
-            method: 'POST',
-            body: JSON.stringify({
-              query: document.getElementById('chatbotFeedbackQuery').value.trim(),
-              feedbackText: document.getElementById('chatbotFeedbackText').value.trim(),
-              wasExpected: false,
-            }),
-          });
-          chatbotFeedbackForm.reset();
-          await loadMemberChatbotFeedback();
-          renderForumNotifications();
-          showAlert('Chatbot feedback sent to the admin panel.', 'success');
-        } catch (error) {
-          showAlert(error.message || 'Unable to send chatbot feedback.');
-        } finally {
-          chatbotFeedbackSubmitButton.disabled = false;
-        }
-      });
 
       document.getElementById('logoutButton').addEventListener('click', async () => {
         clearAlert();

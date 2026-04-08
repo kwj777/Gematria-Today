@@ -19,12 +19,18 @@ import { ensureAdminSchema } from './_admin.mjs';
 
 export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, getSqlClient, hashPassword, jsonResponse, parseBody, verifyTurnstileToken };
 const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
+let memberSchemaReadyPromise = null;
 
 export async function ensureMemberSchema(sql) {
-  await ensureAdminSchema(sql);
-  await ensureSecuritySchema(sql);
+  if (memberSchemaReadyPromise) {
+    return memberSchemaReadyPromise;
+  }
 
-  await sql`ALTER TABLE users
+  memberSchemaReadyPromise = (async () => {
+    await ensureAdminSchema(sql);
+    await ensureSecuritySchema(sql);
+
+    await sql`ALTER TABLE users
     ADD COLUMN IF NOT EXISTS email TEXT,
     ADD COLUMN IF NOT EXISTS display_name TEXT,
     ADD COLUMN IF NOT EXISTS membership_level TEXT NOT NULL DEFAULT 'free',
@@ -36,10 +42,10 @@ export async function ensureMemberSchema(sql) {
     ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE
   `;
 
-  await sql`UPDATE users SET email = LOWER(email) WHERE email IS NOT NULL`;
-  await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (LOWER(email)) WHERE email IS NOT NULL`;
+    await sql`UPDATE users SET email = LOWER(email) WHERE email IS NOT NULL`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (LOWER(email)) WHERE email IS NOT NULL`;
 
-  await sql`UPDATE users
+    await sql`UPDATE users
     SET membership_level = 'lifetime',
         membership_started_at = COALESCE(membership_started_at, NOW()),
         membership_expires_at = NULL,
@@ -50,7 +56,7 @@ export async function ensureMemberSchema(sql) {
         OR membership_expires_at IS NOT NULL
       )`;
 
-  await sql`DO $$
+    await sql`DO $$
   BEGIN
     IF NOT EXISTS (
       SELECT 1
@@ -64,7 +70,7 @@ export async function ensureMemberSchema(sql) {
   END
   $$`;
 
-  await sql`DO $$
+    await sql`DO $$
   BEGIN
     IF NOT EXISTS (
       SELECT 1
@@ -78,7 +84,7 @@ export async function ensureMemberSchema(sql) {
   END
   $$`;
 
-  await sql`CREATE TABLE IF NOT EXISTS member_profiles (
+    await sql`CREATE TABLE IF NOT EXISTS member_profiles (
     user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
     favorite_cipher TEXT,
@@ -87,7 +93,7 @@ export async function ensureMemberSchema(sql) {
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
-  await sql`CREATE TABLE IF NOT EXISTS calculation_history (
+    await sql`CREATE TABLE IF NOT EXISTS calculation_history (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     query_text TEXT NOT NULL,
@@ -101,11 +107,11 @@ export async function ensureMemberSchema(sql) {
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
-  await sql`CREATE INDEX IF NOT EXISTS calculation_history_user_created_at_idx ON calculation_history (user_id, created_at DESC)`;
-  await sql`CREATE INDEX IF NOT EXISTS calculation_history_query_type_idx ON calculation_history (query_type, created_at DESC)`;
-  await sql`CREATE INDEX IF NOT EXISTS calculation_history_calculator_source_idx ON calculation_history (calculator_source, created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS calculation_history_user_created_at_idx ON calculation_history (user_id, created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS calculation_history_query_type_idx ON calculation_history (query_type, created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS calculation_history_calculator_source_idx ON calculation_history (calculator_source, created_at DESC)`;
 
-  await sql`CREATE TABLE IF NOT EXISTS member_chat_sessions (
+    await sql`CREATE TABLE IF NOT EXISTS member_chat_sessions (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
@@ -116,9 +122,9 @@ export async function ensureMemberSchema(sql) {
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
-  await sql`CREATE INDEX IF NOT EXISTS member_chat_sessions_user_created_at_idx ON member_chat_sessions (user_id, created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS member_chat_sessions_user_created_at_idx ON member_chat_sessions (user_id, created_at DESC)`;
 
-  await sql`CREATE TABLE IF NOT EXISTS member_email_verification_requests (
+    await sql`CREATE TABLE IF NOT EXISTS member_email_verification_requests (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash TEXT UNIQUE NOT NULL,
@@ -126,14 +132,22 @@ export async function ensureMemberSchema(sql) {
     consumed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
-  await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_user_idx
+    await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_user_idx
     ON member_email_verification_requests (user_id, created_at DESC)`;
-  await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_expires_idx
+    await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_expires_idx
     ON member_email_verification_requests (expires_at DESC)`;
 
-  await sql`DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles`;
-  await sql`DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history`;
-  await sql`DROP FUNCTION IF EXISTS set_updated_at_timestamp()`;
+    await sql`DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles`;
+    await sql`DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history`;
+    await sql`DROP FUNCTION IF EXISTS set_updated_at_timestamp()`;
+  })();
+
+  try {
+    await memberSchemaReadyPromise;
+  } catch (error) {
+    memberSchemaReadyPromise = null;
+    throw error;
+  }
 }
 
 export function normalizeEmail(email) {

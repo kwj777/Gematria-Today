@@ -592,7 +592,7 @@
           .replace(/\bRun at least 3 semantic neighbors and compare both full totals and digital roots\./gi, '')
           .replace(
             /(Detected calculation targets?:\s*[^\n]+)\s+(For\s+"[^"\n]+"[^.\n]*gematria snapshot:)/gi,
-            '$1\n$2',
+            '$1\n\n$2',
           )
           .replace(/\s+(Total:\s*\d+)/gi, '\n$1')
           .replace(/\s+(Digital root:\s*\d+)/gi, '\n$1')

@@ -50,16 +50,10 @@
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
+                <li><a class="dropdown-item" href="/ai-agent.html">Gematria AI Agent</a></li>
               </ul>
             </li>
-            <li class="nav-item dropdown">
-              <button class="nav-link dropdown-toggle" type="button" id="faqMenu" data-bs-toggle="dropdown" aria-expanded="false">FAQ</button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="faqMenu">
-                <li><a class="dropdown-item" href="/faq.html">FAQ Page</a></li>
-                <li><a class="dropdown-item" href="/ai-agent.html">SearchBot</a></li>
-              </ul>
-            </li>
-            <li class="nav-item"><a class="nav-link" href="/ai-agent.html" aria-label="Open SearchBot">🔍</a></li>
+            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
             <li class="nav-item"><a class="nav-link active" href="/member.html">Dashboard</a></li>
           </ul>
         </div>
@@ -412,7 +406,7 @@
               <section class="content-panel p-4 h-100 w-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
-                    <p class="section-kicker mb-2">SearchBot Sessions</p>
+                    <p class="section-kicker mb-2">AI Agent Sessions</p>
                     <h3 class="h4 mb-0">Saved chat sessions</h3>
                   </div>
                   <button
@@ -804,7 +798,7 @@
         const messagesHtml = transcriptEntries.length
           ? transcriptEntries.map((entry) => `
               <article class="message ${entry.role === 'assistant' ? 'assistant' : 'user'}">
-                <h3>${entry.role === 'assistant' ? 'SearchBot' : 'You'}</h3>
+                <h3>${entry.role === 'assistant' ? 'Gematria AI Agent' : 'You'}</h3>
                 <div>${formatTranscriptEntryHtml(entry.text || '')}</div>
               </article>
             `).join('')
@@ -815,7 +809,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(sessionItem.title || 'SearchBot session')}</title>
+    <title>${escapeHtml(sessionItem.title || 'Gematria AI Agent session')}</title>
     <style>
       body { font-family: Arial, sans-serif; line-height: 1.5; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #1f2937; }
       h1 { margin-bottom: 0.25rem; }
@@ -827,7 +821,7 @@
     </style>
   </head>
   <body>
-    <h1>${escapeHtml(sessionItem.title || 'SearchBot session')}</h1>
+    <h1>${escapeHtml(sessionItem.title || 'Gematria AI Agent session')}</h1>
     <p class="meta">Topic: ${escapeHtml(sessionItem.topic || 'General chat')} · Saved ${escapeHtml(createdAt)}</p>
     ${messagesHtml}
   </body>
@@ -837,10 +831,10 @@
       function createChatSessionMarkdownDocument(sessionItem = {}) {
         const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
         const createdAt = sessionItem.createdAt ? new Date(sessionItem.createdAt).toLocaleString() : 'Unknown save time';
-        const heading = sessionItem.title || 'SearchBot session';
+        const heading = sessionItem.title || 'Gematria AI Agent session';
         const topic = sessionItem.topic || 'General chat';
         const messages = transcriptEntries.length
-          ? transcriptEntries.map((entry) => `## ${entry.role === 'assistant' ? 'SearchBot' : 'You'}\n\n${entry.text || ''}`).join('\n\n')
+          ? transcriptEntries.map((entry) => `## ${entry.role === 'assistant' ? 'Gematria AI Agent' : 'You'}\n\n${entry.text || ''}`).join('\n\n')
           : 'No transcript messages were saved in this session.';
 
         return `# ${heading}\n\n- Topic: ${topic}\n- Saved: ${createdAt}\n\n${messages}\n`;
@@ -849,10 +843,10 @@
       function createChatSessionPlainTextDocument(sessionItem = {}) {
         const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
         const createdAt = sessionItem.createdAt ? new Date(sessionItem.createdAt).toLocaleString() : 'Unknown save time';
-        const heading = sessionItem.title || 'SearchBot session';
+        const heading = sessionItem.title || 'Gematria AI Agent session';
         const topic = sessionItem.topic || 'General chat';
         const messages = transcriptEntries.length
-          ? transcriptEntries.map((entry, index) => `${index + 1}. ${entry.role === 'assistant' ? 'SearchBot' : 'You'}\n${entry.text || ''}`).join('\n\n')
+          ? transcriptEntries.map((entry, index) => `${index + 1}. ${entry.role === 'assistant' ? 'Gematria AI Agent' : 'You'}\n${entry.text || ''}`).join('\n\n')
           : 'No transcript messages were saved in this session.';
 
         return `${heading}\n\nTopic: ${topic}\nSaved: ${createdAt}\n\n${messages}\n`;
@@ -861,7 +855,7 @@
       function createChatSessionJsonDocument(sessionItem = {}) {
         const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
         const payload = {
-          title: sessionItem.title || 'SearchBot session',
+          title: sessionItem.title || 'Gematria AI Agent session',
           topic: sessionItem.topic || 'General chat',
           createdAt: sessionItem.createdAt || null,
           transcript: transcriptEntries.map((entry) => ({
@@ -1977,7 +1971,7 @@
             <article class="admin-item-card member-history-card mb-3 p-3">
               <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div class="flex-grow-1">
-                  <h4 class="h6 mb-1">${escapeHtml(sessionItem.title || 'SearchBot session')}</h4>
+                  <h4 class="h6 mb-1">${escapeHtml(sessionItem.title || 'Gematria AI Agent session')}</h4>
                   <p class="small text-muted mb-2">${escapeHtml(sessionItem.topic || 'General chat')} · Saved ${new Date(sessionItem.createdAt).toLocaleString()}</p>
                   <details>
                     <summary>View transcript (${transcriptEntries.length} message${transcriptEntries.length === 1 ? '' : 's'})</summary>
@@ -2001,7 +1995,7 @@
               </div>
             </article>
           `;
-        }).join('') : '<p class="text-muted mb-0">No saved SearchBot chat sessions yet. Open the <a href="/ai-agent.html">SearchBot</a> and click <strong>Save chat to dashboard</strong>.</p>';
+        }).join('') : '<p class="text-muted mb-0">No saved AI agent chat sessions yet. Open the <a href="/ai-agent.html">Gematria AI Agent</a> and click <strong>Save chat to dashboard</strong>.</p>';
 
         chatSessionList.querySelectorAll('[data-export-chat-session-id]').forEach((button) => {
           button.addEventListener('click', () => {

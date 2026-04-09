@@ -9,13 +9,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
     <meta name="theme-color" content="#2d547c" />
-    <title>SearchBot | EndTimes.Today</title>
+    <title>Gematria AI Agent | EndTimes.Today</title>
     <meta name="description" content="Discuss gematria patterns with an AI-style assistant that calculates English gematria totals and suggests follow-up research prompts." />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href="https://endtimes.today/ai-agent.html" />
     <meta property="og:site_name" content="EndTimes.Today" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="SearchBot | EndTimes.Today" />
+    <meta property="og:title" content="Gematria AI Agent | EndTimes.Today" />
     <meta property="og:description" content="Run English gematria calculations and discuss possible pattern interpretations with a guided AI-style workflow." />
     <meta property="og:url" content="https://endtimes.today/ai-agent.html" />
     <meta property="og:image" content="https://endtimes.today/assets/gematria-agent-hero-share.svg" />
@@ -23,12 +23,12 @@
     <meta property="og:image:type" content="image/svg+xml" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Futuristic SearchBot dashboard with connected letter and number constellations." />
+    <meta property="og:image:alt" content="Futuristic Gematria AI Agent dashboard with connected letter and number constellations." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="SearchBot | EndTimes.Today" />
+    <meta name="twitter:title" content="Gematria AI Agent | EndTimes.Today" />
     <meta name="twitter:description" content="Run English gematria calculations and discuss possible pattern interpretations with a guided AI-style workflow." />
     <meta name="twitter:image" content="https://endtimes.today/assets/gematria-agent-hero-share.svg" />
-    <meta name="twitter:image:alt" content="Futuristic SearchBot dashboard with connected letter and number constellations." />
+    <meta name="twitter:image:alt" content="Futuristic Gematria AI Agent dashboard with connected letter and number constellations." />
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" /></noscript>
     <link rel="stylesheet" href="/theme.css" />
@@ -111,20 +111,14 @@
             <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
-              <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
+              <button class="nav-link dropdown-toggle active" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
+                <li><a class="dropdown-item active" href="/ai-agent.html">Gematria AI Agent</a></li>
               </ul>
             </li>
-            <li class="nav-item dropdown">
-              <button class="nav-link dropdown-toggle" type="button" id="faqMenu" data-bs-toggle="dropdown" aria-expanded="false">FAQ</button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="faqMenu">
-                <li><a class="dropdown-item" href="/faq.html">FAQ Page</a></li>
-                <li><a class="dropdown-item" href="/ai-agent.html">SearchBot</a></li>
-              </ul>
-            </li>
-            <li class="nav-item"><a class="nav-link" href="/ai-agent.html" aria-label="Open SearchBot">🔍</a></li>
+            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
             <li class="nav-item"><a class="nav-link" href="/member.html">Dashboard</a></li>
           </ul>
         </div>
@@ -136,31 +130,31 @@
         <div class="agent-hero-controls">
           <button type="button" id="toggleHeroVisibility" class="btn btn-outline-secondary btn-sm" aria-controls="agentHeroPanel" aria-expanded="true">Hide intro</button>
         </div>
-        <p id="agentCompactTitle" class="h4 fw-semibold mb-4" hidden>SearchBot</p>
+        <p id="agentCompactTitle" class="h4 fw-semibold mb-4" hidden>Gematria Agent</p>
 
         <section id="agentHeroPanel" class="hero-panel agent-hero-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Assistant</p>
-          <h1 class="display-6 fw-bold mb-2">SearchBot</h1>
+          <h1 class="display-6 fw-bold mb-2">Gematria AI Agent</h1>
           <p class="lead mb-0">Ask for gematria calculations, comparison ideas, or interpretation prompts. The assistant computes English gematria (A=6, B=12 ... Z=156), digital root, and optional match counts.</p>
-          <img class="agent-hero-image" src="/assets/gematria-agent-hero-share.svg" alt="SearchBot hero artwork with linked words and number pathways." width="1200" height="630" loading="eager" fetchpriority="high" />
+          <img class="agent-hero-image" src="/assets/gematria-agent-hero-share.svg" alt="Gematria AI Agent hero artwork with linked words and number pathways." width="1200" height="630" loading="eager" fetchpriority="high" />
         </section>
 
         <section class="content-panel p-4 p-lg-5">
           <div id="sharedResultBanner" class="alert alert-info mb-4" hidden></div>
           <div id="premiumGate" class="alert alert-warning mb-4" hidden></div>
           <div id="chatLog" class="d-flex flex-column gap-3 mb-4" aria-live="polite"></div>
-          <form id="agentForm" class="row g-3 mb-4" aria-label="SearchBot input">
+          <form id="agentForm" class="row g-3 mb-4" aria-label="Gematria AI Agent input">
             <div class="col-12">
               <label for="agentPrompt" class="form-label fw-semibold">Your message</label>
               <textarea id="agentPrompt" class="form-control" rows="3" required></textarea>
             </div>
             <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
-              <button type="submit" class="btn btn-primary">Ask SearchBot</button>
+              <button type="submit" class="btn btn-primary">Ask agent</button>
               <button type="button" id="clearConversation" class="btn btn-outline-secondary">Clear conversation</button>
               <button type="button" id="saveConversation" class="btn btn-outline-success">Save chat to dashboard</button>
             </div>
             <div class="col-12">
-              <p id="agentWaitingIndicator" class="agent-waiting-indicator small text-primary-emphasis mb-0" role="status" aria-live="polite" hidden>⏳ SearchBot is working on your request…</p>
+              <p id="agentWaitingIndicator" class="agent-waiting-indicator small text-primary-emphasis mb-0" role="status" aria-live="polite" hidden>⏳ Agent is working on your request…</p>
             </div>
             <div class="col-12 agent-form-help">
               <p class="form-text mb-0">Type the word(s) you want calculated in natural language (quotes are optional).</p>
@@ -189,7 +183,7 @@
       const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
         ? new window.BroadcastChannel('member-dashboard-sync')
         : null;
-      let premiumAccess = true;
+      let premiumAccess = false;
       const memberSession = {
         authenticated: false,
         membershipLevel: ''
@@ -658,7 +652,7 @@
         const wrapper = document.createElement('article');
         wrapper.dataset.role = role === 'assistant' ? 'assistant' : 'user';
         wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
-        wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'SearchBot' : 'You'}</p><div data-message-content>${contentHtml}</div>`;
+        wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'Gematria AI Agent' : 'You'}</p><div data-message-content>${contentHtml}</div>`;
         chatLog.append(wrapper);
         if (pinToTop) {
           scrollMessageToTop(wrapper);
@@ -718,7 +712,7 @@
           throw new Error('No chat messages found. Ask the agent first, then save the session.');
         }
 
-        const firstUserMessage = transcript.find((entry) => entry.role === 'user')?.text || 'SearchBot session';
+        const firstUserMessage = transcript.find((entry) => entry.role === 'user')?.text || 'Gematria AI Agent session';
         const title = firstUserMessage.length > 80 ? `${firstUserMessage.slice(0, 77)}...` : firstUserMessage;
         const response = await fetch('/api/member-chat-sessions', {
           method: 'POST',
@@ -949,16 +943,23 @@ View results: ${shareUrl}`.trim(),
           const level = String(payload?.member?.membershipLevel || '').toLowerCase();
           memberSession.authenticated = Boolean(payload?.authenticated);
           memberSession.membershipLevel = level;
+          premiumAccess = Boolean(payload?.authenticated) && (level === 'premium' || level === 'lifetime');
         } catch {
           memberSession.authenticated = false;
           memberSession.membershipLevel = '';
+          premiumAccess = false;
         }
 
-        premiumAccess = true;
+        if (!premiumAccess) {
+          premiumGate.hidden = false;
+          premiumGate.innerHTML = 'Gematria AI Agent is a <strong>premium member feature</strong>. Please <a href="/member.html" class="alert-link">log in or upgrade your membership</a> to use agent analysis and sharing.';
+          form.querySelectorAll('textarea, select, button[type=\"submit\"]').forEach((field) => {
+            field.disabled = true;
+          });
+          return;
+        }
+
         premiumGate.hidden = true;
-        form.querySelectorAll('textarea, select, button[type="submit"]').forEach((field) => {
-          field.disabled = false;
-        });
       }
 
       function showSharedResultIfPresent() {
@@ -1125,7 +1126,7 @@ View results: ${shareUrl}`.trim(),
             digitalRoot: Number.isFinite(root) ? root : null,
             matchCount: Number.isFinite(matches) ? matches : null,
             rounds: Number.isFinite(rounds) ? rounds : null,
-            source: 'SearchBot'
+            source: 'Gematria AI Agent'
           }
         };
 
@@ -1405,7 +1406,7 @@ View results: ${shareUrl}`.trim(),
         addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
         promptInput.value = '';
 
-        const originalAskButtonText = askAgentButton?.textContent || 'Ask SearchBot';
+        const originalAskButtonText = askAgentButton?.textContent || 'Ask agent';
         if (askAgentButton) {
           askAgentButton.textContent = 'Working...';
           askAgentButton.disabled = true;

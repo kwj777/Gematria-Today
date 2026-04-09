@@ -1,7 +1,7 @@
 # Building Gematria in Public: A Development History of the EndTimes.Today Project
 
 ## Abstract
-This paper documents the development history of the **Gematria** project (EndTimes.Today) from its first commit in February 2026 through the latest April 2, 2026 development cycle. Using the repository’s commit history and project documentation as evidence, it traces how a minimal static site evolved into a production-oriented web application with serverless APIs, database persistence, member accounts, premium research tooling, payment and recovery flows, editorial queue workflows, and layered abuse protections. The history also reveals a distinctive workflow: rapid, iterative, pull-request-driven delivery with frequent UI refinements and operational hardening.
+This paper documents the development history of the **Gematria** project (EndTimes.Today) from its first commit in February 2026 through the latest April 9, 2026 development cycle. Using the repository’s commit history and project documentation as evidence, it traces how a minimal static site evolved into a production-oriented web application with serverless APIs, database persistence, member accounts, premium research tooling, payment and recovery flows, editorial queue workflows, and layered abuse protections. The history also reveals a distinctive workflow: rapid, iterative, pull-request-driven delivery with frequent UI refinements and operational hardening.
 
 ## 1. Introduction
 Gematria began as a small web experiment and quickly transformed into a multi-surface platform. The repository history shows this transition clearly: from an “under construction” page to a full stack made up of front-end pages, Netlify functions, SQL schemas, and deployment configuration. The README identifies the core architecture as HTML/CSS/JavaScript on the front end and Netlify serverless functions backed by Neon/PostgreSQL on the backend.
@@ -17,7 +17,7 @@ This historical reconstruction is based on:
 - repository commit metadata (dates, subjects, and merge cadence), and
 - architectural and operational statements in `README.md`.
 
-At the time of this revision (April 3, 2026), the repository records **1,266 commits** in total. Commit frequency remained highly concentrated in late March and early April 2026, with sustained high throughput from March 23 through April 2.
+At the time of this revision (April 9, 2026), the repository records **1,604 commits** in total. Commit frequency remained highly concentrated in late March and early April 2026, with sustained high throughput from March 23 through April 9.
 
 ## 3. Phase I: Project Seeding and Early Calculation Logic (February 17–March 16, 2026)
 The earliest commits establish a minimal starting point: an initial commit plus an early under-construction front page. This is a common “scaffold first” pattern where deployment visibility is prioritized before core logic is complete.
@@ -124,19 +124,54 @@ The early-April cycle (April 1–2) reflects a new concentration on operational 
 
 Historically, this phase is notable because improvements are less about net-new product pillars and more about **content operations reliability** and **distribution fidelity**: ensuring what editors preview, publish, and share is deterministic across channels and devices.
 
-## 12. Process Characteristics Observed
+
+
+## 12. Phase X: AI Agent Launch and Rapid Capability Iteration (April 7, 2026)
+April 7 marks a sharp product inflection: premium-facing AI agent functionality moved from concept into production and then immediately entered high-frequency iteration. Commit subjects indicate:
+
+- release of a premium-gated AI agent surface with share metadata,
+- conversational-vs-calculation parsing to extract lookup targets from natural prompts,
+- expansion from single lookup responses to richer workflows (related words, spelling variants, value-based word lists, base-root checks),
+- first-pass persistence for agent learning/feedback and dashboard save actions, and
+- repeated improvements to share-sheet behavior, OG image generation, and cross-platform social fallback handling.
+
+Historically, this day is unusual even by this repository’s standards: many small PRs were merged in a single date window to refine one coherent surface (the agent) across UX, retrieval quality, and distribution channels.
+
+## 13. Phase XI: Dashboard Communication Stack and Moderation Tooling Expansion (April 8, 2026)
+April 8 extends the platform’s member/admin communication model with dense dashboard and moderation updates. Commit subjects indicate:
+
+- introduction of a premium message center and inbox-oriented dashboard cards,
+- archival and review-state controls for chatbot feedback triage,
+- migration of chatbot feedback operations into dedicated admin surfaces with queue-style filtering,
+- FAQ publication consistency work (cache bypassing, full-list returns, deduped source merging), and
+- asynchronous dashboard loading/performance passes to improve perceived speed under heavier data density.
+
+This phase deepens the project’s operational posture: not only collecting user interaction signals, but routing, filtering, archiving, and responding to those signals through explicit admin workflows.
+
+## 14. Phase XII: Agent Stabilization and Save-Flow Reliability Pass (April 9, 2026)
+The April 9 cycle appears as a focused hardening pass over the newly launched agent feature set. Commit subjects indicate:
+
+- fixes for target extraction edge cases (quoted/unquoted phrases and command-like prompts),
+- elimination of duplicate summary/quick-calculation artifacts in agent output,
+- improvements to save-to-dashboard semantics and button copy,
+- real-time cross-tab synchronization so saved results appear without manual refresh, and
+- additional per-word suggestion rendering for multi-word inputs.
+
+Historically, this is a textbook post-launch stabilization sprint: quickly converting field-discovered friction points into deterministic behavior and clearer user affordances.
+
+## 15. Process Characteristics Observed
 Three process-level patterns stand out:
 
-### 12.1 High-frequency PR integration
+### 15.1 High-frequency PR integration
 A large proportion of commits are merge commits tied to numbered pull requests. This implies a branch-and-merge workflow with small to medium increments and fast review/merge turnaround.
 
-### 12.2 Corrective micro-iterations
+### 15.2 Corrective micro-iterations
 Many features were shipped with immediate follow-up fixes (naming, URL behavior, overlay visibility, duplicate prevention, return paths). This suggests a pragmatic feedback loop: ship, observe, adjust.
 
-### 12.3 Parallel tracks: feature and operations
+### 15.3 Parallel tracks: feature and operations
 Development did not follow a strict “features first, operations later” sequence. Instead, operational concerns (timeouts, rate limiting, account recovery, admin settings) evolved in tandem with UX features.
 
-## 13. Lessons from This Build History
+## 16. Lessons from This Build History
 The Gematria timeline suggests several reusable lessons for rapid web product development:
 
 1. **Start with deployability, not perfection.** Early under-construction scaffolds accelerated visible progress.
@@ -145,14 +180,16 @@ The Gematria timeline suggests several reusable lessons for rapid web product de
 4. **Operational hardening is a product feature.** Rate limits, audit logs, and timeouts are part of user trust and platform continuity.
 5. **Polish compounds late-stage value.** Navigation consistency, overlays, accessibility, and SEO materially improve usability and discoverability.
 
-## 14. Conclusion
+## 17. Conclusion
 Gematria’s history is a compact case study in accelerated full-stack evolution. In roughly six weeks, the project advanced from a minimal placeholder to a feature-rich, operationally aware platform combining computation, content, membership, payments, and protections.
 
 Just as importantly, the repository records not only what was built, but *how* it was built: through dense iterative cycles, aggressive merge cadence, and continuous refinement at the intersection of logic, UX, and reliability.
 
 ---
 
-### Appendix A: Commit-Volume Snapshot (through April 2, 2026)
-- Total commits: **1,266**
+### Appendix A: Commit-Volume Snapshot (through April 9, 2026)
+- Total commits: **1,604**
 - Earliest commit date: **2026-02-17**
+- Latest commit date captured: **2026-04-09**
 - Highest-volume day in this window: **2026-03-25** (120 commits)
+- Next highest-volume days: **2026-04-07** (114 commits) and **2026-04-08** (114 commits)

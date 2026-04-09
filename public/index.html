@@ -48,6 +48,7 @@
     <link rel="preload" as="image" href="/assets/why-english-gematria-backdrop-16x9.svg" type="image/svg+xml" fetchpriority="high" />
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/conversion-tracking.js"></script>
+    <script defer src="/site-modules.js"></script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -74,25 +75,25 @@
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link active" href="/index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
-            <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
+            <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
+            <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
               <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
-                <li><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
+                <li data-module="gemabot"><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
               </ul>
             </li>
             <li class="nav-item dropdown">
               <button class="nav-link dropdown-toggle" type="button" id="faqMenu" data-bs-toggle="dropdown" aria-expanded="false">FAQ</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="faqMenu">
                 <li><a class="dropdown-item" href="/faq.html">FAQs</a></li>
-                <li><a class="dropdown-item" href="/searchbot.html">GemaBot</a></li>
+                <li data-module="knowbot"><a class="dropdown-item" href="/searchbot.html">KnowBot</a></li>
               </ul>
             </li>
-            <li class="nav-item"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open GemaBot" title="GemaBot">🔍</a></li>
-            <li class="nav-item"><a class="nav-link" href="/member.html">Dashboard</a></li>
+            <li class="nav-item" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot" title="KnowBot">🔍</a></li>
+            <li class="nav-item" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
           </ul>
         </div>
       </div>

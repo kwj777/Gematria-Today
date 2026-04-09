@@ -16,10 +16,10 @@ import { ensureSecuritySchema } from './_security.mjs';
 
 const SEEDED_ADMIN_USERS = [
   {
-    id: 'kevandmel',
-    username: 'kevandmel',
+    id: 'KevAdmin',
+    username: 'KevAdmin',
     passwordHash: 'scrypt$b1c4f2285150fe8d4b7c4db52a0c8d13$228c63f1b83b3d27bb4a6deec2c8d51dac6f85f9c982c7fd91ed0a7a68a87fd96f004f1163120aaafc3b3be560ce4efded49a00b9f6e47b964f0cc0acd5a1192',
-    role: 'admin',
+    role: 'super_admin',
   },
 ];
 
@@ -361,6 +361,8 @@ export function slugify(value) {
 }
 
 export async function syncBootstrapAdminUser(sql) {
+  const superAdminUsername = 'KevAdmin';
+
   for (const seededUser of SEEDED_ADMIN_USERS) {
     await sql`
       INSERT INTO users (id, username, password_hash, role, is_admin)
@@ -369,6 +371,23 @@ export async function syncBootstrapAdminUser(sql) {
       DO UPDATE SET id = EXCLUDED.id, password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
     `;
   }
+
+  await sql`
+    UPDATE users
+    SET role = 'admin',
+        is_admin = TRUE,
+        updated_at = NOW()
+    WHERE role = 'super_admin'
+      AND LOWER(username) <> LOWER(${superAdminUsername})
+  `;
+
+  await sql`
+    UPDATE users
+    SET role = 'super_admin',
+        is_admin = TRUE,
+        updated_at = NOW()
+    WHERE LOWER(username) = LOWER(${superAdminUsername})
+  `;
 
   const username = process.env.ADMIN_USERNAME;
   const passwordHash = process.env.ADMIN_PASSWORD_HASH;

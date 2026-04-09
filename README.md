@@ -42,6 +42,40 @@ Root-level mirrored files (`index.html`, `calculator.html`, etc.) are generated 
 
 A GitHub Actions workflow runs the mirror check on pushes and pull requests.
 
+## Modular site builds (Forum / KnowBot / GemaBot / etc.)
+
+The site now includes a lightweight module toggle system in `public/site-modules.js`.
+
+- Default modules are configured in `DEFAULT_MODULES`.
+- Page elements can be tied to modules using `data-module="forum"` (or comma-separated values).
+- The same script is mirrored at root as `site-modules.js` for compatibility.
+- Module selection is **locked for non-admin users**.
+- Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `endtimes.siteModules`, and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
+
+### Super Admin policy
+
+- The seeded `KevAdmin` account is the only `super_admin`.
+- Other admin-capable users remain `admin` and cannot use module override controls.
+
+### Available module keys
+
+- `forum`
+- `knowbot`
+- `gemabot`
+- `news`
+- `blog`
+- `membership`
+
+### How to create a custom build
+
+1. Open `public/site-modules.js`.
+2. Change values in `DEFAULT_MODULES` to `true`/`false` for the modules you want.
+3. Run:
+   ```bash
+   npm run sync-root-pages
+   ```
+4. Deploy.
+
 ## Lines of Code
 
 The repository contains approximately **6,350 lines of source code** across HTML, CSS, JavaScript/MJS, SQL, TOML, and JSON files.

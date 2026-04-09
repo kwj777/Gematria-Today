@@ -13,6 +13,10 @@ const DEFAULT_SETTINGS = {
   sendgridApiKey: '',
   publicSiteUrl: '',
   siteModules: {},
+  themeCatalog: {
+    activeThemeSlug: 'default',
+    presets: [],
+  },
 };
 
 const DEFAULT_EMAIL_TEMPLATES = [
@@ -43,6 +47,7 @@ function normalizeSiteModules(rawValue = null) {
 }
 
 function normalizeSettings(body = {}) {
+  const hasThemeCatalog = Object.hasOwn(body, 'themeCatalog');
   return {
     stripeAccountId: String(body.stripeAccountId ?? '').trim(),
     stripePublishableKey: String(body.stripePublishableKey ?? '').trim(),
@@ -57,7 +62,59 @@ function normalizeSettings(body = {}) {
     publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
     siteModules: normalizeSiteModules(body.siteModules),
+    themeCatalog: hasThemeCatalog ? normalizeThemeCatalog(body.themeCatalog) : undefined,
   };
+}
+
+function toKebabCase(value = '') {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+}
+
+function normalizeThemeCatalog(input = {}) {
+  const rawPresets = Array.isArray(input?.presets) ? input.presets : [];
+  const seenSlugs = new Set();
+  const presets = rawPresets.reduce((result, preset) => {
+    const name = String(preset?.name ?? '').trim().slice(0, 80);
+    const derivedSlug = toKebabCase(preset?.slug || name);
+    if (!name || !derivedSlug || seenSlugs.has(derivedSlug)) {
+      return result;
+    }
+
+    const rawVariables = (preset?.variables && typeof preset.variables === 'object') ? preset.variables : {};
+    const variables = Object.entries(rawVariables).reduce((acc, [key, value]) => {
+      const variableKey = String(key || '').trim();
+      if (!variableKey.startsWith('--')) {
+        return acc;
+      }
+      const variableValue = String(value ?? '').trim().slice(0, 120);
+      if (!variableValue) {
+        return acc;
+      }
+      acc[variableKey] = variableValue;
+      return acc;
+    }, {});
+
+    result.push({
+      name,
+      slug: derivedSlug,
+      description: String(preset?.description ?? '').trim().slice(0, 240),
+      variables,
+      customCss: String(preset?.customCss ?? '').trim().slice(0, 4000),
+    });
+    seenSlugs.add(derivedSlug);
+    return result;
+  }, []);
+
+  const requestedSlug = toKebabCase(input?.activeThemeSlug);
+  const activeThemeSlug = (requestedSlug && presets.some((preset) => preset.slug === requestedSlug))
+    ? requestedSlug
+    : 'default';
+  return { activeThemeSlug, presets };
 }
 
 function normalizeEmailTemplate(body = {}) {
@@ -69,6 +126,7 @@ function normalizeEmailTemplate(body = {}) {
 }
 
 function serializeSettings(settings = {}) {
+  const normalizedThemeCatalog = normalizeThemeCatalog(settings.themeCatalog || {});
   return {
     stripeAccountId: settings.stripeAccountId || '',
     stripePublishableKey: settings.stripePublishableKey || '',
@@ -83,6 +141,7 @@ function serializeSettings(settings = {}) {
     siteModules: settings.siteModules && typeof settings.siteModules === 'object'
       ? { ...DEFAULT_SITE_MODULES, ...normalizeSiteModules(settings.siteModules) }
       : { ...DEFAULT_SITE_MODULES },
+    themeCatalog: normalizedThemeCatalog,
   };
 }
 
@@ -112,6 +171,13 @@ function mapSettingsFromRows(rows = []) {
         settings.siteModules = { ...DEFAULT_SITE_MODULES };
       }
     }
+    if (row.setting_key === 'theme_catalog') {
+      try {
+        settings.themeCatalog = normalizeThemeCatalog(JSON.parse(row.setting_value || '{}'));
+      } catch {
+        settings.themeCatalog = normalizeThemeCatalog({});
+      }
+    }
 
     const subjectMatch = /^email_template_(.+)_subject$/.exec(row.setting_key || '');
     if (subjectMatch) {
@@ -137,6 +203,7 @@ function getSettingsRows(sql) {
       OR setting_key LIKE 'sendgrid_%'
       OR setting_key = 'public_site_url'
       OR setting_key = 'site_modules'
+      OR setting_key = 'theme_catalog'
       OR setting_key LIKE 'email_template_%'
     ORDER BY setting_key ASC
   `;
@@ -208,6 +275,9 @@ export async function handler(event) {
       if (settings.siteModules !== null && user.role !== 'super_admin') {
         return jsonResponse(403, { error: 'Only super admins can update site modules' });
       }
+      if (settings.themeCatalog !== undefined && user.role !== 'super_admin') {
+        return jsonResponse(403, { error: 'Only super admins can update themes' });
+      }
 
       const existingRows = await getSettingsRows(sql);
       const { settings: existingSettings } = mapSettingsFromRows(existingRows);
@@ -228,6 +298,7 @@ export async function handler(event) {
           ...DEFAULT_SITE_MODULES,
           ...settings.siteModules,
         },
+        themeCatalog: settings.themeCatalog === undefined ? existingSettings.themeCatalog : settings.themeCatalog,
       };
 
       const pairs = [
@@ -241,6 +312,7 @@ export async function handler(event) {
         ['sendgrid_api_key', nextSettings.sendgridApiKey],
         ['public_site_url', nextSettings.publicSiteUrl],
         ['site_modules', JSON.stringify(nextSettings.siteModules || {})],
+        ['theme_catalog', JSON.stringify(nextSettings.themeCatalog || normalizeThemeCatalog({}))],
       ];
 
       for (const [key, value] of pairs) {

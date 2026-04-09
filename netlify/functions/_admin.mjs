@@ -368,7 +368,7 @@ export async function syncBootstrapAdminUser(sql) {
       INSERT INTO users (id, username, password_hash, role, is_admin)
       VALUES (${seededUser.id}, ${seededUser.username}, ${seededUser.passwordHash}, ${seededUser.role}, TRUE)
       ON CONFLICT (username)
-      DO UPDATE SET id = EXCLUDED.id, password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
+      DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
     `;
   }
 

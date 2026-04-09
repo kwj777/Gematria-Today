@@ -10,7 +10,12 @@
 
   const STORAGE_KEY = 'endtimes.siteModules';
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
-  let activeModules = { ...DEFAULT_MODULES };
+  const DISABLED_MODULES = Object.freeze(Object.keys(DEFAULT_MODULES).reduce((result, name) => {
+    result[name] = false;
+    return result;
+  }, {}));
+
+  let activeModules = { ...DISABLED_MODULES };
 
   const parseModuleOverrides = (rawValue) => {
     if (!rawValue || typeof rawValue !== 'object') {
@@ -70,6 +75,8 @@
     membership: [/\/member(?:\.html)?(?:[?#].*)?$/i],
   });
 
+  const MODULE_LINK_HIDDEN_FLAG = 'moduleLinkHidden';
+
   const applyModuleLinkVisibility = () => {
     document.querySelectorAll('a[href]').forEach((link) => {
       const href = String(link.getAttribute('href') || '').trim();
@@ -82,13 +89,20 @@
         && matchers.some((matcher) => matcher.test(href))
       ));
 
+      const container = link.closest('[data-module-link-container], .nav-item, li') || link;
+
       if (!disabledModule) {
+        if (container.dataset[MODULE_LINK_HIDDEN_FLAG] === '1') {
+          container.classList.remove('d-none');
+          container.removeAttribute('aria-hidden');
+          delete container.dataset[MODULE_LINK_HIDDEN_FLAG];
+        }
         return;
       }
 
-      const container = link.closest('[data-module-link-container], .nav-item, li') || link;
       container.classList.add('d-none');
       container.setAttribute('aria-hidden', 'true');
+      container.dataset[MODULE_LINK_HIDDEN_FLAG] = '1';
     });
   };
 

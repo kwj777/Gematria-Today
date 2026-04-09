@@ -167,14 +167,16 @@
 
     const moduleEntries = Object.keys(DEFAULT_MODULES);
     const panel = existingPanel || document.createElement('aside');
+    const hostContainer = document.querySelector('[data-super-admin-module-toggles-host]');
+    const shouldDockInLayout = Boolean(hostContainer);
     panel.id = 'superAdminModuleTogglePanel';
     panel.setAttribute('aria-label', 'Super admin module toggles');
-    panel.style.position = 'fixed';
-    panel.style.right = '1rem';
-    panel.style.bottom = '1rem';
-    panel.style.zIndex = '1050';
-    panel.style.width = 'min(92vw, 320px)';
-    panel.style.maxHeight = '70vh';
+    panel.style.position = shouldDockInLayout ? 'relative' : 'fixed';
+    panel.style.right = shouldDockInLayout ? 'auto' : '1rem';
+    panel.style.bottom = shouldDockInLayout ? 'auto' : '1rem';
+    panel.style.zIndex = shouldDockInLayout ? '1' : '1050';
+    panel.style.width = shouldDockInLayout ? '100%' : 'min(92vw, 320px)';
+    panel.style.maxHeight = shouldDockInLayout ? 'none' : '70vh';
     panel.style.overflow = 'auto';
     panel.style.padding = '0.75rem';
     panel.style.border = '1px solid rgba(0,0,0,0.16)';
@@ -236,7 +238,12 @@
       applyModuleVisibility();
     });
 
-    if (!existingPanel) {
+    if (shouldDockInLayout) {
+      hostContainer.appendChild(panel);
+      return;
+    }
+
+    if (!existingPanel || panel.parentElement !== document.body) {
       document.body.appendChild(panel);
     }
   };

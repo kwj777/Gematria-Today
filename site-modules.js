@@ -101,6 +101,15 @@
 
       const container = link.closest('[data-module-link-container], .nav-item, li') || link;
 
+      if (superAdminCanOverrideModules) {
+        if (container.dataset[MODULE_LINK_HIDDEN_FLAG] === '1') {
+          container.classList.remove('d-none');
+          container.removeAttribute('aria-hidden');
+          delete container.dataset[MODULE_LINK_HIDDEN_FLAG];
+        }
+        return;
+      }
+
       if (!disabledModule) {
         if (container.dataset[MODULE_LINK_HIDDEN_FLAG] === '1') {
           container.classList.remove('d-none');
@@ -176,9 +185,12 @@
     panel.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
         <strong>Super admin modules</strong>
-        <button type="button" data-modules-action="reset" style="border:1px solid #6c757d;background:#fff;border-radius:0.5rem;padding:0.2rem 0.5rem;cursor:pointer;">Reset</button>
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;justify-content:flex-end;">
+          <button type="button" data-modules-action="enable-disabled" style="border:1px solid #0d6efd;background:#fff;border-radius:0.5rem;padding:0.2rem 0.5rem;cursor:pointer;">Enable disabled</button>
+          <button type="button" data-modules-action="reset" style="border:1px solid #6c757d;background:#fff;border-radius:0.5rem;padding:0.2rem 0.5rem;cursor:pointer;">Reset</button>
+        </div>
       </div>
-      <p style="margin:0 0 0.5rem;color:#495057;">Choose what to show while you work.</p>
+      <p style="margin:0 0 0.5rem;color:#495057;">Choose what to show while you work. Changes stay in this browser only.</p>
       <div data-module-toggle-list style="display:grid;gap:0.35rem;"></div>
     `;
 
@@ -209,6 +221,16 @@
 
     panel.querySelector('[data-modules-action="reset"]')?.addEventListener('click', () => {
       activeModules = { ...DEFAULT_MODULES };
+      storeModules(activeModules);
+      renderSuperAdminTogglePanel();
+      applyModuleVisibility();
+    });
+
+    panel.querySelector('[data-modules-action="enable-disabled"]')?.addEventListener('click', () => {
+      activeModules = Object.keys(DEFAULT_MODULES).reduce((result, moduleName) => {
+        result[moduleName] = true;
+        return result;
+      }, {});
       storeModules(activeModules);
       renderSuperAdminTogglePanel();
       applyModuleVisibility();

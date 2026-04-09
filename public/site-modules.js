@@ -159,7 +159,57 @@
   };
 
   const renderSuperAdminTogglePanel = () => {
-    document.getElementById('superAdminModuleTogglePanel')?.remove();
+    const host = document.querySelector('[data-super-admin-module-toggles-host]');
+    const existingPanel = document.getElementById('superAdminModuleTogglePanel');
+
+    if (!superAdminCanOverrideModules || !host) {
+      existingPanel?.remove();
+      return;
+    }
+
+    const moduleMeta = [
+      ['forum', 'Forum'],
+      ['knowbot', 'Knowbot'],
+      ['gemabot', 'GemaBot'],
+      ['news', 'News'],
+      ['blog', 'Blog'],
+      ['membership', 'Membership'],
+    ];
+
+    const panel = existingPanel || document.createElement('div');
+    panel.id = 'superAdminModuleTogglePanel';
+    panel.className = 'row g-3';
+
+    panel.innerHTML = moduleMeta.map(([name, label]) => {
+      const checked = isEnabled(name) ? 'checked' : '';
+      return `
+        <div class="col-md-6 col-xl-4">
+          <label class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" data-super-admin-module-toggle="${name}" ${checked} />
+            <span class="form-check-label">${label}</span>
+          </label>
+        </div>`;
+    }).join('');
+
+    if (!existingPanel) {
+      host.appendChild(panel);
+    }
+
+    panel.querySelectorAll('[data-super-admin-module-toggle]').forEach((field) => {
+      field.addEventListener('change', () => {
+        const moduleName = normalizeName(field.getAttribute('data-super-admin-module-toggle'));
+        if (!moduleName || !(moduleName in DEFAULT_MODULES)) {
+          return;
+        }
+
+        activeModules = {
+          ...activeModules,
+          [moduleName]: Boolean(field.checked),
+        };
+        storeModules(activeModules);
+        applyModuleVisibility();
+      });
+    });
   };
 
   const fetchGlobalModules = async () => {

@@ -81,6 +81,10 @@
         margin-top: 0.25rem;
       }
 
+      #agentForm.is-waiting-for-response {
+        display: none;
+      }
+
       @media (max-width: 575.98px) {
         #chatLog .agent-multi-column-list {
           columns: 1;
@@ -160,6 +164,7 @@
       const chatLog = document.getElementById('chatLog');
       const clearConversationButton = document.getElementById('clearConversation');
       const saveConversationButton = document.getElementById('saveConversation');
+      const askAgentButton = form?.querySelector('button[type="submit"]');
       const toggleHeroButton = document.getElementById('toggleHeroVisibility');
       const heroPanel = document.getElementById('agentHeroPanel');
       const compactTitle = document.getElementById('agentCompactTitle');
@@ -1367,6 +1372,10 @@ View results: ${shareUrl}`.trim(),
         `;
       }
 
+      function setComposerWaitingState(isWaiting) {
+        form.classList.toggle('is-waiting-for-response', Boolean(isWaiting));
+      }
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!premiumAccess) return;
@@ -1375,11 +1384,27 @@ View results: ${shareUrl}`.trim(),
         addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
         promptInput.value = '';
 
+        const originalAskButtonText = askAgentButton?.textContent || 'Ask agent';
+        if (askAgentButton) {
+          askAgentButton.textContent = 'Working...';
+          askAgentButton.disabled = true;
+        }
+
+        setComposerWaitingState(true);
         window.showWorkingOverlay?.();
-        const replyHtml = await buildAgentReply(prompt);
-        window.hideWorkingOverlay?.();
-        const assistantMessage = addMessage('assistant', replyHtml);
-        attachResultFeedbackUi(assistantMessage, prompt);
+        try {
+          const replyHtml = await buildAgentReply(prompt);
+          const assistantMessage = addMessage('assistant', replyHtml);
+          attachResultFeedbackUi(assistantMessage, prompt);
+        } finally {
+          window.hideWorkingOverlay?.();
+          setComposerWaitingState(false);
+          if (askAgentButton) {
+            askAgentButton.textContent = originalAskButtonText;
+            askAgentButton.disabled = false;
+          }
+          promptInput.focus();
+        }
       });
 
       promptInput.addEventListener('keydown', (event) => {

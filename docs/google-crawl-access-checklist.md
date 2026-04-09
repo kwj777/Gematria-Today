@@ -18,7 +18,7 @@ Expected:
 
 If either endpoint returns `401/403`, investigate CDN/WAF/bot rules first.
 
-## 2) Verify access with a Googlebot user agent
+## 2) Verify access with a Googlebot user GemaBot
 
 ```bash
 curl -I -A "Googlebot/2.1 (+http://www.google.com/bot.html)" https://endtimes.today/robots.txt

@@ -57,10 +57,10 @@
               <button class="nav-link dropdown-toggle" type="button" id="faqMenu" data-bs-toggle="dropdown" aria-expanded="false">FAQ</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="faqMenu">
                 <li><a class="dropdown-item" href="/faq.html">FAQs</a></li>
-                <li><a class="dropdown-item" href="/searchbot.html">SearchBot</a></li>
+                <li><a class="dropdown-item" href="/searchbot.html">KnowBot</a></li>
               </ul>
             </li>
-            <li class="nav-item"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open SearchBot" title="SearchBot">🔍</a></li>
+            <li class="nav-item"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot" title="KnowBot">🔍</a></li>
             <li class="nav-item"><a class="nav-link active" href="/member.html">Dashboard</a></li>
           </ul>
         </div>
@@ -2002,7 +2002,7 @@
               </div>
             </article>
           `;
-        }).join('') : '<p class="text-muted mb-0">No saved AI agent chat sessions yet. Open the <a href="/ai-agent.html">GemaBot</a> and click <strong>Save chat to dashboard</strong>.</p>';
+        }).join('') : '<p class="text-muted mb-0">No saved AI GemaBot chat sessions yet. Open the <a href="/ai-agent.html">GemaBot</a> and click <strong>Save chat to dashboard</strong>.</p>';
 
         chatSessionList.querySelectorAll('[data-export-chat-session-id]').forEach((button) => {
           button.addEventListener('click', () => {

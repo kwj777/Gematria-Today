@@ -63,6 +63,35 @@
 
   const isEnabled = (moduleName) => activeModules[normalizeName(moduleName)] !== false;
 
+  const MODULE_PATH_MATCHERS = Object.freeze({
+    news: [/\/news(?:\.html)?(?:[?#].*)?$/i],
+    blog: [/\/blog(?:\.html)?(?:[?#].*)?$/i],
+    forum: [/\/forum(?:\.html)?(?:[?#].*)?$/i],
+    membership: [/\/member(?:\.html)?(?:[?#].*)?$/i],
+  });
+
+  const applyModuleLinkVisibility = () => {
+    document.querySelectorAll('a[href]').forEach((link) => {
+      const href = String(link.getAttribute('href') || '').trim();
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
+        return;
+      }
+
+      const disabledModule = Object.entries(MODULE_PATH_MATCHERS).find(([moduleName, matchers]) => (
+        isEnabled(moduleName) === false
+        && matchers.some((matcher) => matcher.test(href))
+      ));
+
+      if (!disabledModule) {
+        return;
+      }
+
+      const container = link.closest('[data-module-link-container], .nav-item, li') || link;
+      container.classList.add('d-none');
+      container.setAttribute('aria-hidden', 'true');
+    });
+  };
+
   const applyModuleVisibility = () => {
     document.querySelectorAll('[data-module]').forEach((element) => {
       const requiredModules = String(element.getAttribute('data-module') || '')
@@ -92,6 +121,8 @@
         element.disabled = true;
       }
     });
+
+    applyModuleLinkVisibility();
   };
 
   const fetchGlobalModules = async () => {

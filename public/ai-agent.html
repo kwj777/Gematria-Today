@@ -81,8 +81,12 @@
         margin-top: 0.25rem;
       }
 
-      #agentForm.is-waiting-for-response {
-        display: none;
+      #agentForm[aria-busy="true"] {
+        opacity: 0.78;
+      }
+
+      .agent-waiting-indicator[hidden] {
+        display: none !important;
       }
 
       @media (max-width: 575.98px) {
@@ -149,6 +153,9 @@
               <button type="button" id="clearConversation" class="btn btn-outline-secondary">Clear conversation</button>
               <button type="button" id="saveConversation" class="btn btn-outline-success">Save chat to dashboard</button>
             </div>
+            <div class="col-12">
+              <p id="agentWaitingIndicator" class="agent-waiting-indicator small text-primary-emphasis mb-0" role="status" aria-live="polite" hidden>⏳ Agent is working on your request…</p>
+            </div>
             <div class="col-12 agent-form-help">
               <p class="form-text mb-0">Type the word(s) you want calculated in natural language (quotes are optional).</p>
               <p class="form-text mb-0">For multiple targets, separate with commas or use words like "and" (example: <code>calculate pilot and process</code>).</p>
@@ -165,6 +172,7 @@
       const clearConversationButton = document.getElementById('clearConversation');
       const saveConversationButton = document.getElementById('saveConversation');
       const askAgentButton = form?.querySelector('button[type="submit"]');
+      const waitingIndicator = document.getElementById('agentWaitingIndicator');
       const toggleHeroButton = document.getElementById('toggleHeroVisibility');
       const heroPanel = document.getElementById('agentHeroPanel');
       const compactTitle = document.getElementById('agentCompactTitle');
@@ -1373,7 +1381,12 @@ View results: ${shareUrl}`.trim(),
       }
 
       function setComposerWaitingState(isWaiting) {
-        form.classList.toggle('is-waiting-for-response', Boolean(isWaiting));
+        const waiting = Boolean(isWaiting);
+        form.classList.toggle('is-waiting-for-response', waiting);
+        form.setAttribute('aria-busy', waiting ? 'true' : 'false');
+        if (waitingIndicator) {
+          waitingIndicator.hidden = !waiting;
+        }
       }
 
       form.addEventListener('submit', async (event) => {

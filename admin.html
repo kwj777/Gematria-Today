@@ -485,6 +485,42 @@
                 </button>
                 <div id="themeSectionBody" class="collapse admin-section-body mt-4">
                 <p class="text-muted small">Upload theme JSON files or enter values manually. Save one or more presets and activate any saved theme at any time.</p>
+                <div id="bootswatchSuperAdminNotice" class="alert alert-warning py-2 px-3 mb-3 small d-none" role="status">Bootswatch theme import and preview are available only to super admins.</div>
+                <div id="bootswatchControls" class="border rounded-3 p-3 mb-3 bg-light-subtle d-none">
+                  <div class="d-flex flex-column flex-lg-row gap-3 align-items-lg-end">
+                    <div class="flex-grow-1">
+                      <label class="form-label" for="bootswatchThemeSelect">Bootswatch theme catalog</label>
+                      <select id="bootswatchThemeSelect" class="form-select" disabled>
+                        <option value="">Load Bootswatch themes to choose one</option>
+                      </select>
+                      <div id="bootswatchMeta" class="form-text">Theme list not loaded yet.</div>
+                    </div>
+                    <div class="d-grid gap-2 d-sm-flex">
+                      <button id="bootswatchLoadButton" class="btn btn-outline-secondary" type="button">Load Bootswatch API themes</button>
+                      <button id="bootswatchApplyButton" class="btn btn-outline-primary" type="button" disabled>Use selected theme</button>
+                    </div>
+                  </div>
+                  <div class="border rounded-3 p-3 mt-3 bg-body">
+                    <div class="d-flex flex-column flex-lg-row align-items-lg-end gap-2 mb-2">
+                      <div class="flex-grow-1">
+                        <label class="form-label mb-1" for="bootswatchPreviewPath">Preview page</label>
+                        <select id="bootswatchPreviewPath" class="form-select">
+                          <option value="/index.html">Homepage</option>
+                          <option value="/blog.html">Blog</option>
+                          <option value="/news.html">News</option>
+                          <option value="/faq.html">FAQ</option>
+                        </select>
+                      </div>
+                      <div class="d-grid">
+                        <button id="bootswatchPreviewButton" class="btn btn-outline-dark" type="button" disabled>Preview selected theme</button>
+                      </div>
+                    </div>
+                    <div id="bootswatchPreviewMeta" class="small text-muted mb-2">Select a Bootswatch theme to preview it on a live page.</div>
+                    <div class="ratio ratio-16x9 border rounded overflow-hidden bg-light">
+                      <iframe id="bootswatchPreviewFrame" title="Bootswatch site preview" class="w-100 h-100 border-0" loading="lazy" referrerpolicy="same-origin" sandbox="allow-same-origin allow-scripts"></iframe>
+                    </div>
+                  </div>
+                </div>
                 <form id="themeImportForm" class="row g-3">
                   <div class="col-12">
                     <label class="form-label" for="themeJsonFile">Import theme JSON file</label>
@@ -611,6 +647,7 @@
       const workspaceModules = Array.from(document.querySelectorAll('[data-admin-workspace]'));
       const siteModulesPanel = document.getElementById('siteModulesPanel');
       const siteModulesForm = document.getElementById('siteModulesForm');
+      const BOOTSWATCH_API_URL = 'https://bootswatch.com/api/5.json';
 
       const DEFAULT_SITE_MODULES = Object.freeze({
         forum: true,
@@ -638,7 +675,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, bootswatchThemes: [], latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -1208,6 +1245,158 @@
         document.getElementById('themePresetCancelButton').classList.add('d-none');
       }
 
+      function normalizeBootswatchTheme(theme) {
+        return {
+          name: String(theme?.name || '').trim() || 'Bootswatch Theme',
+          slug: normalizeThemeSlug(theme?.name || ''),
+          description: String(theme?.description || '').trim(),
+          cssMin: String(theme?.cssMin || '').trim(),
+        };
+      }
+
+      function isSuperAdminUser() {
+        return state.user?.role === 'super_admin';
+      }
+
+      function updateBootswatchAccess() {
+        const controls = document.getElementById('bootswatchControls');
+        const notice = document.getElementById('bootswatchSuperAdminNotice');
+        const isSuperAdmin = isSuperAdminUser();
+        controls.classList.toggle('d-none', !isSuperAdmin);
+        notice.classList.toggle('d-none', isSuperAdmin);
+      }
+
+      function renderBootswatchCatalog() {
+        const select = document.getElementById('bootswatchThemeSelect');
+        const applyButton = document.getElementById('bootswatchApplyButton');
+        const previewButton = document.getElementById('bootswatchPreviewButton');
+        const meta = document.getElementById('bootswatchMeta');
+        const themes = Array.isArray(state.bootswatchThemes) ? state.bootswatchThemes : [];
+        if (!themes.length) {
+          select.innerHTML = '<option value="">Load Bootswatch themes to choose one</option>';
+          select.disabled = true;
+          applyButton.disabled = true;
+          previewButton.disabled = true;
+          meta.textContent = 'Theme list not loaded yet.';
+          return;
+        }
+        select.innerHTML = [
+          '<option value="">Choose a Bootswatch theme…</option>',
+          ...themes.map((theme) => `<option value="${escapeHtml(theme.slug)}">${escapeHtml(theme.name)}</option>`),
+        ].join('');
+        select.disabled = false;
+        applyButton.disabled = true;
+        previewButton.disabled = true;
+        meta.textContent = `${themes.length} Bootswatch theme options loaded from ${BOOTSWATCH_API_URL}.`;
+      }
+
+      async function loadBootswatchThemes(targetButton) {
+        if (!isSuperAdminUser()) {
+          showMessage(errorMessage, 'Only super admins can use Bootswatch theme import.');
+          return;
+        }
+        clearMessage(errorMessage);
+        clearMessage(saveMessage);
+        const select = document.getElementById('bootswatchThemeSelect');
+        const applyButton = document.getElementById('bootswatchApplyButton');
+        const previewButton = document.getElementById('bootswatchPreviewButton');
+        const meta = document.getElementById('bootswatchMeta');
+        targetButton.disabled = true;
+        select.disabled = true;
+        applyButton.disabled = true;
+        previewButton.disabled = true;
+        meta.textContent = 'Loading Bootswatch themes…';
+        try {
+          const response = await fetch(BOOTSWATCH_API_URL, { method: 'GET', cache: 'no-store' });
+          if (!response.ok) {
+            throw new Error(`Bootswatch API request failed (${response.status}).`);
+          }
+          const payload = await response.json();
+          const themes = Array.isArray(payload?.themes)
+            ? payload.themes.map(normalizeBootswatchTheme).filter((theme) => theme.slug && theme.cssMin)
+            : [];
+          if (!themes.length) {
+            throw new Error('No Bootswatch themes were returned.');
+          }
+          themes.sort((a, b) => a.name.localeCompare(b.name));
+          state.bootswatchThemes = themes;
+          renderBootswatchCatalog();
+          showMessage(saveMessage, 'Bootswatch theme catalog loaded.');
+        } catch (error) {
+          state.bootswatchThemes = [];
+          renderBootswatchCatalog();
+          showMessage(errorMessage, error.message || 'Unable to load Bootswatch themes.');
+        } finally {
+          targetButton.disabled = false;
+        }
+      }
+
+      function applySelectedBootswatchTheme() {
+        if (!isSuperAdminUser()) {
+          showMessage(errorMessage, 'Only super admins can use Bootswatch theme import.');
+          return;
+        }
+        clearMessage(errorMessage);
+        const selectedSlug = normalizeThemeSlug(document.getElementById('bootswatchThemeSelect').value || '');
+        const selectedTheme = state.bootswatchThemes.find((theme) => theme.slug === selectedSlug);
+        if (!selectedTheme) {
+          showMessage(errorMessage, 'Choose a Bootswatch theme first.');
+          return;
+        }
+        document.getElementById('themePresetName').value = selectedTheme.name;
+        document.getElementById('themePresetSlug').value = selectedTheme.slug;
+        document.getElementById('themePresetDescription').value = selectedTheme.description || `Imported from ${BOOTSWATCH_API_URL}`;
+        document.getElementById('themePresetVariables').value = '{}';
+        document.getElementById('themePresetCustomCss').value = `@import url("${selectedTheme.cssMin}");`;
+        showMessage(saveMessage, `Loaded Bootswatch theme "${selectedTheme.name}". Review and save.`);
+      }
+
+      async function previewSelectedBootswatchTheme() {
+        if (!isSuperAdminUser()) {
+          showMessage(errorMessage, 'Only super admins can preview Bootswatch themes.');
+          return;
+        }
+        clearMessage(errorMessage);
+        const selectedSlug = normalizeThemeSlug(document.getElementById('bootswatchThemeSelect').value || '');
+        const selectedTheme = state.bootswatchThemes.find((theme) => theme.slug === selectedSlug);
+        if (!selectedTheme) {
+          showMessage(errorMessage, 'Choose a Bootswatch theme first.');
+          return;
+        }
+
+        const frame = document.getElementById('bootswatchPreviewFrame');
+        const previewMeta = document.getElementById('bootswatchPreviewMeta');
+        const previewPath = String(document.getElementById('bootswatchPreviewPath').value || '/index.html').trim() || '/index.html';
+        const separator = previewPath.includes('?') ? '&' : '?';
+        previewMeta.textContent = `Loading preview for ${selectedTheme.name} on ${previewPath}…`;
+
+        await new Promise((resolve) => {
+          frame.onload = () => {
+            try {
+              const frameDocument = frame.contentDocument;
+              if (!frameDocument) {
+                throw new Error('Preview frame is unavailable.');
+              }
+              const existingStyle = frameDocument.getElementById('bootswatchPreviewStyle');
+              if (existingStyle) {
+                existingStyle.remove();
+              }
+              const styleTag = frameDocument.createElement('style');
+              styleTag.id = 'bootswatchPreviewStyle';
+              styleTag.textContent = `@import url("${selectedTheme.cssMin}");`;
+              frameDocument.head.appendChild(styleTag);
+              previewMeta.textContent = `Previewing ${selectedTheme.name} using ${selectedTheme.cssMin}.`;
+            } catch (error) {
+              previewMeta.textContent = 'Preview loaded, but theme injection failed.';
+              showMessage(errorMessage, error.message || 'Could not apply preview theme.');
+            } finally {
+              resolve();
+            }
+          };
+          frame.src = `${previewPath}${separator}bootswatchPreview=${Date.now()}`;
+        });
+      }
+
       function renderThemeCatalog() {
         const { activeThemeSlug, presets } = getThemeCatalog();
         const activationSelect = document.getElementById('themeActiveSlug');
@@ -1395,6 +1584,7 @@
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
           setLoggedIn(true);
+          updateBootswatchAccess();
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
           if (loadProposalFromQuery) {
@@ -1408,6 +1598,7 @@
           renderThemeCatalog();
           renderSiteModules();
           setLoggedIn(false);
+          updateBootswatchAccess();
         }
       }
 
@@ -1864,6 +2055,24 @@
         resetEmailTemplateForm();
       });
 
+      document.getElementById('bootswatchLoadButton').addEventListener('click', async (event) => {
+        await loadBootswatchThemes(event.currentTarget);
+      });
+
+      document.getElementById('bootswatchThemeSelect').addEventListener('change', (event) => {
+        const hasSelection = Boolean(normalizeThemeSlug(event.target.value || ''));
+        document.getElementById('bootswatchApplyButton').disabled = !hasSelection;
+        document.getElementById('bootswatchPreviewButton').disabled = !hasSelection;
+      });
+
+      document.getElementById('bootswatchApplyButton').addEventListener('click', () => {
+        applySelectedBootswatchTheme();
+      });
+
+      document.getElementById('bootswatchPreviewButton').addEventListener('click', async () => {
+        await previewSelectedBootswatchTheme();
+      });
+
       document.getElementById('themeJsonFile').addEventListener('change', async (event) => {
         clearMessage(errorMessage);
         const file = event.target.files?.[0];
@@ -2164,6 +2373,8 @@
       renderMembershipGrantMeta();
       resetEmailTemplateForm();
       resetThemePresetForm();
+      updateBootswatchAccess();
+      renderBootswatchCatalog();
       renderThemeCatalog();
       withRenderOverlay(() => loadSession(), 'Checking admin session…');
     </script>

@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="/theme.css" />
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/conversion-tracking.js"></script>
+    <script defer src="/site-modules.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -43,24 +44,24 @@
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
-            <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
+            <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
+            <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item dropdown">
               <button class="nav-link dropdown-toggle" type="button" id="calculatorsMenu" data-bs-toggle="dropdown" aria-expanded="false">Calculators</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calculatorsMenu">
                 <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
-                <li><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
+                <li data-module="gemabot"><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
               </ul>
             </li>
             <li class="nav-item dropdown">
               <button class="nav-link dropdown-toggle" type="button" id="faqMenu" data-bs-toggle="dropdown" aria-expanded="false">FAQ</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="faqMenu">
                 <li><a class="dropdown-item" href="/faq.html">FAQs</a></li>
-                <li><a class="dropdown-item" href="/searchbot.html">KnowBot</a></li>
+                <li data-module="knowbot"><a class="dropdown-item" href="/searchbot.html">KnowBot</a></li>
               </ul>
             </li>
-            <li class="nav-item"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot" title="KnowBot">🔍</a></li>
+            <li class="nav-item" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot" title="KnowBot">🔍</a></li>
             <li class="nav-item"><a class="nav-link active" href="/member.html">Dashboard</a></li>
           </ul>
         </div>
@@ -315,7 +316,7 @@
           <div id="dashboardMainContent">
           <div class="row g-4 mb-4">
             <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p id="membershipPlanMeta" class="mb-0 text-muted">Current membership tier.</p></div></div>
-            <div class="col-md-4">
+            <div class="col-md-4" data-module="forum">
               <div class="stat-card p-4 h-100">
                 <div class="section-kicker mb-2">Forum Notifications</div>
                 <div id="forumNotificationCountTop" class="metric-value text-info">0</div>
@@ -336,7 +337,7 @@
             </div>
           </div>
 
-          <section id="forumNotificationSection" class="content-panel p-4 mb-4">
+          <section id="forumNotificationSection" class="content-panel p-4 mb-4" data-module="forum">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
               <div>
                 <p class="section-kicker mb-2">Forum Notifications</p>
@@ -409,7 +410,7 @@
                 </div>
               </section>
             </div>
-            <div class="col d-flex">
+            <div class="col d-flex" data-module="gemabot">
               <section class="content-panel p-4 h-100 w-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
@@ -656,6 +657,9 @@
       const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
         ? new window.BroadcastChannel('member-dashboard-sync')
         : null;
+      const siteModules = window.EndTimesModules;
+      const forumModuleEnabled = siteModules?.isEnabled('forum') !== false;
+      const gemabotModuleEnabled = siteModules?.isEnabled('gemabot') !== false;
 
       let session = null;
       let historyItems = [];
@@ -1602,6 +1606,11 @@
       }
 
       async function loadForumNotifications() {
+        if (!forumModuleEnabled) {
+          recentForumThreads = [];
+          renderForumNotifications();
+          return;
+        }
         if (!session?.member) {
           recentForumThreads = [];
           renderForumNotifications();
@@ -1968,6 +1977,10 @@
       }
 
       function renderChatSessions() {
+        if (!gemabotModuleEnabled) {
+          chatSessionList.innerHTML = '<p class="text-muted mb-0">GemaBot module is disabled for this site build.</p>';
+          return;
+        }
         chatSessionList.innerHTML = chatSessions.length ? chatSessions.map((sessionItem) => {
           const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
           const transcriptSummary = transcriptEntries.slice(0, 8).map((entry) => `
@@ -2061,6 +2074,11 @@
       }
 
       async function loadChatSessions() {
+        if (!gemabotModuleEnabled) {
+          chatSessions = [];
+          renderChatSessions();
+          return;
+        }
         const payload = await request('/api/member-chat-sessions');
         chatSessions = Array.isArray(payload.sessions) ? payload.sessions : [];
         renderChatSessions();
@@ -2082,10 +2100,14 @@
         try {
           if (kind === 'history') {
             await loadHistory();
-          } else if (kind === 'chat') {
+          } else if (kind === 'chat' && gemabotModuleEnabled) {
             await loadChatSessions();
           } else {
-            await Promise.all([loadHistory(), loadChatSessions()]);
+            const loaders = [loadHistory()];
+            if (gemabotModuleEnabled) {
+              loaders.push(loadChatSessions());
+            }
+            await Promise.all(loaders);
           }
         } catch (error) {
           showAlert(error.message || 'Unable to refresh dashboard updates in real time.');
@@ -2150,13 +2172,20 @@
           loadFavoriteHistoryIds();
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
-          loadForumNotificationsInBackground();
+          if (forumModuleEnabled) {
+            loadForumNotificationsInBackground();
+          }
           loadHistory().catch((error) => {
             showAlert(error.message || 'Unable to load saved calculations.');
           });
-          loadChatSessions().catch((error) => {
-            showAlert(error.message || 'Unable to load chat sessions.');
-          });
+          if (gemabotModuleEnabled) {
+            loadChatSessions().catch((error) => {
+              showAlert(error.message || 'Unable to load chat sessions.');
+            });
+          } else {
+            chatSessions = [];
+            renderChatSessions();
+          }
           await loadMemberProposals();
           await loadMemberChatbotFeedback();
 
@@ -2265,10 +2294,17 @@
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
-          loadForumNotificationsInBackground();
+          if (forumModuleEnabled) {
+            loadForumNotificationsInBackground();
+          }
           maybeOpenFollowItAfterVerifiedSignIn(session);
           await loadHistory();
-          await loadChatSessions();
+          if (gemabotModuleEnabled) {
+            await loadChatSessions();
+          } else {
+            chatSessions = [];
+            renderChatSessions();
+          }
           await loadMemberProposals();
           await loadMemberChatbotFeedback();
         } catch (error) {

@@ -951,6 +951,13 @@ View results: ${shareUrl}`.trim(),
         sharedResultBanner.innerHTML = `<strong>Shared gematria lookup:</strong> ${escapeHtml(topic)} → total ${escapeHtml(total)}, digital root ${escapeHtml(root || '?')}.`;
       }
 
+      function normalizeDictionaryText(value) {
+        return String(value || '')
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
       async function fetchMatchCount(total) {
         try {
           const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(total))}`);
@@ -991,7 +998,7 @@ View results: ${shareUrl}`.trim(),
           if (!response.ok) return null;
           const payload = await response.json();
           const firstDefinition = Array.isArray(payload?.definitions) ? payload.definitions[0] : null;
-          const definitionText = String(firstDefinition?.text || '').replace(/\s+/g, ' ').trim();
+          const definitionText = normalizeDictionaryText(firstDefinition?.text);
           return definitionText || null;
         } catch {
           return null;
@@ -1005,7 +1012,7 @@ View results: ${shareUrl}`.trim(),
           const payload = await response.json();
           const definitions = Array.isArray(payload?.definitions) ? payload.definitions : [];
           return definitions
-            .map((entry) => String(entry?.text || '').replace(/\s+/g, ' ').trim())
+            .map((entry) => normalizeDictionaryText(entry?.text))
             .filter(Boolean)
             .slice(0, Math.max(1, Math.min(15, Number(limit) || 6)));
         } catch {
@@ -1373,6 +1380,12 @@ View results: ${shareUrl}`.trim(),
         window.hideWorkingOverlay?.();
         const assistantMessage = addMessage('assistant', replyHtml);
         attachResultFeedbackUi(assistantMessage, prompt);
+      });
+
+      promptInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' || event.shiftKey) return;
+        event.preventDefault();
+        form.requestSubmit();
       });
 
       clearConversationButton.addEventListener('click', () => {

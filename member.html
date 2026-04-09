@@ -828,9 +828,55 @@
 </html>`;
       }
 
-      function downloadChatSessionHtml(sessionItem = {}) {
-        const htmlContent = createChatSessionHtmlDocument(sessionItem);
-        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      function createChatSessionMarkdownDocument(sessionItem = {}) {
+        const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
+        const createdAt = sessionItem.createdAt ? new Date(sessionItem.createdAt).toLocaleString() : 'Unknown save time';
+        const heading = sessionItem.title || 'Gematria AI Agent session';
+        const topic = sessionItem.topic || 'General chat';
+        const messages = transcriptEntries.length
+          ? transcriptEntries.map((entry) => `## ${entry.role === 'assistant' ? 'Gematria AI Agent' : 'You'}\n\n${entry.text || ''}`).join('\n\n')
+          : 'No transcript messages were saved in this session.';
+
+        return `# ${heading}\n\n- Topic: ${topic}\n- Saved: ${createdAt}\n\n${messages}\n`;
+      }
+
+      function createChatSessionPlainTextDocument(sessionItem = {}) {
+        const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
+        const createdAt = sessionItem.createdAt ? new Date(sessionItem.createdAt).toLocaleString() : 'Unknown save time';
+        const heading = sessionItem.title || 'Gematria AI Agent session';
+        const topic = sessionItem.topic || 'General chat';
+        const messages = transcriptEntries.length
+          ? transcriptEntries.map((entry, index) => `${index + 1}. ${entry.role === 'assistant' ? 'Gematria AI Agent' : 'You'}\n${entry.text || ''}`).join('\n\n')
+          : 'No transcript messages were saved in this session.';
+
+        return `${heading}\n\nTopic: ${topic}\nSaved: ${createdAt}\n\n${messages}\n`;
+      }
+
+      function createChatSessionJsonDocument(sessionItem = {}) {
+        const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
+        const payload = {
+          title: sessionItem.title || 'Gematria AI Agent session',
+          topic: sessionItem.topic || 'General chat',
+          createdAt: sessionItem.createdAt || null,
+          transcript: transcriptEntries.map((entry) => ({
+            role: entry.role === 'assistant' ? 'assistant' : 'user',
+            text: String(entry.text || ''),
+          })),
+        };
+
+        return JSON.stringify(payload, null, 2);
+      }
+
+      function downloadChatSession(sessionItem = {}, format = 'html') {
+        const exportConfig = {
+          html: { content: createChatSessionHtmlDocument(sessionItem), mime: 'text/html;charset=utf-8', extension: 'html' },
+          markdown: { content: createChatSessionMarkdownDocument(sessionItem), mime: 'text/markdown;charset=utf-8', extension: 'md' },
+          text: { content: createChatSessionPlainTextDocument(sessionItem), mime: 'text/plain;charset=utf-8', extension: 'txt' },
+          json: { content: createChatSessionJsonDocument(sessionItem), mime: 'application/json;charset=utf-8', extension: 'json' },
+        };
+        const selectedFormat = Object.prototype.hasOwnProperty.call(exportConfig, format) ? format : 'html';
+        const { content, mime, extension } = exportConfig[selectedFormat];
+        const blob = new Blob([content], { type: mime });
         const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         const fallbackName = `gematria-chat-session-${sessionItem.id || 'export'}`;
@@ -840,7 +886,7 @@
           .replace(/^-+|-+$/g, '') || fallbackName;
 
         link.href = objectUrl;
-        link.download = `${safeName}.html`;
+        link.download = `${safeName}.${extension}`;
         document.body.append(link);
         link.click();
         link.remove();
@@ -1935,7 +1981,15 @@
                   </details>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
-                  <button class="btn btn-outline-secondary btn-sm" type="button" data-export-chat-session-id="${sessionItem.id}">Download HTML</button>
+                  <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Download</button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li><button class="dropdown-item" type="button" data-export-chat-session-id="${sessionItem.id}" data-export-chat-format="html">HTML (.html)</button></li>
+                      <li><button class="dropdown-item" type="button" data-export-chat-session-id="${sessionItem.id}" data-export-chat-format="markdown">Markdown (.md)</button></li>
+                      <li><button class="dropdown-item" type="button" data-export-chat-session-id="${sessionItem.id}" data-export-chat-format="text">Plain text (.txt)</button></li>
+                      <li><button class="dropdown-item" type="button" data-export-chat-session-id="${sessionItem.id}" data-export-chat-format="json">JSON (.json)</button></li>
+                    </ul>
+                  </div>
                   <button class="btn btn-outline-danger btn-sm" type="button" data-delete-chat-session-id="${sessionItem.id}">Delete</button>
                 </div>
               </div>
@@ -1951,7 +2005,7 @@
               return;
             }
 
-            downloadChatSessionHtml(selected);
+            downloadChatSession(selected, button.dataset.exportChatFormat || 'html');
           });
         });
 

@@ -38,7 +38,7 @@ function buildShareHtml(params) {
   appUrl.searchParams.set('sharedRoot', root);
 
   const imageUrl = toImageUrl(topic, total, root);
-  const title = `Gematria AI Agent: ${topic}`;
+  const title = `GemaBot: ${topic}`;
   const description = `Gematria lookup for ${topic}: total ${total} • digital root ${root}`;
 
   return `<!doctype html>
@@ -74,7 +74,7 @@ function buildShareHtml(params) {
   </head>
   <body>
     <main>
-      <p>Redirecting to <a href="${escapeHtml(appUrl.toString())}">Gematria AI Agent</a>…</p>
+      <p>Redirecting to <a href="${escapeHtml(appUrl.toString())}">GemaBot</a>…</p>
     </main>
   </body>
 </html>`;

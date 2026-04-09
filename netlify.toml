@@ -3,6 +3,16 @@
   publish = "public"
 
 [[redirects]]
+  from = "/robots.txt"
+  to = "/.netlify/functions/robots-txt"
+  status = 200
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap-xml"
+  status = 200
+
+[[redirects]]
   from = "/nameCalculator.html"
   to = "/name-calculator.html"
   status = 301

@@ -79,6 +79,8 @@
     membership: [/\/member(?:\.html)?(?:[?#].*)?$/i],
   });
 
+  const MODULE_LINK_HIDDEN_FLAG = 'moduleLinkHidden';
+
   const applyModuleLinkVisibility = () => {
     document.querySelectorAll('[data-module-link-hidden="true"]').forEach((element) => {
       element.classList.remove('d-none');
@@ -97,11 +99,17 @@
         && matchers.some((matcher) => matcher.test(href))
       ));
 
+      const container = link.closest('[data-module-link-container], .nav-item, li') || link;
+
       if (!disabledModule) {
+        if (container.dataset[MODULE_LINK_HIDDEN_FLAG] === '1') {
+          container.classList.remove('d-none');
+          container.removeAttribute('aria-hidden');
+          delete container.dataset[MODULE_LINK_HIDDEN_FLAG];
+        }
         return;
       }
 
-      const container = link.closest('[data-module-link-container], .nav-item, li') || link;
       container.classList.add('d-none');
       container.setAttribute('aria-hidden', 'true');
       container.setAttribute('data-module-link-hidden', 'true');

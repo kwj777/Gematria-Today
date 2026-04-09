@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS = {
   sendgridReplyToEmail: '',
   sendgridApiKey: '',
   publicSiteUrl: '',
+  siteModules: {},
 };
 
 const DEFAULT_EMAIL_TEMPLATES = [
@@ -23,8 +24,30 @@ const DEFAULT_EMAIL_TEMPLATES = [
   },
 ];
 
+const DEFAULT_SITE_MODULES = Object.freeze({
+  forum: true,
+  knowbot: true,
+  gemabot: true,
+  news: true,
+  blog: true,
+  membership: true,
+});
+
 function getDefaultEmailTemplates() {
   return DEFAULT_EMAIL_TEMPLATES.map((template) => ({ ...template }));
+}
+
+function normalizeSiteModules(rawValue = null) {
+  if (!rawValue || typeof rawValue !== 'object') {
+    return null;
+  }
+
+  return Object.keys(DEFAULT_SITE_MODULES).reduce((result, moduleName) => {
+    if (Object.hasOwn(rawValue, moduleName)) {
+      result[moduleName] = Boolean(rawValue[moduleName]);
+    }
+    return result;
+  }, {});
 }
 
 function normalizeSettings(body = {}) {
@@ -41,6 +64,7 @@ function normalizeSettings(body = {}) {
     sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
     publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
+    siteModules: normalizeSiteModules(body.siteModules),
   };
 }
 
@@ -64,11 +88,14 @@ function serializeSettings(settings = {}) {
     publicSiteUrl: settings.publicSiteUrl || '',
     hasSendgridApiKey: Boolean(settings.sendgridApiKey),
     emailDeliveryConfigured: Boolean(settings.sendgridApiKey && settings.sendgridFromEmail),
+    siteModules: settings.siteModules && typeof settings.siteModules === 'object'
+      ? { ...DEFAULT_SITE_MODULES, ...normalizeSiteModules(settings.siteModules) }
+      : { ...DEFAULT_SITE_MODULES },
   };
 }
 
 function mapSettingsFromRows(rows = []) {
-  const settings = { ...DEFAULT_SETTINGS };
+  const settings = { ...DEFAULT_SETTINGS, siteModules: { ...DEFAULT_SITE_MODULES } };
   const emailTemplates = getDefaultEmailTemplates();
   const templateById = new Map(emailTemplates.map((template) => [template.id, template]));
 
@@ -82,6 +109,17 @@ function mapSettingsFromRows(rows = []) {
     if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
     if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
     if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
+    if (row.setting_key === 'site_modules') {
+      try {
+        const parsedModules = JSON.parse(row.setting_value || '{}');
+        settings.siteModules = {
+          ...DEFAULT_SITE_MODULES,
+          ...(normalizeSiteModules(parsedModules) || {}),
+        };
+      } catch {
+        settings.siteModules = { ...DEFAULT_SITE_MODULES };
+      }
+    }
 
     const subjectMatch = /^email_template_(.+)_subject$/.exec(row.setting_key || '');
     if (subjectMatch) {
@@ -99,21 +137,25 @@ function mapSettingsFromRows(rows = []) {
   return { settings, emailTemplates };
 }
 
+function getSettingsRows(sql) {
+  return sql`
+    SELECT setting_key, setting_value
+    FROM admin_settings
+    WHERE setting_key LIKE 'stripe_%'
+      OR setting_key LIKE 'sendgrid_%'
+      OR setting_key = 'public_site_url'
+      OR setting_key = 'site_modules'
+      OR setting_key LIKE 'email_template_%'
+    ORDER BY setting_key ASC
+  `;
+}
+
 export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
 
     if (event.httpMethod === 'GET') {
-      const rows = await sql`
-        SELECT setting_key, setting_value
-        FROM admin_settings
-        WHERE setting_key LIKE 'stripe_%'
-          OR setting_key LIKE 'sendgrid_%'
-          OR setting_key = 'public_site_url'
-          OR setting_key LIKE 'email_template_%'
-        ORDER BY setting_key ASC
-      `;
-
+      const rows = await getSettingsRows(sql);
       const { settings, emailTemplates } = mapSettingsFromRows(rows);
       return jsonResponse(200, { settings: serializeSettings(settings), emailTemplates });
     }
@@ -160,15 +202,7 @@ export async function handler(event) {
           `;
         }
 
-        const rows = await sql`
-          SELECT setting_key, setting_value
-          FROM admin_settings
-          WHERE setting_key LIKE 'stripe_%'
-            OR setting_key LIKE 'sendgrid_%'
-            OR setting_key = 'public_site_url'
-            OR setting_key LIKE 'email_template_%'
-          ORDER BY setting_key ASC
-        `;
+        const rows = await getSettingsRows(sql);
         const { settings, emailTemplates } = mapSettingsFromRows(rows);
         return jsonResponse(200, {
           saved: true,
@@ -179,25 +213,12 @@ export async function handler(event) {
       }
 
       const settings = normalizeSettings(body);
-      const existingRows = await sql`
-        SELECT setting_key, setting_value
-        FROM admin_settings
-        WHERE setting_key LIKE 'stripe_%'
-          OR setting_key LIKE 'sendgrid_%'
-          OR setting_key = 'public_site_url'
-      `;
-      const existingSettings = { ...DEFAULT_SETTINGS };
-      for (const row of existingRows) {
-        if (row.setting_key === 'stripe_account_id') existingSettings.stripeAccountId = row.setting_value || '';
-        if (row.setting_key === 'stripe_publishable_key') existingSettings.stripePublishableKey = row.setting_value || '';
-        if (row.setting_key === 'stripe_secret_key') existingSettings.stripeSecretKey = row.setting_value || '';
-        if (row.setting_key === 'stripe_webhook_signing_secret') existingSettings.stripeWebhookSigningSecret = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_from_email') existingSettings.sendgridFromEmail = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_from_name') existingSettings.sendgridFromName = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_reply_to_email') existingSettings.sendgridReplyToEmail = row.setting_value || '';
-        if (row.setting_key === 'sendgrid_api_key') existingSettings.sendgridApiKey = row.setting_value || '';
-        if (row.setting_key === 'public_site_url') existingSettings.publicSiteUrl = row.setting_value || '';
+      if (settings.siteModules !== null && user.role !== 'super_admin') {
+        return jsonResponse(403, { error: 'Only super admins can update site modules' });
       }
+
+      const existingRows = await getSettingsRows(sql);
+      const { settings: existingSettings } = mapSettingsFromRows(existingRows);
 
       const nextSettings = {
         stripeAccountId: settings.stripeAccountId,
@@ -211,6 +232,10 @@ export async function handler(event) {
         sendgridReplyToEmail: settings.sendgridReplyToEmail,
         sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
         publicSiteUrl: settings.publicSiteUrl,
+        siteModules: settings.siteModules === null ? existingSettings.siteModules : {
+          ...DEFAULT_SITE_MODULES,
+          ...settings.siteModules,
+        },
       };
 
       const pairs = [
@@ -223,6 +248,7 @@ export async function handler(event) {
         ['sendgrid_reply_to_email', nextSettings.sendgridReplyToEmail],
         ['sendgrid_api_key', nextSettings.sendgridApiKey],
         ['public_site_url', nextSettings.publicSiteUrl],
+        ['site_modules', JSON.stringify(nextSettings.siteModules || {})],
       ];
 
       for (const [key, value] of pairs) {
@@ -234,15 +260,7 @@ export async function handler(event) {
         `;
       }
 
-      const rows = await sql`
-        SELECT setting_key, setting_value
-        FROM admin_settings
-        WHERE setting_key LIKE 'stripe_%'
-          OR setting_key LIKE 'sendgrid_%'
-          OR setting_key = 'public_site_url'
-          OR setting_key LIKE 'email_template_%'
-        ORDER BY setting_key ASC
-      `;
+      const rows = await getSettingsRows(sql);
       const { emailTemplates } = mapSettingsFromRows(rows);
 
       return jsonResponse(200, { saved: true, settings: serializeSettings(nextSettings), emailTemplates });

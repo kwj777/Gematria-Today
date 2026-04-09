@@ -173,6 +173,20 @@
               </div>
             </div>
           </section>
+          <section id="siteModulesPanel" class="content-panel p-3 p-lg-4 mb-4 d-none">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+              <div>
+                <p class="section-kicker mb-1">Site availability</p>
+                <h3 class="h5 mb-0">Flip module switches</h3>
+              </div>
+              <span class="badge text-bg-warning">Super admins only</span>
+            </div>
+            <p class="text-muted small mb-3">Enable or disable major modules site-wide. Disabling a module hides related UI elements for visitors.</p>
+            <form id="siteModulesForm" class="row g-3"></form>
+            <div class="d-flex justify-content-end mt-3">
+              <button id="saveSiteModulesButton" class="btn btn-outline-primary" type="button">Save module switches</button>
+            </div>
+          </section>
 
           <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
           <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
@@ -542,6 +556,17 @@
       const postImageUploadMeta = document.getElementById('postImageUploadMeta');
       const workspaceFilter = document.getElementById('workspaceFilter');
       const workspaceModules = Array.from(document.querySelectorAll('[data-admin-workspace]'));
+      const siteModulesPanel = document.getElementById('siteModulesPanel');
+      const siteModulesForm = document.getElementById('siteModulesForm');
+
+      const DEFAULT_SITE_MODULES = Object.freeze({
+        forum: true,
+        knowbot: true,
+        gemabot: true,
+        news: true,
+        blog: true,
+        membership: true,
+      });
 
       function applyWorkspaceFilter() {
         const selectedWorkspace = workspaceFilter?.value || 'all';
@@ -556,7 +581,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -802,6 +827,33 @@
       function setLoggedIn(isLoggedIn) {
         authPanel.classList.toggle('d-none', isLoggedIn);
         dashboardPanel.classList.toggle('d-none', !isLoggedIn);
+        if (!isLoggedIn && siteModulesPanel) {
+          siteModulesPanel.classList.add('d-none');
+        }
+      }
+
+      function renderSiteModules() {
+        if (!siteModulesForm) {
+          return;
+        }
+
+        const moduleMeta = [
+          ['forum', 'Forum'],
+          ['knowbot', 'Knowbot'],
+          ['gemabot', 'GemaBot'],
+          ['news', 'News'],
+          ['blog', 'Blog'],
+          ['membership', 'Membership'],
+        ];
+
+        const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
+        siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `
+          <div class="col-md-6 col-xl-4">
+            <label class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" data-site-module="${name}" ${modules[name] !== false ? 'checked' : ''} />
+              <span class="form-check-label">${label}</span>
+            </label>
+          </div>`).join('');
       }
 
       function renderFeeds() {
@@ -1174,6 +1226,7 @@
         state.stripeSettings = settings.settings || null;
         state.emailSettings = settings.settings || null;
         state.emailTemplates = settings.emailTemplates || [];
+        state.siteModules = { ...DEFAULT_SITE_MODULES, ...((settings.settings && settings.settings.siteModules) || {}) };
         renderFeeds();
         renderPosts();
         renderBlogProposals();
@@ -1183,6 +1236,7 @@
         renderStripeSettings();
         renderEmailSettings();
         renderEmailTemplates();
+        renderSiteModules();
         renderMembershipGrantMeta();
         renderMemberPromotionMeta();
       }
@@ -1191,7 +1245,10 @@
         try {
           const payload = await request('/api/admin-session', { method: 'GET' });
           state.user = payload.user;
-          sessionMeta.textContent = `Signed in as ${payload.user.username}`;
+          sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
+          if (siteModulesPanel) {
+            siteModulesPanel.classList.toggle('d-none', payload.user.role !== 'super_admin');
+          }
           setLoggedIn(true);
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
@@ -1201,6 +1258,8 @@
         } catch (error) {
           state.user = null;
           sessionMeta.textContent = '';
+          state.siteModules = { ...DEFAULT_SITE_MODULES };
+          renderSiteModules();
           setLoggedIn(false);
         }
       }
@@ -1257,7 +1316,10 @@
             })
           });
           state.user = payload.user;
-          sessionMeta.textContent = `Signed in as ${payload.user.username}`;
+          sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
+          if (siteModulesPanel) {
+            siteModulesPanel.classList.toggle('d-none', payload.user.role !== 'super_admin');
+          }
           setLoggedIn(true);
           showMessage(saveMessage, payload.message || 'Admin password reset complete.');
           renderRecoveryPreview('Recovery code consumed.');
@@ -1477,6 +1539,47 @@
           targetButton.disabled = false;
         }
       }
+
+
+      document.getElementById('saveSiteModulesButton')?.addEventListener('click', async () => {
+        clearMessage(errorMessage);
+        if (!state.user || state.user.role !== 'super_admin') {
+          showMessage(errorMessage, 'Only super admins can update site modules.');
+          return;
+        }
+
+        const nextModules = { ...DEFAULT_SITE_MODULES };
+        siteModulesForm?.querySelectorAll('[data-site-module]').forEach((field) => {
+          const moduleName = String(field.dataset.siteModule || '').trim().toLowerCase();
+          if (!moduleName || !Object.hasOwn(nextModules, moduleName)) {
+            return;
+          }
+          nextModules[moduleName] = Boolean(field.checked);
+        });
+
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              stripeAccountId: state.stripeSettings?.stripeAccountId || '',
+              stripePublishableKey: state.stripeSettings?.stripePublishableKey || '',
+              sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
+              sendgridFromName: state.emailSettings?.sendgridFromName || '',
+              sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
+              publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
+              replaceStripeSecretKey: false,
+              replaceStripeWebhookSigningSecret: false,
+              replaceSendgridApiKey: false,
+              siteModules: nextModules,
+            })
+          });
+          state.siteModules = { ...DEFAULT_SITE_MODULES, ...((payload.settings && payload.settings.siteModules) || {}) };
+          renderSiteModules();
+          showMessage(saveMessage, 'Site module switches saved.');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
 
       workspaceFilter?.addEventListener('change', applyWorkspaceFilter);
       applyWorkspaceFilter();

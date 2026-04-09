@@ -94,6 +94,23 @@
     });
   };
 
+  const fetchGlobalModules = async () => {
+    try {
+      const response = await fetch('/api/public-site-modules', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { accept: 'application/json' },
+      });
+      if (!response.ok) {
+        return {};
+      }
+      const payload = await response.json();
+      return parseModuleOverrides(payload?.modules);
+    } catch {
+      return {};
+    }
+  };
+
   const isSuperAdminSession = async () => {
     try {
       const response = await fetch('/api/admin-session', {
@@ -111,18 +128,26 @@
     }
   };
 
-  const applySuperAdminOverrides = async () => {
-    const canOverride = await isSuperAdminSession();
-    if (!canOverride) {
-      return;
-    }
+  const applyModuleSettings = async () => {
+    const [globalModules, canOverride] = await Promise.all([
+      fetchGlobalModules(),
+      isSuperAdminSession(),
+    ]);
 
     activeModules = {
       ...DEFAULT_MODULES,
-      ...parseStoredModules(),
+      ...globalModules,
       ...parseModuleOverrides(window.SITE_MODULE_OVERRIDES || {}),
-      ...parseModulesFromQuery(),
     };
+
+    if (canOverride) {
+      activeModules = {
+        ...activeModules,
+        ...parseStoredModules(),
+        ...parseModulesFromQuery(),
+      };
+    }
+
     applyModuleVisibility();
   };
 
@@ -134,16 +159,16 @@
     storageKey: STORAGE_KEY,
     isEnabled,
     applyModuleVisibility,
-    applySuperAdminOverrides,
+    applyModuleSettings,
   });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       applyModuleVisibility();
-      applySuperAdminOverrides().catch(() => {});
+      applyModuleSettings().catch(() => {});
     }, { once: true });
   } else {
     applyModuleVisibility();
-    applySuperAdminOverrides().catch(() => {});
+    applyModuleSettings().catch(() => {});
   }
 })();

@@ -245,7 +245,7 @@ export async function handler(event) {
         limit: 25,
         windowMs: 60_000,
         blockMs: 5 * 60_000,
-        message: 'Too many SearchBot requests. Please try again soon.',
+        message: 'Too many KnowBot requests. Please try again soon.',
       });
     }
 

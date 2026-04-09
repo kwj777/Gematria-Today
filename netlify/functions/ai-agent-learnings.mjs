@@ -96,6 +96,6 @@ export async function handler(event) {
 
     return jsonResponse(405, { error: 'Method not allowed' });
   } catch (error) {
-    return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to process AI agent learnings' });
+    return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to process AI GemaBot learnings' });
   }
 }

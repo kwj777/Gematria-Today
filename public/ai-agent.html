@@ -122,10 +122,10 @@
               <button class="nav-link dropdown-toggle" type="button" id="faqMenu" data-bs-toggle="dropdown" aria-expanded="false">FAQ</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="faqMenu">
                 <li><a class="dropdown-item" href="/faq.html">FAQs</a></li>
-                <li><a class="dropdown-item" href="/searchbot.html">SearchBot</a></li>
+                <li><a class="dropdown-item" href="/searchbot.html">KnowBot</a></li>
               </ul>
             </li>
-            <li class="nav-item"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open SearchBot" title="SearchBot">🔍</a></li>
+            <li class="nav-item"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot" title="KnowBot">🔍</a></li>
             <li class="nav-item"><a class="nav-link" href="/member.html">Dashboard</a></li>
           </ul>
         </div>
@@ -156,7 +156,7 @@
               <textarea id="agentPrompt" class="form-control" rows="3" required></textarea>
             </div>
             <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
-              <button type="submit" class="btn btn-primary">Ask agent</button>
+              <button type="submit" class="btn btn-primary">Ask GemaBot</button>
               <button type="button" id="clearConversation" class="btn btn-outline-secondary">Clear conversation</button>
               <button type="button" id="saveConversation" class="btn btn-outline-success">Save chat to dashboard</button>
             </div>
@@ -585,7 +585,7 @@
           ? `
             <p class="mb-2"><strong>${escapeHtml(relationshipTitle)} results for "${escapeHtml(relatedLookupWord)}"</strong></p>
             ${relatedWords.length ? `
-              <p class="mb-2">Click any word for a quick agent lookup:</p>
+              <p class="mb-2">Click any word for a quick GemaBot lookup:</p>
               <div class="d-flex flex-wrap gap-2 mb-2">
                 ${relatedWords.map((word) => `
                   <button
@@ -716,7 +716,7 @@
       async function saveChatSessionToDashboard() {
         const transcript = readChatTranscriptFromDom();
         if (!transcript.length) {
-          throw new Error('No chat messages found. Ask the agent first, then save the session.');
+          throw new Error('No chat messages found. Ask the GemaBot first, then save the session.');
         }
 
         const firstUserMessage = transcript.find((entry) => entry.role === 'user')?.text || 'GemaBot session';
@@ -959,7 +959,7 @@ View results: ${shareUrl}`.trim(),
 
         if (!premiumAccess) {
           premiumGate.hidden = false;
-          premiumGate.innerHTML = 'GemaBot is a <strong>premium member feature</strong>. Please <a href="/member.html" class="alert-link">log in or upgrade your membership</a> to use agent analysis and sharing.';
+          premiumGate.innerHTML = 'GemaBot is a <strong>premium member feature</strong>. Please <a href="/member.html" class="alert-link">log in or upgrade your membership</a> to use GemaBot analysis and sharing.';
           form.querySelectorAll('textarea, select, button[type=\"submit\"]').forEach((field) => {
             field.disabled = true;
           });
@@ -1091,7 +1091,7 @@ View results: ${shareUrl}`.trim(),
           return relatedWords.length
             ? `
               <p class="mb-2"><strong>${escapeHtml(relationshipLabel)} words for "${escapeHtml(word)}"</strong></p>
-              <p class="mb-2">Click any word for a quick agent lookup:</p>
+              <p class="mb-2">Click any word for a quick GemaBot lookup:</p>
               <div class="d-flex flex-wrap gap-2 mb-0">
                 ${relatedWords.map((entry) => `
                   <button
@@ -1191,7 +1191,7 @@ View results: ${shareUrl}`.trim(),
 
           return `
             <p class="mb-2"><strong>Database words with gematria value ${gematriaValue}</strong></p>
-            <p class="mb-2">Found ${wordsList.length} match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full agent lookup for it.</p>
+            <p class="mb-2">Found ${wordsList.length} match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full GemaBot lookup for it.</p>
             <ul class="mb-0 ${wordsList.length > 30 ? 'agent-multi-column-list' : ''}">
               ${wordsList.map((word) => `
                 <li>
@@ -1208,7 +1208,7 @@ View results: ${shareUrl}`.trim(),
 
         const calculationTargets = extractCalculationTargets(normalizedPrompt);
         if (!calculationTargets.length) {
-          return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try the SearchBot? (on top menu)</p>';
+          return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try the KnowBot? (on top menu)</p>';
         }
 
         const topic = calculationTargets[0] || '';
@@ -1413,7 +1413,7 @@ View results: ${shareUrl}`.trim(),
         addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
         promptInput.value = '';
 
-        const originalAskButtonText = askAgentButton?.textContent || 'Ask agent';
+        const originalAskButtonText = askAgentButton?.textContent || 'Ask GemaBot';
         if (askAgentButton) {
           askAgentButton.textContent = 'Working...';
           askAgentButton.disabled = true;

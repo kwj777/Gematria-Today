@@ -127,15 +127,15 @@ Historically, this phase is notable because improvements are less about net-new 
 
 
 ## 12. Phase X: AI Agent Launch and Rapid Capability Iteration (April 7, 2026)
-April 7 marks a sharp product inflection: premium-facing AI agent functionality moved from concept into production and then immediately entered high-frequency iteration. Commit subjects indicate:
+April 7 marks a sharp product inflection: premium-facing AI GemaBot functionality moved from concept into production and then immediately entered high-frequency iteration. Commit subjects indicate:
 
-- release of a premium-gated AI agent surface with share metadata,
+- release of a premium-gated AI GemaBot surface with share metadata,
 - conversational-vs-calculation parsing to extract lookup targets from natural prompts,
 - expansion from single lookup responses to richer workflows (related words, spelling variants, value-based word lists, base-root checks),
-- first-pass persistence for agent learning/feedback and dashboard save actions, and
+- first-pass persistence for GemaBot learning/feedback and dashboard save actions, and
 - repeated improvements to share-sheet behavior, OG image generation, and cross-platform social fallback handling.
 
-Historically, this day is unusual even by this repository’s standards: many small PRs were merged in a single date window to refine one coherent surface (the agent) across UX, retrieval quality, and distribution channels.
+Historically, this day is unusual even by this repository’s standards: many small PRs were merged in a single date window to refine one coherent surface (the GemaBot) across UX, retrieval quality, and distribution channels.
 
 ## 13. Phase XI: Dashboard Communication Stack and Moderation Tooling Expansion (April 8, 2026)
 April 8 extends the platform’s member/admin communication model with dense dashboard and moderation updates. Commit subjects indicate:
@@ -149,10 +149,10 @@ April 8 extends the platform’s member/admin communication model with dense das
 This phase deepens the project’s operational posture: not only collecting user interaction signals, but routing, filtering, archiving, and responding to those signals through explicit admin workflows.
 
 ## 14. Phase XII: Agent Stabilization and Save-Flow Reliability Pass (April 9, 2026)
-The April 9 cycle appears as a focused hardening pass over the newly launched agent feature set. Commit subjects indicate:
+The April 9 cycle appears as a focused hardening pass over the newly launched GemaBot feature set. Commit subjects indicate:
 
 - fixes for target extraction edge cases (quoted/unquoted phrases and command-like prompts),
-- elimination of duplicate summary/quick-calculation artifacts in agent output,
+- elimination of duplicate summary/quick-calculation artifacts in GemaBot output,
 - improvements to save-to-dashboard semantics and button copy,
 - real-time cross-tab synchronization so saved results appear without manual refresh, and
 - additional per-word suggestion rendering for multi-word inputs.

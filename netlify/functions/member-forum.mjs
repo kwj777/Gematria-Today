@@ -295,7 +295,12 @@ function mapThreadRow(row) {
     categoryIconName: row.category_icon_name,
     authorUserId: row.author_user_id,
     authorUsername: row.author_username,
+    authorDisplayName: row.author_display_name,
     authorReputation,
+    authorThreadCount: Number(row.author_thread_count || 0),
+    authorReplyCount: Number(row.author_reply_count || 0),
+    authorMembershipLevel: row.author_membership_level || 'free',
+    authorJoinedAt: row.author_joined_at,
     authorBadges: deriveBadges(authorReputation, {
       threadCount: Number(row.author_thread_count || 0),
       replyCount: Number(row.author_reply_count || 0),
@@ -323,7 +328,12 @@ function mapReplyRow(row) {
     threadId: row.thread_id,
     authorUserId: row.author_user_id,
     authorUsername: row.author_username,
+    authorDisplayName: row.author_display_name,
     authorReputation,
+    authorThreadCount: Number(row.author_thread_count || 0),
+    authorReplyCount: Number(row.author_reply_count || 0),
+    authorMembershipLevel: row.author_membership_level || 'free',
+    authorJoinedAt: row.author_joined_at,
     authorBadges: deriveBadges(authorReputation, {
       threadCount: Number(row.author_thread_count || 0),
       replyCount: Number(row.author_reply_count || 0),
@@ -387,7 +397,7 @@ async function listThreads(sql, member, user, event) {
   let threadRows;
   if (sort === 'popular') {
     threadRows = await sql`
-      SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+      SELECT t.*, u.username AS author_username, u.display_name AS author_display_name, u.created_at AS author_joined_at, c.slug AS category_slug, c.name AS category_name,
         (t.reply_count * 2 + t.view_count) AS popularity_score,
         c.access_tier AS category_access_tier,
         c.color_badge AS category_color_badge,
@@ -415,7 +425,7 @@ async function listThreads(sql, member, user, event) {
     `;
   } else {
     threadRows = await sql`
-      SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name,
+      SELECT t.*, u.username AS author_username, u.display_name AS author_display_name, u.created_at AS author_joined_at, c.slug AS category_slug, c.name AS category_name,
         (t.reply_count * 2 + t.view_count) AS popularity_score,
         c.access_tier AS category_access_tier,
         c.color_badge AS category_color_badge,
@@ -470,7 +480,7 @@ async function getThread(sql, member, user, event) {
   }
 
   const threadRows = await sql`
-    SELECT t.*, u.username AS author_username, c.slug AS category_slug, c.name AS category_name, c.access_tier AS category_access_tier,
+    SELECT t.*, u.username AS author_username, u.display_name AS author_display_name, u.created_at AS author_joined_at, c.slug AS category_slug, c.name AS category_name, c.access_tier AS category_access_tier,
       c.color_badge AS category_color_badge,
       c.icon_name AS category_icon_name,
       u.role AS author_role,
@@ -498,7 +508,7 @@ async function getThread(sql, member, user, event) {
   await sql`UPDATE forum_threads SET view_count = view_count + 1, updated_at = NOW() WHERE id = ${threadId}`;
 
   const replyRows = await sql`
-    SELECT p.*, u.username AS author_username,
+    SELECT p.*, u.username AS author_username, u.display_name AS author_display_name, u.created_at AS author_joined_at,
       u.role AS author_role,
       u.membership_level AS author_membership_level,
       COALESCE(r.points, 0) AS author_reputation,

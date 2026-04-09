@@ -1196,10 +1196,19 @@ View results: ${shareUrl}`.trim(),
         const primaryWordReport = allWordReports.find((entry) => entry.target === topic) || allWordReports[0];
         const matchCount = primaryWordReport?.matchCount ?? null;
 
-        const [definitionSummary, relatedWords] = await Promise.all([
-          fetchDefinitionSummary(topic),
-          fetchRelatedWordsSummary(topic)
-        ]);
+        const lookupDetailsByTarget = new Map(await Promise.all(
+          allWordReports.map(async (entry) => {
+            const [definitionSummary, relatedWords] = await Promise.all([
+              fetchDefinitionSummary(entry.target),
+              fetchRelatedWordsSummary(entry.target)
+            ]);
+            return [entry.target, { definitionSummary, relatedWords }];
+          })
+        ));
+
+        const topicLookupDetails = lookupDetailsByTarget.get(topic) || { definitionSummary: '', relatedWords: [] };
+        const definitionSummary = topicLookupDetails.definitionSummary;
+        const relatedWords = topicLookupDetails.relatedWords;
 
         const iterations = 2;
         const memoryContext = '';
@@ -1267,7 +1276,20 @@ View results: ${shareUrl}`.trim(),
           ${allWordReports.length ? `
             <p class="mb-2"><strong>Full calculation report for each detected word</strong></p>
             <div class="d-flex flex-column gap-2 mb-3">
-              ${allWordReports.map((entry) => `
+              ${allWordReports.map((entry) => {
+                const lookupDetails = lookupDetailsByTarget.get(entry.target) || { definitionSummary: '', relatedWords: [] };
+                const perWordDefinitionSummary = lookupDetails.definitionSummary;
+                const perWordRelatedWordsWithTotals = (lookupDetails.relatedWords || []).map((word) => {
+                  const total = englishGematria(word);
+                  return {
+                    word,
+                    total,
+                    root: digitalRoot(total),
+                    isBaseRoot: isBaseRootTotal(total)
+                  };
+                });
+
+                return `
                 <section class="border rounded-3 p-2">
                   <p class="mb-1"><strong>${escapeHtml(entry.target)}</strong></p>
                   <ul class="mb-2">
@@ -1277,6 +1299,21 @@ View results: ${shareUrl}`.trim(),
                     <li><strong>Current archived matches:</strong> ${Number.isFinite(entry.matchCount) ? entry.matchCount : 'Unavailable right now'}</li>
                     <li><strong>Letter breakdown:</strong> ${entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.'}</li>
                   </ul>
+                  ${allWordReports.length > 1 ? `
+                    <p class="mb-2"><strong>Suggested next lookups for "${escapeHtml(entry.target)}"</strong></p>
+                    <ul class="mb-2">
+                      <li><a href="/definition?word=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Dictionary lookup page for "${escapeHtml(entry.target)}"</a>${perWordDefinitionSummary ? ` — Preview: ${escapeHtml(perWordDefinitionSummary.slice(0, 180))}${perWordDefinitionSummary.length > 180 ? '…' : ''}` : ''}</li>
+                      <li><a href="/calculator.html?query=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(entry.target)}"</a></li>
+                      <li>
+                        Related words lookup:
+                        ${perWordRelatedWordsWithTotals.length ? `
+                          <div class="d-flex flex-wrap gap-2 mt-2">
+                            ${perWordRelatedWordsWithTotals.map((relatedEntry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(relatedEntry.word)}">${escapeHtml(relatedEntry.word)} (${relatedEntry.isBaseRoot ? 'base-root' : 'not base-root'})</button>`).join('')}
+                          </div>
+                        ` : '<span> No related terms were found right now.</span>'}
+                      </li>
+                    </ul>
+                  ` : ''}
                   <button
                     type="button"
                     class="btn btn-sm btn-outline-success agent-save-history-button"
@@ -1289,7 +1326,8 @@ View results: ${shareUrl}`.trim(),
                     Save "${escapeHtml(entry.target)}" to my dashboard
                   </button>
                 </section>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           ` : ''}
           ${requestedSpellingVariantLookup ? `
@@ -1300,20 +1338,22 @@ View results: ${shareUrl}`.trim(),
               </ul>
             ` : '<p class="mb-0">No close spelling variants were generated from this input. Try a single-word topic for variant lookups.</p>'}
           ` : ''}
-          <hr />
-          <p class="mb-2"><strong>Suggested next lookups</strong></p>
-          <ul class="mb-0">
-            <li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary lookup page for "${escapeHtml(topic)}"</a>${definitionSummary ? ` — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}` : ''}</li>
-            <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(topic)}"</a></li>
-            <li>
-              Related words lookup:
-              ${relatedWordsWithTotals.length ? `
-                <div class="d-flex flex-wrap gap-2 mt-2">
-                  ${relatedWordsWithTotals.map((entry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(entry.word)}">${escapeHtml(entry.word)} (${entry.isBaseRoot ? 'base-root' : 'not base-root'})</button>`).join('')}
-                </div>
-              ` : '<span> No related terms were found right now.</span>'}
-            </li>
-          </ul>
+          ${allWordReports.length === 1 ? `
+            <hr />
+            <p class="mb-2"><strong>Suggested next lookups</strong></p>
+            <ul class="mb-0">
+              <li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary lookup page for "${escapeHtml(topic)}"</a>${definitionSummary ? ` — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}` : ''}</li>
+              <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(topic)}"</a></li>
+              <li>
+                Related words lookup:
+                ${relatedWordsWithTotals.length ? `
+                  <div class="d-flex flex-wrap gap-2 mt-2">
+                    ${relatedWordsWithTotals.map((entry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(entry.word)}">${escapeHtml(entry.word)} (${entry.isBaseRoot ? 'base-root' : 'not base-root'})</button>`).join('')}
+                  </div>
+                ` : '<span> No related terms were found right now.</span>'}
+              </li>
+            </ul>
+          ` : ''}
         `;
       }
 

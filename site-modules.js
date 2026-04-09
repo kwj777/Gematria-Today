@@ -268,7 +268,7 @@
 
     if (canOverride) {
       activeModules = {
-        ...DEFAULT_MODULES,
+        ...activeModules,
         ...parseStoredModules(),
         ...parseModulesFromQuery(),
       };

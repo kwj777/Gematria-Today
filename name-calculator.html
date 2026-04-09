@@ -102,6 +102,10 @@ const form = document.querySelector('#name-form');
       const AUTHENTICATED_RELATED_WORD_LIMIT = 250;
       let currentSearchPayload = null;
       let memberSession = null;
+      const MEMBER_DASHBOARD_SYNC_KEY = 'memberDashboardUpdate';
+      const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
+        ? new window.BroadcastChannel('member-dashboard-sync')
+        : null;
 
       function showCalculatorLoadingOverlay() {
         window.showWorkingOverlay?.();
@@ -164,7 +168,21 @@ const form = document.querySelector('#name-form');
         }
 
         memberSaveMeta.textContent = 'Saved to your account history.';
+        notifyDashboardUpdate('history');
         saveHistoryButton.disabled = false;
+      }
+
+      function notifyDashboardUpdate(kind) {
+        const update = {
+          kind: String(kind || 'history'),
+          at: Date.now(),
+        };
+        try {
+          window.localStorage.setItem(MEMBER_DASHBOARD_SYNC_KEY, JSON.stringify(update));
+        } catch {
+          // Ignore localStorage write failures in private mode or quota exhaustion.
+        }
+        memberDashboardSyncChannel?.postMessage(update);
       }
 
       function updateMemberSaveState() {

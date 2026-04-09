@@ -645,6 +645,10 @@
       const forumNotificationToggleButton = document.getElementById('forumNotificationToggleButton');
       const forumNotificationToggleLabel = document.getElementById('forumNotificationToggleLabel');
       const forumNotificationToggleArrow = document.getElementById('forumNotificationToggleArrow');
+      const MEMBER_DASHBOARD_SYNC_KEY = 'memberDashboardUpdate';
+      const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
+        ? new window.BroadcastChannel('member-dashboard-sync')
+        : null;
 
       let session = null;
       let historyItems = [];
@@ -660,6 +664,8 @@
       let chatSessions = [];
       let isMessageCenterOpen = false;
       let isArchiveViewOpen = false;
+      let dashboardSyncRefreshInFlight = false;
+      let lastDashboardSyncRefreshAt = 0;
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
 
 
@@ -1999,9 +2005,58 @@
         renderChatSessions();
       }
 
+      async function refreshDashboardFromSync(update = {}) {
+        if (!session?.authenticated || dashboardSyncRefreshInFlight) {
+          return;
+        }
+
+        const now = Date.now();
+        if (now - lastDashboardSyncRefreshAt < 400) {
+          return;
+        }
+        lastDashboardSyncRefreshAt = now;
+        dashboardSyncRefreshInFlight = true;
+
+        const kind = String(update?.kind || '').trim();
+        try {
+          if (kind === 'history') {
+            await loadHistory();
+          } else if (kind === 'chat') {
+            await loadChatSessions();
+          } else {
+            await Promise.all([loadHistory(), loadChatSessions()]);
+          }
+        } catch (error) {
+          showAlert(error.message || 'Unable to refresh dashboard updates in real time.');
+        } finally {
+          dashboardSyncRefreshInFlight = false;
+        }
+      }
+
+      function parseDashboardSyncPayload(rawPayload) {
+        if (!rawPayload) return null;
+        if (typeof rawPayload === 'object') return rawPayload;
+        try {
+          return JSON.parse(String(rawPayload));
+        } catch {
+          return null;
+        }
+      }
+
       historyListToggleButton.addEventListener('click', () => {
         showAllHistoryItems = !showAllHistoryItems;
         renderHistory();
+      });
+
+      memberDashboardSyncChannel?.addEventListener('message', (event) => {
+        refreshDashboardFromSync(parseDashboardSyncPayload(event.data));
+      });
+
+      window.addEventListener('storage', (event) => {
+        if (event.key !== MEMBER_DASHBOARD_SYNC_KEY || !event.newValue) {
+          return;
+        }
+        refreshDashboardFromSync(parseDashboardSyncPayload(event.newValue));
       });
 
       async function bootstrapSession() {

@@ -10,12 +10,8 @@
 
   const STORAGE_KEY = 'endtimes.siteModules';
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
-  const DISABLED_MODULES = Object.freeze(Object.keys(DEFAULT_MODULES).reduce((result, name) => {
-    result[name] = false;
-    return result;
-  }, {}));
-
-  let activeModules = { ...DISABLED_MODULES };
+  let activeModules = { ...DEFAULT_MODULES };
+  let superAdminCanOverrideModules = false;
 
   const parseModuleOverrides = (rawValue) => {
     if (!rawValue || typeof rawValue !== 'object') {
@@ -66,6 +62,14 @@
     }
   };
 
+  const storeModules = (modules) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(parseModuleOverrides(modules)));
+    } catch {
+      // Ignore storage write failures (private mode, quota, etc).
+    }
+  };
+
   const isEnabled = (moduleName) => activeModules[normalizeName(moduleName)] !== false;
 
   const MODULE_PATH_MATCHERS = Object.freeze({
@@ -78,6 +82,12 @@
   const MODULE_LINK_HIDDEN_FLAG = 'moduleLinkHidden';
 
   const applyModuleLinkVisibility = () => {
+    document.querySelectorAll('[data-module-link-hidden="true"]').forEach((element) => {
+      element.classList.remove('d-none');
+      element.removeAttribute('aria-hidden');
+      element.removeAttribute('data-module-link-hidden');
+    });
+
     document.querySelectorAll('a[href]').forEach((link) => {
       const href = String(link.getAttribute('href') || '').trim();
       if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
@@ -102,7 +112,7 @@
 
       container.classList.add('d-none');
       container.setAttribute('aria-hidden', 'true');
-      container.dataset[MODULE_LINK_HIDDEN_FLAG] = '1';
+      container.setAttribute('data-module-link-hidden', 'true');
     });
   };
 
@@ -137,6 +147,76 @@
     });
 
     applyModuleLinkVisibility();
+  };
+
+  const renderSuperAdminTogglePanel = () => {
+    const existingPanel = document.getElementById('superAdminModuleTogglePanel');
+    if (!superAdminCanOverrideModules) {
+      existingPanel?.remove();
+      return;
+    }
+
+    const moduleEntries = Object.keys(DEFAULT_MODULES);
+    const panel = existingPanel || document.createElement('aside');
+    panel.id = 'superAdminModuleTogglePanel';
+    panel.setAttribute('aria-label', 'Super admin module toggles');
+    panel.style.position = 'fixed';
+    panel.style.right = '1rem';
+    panel.style.bottom = '1rem';
+    panel.style.zIndex = '1050';
+    panel.style.width = 'min(92vw, 320px)';
+    panel.style.maxHeight = '70vh';
+    panel.style.overflow = 'auto';
+    panel.style.padding = '0.75rem';
+    panel.style.border = '1px solid rgba(0,0,0,0.16)';
+    panel.style.borderRadius = '0.75rem';
+    panel.style.background = 'rgba(255,255,255,0.98)';
+    panel.style.boxShadow = '0 0.5rem 1.5rem rgba(0,0,0,0.18)';
+    panel.style.fontSize = '0.9rem';
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
+        <strong>Super admin modules</strong>
+        <button type="button" data-modules-action="reset" style="border:1px solid #6c757d;background:#fff;border-radius:0.5rem;padding:0.2rem 0.5rem;cursor:pointer;">Reset</button>
+      </div>
+      <p style="margin:0 0 0.5rem;color:#495057;">Choose what to show while you work.</p>
+      <div data-module-toggle-list style="display:grid;gap:0.35rem;"></div>
+    `;
+
+    const list = panel.querySelector('[data-module-toggle-list]');
+    list.innerHTML = moduleEntries.map((moduleName) => `
+      <label style="display:flex;align-items:center;gap:0.5rem;margin:0;">
+        <input type="checkbox" data-module-toggle="${moduleName}" ${isEnabled(moduleName) ? 'checked' : ''}>
+        <span style="text-transform:capitalize;">${moduleName}</span>
+      </label>
+    `).join('');
+
+    panel.querySelectorAll('[data-module-toggle]').forEach((field) => {
+      field.addEventListener('change', () => {
+        const moduleName = normalizeName(field.getAttribute('data-module-toggle'));
+        if (!moduleName || !(moduleName in DEFAULT_MODULES)) {
+          return;
+        }
+
+        activeModules = {
+          ...DEFAULT_MODULES,
+          ...activeModules,
+          [moduleName]: Boolean(field.checked),
+        };
+        storeModules(activeModules);
+        applyModuleVisibility();
+      });
+    });
+
+    panel.querySelector('[data-modules-action="reset"]')?.addEventListener('click', () => {
+      activeModules = { ...DEFAULT_MODULES };
+      storeModules(activeModules);
+      renderSuperAdminTogglePanel();
+      applyModuleVisibility();
+    });
+
+    if (!existingPanel) {
+      document.body.appendChild(panel);
+    }
   };
 
   const fetchGlobalModules = async () => {
@@ -178,6 +258,7 @@
       fetchGlobalModules(),
       isSuperAdminSession(),
     ]);
+    superAdminCanOverrideModules = canOverride;
 
     activeModules = {
       ...DEFAULT_MODULES,
@@ -187,12 +268,13 @@
 
     if (canOverride) {
       activeModules = {
-        ...activeModules,
+        ...DEFAULT_MODULES,
         ...parseStoredModules(),
         ...parseModulesFromQuery(),
       };
     }
 
+    renderSuperAdminTogglePanel();
     applyModuleVisibility();
   };
 

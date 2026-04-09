@@ -145,8 +145,8 @@
               <button type="button" id="saveConversation" class="btn btn-outline-success">Save chat to dashboard</button>
             </div>
             <div class="col-12 agent-form-help">
-              <p class="form-text mb-0">Use quotes around the word(s) you want calculated.</p>
-              <p class="form-text mb-0">To calculate multiple individual words, separate them with commas inside the quotes (example: "pilot, process").</p>
+              <p class="form-text mb-0">Type the word(s) you want calculated in natural language (quotes are optional).</p>
+              <p class="form-text mb-0">For multiple targets, separate with commas or use words like "and" (example: <code>calculate pilot and process</code>).</p>
             </div>
           </form>
         </section>
@@ -385,7 +385,30 @@
           return [...new Set(quotedTargets)];
         }
 
-        return [];
+        const normalizedPrompt = normalizeCandidate(prompt);
+        if (!normalizedPrompt) return [];
+
+        const keywordTargetMatch = normalizedPrompt.match(
+          /\b(?:calculate|calculation|calculate\s+for|gematria|value|values|number|numbers|math|snapshot|lookup|analyze|analysis|compare|comparison)\b[^A-Za-z0-9]+(?:for|of|on|about)?\s*([A-Za-z][A-Za-z' -]*(?:\s*(?:,|and|&)\s*[A-Za-z][A-Za-z' -]*)*)/i
+        );
+        const candidateBlock = keywordTargetMatch ? keywordTargetMatch[1] : normalizedPrompt;
+        const trailingPunctuationStripped = candidateBlock
+          .replace(/[?.!]+$/g, '')
+          .replace(/\b(?:please|thanks?|thank you|now|today|right now)\b\s*$/gi, '')
+          .trim();
+
+        const splitTargets = trailingPunctuationStripped
+          .split(/\s*(?:,| and | & )\s*/i)
+          .map((target) => normalizeCandidate(target).replace(/^[^A-Za-z]+|[^A-Za-z'-]+$/g, ''))
+          .filter((target) => /^[A-Za-z][A-Za-z' -]*$/.test(target))
+          .filter((target) => {
+            const wordCount = target.split(/\s+/).filter(Boolean).length;
+            if (wordCount > 5) return false;
+            if (/^(?:please|provide|give|show|calculate|calculation|gematria|value|values|number|numbers|for|of|and)$/i.test(target)) return false;
+            return true;
+          });
+
+        return [...new Set(splitTargets)].slice(0, 6);
       }
 
       function extractWordnikLookupWord(prompt) {
@@ -501,8 +524,8 @@
 
         return `
           ${learnedCue}
-          <p class="mb-2">I switched to general chat mode because no quoted calculation target was detected.</p>
-          <p class="mb-2">If you want gematria math, wrap one or more targets in quotes (example: <code>"new jerusalem"</code> or <code>"pilot, process"</code>).</p>
+          <p class="mb-2">I switched to general chat mode because I could not identify a clear calculation target.</p>
+          <p class="mb-2">For gematria math, ask naturally (example: <code>calculate new jerusalem</code> or <code>calculate pilot and process</code>). Quotes still work if you prefer them.</p>
           ${buildMemberAccessLinks(normalizedPrompt)}
           ${synonymResponseBlock}
           <p class="mb-0">General response: ${escapeHtml(normalizedPrompt || 'Share a question and I can help.')}</p>

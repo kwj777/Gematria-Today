@@ -46,10 +46,39 @@
       .agent-hero-image {
         width: 100%;
         height: auto;
+        max-height: 220px;
+        object-fit: cover;
         border-radius: 1rem;
-        margin-top: 1.25rem;
+        margin-top: 0.75rem;
         border: 1px solid rgba(255, 255, 255, 0.18);
         box-shadow: 0 16px 36px rgba(4, 13, 28, 0.35);
+      }
+
+      .agent-hero-panel {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+      }
+
+      .agent-hero-panel .display-6 {
+        font-size: clamp(1.55rem, 1.6vw + 1rem, 2.1rem);
+      }
+
+      .agent-hero-panel .lead {
+        font-size: clamp(1rem, 1vw + 0.7rem, 1.35rem);
+      }
+
+      .agent-hero-controls {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 0.75rem;
+      }
+
+      #agentHeroPanel[hidden] {
+        display: none !important;
+      }
+
+      .agent-form-help {
+        margin-top: 0.25rem;
       }
 
       @media (max-width: 575.98px) {
@@ -90,7 +119,11 @@
 
     <main id="mainContent" class="py-5">
       <div class="container">
-        <section class="hero-panel p-4 p-lg-5 mb-4">
+        <div class="agent-hero-controls">
+          <button type="button" id="toggleHeroVisibility" class="btn btn-outline-secondary btn-sm" aria-controls="agentHeroPanel" aria-expanded="true">Hide intro</button>
+        </div>
+
+        <section id="agentHeroPanel" class="hero-panel agent-hero-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Assistant</p>
           <h1 class="display-6 fw-bold mb-2">Gematria AI Agent</h1>
           <p class="lead mb-0">Ask for gematria calculations, comparison ideas, or interpretation prompts. The assistant computes English gematria (A=6, B=12 ... Z=156), digital root, and optional match counts.</p>
@@ -105,13 +138,15 @@
             <div class="col-12">
               <label for="agentPrompt" class="form-label fw-semibold">Your message</label>
               <textarea id="agentPrompt" class="form-control" rows="3" required></textarea>
-              <p class="form-text mb-0">Use quotes around the word(s) you want calculated.</p>
-              <p class="form-text mb-0">To calculate multiple individual words, separate them with commas inside the quotes (example: "pilot, process").</p>
             </div>
             <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
               <button type="submit" class="btn btn-primary">Ask agent</button>
               <button type="button" id="clearConversation" class="btn btn-outline-secondary">Clear conversation</button>
               <button type="button" id="saveConversation" class="btn btn-outline-success">Save chat to dashboard</button>
+            </div>
+            <div class="col-12 agent-form-help">
+              <p class="form-text mb-0">Use quotes around the word(s) you want calculated.</p>
+              <p class="form-text mb-0">To calculate multiple individual words, separate them with commas inside the quotes (example: "pilot, process").</p>
             </div>
           </form>
         </section>
@@ -124,8 +159,11 @@
       const chatLog = document.getElementById('chatLog');
       const clearConversationButton = document.getElementById('clearConversation');
       const saveConversationButton = document.getElementById('saveConversation');
+      const toggleHeroButton = document.getElementById('toggleHeroVisibility');
+      const heroPanel = document.getElementById('agentHeroPanel');
       const premiumGate = document.getElementById('premiumGate');
       const sharedResultBanner = document.getElementById('sharedResultBanner');
+      const HERO_VISIBILITY_KEY = 'gematriaAgentHeroHidden.v1';
       let premiumAccess = false;
       const memberSession = {
         authenticated: false,
@@ -149,6 +187,33 @@
         { type: 'variant', label: 'Variant' },
         { type: 'same-context', label: 'Same context' }
       ];
+
+      function setHeroVisibility(isHidden) {
+        heroPanel.hidden = Boolean(isHidden);
+        toggleHeroButton.textContent = isHidden ? 'Show intro' : 'Hide intro';
+        toggleHeroButton.setAttribute('aria-expanded', String(!isHidden));
+      }
+
+      function initializeHeroVisibility() {
+        try {
+          const savedValue = window.localStorage.getItem(HERO_VISIBILITY_KEY);
+          setHeroVisibility(savedValue === '1');
+        } catch (error) {
+          setHeroVisibility(false);
+        }
+      }
+
+      toggleHeroButton.addEventListener('click', () => {
+        const nextHidden = !heroPanel.hidden;
+        setHeroVisibility(nextHidden);
+        try {
+          window.localStorage.setItem(HERO_VISIBILITY_KEY, nextHidden ? '1' : '0');
+        } catch (error) {
+          // Ignore localStorage write failures.
+        }
+      });
+
+      initializeHeroVisibility();
 
       function escapeHtml(value) {
         return String(value || '')

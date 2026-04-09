@@ -1202,7 +1202,6 @@ View results: ${shareUrl}`.trim(),
           recursiveSteps.push(currentStep);
         }
 
-        const comparisonTargets = allWordReports.filter((entry) => entry.target !== topic);
         const closeSpellingVariants = buildCloseSpellingVariants(topic).map((variant) => {
           const total = englishGematria(variant);
           return {
@@ -1272,12 +1271,6 @@ View results: ${shareUrl}`.trim(),
                 </section>
               `).join('')}
             </div>
-          ` : ''}
-          ${comparisonTargets.length ? `
-            <p class="mb-2"><strong>Additional quick calculations</strong></p>
-            <ul class="mb-3">
-              ${comparisonTargets.map((entry) => `<li>${escapeHtml(entry.target)} → total ${entry.total}, digital root ${entry.root}, base-root ${entry.isBaseRoot ? 'Yes' : 'No'}</li>`).join('')}
-            </ul>
           ` : ''}
           ${requestedSpellingVariantLookup ? `
             <p class="mt-3 mb-2"><strong>Close spelling-variant lookup for "${escapeHtml(topic)}"</strong></p>

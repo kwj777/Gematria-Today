@@ -643,9 +643,26 @@
         input.value = tags.join(', ');
         input.focus();
       }
-      function showMessage(target, message) {
+      const messageTimeouts = new WeakMap();
+
+      function showMessage(target, message, options = {}) {
+        const timeoutMs = Number(options.timeoutMs);
+        const existingTimeout = messageTimeouts.get(target);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+          messageTimeouts.delete(target);
+        }
         target.textContent = message;
         target.classList.remove('d-none');
+        if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
+          const timeoutHandle = window.setTimeout(() => {
+            if (target.textContent === message) {
+              clearMessage(target);
+            }
+            messageTimeouts.delete(target);
+          }, timeoutMs);
+          messageTimeouts.set(target, timeoutHandle);
+        }
       }
 
       function clearMessage(target) {
@@ -1575,7 +1592,8 @@
           });
           state.siteModules = { ...DEFAULT_SITE_MODULES, ...((payload.settings && payload.settings.siteModules) || {}) };
           renderSiteModules();
-          showMessage(saveMessage, 'Site module switches saved.');
+          showMessage(saveMessage, 'Site module switches saved.', { timeoutMs: 10000 });
+          window.alert('Site module switches saved. Please allow up to 10 minutes for changes to take effect.');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }

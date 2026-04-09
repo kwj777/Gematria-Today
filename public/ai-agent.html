@@ -415,6 +415,14 @@
             /^(?:please\s+)?(?:provide|give|show|get|run|do|make|find)\s+/i,
             '',
           )
+          .replace(
+            /^(?:calculate|calculation|gematria|value|values|number|numbers|snapshot|lookup|analyze|analysis|compare|comparison)\s+(?:for|of|on|about)\s+/i,
+            '',
+          )
+          .replace(
+            /^(?:calculate|calculation|gematria|value|values|number|numbers|snapshot|lookup|analyze|analysis|compare|comparison)\s+/i,
+            '',
+          )
           .trim();
 
         const splitTargets = trailingPunctuationStripped
@@ -1237,26 +1245,6 @@ View results: ${shareUrl}`.trim(),
         return `
           ${learnedResponse ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
           <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
-          <p class="mb-2">For <strong>${escapeHtml(topic)}</strong>, here is the current gematria snapshot:</p>
-          <ul class="mb-3">
-            <li><strong>Total:</strong> ${total}</li>
-            <li><strong>Digital root:</strong> ${root}</li>
-            <li><strong>Base-root pattern:</strong> ${isBaseRoot ? 'Yes' : 'No'}</li>
-            <li><strong>Current archived matches:</strong> ${Number.isFinite(matchCount) ? matchCount : 'Unavailable right now'}</li>
-          </ul>
-          <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-success agent-save-history-button"
-              data-topic="${escapeHtml(topic)}"
-              data-total="${total}"
-              data-root="${root}"
-              data-matches="${Number.isFinite(matchCount) ? matchCount : ''}"
-              data-rounds="${iterations}"
-            >
-              Save to my dashboard
-            </button>
-          </div>
           ${allWordReports.length ? `
             <p class="mb-2"><strong>Full calculation report for each detected word</strong></p>
             <div class="d-flex flex-column gap-2 mb-3">

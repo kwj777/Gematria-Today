@@ -29,6 +29,11 @@ body {
 
 .navbar-brand { letter-spacing: 0.04em; }
 
+.nav-search-link {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
 
 .skip-link {
   position: absolute;

@@ -27,7 +27,6 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="stylesheet" href="/theme.css" />
-    <link rel="stylesheet" href="/api/public-theme-css" />
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/site-modules.js"></script>
       <script src="/pwa-register.js" defer></script>
@@ -473,85 +472,6 @@
 
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="system">
               <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
-                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#themeSectionBody" aria-expanded="false" aria-controls="themeSectionBody">
-                  <span>
-                    <span class="section-kicker d-block mb-2">Branding</span>
-                    <span class="h4 mb-0 d-block">Theme library and active theme</span>
-                  </span>
-                  <span class="d-inline-flex align-items-center gap-3">
-                    <span class="badge text-bg-dark">Themes</span>
-                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
-                  </span>
-                </button>
-                <div id="themeSectionBody" class="collapse admin-section-body mt-4">
-                <p class="text-muted small">Upload theme JSON files or enter values manually. Save one or more presets and activate any saved theme at any time.</p>
-                <div id="bootswatchSuperAdminNotice" class="alert alert-warning py-2 px-3 mb-3 small d-none" role="status">Bootswatch theme import and preview are available only to super admins.</div>
-                <div id="bootswatchControls" class="border rounded-3 p-3 mb-3 bg-light-subtle d-none">
-                  <div class="d-flex flex-column flex-lg-row gap-3 align-items-lg-end">
-                    <div class="flex-grow-1">
-                      <label class="form-label" for="bootswatchThemeSelect">Bootswatch theme catalog</label>
-                      <select id="bootswatchThemeSelect" class="form-select" disabled>
-                        <option value="">Load Bootswatch themes to choose one</option>
-                      </select>
-                      <div id="bootswatchMeta" class="form-text">Theme list not loaded yet.</div>
-                    </div>
-                    <div class="d-grid gap-2 d-sm-flex">
-                      <button id="bootswatchLoadButton" class="btn btn-outline-secondary" type="button">Load Bootswatch API themes</button>
-                      <button id="bootswatchApplyButton" class="btn btn-outline-primary" type="button" disabled>Use selected theme</button>
-                    </div>
-                  </div>
-                  <div class="border rounded-3 p-3 mt-3 bg-body">
-                    <div class="d-flex flex-column flex-lg-row align-items-lg-end gap-2 mb-2">
-                      <div class="flex-grow-1">
-                        <label class="form-label mb-1" for="bootswatchPreviewPath">Preview page</label>
-                        <select id="bootswatchPreviewPath" class="form-select">
-                          <option value="/index.html">Homepage</option>
-                          <option value="/blog.html">Blog</option>
-                          <option value="/news.html">News</option>
-                          <option value="/faq.html">FAQ</option>
-                        </select>
-                      </div>
-                      <div class="d-grid">
-                        <button id="bootswatchPreviewButton" class="btn btn-outline-dark" type="button" disabled>Preview selected theme</button>
-                      </div>
-                    </div>
-                    <div id="bootswatchPreviewMeta" class="small text-muted mb-2">Select a Bootswatch theme to preview it on a live page.</div>
-                    <div class="ratio ratio-16x9 border rounded overflow-hidden bg-light">
-                      <iframe id="bootswatchPreviewFrame" title="Bootswatch site preview" class="w-100 h-100 border-0" loading="lazy" referrerpolicy="same-origin" sandbox="allow-same-origin allow-scripts"></iframe>
-                    </div>
-                  </div>
-                </div>
-                <form id="themeImportForm" class="row g-3">
-                  <div class="col-12">
-                    <label class="form-label" for="themeJsonFile">Import theme JSON file</label>
-                    <input id="themeJsonFile" class="form-control" type="file" accept=".json,application/json" />
-                    <div class="form-text">Expected format: <code>{ "name": "...", "slug": "...", "description": "...", "variables": {"--bs-primary":"#123456"}, "customCss":"..." }</code>.</div>
-                  </div>
-                </form>
-                <form id="themePresetForm" class="row g-3 mt-1">
-                  <input id="themePresetEditingSlug" type="hidden" />
-                  <div class="col-12"><label class="form-label" for="themePresetName">Theme name</label><input id="themePresetName" class="form-control" placeholder="Ocean Blue" required /></div>
-                  <div class="col-md-6"><label class="form-label" for="themePresetSlug">Theme slug</label><input id="themePresetSlug" class="form-control" placeholder="ocean-blue" /></div>
-                  <div class="col-md-6"><label class="form-label" for="themePresetDescription">Description</label><input id="themePresetDescription" class="form-control" placeholder="Optional label for admins" /></div>
-                  <div class="col-12"><label class="form-label" for="themePresetVariables">CSS variables (JSON object)</label><textarea id="themePresetVariables" class="form-control font-monospace" rows="6" placeholder='{\"--bs-primary\":\"#355f8c\",\"--app-ink\":\"#2f3a49\"}'></textarea></div>
-                  <div class="col-12"><label class="form-label" for="themePresetCustomCss">Custom CSS (optional)</label><textarea id="themePresetCustomCss" class="form-control font-monospace" rows="4" placeholder=".hero-panel { border-radius: 2rem; }"></textarea></div>
-                  <div class="col-12 d-flex flex-column flex-sm-row gap-2">
-                    <button id="themePresetSubmitButton" class="btn btn-primary flex-fill" type="submit">Save theme preset</button>
-                    <button id="themePresetCancelButton" class="btn btn-outline-secondary d-none" type="button">Cancel edit</button>
-                  </div>
-                </form>
-                <form id="themeActivationForm" class="row g-3 mt-2">
-                  <div class="col-sm-8"><label class="form-label" for="themeActiveSlug">Active theme</label><select id="themeActiveSlug" class="form-select"></select></div>
-                  <div class="col-sm-4 d-grid align-items-end"><button class="btn btn-dark" type="submit">Activate selected theme</button></div>
-                </form>
-                <div id="themeCatalogMeta" class="small text-muted mt-3">Theme presets have not been loaded yet.</div>
-                <div id="themePresetList" class="admin-list mt-3"></div>
-                </div>
-              </section>
-            </div>
-
-            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="system">
-              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#taskSectionBody" aria-expanded="false" aria-controls="taskSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Operations</span>
@@ -647,7 +567,6 @@
       const workspaceModules = Array.from(document.querySelectorAll('[data-admin-workspace]'));
       const siteModulesPanel = document.getElementById('siteModulesPanel');
       const siteModulesForm = document.getElementById('siteModulesForm');
-      const BOOTSWATCH_API_URL = 'https://bootswatch.com/api/5.json';
 
       const DEFAULT_SITE_MODULES = Object.freeze({
         forum: true,
@@ -675,19 +594,13 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, bootswatchThemes: [], latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
-      const normalizeThemeSlug = (value = '') => String(value || '')
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .slice(0, 64);
 
       const getPostTagList = (post) => {
         const tags = [];
@@ -1231,224 +1144,6 @@
         document.getElementById('emailTemplateCancelButton').classList.add('d-none');
       }
 
-      function getThemeCatalog() {
-        const catalog = state.themeCatalog && typeof state.themeCatalog === 'object' ? state.themeCatalog : {};
-        const presets = Array.isArray(catalog.presets) ? catalog.presets : [];
-        const activeThemeSlug = normalizeThemeSlug(catalog.activeThemeSlug || 'default') || 'default';
-        return { activeThemeSlug, presets };
-      }
-
-      function resetThemePresetForm() {
-        document.getElementById('themePresetEditingSlug').value = '';
-        document.getElementById('themePresetForm').reset();
-        document.getElementById('themePresetSubmitButton').textContent = 'Save theme preset';
-        document.getElementById('themePresetCancelButton').classList.add('d-none');
-      }
-
-      function normalizeBootswatchTheme(theme) {
-        return {
-          name: String(theme?.name || '').trim() || 'Bootswatch Theme',
-          slug: normalizeThemeSlug(theme?.name || ''),
-          description: String(theme?.description || '').trim(),
-          cssMin: String(theme?.cssMin || '').trim(),
-        };
-      }
-
-      function isSuperAdminUser() {
-        return state.user?.role === 'super_admin';
-      }
-
-      function updateBootswatchAccess() {
-        const controls = document.getElementById('bootswatchControls');
-        const notice = document.getElementById('bootswatchSuperAdminNotice');
-        const isSuperAdmin = isSuperAdminUser();
-        controls.classList.toggle('d-none', !isSuperAdmin);
-        notice.classList.toggle('d-none', isSuperAdmin);
-      }
-
-      function renderBootswatchCatalog() {
-        const select = document.getElementById('bootswatchThemeSelect');
-        const applyButton = document.getElementById('bootswatchApplyButton');
-        const previewButton = document.getElementById('bootswatchPreviewButton');
-        const meta = document.getElementById('bootswatchMeta');
-        const themes = Array.isArray(state.bootswatchThemes) ? state.bootswatchThemes : [];
-        if (!themes.length) {
-          select.innerHTML = '<option value="">Load Bootswatch themes to choose one</option>';
-          select.disabled = true;
-          applyButton.disabled = true;
-          previewButton.disabled = true;
-          meta.textContent = 'Theme list not loaded yet.';
-          return;
-        }
-        select.innerHTML = [
-          '<option value="">Choose a Bootswatch theme…</option>',
-          ...themes.map((theme) => `<option value="${escapeHtml(theme.slug)}">${escapeHtml(theme.name)}</option>`),
-        ].join('');
-        select.disabled = false;
-        applyButton.disabled = true;
-        previewButton.disabled = true;
-        meta.textContent = `${themes.length} Bootswatch theme options loaded from ${BOOTSWATCH_API_URL}.`;
-      }
-
-      async function loadBootswatchThemes(targetButton) {
-        if (!isSuperAdminUser()) {
-          showMessage(errorMessage, 'Only super admins can use Bootswatch theme import.');
-          return;
-        }
-        clearMessage(errorMessage);
-        clearMessage(saveMessage);
-        const select = document.getElementById('bootswatchThemeSelect');
-        const applyButton = document.getElementById('bootswatchApplyButton');
-        const previewButton = document.getElementById('bootswatchPreviewButton');
-        const meta = document.getElementById('bootswatchMeta');
-        targetButton.disabled = true;
-        select.disabled = true;
-        applyButton.disabled = true;
-        previewButton.disabled = true;
-        meta.textContent = 'Loading Bootswatch themes…';
-        try {
-          const response = await fetch(BOOTSWATCH_API_URL, { method: 'GET', cache: 'no-store' });
-          if (!response.ok) {
-            throw new Error(`Bootswatch API request failed (${response.status}).`);
-          }
-          const payload = await response.json();
-          const themes = Array.isArray(payload?.themes)
-            ? payload.themes.map(normalizeBootswatchTheme).filter((theme) => theme.slug && theme.cssMin)
-            : [];
-          if (!themes.length) {
-            throw new Error('No Bootswatch themes were returned.');
-          }
-          themes.sort((a, b) => a.name.localeCompare(b.name));
-          state.bootswatchThemes = themes;
-          renderBootswatchCatalog();
-          showMessage(saveMessage, 'Bootswatch theme catalog loaded.');
-        } catch (error) {
-          state.bootswatchThemes = [];
-          renderBootswatchCatalog();
-          showMessage(errorMessage, error.message || 'Unable to load Bootswatch themes.');
-        } finally {
-          targetButton.disabled = false;
-        }
-      }
-
-      function applySelectedBootswatchTheme() {
-        if (!isSuperAdminUser()) {
-          showMessage(errorMessage, 'Only super admins can use Bootswatch theme import.');
-          return;
-        }
-        clearMessage(errorMessage);
-        const selectedSlug = normalizeThemeSlug(document.getElementById('bootswatchThemeSelect').value || '');
-        const selectedTheme = state.bootswatchThemes.find((theme) => theme.slug === selectedSlug);
-        if (!selectedTheme) {
-          showMessage(errorMessage, 'Choose a Bootswatch theme first.');
-          return;
-        }
-        document.getElementById('themePresetName').value = selectedTheme.name;
-        document.getElementById('themePresetSlug').value = selectedTheme.slug;
-        document.getElementById('themePresetDescription').value = selectedTheme.description || `Imported from ${BOOTSWATCH_API_URL}`;
-        document.getElementById('themePresetVariables').value = '{}';
-        document.getElementById('themePresetCustomCss').value = `@import url("${selectedTheme.cssMin}");`;
-        showMessage(saveMessage, `Loaded Bootswatch theme "${selectedTheme.name}". Review and save.`);
-      }
-
-      async function previewSelectedBootswatchTheme() {
-        if (!isSuperAdminUser()) {
-          showMessage(errorMessage, 'Only super admins can preview Bootswatch themes.');
-          return;
-        }
-        clearMessage(errorMessage);
-        const selectedSlug = normalizeThemeSlug(document.getElementById('bootswatchThemeSelect').value || '');
-        const selectedTheme = state.bootswatchThemes.find((theme) => theme.slug === selectedSlug);
-        if (!selectedTheme) {
-          showMessage(errorMessage, 'Choose a Bootswatch theme first.');
-          return;
-        }
-
-        const frame = document.getElementById('bootswatchPreviewFrame');
-        const previewMeta = document.getElementById('bootswatchPreviewMeta');
-        const previewPath = String(document.getElementById('bootswatchPreviewPath').value || '/index.html').trim() || '/index.html';
-        const separator = previewPath.includes('?') ? '&' : '?';
-        previewMeta.textContent = `Loading preview for ${selectedTheme.name} on ${previewPath}…`;
-
-        await new Promise((resolve) => {
-          frame.onload = () => {
-            try {
-              const frameDocument = frame.contentDocument;
-              if (!frameDocument) {
-                throw new Error('Preview frame is unavailable.');
-              }
-              const existingStyle = frameDocument.getElementById('bootswatchPreviewStyle');
-              if (existingStyle) {
-                existingStyle.remove();
-              }
-              const styleTag = frameDocument.createElement('style');
-              styleTag.id = 'bootswatchPreviewStyle';
-              styleTag.textContent = `@import url("${selectedTheme.cssMin}");`;
-              frameDocument.head.appendChild(styleTag);
-              previewMeta.textContent = `Previewing ${selectedTheme.name} using ${selectedTheme.cssMin}.`;
-            } catch (error) {
-              previewMeta.textContent = 'Preview loaded, but theme injection failed.';
-              showMessage(errorMessage, error.message || 'Could not apply preview theme.');
-            } finally {
-              resolve();
-            }
-          };
-          frame.src = `${previewPath}${separator}bootswatchPreview=${Date.now()}`;
-        });
-      }
-
-      function renderThemeCatalog() {
-        const { activeThemeSlug, presets } = getThemeCatalog();
-        const activationSelect = document.getElementById('themeActiveSlug');
-        activationSelect.innerHTML = [
-          '<option value="default">Default (no override)</option>',
-          ...presets.map((preset) => `<option value="${escapeHtml(preset.slug)}">${escapeHtml(preset.name)} (${escapeHtml(preset.slug)})</option>`),
-        ].join('');
-        activationSelect.value = activeThemeSlug;
-
-        const list = document.getElementById('themePresetList');
-        list.innerHTML = presets.length
-          ? presets.map((preset) => `
-            <article class="admin-item-card mb-3 p-3">
-              <div class="d-flex justify-content-between gap-3">
-                <div>
-                  <div class="d-flex flex-wrap gap-2 mb-2">
-                    <span class="badge text-bg-light">${escapeHtml(preset.slug)}</span>
-                    <span class="badge ${preset.slug === activeThemeSlug ? 'text-bg-success' : 'text-bg-secondary'}">${preset.slug === activeThemeSlug ? 'Active' : 'Saved'}</span>
-                  </div>
-                  <h4 class="h6 mb-1">${escapeHtml(preset.name || preset.slug)}</h4>
-                  ${preset.description ? `<p class="small text-muted mb-1">${escapeHtml(preset.description)}</p>` : ''}
-                  <p class="small mb-0 text-muted">${Object.keys(preset.variables || {}).length} CSS variables · ${preset.customCss ? 'custom CSS included' : 'no custom CSS'}</p>
-                </div>
-                <div class="d-flex flex-column gap-2">
-                  <button class="btn btn-sm btn-outline-primary" type="button" data-edit-theme="${escapeHtml(preset.slug)}">Edit</button>
-                  <button class="btn btn-sm btn-outline-danger" type="button" data-delete-theme="${escapeHtml(preset.slug)}">Delete</button>
-                </div>
-              </div>
-            </article>`).join('')
-          : '<p class="text-muted small mb-0">No saved theme presets yet.</p>';
-
-        document.getElementById('themeCatalogMeta').textContent = presets.length
-          ? `${presets.length} theme preset${presets.length === 1 ? '' : 's'} saved. Active theme: ${activeThemeSlug}.`
-          : 'No saved theme presets yet. Active theme: default.';
-      }
-
-      function startThemePresetEdit(slug) {
-        const { presets } = getThemeCatalog();
-        const preset = presets.find((item) => item.slug === slug);
-        if (!preset) {
-          return;
-        }
-        document.getElementById('themePresetEditingSlug').value = preset.slug;
-        document.getElementById('themePresetName').value = preset.name || '';
-        document.getElementById('themePresetSlug').value = preset.slug || '';
-        document.getElementById('themePresetDescription').value = preset.description || '';
-        document.getElementById('themePresetVariables').value = JSON.stringify(preset.variables || {}, null, 2);
-        document.getElementById('themePresetCustomCss').value = preset.customCss || '';
-        document.getElementById('themePresetSubmitButton').textContent = 'Update theme preset';
-        document.getElementById('themePresetCancelButton').classList.remove('d-none');
-      }
-
       function startEmailTemplateEdit(templateId) {
         const template = state.emailTemplates.find((item) => item.id === templateId);
         if (!template) {
@@ -1562,7 +1257,6 @@
         state.emailSettings = settings.settings || null;
         state.emailTemplates = settings.emailTemplates || [];
         state.siteModules = { ...DEFAULT_SITE_MODULES, ...((settings.settings && settings.settings.siteModules) || {}) };
-        state.themeCatalog = (settings.settings && settings.settings.themeCatalog) || { activeThemeSlug: 'default', presets: [] };
         renderFeeds();
         renderPosts();
         renderBlogProposals();
@@ -1572,7 +1266,6 @@
         renderStripeSettings();
         renderEmailSettings();
         renderEmailTemplates();
-        renderThemeCatalog();
         renderSiteModules();
         renderMembershipGrantMeta();
         renderMemberPromotionMeta();
@@ -1584,7 +1277,6 @@
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
           setLoggedIn(true);
-          updateBootswatchAccess();
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
           if (loadProposalFromQuery) {
@@ -1594,11 +1286,8 @@
           state.user = null;
           sessionMeta.textContent = '';
           state.siteModules = { ...DEFAULT_SITE_MODULES };
-          state.themeCatalog = { activeThemeSlug: 'default', presets: [] };
-          renderThemeCatalog();
           renderSiteModules();
           setLoggedIn(false);
-          updateBootswatchAccess();
         }
       }
 
@@ -2055,116 +1744,6 @@
         resetEmailTemplateForm();
       });
 
-      document.getElementById('bootswatchLoadButton').addEventListener('click', async (event) => {
-        await loadBootswatchThemes(event.currentTarget);
-      });
-
-      document.getElementById('bootswatchThemeSelect').addEventListener('change', (event) => {
-        const hasSelection = Boolean(normalizeThemeSlug(event.target.value || ''));
-        document.getElementById('bootswatchApplyButton').disabled = !hasSelection;
-        document.getElementById('bootswatchPreviewButton').disabled = !hasSelection;
-      });
-
-      document.getElementById('bootswatchApplyButton').addEventListener('click', () => {
-        applySelectedBootswatchTheme();
-      });
-
-      document.getElementById('bootswatchPreviewButton').addEventListener('click', async () => {
-        await previewSelectedBootswatchTheme();
-      });
-
-      document.getElementById('themeJsonFile').addEventListener('change', async (event) => {
-        clearMessage(errorMessage);
-        const file = event.target.files?.[0];
-        if (!file) {
-          return;
-        }
-        try {
-          const payload = JSON.parse(await file.text());
-          document.getElementById('themePresetName').value = String(payload.name || '').trim();
-          document.getElementById('themePresetSlug').value = normalizeThemeSlug(payload.slug || payload.name || '');
-          document.getElementById('themePresetDescription').value = String(payload.description || '').trim();
-          document.getElementById('themePresetVariables').value = JSON.stringify(payload.variables || {}, null, 2);
-          document.getElementById('themePresetCustomCss').value = String(payload.customCss || '').trim();
-          showMessage(saveMessage, `Loaded theme JSON from ${file.name}. Review and save.`);
-        } catch (error) {
-          showMessage(errorMessage, 'Could not parse theme JSON file.');
-        } finally {
-          event.target.value = '';
-        }
-      });
-
-      document.getElementById('themePresetForm').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearMessage(errorMessage);
-        try {
-          const editingSlug = normalizeThemeSlug(document.getElementById('themePresetEditingSlug').value);
-          const name = String(document.getElementById('themePresetName').value || '').trim();
-          const slug = normalizeThemeSlug(document.getElementById('themePresetSlug').value || name);
-          if (!name || !slug) {
-            throw new Error('Theme name is required.');
-          }
-          let variables;
-          try {
-            const rawVariables = String(document.getElementById('themePresetVariables').value || '').trim();
-            variables = rawVariables ? JSON.parse(rawVariables) : {};
-          } catch {
-            throw new Error('CSS variables must be valid JSON.');
-          }
-
-          const customCss = String(document.getElementById('themePresetCustomCss').value || '').trim();
-          const description = String(document.getElementById('themePresetDescription').value || '').trim();
-          const { activeThemeSlug, presets } = getThemeCatalog();
-          const nextPresets = presets.filter((preset) => preset.slug !== editingSlug && preset.slug !== slug);
-          nextPresets.push({ name, slug, description, variables, customCss });
-          nextPresets.sort((a, b) => String(a.name || a.slug).localeCompare(String(b.name || b.slug)));
-
-          const nextCatalog = {
-            activeThemeSlug: activeThemeSlug === editingSlug ? slug : activeThemeSlug,
-            presets: nextPresets,
-          };
-          const payload = await request('/api/admin-settings', {
-            method: 'PUT',
-            body: JSON.stringify({ themeCatalog: nextCatalog }),
-          });
-          state.themeCatalog = payload.settings?.themeCatalog || nextCatalog;
-          renderThemeCatalog();
-          resetThemePresetForm();
-          showMessage(saveMessage, editingSlug ? 'Theme preset updated.' : 'Theme preset saved.');
-          collapseAdminSection('themeSectionBody');
-        } catch (error) {
-          showMessage(errorMessage, error.message);
-        }
-      });
-
-      document.getElementById('themePresetCancelButton').addEventListener('click', () => {
-        resetThemePresetForm();
-      });
-
-      document.getElementById('themeActivationForm').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearMessage(errorMessage);
-        try {
-          const { presets } = getThemeCatalog();
-          const activeThemeSlug = normalizeThemeSlug(document.getElementById('themeActiveSlug').value || 'default') || 'default';
-          const payload = await request('/api/admin-settings', {
-            method: 'PUT',
-            body: JSON.stringify({
-              themeCatalog: {
-                activeThemeSlug,
-                presets,
-              },
-            }),
-          });
-          state.themeCatalog = payload.settings?.themeCatalog || { activeThemeSlug, presets };
-          renderThemeCatalog();
-          showMessage(saveMessage, `Theme activated: ${activeThemeSlug}.`);
-          collapseAdminSection('themeSectionBody');
-        } catch (error) {
-          showMessage(errorMessage, error.message);
-        }
-      });
-
       document.getElementById('taskForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearMessage(errorMessage);
@@ -2221,8 +1800,6 @@
           deleteTask,
           enableSecret,
           editEmailTemplate,
-          editTheme,
-          deleteTheme,
           loadProposal,
           markProposalReviewed,
           markProposalPending,
@@ -2241,7 +1818,7 @@
           }
           return;
         }
-        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate && !editTheme && !deleteTheme && !loadProposal && !markProposalReviewed && !markProposalPending && !submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed) {
+        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate && !loadProposal && !markProposalReviewed && !markProposalPending && !submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed) {
           return;
         }
         clearMessage(errorMessage);
@@ -2256,10 +1833,6 @@
           }
           if (editEmailTemplate) {
             startEmailTemplateEdit(editEmailTemplate);
-            return;
-          }
-          if (editTheme) {
-            startThemePresetEdit(editTheme);
             return;
           }
           if (loadProposal) {
@@ -2343,25 +1916,6 @@
             await request(`/api/admin-tasks?id=${encodeURIComponent(deleteTask)}`, { method: 'DELETE' });
             showMessage(saveMessage, 'Task completed.');
           }
-          if (deleteTheme) {
-            const { activeThemeSlug, presets } = getThemeCatalog();
-            const nextPresets = presets.filter((preset) => preset.slug !== deleteTheme);
-            const nextActiveThemeSlug = activeThemeSlug === deleteTheme ? 'default' : activeThemeSlug;
-            const payload = await request('/api/admin-settings', {
-              method: 'PUT',
-              body: JSON.stringify({
-                themeCatalog: {
-                  activeThemeSlug: nextActiveThemeSlug,
-                  presets: nextPresets,
-                },
-              }),
-            });
-            state.themeCatalog = payload.settings?.themeCatalog || { activeThemeSlug: nextActiveThemeSlug, presets: nextPresets };
-            if (document.getElementById('themePresetEditingSlug').value === deleteTheme) {
-              resetThemePresetForm();
-            }
-            showMessage(saveMessage, 'Theme preset removed.');
-          }
           await refreshDashboard();
         } catch (error) {
           showMessage(errorMessage, error.message);
@@ -2372,10 +1926,6 @@
       resetFaqForm();
       renderMembershipGrantMeta();
       resetEmailTemplateForm();
-      resetThemePresetForm();
-      updateBootswatchAccess();
-      renderBootswatchCatalog();
-      renderThemeCatalog();
       withRenderOverlay(() => loadSession(), 'Checking admin session…');
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

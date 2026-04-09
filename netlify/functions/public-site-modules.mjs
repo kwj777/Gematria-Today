@@ -1,27 +1,7 @@
 import { ensureAdminSchema, getSqlClient, jsonResponse, syncBootstrapAdminUser } from './_admin.mjs';
 import { assertEndpointEnabled, buildCacheKey, logRequestAudit, withCachedJson } from './_security.mjs';
+import { normalizeSiteModules } from './_site-modules.mjs';
 
-const DEFAULT_SITE_MODULES = Object.freeze({
-  forum: true,
-  knowbot: true,
-  gemabot: true,
-  news: true,
-  blog: true,
-  membership: true,
-});
-
-function normalizeSiteModules(rawValue = null) {
-  if (!rawValue || typeof rawValue !== 'object') {
-    return { ...DEFAULT_SITE_MODULES };
-  }
-
-  return Object.keys(DEFAULT_SITE_MODULES).reduce((result, moduleName) => {
-    result[moduleName] = Object.hasOwn(rawValue, moduleName)
-      ? Boolean(rawValue[moduleName])
-      : DEFAULT_SITE_MODULES[moduleName];
-    return result;
-  }, {});
-}
 
 export async function handler(event) {
   if (event.httpMethod !== 'GET') {

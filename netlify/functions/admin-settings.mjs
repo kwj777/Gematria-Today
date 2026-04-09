@@ -1,5 +1,6 @@
 import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
 import { clearCachedJson, logRequestAudit } from './_security.mjs';
+import { DEFAULT_SITE_MODULES } from './_site-modules.mjs';
 
 const DEFAULT_SETTINGS = {
   stripeAccountId: '',
@@ -23,15 +24,6 @@ const DEFAULT_EMAIL_TEMPLATES = [
     placeholders: ['{{first_name}}', '{{blog_link}}', '{{sender_name}}', '{{site_name}}'],
   },
 ];
-
-const DEFAULT_SITE_MODULES = Object.freeze({
-  forum: true,
-  knowbot: true,
-  gemabot: true,
-  news: true,
-  blog: true,
-  membership: true,
-});
 
 function getDefaultEmailTemplates() {
   return DEFAULT_EMAIL_TEMPLATES.map((template) => ({ ...template }));
@@ -258,6 +250,15 @@ export async function handler(event) {
           ON CONFLICT (setting_key)
           DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW()
         `;
+      }
+
+      const shouldRefreshCrawlerCache = JSON.stringify(existingSettings.siteModules) !== JSON.stringify(nextSettings.siteModules);
+      if (shouldRefreshCrawlerCache) {
+        await Promise.all([
+          clearCachedJson(sql, { route: 'public-site-modules' }),
+          clearCachedJson(sql, { route: 'robots-txt' }),
+          clearCachedJson(sql, { route: 'sitemap-xml' }),
+        ]);
       }
 
       const rows = await getSettingsRows(sql);

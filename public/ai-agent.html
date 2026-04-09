@@ -122,6 +122,7 @@
         <div class="agent-hero-controls">
           <button type="button" id="toggleHeroVisibility" class="btn btn-outline-secondary btn-sm" aria-controls="agentHeroPanel" aria-expanded="true">Hide intro</button>
         </div>
+        <p id="agentCompactTitle" class="h4 fw-semibold mb-4" hidden>Gematria Agent</p>
 
         <section id="agentHeroPanel" class="hero-panel agent-hero-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Assistant</p>
@@ -161,6 +162,7 @@
       const saveConversationButton = document.getElementById('saveConversation');
       const toggleHeroButton = document.getElementById('toggleHeroVisibility');
       const heroPanel = document.getElementById('agentHeroPanel');
+      const compactTitle = document.getElementById('agentCompactTitle');
       const premiumGate = document.getElementById('premiumGate');
       const sharedResultBanner = document.getElementById('sharedResultBanner');
       const HERO_VISIBILITY_KEY = 'gematriaAgentHeroHidden.v1';
@@ -194,6 +196,7 @@
 
       function setHeroVisibility(isHidden) {
         heroPanel.hidden = Boolean(isHidden);
+        compactTitle.hidden = !isHidden;
         toggleHeroButton.textContent = isHidden ? 'Show intro' : 'Hide intro';
         toggleHeroButton.setAttribute('aria-expanded', String(!isHidden));
       }

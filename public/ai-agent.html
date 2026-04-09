@@ -406,9 +406,20 @@
           .replace(/\b(?:please|thanks?|thank you|now|today|right now)\b\s*$/gi, '')
           .trim();
 
+        const sanitizeTarget = (value) => normalizeCandidate(value)
+          .replace(
+            /^(?:please\s+)?(?:(?:provide|give|show|get|run|do|make|find)\s+)?(?:results?\s+)?(?:for|of|on|about)\s+/i,
+            '',
+          )
+          .replace(
+            /^(?:please\s+)?(?:provide|give|show|get|run|do|make|find)\s+/i,
+            '',
+          )
+          .trim();
+
         const splitTargets = trailingPunctuationStripped
           .split(/\s*(?:,| and | & )\s*/i)
-          .map((target) => normalizeCandidate(target).replace(/^[^A-Za-z]+|[^A-Za-z'-]+$/g, ''))
+          .map((target) => sanitizeTarget(target).replace(/^[^A-Za-z]+|[^A-Za-z'-]+$/g, ''))
           .filter((target) => /^[A-Za-z][A-Za-z' -]*$/.test(target))
           .filter((target) => {
             const wordCount = target.split(/\s+/).filter(Boolean).length;

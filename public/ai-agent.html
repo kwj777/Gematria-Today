@@ -164,6 +164,10 @@
       const premiumGate = document.getElementById('premiumGate');
       const sharedResultBanner = document.getElementById('sharedResultBanner');
       const HERO_VISIBILITY_KEY = 'gematriaAgentHeroHidden.v1';
+      const MEMBER_DASHBOARD_SYNC_KEY = 'memberDashboardUpdate';
+      const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
+        ? new window.BroadcastChannel('member-dashboard-sync')
+        : null;
       let premiumAccess = false;
       const memberSession = {
         authenticated: false,
@@ -214,6 +218,19 @@
       });
 
       initializeHeroVisibility();
+
+      function notifyDashboardUpdate(kind) {
+        const update = {
+          kind: String(kind || 'history'),
+          at: Date.now(),
+        };
+        try {
+          window.localStorage.setItem(MEMBER_DASHBOARD_SYNC_KEY, JSON.stringify(update));
+        } catch {
+          // Ignore localStorage write failures; BroadcastChannel covers modern browsers.
+        }
+        memberDashboardSyncChannel?.postMessage(update);
+      }
 
       function escapeHtml(value) {
         return String(value || '')
@@ -692,6 +709,7 @@
           throw new Error(payload?.error || 'Unable to save this chat session right now.');
         }
 
+        notifyDashboardUpdate('chat');
         return 'Chat session saved to your membership dashboard.';
       }
 
@@ -1092,6 +1110,7 @@ View results: ${shareUrl}`.trim(),
           throw new Error(data?.error || 'Unable to save this calculation right now.');
         }
 
+        notifyDashboardUpdate('history');
         return data?.duplicate
           ? 'This calculation is already saved in your membership dashboard.'
           : 'Saved to your membership dashboard history.';

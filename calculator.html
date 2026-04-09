@@ -307,6 +307,10 @@ View results: ${shareUrl}`.trim(),
       const memberSaveMeta = document.querySelector('#member-save-meta');
       const memberLink = document.querySelector('#member-link');
       let saveHistoryPopover = null;
+      const MEMBER_DASHBOARD_SYNC_KEY = 'memberDashboardUpdate';
+      const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
+        ? new window.BroadcastChannel('member-dashboard-sync')
+        : null;
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       let currentSearchPayload = null;
       let memberSession = null;
@@ -374,6 +378,19 @@ View results: ${shareUrl}`.trim(),
         saveHistoryPopover = null;
       }
 
+      function notifyDashboardUpdate(kind) {
+        const update = {
+          kind: String(kind || 'history'),
+          at: Date.now(),
+        };
+        try {
+          window.localStorage.setItem(MEMBER_DASHBOARD_SYNC_KEY, JSON.stringify(update));
+        } catch {
+          // Ignore localStorage quota/privacy failures; BroadcastChannel still handles live tabs when available.
+        }
+        memberDashboardSyncChannel?.postMessage(update);
+      }
+
       async function saveCurrentSearch() {
         if (!currentSearchPayload) {
           memberSaveMeta.textContent = 'Run a lookup before saving history.';
@@ -403,6 +420,7 @@ View results: ${shareUrl}`.trim(),
         memberSaveMeta.textContent = memberSession?.member?.membershipLevel === 'free'
           ? `Saved to your account history. Free memberships can store up to ${FREE_MEMBERSHIP_SAVE_LIMIT} saved searches.`
           : 'Saved to your account history.';
+        notifyDashboardUpdate('history');
         saveHistoryButton.disabled = false;
       }
 

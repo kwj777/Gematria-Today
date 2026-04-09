@@ -1033,7 +1033,9 @@ View results: ${shareUrl}`.trim(),
       }
 
       async function saveCalculationToDashboard(meta) {
-        const queryText = normalizeCandidate(meta?.topic);
+        const rawTopic = normalizeCandidate(meta?.topic);
+        const extractedTargets = extractCalculationTargets(rawTopic);
+        const queryText = normalizeCandidate(extractedTargets[0] || rawTopic);
         if (!queryText) {
           throw new Error('A calculation topic is required before saving.');
         }

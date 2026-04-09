@@ -235,6 +235,15 @@
         return total;
       }
 
+      function gematriaLetterBreakdown(text) {
+        return [...String(text || '').toUpperCase()]
+          .filter((char) => char >= 'A' && char <= 'Z')
+          .map((char) => {
+            const value = (char.charCodeAt(0) - 64) * 6;
+            return { char, value };
+          });
+      }
+
       function digitalRoot(numberValue) {
         let root = Math.abs(Math.trunc(Number(numberValue) || 0));
         while (root >= 10) {
@@ -595,7 +604,8 @@
       function readChatTranscriptFromDom() {
         const normalizeTranscriptLine = (line) => String(line || '').replace(/[\t\f\v ]+/g, ' ').trim();
         const removeTranscriptUiLines = (text) => String(text || '')
-          .replace(/\bSave to membership dashboard\b/gi, '')
+          .replace(/\bSave to (?:my|membership) dashboard\b/gi, '')
+          .replace(/\bSave "[^"\n]+" to my dashboard\b/gi, '')
           .replace(/\bOpen calculator search for\s+"[^"\n]*"/gi, '')
           .replace(/\bDictionary lookup page for\s+"[^"\n]*"(?:\s+—\s+Preview:[^\n]*)?/gi, '')
           .replace(/\bRun at least 3 semantic neighbors and compare both full totals and digital roots\./gi, '')
@@ -1130,8 +1140,23 @@ View results: ${shareUrl}`.trim(),
         const total = englishGematria(topic);
         const root = digitalRoot(total);
         const isBaseRoot = isBaseRootTotal(total);
-        const [matchCount, definitionSummary, relatedWords] = await Promise.all([
-          fetchMatchCount(total),
+        const allWordReports = await Promise.all(calculationTargets.map(async (targetValue) => {
+          const reportTotal = englishGematria(targetValue);
+          const reportMatches = await fetchMatchCount(reportTotal);
+          return {
+            target: targetValue,
+            total: reportTotal,
+            root: digitalRoot(reportTotal),
+            isBaseRoot: isBaseRootTotal(reportTotal),
+            matchCount: reportMatches,
+            letters: gematriaLetterBreakdown(targetValue)
+          };
+        }));
+
+        const primaryWordReport = allWordReports.find((entry) => entry.target === topic) || allWordReports[0];
+        const matchCount = primaryWordReport?.matchCount ?? null;
+
+        const [definitionSummary, relatedWords] = await Promise.all([
           fetchDefinitionSummary(topic),
           fetchRelatedWordsSummary(topic)
         ]);
@@ -1177,12 +1202,7 @@ View results: ${shareUrl}`.trim(),
           recursiveSteps.push(currentStep);
         }
 
-        const comparisonTargets = calculationTargets.slice(1, 6).map((target) => ({
-          target,
-          total: englishGematria(target),
-          root: digitalRoot(englishGematria(target)),
-          isBaseRoot: isBaseRootTotal(englishGematria(target))
-        }));
+        const comparisonTargets = allWordReports.filter((entry) => entry.target !== topic);
         const closeSpellingVariants = buildCloseSpellingVariants(topic).map((variant) => {
           const total = englishGematria(variant);
           return {
@@ -1222,9 +1242,37 @@ View results: ${shareUrl}`.trim(),
               data-matches="${Number.isFinite(matchCount) ? matchCount : ''}"
               data-rounds="${iterations}"
             >
-              Save to membership dashboard
+              Save to my dashboard
             </button>
           </div>
+          ${allWordReports.length ? `
+            <p class="mb-2"><strong>Full calculation report for each detected word</strong></p>
+            <div class="d-flex flex-column gap-2 mb-3">
+              ${allWordReports.map((entry) => `
+                <section class="border rounded-3 p-2">
+                  <p class="mb-1"><strong>${escapeHtml(entry.target)}</strong></p>
+                  <ul class="mb-2">
+                    <li><strong>Total:</strong> ${entry.total}</li>
+                    <li><strong>Digital root:</strong> ${entry.root}</li>
+                    <li><strong>Base-root pattern:</strong> ${entry.isBaseRoot ? 'Yes' : 'No'}</li>
+                    <li><strong>Current archived matches:</strong> ${Number.isFinite(entry.matchCount) ? entry.matchCount : 'Unavailable right now'}</li>
+                    <li><strong>Letter breakdown:</strong> ${entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.'}</li>
+                  </ul>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success agent-save-history-button"
+                    data-topic="${escapeHtml(entry.target)}"
+                    data-total="${entry.total}"
+                    data-root="${entry.root}"
+                    data-matches="${Number.isFinite(entry.matchCount) ? entry.matchCount : ''}"
+                    data-rounds="${iterations}"
+                  >
+                    Save "${escapeHtml(entry.target)}" to my dashboard
+                  </button>
+                </section>
+              `).join('')}
+            </div>
+          ` : ''}
           ${comparisonTargets.length ? `
             <p class="mb-2"><strong>Additional quick calculations</strong></p>
             <ul class="mb-3">

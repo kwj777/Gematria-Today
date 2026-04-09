@@ -41,6 +41,11 @@ body {
   background: linear-gradient(180deg, #fcfbf8 0%, #f2efe8 100%);
 }
 
+:root[data-bs-theme="dark"] body {
+  color: #e6ebf2;
+  background: linear-gradient(180deg, #161c24 0%, #10151d 100%);
+}
+
 .navbar-brand { letter-spacing: 0.04em; }
 
 .nav-search-link {
@@ -128,6 +133,25 @@ body {
 .feature-card,
 .faq-card,
 .stat-card { background: rgba(255,255,255,0.92); border-radius: 1rem; }
+
+:root[data-bs-theme="dark"] .content-panel,
+:root[data-bs-theme="dark"] .feature-card,
+:root[data-bs-theme="dark"] .faq-card,
+:root[data-bs-theme="dark"] .stat-card {
+  background: rgba(23, 30, 41, 0.92);
+  border-color: rgba(148, 177, 215, 0.22);
+  box-shadow: 0 1rem 2.5rem rgba(5, 9, 14, 0.45);
+}
+
+:root[data-bs-theme="dark"] .text-muted {
+  color: rgba(230, 235, 242, 0.72) !important;
+}
+
+:root[data-bs-theme="dark"] .admin-item-card,
+:root[data-bs-theme="dark"] .border,
+:root[data-bs-theme="dark"] .rounded-3 {
+  border-color: rgba(148, 177, 215, 0.22) !important;
+}
 
 /* Forum typography + spacing scales */
 .forum-title {

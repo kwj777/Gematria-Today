@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#355f8c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <title>Super Admin Controls | EndTimes.Today</title>
+    <meta name="description" content="Super admin controls for site module and global theme configuration." />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="canonical" href="https://endtimes.today/admin-super-admin.html" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <script defer src="/ui-feedback.js"></script>
+    <script defer src="/site-modules.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
+            <li class="nav-item"><a class="nav-link active" aria-current="page" href="/admin-super-admin.html">Super Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <section class="hero-panel p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-2">Restricted Workspace</p>
+          <h1 class="h2 mb-3">Super admin controls</h1>
+          <p id="sessionMeta" class="mb-0 text-muted">Verifying admin session…</p>
+        </section>
+
+        <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
+        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+        <section id="superAdminPanel" class="content-panel p-3 p-lg-4 mb-4 d-none">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+            <div>
+              <p class="section-kicker mb-1">Site availability</p>
+              <h2 class="h5 mb-0">Flip module switches</h2>
+            </div>
+            <span class="badge text-bg-warning">Super admins only</span>
+          </div>
+          <p class="text-muted small mb-2">Enable or disable major modules site-wide. Disabling a module hides related UI elements for visitors.</p>
+          <p class="text-muted small mb-3">Note: these switches are global and do not create super-admin-only module access.</p>
+          <form id="siteModulesForm" class="row g-3"></form>
+          <div class="d-flex justify-content-end mt-3">
+            <button id="saveSiteModulesButton" class="btn btn-outline-primary" type="button">Save module switches</button>
+          </div>
+          <hr class="my-4">
+          <div>
+            <p class="section-kicker mb-1">Personal preview</p>
+            <p class="text-muted small mb-3">These local toggles are pinned here and only affect your current browser session.</p>
+            <div data-super-admin-module-toggles-host></div>
+          </div>
+          <hr class="my-4">
+          <div>
+            <p class="section-kicker mb-1">Public site theme</p>
+            <p class="text-muted small mb-3">Apply a Bootswatch theme across the whole site for all visitors.</p>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-8 col-lg-6">
+                <label class="form-label" for="globalBootswatchThemeSelect">Global Bootswatch theme</label>
+                <select id="globalBootswatchThemeSelect" class="form-select">
+                  <option value="bootstrap">Bootstrap default</option>
+                  <option value="cerulean">Cerulean</option>
+                  <option value="cosmo">Cosmo</option>
+                  <option value="darkly">Darkly</option>
+                  <option value="flatly">Flatly</option>
+                  <option value="litera">Litera</option>
+                  <option value="lumen">Lumen</option>
+                  <option value="lux">Lux</option>
+                  <option value="materia">Materia</option>
+                  <option value="minty">Minty</option>
+                  <option value="morph">Morph</option>
+                  <option value="pulse">Pulse</option>
+                  <option value="quartz">Quartz</option>
+                  <option value="sandstone">Sandstone</option>
+                  <option value="simplex">Simplex</option>
+                  <option value="sketchy">Sketchy</option>
+                  <option value="slate">Slate</option>
+                  <option value="solar">Solar</option>
+                  <option value="spacelab">Spacelab</option>
+                  <option value="superhero">Superhero</option>
+                  <option value="united">United</option>
+                  <option value="vapor">Vapor</option>
+                  <option value="yeti">Yeti</option>
+                  <option value="zephyr">Zephyr</option>
+                </select>
+              </div>
+              <div class="col-md-auto d-grid gap-2">
+                <button id="saveGlobalBootswatchThemeButton" type="button" class="btn btn-primary">Save global theme</button>
+                <button id="globalBootswatchThemeResetButton" type="button" class="btn btn-outline-secondary">Reset global theme</button>
+              </div>
+            </div>
+            <div id="globalBootswatchThemeMeta" class="small text-muted mt-2">Global theme settings load after admin login.</div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const sessionMeta = document.getElementById('sessionMeta');
+      const superAdminPanel = document.getElementById('superAdminPanel');
+      const siteModulesForm = document.getElementById('siteModulesForm');
+      const saveSiteModulesButton = document.getElementById('saveSiteModulesButton');
+      const saveMessage = document.getElementById('saveMessage');
+      const errorMessage = document.getElementById('errorMessage');
+      const globalBootswatchThemeSelect = document.getElementById('globalBootswatchThemeSelect');
+      const saveGlobalBootswatchThemeButton = document.getElementById('saveGlobalBootswatchThemeButton');
+      const globalBootswatchThemeResetButton = document.getElementById('globalBootswatchThemeResetButton');
+      const globalBootswatchThemeMeta = document.getElementById('globalBootswatchThemeMeta');
+
+      const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true });
+      let state = { user: null, settings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] } };
+
+      function showMessage(target, message) {
+        target.textContent = message;
+        target.classList.remove('d-none');
+      }
+
+      function clearMessage(target) {
+        target.textContent = '';
+        target.classList.add('d-none');
+      }
+
+      async function request(url, options = {}) {
+        const response = await fetch(url, {
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+          ...options,
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || `Request failed (${response.status})`);
+        }
+        return payload;
+      }
+
+      function normalizeBootswatchTheme(themeId) {
+        const options = new Set(Array.from(globalBootswatchThemeSelect.options).map((option) => option.value));
+        return options.has(themeId) ? themeId : 'bootstrap';
+      }
+
+      function getBootswatchThemeLabel(themeId) {
+        if (themeId === 'bootstrap') return 'Bootstrap default';
+        return themeId.charAt(0).toUpperCase() + themeId.slice(1);
+      }
+
+      function normalizeThemeCatalog(catalog = {}) {
+        return {
+          activeThemeSlug: String(catalog?.activeThemeSlug || 'default').trim().toLowerCase(),
+          presets: Array.isArray(catalog?.presets) ? catalog.presets : [],
+        };
+      }
+
+      function getGlobalBootswatchThemeId(catalog = {}) {
+        const normalizedCatalog = normalizeThemeCatalog(catalog);
+        if (!normalizedCatalog.activeThemeSlug.startsWith('bootswatch-')) return 'bootstrap';
+        return normalizeBootswatchTheme(normalizedCatalog.activeThemeSlug.slice('bootswatch-'.length));
+      }
+
+      function buildThemeCatalogForBootswatch(themeId) {
+        const normalizedThemeId = normalizeBootswatchTheme(themeId);
+        const existingCatalog = normalizeThemeCatalog(state.themeCatalog);
+        const preservedPresets = existingCatalog.presets.filter((preset) => !String(preset?.slug || '').startsWith('bootswatch-'));
+        if (normalizedThemeId === 'bootstrap') {
+          return { ...existingCatalog, activeThemeSlug: 'default', presets: preservedPresets };
+        }
+        const slug = `bootswatch-${normalizedThemeId}`;
+        return {
+          ...existingCatalog,
+          activeThemeSlug: slug,
+          presets: [...preservedPresets, {
+            name: getBootswatchThemeLabel(normalizedThemeId),
+            slug,
+            description: `Global Bootswatch theme (${normalizedThemeId}).`,
+            variables: {},
+            customCss: `@import url('https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/${normalizedThemeId}/bootstrap.min.css');`,
+          }],
+        };
+      }
+
+      function renderSiteModules() {
+        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership']];
+        const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
+        siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `
+          <div class="col-md-6 col-xl-4">
+            <label class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" data-site-module="${name}" ${modules[name] !== false ? 'checked' : ''} />
+              <span class="form-check-label">${label}</span>
+            </label>
+          </div>`).join('');
+      }
+
+      function renderGlobalThemeSettings() {
+        const selectedThemeId = getGlobalBootswatchThemeId(state.themeCatalog);
+        globalBootswatchThemeSelect.value = selectedThemeId;
+        globalBootswatchThemeMeta.textContent = selectedThemeId === 'bootstrap'
+          ? 'Global theme is set to Bootstrap default.'
+          : `Global theme is set to ${getBootswatchThemeLabel(selectedThemeId)}.`;
+      }
+
+      async function loadSessionAndSettings() {
+        try {
+          const payload = await request('/api/admin-session', { method: 'GET' });
+          if (!payload?.authenticated || payload?.user?.role !== 'super_admin') {
+            window.location.assign('/admin.html');
+            return;
+          }
+          state.user = payload.user;
+          sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role}).`;
+
+          const settingsPayload = await request('/api/admin-settings');
+          state.settings = settingsPayload.settings || {};
+          state.siteModules = { ...DEFAULT_SITE_MODULES, ...(state.settings.siteModules || {}) };
+          state.themeCatalog = normalizeThemeCatalog(state.settings.themeCatalog || {});
+          renderSiteModules();
+          renderGlobalThemeSettings();
+          superAdminPanel.classList.remove('d-none');
+        } catch (error) {
+          showMessage(errorMessage, error.message || 'Unable to verify super admin session.');
+          sessionMeta.textContent = 'Unable to verify super admin session.';
+        }
+      }
+
+      saveSiteModulesButton?.addEventListener('click', async () => {
+        clearMessage(errorMessage);
+        clearMessage(saveMessage);
+        const nextModules = { ...DEFAULT_SITE_MODULES };
+        siteModulesForm.querySelectorAll('[data-site-module]').forEach((field) => {
+          const moduleName = String(field.dataset.siteModule || '').trim().toLowerCase();
+          if (Object.hasOwn(nextModules, moduleName)) nextModules[moduleName] = Boolean(field.checked);
+        });
+
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              stripeAccountId: state.settings?.stripeAccountId || '',
+              stripePublishableKey: state.settings?.stripePublishableKey || '',
+              sendgridFromEmail: state.settings?.sendgridFromEmail || '',
+              sendgridFromName: state.settings?.sendgridFromName || '',
+              sendgridReplyToEmail: state.settings?.sendgridReplyToEmail || '',
+              publicSiteUrl: state.settings?.publicSiteUrl || '',
+              replaceStripeSecretKey: false,
+              replaceStripeWebhookSigningSecret: false,
+              replaceSendgridApiKey: false,
+              siteModules: nextModules,
+            }),
+          });
+          state.settings = payload.settings || state.settings;
+          state.siteModules = { ...DEFAULT_SITE_MODULES, ...(state.settings.siteModules || {}) };
+          renderSiteModules();
+          showMessage(saveMessage, 'Site module switches saved.');
+          window.alert('Site module switches saved. Please allow up to 10 minutes for changes to take effect.');
+        } catch (error) {
+          showMessage(errorMessage, error.message || 'Unable to save site module switches.');
+        }
+      });
+
+      saveGlobalBootswatchThemeButton?.addEventListener('click', async () => {
+        clearMessage(errorMessage);
+        clearMessage(saveMessage);
+        const selectedTheme = normalizeBootswatchTheme(globalBootswatchThemeSelect.value || 'bootstrap');
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              stripeAccountId: state.settings?.stripeAccountId || '',
+              stripePublishableKey: state.settings?.stripePublishableKey || '',
+              sendgridFromEmail: state.settings?.sendgridFromEmail || '',
+              sendgridFromName: state.settings?.sendgridFromName || '',
+              sendgridReplyToEmail: state.settings?.sendgridReplyToEmail || '',
+              publicSiteUrl: state.settings?.publicSiteUrl || '',
+              replaceStripeSecretKey: false,
+              replaceStripeWebhookSigningSecret: false,
+              replaceSendgridApiKey: false,
+              themeCatalog: buildThemeCatalogForBootswatch(selectedTheme),
+            }),
+          });
+          state.settings = payload.settings || state.settings;
+          state.themeCatalog = normalizeThemeCatalog(state.settings.themeCatalog || {});
+          renderGlobalThemeSettings();
+          showMessage(saveMessage, selectedTheme === 'bootstrap'
+            ? 'Global theme reset to Bootstrap default.'
+            : `Global theme updated to ${getBootswatchThemeLabel(selectedTheme)}.`);
+          window.alert('Global theme saved. Please allow up to 10 minutes for cached pages to refresh.');
+        } catch (error) {
+          showMessage(errorMessage, error.message || 'Unable to save global theme.');
+        }
+      });
+
+      globalBootswatchThemeResetButton?.addEventListener('click', () => {
+        globalBootswatchThemeSelect.value = 'bootstrap';
+      });
+
+      loadSessionAndSettings();
+    </script>
+  </body>
+</html>

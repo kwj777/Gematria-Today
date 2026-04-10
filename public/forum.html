@@ -167,15 +167,13 @@
               id="forumFilterToggleButton"
               class="btn btn-outline-primary btn-sm"
               type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#forumFilterControls"
               aria-expanded="false"
               aria-controls="forumFilterControls"
             >
               Show filters
             </button>
           </div>
-          <div id="forumFilterControls" class="collapse d-md-block">
+          <div id="forumFilterControls" class="d-none d-md-block" hidden>
             <div class="row g-3 align-items-end">
               <div class="col-md-3">
                 <label class="form-label" for="forumArea">Forum area</label>
@@ -773,12 +771,30 @@
       });
 
       if (forumFilterControlsEl && forumFilterToggleButtonEl) {
-        forumFilterControlsEl.addEventListener('show.bs.collapse', () => {
-          forumFilterToggleButtonEl.textContent = 'Hide filters';
-        });
-        forumFilterControlsEl.addEventListener('hide.bs.collapse', () => {
+        const syncForumFilterVisibility = () => {
+          if (window.innerWidth >= 768) {
+            forumFilterControlsEl.hidden = false;
+            forumFilterControlsEl.classList.remove('d-none');
+            forumFilterToggleButtonEl.setAttribute('aria-expanded', 'true');
+            forumFilterToggleButtonEl.textContent = 'Hide filters';
+            return;
+          }
+          forumFilterControlsEl.hidden = true;
+          forumFilterControlsEl.classList.add('d-none');
+          forumFilterToggleButtonEl.setAttribute('aria-expanded', 'false');
           forumFilterToggleButtonEl.textContent = 'Show filters';
+        };
+
+        forumFilterToggleButtonEl.addEventListener('click', () => {
+          const isHidden = forumFilterControlsEl.hidden;
+          forumFilterControlsEl.hidden = !isHidden;
+          forumFilterControlsEl.classList.toggle('d-none', !isHidden);
+          forumFilterToggleButtonEl.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+          forumFilterToggleButtonEl.textContent = isHidden ? 'Hide filters' : 'Show filters';
         });
+
+        window.addEventListener('resize', syncForumFilterVisibility);
+        syncForumFilterVisibility();
       }
 
       document.addEventListener('click', (event) => {

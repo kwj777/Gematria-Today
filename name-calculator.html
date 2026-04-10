@@ -314,6 +314,23 @@ const form = document.querySelector('#name-form');
         return link;
       }
 
+      function getPerLetterValues(input) {
+        return Array.from(String(input || '').toUpperCase())
+          .filter((char) => char >= 'A' && char <= 'Z')
+          .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
+      }
+
+      function formatPerLetterValuesText(input) {
+        const letterValues = getPerLetterValues(input);
+        return letterValues.length
+          ? letterValues.map(({ letter, value }) => `${letter}=${value}`).join(', ')
+          : 'n/a';
+      }
+
+      function createPerLetterValuesNode(input) {
+        return createTextNode(`Per-letter values: ${formatPerLetterValuesText(input)}`);
+      }
+
       function createRelatedWordButton(word) {
         const link = document.createElement('a');
         link.className = 'word-button';
@@ -459,7 +476,7 @@ View results: ${shareUrl}`.trim(),
   <body>
     <main>
       <h1>${escapeHtml(name)}</h1>
-      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | ${isHighlightedDigitalRoot(result.gematria.gematria.digitalRoot) ? `<span class="meta-highlight">Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}</span>` : `Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}`} | <a href="https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words" target="_blank" rel="noopener noreferrer">Base Rooted:</a> ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}</p>
+      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | ${isHighlightedDigitalRoot(result.gematria.gematria.digitalRoot) ? `<span class="meta-highlight">Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}</span>` : `Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}`} | <a href="https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words" target="_blank" rel="noopener noreferrer">Base Rooted:</a> ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}<br />Per-letter values: ${escapeHtml(formatPerLetterValuesText(name))}</p>
       <p class="meta">Click any related word below to open an English Gematria search for that word.</p>
       ${sections || '<p>No related words found.</p>'}
     </main>
@@ -506,7 +523,9 @@ View results: ${shareUrl}`.trim(),
           createDigitalRootNode(result.gematria.gematria.digitalRoot, 'Digital Root: '),
           createTextNode(' | '),
           baseRootSummary,
-          createTextNode(` | Searches: ${result.gematria.searchCount}`)
+          createTextNode(` | Searches: ${result.gematria.searchCount}`),
+          document.createElement('br'),
+          createPerLetterValuesNode(name)
         );
         article.appendChild(meta);
 

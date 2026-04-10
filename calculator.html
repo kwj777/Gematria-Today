@@ -680,7 +680,7 @@ View results: ${shareUrl}`.trim(),
           const baseRootValue = createBaseRootValueNode(payload.isBaseRoot);
           const searchCountSuffix = document.createTextNode(` | Searches: ${payload.searchCount}`);
 
-          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddlePrefix, detailMiddle, detailMiddleSuffix, createBaseRootLink(), document.createTextNode(' '), baseRootValue, searchCountSuffix);
+          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddlePrefix, detailMiddle, detailMiddleSuffix, createBaseRootLink(), document.createTextNode(' '), baseRootValue, searchCountSuffix, document.createElement('br'), createPerLetterValuesNode(wordResult.word));
         } else {
           gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
         }
@@ -754,6 +754,22 @@ View results: ${shareUrl}`.trim(),
         });
       }
 
+      function getPerLetterValues(input) {
+        return Array.from(String(input || '').toUpperCase())
+          .filter((char) => char >= 'A' && char <= 'Z')
+          .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
+      }
+
+      function createPerLetterValuesNode(input) {
+        const letterValues = getPerLetterValues(input);
+        const node = document.createElement('span');
+        node.className = 'small text-muted';
+        node.textContent = letterValues.length
+          ? `Per-letter values: ${letterValues.map(({ letter, value }) => `${letter}=${value}`).join(', ')}`
+          : 'Per-letter values: n/a';
+        return node;
+      }
+
       function renderSearchGematriaSummary(searchGematria) {
         const shareButton = document.createElement('button');
         shareButton.type = 'button';
@@ -786,6 +802,8 @@ View results: ${shareUrl}`.trim(),
           ' ',
           createBaseRootValueNode(searchGematria.isBaseRoot),
           ` | Searches: ${searchGematria.searchCount}`,
+          document.createElement('br'),
+          createPerLetterValuesNode(searchGematria.word),
           document.createElement('br'),
           document.createElement('br'),
           shareButton

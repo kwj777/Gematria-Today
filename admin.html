@@ -138,6 +138,7 @@
               <a class="btn btn-outline-primary" href="/admin-forum.html">Forum Admin</a>
               <a class="btn btn-outline-primary" href="/admin-reports.html">Reports</a>
               <a class="btn btn-outline-primary" href="/admin-site-chatbot.html">Site Chatbot</a>
+              <a id="superAdminWorkspaceLink" class="btn btn-outline-warning d-none" href="/admin-super-admin.html">Super Admin</a>
               <button id="refreshSiteCacheButton" class="btn btn-outline-warning" type="button">Refresh site cache</button>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
             </div>
@@ -179,110 +180,8 @@
                   <option value="members">Member operations</option>
                   <option value="revenue">Revenue & messaging</option>
                   <option value="system">System & security</option>
-                  <option value="super-admin">Super admin controls</option>
                 </select>
               </div>
-            </div>
-          </section>
-          <section id="siteModulesPanel" class="content-panel p-3 p-lg-4 mb-4 d-none" data-admin-workspace="super-admin" data-super-admin-only="true">
-            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
-              <div>
-                <p class="section-kicker mb-1">Site availability</p>
-                <h3 class="h5 mb-0">Flip module switches</h3>
-              </div>
-              <span class="badge text-bg-warning">Super admins only</span>
-            </div>
-            <p class="text-muted small mb-2">Enable or disable major modules site-wide. Disabling a module hides related UI elements for visitors.</p>
-            <p class="text-muted small mb-3">Note: these switches are global and do not create super-admin-only module access.</p>
-            <form id="siteModulesForm" class="row g-3"></form>
-            <div class="d-flex justify-content-end mt-3">
-              <button id="saveSiteModulesButton" class="btn btn-outline-primary" type="button">Save module switches</button>
-            </div>
-            <hr class="my-4">
-            <div>
-              <p class="section-kicker mb-1">Personal preview</p>
-              <p class="text-muted small mb-3">These local toggles are pinned here and only affect your current browser session.</p>
-              <div data-super-admin-module-toggles-host></div>
-            </div>
-            <hr class="my-4">
-            <div>
-              <p class="section-kicker mb-1">Dashboard appearance</p>
-              <p class="text-muted small mb-3">Pick a local Bootswatch theme for this browser session. This does not affect public visitors.</p>
-              <div class="row g-2 align-items-end">
-                <div class="col-md-8 col-lg-6">
-                  <label class="form-label" for="bootswatchThemeSelect">Bootswatch theme</label>
-                  <select id="bootswatchThemeSelect" class="form-select">
-                    <option value="bootstrap">Bootstrap default</option>
-                    <option value="cerulean">Cerulean</option>
-                    <option value="cosmo">Cosmo</option>
-                    <option value="darkly">Darkly</option>
-                    <option value="flatly">Flatly</option>
-                    <option value="litera">Litera</option>
-                    <option value="lumen">Lumen</option>
-                    <option value="lux">Lux</option>
-                    <option value="materia">Materia</option>
-                    <option value="minty">Minty</option>
-                    <option value="morph">Morph</option>
-                    <option value="pulse">Pulse</option>
-                    <option value="quartz">Quartz</option>
-                    <option value="sandstone">Sandstone</option>
-                    <option value="simplex">Simplex</option>
-                    <option value="sketchy">Sketchy</option>
-                    <option value="slate">Slate</option>
-                    <option value="solar">Solar</option>
-                    <option value="spacelab">Spacelab</option>
-                    <option value="superhero">Superhero</option>
-                    <option value="united">United</option>
-                    <option value="vapor">Vapor</option>
-                    <option value="yeti">Yeti</option>
-                    <option value="zephyr">Zephyr</option>
-                  </select>
-                </div>
-                <div class="col-md-auto">
-                  <button id="bootswatchThemeResetButton" type="button" class="btn btn-outline-secondary w-100">Reset to Bootstrap</button>
-                </div>
-              </div>
-            </div>
-            <hr class="my-4">
-            <div>
-              <p class="section-kicker mb-1">Public site theme</p>
-              <p class="text-muted small mb-3">Apply a Bootswatch theme across the whole site for all visitors.</p>
-              <div class="row g-2 align-items-end">
-                <div class="col-md-8 col-lg-6">
-                  <label class="form-label" for="globalBootswatchThemeSelect">Global Bootswatch theme</label>
-                  <select id="globalBootswatchThemeSelect" class="form-select">
-                    <option value="bootstrap">Bootstrap default</option>
-                    <option value="cerulean">Cerulean</option>
-                    <option value="cosmo">Cosmo</option>
-                    <option value="darkly">Darkly</option>
-                    <option value="flatly">Flatly</option>
-                    <option value="litera">Litera</option>
-                    <option value="lumen">Lumen</option>
-                    <option value="lux">Lux</option>
-                    <option value="materia">Materia</option>
-                    <option value="minty">Minty</option>
-                    <option value="morph">Morph</option>
-                    <option value="pulse">Pulse</option>
-                    <option value="quartz">Quartz</option>
-                    <option value="sandstone">Sandstone</option>
-                    <option value="simplex">Simplex</option>
-                    <option value="sketchy">Sketchy</option>
-                    <option value="slate">Slate</option>
-                    <option value="solar">Solar</option>
-                    <option value="spacelab">Spacelab</option>
-                    <option value="superhero">Superhero</option>
-                    <option value="united">United</option>
-                    <option value="vapor">Vapor</option>
-                    <option value="yeti">Yeti</option>
-                    <option value="zephyr">Zephyr</option>
-                  </select>
-                </div>
-                <div class="col-md-auto d-grid gap-2">
-                  <button id="saveGlobalBootswatchThemeButton" type="button" class="btn btn-primary">Save global theme</button>
-                  <button id="globalBootswatchThemeResetButton" type="button" class="btn btn-outline-secondary">Reset global theme</button>
-                </div>
-              </div>
-              <div id="globalBootswatchThemeMeta" class="small text-muted mt-2">Global theme settings load after admin login.</div>
             </div>
           </section>
 
@@ -642,6 +541,7 @@
       const proposalPendingCount = document.getElementById('proposalPendingCount');
       const taskCount = document.getElementById('taskCount');
       const sessionMeta = document.getElementById('sessionMeta');
+      const superAdminWorkspaceLink = document.getElementById('superAdminWorkspaceLink');
       const stripeSecretKeyInput = document.getElementById('stripeSecretKey');
       const stripeWebhookSigningSecretInput = document.getElementById('stripeWebhookSigningSecret');
       const stripeSecretKeyToggle = document.getElementById('stripeSecretKeyToggle');
@@ -1555,6 +1455,7 @@
           const payload = await request('/api/admin-session', { method: 'GET' });
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
+          superAdminWorkspaceLink?.classList.toggle('d-none', payload.user.role !== 'super_admin');
           setLoggedIn(true);
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
@@ -1564,6 +1465,7 @@
         } catch (error) {
           state.user = null;
           sessionMeta.textContent = '';
+          superAdminWorkspaceLink?.classList.add('d-none');
           state.siteModules = { ...DEFAULT_SITE_MODULES };
           state.themeCatalog = { activeThemeSlug: 'default', presets: [] };
           renderSiteModules();
@@ -1625,6 +1527,7 @@
           });
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
+          superAdminWorkspaceLink?.classList.toggle('d-none', payload.user.role !== 'super_admin');
           setLoggedIn(true);
           showMessage(saveMessage, payload.message || 'Admin password reset complete.');
           renderRecoveryPreview('Recovery code consumed.');
@@ -1659,6 +1562,7 @@
         clearMessage(errorMessage);
         await request('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => null);
         state.user = null;
+        superAdminWorkspaceLink?.classList.add('d-none');
         setLoggedIn(false);
       });
 

@@ -125,7 +125,7 @@
       const globalBootswatchThemeResetButton = document.getElementById('globalBootswatchThemeResetButton');
       const globalBootswatchThemeMeta = document.getElementById('globalBootswatchThemeMeta');
 
-      const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true });
+      const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true, wordnik_wotd_slider: true });
       let state = { user: null, settings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] } };
 
       function showMessage(target, message) {
@@ -196,7 +196,7 @@
       }
 
       function renderSiteModules() {
-        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership']];
+        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Wordnik WOTD Slider']];
         const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
         siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `
           <div class="col-md-6 col-xl-4">

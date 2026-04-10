@@ -101,10 +101,7 @@
     <main id="homePageContent" class="py-5" aria-busy="false">
       <div class="container">
         <section id="homeHeroCarousel" class="carousel slide mb-5" data-bs-ride="carousel" data-bs-interval="9000" data-bs-pause="hover" aria-label="Homepage highlights">
-          <div class="carousel-indicators mb-0">
-            <button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Beginner path highlight"></button>
-            <button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="1" aria-label="Eschatology highlight"></button>
-          </div>
+          <div id="homeHeroCarouselIndicators" class="carousel-indicators mb-0"></div>
           <div class="carousel-inner">
             <div class="carousel-item active">
               <section class="hero-panel hero-panel--compact p-4 p-lg-5">
@@ -165,6 +162,40 @@
                       <span class="hero-why-gematria-overlay">
                         <span class="hero-why-gematria-title">Eschatology Research</span>
                         <span class="hero-why-gematria-excerpt">Deep dives on prophetic themes, symbolic identities, and timeline interpretations with transparent reasoning.</span>
+                        <span class="btn btn-warning btn-sm hero-why-gematria-readmore" aria-hidden="true">Read more</span>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <div class="carousel-item" data-module="wordnik_wotd_slider">
+              <section class="hero-panel hero-panel--compact p-4 p-lg-5">
+                <div class="row align-items-center g-4">
+                  <div class="col-lg-7">
+                    <p class="section-kicker mb-2">Wordnik Word of the Day</p>
+                    <h2 id="homeWordnikWotdTitle" class="display-5 fw-bold mb-3">Daily gematria spotlight is loading…</h2>
+                    <p id="homeWordnikWotdDefinition" class="lead mb-4">Fetching today's Wordnik word and calculation preview.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                      <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning btn-lg touch-target-lg" href="/definition" target="_blank" rel="noopener noreferrer">Open full definition</a>
+                      <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html" target="_blank" rel="noopener noreferrer">Open in calculator</a>
+                    </div>
+                  </div>
+                  <div class="col-lg-5">
+                    <a id="homeWordnikWotdCardLink" class="content-panel hero-selling-points-panel hero-why-gematria-link p-0 overflow-hidden h-100 text-decoration-none" href="/calculator.html" target="_blank" rel="noopener noreferrer" aria-label="Open Wordnik word of the day in calculator">
+                      <img
+                        id="homeWordnikWotdImage"
+                        class="hero-selling-points-image"
+                        src="/assets/blog-hero-gematria.svg"
+                        alt="Gematria calculation preview for Wordnik word of the day."
+                        width="1600"
+                        height="900"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <span class="hero-why-gematria-overlay">
+                        <span class="hero-why-gematria-title" id="homeWordnikWotdOverlayWord">Word of the day</span>
+                        <span class="hero-why-gematria-excerpt" id="homeWordnikWotdOverlayMeta">Daily gematria total and digital root update automatically.</span>
                         <span class="btn btn-warning btn-sm hero-why-gematria-readmore" aria-hidden="true">Read more</span>
                       </span>
                     </a>
@@ -303,7 +334,105 @@
         }).join('');
       }
 
+      const englishGematria = (value) => String(value ?? '').toUpperCase().split('').reduce((sum, char) => {
+        const code = char.charCodeAt(0);
+        if (code < 65 || code > 90) return sum;
+        return sum + ((code - 64) * 6);
+      }, 0);
+
+      const digitalRoot = (value) => {
+        const digits = String(Math.abs(Number(value) || 0)).replace(/\D/g, '');
+        if (!digits) return 0;
+        let total = digits.split('').reduce((sum, digit) => sum + Number(digit), 0);
+        while (total > 9) {
+          total = String(total).split('').reduce((sum, digit) => sum + Number(digit), 0);
+        }
+        return total;
+      };
+
+      const buildWotdGematriaSvgDataUri = ({ word, total, root, definitionPreview }) => {
+        const letters = String(word ?? '').toUpperCase().replace(/[^A-Z]/g, '').split('');
+        const letterBreakdown = letters.map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`).join(' · ') || 'No alphabetical letters';
+        const previewText = String(definitionPreview || 'No definition preview available today.').slice(0, 220);
+        const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <text x="90" y="130" fill="#fbbf24" font-size="44" font-family="Arial, sans-serif" font-weight="700">Wordnik Word of the Day</text>
+  <text x="90" y="230" fill="#f8fafc" font-size="86" font-family="Arial, sans-serif" font-weight="800">${escapeHtml(String(word || 'Unknown'))}</text>
+  <text x="90" y="320" fill="#e2e8f0" font-size="42" font-family="Arial, sans-serif">Total: ${Number(total) || englishGematria(word)}</text>
+  <text x="520" y="320" fill="#e2e8f0" font-size="42" font-family="Arial, sans-serif">Digital root: ${Number(root) || digitalRoot(total)}</text>
+  <text x="90" y="390" fill="#93c5fd" font-size="30" font-family="Arial, sans-serif">${escapeHtml(letterBreakdown)}</text>
+  <foreignObject x="90" y="450" width="1420" height="320">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;color:#cbd5e1;font-size:34px;line-height:1.35;">${escapeHtml(previewText)}</div>
+  </foreignObject>
+</svg>`;
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      };
+
+      function renderHomeHeroIndicators() {
+        const carousel = document.getElementById('homeHeroCarousel');
+        const indicators = document.getElementById('homeHeroCarouselIndicators');
+        const visibleSlides = Array.from(carousel.querySelectorAll('.carousel-inner > .carousel-item')).filter((slide) => !slide.classList.contains('d-none'));
+        indicators.innerHTML = visibleSlides.map((_, index) => `<button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}" ${index === 0 ? 'aria-current="true"' : ''} aria-label="Highlight slide ${index + 1}"></button>`).join('');
+
+        visibleSlides.forEach((slide, index) => {
+          slide.classList.toggle('active', index === 0);
+        });
+      }
+
+      async function loadWordnikWordOfDayHero() {
+        try {
+          const response = await fetch('/api/wordnikWordOfDay', { headers: { accept: 'application/json' } });
+          if (!response.ok) {
+            throw new Error('Failed to load Wordnik word of the day.');
+          }
+          const payload = await response.json();
+          const word = String(payload?.word || '').trim();
+          if (!word) {
+            throw new Error('Missing word of the day.');
+          }
+
+          const total = Number(payload?.total);
+          const root = Number(payload?.digitalRoot);
+          const definitionPreview = String(payload?.definitionPreview || '').trim();
+          const definitionHref = `/definition?word=${encodeURIComponent(word)}`;
+          const calculatorHref = `/calculator.html?query=${encodeURIComponent(word)}`;
+
+          const title = document.getElementById('homeWordnikWotdTitle');
+          const definition = document.getElementById('homeWordnikWotdDefinition');
+          const overlayWord = document.getElementById('homeWordnikWotdOverlayWord');
+          const overlayMeta = document.getElementById('homeWordnikWotdOverlayMeta');
+          const image = document.getElementById('homeWordnikWotdImage');
+          const cardLink = document.getElementById('homeWordnikWotdCardLink');
+          const definitionCta = document.getElementById('homeWordnikWotdDefinitionCta');
+          const calculatorCta = document.getElementById('homeWordnikWotdCalculatorCta');
+
+          if (title) title.textContent = `${word}: daily gematria calculation`; 
+          if (definition) definition.textContent = definitionPreview || 'Definition preview unavailable today.';
+          if (overlayWord) overlayWord.textContent = word;
+          if (overlayMeta) overlayMeta.textContent = `Total ${total} • Digital root ${root}`;
+          if (image) image.src = buildWotdGematriaSvgDataUri({ word, total, root, definitionPreview });
+          if (cardLink) cardLink.href = calculatorHref;
+          if (definitionCta) definitionCta.href = definitionHref;
+          if (calculatorCta) calculatorCta.href = calculatorHref;
+        } catch (_error) {
+          const definition = document.getElementById('homeWordnikWotdDefinition');
+          if (definition) definition.textContent = 'Word of the day is temporarily unavailable. Please check back soon.';
+        }
+      }
+
       renderHomepageSlider([]);
+      renderHomeHeroIndicators();
+      loadWordnikWordOfDayHero().finally(() => {
+        window.EndTimesModules?.applyModuleVisibility?.();
+        renderHomeHeroIndicators();
+      });
 
       const fetchFeaturedPosts = async () => {
         const response = await fetch('/api/public-posts?featured=true&limit=5');

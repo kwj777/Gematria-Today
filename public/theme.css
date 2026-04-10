@@ -1040,7 +1040,7 @@ footer.site-footer {
 .blog-home-featured-image-frame {
   margin: 0;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: clamp(8rem, 20vw, 11rem);
   border-radius: 0.85rem;
   overflow: hidden;
   border: 1px solid rgba(53, 65, 79, 0.12);

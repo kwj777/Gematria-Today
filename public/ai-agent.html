@@ -851,13 +851,6 @@
         return imageUrl.toString();
       }
 
-      function buildCalculatorLookupUrl(topic) {
-        const lookupUrl = new URL('/calculator.html', getCanonicalOrigin());
-        lookupUrl.searchParams.set('query', topic);
-        lookupUrl.searchParams.set('source', 'ai_agent');
-        return lookupUrl.toString();
-      }
-
       function buildAgentShareUrl({ topic, total, root }) {
         const shareUrl = new URL('/api/ai-agent-share', getCanonicalOrigin());
         shareUrl.searchParams.set('topic', topic);
@@ -1588,14 +1581,14 @@ View results: ${shareUrl}`.trim(),
               await downloadShareImage(shareImageUrl, `gematria-${sanitizedWord}.svg`);
               window.alert('Image downloaded.');
             } else {
-              const calculatorLookupUrl = buildCalculatorLookupUrl(topic);
+              const agentShareUrl = buildAgentShareUrl({ topic, total, root });
               const shareText = `Gematria for "${topic}": total ${total}, digital root ${root}.`;
               await sharePage({
                 title: `Gematria for ${topic}`,
                 text: shareText,
-                url: calculatorLookupUrl,
+                url: agentShareUrl,
                 imageUrl: shareImageUrl
-              }, calculatorLookupUrl);
+              }, agentShareUrl);
             }
           } catch (error) {
             window.alert(error?.message || (saveImageButton ? 'Unable to download image right now.' : 'Unable to share image right now.'));

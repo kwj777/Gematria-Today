@@ -247,6 +247,26 @@
           </div>
         </section>
 
+        <section class="content-panel p-4 p-lg-5 mb-5" data-module="blog_home_featured_grid">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Featured Picks</p>
+              <h2 class="mb-1">Homepage featured posts</h2>
+              <p class="text-muted mb-0">Up to six static spots can be highlighted by admins. Each spot includes hero image, excerpt, and a direct read-more link.</p>
+            </div>
+            <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
+          </div>
+          <div id="homeFeaturedPostsGrid" class="row g-4" aria-live="polite">
+            <div class="col-12">
+              <article class="blog-home-featured-card p-4 p-lg-5 async-shell-card">
+                <p class="placeholder-glow w-100"><span class="placeholder async-shell-line async-shell-line--lg col-7"></span></p>
+                <p class="placeholder-glow w-100"><span class="placeholder async-shell-line col-10"></span></p>
+                <p class="placeholder-glow w-100"><span class="placeholder async-shell-line col-9"></span></p>
+              </article>
+            </div>
+          </div>
+        </section>
+
         <section class="row g-4 mb-5">
           <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Research</div><div class="metric-value text-primary">Words</div><p class="mb-0 text-muted">Use the calculator to inspect related terms, roots, and definitions.</p></div></div>
           <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Compare</div><div class="metric-value text-success">Names</div><p class="mb-0 text-muted">Test multiple names in parallel and follow links to matching result pages.</p></div></div>
@@ -279,6 +299,19 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+      const stripHtml = (value) => String(value ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+      const buildPostExcerpt = (post, maxLength = 165) => {
+        const sourceText = stripHtml(post?.summary || post?.body || '');
+        if (!sourceText) {
+          return 'Read this featured post for the full analysis and supporting notes.';
+        }
+        if (sourceText.length <= maxLength) {
+          return sourceText;
+        }
+        return `${sourceText.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+      };
+
       const normalizePostImageUrl = (value) => {
         const raw = String(value ?? '').trim();
         if (!raw) {
@@ -289,6 +322,51 @@
         }
         return `/${raw.replace(/^\.?\//, '')}`;
       };
+
+      function renderHomepageFeaturedGrid(posts) {
+        const spots = posts.slice(0, 6);
+        const grid = document.getElementById('homeFeaturedPostsGrid');
+        if (!grid) {
+          return;
+        }
+
+        if (!spots.length) {
+          grid.innerHTML = `
+            <div class="col-12">
+              <article class="blog-home-featured-card p-4 p-lg-5">
+                <span class="badge text-bg-secondary mb-3">Featured</span>
+                <h3 class="mb-3">No featured homepage posts selected yet.</h3>
+                <p class="text-muted mb-4">Enable "Show this post in the home page slider" on published posts to fill these six spots.</p>
+                <a class="btn btn-outline-primary" href="/blog.html">Browse all blog posts</a>
+              </article>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = spots.map((post, index) => {
+          const slug = String(post.slug || `post-${index}`).trim();
+          const title = String(post.title || 'Featured post').trim() || 'Featured post';
+          const excerpt = buildPostExcerpt(post);
+          const heroImageUrl = normalizePostImageUrl(post.sliderImageUrl || post.imageUrl) || '/assets/blog-hero-gematria.svg';
+          const href = `/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
+
+          return `
+            <div class="col-12 col-md-6 col-xl-4">
+              <article class="blog-home-featured-card h-100 p-3 p-lg-4">
+                <a href="${href}" class="text-decoration-none" aria-label="Read ${escapeHtml(title)}" title="${escapeHtml(title)}" rel="bookmark">
+                  <figure class="blog-home-featured-image-frame mb-3">
+                    <img class="blog-home-featured-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(title)} hero image" loading="lazy" decoding="async" />
+                  </figure>
+                </a>
+                <h3 class="h5 mb-2">${escapeHtml(title)}</h3>
+                <p class="text-muted mb-3">${escapeHtml(excerpt)}</p>
+                <a class="btn btn-warning btn-sm" href="${href}" rel="bookmark">Read more</a>
+              </article>
+            </div>
+          `;
+        }).join('');
+      }
 
       function renderHomepageSlider(posts) {
         const normalizedPosts = posts.slice(0, 5);
@@ -428,6 +506,7 @@
       }
 
       renderHomepageSlider([]);
+      renderHomepageFeaturedGrid([]);
       renderHomeHeroIndicators();
       loadWordnikWordOfDayHero().finally(() => {
         window.EndTimesModules?.applyModuleVisibility?.();
@@ -435,7 +514,7 @@
       });
 
       const fetchFeaturedPosts = async () => {
-        const response = await fetch('/api/public-posts?featured=true&limit=5');
+        const response = await fetch('/api/public-posts?featured=true&limit=6');
         if (!response.ok) {
           throw new Error('Failed to load featured posts');
         }
@@ -569,7 +648,9 @@
         ]).catch(() => ({ items: [] })),
       ])
       .then(([, featuredPostsPayload]) => {
-        renderHomepageSlider(featuredPostsPayload?.items || []);
+        const featuredItems = featuredPostsPayload?.items || [];
+        renderHomepageSlider(featuredItems);
+        renderHomepageFeaturedGrid(featuredItems);
       });
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

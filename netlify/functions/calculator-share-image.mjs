@@ -121,8 +121,8 @@ export default async (request) => {
     </linearGradient>
   </defs>
   <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
-  <rect x="925" y="28" width="245" height="46" rx="12" ry="12" fill="rgba(11, 23, 40, 0.72)" stroke="rgba(159, 193, 232, 0.8)" />
-  <text x="1048" y="58" fill="#f4d77a" font-size="30" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle">endtimes.today</text>
+  <rect x="760" y="365" width="320" height="64" rx="16" ry="16" fill="rgba(11, 23, 40, 0.72)" stroke="rgba(159, 193, 232, 0.8)" />
+  <text x="920" y="406" fill="#f4d77a" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle">endtimes.today</text>
   ${content}
 </svg>`;
 

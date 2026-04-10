@@ -60,7 +60,7 @@ function drawWordImage(searchParams) {
   const perLetterValues = String(searchParams.get('perLetterValues') || 'n/a').trim();
   const definitionLines = wrapSvgText(definitionPreview, 62, 2);
   const definitionText = definitionLines
-    .map((line, index) => `<text x="120" y="${525 + (index * 28)}" fill="#d5e5f7" font-size="24" font-family="Inter, Arial, sans-serif">${escapeXml(line)}</text>`)
+    .map((line, index) => `<text x="120" y="${468 + (index * 28)}" fill="#d5e5f7" font-size="24" font-family="Inter, Arial, sans-serif">${escapeXml(line)}</text>`)
     .join('');
 
   return `
@@ -74,7 +74,6 @@ function drawWordImage(searchParams) {
     <text x="120" y="320" fill="#f3f6fb" font-size="46" font-family="Inter, Arial, sans-serif" font-weight="700">Gematria: ${total}</text>
     <text x="120" y="385" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${digitalRoot}</text>
     <text x="120" y="425" fill="#c7d9ee" font-size="32" font-family="Inter, Arial, sans-serif">Base Rooted: ${isBaseRoot}</text>
-    <text x="120" y="468" fill="#9fc1e8" font-size="25" font-family="Inter, Arial, sans-serif">Definition: ${definitionLines.length ? '' : 'Definition preview unavailable.'}</text>
     ${definitionText}
     <text x="120" y="568" fill="#9fc1e8" font-size="22" font-family="Inter, Arial, sans-serif">Per-letter values: ${escapeXml(perLetterValues)}</text>
   `;

@@ -1,4 +1,5 @@
 import { getSqlClient } from './_admin.mjs';
+import { getOptionalAuthenticatedSession } from './_auth.mjs';
 
 function safeJsonParse(value, fallback = {}) {
   if (!value || typeof value !== 'string') {
@@ -77,11 +78,17 @@ export async function handler(event) {
     const sql = getSqlClient();
     const rows = await sql`
       SELECT setting_value
+      , setting_key
       FROM admin_settings
       WHERE setting_key = 'theme_catalog'
-      LIMIT 1
+        OR setting_key = 'private_theme_catalog'
     `;
-    const catalog = normalizeThemeCatalog(safeJsonParse(rows?.[0]?.setting_value, {}));
+    const settingMap = new Map(rows.map((row) => [row.setting_key, row.setting_value]));
+    const session = await getOptionalAuthenticatedSession(event, { sql });
+    const isSuperAdmin = session?.user?.role === 'super_admin';
+    const catalog = isSuperAdmin
+      ? normalizeThemeCatalog(safeJsonParse(settingMap.get('private_theme_catalog'), {}))
+      : normalizeThemeCatalog(safeJsonParse(settingMap.get('theme_catalog'), {}));
     const css = buildCss(catalog, { includeCustomCss: shouldIncludeCustomCss(event) });
     return {
       statusCode: 200,

@@ -109,6 +109,47 @@
             </div>
             <div id="globalBootswatchThemeMeta" class="small text-muted mt-2">Global theme settings load after admin login.</div>
           </div>
+          <hr class="my-4">
+          <div>
+            <p class="section-kicker mb-1">Private site theme preview</p>
+            <p class="text-muted small mb-3">Choose a super-admin-only preview theme to test on the live site before publishing.</p>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-8 col-lg-6">
+                <label class="form-label" for="privateBootswatchThemeSelect">Private Bootswatch preview</label>
+                <select id="privateBootswatchThemeSelect" class="form-select">
+                  <option value="bootstrap">Bootstrap default</option>
+                  <option value="cerulean">Cerulean</option>
+                  <option value="cosmo">Cosmo</option>
+                  <option value="darkly">Darkly</option>
+                  <option value="flatly">Flatly</option>
+                  <option value="litera">Litera</option>
+                  <option value="lumen">Lumen</option>
+                  <option value="lux">Lux</option>
+                  <option value="materia">Materia</option>
+                  <option value="minty">Minty</option>
+                  <option value="morph">Morph</option>
+                  <option value="pulse">Pulse</option>
+                  <option value="quartz">Quartz</option>
+                  <option value="sandstone">Sandstone</option>
+                  <option value="simplex">Simplex</option>
+                  <option value="sketchy">Sketchy</option>
+                  <option value="slate">Slate</option>
+                  <option value="solar">Solar</option>
+                  <option value="spacelab">Spacelab</option>
+                  <option value="superhero">Superhero</option>
+                  <option value="united">United</option>
+                  <option value="vapor">Vapor</option>
+                  <option value="yeti">Yeti</option>
+                  <option value="zephyr">Zephyr</option>
+                </select>
+              </div>
+              <div class="col-md-auto d-grid gap-2">
+                <button id="savePrivateBootswatchThemeButton" type="button" class="btn btn-outline-primary">Save private preview</button>
+                <button id="privateBootswatchThemeResetButton" type="button" class="btn btn-outline-secondary">Reset private preview</button>
+              </div>
+            </div>
+            <div id="privateBootswatchThemeMeta" class="small text-muted mt-2">Private preview settings load after admin login.</div>
+          </div>
         </section>
       </div>
     </main>
@@ -124,9 +165,19 @@
       const saveGlobalBootswatchThemeButton = document.getElementById('saveGlobalBootswatchThemeButton');
       const globalBootswatchThemeResetButton = document.getElementById('globalBootswatchThemeResetButton');
       const globalBootswatchThemeMeta = document.getElementById('globalBootswatchThemeMeta');
+      const privateBootswatchThemeSelect = document.getElementById('privateBootswatchThemeSelect');
+      const savePrivateBootswatchThemeButton = document.getElementById('savePrivateBootswatchThemeButton');
+      const privateBootswatchThemeResetButton = document.getElementById('privateBootswatchThemeResetButton');
+      const privateBootswatchThemeMeta = document.getElementById('privateBootswatchThemeMeta');
 
       const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true, wordnik_wotd_slider: true });
-      let state = { user: null, settings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] } };
+      let state = {
+        user: null,
+        settings: null,
+        siteModules: { ...DEFAULT_SITE_MODULES },
+        themeCatalog: { activeThemeSlug: 'default', presets: [] },
+        privateThemeCatalog: { activeThemeSlug: 'default', presets: [] },
+      };
 
       function showMessage(target, message) {
         target.textContent = message;
@@ -215,6 +266,14 @@
           : `Global theme is set to ${getBootswatchThemeLabel(selectedThemeId)}.`;
       }
 
+      function renderPrivateThemeSettings() {
+        const selectedThemeId = getGlobalBootswatchThemeId(state.privateThemeCatalog);
+        privateBootswatchThemeSelect.value = selectedThemeId;
+        privateBootswatchThemeMeta.textContent = selectedThemeId === 'bootstrap'
+          ? 'Private preview theme is currently Bootstrap default.'
+          : `Private preview theme is set to ${getBootswatchThemeLabel(selectedThemeId)}.`;
+      }
+
       async function loadSessionAndSettings() {
         try {
           const payload = await request('/api/admin-session', { method: 'GET' });
@@ -229,8 +288,10 @@
           state.settings = settingsPayload.settings || {};
           state.siteModules = { ...DEFAULT_SITE_MODULES, ...(state.settings.siteModules || {}) };
           state.themeCatalog = normalizeThemeCatalog(state.settings.themeCatalog || {});
+          state.privateThemeCatalog = normalizeThemeCatalog(state.settings.privateThemeCatalog || {});
           renderSiteModules();
           renderGlobalThemeSettings();
+          renderPrivateThemeSettings();
           superAdminPanel.classList.remove('d-none');
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to verify super admin session.');
@@ -291,6 +352,7 @@
               replaceStripeWebhookSigningSecret: false,
               replaceSendgridApiKey: false,
               themeCatalog: buildThemeCatalogForBootswatch(selectedTheme),
+              privateThemeCatalog: state.privateThemeCatalog,
             }),
           });
           state.settings = payload.settings || state.settings;
@@ -307,6 +369,43 @@
 
       globalBootswatchThemeResetButton?.addEventListener('click', () => {
         globalBootswatchThemeSelect.value = 'bootstrap';
+      });
+
+      savePrivateBootswatchThemeButton?.addEventListener('click', async () => {
+        clearMessage(errorMessage);
+        clearMessage(saveMessage);
+        const selectedTheme = normalizeBootswatchTheme(privateBootswatchThemeSelect.value || 'bootstrap');
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              stripeAccountId: state.settings?.stripeAccountId || '',
+              stripePublishableKey: state.settings?.stripePublishableKey || '',
+              sendgridFromEmail: state.settings?.sendgridFromEmail || '',
+              sendgridFromName: state.settings?.sendgridFromName || '',
+              sendgridReplyToEmail: state.settings?.sendgridReplyToEmail || '',
+              publicSiteUrl: state.settings?.publicSiteUrl || '',
+              replaceStripeSecretKey: false,
+              replaceStripeWebhookSigningSecret: false,
+              replaceSendgridApiKey: false,
+              themeCatalog: state.themeCatalog,
+              privateThemeCatalog: buildThemeCatalogForBootswatch(selectedTheme),
+            }),
+          });
+          state.settings = payload.settings || state.settings;
+          state.privateThemeCatalog = normalizeThemeCatalog(state.settings.privateThemeCatalog || {});
+          renderPrivateThemeSettings();
+          showMessage(saveMessage, selectedTheme === 'bootstrap'
+            ? 'Private preview theme reset to Bootstrap default.'
+            : `Private preview theme updated to ${getBootswatchThemeLabel(selectedTheme)}.`);
+          window.alert('Private preview theme saved. It applies only to super admin sessions.');
+        } catch (error) {
+          showMessage(errorMessage, error.message || 'Unable to save private preview theme.');
+        }
+      });
+
+      privateBootswatchThemeResetButton?.addEventListener('click', () => {
+        privateBootswatchThemeSelect.value = 'bootstrap';
       });
 
       loadSessionAndSettings();

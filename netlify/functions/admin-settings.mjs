@@ -17,6 +17,10 @@ const DEFAULT_SETTINGS = {
     activeThemeSlug: 'default',
     presets: [],
   },
+  privateThemeCatalog: {
+    activeThemeSlug: 'default',
+    presets: [],
+  },
 };
 
 const DEFAULT_EMAIL_TEMPLATES = [
@@ -48,6 +52,7 @@ function normalizeSiteModules(rawValue = null) {
 
 function normalizeSettings(body = {}) {
   const hasThemeCatalog = Object.hasOwn(body, 'themeCatalog');
+  const hasPrivateThemeCatalog = Object.hasOwn(body, 'privateThemeCatalog');
   return {
     stripeAccountId: String(body.stripeAccountId ?? '').trim(),
     stripePublishableKey: String(body.stripePublishableKey ?? '').trim(),
@@ -63,6 +68,7 @@ function normalizeSettings(body = {}) {
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
     siteModules: normalizeSiteModules(body.siteModules),
     themeCatalog: hasThemeCatalog ? normalizeThemeCatalog(body.themeCatalog) : undefined,
+    privateThemeCatalog: hasPrivateThemeCatalog ? normalizeThemeCatalog(body.privateThemeCatalog) : undefined,
   };
 }
 
@@ -127,6 +133,7 @@ function normalizeEmailTemplate(body = {}) {
 
 function serializeSettings(settings = {}) {
   const normalizedThemeCatalog = normalizeThemeCatalog(settings.themeCatalog || {});
+  const normalizedPrivateThemeCatalog = normalizeThemeCatalog(settings.privateThemeCatalog || {});
   return {
     stripeAccountId: settings.stripeAccountId || '',
     stripePublishableKey: settings.stripePublishableKey || '',
@@ -142,6 +149,7 @@ function serializeSettings(settings = {}) {
       ? { ...DEFAULT_SITE_MODULES, ...normalizeSiteModules(settings.siteModules) }
       : { ...DEFAULT_SITE_MODULES },
     themeCatalog: normalizedThemeCatalog,
+    privateThemeCatalog: normalizedPrivateThemeCatalog,
   };
 }
 
@@ -178,6 +186,13 @@ function mapSettingsFromRows(rows = []) {
         settings.themeCatalog = normalizeThemeCatalog({});
       }
     }
+    if (row.setting_key === 'private_theme_catalog') {
+      try {
+        settings.privateThemeCatalog = normalizeThemeCatalog(JSON.parse(row.setting_value || '{}'));
+      } catch {
+        settings.privateThemeCatalog = normalizeThemeCatalog({});
+      }
+    }
 
     const subjectMatch = /^email_template_(.+)_subject$/.exec(row.setting_key || '');
     if (subjectMatch) {
@@ -204,6 +219,7 @@ function getSettingsRows(sql) {
       OR setting_key = 'public_site_url'
       OR setting_key = 'site_modules'
       OR setting_key = 'theme_catalog'
+      OR setting_key = 'private_theme_catalog'
       OR setting_key LIKE 'email_template_%'
     ORDER BY setting_key ASC
   `;
@@ -278,6 +294,9 @@ export async function handler(event) {
       if (settings.themeCatalog !== undefined && user.role !== 'super_admin') {
         return jsonResponse(403, { error: 'Only super admins can update themes' });
       }
+      if (settings.privateThemeCatalog !== undefined && user.role !== 'super_admin') {
+        return jsonResponse(403, { error: 'Only super admins can update themes' });
+      }
 
       const existingRows = await getSettingsRows(sql);
       const { settings: existingSettings } = mapSettingsFromRows(existingRows);
@@ -299,6 +318,9 @@ export async function handler(event) {
           ...settings.siteModules,
         },
         themeCatalog: settings.themeCatalog === undefined ? existingSettings.themeCatalog : settings.themeCatalog,
+        privateThemeCatalog: settings.privateThemeCatalog === undefined
+          ? existingSettings.privateThemeCatalog
+          : settings.privateThemeCatalog,
       };
 
       const pairs = [
@@ -313,6 +335,7 @@ export async function handler(event) {
         ['public_site_url', nextSettings.publicSiteUrl],
         ['site_modules', JSON.stringify(nextSettings.siteModules || {})],
         ['theme_catalog', JSON.stringify(nextSettings.themeCatalog || normalizeThemeCatalog({}))],
+        ['private_theme_catalog', JSON.stringify(nextSettings.privateThemeCatalog || normalizeThemeCatalog({}))],
       ];
 
       for (const [key, value] of pairs) {

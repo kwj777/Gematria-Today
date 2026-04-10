@@ -31,7 +31,7 @@ function normalizeThemeCatalog(input = {}) {
   };
 }
 
-function buildCss(catalog) {
+function buildCss(catalog, { includeCustomCss = true } = {}) {
   const active = catalog.presets.find((preset) => preset.slug === catalog.activeThemeSlug);
   if (!active) {
     return '/* Active theme: default */\n';
@@ -42,12 +42,26 @@ function buildCss(catalog) {
   const variablesBlock = variableEntries.length
     ? `:root {\n${variableEntries.map(([key, value]) => `  ${String(key).trim()}: ${String(value).trim()};`).join('\n')}\n}\n`
     : '';
-  const customCss = String(active.customCss || '').trim();
+  const customCss = includeCustomCss ? String(active.customCss || '').trim() : '';
   return [
     `/* Active theme: ${escapeCssComment(active.name || active.slug)} (${escapeCssComment(active.slug)}) */`,
     variablesBlock,
     customCss,
   ].filter(Boolean).join('\n');
+}
+
+function shouldIncludeCustomCss(event) {
+  const referer = String(event?.headers?.referer || event?.headers?.Referer || '').trim();
+  if (!referer) {
+    return true;
+  }
+
+  try {
+    const refererUrl = new URL(referer);
+    return !refererUrl.pathname.startsWith('/admin');
+  } catch {
+    return true;
+  }
 }
 
 export async function handler(event) {
@@ -68,7 +82,7 @@ export async function handler(event) {
       LIMIT 1
     `;
     const catalog = normalizeThemeCatalog(safeJsonParse(rows?.[0]?.setting_value, {}));
-    const css = buildCss(catalog);
+    const css = buildCss(catalog, { includeCustomCss: shouldIncludeCustomCss(event) });
     return {
       statusCode: 200,
       headers: {

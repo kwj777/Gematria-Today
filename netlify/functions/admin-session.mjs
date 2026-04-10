@@ -36,9 +36,8 @@ export async function handler(event) {
       // fall through to unauthorized response
     }
 
-    const statusCode = error.statusCode || 401;
     return jsonResponse(
-      statusCode,
+      200,
       { authenticated: false },
       { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) },
     );

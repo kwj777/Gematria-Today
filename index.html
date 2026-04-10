@@ -358,10 +358,11 @@
                   <figure class="blog-home-featured-image-frame mb-3">
                     <img class="blog-home-featured-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(title)} hero image" loading="lazy" decoding="async" />
                   </figure>
+                  <span class="visually-hidden">Read featured post: ${escapeHtml(title)}.</span>
                 </a>
                 <h3 class="h5 mb-2">${escapeHtml(title)}</h3>
                 <p class="text-muted mb-3">${escapeHtml(excerpt)}</p>
-                <a class="btn btn-warning btn-sm blog-home-featured-readmore" href="${href}" rel="bookmark">Read more</a>
+                <a class="btn btn-warning btn-sm blog-home-featured-readmore" href="${href}" rel="bookmark">Read: ${escapeHtml(title)}</a>
               </article>
             </div>
           `;

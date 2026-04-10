@@ -1042,6 +1042,15 @@ footer.site-footer {
   align-self: flex-start;
 }
 
+.seo-offscreen-text {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .blog-home-featured-image-frame {
   margin: 0;
   width: 100%;

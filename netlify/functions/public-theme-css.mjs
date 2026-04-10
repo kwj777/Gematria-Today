@@ -1,5 +1,5 @@
 import { getSqlClient } from './_admin.mjs';
-import { getOptionalAuthenticatedSession } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, parseCookies } from './_auth.mjs';
 
 function safeJsonParse(value, fallback = {}) {
   if (!value || typeof value !== 'string') {
@@ -85,8 +85,10 @@ export async function handler(event) {
     `;
     const settingMap = new Map(rows.map((row) => [row.setting_key, row.setting_value]));
     const session = await getOptionalAuthenticatedSession(event, { sql });
+    const cookies = parseCookies(event);
+    const privatePreviewEnabled = cookies.private_theme_preview === '1';
     const isSuperAdmin = session?.user?.role === 'super_admin';
-    const catalog = isSuperAdmin
+    const catalog = isSuperAdmin && privatePreviewEnabled
       ? normalizeThemeCatalog(safeJsonParse(settingMap.get('private_theme_catalog'), {}))
       : normalizeThemeCatalog(safeJsonParse(settingMap.get('theme_catalog'), {}));
     const css = buildCss(catalog, { includeCustomCss: shouldIncludeCustomCss(event) });

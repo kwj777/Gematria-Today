@@ -112,7 +112,7 @@
           <hr class="my-4">
           <div>
             <p class="section-kicker mb-1">Private site theme preview</p>
-            <p class="text-muted small mb-3">Choose a super-admin-only preview theme to test on the live site before publishing.</p>
+            <p class="text-muted small mb-3">Choose a private preview theme for this browser session only, so you can test on the live site before publishing.</p>
             <div class="row g-2 align-items-end">
               <div class="col-md-8 col-lg-6">
                 <label class="form-label" for="privateBootswatchThemeSelect">Private Bootswatch preview</label>
@@ -217,6 +217,24 @@
           activeThemeSlug: String(catalog?.activeThemeSlug || 'default').trim().toLowerCase(),
           presets: Array.isArray(catalog?.presets) ? catalog.presets : [],
         };
+      }
+
+      function setPrivateThemePreviewSessionCookie(enabled) {
+        if (enabled) {
+          document.cookie = 'private_theme_preview=1; Path=/; SameSite=Lax; Secure';
+          return;
+        }
+        document.cookie = 'private_theme_preview=; Path=/; SameSite=Lax; Secure; Max-Age=0';
+      }
+
+      function refreshThemeStylesheets() {
+        const nonce = Date.now();
+        document.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
+          if (!String(link.getAttribute('href') || '').includes('/theme.css')) return;
+          const url = new URL(link.href, window.location.origin);
+          url.searchParams.set('preview_nonce', String(nonce));
+          link.href = url.toString();
+        });
       }
 
       function getGlobalBootswatchThemeId(catalog = {}) {
@@ -394,11 +412,13 @@
           });
           state.settings = payload.settings || state.settings;
           state.privateThemeCatalog = normalizeThemeCatalog(state.settings.privateThemeCatalog || {});
+          setPrivateThemePreviewSessionCookie(selectedTheme !== 'bootstrap');
+          refreshThemeStylesheets();
           renderPrivateThemeSettings();
           showMessage(saveMessage, selectedTheme === 'bootstrap'
             ? 'Private preview theme reset to Bootstrap default.'
             : `Private preview theme updated to ${getBootswatchThemeLabel(selectedTheme)}.`);
-          window.alert('Private preview theme saved. It applies only to super admin sessions.');
+          window.alert('Private preview theme saved for this browser session only and applied immediately.');
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to save private preview theme.');
         }

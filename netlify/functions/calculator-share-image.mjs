@@ -64,19 +64,19 @@ function drawWordImage(searchParams) {
     .join('');
 
   return `
-    <text x="80" y="120" fill="#f3f6fb" font-size="42" font-family="Inter, Arial, sans-serif" font-weight="700">
+    <text x="600" y="108" fill="#f3f6fb" font-size="42" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle">
       English Gematria Lookup
     </text>
-    <text x="80" y="220" fill="#ffd66e" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="800">
+    <text x="600" y="200" fill="#ffd66e" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="800" text-anchor="middle">
       ${query}
     </text>
-    <rect x="80" y="280" rx="16" ry="16" width="1040" height="315" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
-    <text x="120" y="360" fill="#f3f6fb" font-size="46" font-family="Inter, Arial, sans-serif" font-weight="700">Gematria: ${total}</text>
-    <text x="120" y="425" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${digitalRoot}</text>
-    <text x="120" y="465" fill="#c7d9ee" font-size="32" font-family="Inter, Arial, sans-serif">Base Rooted: ${isBaseRoot}</text>
-    <text x="120" y="500" fill="#9fc1e8" font-size="25" font-family="Inter, Arial, sans-serif">Definition: ${definitionLines.length ? '' : 'Definition preview unavailable.'}</text>
+    <rect x="80" y="245" rx="16" ry="16" width="1040" height="340" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
+    <text x="120" y="320" fill="#f3f6fb" font-size="46" font-family="Inter, Arial, sans-serif" font-weight="700">Gematria: ${total}</text>
+    <text x="120" y="385" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${digitalRoot}</text>
+    <text x="120" y="425" fill="#c7d9ee" font-size="32" font-family="Inter, Arial, sans-serif">Base Rooted: ${isBaseRoot}</text>
+    <text x="120" y="468" fill="#9fc1e8" font-size="25" font-family="Inter, Arial, sans-serif">Definition: ${definitionLines.length ? '' : 'Definition preview unavailable.'}</text>
     ${definitionText}
-    <text x="120" y="585" fill="#9fc1e8" font-size="22" font-family="Inter, Arial, sans-serif">Per-letter values: ${escapeXml(perLetterValues)}</text>
+    <text x="120" y="582" fill="#9fc1e8" font-size="22" font-family="Inter, Arial, sans-serif">Per-letter values: ${escapeXml(perLetterValues)}</text>
   `;
 }
 
@@ -91,19 +91,19 @@ function drawNameImage(searchParams) {
   const lines = names.map((name, index) => {
     const safeName = escapeXml(name);
     const total = escapeXml(totalsLabel[index] || '?');
-    const y = 310 + (index * 78);
+    const y = 300 + (index * 78);
     return `<text x="120" y="${y}" fill="#f3f6fb" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700">${safeName}: ${total}</text>`;
   }).join('');
 
   return `
-    <text x="80" y="120" fill="#f3f6fb" font-size="42" font-family="Inter, Arial, sans-serif" font-weight="700">
+    <text x="600" y="112" fill="#f3f6fb" font-size="42" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle">
       Name Calculator Comparison
     </text>
-    <text x="80" y="205" fill="#ffd66e" font-size="34" font-family="Inter, Arial, sans-serif">
+    <text x="600" y="185" fill="#ffd66e" font-size="34" font-family="Inter, Arial, sans-serif" text-anchor="middle">
       ${escapeXml(names.join(' • ') || 'Name Results')}
     </text>
-    <rect x="80" y="250" rx="16" ry="16" width="1040" height="320" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
-    ${lines || '<text x="120" y="360" fill="#f3f6fb" font-size="44" font-family="Inter, Arial, sans-serif">Run a name search to generate comparison results.</text>'}
+    <rect x="80" y="230" rx="16" ry="16" width="1040" height="340" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
+    ${lines || '<text x="120" y="340" fill="#f3f6fb" font-size="44" font-family="Inter, Arial, sans-serif">Run a name search to generate comparison results.</text>'}
   `;
 }
 
@@ -121,8 +121,9 @@ export default async (request) => {
     </linearGradient>
   </defs>
   <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
+  <rect x="925" y="28" width="245" height="46" rx="12" ry="12" fill="rgba(11, 23, 40, 0.72)" stroke="rgba(159, 193, 232, 0.8)" />
+  <text x="1048" y="58" fill="#f4d77a" font-size="30" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle">endtimes.today</text>
   ${content}
-  <text x="980" y="608" fill="#9fc1e8" font-size="24" font-family="Inter, Arial, sans-serif">endtimes.today</text>
 </svg>`;
 
   return new Response(svg, {

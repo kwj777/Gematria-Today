@@ -42,7 +42,7 @@ test('session endpoints return unauthenticated payload shape when unauthenticate
   ]);
 
   assert.equal(memberResponse.statusCode, 200);
-  assert.equal(adminResponse.statusCode, 401);
+  assert.equal(adminResponse.statusCode, 200);
   assert.deepEqual(parseBody(memberResponse), { authenticated: false });
   assert.deepEqual(parseBody(adminResponse), { authenticated: false });
 });

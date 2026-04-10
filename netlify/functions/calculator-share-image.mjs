@@ -76,7 +76,7 @@ function drawWordImage(searchParams) {
     <text x="120" y="425" fill="#c7d9ee" font-size="32" font-family="Inter, Arial, sans-serif">Base Rooted: ${isBaseRoot}</text>
     <text x="120" y="468" fill="#9fc1e8" font-size="25" font-family="Inter, Arial, sans-serif">Definition: ${definitionLines.length ? '' : 'Definition preview unavailable.'}</text>
     ${definitionText}
-    <text x="120" y="582" fill="#9fc1e8" font-size="22" font-family="Inter, Arial, sans-serif">Per-letter values: ${escapeXml(perLetterValues)}</text>
+    <text x="120" y="568" fill="#9fc1e8" font-size="22" font-family="Inter, Arial, sans-serif">Per-letter values: ${escapeXml(perLetterValues)}</text>
   `;
 }
 

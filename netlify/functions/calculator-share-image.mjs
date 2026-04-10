@@ -10,11 +10,58 @@ function escapeXml(value = '') {
     .replaceAll("'", '&apos;');
 }
 
+function wrapSvgText(value, maxCharsPerLine = 60, maxLines = 3) {
+  const words = String(value || '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) {
+    return [];
+  }
+
+  const lines = [];
+  let currentLine = '';
+  for (const word of words) {
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (candidate.length <= maxCharsPerLine) {
+      currentLine = candidate;
+      continue;
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    currentLine = word;
+    if (lines.length >= maxLines - 1) {
+      break;
+    }
+  }
+
+  if (lines.length < maxLines && currentLine) {
+    lines.push(currentLine);
+  }
+
+  if (lines.length > maxLines) {
+    return lines.slice(0, maxLines);
+  }
+
+  if (words.length && lines.length === maxLines) {
+    const joined = lines.join(' ');
+    if (joined.length < String(value || '').trim().length) {
+      lines[maxLines - 1] = `${lines[maxLines - 1].slice(0, Math.max(0, maxCharsPerLine - 1))}…`;
+    }
+  }
+
+  return lines;
+}
+
 function drawWordImage(searchParams) {
   const query = escapeXml(searchParams.get('query') || 'Lookup');
   const total = escapeXml(searchParams.get('total') || '?');
   const digitalRoot = escapeXml(searchParams.get('digitalRoot') || '?');
   const isBaseRoot = String(searchParams.get('isBaseRoot') || '').toLowerCase() === 'true' ? 'Yes' : 'No';
+  const definitionPreview = String(searchParams.get('definitionPreview') || 'Definition preview unavailable.').trim();
+  const perLetterValues = String(searchParams.get('perLetterValues') || 'n/a').trim();
+  const definitionLines = wrapSvgText(definitionPreview, 64, 3);
+  const definitionText = definitionLines
+    .map((line, index) => `<text x="120" y="${495 + (index * 34)}" fill="#d5e5f7" font-size="28" font-family="Inter, Arial, sans-serif">${escapeXml(line)}</text>`)
+    .join('');
 
   return `
     <text x="80" y="120" fill="#f3f6fb" font-size="42" font-family="Inter, Arial, sans-serif" font-weight="700">
@@ -23,10 +70,13 @@ function drawWordImage(searchParams) {
     <text x="80" y="220" fill="#ffd66e" font-size="64" font-family="Inter, Arial, sans-serif" font-weight="800">
       ${query}
     </text>
-    <rect x="80" y="280" rx="16" ry="16" width="1040" height="250" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
+    <rect x="80" y="280" rx="16" ry="16" width="1040" height="300" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
     <text x="120" y="360" fill="#f3f6fb" font-size="46" font-family="Inter, Arial, sans-serif" font-weight="700">Gematria: ${total}</text>
     <text x="120" y="425" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${digitalRoot}</text>
-    <text x="120" y="485" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Base Rooted: ${isBaseRoot}</text>
+    <text x="120" y="465" fill="#c7d9ee" font-size="32" font-family="Inter, Arial, sans-serif">Base Rooted: ${isBaseRoot}</text>
+    <text x="120" y="532" fill="#9fc1e8" font-size="25" font-family="Inter, Arial, sans-serif">Definition: ${definitionLines.length ? '' : 'Definition preview unavailable.'}</text>
+    ${definitionText}
+    <text x="120" y="610" fill="#9fc1e8" font-size="23" font-family="Inter, Arial, sans-serif">Per-letter values: ${escapeXml(perLetterValues)}</text>
   `;
 }
 
@@ -72,7 +122,7 @@ export default async (request) => {
   </defs>
   <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
   ${content}
-  <text x="80" y="590" fill="#9fc1e8" font-size="28" font-family="Inter, Arial, sans-serif">endtimes.today</text>
+  <text x="980" y="608" fill="#9fc1e8" font-size="24" font-family="Inter, Arial, sans-serif">endtimes.today</text>
 </svg>`;
 
   return new Response(svg, {

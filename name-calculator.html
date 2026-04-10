@@ -411,6 +411,37 @@ const form = document.querySelector('#name-form');
         return url.toString();
       }
 
+      function createNameShareImageUrl(names = [], totals = []) {
+        const imageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalShareOrigin());
+        imageUrl.searchParams.set('type', 'name');
+        names.filter(Boolean).slice(0, 3).forEach((name, index) => {
+          imageUrl.searchParams.set(`name${index + 1}`, String(name).trim());
+        });
+        const normalizedTotals = totals.map((value) => String(value || '').trim()).filter(Boolean);
+        if (normalizedTotals.length) {
+          imageUrl.searchParams.set('totals', normalizedTotals.join(','));
+        }
+        return imageUrl;
+      }
+
+      async function downloadShareImage(shareImageUrlCandidate, filename) {
+        const shareImageUrl = toCanonicalShareUrl(shareImageUrlCandidate);
+        const response = await fetch(shareImageUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('Unable to download image right now. Please try again.');
+        }
+
+        const imageBlob = await response.blob();
+        const objectUrl = URL.createObjectURL(imageBlob);
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.href = objectUrl;
+        downloadAnchor.download = filename;
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        URL.revokeObjectURL(objectUrl);
+      }
+
       async function shareUrl(payload) {
         const shareUrl = toCanonicalShareUrl(payload.url || window.location.href);
         const shareText = payload.text || '';
@@ -676,6 +707,21 @@ View results: ${shareUrl}`.trim(),
             });
           });
           resultsActions.appendChild(shareAllButton);
+          const downloadImageButton = document.createElement('button');
+          downloadImageButton.type = 'button';
+          downloadImageButton.className = 'btn btn-sm btn-outline-warning fw-semibold share-action-button ms-2';
+          downloadImageButton.textContent = 'Download image';
+          downloadImageButton.setAttribute('aria-label', 'Download the share image for this comparison');
+          downloadImageButton.addEventListener('click', async () => {
+            try {
+              const shareImageUrl = createNameShareImageUrl(names, successfulTotals);
+              await downloadShareImage(shareImageUrl.toString(), 'name-calculator-comparison.svg');
+              statusNode.textContent = 'Comparison image downloaded.';
+            } catch (error) {
+              statusNode.textContent = error?.message || 'Unable to download image right now.';
+            }
+          });
+          resultsActions.appendChild(downloadImageButton);
         }
         const highlightBaseRootMatch = names.length === 3 && results.every((result) => !result.error && result.gematria?.isBaseRoot === true);
         results.forEach((result, index) => {

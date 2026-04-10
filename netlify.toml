@@ -102,6 +102,21 @@
     Cache-Control = "public, max-age=300"
 
 [[headers]]
+  for = "/api/public-*"
+  [headers.values]
+    Cache-Control = "public, max-age=120, stale-while-revalidate=60"
+
+[[headers]]
+  for = "/api/wordnikDefinition"
+  [headers.values]
+    Cache-Control = "public, max-age=600, stale-while-revalidate=120"
+
+[[headers]]
+  for = "/api/wordnikRelatedWords"
+  [headers.values]
+    Cache-Control = "public, max-age=600, stale-while-revalidate=120"
+
+[[headers]]
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"

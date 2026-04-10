@@ -770,19 +770,65 @@ View results: ${shareUrl}`.trim(),
         return node;
       }
 
+      function getPerLetterValuesLabel(input) {
+        const letterValues = getPerLetterValues(input);
+        return letterValues.length
+          ? letterValues.map(({ letter, value }) => `${letter}=${value}`).join(', ')
+          : 'n/a';
+      }
+
+      function stripHtmlTags(value) {
+        return String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+
+      async function fetchDefinitionPreview(word) {
+        const normalizedWord = String(word || '').trim();
+        if (!normalizedWord) {
+          return '';
+        }
+
+        try {
+          const response = await fetch(`/api/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`, {
+            headers: { accept: 'application/json' },
+          });
+
+          if (!response.ok) {
+            return '';
+          }
+
+          const payload = await response.json();
+          const definitions = Array.isArray(payload?.definitions) ? payload.definitions : [];
+          const firstDefinition = definitions.find((definition) => String(definition?.text || '').trim());
+          return stripHtmlTags(firstDefinition?.text || '');
+        } catch (error) {
+          return '';
+        }
+      }
+
+      async function createWordShareImageUrl(searchGematria) {
+        const shareImageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalShareOrigin());
+        const query = String(searchGematria.word || '').trim();
+        const definitionPreview = await fetchDefinitionPreview(query);
+
+        shareImageUrl.searchParams.set('type', 'word');
+        shareImageUrl.searchParams.set('query', query);
+        shareImageUrl.searchParams.set('total', String(searchGematria.gematria?.total ?? ''));
+        shareImageUrl.searchParams.set('digitalRoot', String(searchGematria.gematria?.digitalRoot ?? ''));
+        shareImageUrl.searchParams.set('isBaseRoot', String(Boolean(searchGematria.isBaseRoot)));
+        shareImageUrl.searchParams.set('definitionPreview', definitionPreview || 'Definition preview unavailable.');
+        shareImageUrl.searchParams.set('perLetterValues', getPerLetterValuesLabel(query));
+
+        return shareImageUrl;
+      }
+
       function renderSearchGematriaSummary(searchGematria) {
         const shareButton = document.createElement('button');
         shareButton.type = 'button';
         shareButton.className = 'btn btn-warning btn-sm mt-2 fw-semibold share-action-button';
         shareButton.textContent = 'Share this lookup';
         const shareUrl = createLookupShareUrl(searchGematria);
-        const shareImageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalShareOrigin());
-        shareImageUrl.searchParams.set('type', 'word');
-        shareImageUrl.searchParams.set('query', String(searchGematria.word || '').trim());
-        shareImageUrl.searchParams.set('total', String(searchGematria.gematria?.total ?? ''));
-        shareImageUrl.searchParams.set('digitalRoot', String(searchGematria.gematria?.digitalRoot ?? ''));
-        shareImageUrl.searchParams.set('isBaseRoot', String(Boolean(searchGematria.isBaseRoot)));
         shareButton.addEventListener('click', async () => {
+          const shareImageUrl = await createWordShareImageUrl(searchGematria);
           await sharePage({
             title: `Gematria lookup for ${searchGematria.word}`,
             text: formatCalculationSharePreview(searchGematria.word, searchGematria.gematria.total),
@@ -798,6 +844,8 @@ View results: ${shareUrl}`.trim(),
           ' (',
           createDigitalRootValueNode(searchGematria.gematria.digitalRoot, 'Digital Root: '),
           ') | ',
+          createDefinitionLink(searchGematria.word),
+          ' | ',
           createBaseRootLink(),
           ' ',
           createBaseRootValueNode(searchGematria.isBaseRoot),
@@ -852,12 +900,7 @@ View results: ${shareUrl}`.trim(),
         shareSearchButton.className = 'btn btn-warning btn-sm mt-2 fw-semibold share-action-button';
         shareSearchButton.textContent = 'Share results';
         shareSearchButton.addEventListener('click', async () => {
-          const shareImageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalShareOrigin());
-          shareImageUrl.searchParams.set('type', 'word');
-          shareImageUrl.searchParams.set('query', String(payload.query || '').trim());
-          shareImageUrl.searchParams.set('total', String(searchGematria.gematria?.total ?? ''));
-          shareImageUrl.searchParams.set('digitalRoot', String(searchGematria.gematria?.digitalRoot ?? ''));
-          shareImageUrl.searchParams.set('isBaseRoot', String(Boolean(searchGematria.isBaseRoot)));
+          const shareImageUrl = await createWordShareImageUrl(searchGematria);
           await sharePage({
             title: `Gematria related words for ${payload.query}`,
             text: formatCalculationSharePreview(payload.query, searchGematria.gematria.total),

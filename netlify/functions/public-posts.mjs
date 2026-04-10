@@ -31,29 +31,6 @@ export async function handler(event) {
     const limitValue = Number.parseInt(event.queryStringParameters?.limit || '', 10);
     const requestedLimit = Number.isFinite(limitValue) && limitValue > 0 ? Math.min(limitValue, 12) : null;
 
-    await sql`
-      UPDATE posts
-      SET
-        slider_image_url = image_url,
-        updated_at = NOW()
-      WHERE
-        COALESCE(NULLIF(BTRIM(slider_image_url), ''), NULL) IS NULL
-        AND COALESCE(NULLIF(BTRIM(image_url), ''), NULL) IS NOT NULL
-    `;
-
-    await sql`
-      UPDATE posts
-      SET
-        status = 'published',
-        published_at = COALESCE(published_at, scheduled_publish_at, NOW()),
-        scheduled_publish_at = NULL,
-        updated_at = NOW()
-      WHERE
-        COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
-        AND scheduled_publish_at IS NOT NULL
-        AND scheduled_publish_at <= NOW()
-    `;
-
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit, previewMode, slugFilter: slugFilter || null }),
       route: 'public-posts',
@@ -63,14 +40,28 @@ export async function handler(event) {
         if (featuredOnly && requestedLimit) {
           rows = await sql`
             SELECT * FROM posts
-            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND show_on_homepage = TRUE
+            WHERE (
+              COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+              OR (
+                COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
+                AND scheduled_publish_at IS NOT NULL
+                AND scheduled_publish_at <= NOW()
+              )
+            ) AND show_on_homepage = TRUE
             ORDER BY COALESCE(published_at, created_at) DESC
             LIMIT ${requestedLimit}
           `;
         } else if (featuredOnly) {
           rows = await sql`
             SELECT * FROM posts
-            WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' AND show_on_homepage = TRUE
+            WHERE (
+              COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+              OR (
+                COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
+                AND scheduled_publish_at IS NOT NULL
+                AND scheduled_publish_at <= NOW()
+              )
+            ) AND show_on_homepage = TRUE
             ORDER BY COALESCE(published_at, created_at) DESC
           `;
         } else if (requestedLimit) {
@@ -78,6 +69,11 @@ export async function handler(event) {
             SELECT * FROM posts
             WHERE (
               COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+              OR (
+                COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
+                AND scheduled_publish_at IS NOT NULL
+                AND scheduled_publish_at <= NOW()
+              )
               OR (${previewMode ? 1 : 0} = 1 AND COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft')
             )
               AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
@@ -89,6 +85,11 @@ export async function handler(event) {
             SELECT * FROM posts
             WHERE (
               COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
+              OR (
+                COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
+                AND scheduled_publish_at IS NOT NULL
+                AND scheduled_publish_at <= NOW()
+              )
               OR (${previewMode ? 1 : 0} = 1 AND COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft')
             )
               AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})

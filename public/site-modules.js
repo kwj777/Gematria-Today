@@ -8,6 +8,7 @@
     membership: true,
     wordnik_wotd_slider: true,
     blog_home_slider: true,
+    blog_home_featured_grid: true,
   });
 
   const STORAGE_KEY = 'endtimes.siteModules';
@@ -175,7 +176,7 @@
       ['gemabot', 'GemaBot'],
       ['news', 'News'],
       ['blog', 'Blog'],
-      ['membership', 'Membership'], ['wordnik_wotd_slider', 'Wordnik WOTD Slider'], ['blog_home_slider', 'Home Blog Slider'],
+      ['membership', 'Membership'], ['wordnik_wotd_slider', 'Wordnik WOTD Slider'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid'],
     ];
 
     const panel = existingPanel || document.createElement('div');

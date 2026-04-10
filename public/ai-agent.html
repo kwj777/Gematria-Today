@@ -822,6 +822,35 @@
         return window.location.protocol === 'https:' ? window.location.origin : `https://${window.location.host}`;
       }
 
+      async function downloadShareImage(shareImageUrlCandidate, filename) {
+        const response = await fetch(shareImageUrlCandidate);
+        if (!response.ok) {
+          throw new Error('Unable to download image right now. Please try again.');
+        }
+
+        const imageBlob = await response.blob();
+        const objectUrl = URL.createObjectURL(imageBlob);
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.href = objectUrl;
+        downloadAnchor.download = filename;
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        URL.revokeObjectURL(objectUrl);
+      }
+
+      function buildCalculatorImageUrl({ topic, total, root, isBaseRoot, definitionPreview, perLetterValues }) {
+        const imageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalOrigin());
+        imageUrl.searchParams.set('type', 'word');
+        imageUrl.searchParams.set('query', topic);
+        imageUrl.searchParams.set('total', String(total));
+        imageUrl.searchParams.set('digitalRoot', String(root));
+        imageUrl.searchParams.set('isBaseRoot', String(Boolean(isBaseRoot)));
+        imageUrl.searchParams.set('definitionPreview', definitionPreview || 'Definition preview unavailable.');
+        imageUrl.searchParams.set('perLetterValues', perLetterValues || 'No alphabetical letters detected.');
+        return imageUrl.toString();
+      }
+
       function buildAgentShareUrl({ topic, total, root }) {
         const shareUrl = new URL('/api/ai-agent-share', getCanonicalOrigin());
         shareUrl.searchParams.set('topic', topic);
@@ -1364,6 +1393,18 @@ View results: ${shareUrl}`.trim(),
                   >
                     Save "${escapeHtml(entry.target)}" to my dashboard
                   </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-warning agent-save-image-button ms-2"
+                    data-topic="${escapeHtml(entry.target)}"
+                    data-total="${entry.total}"
+                    data-root="${entry.root}"
+                    data-base-root="${entry.isBaseRoot ? 'true' : 'false'}"
+                    data-definition-preview="${escapeHtml(perWordDefinitionSummary || '')}"
+                    data-per-letter-values="${escapeHtml(entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.')}"
+                  >
+                    Save image
+                  </button>
                 </section>
               `;
               }).join('')}
@@ -1493,7 +1534,45 @@ View results: ${shareUrl}`.trim(),
         }
 
         const actionButton = event.target.closest('.agent-save-history-button');
-        if (!actionButton) return;
+        const saveImageButton = event.target.closest('.agent-save-image-button');
+        if (!actionButton && !saveImageButton) return;
+
+        if (saveImageButton) {
+          const topic = String(saveImageButton.dataset.topic || '').trim();
+          const total = Number(saveImageButton.dataset.total);
+          const root = Number(saveImageButton.dataset.root);
+          if (!topic || !Number.isFinite(total) || !Number.isFinite(root)) {
+            window.alert('Unable to prepare the image for this result right now.');
+            return;
+          }
+
+          const sanitizedWord = topic.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'lookup';
+          const definitionPreview = String(saveImageButton.dataset.definitionPreview || '').trim();
+          const perLetterValues = String(saveImageButton.dataset.perLetterValues || '').trim();
+          const isBaseRoot = String(saveImageButton.dataset.baseRoot || '').trim() === 'true';
+
+          saveImageButton.disabled = true;
+          const originalText = saveImageButton.textContent;
+          saveImageButton.textContent = 'Saving...';
+          try {
+            const shareImageUrl = buildCalculatorImageUrl({
+              topic,
+              total,
+              root,
+              isBaseRoot,
+              definitionPreview,
+              perLetterValues
+            });
+            await downloadShareImage(shareImageUrl, `gematria-${sanitizedWord}.svg`);
+            window.alert('Image downloaded.');
+          } catch (error) {
+            window.alert(error?.message || 'Unable to download image right now.');
+          } finally {
+            saveImageButton.disabled = false;
+            saveImageButton.textContent = originalText;
+          }
+          return;
+        }
 
         const meta = {
           topic: String(actionButton.dataset.topic || '').trim(),

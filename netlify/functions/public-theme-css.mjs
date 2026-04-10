@@ -1,5 +1,6 @@
 import { getSqlClient } from './_admin.mjs';
 import { getOptionalAuthenticatedSession, parseCookies } from './_auth.mjs';
+import { createHash } from 'node:crypto';
 
 function safeJsonParse(value, fallback = {}) {
   if (!value || typeof value !== 'string') {
@@ -88,15 +89,32 @@ export async function handler(event) {
     const cookies = parseCookies(event);
     const privatePreviewEnabled = cookies.private_theme_preview === '1';
     const isSuperAdmin = session?.user?.role === 'super_admin';
-    const catalog = isSuperAdmin && privatePreviewEnabled
+    const usingPrivatePreview = isSuperAdmin && privatePreviewEnabled;
+    const catalog = usingPrivatePreview
       ? normalizeThemeCatalog(safeJsonParse(settingMap.get('private_theme_catalog'), {}))
       : normalizeThemeCatalog(safeJsonParse(settingMap.get('theme_catalog'), {}));
     const css = buildCss(catalog, { includeCustomCss: shouldIncludeCustomCss(event) });
+    const etag = `"${createHash('sha1').update(css).digest('hex')}"`;
+    const ifNoneMatch = String(event?.headers?.['if-none-match'] || event?.headers?.['If-None-Match'] || '').trim();
+    if (!usingPrivatePreview && ifNoneMatch === etag) {
+      return {
+        statusCode: 304,
+        headers: {
+          etag,
+          'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+        },
+      };
+    }
+
     return {
       statusCode: 200,
       headers: {
         'content-type': 'text/css; charset=utf-8',
-        'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+        'cache-control': usingPrivatePreview
+          ? 'private, no-store'
+          : 'public, max-age=300, stale-while-revalidate=120',
+        vary: 'Cookie',
+        etag,
       },
       body: css,
     };

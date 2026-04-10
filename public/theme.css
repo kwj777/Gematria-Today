@@ -1,5 +1,3 @@
-@import url('/api/public-theme-css');
-
 /* Shared Bootstrap theme overrides */
 :root {
   --bs-primary: #355f8c;

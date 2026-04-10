@@ -1031,10 +1031,17 @@ footer.site-footer {
 
 
 .blog-home-featured-card {
+  display: flex;
+  flex-direction: column;
   background: rgba(255,255,255,0.94);
   border: 1px solid rgba(53, 65, 79, 0.08);
   border-radius: 1rem;
   box-shadow: 0 0.8rem 1.6rem rgba(63,64,58,.07);
+}
+
+.blog-home-featured-readmore {
+  margin-top: auto;
+  align-self: flex-start;
 }
 
 .blog-home-featured-image-frame {

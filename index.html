@@ -26,11 +26,11 @@
     <meta property="og:title" content="EndTimes.Today | Gematria Calculator, Name Meaning, News & Blog" />
     <meta property="og:description" content="Use EndTimes.Today to calculate English gematria values, compare names, explore related words, and read curated news and blog insights in one place." />
     <meta property="og:url" content="https://endtimes.today/" />
-    <meta property="og:image" content="https://endtimes.today/assets/why-english-gematria-backdrop-16x9.svg" />
+    <meta property="og:image" content="https://endtimes.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="EndTimes.Today | Gematria Calculator, Name Meaning, News & Blog" />
     <meta name="twitter:description" content="Use EndTimes.Today to calculate English gematria values, compare names, explore related words, and read curated news and blog insights in one place." />
-    <meta name="twitter:image" content="https://endtimes.today/assets/why-english-gematria-backdrop-16x9.svg" />
+    <meta name="twitter:image" content="https://endtimes.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" /></noscript>
     <style>
@@ -53,7 +53,7 @@
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="image" href="/assets/endtimes-logo-navbar.svg" type="image/svg+xml" fetchpriority="high" />
-    <link rel="preload" as="image" href="/assets/why-english-gematria-backdrop-16x9.svg" type="image/svg+xml" fetchpriority="high" />
+    <link rel="preload" as="image" href="/assets/why-english-gematria-backdrop-compact-16x9.svg" type="image/svg+xml" fetchpriority="high" />
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/conversion-tracking.js"></script>
     <script defer src="/site-modules.js"></script>
@@ -127,10 +127,10 @@
                     <a class="content-panel hero-selling-points-panel hero-why-gematria-link p-0 overflow-hidden h-100 text-decoration-none" href="/why-english-gematria.html" aria-label="Read Why English Gematria?">
                       <img
                         class="hero-selling-points-image"
-                        src="/assets/why-english-gematria-backdrop-16x9.svg"
+                        src="/assets/why-english-gematria-backdrop-compact-16x9.svg"
                         alt="Abstract geometric backdrop used behind the Why English Gematria card without wording."
-                        width="1600"
-                        height="900"
+                        width="1200"
+                        height="675"
                         loading="eager"
                         decoding="async"
                       />
@@ -162,8 +162,8 @@
                         class="hero-selling-points-image"
                         src="/assets/beast-identity-rev13-hero-16x9.svg"
                         alt="Symbolic beast-themed illustration used for eschatology content."
-                        width="1600"
-                        height="900"
+                        width="1200"
+                        height="675"
                         loading="lazy"
                         decoding="async"
                       />
@@ -196,8 +196,8 @@
                         class="hero-selling-points-image"
                         src="/assets/blog-hero-gematria.svg"
                         alt="Gematria calculation preview for Wordnik word of the day."
-                        width="1600"
-                        height="900"
+                        width="1200"
+                        height="675"
                         loading="lazy"
                         decoding="async"
                       />
@@ -331,6 +331,53 @@
         return `/${raw.replace(/^\.?\//, '')}`;
       };
 
+      const HOME_HERO_IMAGE_WIDTH = 1200;
+      const HOME_HERO_IMAGE_HEIGHT = 675;
+
+      const optimizeHomeHeroImageUrl = (value) => {
+        const raw = String(value ?? '').trim();
+        if (!raw) {
+          return '';
+        }
+        if (raw.startsWith('data:')) {
+          return raw;
+        }
+
+        const normalized = normalizePostImageUrl(raw);
+        if (!normalized || /\.svg($|[?#])/i.test(normalized)) {
+          return normalized;
+        }
+
+        try {
+          const candidate = new URL(normalized, window.location.origin);
+          const sourcePath = `${candidate.pathname}${candidate.search}`;
+          const optimized = new URL('/.netlify/images', window.location.origin);
+          optimized.searchParams.set('url', sourcePath);
+          optimized.searchParams.set('w', String(HOME_HERO_IMAGE_WIDTH));
+          optimized.searchParams.set('h', String(HOME_HERO_IMAGE_HEIGHT));
+          optimized.searchParams.set('fit', 'cover');
+          optimized.searchParams.set('fm', 'webp');
+          optimized.searchParams.set('q', '75');
+          return `${optimized.pathname}${optimized.search}`;
+        } catch (_error) {
+          return normalized;
+        }
+      };
+
+      const applyHomeHeroImageOptimization = (scope = document) => {
+        const images = Array.from(scope.querySelectorAll('#homeHeroCarousel img.hero-selling-points-image'));
+        images.forEach((img, index) => {
+          const optimizedSrc = optimizeHomeHeroImageUrl(img.getAttribute('src') || img.src || '');
+          if (optimizedSrc) {
+            img.setAttribute('src', optimizedSrc);
+          }
+          img.setAttribute('width', String(HOME_HERO_IMAGE_WIDTH));
+          img.setAttribute('height', String(HOME_HERO_IMAGE_HEIGHT));
+          img.setAttribute('decoding', 'async');
+          img.setAttribute('loading', index === 0 ? 'eager' : 'lazy');
+        });
+      };
+
       function renderHomepageFeaturedGrid(posts) {
         const spots = posts.slice(0, 6);
         const grid = document.getElementById('homeFeaturedPostsGrid');
@@ -442,21 +489,21 @@
         const letterBreakdown = letters.map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`).join(' · ') || 'No alphabetical letters';
         const previewText = String(definitionPreview || 'No definition preview available today.').slice(0, 220);
         const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#1e293b"/>
       <stop offset="100%" stop-color="#0f172a"/>
     </linearGradient>
   </defs>
-  <rect width="1600" height="900" fill="url(#bg)"/>
-  <text x="90" y="130" fill="#fbbf24" font-size="44" font-family="Arial, sans-serif" font-weight="700">Wordnik Word of the Day</text>
-  <text x="90" y="230" fill="#f8fafc" font-size="86" font-family="Arial, sans-serif" font-weight="800">${escapeHtml(String(word || 'Unknown'))}</text>
-  <text x="90" y="320" fill="#e2e8f0" font-size="42" font-family="Arial, sans-serif">Total: ${Number(total) || englishGematria(word)}</text>
-  <text x="520" y="320" fill="#e2e8f0" font-size="42" font-family="Arial, sans-serif">Digital root: ${Number(root) || digitalRoot(total)}</text>
-  <text x="90" y="390" fill="#93c5fd" font-size="30" font-family="Arial, sans-serif">${escapeHtml(letterBreakdown)}</text>
-  <foreignObject x="90" y="450" width="1420" height="320">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;color:#cbd5e1;font-size:34px;line-height:1.35;">${escapeHtml(previewText)}</div>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <text x="68" y="98" fill="#fbbf24" font-size="33" font-family="Arial, sans-serif" font-weight="700">Wordnik Word of the Day</text>
+  <text x="68" y="172" fill="#f8fafc" font-size="64" font-family="Arial, sans-serif" font-weight="800">${escapeHtml(String(word || 'Unknown'))}</text>
+  <text x="68" y="240" fill="#e2e8f0" font-size="32" font-family="Arial, sans-serif">Total: ${Number(total) || englishGematria(word)}</text>
+  <text x="390" y="240" fill="#e2e8f0" font-size="32" font-family="Arial, sans-serif">Digital root: ${Number(root) || digitalRoot(total)}</text>
+  <text x="68" y="292" fill="#93c5fd" font-size="23" font-family="Arial, sans-serif">${escapeHtml(letterBreakdown)}</text>
+  <foreignObject x="68" y="338" width="1064" height="240">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;color:#cbd5e1;font-size:26px;line-height:1.35;">${escapeHtml(previewText)}</div>
   </foreignObject>
 </svg>`;
         return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -504,7 +551,7 @@
           if (definition) definition.textContent = definitionPreview || 'Definition preview unavailable today.';
           if (overlayWord) overlayWord.textContent = word;
           if (overlayMeta) overlayMeta.textContent = `Total ${total} • Digital root ${root}`;
-          if (image) image.src = buildWotdGematriaSvgDataUri({ word, total, root, definitionPreview });
+          if (image) image.src = optimizeHomeHeroImageUrl(buildWotdGematriaSvgDataUri({ word, total, root, definitionPreview }));
           if (cardLink) cardLink.href = calculatorHref;
           if (definitionCta) definitionCta.href = definitionHref;
           if (calculatorCta) calculatorCta.href = calculatorHref;
@@ -517,9 +564,11 @@
       renderHomepageSlider([]);
       renderHomepageFeaturedGrid([]);
       renderHomeHeroIndicators();
+      applyHomeHeroImageOptimization();
       loadWordnikWordOfDayHero().finally(() => {
         window.EndTimesModules?.applyModuleVisibility?.();
         renderHomeHeroIndicators();
+        applyHomeHeroImageOptimization();
       });
 
       const fetchFeaturedPosts = async () => {

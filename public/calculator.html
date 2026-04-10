@@ -818,22 +818,58 @@ View results: ${shareUrl}`.trim(),
           return '';
         }
 
-        try {
-          const response = await fetch(`/api/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`, {
-            headers: { accept: 'application/json' },
-          });
-
-          if (!response.ok) {
-            return '';
+        const getDefinitionList = (payload) => {
+          if (Array.isArray(payload)) {
+            return payload;
           }
 
-          const payload = await response.json();
-          const definitions = Array.isArray(payload?.definitions) ? payload.definitions : [];
-          const firstDefinition = definitions.find((definition) => String(definition?.text || '').trim());
-          return stripHtmlTags(firstDefinition?.text || '');
+          if (Array.isArray(payload?.definitions)) {
+            return payload.definitions;
+          }
+
+          if (Array.isArray(payload?.data?.definitions)) {
+            return payload.data.definitions;
+          }
+
+          return [];
+        };
+
+        const extractDefinitionText = (definition) => String(
+          definition?.text
+          || definition?.definition
+          || definition?.display
+          || definition?.gloss
+          || ''
+        ).trim();
+
+        const endpoints = [
+          `/api/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+          `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+        ];
+
+        try {
+          for (const endpoint of endpoints) {
+            const response = await fetch(endpoint, {
+              headers: { accept: 'application/json' },
+            });
+
+            if (!response.ok) {
+              continue;
+            }
+
+            const payload = await response.json();
+            const definitions = getDefinitionList(payload);
+            const firstDefinition = definitions.find((definition) => extractDefinitionText(definition));
+            const preview = stripHtmlTags(extractDefinitionText(firstDefinition));
+            if (preview) {
+              return preview;
+            }
+          }
         } catch (error) {
           return '';
         }
+
+        return '';
       }
 
       async function createWordShareImageUrl(searchGematria) {

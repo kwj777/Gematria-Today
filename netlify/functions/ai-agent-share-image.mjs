@@ -64,12 +64,23 @@ function buildSvg({ topic, total, root, summaryLines }) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10233d" />
-      <stop offset="100%" stop-color="#274e75" />
+    <linearGradient id="bgBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1b31" />
+      <stop offset="58%" stop-color="#15355d" />
+      <stop offset="100%" stop-color="#244e78" />
     </linearGradient>
+    <radialGradient id="bgGlowLeft" cx="20%" cy="18%" r="62%">
+      <stop offset="0%" stop-color="rgba(113, 168, 255, 0.30)" />
+      <stop offset="100%" stop-color="rgba(113, 168, 255, 0)" />
+    </radialGradient>
+    <radialGradient id="bgGlowRight" cx="84%" cy="76%" r="58%">
+      <stop offset="0%" stop-color="rgba(255, 214, 110, 0.17)" />
+      <stop offset="100%" stop-color="rgba(255, 214, 110, 0)" />
+    </radialGradient>
   </defs>
-  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bg)" />
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bgBase)" />
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bgGlowLeft)" />
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bgGlowRight)" />
   <text x="80" y="120" fill="#f3f6fb" font-size="42" font-family="Arial, Helvetica, sans-serif" font-weight="700">
     English Gematria Lookup
   </text>

@@ -115,14 +115,25 @@ export default async (request) => {
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" viewBox="0 0 ${IMAGE_WIDTH} ${IMAGE_HEIGHT}">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10233d" />
-      <stop offset="100%" stop-color="#274e75" />
+    <linearGradient id="bgBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1b31" />
+      <stop offset="55%" stop-color="#15355d" />
+      <stop offset="100%" stop-color="#254f79" />
     </linearGradient>
+    <radialGradient id="bgGlowLeft" cx="18%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="rgba(113, 168, 255, 0.30)" />
+      <stop offset="100%" stop-color="rgba(113, 168, 255, 0)" />
+    </radialGradient>
+    <radialGradient id="bgGlowRight" cx="86%" cy="74%" r="58%">
+      <stop offset="0%" stop-color="rgba(255, 214, 110, 0.18)" />
+      <stop offset="100%" stop-color="rgba(255, 214, 110, 0)" />
+    </radialGradient>
   </defs>
-  <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
-  <rect x="700" y="365" width="440" height="64" rx="16" ry="16" fill="rgba(11, 23, 40, 0.72)" stroke="rgba(159, 193, 232, 0.8)" />
-  <text x="920" y="397" fill="#f4d77a" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle" dominant-baseline="middle">endtimes.today</text>
+  <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bgBase)" />
+  <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bgGlowLeft)" />
+  <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bgGlowRight)" />
+  <rect x="640" y="365" width="440" height="64" rx="16" ry="16" fill="rgba(11, 23, 40, 0.72)" stroke="rgba(159, 193, 232, 0.8)" />
+  <text x="860" y="397" fill="#f4d77a" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle" dominant-baseline="middle">endtimes.today</text>
   ${content}
 </svg>`;
 

@@ -851,6 +851,13 @@
         return imageUrl.toString();
       }
 
+      function buildCalculatorLookupUrl(topic) {
+        const lookupUrl = new URL('/calculator.html', getCanonicalOrigin());
+        lookupUrl.searchParams.set('query', topic);
+        lookupUrl.searchParams.set('source', 'ai_agent');
+        return lookupUrl.toString();
+      }
+
       function buildAgentShareUrl({ topic, total, root }) {
         const shareUrl = new URL('/api/ai-agent-share', getCanonicalOrigin());
         shareUrl.searchParams.set('topic', topic);
@@ -1405,6 +1412,18 @@ View results: ${shareUrl}`.trim(),
                   >
                     Save image
                   </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-info agent-share-image-button ms-2"
+                    data-topic="${escapeHtml(entry.target)}"
+                    data-total="${entry.total}"
+                    data-root="${entry.root}"
+                    data-base-root="${entry.isBaseRoot ? 'true' : 'false'}"
+                    data-definition-preview="${escapeHtml(perWordDefinitionSummary || '')}"
+                    data-per-letter-values="${escapeHtml(entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.')}"
+                  >
+                    Share
+                  </button>
                 </section>
               `;
               }).join('')}
@@ -1535,25 +1554,27 @@ View results: ${shareUrl}`.trim(),
 
         const actionButton = event.target.closest('.agent-save-history-button');
         const saveImageButton = event.target.closest('.agent-save-image-button');
-        if (!actionButton && !saveImageButton) return;
+        const shareImageButton = event.target.closest('.agent-share-image-button');
+        if (!actionButton && !saveImageButton && !shareImageButton) return;
 
-        if (saveImageButton) {
-          const topic = String(saveImageButton.dataset.topic || '').trim();
-          const total = Number(saveImageButton.dataset.total);
-          const root = Number(saveImageButton.dataset.root);
+        if (saveImageButton || shareImageButton) {
+          const imageActionButton = saveImageButton || shareImageButton;
+          const topic = String(imageActionButton.dataset.topic || '').trim();
+          const total = Number(imageActionButton.dataset.total);
+          const root = Number(imageActionButton.dataset.root);
           if (!topic || !Number.isFinite(total) || !Number.isFinite(root)) {
             window.alert('Unable to prepare the image for this result right now.');
             return;
           }
 
           const sanitizedWord = topic.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'lookup';
-          const definitionPreview = String(saveImageButton.dataset.definitionPreview || '').trim();
-          const perLetterValues = String(saveImageButton.dataset.perLetterValues || '').trim();
-          const isBaseRoot = String(saveImageButton.dataset.baseRoot || '').trim() === 'true';
+          const definitionPreview = String(imageActionButton.dataset.definitionPreview || '').trim();
+          const perLetterValues = String(imageActionButton.dataset.perLetterValues || '').trim();
+          const isBaseRoot = String(imageActionButton.dataset.baseRoot || '').trim() === 'true';
 
-          saveImageButton.disabled = true;
-          const originalText = saveImageButton.textContent;
-          saveImageButton.textContent = 'Saving...';
+          imageActionButton.disabled = true;
+          const originalText = imageActionButton.textContent;
+          imageActionButton.textContent = saveImageButton ? 'Saving...' : 'Sharing...';
           try {
             const shareImageUrl = buildCalculatorImageUrl({
               topic,
@@ -1563,13 +1584,24 @@ View results: ${shareUrl}`.trim(),
               definitionPreview,
               perLetterValues
             });
-            await downloadShareImage(shareImageUrl, `gematria-${sanitizedWord}.svg`);
-            window.alert('Image downloaded.');
+            if (saveImageButton) {
+              await downloadShareImage(shareImageUrl, `gematria-${sanitizedWord}.svg`);
+              window.alert('Image downloaded.');
+            } else {
+              const calculatorLookupUrl = buildCalculatorLookupUrl(topic);
+              const shareText = `Gematria for "${topic}": total ${total}, digital root ${root}.`;
+              await sharePage({
+                title: `Gematria for ${topic}`,
+                text: shareText,
+                url: calculatorLookupUrl,
+                imageUrl: shareImageUrl
+              }, calculatorLookupUrl);
+            }
           } catch (error) {
-            window.alert(error?.message || 'Unable to download image right now.');
+            window.alert(error?.message || (saveImageButton ? 'Unable to download image right now.' : 'Unable to share image right now.'));
           } finally {
-            saveImageButton.disabled = false;
-            saveImageButton.textContent = originalText;
+            imageActionButton.disabled = false;
+            imageActionButton.textContent = originalText;
           }
           return;
         }

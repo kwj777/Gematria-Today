@@ -2,6 +2,10 @@ import { getSqlClient } from './_admin.mjs';
 import { getOptionalAuthenticatedSession, parseCookies } from './_auth.mjs';
 import { createHash } from 'node:crypto';
 
+const BOOTSWATCH_IMPORT_PATTERN = /@import\s+url\((['"]?)(https:\/\/cdn\.jsdelivr\.net\/npm\/bootswatch@5\.3\.3\/dist\/[\w-]+\/bootstrap\.min\.css(?:\?[^'"\)]*)?)\1\)\s*;?/gi;
+const GOOGLE_FONTS_IMPORT_PATTERN = /@import\s+url\((['"]?)https:\/\/fonts\.googleapis\.com\/[^'"\)]*\1\)\s*;?/gi;
+const bootswatchCssCache = new Map();
+
 function safeJsonParse(value, fallback = {}) {
   if (!value || typeof value !== 'string') {
     return fallback;
@@ -52,6 +56,57 @@ function buildCss(catalog, { includeCustomCss = true } = {}) {
   ].filter(Boolean).join('\n');
 }
 
+async function fetchBootswatchCss(url) {
+  if (bootswatchCssCache.has(url)) {
+    return bootswatchCssCache.get(url);
+  }
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'user-agent': 'Gematria public-theme-css' },
+    });
+    if (!response.ok) {
+      return null;
+    }
+
+    const css = await response.text();
+    bootswatchCssCache.set(url, css);
+    return css;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveRemoteThemeImports(cssText) {
+  const customCss = String(cssText || '').trim();
+  if (!customCss) {
+    return '';
+  }
+
+  const imports = [...customCss.matchAll(BOOTSWATCH_IMPORT_PATTERN)];
+  if (!imports.length) {
+    return customCss;
+  }
+
+  let resolvedCss = customCss;
+  for (const match of imports) {
+    const fullImport = match[0];
+    const importUrl = match[2];
+    const downloadedCss = await fetchBootswatchCss(importUrl);
+    if (!downloadedCss) {
+      continue;
+    }
+
+    const sanitizedCss = downloadedCss.replace(GOOGLE_FONTS_IMPORT_PATTERN, '').trim();
+    resolvedCss = resolvedCss.replace(
+      fullImport,
+      `/* Inlined remote Bootswatch theme (${importUrl}) */\n${sanitizedCss}`,
+    );
+  }
+
+  return resolvedCss;
+}
+
 function shouldIncludeCustomCss(event) {
   const referer = String(event?.headers?.referer || event?.headers?.Referer || '').trim();
   if (!referer) {
@@ -93,7 +148,11 @@ export async function handler(event) {
     const catalog = usingPrivatePreview
       ? normalizeThemeCatalog(safeJsonParse(settingMap.get('private_theme_catalog'), {}))
       : normalizeThemeCatalog(safeJsonParse(settingMap.get('theme_catalog'), {}));
-    const css = buildCss(catalog, { includeCustomCss: shouldIncludeCustomCss(event) });
+    const includeCustomCss = shouldIncludeCustomCss(event);
+    let css = buildCss(catalog, { includeCustomCss });
+    if (includeCustomCss) {
+      css = await resolveRemoteThemeImports(css);
+    }
     const etag = `"${createHash('sha1').update(css).digest('hex')}"`;
     const ifNoneMatch = String(event?.headers?.['if-none-match'] || event?.headers?.['If-None-Match'] || '').trim();
     if (!usingPrivatePreview && ifNoneMatch === etag) {

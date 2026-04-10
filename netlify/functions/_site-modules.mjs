@@ -6,6 +6,7 @@ export const DEFAULT_SITE_MODULES = Object.freeze({
   blog: true,
   membership: true,
   wordnik_wotd_slider: true,
+  blog_home_slider: true,
 });
 
 export const DEFAULT_SITE_ORIGIN = 'https://endtimes.today';

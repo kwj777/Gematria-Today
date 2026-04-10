@@ -112,7 +112,9 @@ body {
 }
 
 .hero-panel {
-  background: linear-gradient(135deg, rgba(53, 95, 140, 0.98), rgba(51, 161, 214, 0.92));
+  background:
+    radial-gradient(circle at 10% 14%, rgba(255, 212, 77, 0.24) 0%, rgba(255, 212, 77, 0) 40%),
+    linear-gradient(135deg, rgba(17, 44, 75, 0.98) 0%, rgba(43, 94, 143, 0.96) 48%, rgba(49, 141, 184, 0.94) 100%);
   color: #fff;
   border-radius: 1.5rem;
 }

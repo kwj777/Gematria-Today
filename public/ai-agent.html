@@ -674,8 +674,8 @@
         const removeTranscriptUiLines = (text) => String(text || '')
           .replace(/\bSave to (?:my|membership) dashboard\b/gi, '')
           .replace(/\bSave "[^"\n]+" to my dashboard\b/gi, '')
-          .replace(/\bOpen calculator search for\s+"[^"\n]*"/gi, '')
-          .replace(/\bDictionary lookup page for\s+"[^"\n]*"(?:\s+—\s+Preview:[^\n]*)?/gi, '')
+          .replace(/\b(?:Open calculator search for|Calculator search for)\s+"[^"\n]*"/gi, '')
+          .replace(/\b(?:Dictionary lookup page for|Dictionary page for)\s+"[^"\n]*"(?:\s+—\s+Preview:[^\n]*)?/gi, '')
           .replace(/\bRun at least 3 semantic neighbors and compare both full totals and digital roots\./gi, '')
           .replace(
             /(Detected calculation targets?:\s*[^\n]+)\s+(For\s+(?:"[^"\n]+"|[^,\n]+),\s+here\s+is\s+the\s+current\s+gematria\s+snapshot:)/gi,
@@ -1341,8 +1341,8 @@ View results: ${shareUrl}`.trim(),
                   ${allWordReports.length > 1 ? `
                     <p class="mb-2"><strong>Suggested next lookups for "${escapeHtml(entry.target)}"</strong></p>
                     <ul class="mb-2">
-                      <li><a href="/definition?word=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Dictionary lookup page for "${escapeHtml(entry.target)}"</a>${perWordDefinitionSummary ? ` — Preview: ${escapeHtml(perWordDefinitionSummary.slice(0, 180))}${perWordDefinitionSummary.length > 180 ? '…' : ''}` : ''}</li>
-                      <li><a href="/calculator.html?query=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(entry.target)}"</a></li>
+                      <li><a href="/definition?word=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(entry.target)}"</a>${perWordDefinitionSummary ? ` — Preview: ${escapeHtml(perWordDefinitionSummary.slice(0, 180))}${perWordDefinitionSummary.length > 180 ? '…' : ''}` : ''}</li>
+                      <li><a href="/calculator.html?query=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Calculator search for "${escapeHtml(entry.target)}"</a></li>
                       <li>
                         Related words lookup:
                         ${perWordRelatedWordsWithTotals.length ? `
@@ -1381,8 +1381,8 @@ View results: ${shareUrl}`.trim(),
             <hr />
             <p class="mb-2"><strong>Suggested next lookups</strong></p>
             <ul class="mb-0">
-              <li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary lookup page for "${escapeHtml(topic)}"</a>${definitionSummary ? ` — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}` : ''}</li>
-              <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Open calculator search for "${escapeHtml(topic)}"</a></li>
+              <li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(topic)}"</a>${definitionSummary ? ` — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}` : ''}</li>
+              <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Calculator search for "${escapeHtml(topic)}"</a></li>
               <li>
                 Related words lookup:
                 ${relatedWordsWithTotals.length ? `

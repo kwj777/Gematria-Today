@@ -6,6 +6,7 @@
     news: true,
     blog: true,
     membership: true,
+    wordnik_wotd_slider: true,
   });
 
   const STORAGE_KEY = 'endtimes.siteModules';
@@ -173,7 +174,7 @@
       ['gemabot', 'GemaBot'],
       ['news', 'News'],
       ['blog', 'Blog'],
-      ['membership', 'Membership'],
+      ['membership', 'Membership'], ['wordnik_wotd_slider', 'Wordnik WOTD Slider'],
     ];
 
     const panel = existingPanel || document.createElement('div');

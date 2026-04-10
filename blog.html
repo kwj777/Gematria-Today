@@ -192,13 +192,6 @@
                   </form>
                 </div>
               </div>
-              <p id="blogFilterSummary" class="small text-muted mb-3"></p>
-              <div id="blogSidebarLinks" class="d-grid gap-3 async-content-shell async-content-shell--md" aria-live="polite">
-                <article class="blog-mini-link news-placeholder-panel">
-                  <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-10"></span></p>
-                  <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-6"></span></p>
-                </article>
-              </div>
             </aside>
           </div>
           <div class="col-lg-8">
@@ -885,20 +878,6 @@
         renderTagFilters(latestPosts);
 
         const filteredPosts = getVisiblePosts();
-        document.getElementById('blogFilterSummary').innerHTML = selectedTag
-          ? `Showing <strong>${filteredPosts.length}</strong> post${filteredPosts.length === 1 ? '' : 's'} tagged <strong>${escapeHtml(selectedTag)}</strong>.`
-          : `Showing all <strong>${filteredPosts.length}</strong> posts.`;
-
-        document.getElementById('blogSidebarLinks').innerHTML = filteredPosts.map((post) => {
-          const plainSummary = escapeHtml(post.summary || '');
-          return `
-          <a class="blog-mini-link text-decoration-none" href="/blog/${encodeURIComponent(post.slug)}">
-            <strong class="d-block mb-1">${escapeHtml(post.title)}</strong>
-            <span class="text-muted small">${plainSummary}</span>
-          </a>`;
-        }).join('');
-        document.getElementById('blogSidebarLinks').classList.toggle('blog-sidebar-links--scrollable', filteredPosts.length > 1);
-
         const postMarkup = filteredPosts.map((post) => {
           const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
           const bodyLinkResult = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);

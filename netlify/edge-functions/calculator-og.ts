@@ -34,6 +34,8 @@ export default async (req: Request, context: Context) => {
   const total = String(requestUrl.searchParams.get('total') || '').trim();
   const digitalRoot = String(requestUrl.searchParams.get('digitalRoot') || '').trim();
   const isBaseRoot = String(requestUrl.searchParams.get('isBaseRoot') || '').trim();
+  const definitionPreview = String(requestUrl.searchParams.get('definitionPreview') || '').trim();
+  const perLetterValues = String(requestUrl.searchParams.get('perLetterValues') || '').trim();
 
   const response = await context.next();
   let html = await response.text();
@@ -60,6 +62,12 @@ export default async (req: Request, context: Context) => {
   }
   if (isBaseRoot) {
     imageUrl.searchParams.set('isBaseRoot', isBaseRoot);
+  }
+  if (definitionPreview) {
+    imageUrl.searchParams.set('definitionPreview', definitionPreview);
+  }
+  if (perLetterValues) {
+    imageUrl.searchParams.set('perLetterValues', perLetterValues);
   }
 
   html = html.replace(/(<title[^>]*>)[^<]*(<\/title>)/, `$1${escapeAttr(title)}$2`);

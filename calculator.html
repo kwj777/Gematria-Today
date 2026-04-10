@@ -209,6 +209,24 @@ const lookupForm = document.querySelector('#lookup-form');
         return `${getCanonicalShareOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
       }
 
+      async function downloadShareImage(shareImageUrlCandidate, filename) {
+        const shareImageUrl = toCanonicalShareUrl(shareImageUrlCandidate);
+        const response = await fetch(shareImageUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('Unable to download image right now. Please try again.');
+        }
+
+        const imageBlob = await response.blob();
+        const objectUrl = URL.createObjectURL(imageBlob);
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.href = objectUrl;
+        downloadAnchor.download = filename;
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        URL.revokeObjectURL(objectUrl);
+      }
+
       function createLookupShareUrl(searchGematria, shareImageCandidate = null) {
         const shareUrl = new URL('/calculator.html', getCanonicalShareOrigin());
         shareUrl.searchParams.set('query', String(searchGematria.word || '').trim());
@@ -849,6 +867,20 @@ View results: ${shareUrl}`.trim(),
             imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
           });
         });
+        const downloadImageButton = document.createElement('button');
+        downloadImageButton.type = 'button';
+        downloadImageButton.className = 'btn btn-outline-warning btn-sm mt-2 ms-2 fw-semibold share-action-button';
+        downloadImageButton.textContent = 'Download image';
+        downloadImageButton.addEventListener('click', async () => {
+          try {
+            const shareImageUrl = await createWordShareImageUrl(searchGematria);
+            const sanitizedWord = String(searchGematria.word || 'lookup').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'lookup';
+            await downloadShareImage(shareImageUrl.toString(), `gematria-${sanitizedWord}.svg`);
+            setShareStatus('Image downloaded.');
+          } catch (error) {
+            setShareStatus(error?.message || 'Unable to download image right now.');
+          }
+        });
 
         gematriaResult.textContent = '';
         gematriaResult.append(
@@ -867,7 +899,8 @@ View results: ${shareUrl}`.trim(),
           createPerLetterValuesNode(searchGematria.word),
           document.createElement('br'),
           document.createElement('br'),
-          shareButton
+          shareButton,
+          downloadImageButton
         );
       }
 
@@ -922,7 +955,21 @@ View results: ${shareUrl}`.trim(),
             imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
           });
         });
-        meta.append(document.createElement('br'), shareSearchButton);
+        const downloadResultsImageButton = document.createElement('button');
+        downloadResultsImageButton.type = 'button';
+        downloadResultsImageButton.className = 'btn btn-outline-warning btn-sm mt-2 ms-2 fw-semibold share-action-button';
+        downloadResultsImageButton.textContent = 'Download image';
+        downloadResultsImageButton.addEventListener('click', async () => {
+          try {
+            const shareImageUrl = await createWordShareImageUrl(searchGematria);
+            const sanitizedQuery = String(payload.query || 'results').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'results';
+            await downloadShareImage(shareImageUrl.toString(), `gematria-results-${sanitizedQuery}.svg`);
+            setShareStatus('Image downloaded.');
+          } catch (error) {
+            setShareStatus(error?.message || 'Unable to download image right now.');
+          }
+        });
+        meta.append(document.createElement('br'), shareSearchButton, downloadResultsImageButton);
         relatedWordsResult.appendChild(meta);
 
         const disclaimer = document.createElement('p');

@@ -234,7 +234,7 @@
 .word-of-day-spotlight {
   border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: 1.25rem;
-  background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.2), rgba(15, 23, 42, 0.95) 55%), linear-gradient(140deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.95));
+  background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.3), rgba(30, 64, 112, 0.78) 55%), linear-gradient(140deg, rgba(37, 99, 175, 0.72), rgba(15, 23, 42, 0.82));
   color: #f8fafc;
   box-shadow: 0 1.5rem 3rem rgba(15, 23, 42, 0.35);
 }
@@ -245,7 +245,7 @@
   border: 1px solid rgba(148, 163, 184, 0.4);
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(15, 23, 42, 0.4);
   width: 100%;
   max-width: 640px;
   aspect-ratio: 16 / 9;
@@ -267,7 +267,7 @@
   flex-direction: column;
   gap: 0.4rem;
   padding: 1.25rem;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.05), rgba(15, 23, 42, 0.9));
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.72));
   color: #f8fafc;
 }
 

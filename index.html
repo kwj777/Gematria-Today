@@ -211,7 +211,6 @@
                   decoding="async"
                 />
                 <span class="word-of-day-spotlight__overlay">
-                  <span class="word-of-day-spotlight__word" id="homeWordnikWotdOverlayWord">Word of the day</span>
                   <span class="word-of-day-spotlight__meta" id="homeWordnikWotdOverlayMeta">Daily gematria total and digital root update automatically.</span>
                   <span class="btn btn-warning btn-sm" aria-hidden="true">See in calculator</span>
                 </span>
@@ -538,7 +537,6 @@
 
           const title = document.getElementById('homeWordnikWotdTitle');
           const definition = document.getElementById('homeWordnikWotdDefinition');
-          const overlayWord = document.getElementById('homeWordnikWotdOverlayWord');
           const overlayMeta = document.getElementById('homeWordnikWotdOverlayMeta');
           const image = document.getElementById('homeWordnikWotdImage');
           const cardLink = document.getElementById('homeWordnikWotdCardLink');
@@ -547,7 +545,6 @@
 
           if (title) title.textContent = `${word}: daily gematria calculation`;
           if (definition) definition.textContent = definitionPreview || 'Definition preview unavailable today.';
-          if (overlayWord) overlayWord.textContent = word;
           if (overlayMeta) overlayMeta.textContent = `Total ${total} • Digital root ${root}`;
           if (image) image.src = optimizeHomeHeroImageUrl(buildWotdGematriaSvgDataUri({ word, total, root, definitionPreview }));
           if (cardLink) cardLink.href = calculatorHref;

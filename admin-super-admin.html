@@ -69,9 +69,6 @@
           <p class="text-info-emphasis small mb-2"><strong>Status is saved upon switching toggles.</strong></p>
           <p class="text-muted small mb-3">Note: these switches are global and do not create super-admin-only module access.</p>
           <form id="siteModulesForm" class="row g-3"></form>
-          <div class="d-flex justify-content-end mt-3">
-            <button id="saveSiteModulesButton" class="btn btn-outline-primary" type="button">Save module switches</button>
-          </div>
           <hr class="my-4">
           <div>
             <p class="section-kicker mb-1">Personal preview</p>
@@ -169,7 +166,6 @@
       const sessionMeta = document.getElementById('sessionMeta');
       const superAdminPanel = document.getElementById('superAdminPanel');
       const siteModulesForm = document.getElementById('siteModulesForm');
-      const saveSiteModulesButton = document.getElementById('saveSiteModulesButton');
       const saveMessage = document.getElementById('saveMessage');
       const errorMessage = document.getElementById('errorMessage');
       const globalBootswatchThemeSelect = document.getElementById('globalBootswatchThemeSelect');
@@ -329,7 +325,7 @@
         }
       }
 
-      saveSiteModulesButton?.addEventListener('click', async () => {
+      async function saveSiteModules() {
         clearMessage(errorMessage);
         clearMessage(saveMessage);
         const nextModules = { ...DEFAULT_SITE_MODULES };
@@ -362,6 +358,12 @@
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to save site module switches.');
         }
+      }
+
+      siteModulesForm?.addEventListener('change', async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || !target.matches('[data-site-module]')) return;
+        await saveSiteModules();
       });
 
       saveGlobalBootswatchThemeButton?.addEventListener('click', async () => {

@@ -231,6 +231,53 @@
   width: fit-content;
 }
 
+.word-of-day-spotlight {
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 1.25rem;
+  background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.2), rgba(15, 23, 42, 0.95) 55%), linear-gradient(140deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.95));
+  color: #f8fafc;
+  box-shadow: 0 1.5rem 3rem rgba(15, 23, 42, 0.35);
+}
+
+.word-of-day-spotlight__card {
+  display: block;
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.55);
+  min-height: 100%;
+}
+
+.word-of-day-spotlight__image {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  max-height: 320px;
+  object-fit: cover;
+}
+
+.word-of-day-spotlight__overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.05), rgba(15, 23, 42, 0.9));
+  color: #f8fafc;
+}
+
+.word-of-day-spotlight__word {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.word-of-day-spotlight__meta {
+  font-size: 0.95rem;
+  color: rgba(226, 232, 240, 0.92);
+}
+
 @media (max-height: 480px) and (orientation: landscape) {
   .hero-selling-points-image {
     min-height: 170px;

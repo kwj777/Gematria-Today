@@ -177,40 +177,6 @@
                 </div>
               </section>
             </div>
-            <div class="carousel-item" data-module="wordnik_wotd_slider">
-              <section class="hero-panel hero-panel--compact p-4 p-lg-5">
-                <div class="row align-items-center g-4">
-                  <div class="col-lg-7">
-                    <p class="section-kicker mb-2">Wordnik Word of the Day</p>
-                    <h2 id="homeWordnikWotdTitle" class="display-5 fw-bold mb-3">Daily gematria spotlight is loading…</h2>
-                    <p id="homeWordnikWotdDefinition" class="lead mb-4">Fetching today's Wordnik word and calculation preview.</p>
-                    <div class="d-flex flex-wrap gap-2">
-                      <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning btn-lg touch-target-lg" href="/definition" target="_blank" rel="noopener noreferrer">Open full definition</a>
-                      <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html" target="_blank" rel="noopener noreferrer">Open in calculator</a>
-                    </div>
-                  </div>
-                  <div class="col-lg-5">
-                    <a id="homeWordnikWotdCardLink" class="content-panel hero-selling-points-panel hero-why-gematria-link p-0 overflow-hidden h-100 text-decoration-none" href="/calculator.html" target="_blank" rel="noopener noreferrer" aria-label="Open Wordnik word of the day in calculator">
-                      <img
-                        id="homeWordnikWotdImage"
-                        class="hero-selling-points-image"
-                        src="/assets/blog-hero-gematria.svg"
-                        alt="Gematria calculation preview for Wordnik word of the day."
-                        width="1200"
-                        height="675"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <span class="hero-why-gematria-overlay">
-                        <span class="hero-why-gematria-title" id="homeWordnikWotdOverlayWord">Word of the day</span>
-                        <span class="hero-why-gematria-excerpt" id="homeWordnikWotdOverlayMeta">Daily gematria total and digital root update automatically.</span>
-                        <span class="btn btn-warning btn-sm hero-why-gematria-readmore" aria-hidden="true">Read more</span>
-                      </span>
-                    </a>
-                  </div>
-                </div>
-              </section>
-            </div>
           </div>
           <button class="carousel-control-prev" type="button" data-bs-target="#homeHeroCarousel" data-bs-slide="prev">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -220,6 +186,38 @@
             <span class="carousel-control-next-icon" aria-hidden="true"></span>
             <span class="visually-hidden">Next</span>
           </button>
+        </section>
+        <section class="word-of-day-spotlight p-4 p-lg-5 mb-5" data-module="wordnik_wotd_slider">
+          <div class="row g-4 align-items-center">
+            <div class="col-lg-7">
+              <p class="section-kicker text-warning-emphasis mb-2">Wordnik Word of the Day</p>
+              <h2 id="homeWordnikWotdTitle" class="display-6 fw-bold mb-3">Daily gematria spotlight is loading…</h2>
+              <p id="homeWordnikWotdDefinition" class="lead mb-4">Fetching today's Wordnik word and calculation preview.</p>
+              <div class="d-flex flex-wrap gap-2">
+                <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning btn-lg touch-target-lg" href="/definition" target="_blank" rel="noopener noreferrer">Open full definition</a>
+                <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html" target="_blank" rel="noopener noreferrer">Open in calculator</a>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <a id="homeWordnikWotdCardLink" class="word-of-day-spotlight__card p-0 overflow-hidden h-100 text-decoration-none" href="/calculator.html" target="_blank" rel="noopener noreferrer" aria-label="Open Wordnik word of the day in calculator">
+                <img
+                  id="homeWordnikWotdImage"
+                  class="word-of-day-spotlight__image"
+                  src="/assets/blog-hero-gematria.svg"
+                  alt="Gematria calculation preview for Wordnik word of the day."
+                  width="1200"
+                  height="675"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="word-of-day-spotlight__overlay">
+                  <span class="word-of-day-spotlight__word" id="homeWordnikWotdOverlayWord">Word of the day</span>
+                  <span class="word-of-day-spotlight__meta" id="homeWordnikWotdOverlayMeta">Daily gematria total and digital root update automatically.</span>
+                  <span class="btn btn-warning btn-sm" aria-hidden="true">See in calculator</span>
+                </span>
+              </a>
+            </div>
+          </div>
         </section>
 
         <section class="content-panel p-4 p-lg-5 mb-5 d-none" data-module="blog_home_slider">

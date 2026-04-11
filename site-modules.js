@@ -83,6 +83,19 @@
   });
 
   const MODULE_LINK_HIDDEN_FLAG = 'moduleLinkHidden';
+  const MODULE_PRELOAD_HIDDEN_FLAG = 'modulePreloadHidden';
+
+  const hideModuleElementsUntilSettingsLoad = () => {
+    document.querySelectorAll('[data-module]').forEach((element) => {
+      if (element.classList.contains('d-none')) {
+        return;
+      }
+
+      element.classList.add('d-none');
+      element.dataset[MODULE_PRELOAD_HIDDEN_FLAG] = '1';
+      element.setAttribute('aria-hidden', 'true');
+    });
+  };
 
   const applyModuleLinkVisibility = () => {
     document.querySelectorAll('[data-module-link-hidden="true"]').forEach((element) => {
@@ -144,6 +157,9 @@
 
       if (shouldShow) {
         element.classList.remove('d-none');
+        if (element.dataset[MODULE_PRELOAD_HIDDEN_FLAG] === '1') {
+          delete element.dataset[MODULE_PRELOAD_HIDDEN_FLAG];
+        }
         element.removeAttribute('aria-hidden');
         if (hideMode === 'disable' && 'disabled' in element) {
           element.disabled = false;
@@ -153,6 +169,9 @@
 
       element.classList.add('d-none');
       element.setAttribute('aria-hidden', 'true');
+      if (element.dataset[MODULE_PRELOAD_HIDDEN_FLAG] === '1') {
+        delete element.dataset[MODULE_PRELOAD_HIDDEN_FLAG];
+      }
       if (hideMode === 'disable' && 'disabled' in element) {
         element.disabled = true;
       }
@@ -287,11 +306,15 @@
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      applyModuleVisibility();
-      applyModuleSettings().catch(() => {});
+      hideModuleElementsUntilSettingsLoad();
+      applyModuleSettings().catch(() => {
+        applyModuleVisibility();
+      });
     }, { once: true });
   } else {
-    applyModuleVisibility();
-    applyModuleSettings().catch(() => {});
+    hideModuleElementsUntilSettingsLoad();
+    applyModuleSettings().catch(() => {
+      applyModuleVisibility();
+    });
   }
 })();

@@ -830,6 +830,16 @@
         return window.location.protocol === 'https:' ? window.location.origin : `https://${window.location.host}`;
       }
 
+      function toShareImageAssetUrl(urlCandidate) {
+        const source = String(urlCandidate || '').trim();
+        if (!source || /^data:image\//i.test(source)) {
+          return source;
+        }
+        const absoluteUrl = new URL(source, getCanonicalOrigin()).toString();
+        const encoded = encodeURIComponent(absoluteUrl);
+        return `${getCanonicalOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
+      }
+
       async function downloadShareImage(shareImageUrlCandidate, filename) {
         const response = await fetch(shareImageUrlCandidate);
         if (!response.ok) {
@@ -1586,7 +1596,7 @@ View results: ${shareUrl}`.trim(),
               perLetterValues
             });
             if (saveImageButton) {
-              await downloadShareImage(shareImageUrl, `gematria-${sanitizedWord}.svg`);
+              await downloadShareImage(toShareImageAssetUrl(shareImageUrl), `gematria-${sanitizedWord}.jpg`);
               window.alert('Image downloaded.');
             } else {
               const agentShareUrl = buildAgentShareUrl({ topic, total, root });

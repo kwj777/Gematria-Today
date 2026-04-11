@@ -1,37 +1,3 @@
-/* Shared Bootstrap theme overrides */
-:root {
-  --bs-primary: #355f8c;
-  --bs-primary-rgb: 53,95,140;
-  --bs-secondary: #9a958b;
-  --bs-secondary-rgb: 154,149,139;
-  --bs-success: #97c93c;
-  --bs-success-rgb: 151,201,60;
-  --bs-info: #33a1d6;
-  --bs-info-rgb: 51,161,214;
-  --bs-warning: #ff7c35;
-  --bs-warning-rgb: 255,124,53;
-  --bs-danger: #dc4f4a;
-  --bs-danger-rgb: 220,79,74;
-  --bs-light: #f8f5ef;
-  --bs-light-rgb: 248,245,239;
-  --bs-dark: #3f403a;
-  --bs-dark-rgb: 63,64,58;
-  --app-cream: #f8f5ef;
-  --app-ink: #35414f;
-  --app-muted: #6d7278;
-}
-
-body {
-  min-height: 100vh;
-  color: var(--app-ink);
-  background: linear-gradient(180deg, #fcfbf8 0%, #f2efe8 100%);
-}
-
-:root[data-bs-theme="dark"] body {
-  color: #e6ebf2;
-  background: linear-gradient(180deg, #161c24 0%, #10151d 100%);
-}
-
 .navbar-brand { letter-spacing: 0.04em; }
 
 .nav-search-link {

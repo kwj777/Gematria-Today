@@ -432,6 +432,16 @@ const form = document.querySelector('#name-form');
         return imageUrl;
       }
 
+      function toShareImageAssetUrl(urlCandidate) {
+        const source = String(urlCandidate || '').trim();
+        if (!source || /^data:image\//i.test(source)) {
+          return source;
+        }
+        const absoluteUrl = toCanonicalShareUrl(source);
+        const encoded = encodeURIComponent(absoluteUrl);
+        return `${getCanonicalShareOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
+      }
+
       async function downloadShareImage(shareImageUrlCandidate, filename) {
         const shareImageUrl = toCanonicalShareUrl(shareImageUrlCandidate);
         const response = await fetch(shareImageUrl, { cache: 'no-store' });
@@ -723,7 +733,7 @@ View results: ${shareUrl}`.trim(),
           downloadImageButton.addEventListener('click', async () => {
             try {
               const shareImageUrl = createNameShareImageUrl(names, successfulTotals);
-              await downloadShareImage(shareImageUrl.toString(), 'name-calculator-comparison.svg');
+              await downloadShareImage(toShareImageAssetUrl(shareImageUrl.toString()), 'name-calculator-comparison.jpg');
               statusNode.textContent = 'Comparison image downloaded.';
             } catch (error) {
               statusNode.textContent = error?.message || 'Unable to download image right now.';

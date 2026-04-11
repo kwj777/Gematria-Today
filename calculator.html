@@ -919,7 +919,7 @@ View results: ${shareUrl}`.trim(),
           try {
             const shareImageUrl = await createWordShareImageUrl(searchGematria);
             const sanitizedWord = String(searchGematria.word || 'lookup').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'lookup';
-            await downloadShareImage(shareImageUrl.toString(), `gematria-${sanitizedWord}.svg`);
+            await downloadShareImage(toShareImageAssetUrl(shareImageUrl.toString()), `gematria-${sanitizedWord}.jpg`);
             setShareStatus('Image downloaded.');
           } catch (error) {
             setShareStatus(error?.message || 'Unable to download image right now.');

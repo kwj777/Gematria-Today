@@ -6,6 +6,42 @@ const BOOTSWATCH_IMPORT_PATTERN = /@import\s+url\((['"]?)(https:\/\/cdn\.jsdeliv
 const GOOGLE_FONTS_IMPORT_PATTERN = /@import\s+url\((['"]?)https:\/\/fonts\.googleapis\.com\/[^'"\)]*\1\)\s*;?/gi;
 const bootswatchCssCache = new Map();
 
+
+const DEFAULT_BOOTSTRAP_THEME_CSS = `/* Active theme: Bootstrap default */
+:root {
+  --bs-primary: #355f8c;
+  --bs-primary-rgb: 53,95,140;
+  --bs-secondary: #9a958b;
+  --bs-secondary-rgb: 154,149,139;
+  --bs-success: #97c93c;
+  --bs-success-rgb: 151,201,60;
+  --bs-info: #33a1d6;
+  --bs-info-rgb: 51,161,214;
+  --bs-warning: #ff7c35;
+  --bs-warning-rgb: 255,124,53;
+  --bs-danger: #dc4f4a;
+  --bs-danger-rgb: 220,79,74;
+  --bs-light: #f8f5ef;
+  --bs-light-rgb: 248,245,239;
+  --bs-dark: #3f403a;
+  --bs-dark-rgb: 63,64,58;
+  --app-cream: #f8f5ef;
+  --app-ink: #35414f;
+  --app-muted: #6d7278;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--app-ink);
+  background: linear-gradient(180deg, #fcfbf8 0%, #f2efe8 100%);
+}
+
+:root[data-bs-theme="dark"] body {
+  color: #e6ebf2;
+  background: linear-gradient(180deg, #161c24 0%, #10151d 100%);
+}`;
+
+
 function safeJsonParse(value, fallback = {}) {
   if (!value || typeof value !== 'string') {
     return fallback;
@@ -40,7 +76,7 @@ function normalizeThemeCatalog(input = {}) {
 function buildCss(catalog, { includeCustomCss = true } = {}) {
   const active = catalog.presets.find((preset) => preset.slug === catalog.activeThemeSlug);
   if (!active) {
-    return '/* Active theme: default */\n';
+    return `${DEFAULT_BOOTSTRAP_THEME_CSS}\n`;
   }
 
   const variableEntries = Object.entries(active.variables || {})

@@ -7,7 +7,7 @@ const GOOGLE_FONTS_IMPORT_PATTERN = /@import\s+url\((['"]?)https:\/\/fonts\.goog
 const bootswatchCssCache = new Map();
 
 
-const DEFAULT_BOOTSTRAP_THEME_CSS = `/* Active theme: Bootstrap default */
+const BASE_BOOTSTRAP_THEME_CSS = `/* Base Bootstrap theme tokens */
 :root {
   --bs-primary: #355f8c;
   --bs-primary-rgb: 53,95,140;
@@ -76,7 +76,7 @@ function normalizeThemeCatalog(input = {}) {
 function buildCss(catalog, { includeCustomCss = true } = {}) {
   const active = catalog.presets.find((preset) => preset.slug === catalog.activeThemeSlug);
   if (!active) {
-    return `${DEFAULT_BOOTSTRAP_THEME_CSS}\n`;
+    return `${BASE_BOOTSTRAP_THEME_CSS}\n`;
   }
 
   const variableEntries = Object.entries(active.variables || {})
@@ -86,6 +86,7 @@ function buildCss(catalog, { includeCustomCss = true } = {}) {
     : '';
   const customCss = includeCustomCss ? String(active.customCss || '').trim() : '';
   return [
+    BASE_BOOTSTRAP_THEME_CSS,
     `/* Active theme: ${escapeCssComment(active.name || active.slug)} (${escapeCssComment(active.slug)}) */`,
     variablesBlock,
     customCss,

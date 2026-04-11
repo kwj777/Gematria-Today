@@ -7,7 +7,7 @@
     blog: true,
     membership: true,
     wordnik_wotd_slider: true,
-    blog_home_slider: true,
+    blog_home_slider: false,
     blog_home_featured_grid: true,
   });
 

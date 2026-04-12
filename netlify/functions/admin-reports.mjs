@@ -297,7 +297,6 @@ export async function handler(event) {
           FROM request_audit_log
           WHERE created_at >= NOW() - ${windowInterval}::interval
             AND route NOT LIKE 'admin-%'
-            AND route NOT LIKE 'member-%'
             AND route <> 'security-retention'
             AND (
               COALESCE(metadata->>'clientType', '') = 'human'
@@ -412,7 +411,6 @@ export async function handler(event) {
         FROM request_audit_log
         WHERE created_at >= NOW() - ${windowInterval}::interval
           AND route NOT LIKE 'admin-%'
-          AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
           AND (
             COALESCE(metadata->>'clientType', '') = 'human'
@@ -433,7 +431,6 @@ export async function handler(event) {
         FROM request_audit_log
         WHERE created_at >= NOW() - ${windowInterval}::interval
           AND route NOT LIKE 'admin-%'
-          AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
           AND (
             COALESCE(metadata->>'clientType', '') = 'human'

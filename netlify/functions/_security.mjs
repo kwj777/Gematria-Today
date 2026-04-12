@@ -226,6 +226,7 @@ export async function logRequestAudit(sql, source, { route, action, outcome, met
 function getVisitorLocationMetadata(source) {
   const headers = source?.headers || {};
   const getHeader = (name) => headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || '';
+  const userAgent = String(getHeader('user-agent') || '').trim();
   const normalizedCountry = normalizeGeoValue(
     getHeader('x-country')
       || getHeader('cf-ipcountry')
@@ -249,6 +250,10 @@ function getVisitorLocationMetadata(source) {
   if (normalizedCountry) locationMetadata.country = normalizedCountry;
   if (normalizedRegion) locationMetadata.region = normalizedRegion;
   if (normalizedCity) locationMetadata.city = normalizedCity;
+  if (userAgent) {
+    locationMetadata.userAgent = userAgent.slice(0, 512);
+    locationMetadata.clientType = isAutomatedUserAgent(userAgent) ? 'automation' : 'human';
+  }
   return locationMetadata;
 }
 
@@ -257,6 +262,10 @@ function normalizeGeoValue(value) {
   const normalized = String(value).trim();
   if (!normalized || normalized.toLowerCase() === 'unknown') return '';
   return normalized;
+}
+
+function isAutomatedUserAgent(userAgent) {
+  return /(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse)/i.test(String(userAgent || ''));
 }
 
 export function securityHeaders(extraHeaders = {}) {

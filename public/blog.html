@@ -530,6 +530,25 @@
           return null;
         }
       };
+
+      const reportButtonEvent = (action, metadata = {}) => {
+        const normalizedAction = String(action || '').trim().toLowerCase();
+        if (!normalizedAction) {
+          return;
+        }
+        fetch('/api/public-button-report', {
+          method: 'POST',
+          credentials: 'same-origin',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            route: window.location.pathname,
+            action: normalizedAction,
+            metadata,
+          }),
+        }).catch(() => {});
+      };
+
       const fetchShareImageFile = async (post) => {
         const heroImageUrl = toAbsolutePostAssetUrl(post.heroImageUrl || post.imageUrl || post.backgroundImageUrl || post.sliderImageUrl) || getDefaultBlogHeroImageUrl();
         if (!heroImageUrl || /^data:image\//i.test(heroImageUrl)) {
@@ -962,6 +981,7 @@
           const slug = String(shareButton.dataset.sharePost || '').trim().toLowerCase();
           const post = latestPosts.find((entry) => entry.slug.toLowerCase() === slug);
           if (post) {
+            reportButtonEvent('share_button_click', { source: 'blog_post_card', slug: post.slug });
             shareBlogPost(post).catch(() => {});
           }
           return;

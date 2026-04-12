@@ -885,6 +885,25 @@
         return imageUrl.toString();
       }
 
+
+      function reportButtonEvent(action, metadata = {}) {
+        const normalizedAction = String(action || '').trim().toLowerCase();
+        if (!normalizedAction) {
+          return;
+        }
+        fetch('/api/public-button-report', {
+          method: 'POST',
+          credentials: 'same-origin',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            route: window.location.pathname,
+            action: normalizedAction,
+            metadata,
+          }),
+        }).catch(() => {});
+      }
+
       async function fetchShareImageFile(imageUrl) {
         try {
           const response = await fetch(imageUrl);
@@ -1596,9 +1615,11 @@ View results: ${shareUrl}`.trim(),
               perLetterValues
             });
             if (saveImageButton) {
+              reportButtonEvent('image_download', { source: 'ai_agent_lookup' });
               await downloadShareImage(toShareImageAssetUrl(shareImageUrl), `gematria-${sanitizedWord}.jpg`);
               window.alert('Image downloaded.');
             } else {
+              reportButtonEvent('share_button_click', { source: 'ai_agent_lookup' });
               const agentShareUrl = buildAgentShareUrl({ topic, total, root });
               const shareText = `Gematria for "${topic}": total ${total}, digital root ${root}.`;
               await sharePage({

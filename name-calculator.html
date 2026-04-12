@@ -442,6 +442,25 @@ const form = document.querySelector('#name-form');
         return `${getCanonicalShareOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
       }
 
+
+      function reportButtonEvent(action, metadata = {}) {
+        const normalizedAction = String(action || '').trim().toLowerCase();
+        if (!normalizedAction) {
+          return;
+        }
+        fetch('/api/public-button-report', {
+          method: 'POST',
+          credentials: 'same-origin',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            route: window.location.pathname,
+            action: normalizedAction,
+            metadata,
+          }),
+        }).catch(() => {});
+      }
+
       async function downloadShareImage(shareImageUrlCandidate, filename) {
         const shareImageUrl = toCanonicalShareUrl(shareImageUrlCandidate);
         const response = await fetch(shareImageUrl, { cache: 'no-store' });
@@ -718,6 +737,7 @@ View results: ${shareUrl}`.trim(),
           shareAllButton.textContent = 'Share comparison';
           shareAllButton.setAttribute('aria-label', 'Share this comparison');
           shareAllButton.addEventListener('click', async () => {
+            reportButtonEvent('share_button_click', { source: 'name_calculator_comparison' });
             await shareUrl({
               title: `Name calculator comparison: ${names.join(', ')}`,
               text: 'Compare these gematria name results.',
@@ -731,6 +751,7 @@ View results: ${shareUrl}`.trim(),
           downloadImageButton.textContent = 'Download image';
           downloadImageButton.setAttribute('aria-label', 'Download the share image for this comparison');
           downloadImageButton.addEventListener('click', async () => {
+            reportButtonEvent('image_download', { source: 'name_calculator_comparison' });
             try {
               const shareImageUrl = createNameShareImageUrl(names, successfulTotals);
               await downloadShareImage(toShareImageAssetUrl(shareImageUrl.toString()), 'name-calculator-comparison.jpg');

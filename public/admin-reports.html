@@ -186,6 +186,11 @@
           <div id="publicTrafficSummary" class="mb-3"></div>
           <div id="publicPageViews" class="d-grid gap-2"></div>
         </section>
+
+        <section class="content-panel p-4">
+          <h2 class="h5 mb-3">Button / action click stats</h2>
+          <div id="buttonStats" class="d-grid gap-2"></div>
+        </section>
       </div>
     </main>
 
@@ -439,6 +444,35 @@
         });
       }
 
+      function renderButtonStats(rows) {
+        const target = document.getElementById('buttonStats');
+        if (!rows || !rows.length) {
+          target.innerHTML = '<p class="on-light-muted small mb-0">No button/action click stats available for this window.</p>';
+          return;
+        }
+
+        const maxClicks = Math.max(...rows.map((row) => Number(row.clicks || 0)), 1);
+        target.innerHTML = rows.map((row) => {
+          const clicks = Number(row.clicks || 0);
+          const uniqueVisitors = Number(row.uniqueVisitors || 0);
+          const barWidth = Math.max(2, Math.round((clicks / maxClicks) * 100));
+          const label = `${row.route} · ${row.action}`;
+          const lastClicked = row.lastClickedAt ? new Date(row.lastClickedAt).toLocaleString() : 'Unknown';
+          return `
+            <article class="border rounded p-2">
+              <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+                <p class="mb-0"><strong>${escapeHtml(label)}</strong></p>
+                <p class="mb-0 small">Clicks: <strong>${formatNumber(clicks)}</strong> · Unique visitors: <strong>${formatNumber(uniqueVisitors)}</strong></p>
+              </div>
+              <div class="progress report-bar mb-1" role="img" aria-label="${escapeHtml(label)} clicks ${clicks}">
+                <div class="progress-bar bg-warning text-dark" style="width: ${barWidth}%"></div>
+              </div>
+              <p class="small on-light-muted mb-0">Last clicked: ${escapeHtml(lastClicked)}</p>
+            </article>
+          `;
+        }).join('');
+      }
+
       function renderConversionFunnel(funnel) {
         const target = document.getElementById('conversionFunnel');
         if (!funnel) {
@@ -507,6 +541,7 @@
         renderCoverage(reports);
         renderConversionFunnel(reports.conversionFunnel);
         renderPublicPageViews(reports.publicPageViews, reports.publicTrafficSummary);
+        renderButtonStats(reports.buttonStats);
         renderSecurityEvents(reports.securityEvents);
 
         const generated = new Date(reports.generatedAt).toLocaleString();

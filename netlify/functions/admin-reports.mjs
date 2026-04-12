@@ -125,7 +125,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -398,6 +398,22 @@ export async function handler(event) {
           AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
       `,
+      sql`
+        SELECT
+          route,
+          action,
+          COUNT(*)::int AS clicks,
+          COUNT(DISTINCT request_fingerprint)::int AS unique_visitors,
+          MAX(created_at) AS last_clicked_at
+        FROM request_audit_log
+        WHERE created_at >= NOW() - ${windowInterval}::interval
+          AND route NOT LIKE 'admin-%'
+          AND route NOT LIKE 'member-%'
+          AND route <> 'security-retention'
+        GROUP BY route, action
+        ORDER BY clicks DESC, unique_visitors DESC, route ASC, action ASC
+        LIMIT 50
+      `,
     ]);
 
     const overview = overviewRows[0] || {};
@@ -502,6 +518,13 @@ export async function handler(event) {
         totalRequests: Number(publicTrafficSummary.total_requests || 0),
         uniqueVisitors: Number(publicTrafficSummary.unique_visitors || 0),
       },
+      buttonStats: buttonStatsRows.map((row) => ({
+        route: row.route,
+        action: row.action,
+        clicks: Number(row.clicks || 0),
+        uniqueVisitors: Number(row.unique_visitors || 0),
+        lastClickedAt: toIsoDate(row.last_clicked_at),
+      })),
       securityEvents: securityRows.map((row) => ({
         route: row.route,
         action: row.action,

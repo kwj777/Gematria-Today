@@ -13,7 +13,7 @@ const MONITORED_ROUTE_CONFIG = [
   { route: 'wordnikDefinition', apiPath: '/definition', threshold: Number.parseInt(process.env.ALERT_WORDNIK_DEFINITION_SPIKE_5M || '120', 10) },
   { route: 'wordnikRelatedWords', apiPath: '/api/wordnikRelatedWords', threshold: Number.parseInt(process.env.ALERT_WORDNIK_RELATED_WORDS_SPIKE_5M || '80', 10) },
 ];
-const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse)';
+const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
 
 function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
@@ -254,7 +254,13 @@ export async function handler(event) {
           WHERE created_at >= conversion_window.starts_at
             AND route NOT LIKE 'admin-%'
             AND route <> 'security-retention'
-            AND COALESCE(metadata->>'clientType', 'human') <> 'automation'
+            AND (
+              COALESCE(metadata->>'clientType', '') = 'human'
+              OR (
+                COALESCE(metadata->>'clientType', '') = ''
+                AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
+              )
+            )
             AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
         ),
         free_memberships AS (
@@ -293,7 +299,13 @@ export async function handler(event) {
             AND route NOT LIKE 'admin-%'
             AND route NOT LIKE 'member-%'
             AND route <> 'security-retention'
-            AND COALESCE(metadata->>'clientType', 'human') <> 'automation'
+            AND (
+              COALESCE(metadata->>'clientType', '') = 'human'
+              OR (
+                COALESCE(metadata->>'clientType', '') = ''
+                AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
+              )
+            )
             AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
         ),
         route_totals AS (
@@ -402,7 +414,13 @@ export async function handler(event) {
           AND route NOT LIKE 'admin-%'
           AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
-          AND COALESCE(metadata->>'clientType', 'human') <> 'automation'
+          AND (
+            COALESCE(metadata->>'clientType', '') = 'human'
+            OR (
+              COALESCE(metadata->>'clientType', '') = ''
+              AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
+            )
+          )
           AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
       `,
       sql`
@@ -417,7 +435,13 @@ export async function handler(event) {
           AND route NOT LIKE 'admin-%'
           AND route NOT LIKE 'member-%'
           AND route <> 'security-retention'
-          AND COALESCE(metadata->>'clientType', 'human') <> 'automation'
+          AND (
+            COALESCE(metadata->>'clientType', '') = 'human'
+            OR (
+              COALESCE(metadata->>'clientType', '') = ''
+              AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
+            )
+          )
           AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
         GROUP BY route, action
         ORDER BY clicks DESC, unique_visitors DESC, route ASC, action ASC

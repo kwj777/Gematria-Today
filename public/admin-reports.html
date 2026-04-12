@@ -146,27 +146,6 @@
         </section>
 
         <section class="row g-4">
-          <div class="col-lg-4">
-            <div class="content-panel p-4 h-100">
-              <h2 class="h5 mb-3">Membership levels</h2>
-              <div id="membershipBreakdown" class="d-grid gap-3"></div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="content-panel p-4 h-100">
-              <h2 class="h5 mb-3">Task status</h2>
-              <div id="taskBreakdown" class="d-grid gap-3"></div>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="content-panel p-4 h-100">
-              <h2 class="h5 mb-3">Top post tags</h2>
-              <div id="topTags" class="d-grid gap-2"></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="row g-4">
           <div class="col-lg-6">
             <div class="content-panel p-4 h-100">
               <h2 class="h5 mb-3">Coverage and inventory</h2>
@@ -535,9 +514,6 @@
         renderOverviewCards(reports.overview);
         renderBars('signupTrend', reports.memberSignupsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
         renderBars('postTrend', reports.publishedPostsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
-        renderBars('membershipBreakdown', reports.membershipsByLevel, 'total', 'level');
-        renderBars('taskBreakdown', reports.taskStatusBreakdown, 'total', 'status');
-        renderBars('topTags', reports.topTags.map((row) => ({ ...row, tag: `#${row.tag}` })), 'total', 'tag');
         renderCoverage(reports);
         renderConversionFunnel(reports.conversionFunnel);
         renderPublicPageViews(reports.publicPageViews, reports.publicTrafficSummary);

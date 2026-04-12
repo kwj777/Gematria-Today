@@ -217,6 +217,25 @@ const lookupForm = document.querySelector('#lookup-form');
         return `${getCanonicalShareOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
       }
 
+
+      function reportButtonEvent(action, metadata = {}) {
+        const normalizedAction = String(action || '').trim().toLowerCase();
+        if (!normalizedAction) {
+          return;
+        }
+        fetch('/api/public-button-report', {
+          method: 'POST',
+          credentials: 'same-origin',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            route: window.location.pathname,
+            action: normalizedAction,
+            metadata,
+          }),
+        }).catch(() => {});
+      }
+
       async function downloadShareImage(shareImageUrlCandidate, filename) {
         const shareImageUrl = toCanonicalShareUrl(shareImageUrlCandidate);
         const response = await fetch(shareImageUrl, { cache: 'no-store' });
@@ -902,6 +921,7 @@ View results: ${shareUrl}`.trim(),
         shareButton.className = 'btn btn-warning btn-sm mt-2 fw-semibold share-action-button';
         shareButton.textContent = 'Share this lookup';
         shareButton.addEventListener('click', async () => {
+          reportButtonEvent('share_button_click', { source: 'calculator_lookup' });
           const shareImageUrl = await createWordShareImageUrl(searchGematria);
           const shareUrl = createLookupShareUrl(searchGematria, shareImageUrl);
           await sharePage({
@@ -916,6 +936,7 @@ View results: ${shareUrl}`.trim(),
         downloadImageButton.className = 'btn btn-outline-warning btn-sm mt-2 ms-2 fw-semibold share-action-button';
         downloadImageButton.textContent = 'Download image';
         downloadImageButton.addEventListener('click', async () => {
+          reportButtonEvent('image_download', { source: 'calculator_lookup' });
           try {
             const shareImageUrl = await createWordShareImageUrl(searchGematria);
             const sanitizedWord = String(searchGematria.word || 'lookup').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'lookup';

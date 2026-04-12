@@ -146,13 +146,7 @@
         </section>
 
         <section class="row g-4">
-          <div class="col-lg-6">
-            <div class="content-panel p-4 h-100">
-              <h2 class="h5 mb-3">Coverage and inventory</h2>
-              <div id="coverageSummary" class="d-grid gap-3"></div>
-            </div>
-          </div>
-          <div class="col-lg-6">
+          <div class="col-12">
             <div class="content-panel p-4 h-100">
               <h2 class="h5 mb-3">Recent security problems</h2>
               <div id="securityEvents" class="d-grid gap-2"></div>
@@ -318,21 +312,6 @@
         target.querySelectorAll('[data-overview-key]').forEach((element) => {
           element.addEventListener('click', () => openOverviewDetail(element.getAttribute('data-overview-key')));
         });
-      }
-
-      function renderCoverage(reports) {
-        const { faqCoverage, feedCoverage } = reports;
-        const target = document.getElementById('coverageSummary');
-        target.innerHTML = `
-          <div class="report-card">
-            <p class="muted-label mb-1">FAQ coverage</p>
-            <p class="mb-0">Published: <strong>${formatNumber(faqCoverage.published)}</strong> · Unpublished: <strong>${formatNumber(faqCoverage.unpublished)}</strong> · Total: <strong>${formatNumber(faqCoverage.total)}</strong></p>
-          </div>
-          <div class="report-card">
-            <p class="muted-label mb-1">Feed inventory</p>
-            <p class="mb-0">Active: <strong>${formatNumber(feedCoverage.active)}</strong> · Inactive: <strong>${formatNumber(feedCoverage.inactive)}</strong> · Total: <strong>${formatNumber(feedCoverage.total)}</strong></p>
-          </div>
-        `;
       }
 
       function renderSecurityEvents(rows) {
@@ -514,7 +493,6 @@
         renderOverviewCards(reports.overview);
         renderBars('signupTrend', reports.memberSignupsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
         renderBars('postTrend', reports.publishedPostsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
-        renderCoverage(reports);
         renderConversionFunnel(reports.conversionFunnel);
         renderPublicPageViews(reports.publicPageViews, reports.publicTrafficSummary);
         renderButtonStats(reports.buttonStats);

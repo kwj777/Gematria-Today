@@ -218,7 +218,7 @@
             <form id="loginForm" class="row g-3">
               <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" required /></div>
               <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" required /></div>
-              <div class="col-12 d-grid"><button class="btn btn-outline-primary" type="submit">Sign in</button></div>
+              <div class="col-12 d-grid"><button id="loginSubmitButton" class="btn btn-outline-primary" type="submit">Sign in</button></div>
               <div class="col-12 text-center">
                 <a class="link-primary text-decoration-none" href="/account-recovery.html">Forgot username/password</a>
               </div>
@@ -2280,9 +2280,22 @@
         setAuthView('login', { updateUrl: true });
       });
 
-      document.getElementById('loginForm').addEventListener('submit', async (event) => {
+      const loginForm = document.getElementById('loginForm');
+      const loginSubmitButton = document.getElementById('loginSubmitButton');
+      const loginSubmitButtonDefaultLabel = loginSubmitButton?.textContent || 'Sign in';
+      const setLoginSubmittingState = (isSubmitting) => {
+        if (!loginSubmitButton) {
+          return;
+        }
+        loginSubmitButton.disabled = Boolean(isSubmitting);
+        loginSubmitButton.textContent = isSubmitting ? 'Signing in… Please wait' : loginSubmitButtonDefaultLabel;
+      };
+
+      loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAlert();
+        setLoginSubmittingState(true);
+        showAlert('Signing in and loading your dashboard. This can take a few seconds…', 'info');
         try {
           session = await request('/api/member-login', {
             method: 'POST',
@@ -2317,6 +2330,8 @@
           await loadMemberChatbotFeedback();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
+        } finally {
+          setLoginSubmittingState(false);
         }
       });
 

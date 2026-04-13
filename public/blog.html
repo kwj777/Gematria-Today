@@ -804,12 +804,12 @@
         latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
         const detailViewActive = Boolean(requestedPostSlug);
-        const previewTargetPost = requestedPostSlug && previewModeActive
+        const requestedTargetPost = requestedPostSlug
           ? latestPosts.find((post) => String(post.slug || '').toLowerCase() === requestedPostSlug.toLowerCase())
           : null;
         latestPosts = latestPosts.filter((post) => {
-          if (previewTargetPost) {
-            return String(post.slug || '').toLowerCase() === String(previewTargetPost.slug || '').toLowerCase();
+          if (requestedTargetPost) {
+            return String(post.slug || '').toLowerCase() === String(requestedTargetPost.slug || '').toLowerCase();
           }
           if (previewModeActive) {
             return true;
@@ -822,9 +822,9 @@
         const postMarkup = filteredPosts.map((post) => {
           const preRenderedBodyHtml = String(post.renderedBodyHtml || '').trim();
           const summaryText = String(post.summary || '').trim();
-          const readMoreHref = `/blog/${encodeURIComponent(post.slug)}`;
+          const readMoreHref = `/blog.html?preview=true&post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
           const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/name-calculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a> · <a class="news-inline-link" href="/blog.html">More Blog Posts</a></p>`;
-          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p><p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}" data-expand-post="${escapeHtml(post.slug)}">${expandedPostSlugs.has(post.slug) ? 'Show less' : 'Read more...'}</a></p>`;
+          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p><p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}" data-expand-post="${escapeHtml(post.slug)}" target="_blank" rel="noopener noreferrer">${expandedPostSlugs.has(post.slug) ? 'Show less' : 'Read more...'}</a></p>`;
           const expandedBodyHtml = `${listSummaryHtml}${preRenderedBodyHtml || normalizePostBodyHtml(post.body || '')}${fallbackRelatedLinks}`;
           const bodyHtml = detailViewActive
             ? `${preRenderedBodyHtml || normalizePostBodyHtml(post.body || '')}${fallbackRelatedLinks}`
@@ -1038,9 +1038,11 @@
           if (previewNotice) {
             previewNotice.classList.toggle('d-none', !previewModeActive);
           }
-          const mergedPosts = mergeWithFallbackPosts(loadedPublishedPosts);
-          selectedTag = getRequestedTag();
           const hasRequestedPost = Boolean(getRequestedPostSlug());
+          const mergedPosts = hasRequestedPost
+            ? mergeUniquePosts(loadedPublishedPosts)
+            : mergeWithFallbackPosts(loadedPublishedPosts);
+          selectedTag = getRequestedTag();
           const fallbackSet = previewModeActive || hasRequestedPost ? [] : fallbackPosts;
           renderPosts(mergedPosts.length ? mergedPosts : fallbackSet);
           updateLoadMoreControl();

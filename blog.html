@@ -1109,7 +1109,7 @@
       };
 
       const renderPostsPromise = checkAdminSession()
-        .finally(() => fetchPublishedPosts())
+        .then(() => fetchPublishedPosts())
         .then((payload) => {
           const publishedItems = Array.isArray(payload?.items) ? payload.items : [];
           previewModeActive = Boolean(payload?.previewMode);

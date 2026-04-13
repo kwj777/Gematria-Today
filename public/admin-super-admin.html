@@ -273,7 +273,7 @@
       }
 
       function renderSiteModules() {
-        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Wordnik WOTD Slider'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
+        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
         const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
         siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `
           <div class="col-md-6 col-xl-4">

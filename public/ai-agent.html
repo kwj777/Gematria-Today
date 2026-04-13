@@ -203,6 +203,7 @@
         authenticated: false,
         membershipLevel: ''
       };
+      let pendingRelatedWordsSuggestionTopic = '';
       const AGENT_LEARNING_KEY = 'gematriaAgentLearnedResponses.v1';
       const DEFAULT_LEARNINGS = {
         entries: []
@@ -524,6 +525,65 @@
         if (/\bsame context\b/.test(normalizedPrompt)) return 'same-context';
         if (/\brelated words?\b/.test(normalizedPrompt)) return 'synonym';
         return 'synonym';
+      }
+
+      function isAffirmativePrompt(prompt) {
+        const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
+        if (!normalizedPrompt) return false;
+        return /^(?:yes|yep|yeah|sure|ok|okay|please do|go ahead|do it|sounds good|that works|absolutely|affirmative)\b/.test(normalizedPrompt);
+      }
+
+      function extractRelatedWordsCalculationTarget(prompt) {
+        const normalizedPrompt = normalizeCandidate(prompt);
+        if (!normalizedPrompt) return '';
+
+        const quotedTargets = extractQuotedTargets(normalizedPrompt);
+        if (quotedTargets.length) {
+          return quotedTargets[0];
+        }
+
+        const directTargetMatch = normalizedPrompt.match(
+          /\b(?:calculate|show|find|get|lookup|look up|run)\s+(?:the\s+)?(?:related words?|synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context)\b(?:\s+(?:for|of))?\s+([A-Za-z][A-Za-z' -]*)/i,
+        );
+        if (directTargetMatch) {
+          return normalizeCandidate(directTargetMatch[1]).replace(/[?.!,;:]+$/g, '');
+        }
+
+        const wordnikTarget = extractWordnikLookupWord(normalizedPrompt);
+        return wordnikTarget || '';
+      }
+
+      async function buildRelatedWordsCalculationReply(word, relationshipType = 'synonym', sourceLabel = '') {
+        const relationshipLabel = relationshipType.replace('-', ' ');
+        const relatedWords = await fetchRelatedWordsSummary(word, relationshipType);
+        const relatedWordsWithTotals = relatedWords.map((entry) => {
+          const total = englishGematria(entry);
+          return {
+            word: entry,
+            total,
+            root: digitalRoot(total),
+            isBaseRoot: isBaseRootTotal(total)
+          };
+        });
+
+        pendingRelatedWordsSuggestionTopic = '';
+
+        return `
+          <p class="mb-2"><strong>${sourceLabel || 'Related words calculation'} for "${escapeHtml(word)}"</strong></p>
+          ${relatedWordsWithTotals.length
+            ? `
+              <p class="mb-2">Here are the ${escapeHtml(relationshipLabel)} results with gematria totals:</p>
+              <ul class="mb-2">
+                ${relatedWordsWithTotals.map((entry) => `<li><strong>${escapeHtml(entry.word)}</strong> → total ${entry.total}, digital root ${entry.root}, base-root ${entry.isBaseRoot ? 'Yes' : 'No'}</li>`).join('')}
+              </ul>
+              <p class="mb-0">Click any result for a quick full lookup:</p>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                ${relatedWordsWithTotals.map((entry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(entry.word)}">${escapeHtml(entry.word)}</button>`).join('')}
+              </div>
+            `
+            : `<p class="mb-0">I could not find ${escapeHtml(relationshipLabel)} results for <strong>${escapeHtml(word)}</strong> right now. Please try again in a moment.</p>`
+          }
+        `;
       }
 
       function buildMemberAccessLinks(normalizedPrompt) {
@@ -1226,6 +1286,20 @@ View results: ${shareUrl}`.trim(),
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
         const gematriaValueLookupMatch = normalizedPrompt.match(/\b(?:gematria\s+value|value|number|calculation)\s*(?:of|for|=|is)?\s*(\d+)\b/i);
+        const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
+        const explicitRelatedWordsTarget = extractRelatedWordsCalculationTarget(normalizedPrompt);
+
+        if (explicitRelatedWordsTarget && /\b(?:related words?|synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context)\b/i.test(normalizedPrompt)) {
+          return buildRelatedWordsCalculationReply(explicitRelatedWordsTarget, relationshipType);
+        }
+
+        if (isAffirmativePrompt(normalizedPrompt) && pendingRelatedWordsSuggestionTopic) {
+          return buildRelatedWordsCalculationReply(
+            pendingRelatedWordsSuggestionTopic,
+            'synonym',
+            'Great — running that now'
+          );
+        }
 
 
         if (/\b(?:how many|number of|count|total)\b.*\bwords?\b.*\b(?:database|dataset|archive)\b/i.test(normalizedPrompt)) {
@@ -1278,6 +1352,7 @@ View results: ${shareUrl}`.trim(),
         }
 
         const topic = calculationTargets[0] || '';
+        pendingRelatedWordsSuggestionTopic = topic;
         if (!topic) {
           return '<p class="mb-0">Please share a word, phrase, or name so I can calculate and discuss it.</p>';
         }
@@ -1482,6 +1557,7 @@ View results: ${shareUrl}`.trim(),
                 ` : '<span> No related terms were found right now.</span>'}
               </li>
             </ul>
+            <p class="mt-3 mb-0"><em>Would you like me to calculate the related words for "${escapeHtml(topic)}"?</em> You can reply with <code>yes</code> or ask directly: <code>calculate the related words for ${escapeHtml(topic)}</code>.</p>
           ` : ''}
         `;
       }

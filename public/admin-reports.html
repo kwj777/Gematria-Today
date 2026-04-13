@@ -134,7 +134,7 @@
         <section class="content-panel p-4">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h4 mb-0">Membership and publishing trends</h2>
-            <button class="btn btn-outline-light btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#membershipPublishingTrendsCollapse" aria-expanded="false" aria-controls="membershipPublishingTrendsCollapse">
+            <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#membershipPublishingTrendsCollapse" aria-expanded="false" aria-controls="membershipPublishingTrendsCollapse">
               Show / hide
             </button>
           </div>
@@ -157,7 +157,7 @@
             <div class="content-panel p-4 h-100">
               <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h2 class="h5 mb-0">Recent security problems</h2>
-                <button class="btn btn-outline-light btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#securityEventsCollapse" aria-expanded="false" aria-controls="securityEventsCollapse">
+                <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#securityEventsCollapse" aria-expanded="false" aria-controls="securityEventsCollapse">
                   Show / hide
                 </button>
               </div>
@@ -169,14 +169,28 @@
         </section>
 
         <section class="content-panel p-4">
-          <h2 class="h5 mb-3">Public page views (includes member traffic)</h2>
-          <div id="publicTrafficSummary" class="mb-3"></div>
-          <div id="publicPageViews" class="d-grid gap-2"></div>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h5 mb-0">Public page views (includes member traffic)</h2>
+            <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#publicPageViewsCollapse" aria-expanded="false" aria-controls="publicPageViewsCollapse">
+              Show / hide
+            </button>
+          </div>
+          <div id="publicPageViewsCollapse" class="collapse">
+            <div id="publicTrafficSummary" class="mb-3"></div>
+            <div id="publicPageViews" class="d-grid gap-2"></div>
+          </div>
         </section>
 
         <section class="content-panel p-4">
-          <h2 class="h5 mb-3">Button / action click stats</h2>
-          <div id="buttonStats" class="d-grid gap-2"></div>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h5 mb-0">Button / action click stats</h2>
+            <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#buttonStatsCollapse" aria-expanded="false" aria-controls="buttonStatsCollapse">
+              Show / hide
+            </button>
+          </div>
+          <div id="buttonStatsCollapse" class="collapse">
+            <div id="buttonStats" class="d-grid gap-2"></div>
+          </div>
         </section>
       </div>
     </main>

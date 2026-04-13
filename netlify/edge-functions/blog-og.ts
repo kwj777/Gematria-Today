@@ -7,6 +7,10 @@ const OGP_IMAGE_FORMAT = 'jpg';
 const DEFAULT_TITLE = 'EndTimes.Today Blog';
 const DEFAULT_DESCRIPTION =
   'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.';
+const HERO_IMAGE_OVERRIDES: Record<string, string> = Object.freeze({
+  'amillennialism-what-it-is-and-isn-t': '/assets/amillennialism-post-01-what-it-is-and-isnt-hero-16x9.svg',
+});
+
 
 interface Post {
   slug: string;
@@ -41,6 +45,18 @@ function toShareImageUrl(value?: string | null): string {
     return `${SITE_ORIGIN}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
   }
   return absoluteUrl;
+}
+
+
+function getPostHeroImage(post?: Post | null): string {
+  const slug = String(post?.slug || '').trim().toLowerCase();
+  return (
+    String(post?.heroImageUrl || '').trim() ||
+    String(post?.imageUrl || '').trim() ||
+    String(post?.sliderImageUrl || '').trim() ||
+    String(HERO_IMAGE_OVERRIDES[slug] || '').trim() ||
+    DEFAULT_OG_IMAGE
+  );
 }
 
 function escapeAttr(value: string): string {
@@ -92,11 +108,7 @@ export default async (req: Request, context: Context) => {
 
   const title = String(post.title || DEFAULT_TITLE).trim();
   const description = String(post.summary || DEFAULT_DESCRIPTION).trim();
-  const imageUrl =
-    toShareImageUrl(post.heroImageUrl) ||
-    toShareImageUrl(post.imageUrl) ||
-    toShareImageUrl(post.sliderImageUrl) ||
-    toShareImageUrl(DEFAULT_OG_IMAGE);
+  const imageUrl = toShareImageUrl(getPostHeroImage(post)) || toShareImageUrl(DEFAULT_OG_IMAGE);
   const shareUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(postSlug)}#${encodeURIComponent(postSlug)}`;
 
   // Replace title tag

@@ -134,9 +134,9 @@
         <section class="content-panel p-4">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h4 mb-0">Membership and publishing trends</h2>
-            <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#membershipPublishingTrendsCollapse" aria-expanded="false" aria-controls="membershipPublishingTrendsCollapse">
-              Show / hide
-            </button>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="membershipPublishingTrendsToggle" data-bs-toggle="collapse" data-bs-target="#membershipPublishingTrendsCollapse" aria-controls="membershipPublishingTrendsCollapse" aria-label="Toggle membership and publishing trends section">
+            </div>
           </div>
           <div id="membershipPublishingTrendsCollapse" class="collapse">
             <div class="row g-4">
@@ -156,10 +156,10 @@
           <div class="col-12">
             <div class="content-panel p-4 h-100">
               <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <h2 class="h5 mb-0">Recent security problems</h2>
-                <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#securityEventsCollapse" aria-expanded="false" aria-controls="securityEventsCollapse">
-                  Show / hide
-                </button>
+                <h2 class="h4 mb-0">Recent security problems</h2>
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" id="securityEventsToggle" data-bs-toggle="collapse" data-bs-target="#securityEventsCollapse" aria-controls="securityEventsCollapse" aria-label="Toggle recent security problems section">
+                </div>
               </div>
               <div id="securityEventsCollapse" class="collapse">
                 <div id="securityEvents" class="d-grid gap-2"></div>
@@ -170,10 +170,10 @@
 
         <section class="content-panel p-4">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 class="h5 mb-0">Public page views (includes member traffic)</h2>
-            <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#publicPageViewsCollapse" aria-expanded="false" aria-controls="publicPageViewsCollapse">
-              Show / hide
-            </button>
+            <h2 class="h4 mb-0">Public page views (includes member traffic)</h2>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="publicPageViewsToggle" data-bs-toggle="collapse" data-bs-target="#publicPageViewsCollapse" aria-controls="publicPageViewsCollapse" aria-label="Toggle public page views section">
+            </div>
           </div>
           <div id="publicPageViewsCollapse" class="collapse">
             <div id="publicTrafficSummary" class="mb-3"></div>
@@ -183,10 +183,10 @@
 
         <section class="content-panel p-4">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 class="h5 mb-0">Button / action click stats</h2>
-            <button class="btn btn-outline-primary btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#buttonStatsCollapse" aria-expanded="false" aria-controls="buttonStatsCollapse">
-              Show / hide
-            </button>
+            <h2 class="h4 mb-0">Button / action click stats</h2>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="buttonStatsToggle" data-bs-toggle="collapse" data-bs-target="#buttonStatsCollapse" aria-controls="buttonStatsCollapse" aria-label="Toggle button and action click stats section">
+            </div>
           </div>
           <div id="buttonStatsCollapse" class="collapse">
             <div id="buttonStats" class="d-grid gap-2"></div>
@@ -530,6 +530,29 @@
         };
       }
 
+      function initializeReportSectionSwitches() {
+        const pairs = [
+          ['membershipPublishingTrendsToggle', 'membershipPublishingTrendsCollapse'],
+          ['securityEventsToggle', 'securityEventsCollapse'],
+          ['publicPageViewsToggle', 'publicPageViewsCollapse'],
+          ['buttonStatsToggle', 'buttonStatsCollapse'],
+        ];
+
+        pairs.forEach(([toggleId, collapseId]) => {
+          const toggle = document.getElementById(toggleId);
+          const collapse = document.getElementById(collapseId);
+          if (!toggle || !collapse) return;
+
+          toggle.checked = collapse.classList.contains('show');
+          collapse.addEventListener('shown.bs.collapse', () => {
+            toggle.checked = true;
+          });
+          collapse.addEventListener('hidden.bs.collapse', () => {
+            toggle.checked = false;
+          });
+        });
+      }
+
       async function loadReports() {
         clearError();
         const select = document.getElementById('windowSelect');
@@ -556,6 +579,7 @@
 
       document.getElementById('refreshButton').addEventListener('click', loadReports);
       document.getElementById('windowSelect').addEventListener('change', loadReports);
+      initializeReportSectionSwitches();
       loadReports();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

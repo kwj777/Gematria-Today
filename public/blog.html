@@ -898,6 +898,9 @@
           }
           const tagMarkup = tagBadges.join(' ');
           const coverImageUrl = getPostCoverImageUrl(post);
+          const previewImageVersionToken = previewModeActive
+            ? `${post.updatedAt || post.updated_at || post.createdAt || post.id || 'preview'}-${Date.now()}`
+            : '';
           const renderedCoverImageUrl = appendImageVersionToken(coverImageUrl, previewImageVersionToken);
           const coverImageMarkup = coverImageUrl
             ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(renderedCoverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`

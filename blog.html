@@ -73,14 +73,8 @@
       }
     </script>
   </head>
-  <body class="page-render-pending">
+  <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
-    <div id="pageRenderOverlay" class="page-render-overlay" role="status" aria-live="polite" aria-label="Working">
-      <div class="page-render-overlay__card">
-        <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
-        <span class="fw-semibold">Working...</span>
-      </div>
-    </div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -209,6 +203,9 @@
                 <p class="placeholder-glow mb-3"><span class="placeholder async-shell-line col-11"></span></p>
                 <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-7"></span></p>
               </article>
+            </div>
+            <div id="blogLoadMoreWrap" class="d-flex justify-content-center mt-4 d-none">
+              <button id="blogLoadMoreButton" type="button" class="btn btn-outline-primary fw-semibold">Load older posts</button>
             </div>
           </div>
         </section>
@@ -707,6 +704,11 @@
       let selectedTag = '';
       let previewModeActive = false;
       let adminSessionActive = false;
+      let loadedPublishedPosts = [];
+      let paginationOffset = 0;
+      let hasMorePublishedPosts = false;
+      let loadingMorePosts = false;
+      const BLOG_LIST_PAGE_LIMIT = 12;
       const updateTagFilterOverflowState = () => {
         const tagFiltersEl = document.getElementById('blogTagFilters');
         const toggleEl = document.getElementById('blogTagFiltersToggle');
@@ -725,6 +727,18 @@
         const isExpanded = !tagFiltersEl.classList.contains('blog-tag-filters--collapsed');
         toggleEl.textContent = isExpanded ? 'Show fewer tags' : 'Show all tags';
         toggleEl.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      };
+      const updateLoadMoreControl = () => {
+        const wrap = document.getElementById('blogLoadMoreWrap');
+        const button = document.getElementById('blogLoadMoreButton');
+        if (!wrap || !button) {
+          return;
+        }
+        const detailViewActive = Boolean(getRequestedPostSlug());
+        const shouldShow = !detailViewActive && !previewModeActive && hasMorePublishedPosts;
+        wrap.classList.toggle('d-none', !shouldShow);
+        button.disabled = loadingMorePosts;
+        button.textContent = loadingMorePosts ? 'Loading…' : 'Load older posts';
       };
 
       const renderTagFilters = (posts) => {
@@ -766,119 +780,6 @@
         }
         return latestPosts.filter((post) => getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag));
       };
-      const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const buildInternalLinkTargets = (posts, currentSlug = '') => {
-        const targets = [
-          { phrase: 'Word/Phrase Calculator', href: '/calculator.html' },
-          { phrase: 'gematria calculator', href: '/calculator.html' },
-          { phrase: 'calculator', href: '/calculator.html' },
-          { phrase: 'name lookup page', href: '/name-calculator.html' },
-          { phrase: 'name calculator', href: '/name-calculator.html' },
-          { phrase: 'names', href: '/name-calculator.html' },
-          { phrase: 'news feed', href: '/news.html' },
-          { phrase: 'FAQ', href: '/faq.html' },
-          { phrase: 'premium research tools', href: '/premium-research.html' },
-          { phrase: 'gematria guide', href: '/gematria-guide.html' },
-          { phrase: 'gematria results archive', href: '/' },
-          { phrase: 'related words', href: '/premium-research.html' }
-        ];
-
-        posts.forEach((post) => {
-          if (!post?.slug || String(post.slug).toLowerCase() === String(currentSlug).toLowerCase()) {
-            return;
-          }
-          const title = String(post.title || '').trim();
-          if (title.length < 12) {
-            return;
-          }
-          targets.push({
-            phrase: title,
-            href: `/blog/${encodeURIComponent(post.slug)}`
-          });
-        });
-
-        const seen = new Set();
-        return targets
-          .map((target) => ({
-            phrase: String(target.phrase || '').trim(),
-            href: String(target.href || '').trim()
-          }))
-          .filter((target) => {
-            const key = `${target.phrase.toLowerCase()}::${target.href}`;
-            if (!target.phrase || !target.href || seen.has(key)) {
-              return false;
-            }
-            seen.add(key);
-            return true;
-          })
-          .sort((left, right) => right.phrase.length - left.phrase.length);
-      };
-      const linkifyHtmlContent = (html, targets = []) => {
-        const parser = new DOMParser();
-        const documentFragment = parser.parseFromString(`<div>${html}</div>`, 'text/html');
-        const root = documentFragment.body.firstElementChild;
-        if (!root) {
-          return { html, count: 0 };
-        }
-
-        const excludedParents = new Set(['A', 'BUTTON', 'CODE', 'PRE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
-        const linkedTargets = new Set();
-        let linkCount = 0;
-        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-        const textNodes = [];
-        while (walker.nextNode()) {
-          textNodes.push(walker.currentNode);
-        }
-
-        textNodes.forEach((node) => {
-          if (!node || !node.parentElement || excludedParents.has(node.parentElement.tagName)) {
-            return;
-          }
-          const text = node.textContent || '';
-          if (!text.trim()) {
-            return;
-          }
-          const target = targets.find((candidate) => {
-            if (!candidate?.phrase || linkedTargets.has(candidate.phrase.toLowerCase())) {
-              return false;
-            }
-            const pattern = new RegExp(`(^|[^\\w])(${escapeRegex(candidate.phrase)})(?=[^\\w]|$)`, 'i');
-            return pattern.test(text);
-          });
-          if (!target) {
-            return;
-          }
-
-          const pattern = new RegExp(`(^|[^\\w])(${escapeRegex(target.phrase)})(?=[^\\w]|$)`, 'i');
-          const match = text.match(pattern);
-          if (!match || typeof match.index !== 'number') {
-            return;
-          }
-
-          const matchStart = match.index + match[1].length;
-          const matchText = text.slice(matchStart, matchStart + match[2].length);
-          const before = text.slice(0, matchStart);
-          const after = text.slice(matchStart + match[2].length);
-          const fragment = document.createDocumentFragment();
-          if (before) {
-            fragment.appendChild(document.createTextNode(before));
-          }
-          const anchor = document.createElement('a');
-          anchor.className = 'news-inline-link';
-          anchor.href = target.href;
-          anchor.textContent = matchText;
-          fragment.appendChild(anchor);
-          if (after) {
-            fragment.appendChild(document.createTextNode(after));
-          }
-          node.parentNode?.replaceChild(fragment, node);
-          linkedTargets.add(target.phrase.toLowerCase());
-          linkCount += 1;
-        });
-
-        return { html: root.innerHTML, count: linkCount };
-      };
-      const linkifyPlainText = (text = '', targets = []) => linkifyHtmlContent(escapeHtml(text), targets);
       const inlineFollowFormMarkup = `
         <section class="content-panel p-4 p-lg-5 blog-post-card" aria-label="Email subscription">
           <div class="followit--follow-form-container followit-card followit-card--inline" attr-a attr-b attr-c attr-d attr-e attr-f>
@@ -909,6 +810,7 @@
       function renderPosts(posts) {
         latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
+        const detailViewActive = Boolean(requestedPostSlug);
         const previewTargetPost = requestedPostSlug && previewModeActive
           ? latestPosts.find((post) => String(post.slug || '').toLowerCase() === requestedPostSlug.toLowerCase())
           : null;
@@ -925,10 +827,14 @@
 
         const filteredPosts = getVisiblePosts();
         const postMarkup = filteredPosts.map((post) => {
-          const linkTargets = buildInternalLinkTargets(latestPosts, post.slug);
-          const bodyLinkResult = linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), linkTargets);
+          const preRenderedBodyHtml = String(post.renderedBodyHtml || '').trim();
+          const summaryText = String(post.summary || '').trim();
+          const readMoreHref = `/blog/${encodeURIComponent(post.slug)}`;
           const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/name-calculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a> · <a class="news-inline-link" href="/blog.html">More Blog Posts</a></p>`;
-          const bodyHtml = `${bodyLinkResult.html}${fallbackRelatedLinks}`;
+          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p><p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}">Read more...</a></p>`;
+          const bodyHtml = detailViewActive
+            ? `${preRenderedBodyHtml || normalizePostBodyHtml(post.body || '')}${fallbackRelatedLinks}`
+            : listSummaryHtml;
           const createdOn = formatPostCreatedDate(post.publishedAt || post.createdAt || '');
           const tags = getPostTags(post);
           const tagBadges = [];
@@ -1024,10 +930,6 @@
 
       selectedTag = getRequestedTag();
 
-      const completeBlogPageRender = () => {
-        document.body.classList.remove('page-render-pending');
-        document.getElementById('pageRenderOverlay')?.remove();
-      };
       const applyStaticContentPromise = fetch('/api/public-static-content?page=blog')
         .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load static content')))
         .then((payload) => {
@@ -1057,14 +959,17 @@
         })
         .catch(() => {});
 
-      const fetchPublishedPosts = async () => {
+      const fetchPublishedPosts = async ({ offset = 0 } = {}) => {
         const requestUrl = new URL('/api/public-posts', window.location.origin);
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
+        if (requestedPostSlug) {
+          requestUrl.searchParams.set('slug', requestedPostSlug);
+        } else {
+          requestUrl.searchParams.set('limit', String(BLOG_LIST_PAGE_LIMIT));
+          requestUrl.searchParams.set('offset', String(Math.max(0, Number(offset) || 0)));
+        }
         if (isPreviewRequested()) {
           requestUrl.searchParams.set('preview', 'true');
-          if (requestedPostSlug) {
-            requestUrl.searchParams.set('slug', requestedPostSlug);
-          }
         }
         const response = await fetch(requestUrl.toString());
         if (!response.ok) {
@@ -1086,11 +991,12 @@
         }
       };
 
-      const mergeWithFallbackPosts = (items = []) => {
+      const mergeWithFallbackPosts = (items = [], { includeFallback = true } = {}) => {
         const mergedPosts = [];
         const seenSlugs = new Set();
         const seenTitles = new Set();
-        [...items, ...fallbackPosts].forEach((post, index) => {
+        const sourceItems = includeFallback ? [...items, ...fallbackPosts] : [...items];
+        sourceItems.forEach((post, index) => {
           const slug = createPostSlug(post, index).toLowerCase();
           const normalizedTitle = String(post?.title || '').trim().toLowerCase();
           if (seenSlugs.has(slug)) {
@@ -1107,32 +1013,62 @@
         });
         return mergedPosts;
       };
+      const mergeUniquePosts = (items = []) => mergeWithFallbackPosts(items, { includeFallback: false });
 
-      const renderPostsPromise = checkAdminSession()
-        .then(() => fetchPublishedPosts())
-        .then((payload) => {
+      const renderPostsPromise = Promise.all([
+        checkAdminSession(),
+        fetchPublishedPosts({ offset: 0 })
+      ])
+        .then(([, payload]) => {
           const publishedItems = Array.isArray(payload?.items) ? payload.items : [];
+          loadedPublishedPosts = mergeUniquePosts(publishedItems);
           previewModeActive = Boolean(payload?.previewMode);
+          hasMorePublishedPosts = Boolean(payload?.hasMore);
+          paginationOffset = loadedPublishedPosts.length;
           const previewNotice = document.getElementById('blogPreviewNotice');
           if (previewNotice) {
             previewNotice.classList.toggle('d-none', !previewModeActive);
           }
-          const mergedPosts = mergeWithFallbackPosts(publishedItems);
+          const mergedPosts = mergeWithFallbackPosts(loadedPublishedPosts);
           selectedTag = getRequestedTag();
           const hasRequestedPost = Boolean(getRequestedPostSlug());
           const fallbackSet = previewModeActive || hasRequestedPost ? [] : fallbackPosts;
           renderPosts(mergedPosts.length ? mergedPosts : fallbackSet);
+          updateLoadMoreControl();
         })
         .catch(() => {
           previewModeActive = false;
           selectedTag = getRequestedTag();
+          hasMorePublishedPosts = false;
+          paginationOffset = 0;
+          loadedPublishedPosts = [];
           renderPosts(fallbackPosts);
+          updateLoadMoreControl();
         });
 
-      Promise.allSettled([applyStaticContentPromise, renderPostsPromise])
-        .finally(() => {
-          window.requestAnimationFrame(() => completeBlogPageRender());
-        });
+      document.getElementById('blogLoadMoreButton')?.addEventListener('click', async () => {
+        if (loadingMorePosts || !hasMorePublishedPosts) {
+          return;
+        }
+        loadingMorePosts = true;
+        updateLoadMoreControl();
+        try {
+          const payload = await fetchPublishedPosts({ offset: paginationOffset });
+          const publishedItems = Array.isArray(payload?.items) ? payload.items : [];
+          loadedPublishedPosts = mergeUniquePosts([...loadedPublishedPosts, ...publishedItems]);
+          paginationOffset = loadedPublishedPosts.length;
+          hasMorePublishedPosts = Boolean(payload?.hasMore);
+          renderPosts(mergeWithFallbackPosts(loadedPublishedPosts));
+        } catch (_) {
+          hasMorePublishedPosts = false;
+        } finally {
+          loadingMorePosts = false;
+          updateLoadMoreControl();
+        }
+      });
+
+      void applyStaticContentPromise;
+      void renderPostsPromise;
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

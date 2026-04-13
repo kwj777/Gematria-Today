@@ -2,6 +2,208 @@ import { ensureAdminSchema, formatPost, getSqlClient, jsonResponse, syncBootstra
 import { getOptionalAuthenticatedSession } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function applyInlineMarkdown(text = '') {
+  return escapeHtml(text)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a class="news-inline-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function convertMarkdownToHtml(markdown = '') {
+  const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+  const html = [];
+  let paragraphLines = [];
+  let inUnorderedList = false;
+  let inOrderedList = false;
+  let inCodeBlock = false;
+
+  const closeParagraph = () => {
+    if (!paragraphLines.length) return;
+    html.push(`<p>${applyInlineMarkdown(paragraphLines.join(' '))}</p>`);
+    paragraphLines = [];
+  };
+  const closeLists = () => {
+    if (inUnorderedList) {
+      html.push('</ul>');
+      inUnorderedList = false;
+    }
+    if (inOrderedList) {
+      html.push('</ol>');
+      inOrderedList = false;
+    }
+  };
+
+  lines.forEach((line) => {
+    const trimmed = String(line || '').trim();
+    if (trimmed.startsWith('```')) {
+      closeParagraph();
+      closeLists();
+      if (inCodeBlock) {
+        html.push('</code></pre>');
+        inCodeBlock = false;
+      } else {
+        html.push('<pre><code>');
+        inCodeBlock = true;
+      }
+      return;
+    }
+    if (inCodeBlock) {
+      html.push(`${escapeHtml(line)}\n`);
+      return;
+    }
+    if (!trimmed) {
+      closeParagraph();
+      closeLists();
+      return;
+    }
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      closeParagraph();
+      closeLists();
+      const level = Math.max(1, Math.min(6, headingMatch[1].length));
+      html.push(`<h${level}>${applyInlineMarkdown(headingMatch[2])}</h${level}>`);
+      return;
+    }
+    const unorderedMatch = trimmed.match(/^[-*]\s+(.+)$/);
+    if (unorderedMatch) {
+      closeParagraph();
+      if (inOrderedList) {
+        html.push('</ol>');
+        inOrderedList = false;
+      }
+      if (!inUnorderedList) {
+        html.push('<ul>');
+        inUnorderedList = true;
+      }
+      html.push(`<li>${applyInlineMarkdown(unorderedMatch[1])}</li>`);
+      return;
+    }
+    const orderedMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+    if (orderedMatch) {
+      closeParagraph();
+      if (inUnorderedList) {
+        html.push('</ul>');
+        inUnorderedList = false;
+      }
+      if (!inOrderedList) {
+        html.push('<ol>');
+        inOrderedList = true;
+      }
+      html.push(`<li>${applyInlineMarkdown(orderedMatch[1])}</li>`);
+      return;
+    }
+    paragraphLines.push(trimmed);
+  });
+
+  closeParagraph();
+  closeLists();
+  if (inCodeBlock) {
+    html.push('</code></pre>');
+  }
+  return html.join('');
+}
+
+function normalizePostBodyHtml(value = '') {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '<p></p>';
+  }
+  const containsHtml = /<\/?[a-z][\s\S]*>/i.test(raw);
+  if (containsHtml) {
+    return raw;
+  }
+  return convertMarkdownToHtml(raw);
+}
+
+function escapeRegex(value = '') {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildInternalLinkTargets(posts, currentSlug = '') {
+  const targets = [
+    { phrase: 'Word/Phrase Calculator', href: '/calculator.html' },
+    { phrase: 'gematria calculator', href: '/calculator.html' },
+    { phrase: 'calculator', href: '/calculator.html' },
+    { phrase: 'name lookup page', href: '/name-calculator.html' },
+    { phrase: 'name calculator', href: '/name-calculator.html' },
+    { phrase: 'names', href: '/name-calculator.html' },
+    { phrase: 'news feed', href: '/news.html' },
+    { phrase: 'FAQ', href: '/faq.html' },
+    { phrase: 'premium research tools', href: '/premium-research.html' },
+    { phrase: 'gematria guide', href: '/gematria-guide.html' },
+    { phrase: 'gematria results archive', href: '/' },
+    { phrase: 'related words', href: '/premium-research.html' },
+  ];
+  posts.forEach((post) => {
+    if (!post?.slug || String(post.slug).toLowerCase() === String(currentSlug).toLowerCase()) return;
+    const title = String(post.title || '').trim();
+    if (title.length < 12) return;
+    targets.push({ phrase: title, href: `/blog/${encodeURIComponent(post.slug)}` });
+  });
+  const seen = new Set();
+  return targets
+    .map((target) => ({ phrase: String(target.phrase || '').trim(), href: String(target.href || '').trim() }))
+    .filter((target) => {
+      const key = `${target.phrase.toLowerCase()}::${target.href}`;
+      if (!target.phrase || !target.href || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => right.phrase.length - left.phrase.length);
+}
+
+function linkifyHtmlContent(html, targets = []) {
+  const tokens = String(html || '').split(/(<[^>]+>)/g);
+  const linkedTargets = new Set();
+  let excludedDepth = 0;
+  return tokens.map((token) => {
+    if (!token) return token;
+    if (token.startsWith('<')) {
+      const openTagMatch = token.match(/^<([a-z0-9-]+)/i);
+      const closeTagMatch = token.match(/^<\/([a-z0-9-]+)/i);
+      if (openTagMatch) {
+        const tagName = openTagMatch[1].toLowerCase();
+        if (['a', 'button', 'code', 'pre', 'script', 'style', 'textarea'].includes(tagName) && !/\/>$/.test(token.trim())) {
+          excludedDepth += 1;
+        }
+      } else if (closeTagMatch) {
+        const tagName = closeTagMatch[1].toLowerCase();
+        if (['a', 'button', 'code', 'pre', 'script', 'style', 'textarea'].includes(tagName) && excludedDepth > 0) {
+          excludedDepth -= 1;
+        }
+      }
+      return token;
+    }
+    if (excludedDepth > 0 || !token.trim()) {
+      return token;
+    }
+    let updated = token;
+    targets.forEach((target) => {
+      const normalizedPhrase = String(target?.phrase || '').toLowerCase();
+      if (!target?.phrase || !target?.href || linkedTargets.has(normalizedPhrase)) {
+        return;
+      }
+      const pattern = new RegExp(`(^|[^\\w])(${escapeRegex(target.phrase)})(?=[^\\w]|$)`, 'i');
+      if (!pattern.test(updated)) {
+        return;
+      }
+      updated = updated.replace(pattern, (_, prefix, phrase) => `${prefix}<a class="news-inline-link" href="${escapeHtml(target.href)}">${phrase}</a>`);
+      linkedTargets.add(normalizedPhrase);
+    });
+    return updated;
+  }).join('');
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'GET') {
     return jsonResponse(405, { error: 'Method not allowed' });
@@ -28,15 +230,20 @@ export async function handler(event) {
     const previewRequested = event.queryStringParameters?.preview === 'true';
     const previewMode = previewRequested && String(user?.role || '').toLowerCase() === 'admin';
     const slugFilter = String(event.queryStringParameters?.slug || '').trim().toLowerCase();
+    const detailMode = Boolean(slugFilter);
     const limitValue = Number.parseInt(event.queryStringParameters?.limit || '', 10);
     const requestedLimit = Number.isFinite(limitValue) && limitValue > 0 ? Math.min(limitValue, 12) : null;
+    const offsetValue = Number.parseInt(event.queryStringParameters?.offset || '', 10);
+    const requestedOffset = Number.isFinite(offsetValue) && offsetValue > 0 ? offsetValue : 0;
 
     const cacheResult = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit, previewMode, slugFilter: slugFilter || null }),
+      cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit, requestedOffset, previewMode, slugFilter: slugFilter || null, detailMode }),
       route: 'public-posts',
       ttlSeconds: 120,
       compute: async () => {
         let rows;
+        const effectiveLimit = requestedLimit ? requestedLimit + 1 : null;
+        const effectiveOffset = detailMode ? 0 : requestedOffset;
         if (featuredOnly && requestedLimit) {
           rows = await sql`
             SELECT * FROM posts
@@ -49,7 +256,8 @@ export async function handler(event) {
               )
             ) AND show_on_homepage = TRUE
             ORDER BY COALESCE(published_at, created_at) DESC
-            LIMIT ${requestedLimit}
+            LIMIT ${effectiveLimit}
+            OFFSET ${effectiveOffset}
           `;
         } else if (featuredOnly) {
           rows = await sql`
@@ -78,7 +286,8 @@ export async function handler(event) {
             )
               AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
             ORDER BY COALESCE(published_at, created_at) DESC
-            LIMIT ${requestedLimit}
+            LIMIT ${effectiveLimit}
+            OFFSET ${effectiveOffset}
           `;
         } else {
           rows = await sql`
@@ -96,7 +305,41 @@ export async function handler(event) {
             ORDER BY COALESCE(published_at, created_at) DESC
           `;
         }
-        return { items: rows.map(formatPost), previewMode };
+        const hasMore = Boolean(requestedLimit) && rows.length > requestedLimit;
+        if (hasMore) {
+          rows = rows.slice(0, requestedLimit);
+        }
+        const formattedPosts = rows.map(formatPost);
+        const items = formattedPosts.map((post) => {
+          const summaryItem = {
+            id: post.id,
+            title: post.title,
+            slug: post.slug,
+            tag: post.tag,
+            tags: post.tags,
+            summary: post.summary,
+            readTime: post.readTime,
+            imageUrl: post.imageUrl,
+            sliderImageUrl: post.sliderImageUrl,
+            backgroundImageUrl: post.backgroundImageUrl,
+            showOnHomepage: post.showOnHomepage,
+            hideFromBlog: post.hideFromBlog,
+            status: post.status,
+            publishedAt: post.publishedAt,
+            scheduledPublishAt: post.scheduledPublishAt,
+            createdAt: post.createdAt,
+          };
+          if (!detailMode) {
+            return summaryItem;
+          }
+          return {
+            ...summaryItem,
+            body: post.body,
+            renderedBodyHtml: linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), buildInternalLinkTargets(formattedPosts, post.slug)),
+          };
+        });
+        const nextOffset = requestedOffset + items.length;
+        return { items, previewMode, hasMore, nextOffset };
       },
     });
 
@@ -108,6 +351,7 @@ export async function handler(event) {
         slug: slugFilter || null,
         featuredOnly,
         limit: requestedLimit,
+        offset: requestedOffset,
         previewMode,
       },
     });

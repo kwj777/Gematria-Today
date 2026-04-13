@@ -43,6 +43,9 @@ export async function handler(event) {
       route: 'public-site-modules',
       action: 'read',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
+      metadata: {
+        pagePath: String(event.queryStringParameters?.pagePath || '').trim() || null,
+      },
     });
 
     return jsonResponse(200, cacheResult.payload, {

@@ -422,26 +422,80 @@ export async function handler(event) {
           AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
       `,
       sql`
-        SELECT
-          route,
-          action,
-          COUNT(*)::int AS clicks,
-          COUNT(DISTINCT request_fingerprint)::int AS unique_visitors,
-          MAX(created_at) AS last_clicked_at
-        FROM request_audit_log
-        WHERE created_at >= NOW() - ${windowInterval}::interval
-          AND route NOT LIKE 'admin-%'
-          AND route <> 'security-retention'
-          AND (
-            COALESCE(metadata->>'clientType', '') = 'human'
-            OR (
-              COALESCE(metadata->>'clientType', '') = ''
-              AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
+        WITH click_rows AS (
+          SELECT
+            route,
+            action,
+            request_fingerprint,
+            created_at,
+            COALESCE(
+              NULLIF(BTRIM(metadata->>'href'), ''),
+              NULLIF(BTRIM(metadata->>'targetHref'), ''),
+              NULLIF(BTRIM(metadata->>'slug'), ''),
+              NULLIF(BTRIM(metadata->>'pagePath'), ''),
+              NULLIF(BTRIM(metadata->>'source'), '')
+            ) AS detail
+          FROM request_audit_log
+          WHERE created_at >= NOW() - ${windowInterval}::interval
+            AND route NOT LIKE 'admin-%'
+            AND route <> 'security-retention'
+            AND (
+              COALESCE(metadata->>'clientType', '') = 'human'
+              OR (
+                COALESCE(metadata->>'clientType', '') = ''
+                AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
+              )
             )
-          )
-          AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
-        GROUP BY route, action
-        ORDER BY clicks DESC, unique_visitors DESC, route ASC, action ASC
+            AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
+        ),
+        grouped AS (
+          SELECT
+            route,
+            action,
+            COUNT(*)::int AS clicks,
+            COUNT(DISTINCT request_fingerprint)::int AS unique_visitors,
+            MAX(created_at) AS last_clicked_at
+          FROM click_rows
+          GROUP BY route, action
+        ),
+        details AS (
+          SELECT
+            route,
+            action,
+            detail,
+            COUNT(*)::int AS clicks,
+            ROW_NUMBER() OVER (
+              PARTITION BY route, action
+              ORDER BY COUNT(*) DESC, detail ASC
+            ) AS rank
+          FROM click_rows
+          WHERE detail IS NOT NULL
+          GROUP BY route, action, detail
+        )
+        SELECT
+          grouped.route,
+          grouped.action,
+          grouped.clicks,
+          grouped.unique_visitors,
+          grouped.last_clicked_at,
+          COALESCE(
+            (
+              SELECT JSON_AGG(
+                JSON_BUILD_OBJECT(
+                  'detail', details.detail,
+                  'clicks', details.clicks
+                )
+                ORDER BY details.rank
+              )
+              FROM details
+              WHERE details.route = grouped.route
+                AND details.action = grouped.action
+                AND details.rank <= 3
+            ),
+            '[]'::json
+          ) AS top_details
+        FROM grouped
+        ORDER BY grouped.clicks DESC, grouped.unique_visitors DESC, grouped.route ASC, grouped.action ASC
         LIMIT 50
       `,
     ]);
@@ -554,6 +608,14 @@ export async function handler(event) {
         clicks: Number(row.clicks || 0),
         uniqueVisitors: Number(row.unique_visitors || 0),
         lastClickedAt: toIsoDate(row.last_clicked_at),
+        topDetails: Array.isArray(row.top_details)
+          ? row.top_details
+            .map((detailRow) => ({
+              detail: String(detailRow.detail || '').trim(),
+              clicks: Number(detailRow.clicks || 0),
+            }))
+            .filter((detailRow) => detailRow.detail)
+          : [],
       })),
       securityEvents: securityRows.map((row) => ({
         route: row.route,

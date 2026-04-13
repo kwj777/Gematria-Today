@@ -691,6 +691,7 @@
       };
 
       let latestPosts = [];
+      const expandedPostSlugs = new Set();
       let selectedTag = '';
       let previewModeActive = false;
       let adminSessionActive = false;
@@ -821,10 +822,11 @@
           const summaryText = String(post.summary || '').trim();
           const readMoreHref = `/blog/${encodeURIComponent(post.slug)}`;
           const fallbackRelatedLinks = `<p class="small mb-0">Related: <a class="news-inline-link" href="/calculator.html">Gematria Calculator</a> · <a class="news-inline-link" href="/name-calculator.html">Name Calculator</a> · <a class="news-inline-link" href="/gematria-guide.html">Gematria Guide</a> · <a class="news-inline-link" href="/blog.html">More Blog Posts</a></p>`;
-          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p><p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}">Read more...</a></p>`;
+          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p><p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}" data-expand-post="${escapeHtml(post.slug)}">${expandedPostSlugs.has(post.slug) ? 'Show less' : 'Read more...'}</a></p>`;
+          const expandedBodyHtml = `${listSummaryHtml}${preRenderedBodyHtml || normalizePostBodyHtml(post.body || '')}${fallbackRelatedLinks}`;
           const bodyHtml = detailViewActive
             ? `${preRenderedBodyHtml || normalizePostBodyHtml(post.body || '')}${fallbackRelatedLinks}`
-            : listSummaryHtml;
+            : (expandedPostSlugs.has(post.slug) ? expandedBodyHtml : listSummaryHtml);
           const createdOn = formatPostCreatedDate(post.publishedAt || post.createdAt || '');
           const tags = getPostTags(post);
           const tagBadges = [];
@@ -892,6 +894,22 @@
           selectedTag = String(tagFilter.dataset.tagFilter || '').trim().toLowerCase();
           syncTagLocation(selectedTag);
           renderPosts(latestPosts);
+          return;
+        }
+        const expandPostLink = event.target.closest('[data-expand-post]');
+        if (expandPostLink) {
+          event.preventDefault();
+          const slug = String(expandPostLink.dataset.expandPost || '').trim();
+          if (!slug) {
+            return;
+          }
+          if (expandedPostSlugs.has(slug)) {
+            expandedPostSlugs.delete(slug);
+          } else {
+            expandedPostSlugs.add(slug);
+          }
+          renderPosts(latestPosts);
+          window.setTimeout(() => focusLinkedPost(slug), 0);
           return;
         }
         const shareButton = event.target.closest('[data-share-post]');

@@ -129,6 +129,26 @@ function escapeRegex(value = '') {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const SERIES_ORDER_OVERRIDES = [
+  {
+    olderSlug: 'amillennialism-explained-complete-8-part-end-times-theology-series',
+    newerSlug: 'amillennialism-what-it-is-and-isn-t'
+  }
+];
+
+function applySeriesOrderOverrides(posts) {
+  const ordered = [...posts];
+  SERIES_ORDER_OVERRIDES.forEach(({ olderSlug, newerSlug }) => {
+    const olderIndex = ordered.findIndex((post) => String(post.slug || '').toLowerCase() === olderSlug);
+    const newerIndex = ordered.findIndex((post) => String(post.slug || '').toLowerCase() === newerSlug);
+    if (olderIndex === -1 || newerIndex === -1 || olderIndex > newerIndex) return;
+    const [olderPost] = ordered.splice(olderIndex, 1);
+    const refreshedNewerIndex = ordered.findIndex((post) => String(post.slug || '').toLowerCase() === newerSlug);
+    ordered.splice(refreshedNewerIndex + 1, 0, olderPost);
+  });
+  return ordered;
+}
+
 function buildInternalLinkTargets(posts, currentSlug = '') {
   const targets = [
     { phrase: 'Word/Phrase Calculator', href: '/calculator.html' },
@@ -309,7 +329,7 @@ export async function handler(event) {
         if (hasMore) {
           rows = rows.slice(0, requestedLimit);
         }
-        const formattedPosts = rows.map(formatPost);
+        const formattedPosts = applySeriesOrderOverrides(rows.map(formatPost));
         const items = formattedPosts.map((post) => {
           const summaryItem = {
             id: post.id,

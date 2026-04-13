@@ -923,7 +923,7 @@
         });
         if (postMarkup.length > 2) {
           postMarkup.splice(2, 0, inlineFollowFormMarkup);
-        } else if (postMarkup.length > 0) {
+        } else if (postMarkup.length > 1) {
           postMarkup.push(inlineFollowFormMarkup);
         }
         document.getElementById('blogPosts').innerHTML = postMarkup.join('');

@@ -689,9 +689,12 @@
       };
       const syncBlogLocation = (slug) => {
         const url = new URL(window.location.href);
-        if (slug) {
+        if (slug && !isPreviewRequested()) {
           url.pathname = `/blog/${encodeURIComponent(slug)}`;
           url.searchParams.delete('post');
+          url.hash = '';
+        } else if (slug && isPreviewRequested()) {
+          url.searchParams.set('post', slug);
           url.hash = '';
         } else {
           url.pathname = '/blog.html';
@@ -747,17 +750,20 @@
         if (!slug) {
           return;
         }
-        const post = document.getElementById(slug);
+        const post = document.getElementById(slug)
+          || document.querySelector('.blog-post-card');
         if (!post) {
           return;
         }
         document.querySelectorAll('.blog-post-card').forEach((card) => card.classList.remove('border-primary', 'border-2'));
         post.classList.add('border-primary', 'border-2');
         post.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const resolvedSlug = post.id || slug;
         if (syncLocation) {
-          syncBlogLocation(slug);
+          syncBlogLocation(resolvedSlug);
         }
-        const selectedPost = latestPosts.find((entry) => entry.slug === slug);
+        const selectedPost = latestPosts.find((entry) => entry.slug === resolvedSlug)
+          || latestPosts.find((entry) => entry.slug === slug);
         if (selectedPost) {
           updateShareMetadata(selectedPost);
         }
@@ -875,9 +881,10 @@
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
         const requestedPostId = String(getRequestedPostId() || '').trim();
         const detailViewActive = Boolean(requestedPostSlug || requestedPostId);
-        const requestedTargetPost = requestedPostSlug
+        const requestedTargetPost = (requestedPostSlug
           ? latestPosts.find((post) => String(post.slug || '').toLowerCase() === requestedPostSlug.toLowerCase())
-          : (requestedPostId
+          : null)
+          || (requestedPostId
             ? latestPosts.find((post) => String(post.id || '').trim() === requestedPostId)
             : null);
         latestPosts = latestPosts.filter((post) => {
@@ -939,7 +946,8 @@
         document.getElementById('blogPosts').innerHTML = postMarkup.join('');
 
         if (filteredPosts.length) {
-          focusLinkedPost(getRequestedPostSlug());
+          const focusSlug = getRequestedPostSlug() || (filteredPosts[0]?.slug || '');
+          focusLinkedPost(focusSlug);
         } else {
           syncBlogLocation('');
         }

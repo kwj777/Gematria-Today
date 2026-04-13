@@ -301,6 +301,16 @@
         return HERO_IMAGE_OVERRIDES[slug] || '';
       };
 
+      const appendImageVersionToken = (url, token) => {
+        const normalizedUrl = String(url || '').trim();
+        const normalizedToken = String(token || '').trim();
+        if (!normalizedUrl || !normalizedToken || /^data:image\//i.test(normalizedUrl)) {
+          return normalizedUrl;
+        }
+        const delimiter = normalizedUrl.includes('?') ? '&' : '?';
+        return `${normalizedUrl}${delimiter}v=${encodeURIComponent(normalizedToken)}`;
+      };
+
       const applyInlineMarkdown = (value = '') => {
         let output = escapeHtml(value);
         output = output.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" decoding="async" />');
@@ -870,8 +880,12 @@
           }
           const tagMarkup = tagBadges.join(' ');
           const coverImageUrl = getPostCoverImageUrl(post);
+          const previewImageVersionToken = previewModeActive
+            ? (post.updatedAt || post.updated_at || post.createdAt || post.id || Date.now())
+            : '';
+          const renderedCoverImageUrl = appendImageVersionToken(coverImageUrl, previewImageVersionToken);
           const coverImageMarkup = coverImageUrl
-            ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(coverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`
+            ? `<figure class="blog-post-image-frame mb-4"><img class="blog-post-image" src="${escapeHtml(renderedCoverImageUrl)}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" width="1600" height="900" /></figure>`
             : '';
           const adminEditButtonMarkup = adminSessionActive
             ? `<a class="btn btn-sm btn-outline-primary fw-semibold" href="${escapeHtml(getPostEditUrl(post))}">Edit</a>`

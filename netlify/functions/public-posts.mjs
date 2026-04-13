@@ -104,6 +104,12 @@ export async function handler(event) {
       route: 'public-posts',
       action: featuredOnly ? 'read_featured' : 'read',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
+      metadata: {
+        slug: slugFilter || null,
+        featuredOnly,
+        limit: requestedLimit,
+        previewMode,
+      },
     });
 
     return jsonResponse(200, cacheResult.payload, {

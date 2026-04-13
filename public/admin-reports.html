@@ -447,6 +447,10 @@
           const barWidth = Math.max(2, Math.round((clicks / maxClicks) * 100));
           const label = `${row.route} · ${row.action}`;
           const lastClicked = row.lastClickedAt ? new Date(row.lastClickedAt).toLocaleString() : 'Unknown';
+          const topDetails = Array.isArray(row.topDetails) ? row.topDetails.filter((detailRow) => detailRow?.detail) : [];
+          const detailSummary = topDetails.length
+            ? topDetails.map((detailRow) => `${escapeHtml(detailRow.detail)} (${formatNumber(detailRow.clicks)})`).join(' · ')
+            : 'No link/detail metadata captured yet.';
           return `
             <article class="border rounded p-2">
               <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
@@ -456,6 +460,7 @@
               <div class="progress report-bar mb-1" role="img" aria-label="${escapeHtml(label)} clicks ${clicks}">
                 <div class="progress-bar bg-warning text-dark" style="width: ${barWidth}%"></div>
               </div>
+              <p class="small on-light-muted mb-1">Top clicked detail: ${detailSummary}</p>
               <p class="small on-light-muted mb-0">Last clicked: ${escapeHtml(lastClicked)}</p>
             </article>
           `;

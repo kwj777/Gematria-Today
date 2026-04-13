@@ -6,6 +6,11 @@ const FALLBACK_IMAGE = '/assets/blog-hero-insights-16x9.svg';
 const OGP_IMAGE_WIDTH = 1200;
 const OGP_IMAGE_FORMAT = 'jpg';
 
+const HERO_IMAGE_OVERRIDES = Object.freeze({
+  'amillennialism-what-it-is-and-isn-t': '/assets/amillennialism-post-01-what-it-is-and-isnt-hero-16x9.svg',
+});
+
+
 function escapeHtml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -43,6 +48,19 @@ function toShareImageUrl(value = '') {
   return absoluteUrl;
 }
 
+
+function getPostHeroImage(post) {
+  const slug = String(post?.slug || '').trim().toLowerCase();
+  return (
+    post?.heroImageUrl ||
+    post?.imageUrl ||
+    post?.backgroundImageUrl ||
+    post?.sliderImageUrl ||
+    HERO_IMAGE_OVERRIDES[slug] ||
+    FALLBACK_IMAGE
+  );
+}
+
 function getShareDescription(post) {
   const summary = stripHtml(post?.summary || '');
   if (summary) {
@@ -61,9 +79,7 @@ function buildShareHtml(post) {
   const description = getShareDescription(post);
   const canonicalUrl = `${SITE_ORIGIN}/blog/${encodeURIComponent(slug)}`;
   const appUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
-  const imageUrl = toShareImageUrl(
-    post?.heroImageUrl || post?.imageUrl || post?.backgroundImageUrl || post?.sliderImageUrl || FALLBACK_IMAGE,
-  ) || toShareImageUrl(FALLBACK_IMAGE);
+  const imageUrl = toShareImageUrl(getPostHeroImage(post)) || toShareImageUrl(FALLBACK_IMAGE);
   const publishedIso = post?.publishedAt || post?.createdAt || new Date().toISOString();
 
   return `<!doctype html>

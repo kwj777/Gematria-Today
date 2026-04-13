@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">From Justin to Augustine to the Reformation — Amillennialism Hero</title>
+  <desc id="desc">A 16 by 9 blog hero image showing a theological timeline from early church to reformation with warm light and manuscript motifs.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1024"/>
+      <stop offset="0.55" stop-color="#1e3a5f"/>
+      <stop offset="1" stop-color="#7c2d12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="52%">
+      <stop offset="0" stop-color="#fde68a" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#fde68a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+
+  <g opacity="0.2" stroke="#f8fafc" stroke-width="2" fill="none">
+    <path d="M120 730 C380 610, 570 600, 800 620 C1030 640, 1240 590, 1470 470"/>
+    <path d="M120 770 C380 650, 580 640, 810 660 C1040 680, 1260 640, 1480 520"/>
+  </g>
+
+  <g fill="#f8fafc" opacity="0.92">
+    <circle cx="280" cy="640" r="14"/>
+    <circle cx="800" cy="620" r="14"/>
+    <circle cx="1320" cy="500" r="14"/>
+  </g>
+
+  <g font-family="Inter, Arial, sans-serif" fill="#e2e8f0">
+    <text x="240" y="690" font-size="34" font-weight="700">Justin Martyr</text>
+    <text x="730" y="670" font-size="34" font-weight="700">Augustine</text>
+    <text x="1190" y="550" font-size="34" font-weight="700">Reformation</text>
+  </g>
+
+  <g transform="translate(0,38)">
+    <text x="84" y="94" fill="#fef3c7" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="1.8">AMILLENNIALISM SERIES</text>
+    <text x="84" y="178" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-size="66" font-weight="700">From Justin to Augustine</text>
+    <text x="84" y="252" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-size="66" font-weight="700">to the Reformation</text>
+    <text x="84" y="318" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="500">How Amillennialism Became Mainstream</text>
+  </g>
+
+  <g opacity="0.4" filter="url(#soft)">
+    <rect x="1160" y="120" width="260" height="360" rx="16" fill="#f8fafc"/>
+  </g>
+  <g opacity="0.78">
+    <rect x="1180" y="140" width="220" height="320" rx="12" fill="#f8fafc"/>
+    <line x1="1210" y1="200" x2="1370" y2="200" stroke="#64748b" stroke-width="6"/>
+    <line x1="1210" y1="245" x2="1370" y2="245" stroke="#94a3b8" stroke-width="4"/>
+    <line x1="1210" y1="285" x2="1370" y2="285" stroke="#94a3b8" stroke-width="4"/>
+    <line x1="1210" y1="325" x2="1335" y2="325" stroke="#94a3b8" stroke-width="4"/>
+  </g>
+</svg>

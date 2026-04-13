@@ -363,6 +363,7 @@ export async function handler(event) {
             publishedAt: post.publishedAt,
             scheduledPublishAt: post.scheduledPublishAt,
             createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
           };
           if (!detailMode) {
             return summaryItem;

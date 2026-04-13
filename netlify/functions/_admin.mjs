@@ -507,6 +507,7 @@ export function formatPost(row) {
     publishedAt: row.published_at,
     scheduledPublishAt: row.scheduled_publish_at,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -519,6 +520,7 @@ export function formatFeed(row) {
     notes: row.notes,
     isActive: row.is_active,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -531,6 +533,7 @@ export function formatTask(row) {
     notes: row.notes,
     status: row.status,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 

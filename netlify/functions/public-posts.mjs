@@ -249,15 +249,25 @@ export async function handler(event) {
     const featuredOnly = event.queryStringParameters?.featured === 'true';
     const previewRequested = event.queryStringParameters?.preview === 'true';
     const previewMode = previewRequested && String(user?.role || '').toLowerCase() === 'admin';
+    const idFilter = String(event.queryStringParameters?.id || '').trim();
     const slugFilter = String(event.queryStringParameters?.slug || '').trim().toLowerCase();
-    const detailMode = Boolean(slugFilter);
+    const detailMode = Boolean(idFilter || slugFilter);
     const limitValue = Number.parseInt(event.queryStringParameters?.limit || '', 10);
     const requestedLimit = Number.isFinite(limitValue) && limitValue > 0 ? Math.min(limitValue, 12) : null;
     const offsetValue = Number.parseInt(event.queryStringParameters?.offset || '', 10);
     const requestedOffset = Number.isFinite(offsetValue) && offsetValue > 0 ? offsetValue : 0;
 
     const cacheResult = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'public-posts', featuredOnly, requestedLimit, requestedOffset, previewMode, slugFilter: slugFilter || null, detailMode }),
+      cacheKey: buildCacheKey({
+        route: 'public-posts',
+        featuredOnly,
+        requestedLimit,
+        requestedOffset,
+        previewMode,
+        idFilter: idFilter || null,
+        slugFilter: slugFilter || null,
+        detailMode
+      }),
       route: 'public-posts',
       ttlSeconds: 120,
       compute: async () => {
@@ -304,6 +314,7 @@ export async function handler(event) {
               )
               OR (${previewMode ? 1 : 0} = 1 AND COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft')
             )
+              AND (${idFilter ? 1 : 0} = 0 OR id = ${idFilter})
               AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
             ORDER BY COALESCE(published_at, created_at) DESC
             LIMIT ${effectiveLimit}
@@ -321,6 +332,7 @@ export async function handler(event) {
               )
               OR (${previewMode ? 1 : 0} = 1 AND COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft')
             )
+              AND (${idFilter ? 1 : 0} = 0 OR id = ${idFilter})
               AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
             ORDER BY COALESCE(published_at, created_at) DESC
           `;
@@ -368,6 +380,7 @@ export async function handler(event) {
       action: featuredOnly ? 'read_featured' : 'read',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
       metadata: {
+        id: idFilter || null,
         slug: slugFilter || null,
         featuredOnly,
         limit: requestedLimit,

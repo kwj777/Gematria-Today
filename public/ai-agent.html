@@ -1583,6 +1583,14 @@ View results: ${shareUrl}`.trim(),
         const waiting = Boolean(isWaiting);
         form.classList.toggle('is-waiting-for-response', waiting);
         form.setAttribute('aria-busy', waiting ? 'true' : 'false');
+        form.hidden = waiting;
+        if (relatedWordsFollowupSuggestion) {
+          if (waiting) {
+            relatedWordsFollowupSuggestion.hidden = true;
+          } else {
+            renderRelatedWordsFollowupSuggestion();
+          }
+        }
         if (waitingIndicator) {
           waitingIndicator.hidden = !waiting;
         }

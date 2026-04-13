@@ -93,8 +93,29 @@
         opacity: 0.78;
       }
 
+      .agent-waiting-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .agent-working-icon {
+        width: 0.95rem;
+        height: 0.95rem;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: agent-spin 0.7s linear infinite;
+      }
+
       .agent-waiting-indicator[hidden] {
         display: none !important;
+      }
+
+      @keyframes agent-spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       @media (max-width: 575.98px) {
@@ -170,7 +191,7 @@
               <button type="button" id="saveConversation" class="btn btn-outline-success">Save chat to dashboard</button>
             </div>
             <div class="col-12">
-              <p id="agentWaitingIndicator" class="agent-waiting-indicator small text-primary-emphasis mb-0" role="status" aria-live="polite" hidden>⏳ Agent is working on your request…</p>
+              <p id="agentWaitingIndicator" class="agent-waiting-indicator small text-primary-emphasis mb-0" role="status" aria-live="polite" hidden><span class="agent-working-icon" aria-hidden="true"></span><span>Agent is working on your request…</span></p>
             </div>
             <div class="col-12 agent-form-help">
               <p class="form-text mb-0">Type the word(s) you want calculated in natural language (quotes are optional).</p>
@@ -1370,7 +1391,6 @@ View results: ${shareUrl}`.trim(),
 
         const topic = calculationTargets[0] || '';
         pendingRelatedWordsSuggestionTopic = topic;
-        renderRelatedWordsFollowupSuggestion();
         if (!topic) {
           return '<p class="mb-0">Please share a word, phrase, or name so I can calculate and discuss it.</p>';
         }
@@ -1583,7 +1603,6 @@ View results: ${shareUrl}`.trim(),
         const waiting = Boolean(isWaiting);
         form.classList.toggle('is-waiting-for-response', waiting);
         form.setAttribute('aria-busy', waiting ? 'true' : 'false');
-        form.hidden = waiting;
         if (relatedWordsFollowupSuggestion) {
           if (waiting) {
             relatedWordsFollowupSuggestion.hidden = true;
@@ -1679,11 +1698,16 @@ View results: ${shareUrl}`.trim(),
           const selectedWord = String(wordLookupButton.dataset.word || '').trim();
           if (!selectedWord) return;
           addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`, { pinToTop: true });
+          setComposerWaitingState(true);
           window.showWorkingOverlay?.();
-          const replyHtml = await buildAgentReply(`"${selectedWord}"`);
-          window.hideWorkingOverlay?.();
-          const assistantMessage = addMessage('assistant', replyHtml);
-          attachResultFeedbackUi(assistantMessage, selectedWord);
+          try {
+            const replyHtml = await buildAgentReply(`"${selectedWord}"`);
+            const assistantMessage = addMessage('assistant', replyHtml);
+            attachResultFeedbackUi(assistantMessage, selectedWord);
+          } finally {
+            window.hideWorkingOverlay?.();
+            setComposerWaitingState(false);
+          }
           return;
         }
 

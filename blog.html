@@ -751,7 +751,7 @@
         if (!wrap || !button) {
           return;
         }
-        const detailViewActive = Boolean(getRequestedPostSlug());
+        const detailViewActive = Boolean(getRequestedPostSlug() || getRequestedPostId());
         const shouldShow = !detailViewActive && !previewModeActive && hasMorePublishedPosts;
         wrap.classList.toggle('d-none', !shouldShow);
         button.disabled = loadingMorePosts;
@@ -827,10 +827,13 @@
       function renderPosts(posts) {
         latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
-        const detailViewActive = Boolean(requestedPostSlug);
+        const requestedPostId = String(getRequestedPostId() || '').trim();
+        const detailViewActive = Boolean(requestedPostSlug || requestedPostId);
         const requestedTargetPost = requestedPostSlug
           ? latestPosts.find((post) => String(post.slug || '').toLowerCase() === requestedPostSlug.toLowerCase())
-          : null;
+          : (requestedPostId
+            ? latestPosts.find((post) => String(post.id || '').trim() === requestedPostId)
+            : null);
         latestPosts = latestPosts.filter((post) => {
           if (requestedTargetPost) {
             return String(post.slug || '').toLowerCase() === String(requestedTargetPost.slug || '').toLowerCase();
@@ -1051,7 +1054,7 @@
           if (previewNotice) {
             previewNotice.classList.toggle('d-none', !previewModeActive);
           }
-          const hasRequestedPost = Boolean(getRequestedPostSlug());
+          const hasRequestedPost = Boolean(getRequestedPostSlug() || getRequestedPostId());
           const mergedPosts = hasRequestedPost
             ? mergeUniquePosts(loadedPublishedPosts)
             : mergeWithFallbackPosts(loadedPublishedPosts);

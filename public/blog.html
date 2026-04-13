@@ -881,7 +881,7 @@
           const tagMarkup = tagBadges.join(' ');
           const coverImageUrl = getPostCoverImageUrl(post);
           const previewImageVersionToken = previewModeActive
-            ? (post.updatedAt || post.updated_at || post.createdAt || post.id || Date.now())
+            ? `${post.updatedAt || post.updated_at || post.createdAt || post.id || 'preview'}-${Date.now()}`
             : '';
           const renderedCoverImageUrl = appendImageVersionToken(coverImageUrl, previewImageVersionToken);
           const coverImageMarkup = coverImageUrl

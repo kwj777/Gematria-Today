@@ -7,7 +7,7 @@ const OGP_IMAGE_WIDTH = 1200;
 const OGP_IMAGE_FORMAT = 'jpg';
 
 const HERO_IMAGE_OVERRIDES = Object.freeze({
-  'amillennialism-what-it-is-and-isn-t': '/assets/amillennialism-post-01-what-it-is-and-isnt-hero-16x9.svg',
+  'amillennialism-what-it-is-and-isn-t': '/assets/amillennialism-post-01-graphic.svg',
 });
 
 

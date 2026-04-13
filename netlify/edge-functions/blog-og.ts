@@ -8,7 +8,7 @@ const DEFAULT_TITLE = 'EndTimes.Today Blog';
 const DEFAULT_DESCRIPTION =
   'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.';
 const HERO_IMAGE_OVERRIDES: Record<string, string> = Object.freeze({
-  'amillennialism-what-it-is-and-isn-t': '/assets/amillennialism-post-01-what-it-is-and-isnt-hero-16x9.svg',
+  'amillennialism-what-it-is-and-isn-t': '/assets/amillennialism-post-01-graphic.svg',
 });
 
 

@@ -1214,6 +1214,30 @@ body.admin-render-pending footer {
   transform: rotate(0deg);
 }
 
+[data-bs-toggle="collapse"]:not(.navbar-toggler):not(.admin-section-toggle) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+[data-bs-toggle="collapse"]:not(.navbar-toggler):not(.admin-section-toggle)::after {
+  content: "⌄";
+  color: var(--bs-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+[data-bs-toggle="collapse"]:not(.navbar-toggler):not(.admin-section-toggle)[aria-expanded="true"]::after {
+  transform: rotate(180deg);
+}
+
+[data-bs-toggle="collapse"] [id$="ToggleArrow"] {
+  display: none;
+}
+
 
 .admin-danger-zone {
   border: 1px solid rgba(176, 34, 34, 0.25);

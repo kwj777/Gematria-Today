@@ -1326,12 +1326,13 @@ View results: ${shareUrl}`.trim(),
         const gematriaValueLookupMatch = normalizedPrompt.match(/\b(?:gematria\s+value|value|number|calculation)\s*(?:of|for|=|is)?\s*(\d+)\b/i);
         const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
         const explicitRelatedWordsTarget = extractRelatedWordsCalculationTarget(normalizedPrompt);
+        const affirmativeFollowup = isAffirmativePrompt(normalizedPrompt);
 
         if (explicitRelatedWordsTarget && /\b(?:related words?|synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context)\b/i.test(normalizedPrompt)) {
           return buildRelatedWordsCalculationReply(explicitRelatedWordsTarget, relationshipType);
         }
 
-        if (isAffirmativePrompt(normalizedPrompt) && pendingRelatedWordsSuggestionTopic) {
+        if (affirmativeFollowup && pendingRelatedWordsSuggestionTopic) {
           return buildRelatedWordsCalculationReply(
             pendingRelatedWordsSuggestionTopic,
             'synonym',
@@ -1620,8 +1621,6 @@ View results: ${shareUrl}`.trim(),
         if (!premiumAccess) return;
         const prompt = promptInput.value.trim();
         if (!prompt) return;
-        pendingRelatedWordsSuggestionTopic = '';
-        renderRelatedWordsFollowupSuggestion();
         addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
         promptInput.value = '';
 

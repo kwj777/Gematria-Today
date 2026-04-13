@@ -169,7 +169,7 @@ async function findAuthenticatedSession(event, sql, cookieName) {
   }
 
   const rows = await sql`
-    SELECT users.id, users.username, users.role, sessions.expires_at
+    SELECT users.id, users.username, users.role, COALESCE(users.is_admin, FALSE) AS is_admin, sessions.expires_at
     FROM sessions
     JOIN users ON users.id = sessions.user_id
     WHERE sessions.token_hash = ${hashToken(sessionToken)}
@@ -188,6 +188,7 @@ async function findAuthenticatedSession(event, sql, cookieName) {
       id: rows[0].id,
       username: rows[0].username,
       role: rows[0].role,
+      isAdmin: Boolean(rows[0].is_admin),
       expiresAt: rows[0].expires_at,
     },
   };

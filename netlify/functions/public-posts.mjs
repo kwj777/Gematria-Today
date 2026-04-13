@@ -248,7 +248,10 @@ export async function handler(event) {
 
     const featuredOnly = event.queryStringParameters?.featured === 'true';
     const previewRequested = event.queryStringParameters?.preview === 'true';
-    const previewMode = previewRequested && String(user?.role || '').toLowerCase() === 'admin';
+    const previewMode = previewRequested && (
+      String(user?.role || '').toLowerCase() === 'admin'
+      || Boolean(user?.isAdmin)
+    );
     const idFilter = String(event.queryStringParameters?.id || '').trim();
     const slugFilter = String(event.queryStringParameters?.slug || '').trim().toLowerCase();
     const detailMode = Boolean(idFilter || slugFilter);

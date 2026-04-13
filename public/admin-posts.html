@@ -31,6 +31,14 @@
         overflow-y: auto;
         white-space: normal;
       }
+
+      .admin-editor-toolbar {
+        position: sticky;
+        top: 5.25rem;
+        z-index: 20;
+        background: var(--bs-body-bg, #fff);
+        padding: 0.5rem 0;
+      }
     </style>
     <script defer src="/ui-feedback.js"></script>
       <script src="/pwa-register.js" defer></script>
@@ -90,7 +98,7 @@
             <div class="col-12">
               <label class="form-label" for="createPostBody">Body</label>
               <p class="small text-muted mb-2">WYSIWYG editor: use the toolbar or type directly in the editor.</p>
-              <div class="d-flex flex-wrap gap-2 mb-2" role="toolbar" aria-label="Create post editor toolbar">
+              <div class="d-flex flex-wrap gap-2 mb-2 admin-editor-toolbar" role="toolbar" aria-label="Create post editor toolbar">
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="bold" data-editor-target="createPostBody"><strong>B</strong></button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="italic" data-editor-target="createPostBody"><em>I</em></button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="heading" data-editor-target="createPostBody">H2</button>
@@ -706,7 +714,7 @@
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
                   <div class="col-12">
                     <label class="form-label" for="editBody-${post.id}">Body</label>
-                    <div class="d-flex flex-wrap gap-2 mb-2" role="toolbar" aria-label="Edit post editor toolbar">
+                    <div class="d-flex flex-wrap gap-2 mb-2 admin-editor-toolbar" role="toolbar" aria-label="Edit post editor toolbar">
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="bold" data-editor-target="editBody-${post.id}"><strong>B</strong></button>
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="italic" data-editor-target="editBody-${post.id}"><em>I</em></button>
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="heading" data-editor-target="editBody-${post.id}">H2</button>

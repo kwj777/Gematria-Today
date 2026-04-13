@@ -628,6 +628,10 @@
         const pathMatch = window.location.pathname.match(/^\/blog\/([^/?#]+)/i);
         return pathMatch ? decodeURIComponent(pathMatch[1]) : '';
       };
+      const getRequestedPostId = () => {
+        const params = new URLSearchParams(window.location.search);
+        return String(params.get('postId') || '').trim();
+      };
       const getRequestedTag = () => {
         const params = new URLSearchParams(window.location.search);
         const tag = String(params.get('tag') || '').trim();
@@ -976,8 +980,11 @@
 
       const fetchPublishedPosts = async ({ offset = 0 } = {}) => {
         const requestUrl = new URL('/api/public-posts', window.location.origin);
+        const requestedPostId = String(getRequestedPostId() || '').trim();
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
-        if (requestedPostSlug) {
+        if (requestedPostId) {
+          requestUrl.searchParams.set('id', requestedPostId);
+        } else if (requestedPostSlug) {
           requestUrl.searchParams.set('slug', requestedPostSlug);
         } else {
           requestUrl.searchParams.set('limit', String(BLOG_LIST_PAGE_LIMIT));

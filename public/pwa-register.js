@@ -6,6 +6,8 @@
   let deferredInstallPrompt = null;
   let launchOverlayTimer = null;
   const IOS_INSTALL_DISMISSED_KEY = 'pwa-ios-install-dismissed';
+  const INSTALL_CTA_DISMISS_COUNT_KEY = 'pwa-install-cta-dismiss-count';
+  const INSTALL_CTA_MAX_DISMISSALS = 2;
 
   function removeLaunchOverlay() {
     const existing = document.querySelector('[data-pwa-launch-overlay]');
@@ -148,8 +150,27 @@
     }
   }
 
+  function getInstallCtaDismissCount() {
+    const stored = window.localStorage.getItem(INSTALL_CTA_DISMISS_COUNT_KEY);
+    const parsed = Number.parseInt(stored || '0', 10);
+    return Number.isNaN(parsed) ? 0 : Math.max(parsed, 0);
+  }
+
+  function incrementInstallCtaDismissCount() {
+    const nextCount = getInstallCtaDismissCount() + 1;
+    window.localStorage.setItem(INSTALL_CTA_DISMISS_COUNT_KEY, String(nextCount));
+  }
+
+  function resetInstallCtaDismissCount() {
+    window.localStorage.removeItem(INSTALL_CTA_DISMISS_COUNT_KEY);
+  }
+
   function showInstallCta() {
     if (deferredInstallPrompt === null || isStandaloneMode() || document.querySelector('[data-pwa-install-cta]')) {
+      return;
+    }
+
+    if (getInstallCtaDismissCount() >= INSTALL_CTA_MAX_DISMISSALS) {
       return;
     }
 
@@ -173,6 +194,7 @@
     dismiss.textContent = '×';
 
     dismiss.addEventListener('click', () => {
+      incrementInstallCtaDismissCount();
       removeInstallCta();
     });
 
@@ -185,7 +207,12 @@
       promptEvent.prompt();
 
       try {
-        await promptEvent.userChoice;
+        const choiceResult = await promptEvent.userChoice;
+        if (choiceResult && choiceResult.outcome !== 'accepted') {
+          incrementInstallCtaDismissCount();
+        } else {
+          resetInstallCtaDismissCount();
+        }
       } finally {
         deferredInstallPrompt = null;
         removeInstallCta();
@@ -204,6 +231,7 @@
 
   window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
+    resetInstallCtaDismissCount();
     removeInstallCta();
     removeIosInstallPopup();
   });

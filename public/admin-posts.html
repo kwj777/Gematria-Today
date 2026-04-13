@@ -649,6 +649,10 @@
         return `/blog.html?${searchParams.toString()}#${encodeURIComponent(slug)}`;
       }
 
+      function getPostHeroImageUrl(post) {
+        return String(post?.imageUrl || post?.heroImageUrl || post?.backgroundImageUrl || post?.sliderImageUrl || '').trim();
+      }
+
       function getDateFilterTimestamp(value, isEndOfDay = false) {
         if (!value) return null;
         const date = new Date(`${value}T00:00:00`);
@@ -733,7 +737,7 @@
                     </div>
                     <div id="editBody-${post.id}" class="form-control admin-wysiwyg-editor" role="textbox" aria-multiline="true" contenteditable="true">${normalizePostBodyHtml(post.body || '')}</div>
                   </div>
-                  <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Hero image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
+                  <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Hero image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(getPostHeroImageUrl(post))}" /></div>
                   <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Homepage slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editBackgroundImageUrl-${post.id}">Background image URL</label><input id="editBackgroundImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.backgroundImageUrl || '')}" /></div>
                   <div class="col-12">

@@ -25,6 +25,13 @@
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />
+    <style>
+      .admin-wysiwyg-editor {
+        min-height: 12rem;
+        overflow-y: auto;
+        white-space: normal;
+      }
+    </style>
     <script defer src="/ui-feedback.js"></script>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -82,6 +89,7 @@
             <div class="col-12"><label class="form-label" for="createPostSummary">Summary</label><textarea id="createPostSummary" class="form-control" rows="2" required></textarea></div>
             <div class="col-12">
               <label class="form-label" for="createPostBody">Body</label>
+              <p class="small text-muted mb-2">WYSIWYG editor: use the toolbar or type directly in the editor.</p>
               <div class="d-flex flex-wrap gap-2 mb-2" role="toolbar" aria-label="Create post editor toolbar">
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="bold" data-editor-target="createPostBody"><strong>B</strong></button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="italic" data-editor-target="createPostBody"><em>I</em></button>
@@ -92,7 +100,7 @@
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="quote" data-editor-target="createPostBody">Quote</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="code" data-editor-target="createPostBody">Code</button>
               </div>
-              <textarea id="createPostBody" class="form-control" rows="7" required></textarea>
+              <div id="createPostBody" class="form-control admin-wysiwyg-editor" role="textbox" aria-multiline="true" contenteditable="true"></div>
             </div>
             <div class="col-12"><label class="form-label" for="createPostImageUrl">Hero image URL</label><input id="createPostImageUrl" class="form-control" /></div>
             <div class="col-12"><label class="form-label" for="createPostSliderImageUrl">Homepage slider image URL</label><input id="createPostSliderImageUrl" class="form-control" /></div>
@@ -373,23 +381,21 @@
       }
 
       function injectGeneratedHeroImage() {
-        const bodyField = document.getElementById('createPostBody');
         const heroMarkup = createHeroImageMarkup();
-        const existingBody = bodyField.value.trim();
+        const existingBody = getEditorHtml('createPostBody').trim();
         const heroBlockPattern = /<!-- auto-generated-hero -->[\s\S]*?<!-- \/auto-generated-hero -->\s*/;
         const bodyWithoutOldHero = existingBody.replace(heroBlockPattern, '').trim();
-        bodyField.value = bodyWithoutOldHero ? `${heroMarkup}\n\n${bodyWithoutOldHero}` : heroMarkup;
+        setEditorHtml('createPostBody', bodyWithoutOldHero ? `${heroMarkup}\n\n${bodyWithoutOldHero}` : heroMarkup);
       }
 
       function removeGeneratedHeroImage() {
-        const bodyField = document.getElementById('createPostBody');
-        const existingBody = bodyField.value || '';
+        const existingBody = getEditorHtml('createPostBody');
         const heroBlockPattern = /<!-- auto-generated-hero -->[\s\S]*?<!-- \/auto-generated-hero -->\s*/;
         const bodyWithoutHero = existingBody.replace(heroBlockPattern, '').trim();
         if (bodyWithoutHero === existingBody.trim()) {
           return false;
         }
-        bodyField.value = bodyWithoutHero;
+        setEditorHtml('createPostBody', bodyWithoutHero);
         return true;
       }
 
@@ -458,43 +464,55 @@
         target.classList.remove('d-none');
       }
 
-      function insertEditorText(targetId, before, after = '', placeholder = '') {
+      function getEditorHtml(targetId) {
+        const field = document.getElementById(targetId);
+        if (!field) return '';
+        return field.innerHTML || '';
+      }
+
+      function setEditorHtml(targetId, value) {
         const field = document.getElementById(targetId);
         if (!field) return;
+        field.innerHTML = String(value || '');
+      }
+
+      function focusEditor(targetId) {
+        const field = document.getElementById(targetId);
+        if (!field) return null;
         field.focus();
-        const start = field.selectionStart ?? field.value.length;
-        const end = field.selectionEnd ?? field.value.length;
-        const selectedText = field.value.slice(start, end);
-        const replacement = `${before}${selectedText || placeholder}${after}`;
-        field.setRangeText(replacement, start, end, 'end');
-        const cursorPosition = start + replacement.length;
-        field.setSelectionRange(cursorPosition, cursorPosition);
+        return field;
+      }
+
+      function insertEditorHtml(targetId, html) {
+        const field = focusEditor(targetId);
+        if (!field) return;
+        document.execCommand('insertHTML', false, html);
       }
 
       function applyEditorAction(action, targetId) {
-        const targetField = document.getElementById(targetId);
+        const targetField = focusEditor(targetId);
         if (!targetField) return;
         switch (action) {
           case 'bold':
-            insertEditorText(targetId, '<strong>', '</strong>', 'Bold text');
+            document.execCommand('bold', false);
             return;
           case 'italic':
-            insertEditorText(targetId, '<em>', '</em>', 'Italic text');
+            document.execCommand('italic', false);
             return;
           case 'heading':
-            insertEditorText(targetId, '\n<h2>', '</h2>\n', 'Section heading');
+            document.execCommand('formatBlock', false, 'h2');
             return;
           case 'unordered-list':
-            insertEditorText(targetId, '\n<ul>\n  <li>', '</li>\n  <li>Another point</li>\n</ul>\n', 'List item');
+            document.execCommand('insertUnorderedList', false);
             return;
           case 'ordered-list':
-            insertEditorText(targetId, '\n<ol>\n  <li>', '</li>\n  <li>Second item</li>\n</ol>\n', 'List item');
+            document.execCommand('insertOrderedList', false);
             return;
           case 'quote':
-            insertEditorText(targetId, '\n<blockquote>', '</blockquote>\n', 'Quoted text');
+            document.execCommand('formatBlock', false, 'blockquote');
             return;
           case 'code':
-            insertEditorText(targetId, '<code>', '</code>', 'code');
+            insertEditorHtml(targetId, '<code>code</code>');
             return;
           case 'link': {
             const urlInput = window.prompt('Enter link URL (include https://):', 'https://');
@@ -505,8 +523,15 @@
               return;
             }
             clearMessage(errorMessage);
-            const selectedText = targetField.value.slice(targetField.selectionStart ?? 0, targetField.selectionEnd ?? 0);
-            insertEditorText(targetId, `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">`, '</a>', selectedText || 'Link text');
+            const selectedText = window.getSelection?.()?.toString().trim() || 'Link text';
+            document.execCommand('createLink', false, safeUrl);
+            const selection = window.getSelection?.();
+            const anchor = selection?.anchorNode?.parentElement?.closest?.('a');
+            if (anchor) {
+              anchor.textContent = anchor.textContent || selectedText;
+              anchor.setAttribute('target', '_blank');
+              anchor.setAttribute('rel', 'noopener noreferrer');
+            }
             return;
           }
           default:
@@ -534,7 +559,7 @@
         const tag = document.getElementById('createPostTag').value.trim();
         const readTime = document.getElementById('createPostReadTime').value.trim();
         const summary = document.getElementById('createPostSummary').value.trim() || 'No summary added yet.';
-        const body = document.getElementById('createPostBody').value.trim() || '<p>No body content added yet.</p>';
+        const body = getEditorHtml('createPostBody').trim() || '<p>No body content added yet.</p>';
         const status = document.getElementById('createPostStatus').value;
         const scheduledPublishAt = document.getElementById('createPostScheduledPublishAt').value || null;
         const previewStatus = document.getElementById('previewCreatePostStatus');
@@ -691,7 +716,7 @@
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="quote" data-editor-target="editBody-${post.id}">Quote</button>
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="code" data-editor-target="editBody-${post.id}">Code</button>
                     </div>
-                    <textarea id="editBody-${post.id}" class="form-control" rows="6" required>${escapeHtml(post.body || '')}</textarea>
+                    <div id="editBody-${post.id}" class="form-control admin-wysiwyg-editor" role="textbox" aria-multiline="true" contenteditable="true">${normalizePostBodyHtml(post.body || '')}</div>
                   </div>
                   <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Hero image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.imageUrl || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Homepage slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /></div>
@@ -747,7 +772,7 @@
         document.getElementById('createPostTitle').value = proposal.title || '';
         document.getElementById('createPostTag').value = proposal.suggestedTags || '';
         document.getElementById('createPostSummary').value = proposal.summary || '';
-        document.getElementById('createPostBody').value = proposal.body || '';
+        setEditorHtml('createPostBody', proposal.body || '');
         const details = document.getElementById('createPostDetails');
         details?.setAttribute('open', 'open');
         renderCreatePostPreview();
@@ -755,6 +780,25 @@
         if (proposalLoadMessage) {
           showMessage(proposalLoadMessage, `Loaded proposal into the publishing workspace: ${proposal.title || 'Untitled proposal'}.`);
         }
+      }
+
+      function loadPostForEditingFromQueryParam() {
+        const editPostQuery = new URLSearchParams(window.location.search).get('editPost');
+        if (!editPostQuery) {
+          return;
+        }
+        const normalizedQuery = String(editPostQuery).trim().toLowerCase();
+        const matchedPost = state.posts.find((post) => String(post.id || '').toLowerCase() === normalizedQuery
+          || String(post.slug || '').trim().toLowerCase() === normalizedQuery);
+        if (!matchedPost) {
+          showMessage(errorMessage, 'The selected blog post could not be found for editing.');
+          return;
+        }
+        state.editingPostId = matchedPost.id;
+        renderPosts();
+        window.requestAnimationFrame(() => {
+          document.getElementById(`editTitle-${matchedPost.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
       }
 
 
@@ -843,7 +887,7 @@
           document.getElementById('createPostTag').value = extracted.tag || '';
           document.getElementById('createPostReadTime').value = extracted.readTime || '';
           document.getElementById('createPostSummary').value = extracted.summary || '';
-          document.getElementById('createPostBody').value = markdownToHtml(extracted.bodyMarkdown);
+          setEditorHtml('createPostBody', markdownToHtml(extracted.bodyMarkdown));
           renderCreatePostPreview();
           showMessage(saveMessage, `Imported ${file.name} into the post editor.`);
         } catch (error) {
@@ -883,7 +927,10 @@
         clearMessage(saveMessage);
         try {
           const readTimeField = document.getElementById('createPostReadTime');
-          const bodyValue = document.getElementById('createPostBody').value;
+          const bodyValue = getEditorHtml('createPostBody');
+          if (!bodyValue.replace(/<[^>]+>/g, '').trim()) {
+            throw new Error('Add body content before saving the post.');
+          }
           const isSaveDraftAction = event.submitter?.id === 'saveDraftButton';
           if (!String(readTimeField.value || '').trim()) {
             readTimeField.value = estimateReadTimeLabelFromContent(bodyValue);
@@ -925,7 +972,10 @@
         const getField = (fieldName) => form.querySelector(`[id="${fieldName}-${postId}"]`);
         const getFieldValue = (fieldName) => getField(fieldName)?.value || '';
         try {
-          const bodyValue = getFieldValue('editBody');
+          const bodyValue = getEditorHtml(`editBody-${postId}`);
+          if (!bodyValue.replace(/<[^>]+>/g, '').trim()) {
+            throw new Error('Add body content before saving the post.');
+          }
           const readTimeValue = String(getFieldValue('editReadTime') || '').trim() || estimateReadTimeLabelFromContent(bodyValue);
           await request('/api/admin-posts', {
             method: 'PUT',
@@ -962,6 +1012,7 @@
 
       loadSession()
         .then(loadPosts)
+        .then(loadPostForEditingFromQueryParam)
         .then(loadProposalFromQueryParam)
         .catch((error) => showMessage(errorMessage, error.message));
     </script>

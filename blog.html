@@ -336,17 +336,7 @@
       };
 
 
-      const appendImageVersionTokenToHtmlImages = (html, token) => {
-        const normalizedToken = String(token || '').trim();
-        if (!normalizedToken) {
-          return String(html || '');
-        }
-        return String(html || '').replace(/(<img\b[^>]*\bsrc=["'])([^"']+)(["'][^>]*>)/gi, (match, prefix, srcValue, suffix) => {
-          const nextSrc = appendImageVersionToken(srcValue, normalizedToken);
-          return `${prefix}${nextSrc || srcValue}${suffix}`;
-        });
-      };
-
+      
       const applyInlineMarkdown = (value = '') => {
         let output = escapeHtml(value);
         output = output.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" decoding="async" />');

@@ -900,19 +900,18 @@
         }
         const expandPostLink = event.target.closest('[data-expand-post]');
         if (expandPostLink) {
-          event.preventDefault();
           const slug = String(expandPostLink.dataset.expandPost || '').trim();
           if (!slug) {
             return;
           }
-          if (expandedPostSlugs.has(slug)) {
+          const isExpanded = expandedPostSlugs.has(slug);
+          if (isExpanded) {
+            event.preventDefault();
             expandedPostSlugs.delete(slug);
-          } else {
-            expandedPostSlugs.add(slug);
+            renderPosts(latestPosts);
+            window.setTimeout(() => focusLinkedPost(slug, { syncLocation: false }), 0);
+            return;
           }
-          renderPosts(latestPosts);
-          window.setTimeout(() => focusLinkedPost(slug, { syncLocation: false }), 0);
-          return;
         }
         const shareButton = event.target.closest('[data-share-post]');
         if (shareButton) {

@@ -1109,10 +1109,7 @@
       };
 
       const renderPostsPromise = checkAdminSession()
-        .finally(() => Promise.race([
-          fetchPublishedPosts(),
-          new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading published posts')), 4000))
-        ]))
+        .then(() => fetchPublishedPosts())
         .then((payload) => {
           const publishedItems = Array.isArray(payload?.items) ? payload.items : [];
           previewModeActive = Boolean(payload?.previewMode);

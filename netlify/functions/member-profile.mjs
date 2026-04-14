@@ -1,14 +1,20 @@
 import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
+import { generateCsrfToken, validateCsrfToken, getCsrfTokenFromRequest } from './_auth.mjs';
 
 export async function handler(event) {
   try {
-    const { sql, member, profile } = await getAuthenticatedMember(event, { requireAuth: true });
+    const { sql, member, profile, sessionToken } = await getAuthenticatedMember(event, { requireAuth: true });
 
     if (event.httpMethod === 'GET') {
-      return jsonResponse(200, { member, profile });
+      return jsonResponse(200, { member, profile, csrfToken: generateCsrfToken(sessionToken) });
     }
 
     if (event.httpMethod === 'PATCH' || event.httpMethod === 'PUT') {
+      const csrfToken = getCsrfTokenFromRequest(event);
+      if (!validateCsrfToken(csrfToken, sessionToken)) {
+        return jsonResponse(403, { error: 'Invalid or missing CSRF token' });
+      }
+
       const body = parseBody(event);
       const displayName = String(body.displayName ?? member.displayName ?? '').trim() || member.username;
       const favoriteCipher = body.favoriteCipher ? String(body.favoriteCipher).trim() : null;

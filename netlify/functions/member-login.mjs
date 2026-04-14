@@ -11,6 +11,7 @@ import {
   parseBody,
   verifyTurnstileToken,
 } from './_member.mjs';
+import { generateCsrfToken } from './_auth.mjs';
 import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -79,6 +80,7 @@ export async function handler(event) {
         authenticated: true,
         user: { id: admin.id, username: admin.username, role: admin.role },
         route: 'admin',
+        csrfToken: generateCsrfToken(token),
       }, {
         'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
       });
@@ -116,6 +118,7 @@ export async function handler(event) {
       user: authenticatedUser,
       member,
       profile,
+      csrfToken: generateCsrfToken(token),
     }, {
       'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.member),
     });

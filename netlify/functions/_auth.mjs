@@ -343,6 +343,45 @@ export async function verifyTurnstileToken(event, challengeToken, { timeoutMs = 
   };
 }
 
+export const CSRF_TOKEN_HEADER = 'x-csrf-token';
+
+function getCsrfSecret() {
+  const secret = String(process.env.CSRF_SECRET || process.env.DATABASE_URL || '').trim();
+  if (!secret) {
+    throw new Error('Missing CSRF_SECRET environment variable');
+  }
+  return secret;
+}
+
+export function generateCsrfToken(sessionToken) {
+  return crypto.createHmac('sha256', getCsrfSecret())
+    .update('session:' + String(sessionToken || ''))
+    .digest('hex');
+}
+
+export function validateCsrfToken(providedToken, sessionToken) {
+  if (!providedToken || !sessionToken) {
+    return false;
+  }
+  const expected = generateCsrfToken(sessionToken);
+  const provided = String(providedToken);
+  if (provided.length !== expected.length) {
+    return false;
+  }
+  try {
+    return crypto.timingSafeEqual(Buffer.from(provided, 'utf8'), Buffer.from(expected, 'utf8'));
+  } catch {
+    return false;
+  }
+}
+
+export function getCsrfTokenFromRequest(event) {
+  if (typeof event?.headers?.get === 'function') {
+    return String(event.headers.get(CSRF_TOKEN_HEADER) || '').trim();
+  }
+  return String(event?.headers?.[CSRF_TOKEN_HEADER] || '').trim();
+}
+
 export async function getAuthenticatedUser(event, {
   sql,
   cookieName = AUTH_COOKIES.admin,

@@ -224,8 +224,8 @@ export async function logRequestAudit(sql, source, { route, action, outcome, met
 }
 
 function getVisitorLocationMetadata(source) {
-  const headers = source?.headers || {};
-  const getHeader = (name) => headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || '';
+  const headers = getRequestHeaders(source);
+  const getHeader = (name) => headers[name.toLowerCase()] || '';
   const userAgent = String(getHeader('user-agent') || '').trim();
   const normalizedCountry = normalizeGeoValue(
     getHeader('x-country')

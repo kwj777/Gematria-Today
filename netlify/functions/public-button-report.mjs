@@ -79,11 +79,18 @@ export async function handler(event) {
       });
     }
 
+    const normalizedMetadata = normalizeMetadata(payload.metadata);
+    const audienceType = user && user.role === 'member' ? 'member' : 'visitor';
+
     await logRequestAudit(sql, event, {
       route,
       action,
       outcome: 'success',
-      metadata: normalizeMetadata(payload.metadata),
+      metadata: {
+        ...normalizedMetadata,
+        audienceType,
+        authenticated: audienceType === 'member' ? 'true' : (normalizedMetadata.authenticated || 'false'),
+      },
     });
 
     return jsonResponse(202, { ok: true });

@@ -6,8 +6,12 @@ import { fileURLToPath } from 'node:url';
 const ALLOWED_DAY_WINDOWS = new Set([1, 7, 30, 60, 90, 365]);
 const ALLOWED_HOUR_WINDOWS = new Set([1, 6, 12]);
 const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node-fetch|node\\.js|nodejs|node/|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SITE_PUBLIC_DIR = path.resolve(__dirname, '../../public');
+let SITE_PUBLIC_DIR = null;
+try {
+  SITE_PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
+} catch {
+  // import.meta.url may not resolve to a file path in all bundling environments
+}
 const EXCLUDED_REPORT_ROUTES = new Set(['/admin-click-tracking.html', '/unsupported-browser.html', '/offline.html']);
 
 function normalizePathname(value) {
@@ -47,6 +51,7 @@ function stripHtml(rawText) {
 }
 
 async function collectTrackableElements() {
+  if (!SITE_PUBLIC_DIR) return [];
   let files;
   try {
     files = await fs.readdir(SITE_PUBLIC_DIR);

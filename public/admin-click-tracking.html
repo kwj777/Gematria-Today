@@ -191,7 +191,7 @@
         const response = await fetch(url, { credentials: 'same-origin', headers: { 'content-type': 'application/json' } });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(payload.error || 'Request failed');
+          throw new Error(payload.error || `Request failed (HTTP ${response.status})`);
         }
         return payload;
       }
@@ -412,7 +412,10 @@
         const errorMessage = document.getElementById('errorMessage');
         errorMessage.classList.add('d-none');
         try {
-          await request('/api/admin-session');
+          const session = await request('/api/admin-session');
+          if (!session.authenticated) {
+            throw new Error('Not authenticated');
+          }
           const payload = await request(`/api/admin-click-tracking?${selected.query}`);
           currentRows = Array.isArray(payload.clickTrackingDetails) ? payload.clickTrackingDetails : [];
           currentNeverClickedElements = Array.isArray(payload.neverClickedElements) ? payload.neverClickedElements : [];

@@ -82,6 +82,26 @@
                 <p id="reportVisitorClicks" class="h4 mb-0">0</p>
               </div>
             </div>
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Never clicked links/buttons</p>
+                <p id="reportNeverClickedElements" class="h4 mb-0">0</p>
+              </div>
+            </div>
+          </div>
+          <h2 class="h5 mb-2">Never clicked in selected timeframe</h2>
+          <div class="table-responsive mb-4">
+            <table class="table table-sm table-striped align-middle mb-0" id="neverClickedTable">
+              <thead>
+                <tr>
+                  <th scope="col">Element type</th>
+                  <th scope="col">Page</th>
+                  <th scope="col">Label</th>
+                  <th scope="col">Destination</th>
+                </tr>
+              </thead>
+              <tbody id="neverClickedBody"></tbody>
+            </table>
           </div>
           <h2 class="h5 mb-2">Most clicked (grouped by first 4 columns)</h2>
           <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
@@ -178,6 +198,7 @@
 
       const tableBody = document.getElementById('clickTrackingBody');
       const mostClickedBody = document.getElementById('mostClickedBody');
+      const neverClickedBody = document.getElementById('neverClickedBody');
       const countEl = document.getElementById('clickTrackingCount');
       const filterInput = document.getElementById('clickTrackingFilter');
       const sortSelect = document.getElementById('clickTrackingSort');
@@ -185,6 +206,7 @@
       const mostClickedActionFilter = document.getElementById('mostClickedActionFilter');
       const mostClickedPageFilter = document.getElementById('mostClickedPageFilter');
       let currentRows = [];
+      let currentNeverClickedElements = [];
 
       function normalizeAudienceType(rawAudienceType) {
         const normalized = String(rawAudienceType || '').trim().toLowerCase();
@@ -260,6 +282,19 @@
         document.getElementById('reportTotalClicks').textContent = formatNumber(rows.length);
         document.getElementById('reportMemberClicks').textContent = formatNumber(memberClicks);
         document.getElementById('reportVisitorClicks').textContent = formatNumber(visitorClicks);
+        document.getElementById('reportNeverClickedElements').textContent = formatNumber(currentNeverClickedElements.length);
+      }
+
+      function renderNeverClickedTable() {
+        const rows = Array.isArray(currentNeverClickedElements) ? currentNeverClickedElements : [];
+        neverClickedBody.innerHTML = rows.slice(0, 200).map((row) => (
+          '<tr>'
+          + '<td><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
+          + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
+          + '<td class="small" title="' + escapeHtml(row.label || '—') + '">' + escapeHtml(row.label || '—') + '</td>'
+          + '<td class="small">' + (row.destination ? ('<code>' + escapeHtml(row.destination) + '</code>') : '<span class="text-muted">—</span>') + '</td>'
+          + '</tr>'
+        )).join('') || '<tr><td colspan="4" class="small text-muted">No never-clicked links or buttons found for this timeframe.</td></tr>';
       }
 
       function renderMostClickedTable(rows) {
@@ -341,6 +376,7 @@
         tableBody.innerHTML = groupRows || '<tr><td colspan="8" class="small text-muted">No click tracking data available for this timeframe.</td></tr>';
         countEl.textContent = `Showing ${formatNumber(filtered.length)} click events in timeframe.`;
         renderReportCards(filtered);
+        renderNeverClickedTable();
         updateMostClickedFilterOptions(filtered);
         renderMostClickedTable(filtered);
 
@@ -379,6 +415,7 @@
           await request('/api/admin-session');
           const payload = await request(`/api/admin-click-tracking?${selected.query}`);
           currentRows = Array.isArray(payload.clickTrackingDetails) ? payload.clickTrackingDetails : [];
+          currentNeverClickedElements = Array.isArray(payload.neverClickedElements) ? payload.neverClickedElements : [];
           document.getElementById('metaLine').textContent = `Signed in as ${payload.user.username}. Window: ${payload.windowLabel}. Last refresh: ${new Date(payload.generatedAt).toLocaleString()}.`;
           renderGroupedRows();
         } catch (error) {
@@ -387,6 +424,8 @@
           document.getElementById('metaLine').textContent = 'Not authenticated or unable to load click tracking data.';
           tableBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No click tracking data loaded.</td></tr>';
           mostClickedBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No grouped click rows loaded.</td></tr>';
+          neverClickedBody.innerHTML = '<tr><td colspan="4" class="small text-muted">No never-clicked rows loaded.</td></tr>';
+          currentNeverClickedElements = [];
           countEl.textContent = '';
           renderReportCards([]);
         }

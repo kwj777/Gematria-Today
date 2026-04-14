@@ -5,6 +5,64 @@
 
   window.__globalLoadingFeedbackInstalled = true;
 
+  function normalizeTrackValue(value, maxLength = 160) {
+    return String(value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+  }
+
+  function reportSitewideElementClick(event) {
+    if (window.endTimesTracking?.track) {
+      return;
+    }
+
+    const target = event.target instanceof Element ? event.target.closest('a, button') : null;
+    if (!target) {
+      return;
+    }
+
+    const source = normalizeTrackValue(
+      target.getAttribute('data-track-source')
+      || target.getAttribute('aria-label')
+      || target.textContent
+      || target.id
+      || target.className
+      || 'unknown'
+    );
+    const href = target instanceof HTMLAnchorElement ? normalizeTrackValue(target.getAttribute('href')) : '';
+
+    const payload = {
+      route: window.location.pathname,
+      action: target.getAttribute('data-track-action') || 'sitewide_element_click',
+      metadata: {
+        source,
+        href,
+        elementType: target.tagName.toLowerCase(),
+        pagePath: window.location.pathname,
+      },
+    };
+    const requestBody = JSON.stringify(payload);
+
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+        const sent = navigator.sendBeacon('/api/public-button-report', new Blob([requestBody], { type: 'application/json' }));
+        if (sent) {
+          return;
+        }
+      }
+    } catch {
+      // Fall back to fetch when sendBeacon is unavailable.
+    }
+
+    fetch('/api/public-button-report', {
+      method: 'POST',
+      credentials: 'same-origin',
+      keepalive: true,
+      headers: { 'content-type': 'application/json' },
+      body: requestBody,
+    }).catch(() => {});
+  }
+
+  window.document.addEventListener('click', reportSitewideElementClick, { capture: true });
+
   const workingOverlayAllowedPages = new Set(['/calculator.html', '/namecalculator.html']);
   const currentPath = (window.location && window.location.pathname ? window.location.pathname : '').toLowerCase();
   const isWorkingOverlayPage = workingOverlayAllowedPages.has(currentPath);

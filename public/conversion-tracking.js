@@ -40,16 +40,30 @@
       return;
     }
 
+    const payload = {
+      route: window.location.pathname,
+      action: normalizedAction,
+      metadata,
+    };
+    const requestBody = JSON.stringify(payload);
+
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+        const sent = navigator.sendBeacon('/api/public-button-report', new Blob([requestBody], { type: 'application/json' }));
+        if (sent) {
+          return;
+        }
+      }
+    } catch {
+      // Fall back to fetch when sendBeacon is unavailable.
+    }
+
     fetch('/api/public-button-report', {
       method: 'POST',
       credentials: 'same-origin',
       keepalive: true,
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        route: window.location.pathname,
-        action: normalizedAction,
-        metadata,
-      }),
+      body: requestBody,
     }).catch(() => {});
   }
 

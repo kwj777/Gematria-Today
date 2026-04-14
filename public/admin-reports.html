@@ -385,6 +385,8 @@
 
         const maxUnique = Math.max(...rows.map((row) => Number(row.uniquePageViews || 0)), 1);
         target.innerHTML = rows.map((row, rowIndex) => {
+          const pagePath = String(row.pagePath || row.route || '/unknown');
+          const sourceRoute = String(row.route || pagePath);
           const uniqueViews = Number(row.uniquePageViews || 0);
           const rowTotalRequests = Number(row.totalRequests || 0);
           const barWidth = Math.max(2, Math.round((uniqueViews / maxUnique) * 100));
@@ -397,7 +399,7 @@
             : 'Unknown';
           const detailReport = topCountries.length
             ? `
-              <div id="${detailPanelId}" class="detail-report mt-2 p-2 d-none" role="region" aria-label="Detailed page-view report for ${escapeHtml(row.route)}">
+              <div id="${detailPanelId}" class="detail-report mt-2 p-2 d-none" role="region" aria-label="Detailed page-view report for ${escapeHtml(pagePath)}">
                 <p class="small mb-2"><strong>Detailed page-view report</strong></p>
                 <div class="d-grid gap-1">
                   ${topCountries.map((countryRow, countryIndex) => {
@@ -425,12 +427,13 @@
           return `
             <article class="border rounded p-2">
               <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
-                <p class="mb-0"><strong>${escapeHtml(row.route)}</strong></p>
+                <p class="mb-0"><strong>${escapeHtml(pagePath)}</strong></p>
                 <p class="mb-0 small">Unique views: <strong>${formatNumber(uniqueViews)}</strong> · Requests: <strong>${formatNumber(rowTotalRequests)}</strong></p>
               </div>
-              <div class="progress report-bar" role="img" aria-label="${escapeHtml(row.route)} unique views ${uniqueViews}">
+              <div class="progress report-bar" role="img" aria-label="${escapeHtml(pagePath)} unique views ${uniqueViews}">
                 <div class="progress-bar bg-info" style="width: ${barWidth}%"></div>
               </div>
+              ${sourceRoute !== pagePath ? `<p class="small on-light-muted mb-1 mt-2">Primary route source: <code>${escapeHtml(sourceRoute)}</code></p>` : '<div class="mt-2"></div>'}
               <p class="small on-light-muted mb-1 mt-2">Top visitor countries: ${countrySummary}</p>
               <p class="small on-light-muted mb-1">Share of total traffic: <strong>${routeShare}%</strong> requests · <strong>${uniqueShare}%</strong> unique visitors</p>
               ${topCountries.length ? `<button class="detail-toggle mb-2" type="button" data-pageview-toggle="${detailPanelId}" aria-expanded="false">Show full page-view details ▾</button>` : ''}

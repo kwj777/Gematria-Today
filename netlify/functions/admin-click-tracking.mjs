@@ -53,19 +53,28 @@ function stripHtml(rawText) {
 }
 
 async function collectTrackableElements() {
-  if (!SITE_PUBLIC_DIR) return [];
-  let files;
-  try {
-    files = await fs.readdir(SITE_PUBLIC_DIR);
-  } catch {
-    return [];
+  const candidates = SITE_PUBLIC_DIR ? [SITE_PUBLIC_DIR] : [];
+  const cwdPublic = path.resolve(process.cwd(), 'public');
+  if (SITE_PUBLIC_DIR !== cwdPublic) candidates.push(cwdPublic);
+
+  let files = null;
+  let resolvedDir = null;
+  for (const dir of candidates) {
+    try {
+      files = await fs.readdir(dir);
+      resolvedDir = dir;
+      break;
+    } catch {
+      // try next candidate
+    }
   }
+  if (!files || !resolvedDir) return [];
 
   const htmlFiles = files.filter((file) => file.endsWith('.html') && !file.startsWith('admin-') && !file.startsWith('member-'));
   const elements = [];
 
   for (const fileName of htmlFiles) {
-    const fullPath = path.join(SITE_PUBLIC_DIR, fileName);
+    const fullPath = path.join(resolvedDir, fileName);
     const pagePath = normalizePathname(`/${fileName}`);
     if (EXCLUDED_REPORT_ROUTES.has(pagePath)) continue;
     let html = '';

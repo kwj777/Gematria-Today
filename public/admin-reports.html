@@ -52,13 +52,6 @@
         line-height: 1;
         padding: 0;
       }
-      .section-collapse-toggle .toggle-arrow {
-        display: inline-block;
-        transition: transform 160ms ease;
-      }
-      .section-collapse-toggle[aria-expanded="true"] .toggle-arrow {
-        transform: rotate(90deg);
-      }
     </style>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -150,7 +143,6 @@
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h4 mb-0">Membership and publishing trends</h2>
             <button class="section-collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#membershipPublishingTrendsCollapse" aria-controls="membershipPublishingTrendsCollapse" aria-expanded="false" aria-label="Toggle membership and publishing trends section">
-              <span class="toggle-arrow" aria-hidden="true">▸</span>
             </button>
           </div>
           <div id="membershipPublishingTrendsCollapse" class="collapse">
@@ -173,7 +165,6 @@
               <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <h2 class="h4 mb-0">Recent security problems</h2>
                 <button class="section-collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#securityEventsCollapse" aria-controls="securityEventsCollapse" aria-expanded="false" aria-label="Toggle recent security problems section">
-                  <span class="toggle-arrow" aria-hidden="true">▸</span>
                 </button>
               </div>
               <div id="securityEventsCollapse" class="collapse">
@@ -187,7 +178,6 @@
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h4 mb-0">Public page views (includes member traffic)</h2>
             <button class="section-collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#publicPageViewsCollapse" aria-controls="publicPageViewsCollapse" aria-expanded="false" aria-label="Toggle public page views section">
-              <span class="toggle-arrow" aria-hidden="true">▸</span>
             </button>
           </div>
           <div id="publicPageViewsCollapse" class="collapse">
@@ -200,7 +190,6 @@
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 class="h4 mb-0">Button / action click stats</h2>
             <button class="section-collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#buttonStatsCollapse" aria-controls="buttonStatsCollapse" aria-expanded="false" aria-label="Toggle button and action click stats section">
-              <span class="toggle-arrow" aria-hidden="true">▸</span>
             </button>
           </div>
           <div id="buttonStatsCollapse" class="collapse">

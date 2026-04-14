@@ -52,6 +52,24 @@
         line-height: 1;
         padding: 0;
       }
+      .detail-toggle {
+        border: 0;
+        background: transparent;
+        color: #355f8c;
+        font-size: 0.92rem;
+        padding: 0;
+        text-align: left;
+      }
+      .detail-toggle:hover,
+      .detail-toggle:focus-visible { color: #1f4062; text-decoration: underline; }
+      .detail-report {
+        border: 1px solid rgba(74, 89, 112, 0.22);
+        border-radius: 0.5rem;
+        background: #f8f9fb;
+      }
+      .detail-report-item + .detail-report-item {
+        border-top: 1px dashed rgba(74, 89, 112, 0.2);
+      }
     </style>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -245,7 +263,7 @@
           return;
         }
         const maxValue = Math.max(...rows.map((row) => Number(row[valueField] || 0)), 1);
-        target.innerHTML = rows.map((row) => {
+        target.innerHTML = rows.map((row, index) => {
           const value = Number(row[valueField] || 0);
           const percent = Math.max(2, Math.round((value / maxValue) * 100));
           return `
@@ -430,16 +448,37 @@
         }
 
         const maxClicks = Math.max(...rows.map((row) => Number(row.clicks || 0)), 1);
-        target.innerHTML = rows.map((row) => {
+        target.innerHTML = rows.map((row, index) => {
           const clicks = Number(row.clicks || 0);
           const uniqueVisitors = Number(row.uniqueVisitors || 0);
           const barWidth = Math.max(2, Math.round((clicks / maxClicks) * 100));
           const label = `${row.route} · ${row.action}`;
           const lastClicked = row.lastClickedAt ? new Date(row.lastClickedAt).toLocaleString() : 'Unknown';
           const topDetails = Array.isArray(row.topDetails) ? row.topDetails.filter((detailRow) => detailRow?.detail) : [];
+          const detailPanelId = `detailReport-${index}`;
+          const hasDetails = topDetails.length > 0;
           const detailSummary = topDetails.length
             ? topDetails.map((detailRow) => `${escapeHtml(detailRow.detail)} (${formatNumber(detailRow.clicks)})`).join(' · ')
             : 'No link/detail metadata captured yet.';
+          const detailReport = hasDetails
+            ? `
+              <div id="${detailPanelId}" class="detail-report mt-2 p-2 d-none" role="region" aria-label="Detailed click report for ${escapeHtml(label)}">
+                <p class="small mb-2"><strong>Detailed click report</strong></p>
+                <div class="d-grid gap-1">
+                  ${topDetails.map((detailRow, detailIndex) => {
+                    const detailClicks = Number(detailRow.clicks || 0);
+                    const detailShare = clicks > 0 ? ((detailClicks / clicks) * 100).toFixed(1) : '0.0';
+                    return `
+                      <article class="detail-report-item pt-1">
+                        <p class="small mb-1"><strong>#${detailIndex + 1}</strong> ${escapeHtml(detailRow.detail)}</p>
+                        <p class="small on-light-muted mb-0">Clicks: <strong>${formatNumber(detailClicks)}</strong> · Share of this action: <strong>${detailShare}%</strong></p>
+                      </article>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            `
+            : '';
           return `
             <article class="border rounded p-2">
               <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
@@ -450,10 +489,25 @@
                 <div class="progress-bar bg-warning text-dark" style="width: ${barWidth}%"></div>
               </div>
               <p class="small on-light-muted mb-1">Top clicked detail: ${detailSummary}</p>
+              ${hasDetails ? `<button class="detail-toggle mb-2" type="button" data-detail-toggle="${detailPanelId}" aria-expanded="false">Show full click details ▾</button>` : ''}
+              ${detailReport}
               <p class="small on-light-muted mb-0">Last clicked: ${escapeHtml(lastClicked)}</p>
             </article>
           `;
         }).join('');
+
+        target.querySelectorAll('[data-detail-toggle]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const panelId = button.getAttribute('data-detail-toggle');
+            if (!panelId) return;
+            const panel = target.querySelector(`#${CSS.escape(panelId)}`);
+            if (!panel) return;
+            const isHidden = panel.classList.contains('d-none');
+            panel.classList.toggle('d-none', !isHidden);
+            button.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+            button.textContent = isHidden ? 'Hide full click details ▴' : 'Show full click details ▾';
+          });
+        });
       }
 
       function renderConversionFunnel(funnel) {

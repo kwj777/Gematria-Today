@@ -63,6 +63,44 @@
 
         <section class="content-panel p-4">
           <p class="small on-light-muted mb-3">Click history is now timeframe-based. Admin clicks are excluded.</p>
+          <div class="row g-3 mb-3" id="clickTrackingReports">
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Total clicks</p>
+                <p id="reportTotalClicks" class="h4 mb-0">0</p>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Member clicks</p>
+                <p id="reportMemberClicks" class="h4 mb-0">0</p>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Non-member clicks</p>
+                <p id="reportVisitorClicks" class="h4 mb-0">0</p>
+              </div>
+            </div>
+          </div>
+          <h2 class="h5 mb-2">Most clicked (grouped by identical rows)</h2>
+          <div class="table-responsive mb-4">
+            <table class="table table-sm table-hover align-middle mb-0" id="mostClickedTable">
+              <thead>
+                <tr>
+                  <th scope="col">Total Clicks</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Source (label)</th>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Element</th>
+                  <th scope="col">Page</th>
+                  <th scope="col">Referrer</th>
+                  <th scope="col">Element link</th>
+                </tr>
+              </thead>
+              <tbody id="mostClickedBody"></tbody>
+            </table>
+          </div>
           <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
             <input type="text" id="clickTrackingFilter" class="form-control form-control-sm" style="max-width: 340px;" placeholder="Filter by action, source, page…" aria-label="Filter click tracking log" />
             <select id="clickTrackingSort" class="form-select form-select-sm" style="max-width: 260px;" aria-label="Sort click tracking log">
@@ -82,6 +120,7 @@
                   <th scope="col">Element</th>
                   <th scope="col">Page</th>
                   <th scope="col">Referrer</th>
+                  <th scope="col">Element link</th>
                 </tr>
               </thead>
               <tbody id="clickTrackingBody"></tbody>
@@ -124,10 +163,78 @@
       }
 
       const tableBody = document.getElementById('clickTrackingBody');
+      const mostClickedBody = document.getElementById('mostClickedBody');
       const countEl = document.getElementById('clickTrackingCount');
       const filterInput = document.getElementById('clickTrackingFilter');
       const sortSelect = document.getElementById('clickTrackingSort');
       let currentRows = [];
+
+      function buildMostClickedRows(rows) {
+        const grouped = new Map();
+        rows.forEach((row) => {
+          const key = JSON.stringify([
+            row.action || '',
+            row.source || '',
+            row.destination || '',
+            row.elementType || '',
+            row.pagePath || '',
+            row.referrer || '',
+            row.elementLink || '',
+            row.elementSelector || '',
+            row.elementId || '',
+          ]);
+          const existing = grouped.get(key);
+          if (existing) {
+            existing.clicks += 1;
+            return;
+          }
+          grouped.set(key, {
+            action: row.action || '',
+            source: row.source || '',
+            destination: row.destination || '',
+            elementType: row.elementType || '',
+            pagePath: row.pagePath || '',
+            referrer: row.referrer || '',
+            elementLink: row.elementLink || row.pageUrl || '',
+            elementId: row.elementId || '',
+            elementSelector: row.elementSelector || '',
+            clicks: 1,
+          });
+        });
+
+        return Array.from(grouped.values()).sort((a, b) => (
+          b.clicks - a.clicks
+          || String(a.action).localeCompare(String(b.action))
+          || String(a.source).localeCompare(String(b.source))
+        ));
+      }
+
+      function renderReportCards(rows) {
+        const memberClicks = rows.filter((row) => String(row.audienceType || 'visitor').toLowerCase() === 'member').length;
+        const visitorClicks = rows.length - memberClicks;
+        document.getElementById('reportTotalClicks').textContent = formatNumber(rows.length);
+        document.getElementById('reportMemberClicks').textContent = formatNumber(memberClicks);
+        document.getElementById('reportVisitorClicks').textContent = formatNumber(visitorClicks);
+      }
+
+      function renderMostClickedTable(rows) {
+        const mostClickedRows = buildMostClickedRows(rows);
+        mostClickedBody.innerHTML = mostClickedRows.slice(0, 100).map((row) => {
+          const link = row.elementLink || '';
+          const selectorHint = row.elementId ? `#${row.elementId}` : row.elementSelector;
+          const elementLabel = selectorHint ? `${row.elementType || 'element'} (${selectorHint})` : (row.elementType || 'element');
+          return '<tr>'
+            + '<td class="fw-semibold">' + formatNumber(row.clicks) + '</td>'
+            + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
+            + '<td class="small" title="' + escapeHtml(row.source || '—') + '">' + escapeHtml(row.source || '—') + '</td>'
+            + '<td class="small" title="' + escapeHtml(row.destination || '—') + '">' + escapeHtml(row.destination || '—') + '</td>'
+            + '<td class="small" title="' + escapeHtml(elementLabel) + '">' + escapeHtml(elementLabel) + '</td>'
+            + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
+            + '<td class="small" title="' + escapeHtml(row.referrer || '—') + '">' + escapeHtml(row.referrer || '—') + '</td>'
+            + '<td class="small">' + (link ? ('<a href="' + escapeHtml(link) + '" target="_blank" rel="noopener noreferrer">Open element</a>') : '<span class="text-muted">—</span>') + '</td>'
+            + '</tr>';
+        }).join('') || '<tr><td colspan="8" class="small text-muted">No grouped click rows for this timeframe.</td></tr>';
+      }
 
       function compareRows(a, b, sortMode) {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -176,21 +283,24 @@
               + '<td class="small"><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
               + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
               + '<td class="small" title="' + escapeHtml(ref) + '">' + escapeHtml(ref.length > 40 ? ref.slice(0, 37) + '…' : ref) + '</td>'
+              + '<td class="small">' + (row.elementLink ? ('<a href="' + escapeHtml(row.elementLink) + '" target="_blank" rel="noopener noreferrer">Open</a>') : '<span class="text-muted">—</span>') + '</td>'
               + '</tr>';
           }).join('');
 
           return '<tr class="table-secondary">'
-            + '<td colspan="7">'
+            + '<td colspan="8">'
             + '<button type="button" class="group-toggle" data-group-toggle="' + groupId + '" aria-expanded="false">'
             + '▸ ' + escapeHtml(group.label) + ' (' + formatNumber(groupItems.length) + ')'
             + '</button>'
             + '</td>'
             + '</tr>'
-            + (groupContent || '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed"><td colspan="7" class="small text-muted">No events in this group.</td></tr>');
+            + (groupContent || '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed"><td colspan="8" class="small text-muted">No events in this group.</td></tr>');
         }).join('');
 
-        tableBody.innerHTML = groupRows || '<tr><td colspan="7" class="small text-muted">No click tracking data available for this timeframe.</td></tr>';
+        tableBody.innerHTML = groupRows || '<tr><td colspan="8" class="small text-muted">No click tracking data available for this timeframe.</td></tr>';
         countEl.textContent = `Showing ${formatNumber(filtered.length)} click events in timeframe.`;
+        renderReportCards(filtered);
+        renderMostClickedTable(filtered);
 
         document.querySelectorAll('[data-group-toggle]').forEach((button) => {
           button.addEventListener('click', () => {
@@ -219,8 +329,10 @@
           errorMessage.textContent = `${error.message}. Visit Admin to sign in, then return here.`;
           errorMessage.classList.remove('d-none');
           document.getElementById('metaLine').textContent = 'Not authenticated or unable to load click tracking data.';
-          tableBody.innerHTML = '<tr><td colspan="7" class="small text-muted">No click tracking data loaded.</td></tr>';
+          tableBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No click tracking data loaded.</td></tr>';
+          mostClickedBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No grouped click rows loaded.</td></tr>';
           countEl.textContent = '';
+          renderReportCards([]);
         }
       }
 

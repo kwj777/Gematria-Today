@@ -386,56 +386,69 @@
         const maxUnique = Math.max(...rows.map((row) => Number(row.uniquePageViews || 0)), 1);
         target.innerHTML = rows.map((row, rowIndex) => {
           const uniqueViews = Number(row.uniquePageViews || 0);
-          const totalRequests = Number(row.totalRequests || 0);
+          const rowTotalRequests = Number(row.totalRequests || 0);
           const barWidth = Math.max(2, Math.round((uniqueViews / maxUnique) * 100));
           const topCountries = Array.isArray(row.topCountries) ? row.topCountries : [];
+          const detailPanelId = `pageViewDetail-${rowIndex}`;
+          const routeShare = totalRequests > 0 ? ((rowTotalRequests / totalRequests) * 100).toFixed(1) : '0.0';
+          const uniqueShare = uniqueVisitors > 0 ? ((uniqueViews / uniqueVisitors) * 100).toFixed(1) : '0.0';
           const countrySummary = topCountries.length
-            ? topCountries.map((countryRow, countryIndex) => {
-              const panelId = `countryLocations-${rowIndex}-${countryIndex}`;
-              return `
-                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-country-toggle="${panelId}" aria-expanded="false">
-                  ${escapeHtml(countryRow.country)} (${formatNumber(countryRow.uniqueVisitors)})
-                </button>
-              `;
-            }).join(' · ')
+            ? topCountries.map((countryRow) => `${escapeHtml(countryRow.country)} (${formatNumber(countryRow.uniqueVisitors)})`).join(' · ')
             : 'Unknown';
-          const locationPanels = topCountries.map((countryRow, countryIndex) => {
-            const panelId = `countryLocations-${rowIndex}-${countryIndex}`;
-            const topLocations = Array.isArray(countryRow.topLocations) ? countryRow.topLocations : [];
-            const locationSummary = topLocations.length
-              ? topLocations.map((locationRow) => `${escapeHtml(locationRow.location)} (${formatNumber(locationRow.uniqueVisitors)})`).join(' · ')
-              : 'No location breakdown available.';
-            return `
-              <div id="${panelId}" class="country-location-panel small on-light-muted mt-1 d-none">
-                Top locations in <strong>${escapeHtml(countryRow.country)}</strong>: ${locationSummary}
+          const detailReport = topCountries.length
+            ? `
+              <div id="${detailPanelId}" class="detail-report mt-2 p-2 d-none" role="region" aria-label="Detailed page-view report for ${escapeHtml(row.route)}">
+                <p class="small mb-2"><strong>Detailed page-view report</strong></p>
+                <div class="d-grid gap-1">
+                  ${topCountries.map((countryRow, countryIndex) => {
+                    const countryUnique = Number(countryRow.uniqueVisitors || 0);
+                    const countryRequests = Number(countryRow.totalRequests || 0);
+                    const countryShare = uniqueViews > 0 ? ((countryUnique / uniqueViews) * 100).toFixed(1) : '0.0';
+                    const topLocations = Array.isArray(countryRow.topLocations) ? countryRow.topLocations : [];
+                    return `
+                      <article class="detail-report-item pt-1">
+                        <p class="small mb-1"><strong>#${countryIndex + 1}</strong> ${escapeHtml(countryRow.country)}</p>
+                        <p class="small on-light-muted mb-1">Unique visitors: <strong>${formatNumber(countryUnique)}</strong> · Requests: <strong>${formatNumber(countryRequests)}</strong> · Share of route unique views: <strong>${countryShare}%</strong></p>
+                        <p class="small on-light-muted mb-0">Top locations: ${
+                          topLocations.length
+                            ? topLocations.map((locationRow) => `${escapeHtml(locationRow.location)} (${formatNumber(locationRow.uniqueVisitors)})`).join(' · ')
+                            : 'No location breakdown available.'
+                        }</p>
+                      </article>
+                    `;
+                  }).join('')}
+                </div>
               </div>
-            `;
-          }).join('');
+            `
+            : '';
 
           return `
             <article class="border rounded p-2">
               <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
                 <p class="mb-0"><strong>${escapeHtml(row.route)}</strong></p>
-                <p class="mb-0 small">Unique views: <strong>${formatNumber(uniqueViews)}</strong> · Requests: <strong>${formatNumber(totalRequests)}</strong></p>
+                <p class="mb-0 small">Unique views: <strong>${formatNumber(uniqueViews)}</strong> · Requests: <strong>${formatNumber(rowTotalRequests)}</strong></p>
               </div>
               <div class="progress report-bar" role="img" aria-label="${escapeHtml(row.route)} unique views ${uniqueViews}">
                 <div class="progress-bar bg-info" style="width: ${barWidth}%"></div>
               </div>
-              <p class="small on-light-muted mb-0 mt-2">Top visitor countries: ${countrySummary}</p>
-              ${locationPanels}
+              <p class="small on-light-muted mb-1 mt-2">Top visitor countries: ${countrySummary}</p>
+              <p class="small on-light-muted mb-1">Share of total traffic: <strong>${routeShare}%</strong> requests · <strong>${uniqueShare}%</strong> unique visitors</p>
+              ${topCountries.length ? `<button class="detail-toggle mb-2" type="button" data-pageview-toggle="${detailPanelId}" aria-expanded="false">Show full page-view details ▾</button>` : ''}
+              ${detailReport}
             </article>
           `;
         }).join('');
 
-        target.querySelectorAll('[data-country-toggle]').forEach((button) => {
+        target.querySelectorAll('[data-pageview-toggle]').forEach((button) => {
           button.addEventListener('click', () => {
-            const panelId = button.getAttribute('data-country-toggle');
+            const panelId = button.getAttribute('data-pageview-toggle');
             if (!panelId) return;
             const panel = target.querySelector(`#${CSS.escape(panelId)}`);
             if (!panel) return;
             const isHidden = panel.classList.contains('d-none');
             panel.classList.toggle('d-none', !isHidden);
             button.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+            button.textContent = isHidden ? 'Hide full page-view details ▴' : 'Show full page-view details ▾';
           });
         });
       }

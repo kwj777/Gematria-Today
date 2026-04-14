@@ -420,11 +420,26 @@ export function getProtectionConfig() {
 
 export function assertEndpointEnabled({ publicRoute = false, expensive = false, route = 'unknown' } = {}) {
   const config = getProtectionConfig();
+  const normalizedRoute = String(route || 'unknown');
+
+  const logDisabledEndpoint = (reason) => {
+    const metadata = {
+      route: normalizedRoute,
+      reason,
+      highAlertMode: config.highAlertMode,
+      disableExpensivePublicEndpoints: config.disableExpensivePublicEndpoints,
+      timestamp: new Date().toISOString(),
+    };
+    console.warn('[security] Endpoint disabled by protection config', metadata);
+  };
+
   if (config.highAlertMode && expensive) {
-    throw Object.assign(new Error(`The ${route} endpoint is temporarily unavailable while protection mode is active.`), { statusCode: 503 });
+    logDisabledEndpoint('high_alert_mode');
+    throw Object.assign(new Error(`The ${normalizedRoute} endpoint is temporarily unavailable while protection mode is active.`), { statusCode: 503 });
   }
 
   if (config.disableExpensivePublicEndpoints && publicRoute && expensive) {
-    throw Object.assign(new Error(`The ${route} endpoint is temporarily disabled.`), { statusCode: 503 });
+    logDisabledEndpoint('public_expensive_endpoints_disabled');
+    throw Object.assign(new Error(`The ${normalizedRoute} endpoint is temporarily disabled.`), { statusCode: 503 });
   }
 }

@@ -3,6 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var hasPromise = typeof window.Promise === 'function';
+        var hasFetch = typeof window.fetch === 'function';
+        if (hasPromise && hasFetch) {
+          return;
+        }
+
+        var pathname = (window.location && window.location.pathname) || '';
+        if (pathname === '/unsupported-browser.html') {
+          return;
+        }
+
+        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
+        window.location.replace(redirectUrl);
+      })();
+    </script>
     <title>Offline | EndTimes.Today</title>
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />

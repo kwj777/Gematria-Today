@@ -152,6 +152,16 @@
         padding: 0.65rem 0.75rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.35);
       }
+      .forum-profile-popover-close {
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: inherit;
+        line-height: 1;
+        padding: 0.125rem 0.375rem;
+      }
+      .forum-profile-popover-close:hover,
+      .forum-profile-popover-close:focus-visible { background: rgba(255, 255, 255, 0.12); }
       .forum-profile-popover .badge { font-size: 0.68rem; }
     </style>
   </head>
@@ -618,9 +628,9 @@
         const payload = esc(JSON.stringify(profile));
         return `
           <span class="forum-author">
-            <span class="forum-author-trigger" role="button" tabindex="0" aria-expanded="false" data-author-profile="${payload}">
+            <button class="forum-author-trigger" type="button" aria-expanded="false" aria-haspopup="dialog" data-author-profile="${payload}">
               ${esc(profile.displayName || profile.username)}
-            </span>
+            </button>
             <span class="small">(${profile.reputation} rep)</span> ${renderBadges(profile.badges)}
           </span>
         `;
@@ -629,10 +639,18 @@
       function showAuthorPopover(trigger, profile) {
         closeAuthorPopovers();
         const popover = document.createElement('div');
+        const popoverId = `authorProfilePopover-${profile.username || 'member'}-${Math.random().toString(36).slice(2, 8)}`;
         popover.className = 'forum-profile-popover';
-        popover.setAttribute('role', 'tooltip');
+        popover.id = popoverId;
+        popover.setAttribute('role', 'dialog');
+        popover.setAttribute('aria-modal', 'false');
+        popover.setAttribute('aria-label', `${profile.displayName || profile.username} profile details`);
+        popover.setAttribute('tabindex', '-1');
         popover.innerHTML = `
-          <p class="fw-semibold mb-1">${esc(profile.displayName || profile.username)}</p>
+          <div class="d-flex align-items-start justify-content-between gap-2">
+            <p class="fw-semibold mb-1">${esc(profile.displayName || profile.username)}</p>
+            <button type="button" class="forum-profile-popover-close" aria-label="Close profile details">×</button>
+          </div>
           <p class="small text-muted mb-1">@${esc(profile.username)} · ${profile.reputation} rep</p>
           <p class="small text-muted mb-2">${membershipLabel(profile.membershipLevel)} member${profile.joinedAt ? ` · joined ${formatDate(profile.joinedAt)}` : ''}</p>
           <p class="small mb-2">${profile.threadCount} threads · ${profile.replyCount} replies</p>
@@ -640,11 +658,19 @@
         `;
         trigger.parentElement.appendChild(popover);
         trigger.setAttribute('aria-expanded', 'true');
+        trigger.setAttribute('aria-controls', popoverId);
+        popover.querySelector('.forum-profile-popover-close')?.addEventListener('click', () => {
+          closeAuthorPopovers();
+          trigger.focus();
+        });
       }
 
       function closeAuthorPopovers() {
         document.querySelectorAll('.forum-profile-popover').forEach((popover) => popover.remove());
-        document.querySelectorAll('.forum-author-trigger[aria-expanded="true"]').forEach((trigger) => trigger.setAttribute('aria-expanded', 'false'));
+        document.querySelectorAll('.forum-author-trigger[aria-expanded="true"]').forEach((trigger) => {
+          trigger.setAttribute('aria-expanded', 'false');
+          trigger.removeAttribute('aria-controls');
+        });
       }
 
       function bindAuthorPopovers(container) {
@@ -659,7 +685,6 @@
           }
 
           trigger.addEventListener('mouseenter', () => showAuthorPopover(trigger, profile));
-          trigger.addEventListener('focus', () => showAuthorPopover(trigger, profile));
           trigger.addEventListener('keydown', (event) => {
             if (event.key !== 'Enter' && event.key !== ' ') return;
             event.preventDefault();

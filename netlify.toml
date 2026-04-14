@@ -102,6 +102,11 @@
     Cache-Control = "public, max-age=300"
 
 [[headers]]
+  for = "/api/public-button-report"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
   for = "/api/public-*"
   [headers.values]
     Cache-Control = "public, max-age=120, stale-while-revalidate=60"

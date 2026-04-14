@@ -346,6 +346,10 @@ export async function handler(event) {
         }
         const formattedPosts = applySeriesOrderOverrides(rows.map(formatPost));
         const items = formattedPosts.map((post) => {
+          const renderedBodyHtml = linkifyHtmlContent(
+            normalizePostBodyHtml(post.body || ''),
+            buildInternalLinkTargets(formattedPosts, post.slug)
+          );
           const summaryItem = {
             id: post.id,
             title: post.title,
@@ -364,6 +368,7 @@ export async function handler(event) {
             scheduledPublishAt: post.scheduledPublishAt,
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
+            renderedBodyHtml,
           };
           if (!detailMode) {
             return summaryItem;
@@ -371,7 +376,7 @@ export async function handler(event) {
           return {
             ...summaryItem,
             body: post.body,
-            renderedBodyHtml: linkifyHtmlContent(normalizePostBodyHtml(post.body || ''), buildInternalLinkTargets(formattedPosts, post.slug)),
+            renderedBodyHtml,
           };
         });
         const nextOffset = requestedOffset + items.length;

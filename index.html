@@ -575,6 +575,29 @@
         return response.json();
       };
 
+      const setHomeReadMoreWorkingState = () => {
+        document.addEventListener('click', (event) => {
+          const featuredReadMoreButton = event.target.closest('.blog-home-featured-readmore');
+          if (featuredReadMoreButton) {
+            featuredReadMoreButton.textContent = 'Working...';
+            featuredReadMoreButton.setAttribute('aria-label', 'Working...');
+            return;
+          }
+
+          const homeHeroReadMoreLink = event.target.closest('#homeHeroCarousel a');
+          if (!homeHeroReadMoreLink) {
+            return;
+          }
+
+          const heroReadMoreBadge = homeHeroReadMoreLink.querySelector('.hero-why-gematria-readmore');
+          if (heroReadMoreBadge) {
+            heroReadMoreBadge.textContent = 'Working...';
+          }
+        });
+      };
+
+      setHomeReadMoreWorkingState();
+
       document.getElementById('homeJoinCta')?.addEventListener('click', () => {
         window.endTimesTracking?.track('beginner_path_start_click', {
           source: 'home_hero_primary_cta',

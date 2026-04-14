@@ -100,7 +100,7 @@
         <section class="content-panel p-4 p-lg-5 form-shell">
           <section class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
             </div>
           </section>
         </section>
@@ -119,6 +119,10 @@ const lookupForm = document.querySelector('#lookup-form');
       const learningPathReturnLink = document.querySelector('#learning-path-return-link');
       let learningPathReturnHref = '';
       let shareStatusTimeout = null;
+      let lastSearchTerm = '';
+      const calculatorError = document.querySelector('#calculator-error');
+      const calculatorErrorMessage = document.querySelector('#calculator-error-message');
+      const calculatorRetryButton = document.querySelector('#calculator-retry-button');
 
       function showCalculatorLoadingOverlay() {
         window.showWorkingOverlay?.();
@@ -127,6 +131,34 @@ const lookupForm = document.querySelector('#lookup-form');
       function hideCalculatorLoadingOverlay() {
         window.hideWorkingOverlay?.();
       }
+
+      function showCalculatorError(message) {
+        const msg = String(message || 'Something went wrong. Please try again.');
+        if (/failed to fetch|networkerror|network request failed/i.test(msg)) {
+          calculatorErrorMessage.textContent = 'Network error — please check your connection and try again.';
+        } else if (/out of memory/i.test(msg)) {
+          calculatorErrorMessage.replaceChildren('Guest search limit reached. Try again in a few minutes or sign up for a ');
+          const link = document.createElement('a');
+          link.href = '/member.html#authSection';
+          link.className = 'alert-link';
+          link.textContent = 'free membership';
+          calculatorErrorMessage.append(link, '.');
+        } else {
+          calculatorErrorMessage.textContent = msg;
+        }
+        calculatorError.hidden = false;
+      }
+
+      function hideCalculatorError() {
+        calculatorError.hidden = true;
+        calculatorErrorMessage.textContent = '';
+      }
+
+      calculatorRetryButton.addEventListener('click', () => {
+        hideCalculatorError();
+        lookupInput.value = lastSearchTerm;
+        lookupForm.requestSubmit();
+      });
 
       function configureLearningPathReturn() {
         const getLearningPathLevel = (pathname) => {
@@ -654,6 +686,7 @@ View results: ${shareUrl}`.trim(),
         lookupStatus.textContent = '';
         gematriaResult.textContent = '';
         relatedWordsResult.innerHTML = '';
+        hideCalculatorError();
         const url = new URL(window.location.href);
         url.search = '';
         window.history.replaceState({}, '', url);
@@ -1062,6 +1095,8 @@ View results: ${shareUrl}`.trim(),
         event.preventDefault();
 
         const term = lookupInput.value.trim();
+        lastSearchTerm = term;
+        hideCalculatorError();
         window.endTimesTracking?.track('calculator_usage_start', {
           source: 'calculator_lookup_form',
           queryLength: term.length,
@@ -1149,7 +1184,8 @@ View results: ${shareUrl}`.trim(),
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
-          setStatusMessage(lookupStatus, error.message || 'Unable to load gematria and related words.');
+          lookupStatus.textContent = '';
+          showCalculatorError(error.message || 'Unable to load gematria and related words.');
           gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
           currentSearchPayload = null;

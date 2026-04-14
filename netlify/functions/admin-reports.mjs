@@ -439,6 +439,8 @@ export async function handler(event) {
           WHERE created_at >= NOW() - ${windowInterval}::interval
             AND route NOT LIKE 'admin-%'
             AND route <> 'security-retention'
+            AND outcome = 'success'
+            AND action IN ('share_button_click', 'image_download')
             AND (
               COALESCE(metadata->>'clientType', '') = 'human'
               OR (

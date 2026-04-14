@@ -240,20 +240,31 @@
           </div>
           <div id="clickTrackingCollapse" class="collapse">
             <p class="small on-light-muted mb-2">Detailed log of individual click events (most recent first, up to 200). Admin clicks are excluded.</p>
-            <div class="mb-3 d-flex flex-wrap gap-2">
+            <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
               <input type="text" id="clickTrackingFilter" class="form-control form-control-sm" style="max-width: 300px;" placeholder="Filter by action, source, page…" aria-label="Filter click tracking log" />
+              <select id="clickTrackingAudienceFilter" class="form-select form-select-sm" style="max-width: 220px;" aria-label="Filter click tracking by audience">
+                <option value="all">All audiences</option>
+                <option value="visitor">Visitors (non-authenticated)</option>
+                <option value="member">Members</option>
+              </select>
+              <select id="clickTrackingSort" class="form-select form-select-sm" style="max-width: 260px;" aria-label="Sort click tracking log">
+                <option value="recent">Most recent first</option>
+                <option value="visitors">Visitors first (non-authenticated)</option>
+                <option value="members">Members first</option>
+              </select>
             </div>
             <div class="table-responsive">
               <table class="table table-sm table-striped align-middle mb-0" id="clickTrackingTable">
                 <thead>
                   <tr>
-                    <th scope="col">Time</th>
-                    <th scope="col">Action</th>
-                    <th scope="col">Source (label)</th>
-                    <th scope="col">Destination</th>
-                    <th scope="col">Element</th>
-                    <th scope="col">Page</th>
-                    <th scope="col">Referrer</th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="createdAt">Time</button></th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="action">Action</button></th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="source">Source (label)</button></th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="destination">Destination</button></th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="elementType">Element</button></th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="pagePath">Page</button></th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="referrer">Referrer</button></th>
+                    <th scope="col"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" data-click-sort-key="audienceType">Audience</button></th>
                   </tr>
                 </thead>
                 <tbody id="clickTrackingBody"></tbody>
@@ -578,28 +589,89 @@
         const body = document.getElementById('clickTrackingBody');
         const countEl = document.getElementById('clickTrackingCount');
         const filterInput = document.getElementById('clickTrackingFilter');
+        const audienceFilter = document.getElementById('clickTrackingAudienceFilter');
+        const sortSelect = document.getElementById('clickTrackingSort');
+        const sortableHeaders = Array.from(document.querySelectorAll('[data-click-sort-key]'));
+        const sortState = {
+          key: 'createdAt',
+          direction: 'desc',
+        };
 
         if (!rows || !rows.length) {
-          body.innerHTML = '<tr><td colspan="7" class="on-light-muted">No click tracking data available for this window.</td></tr>';
+          body.innerHTML = '<tr><td colspan="8" class="on-light-muted">No click tracking data available for this window.</td></tr>';
           countEl.textContent = '';
           return;
         }
 
-        function renderRows(filter) {
+        function sortValueForKey(row, key) {
+          if (key === 'createdAt') {
+            return row.createdAt ? new Date(row.createdAt).getTime() : 0;
+          }
+          if (key === 'audienceType') {
+            return String(row.audienceType || 'visitor').toLowerCase();
+          }
+          return String(row[key] || '').toLowerCase();
+        }
+
+        function compareByColumn(a, b, key, direction) {
+          const aValue = sortValueForKey(a, key);
+          const bValue = sortValueForKey(b, key);
+          const multiplier = direction === 'asc' ? 1 : -1;
+          if (aValue < bValue) return -1 * multiplier;
+          if (aValue > bValue) return 1 * multiplier;
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        }
+
+        function updateHeaderIndicators() {
+          sortableHeaders.forEach((button) => {
+            const key = button.getAttribute('data-click-sort-key');
+            const baseLabel = String(button.textContent || '').replace(/ [↑↓]$/, '');
+            button.textContent = key === sortState.key
+              ? `${baseLabel} ${sortState.direction === 'asc' ? '↑' : '↓'}`
+              : baseLabel;
+            button.setAttribute('aria-label', `Sort by ${baseLabel} ${key === sortState.key && sortState.direction === 'asc' ? 'descending next' : 'ascending next'}`);
+          });
+        }
+
+        function renderRows(filter, audienceValue, sortMode, columnSort) {
           const lowerFilter = (filter || '').toLowerCase();
-          const filtered = lowerFilter
-            ? rows.filter(function (row) {
-              return (row.action || '').toLowerCase().includes(lowerFilter)
-                || (row.source || '').toLowerCase().includes(lowerFilter)
-                || (row.destination || '').toLowerCase().includes(lowerFilter)
-                || (row.pagePath || '').toLowerCase().includes(lowerFilter)
-                || (row.elementType || '').toLowerCase().includes(lowerFilter)
-                || (row.referrer || '').toLowerCase().includes(lowerFilter);
-            })
-            : rows;
+          const normalizedAudience = String(audienceValue || 'all').toLowerCase();
+          const normalizedSort = String(sortMode || 'recent').toLowerCase();
+
+          let filtered = rows.filter(function (row) {
+            if (normalizedAudience !== 'all' && String(row.audienceType || 'visitor').toLowerCase() !== normalizedAudience) {
+              return false;
+            }
+            if (!lowerFilter) {
+              return true;
+            }
+            return (row.action || '').toLowerCase().includes(lowerFilter)
+              || (row.source || '').toLowerCase().includes(lowerFilter)
+              || (row.destination || '').toLowerCase().includes(lowerFilter)
+              || (row.pagePath || '').toLowerCase().includes(lowerFilter)
+              || (row.elementType || '').toLowerCase().includes(lowerFilter)
+              || (row.referrer || '').toLowerCase().includes(lowerFilter)
+              || (row.audienceType || '').toLowerCase().includes(lowerFilter);
+          });
+
+          filtered = filtered.slice().sort(function (a, b) {
+            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            if (normalizedSort === 'visitors' || normalizedSort === 'members') {
+              const preferredAudience = normalizedSort === 'members' ? 'member' : 'visitor';
+              const aScore = String(a.audienceType || 'visitor').toLowerCase() === preferredAudience ? 1 : 0;
+              const bScore = String(b.audienceType || 'visitor').toLowerCase() === preferredAudience ? 1 : 0;
+              if (aScore !== bScore) {
+                return bScore - aScore;
+              }
+            }
+            return compareByColumn(a, b, columnSort.key, columnSort.direction);
+          });
 
           if (!filtered.length) {
-            body.innerHTML = '<tr><td colspan="7" class="on-light-muted">No matching click events.</td></tr>';
+            body.innerHTML = '<tr><td colspan="8" class="on-light-muted">No matching click events.</td></tr>';
             countEl.textContent = 'Showing 0 of ' + formatNumber(rows.length) + ' events.';
             return;
           }
@@ -613,6 +685,7 @@
             var page = row.pagePath || '—';
             var ref = row.referrer || '—';
             var truncatedRef = ref.length > 40 ? ref.slice(0, 37) + '…' : ref;
+            var audience = String(row.audienceType || 'visitor').toLowerCase() === 'member' ? 'Member' : 'Visitor';
             return '<tr>'
               + '<td class="small text-nowrap">' + escapeHtml(time) + '</td>'
               + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
@@ -621,17 +694,38 @@
               + '<td class="small"><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
               + '<td class="small">' + escapeHtml(page) + '</td>'
               + '<td class="small" title="' + escapeHtml(ref) + '">' + escapeHtml(truncatedRef) + '</td>'
+              + '<td class="small">' + escapeHtml(audience) + '</td>'
               + '</tr>';
           }).join('');
 
           countEl.textContent = 'Showing ' + formatNumber(filtered.length) + ' of ' + formatNumber(rows.length) + ' events.';
         }
 
-        renderRows('');
+        function rerenderFromControls() {
+          renderRows(filterInput.value, audienceFilter.value, sortSelect.value, sortState);
+        }
 
-        filterInput.addEventListener('input', function () {
-          renderRows(filterInput.value);
+        sortableHeaders.forEach((button) => {
+          button.addEventListener('click', () => {
+            const key = button.getAttribute('data-click-sort-key');
+            if (!key) return;
+            if (sortState.key === key) {
+              sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+              sortState.key = key;
+              sortState.direction = key === 'createdAt' ? 'desc' : 'asc';
+            }
+            updateHeaderIndicators();
+            rerenderFromControls();
+          });
         });
+
+        updateHeaderIndicators();
+        renderRows('', 'all', 'recent', sortState);
+
+        filterInput.addEventListener('input', rerenderFromControls);
+        audienceFilter.addEventListener('change', rerenderFromControls);
+        sortSelect.addEventListener('change', rerenderFromControls);
       }
 
       function renderConversionFunnel(funnel) {

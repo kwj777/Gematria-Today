@@ -526,6 +526,12 @@ export async function handler(event) {
           COALESCE(NULLIF(BTRIM(metadata->>'pagePath'), ''), route) AS page_path,
           COALESCE(NULLIF(BTRIM(metadata->>'pageUrl'), ''), '') AS page_url,
           COALESCE(NULLIF(BTRIM(metadata->>'referrer'), ''), '') AS referrer,
+          CASE
+            WHEN COALESCE(NULLIF(BTRIM(metadata->>'audienceType'), ''), '') = 'member' THEN 'member'
+            WHEN COALESCE(NULLIF(BTRIM(metadata->>'memberId'), ''), '') <> '' THEN 'member'
+            WHEN LOWER(COALESCE(NULLIF(BTRIM(metadata->>'authenticated'), ''), 'false')) = 'true' THEN 'member'
+            ELSE 'visitor'
+          END AS audience_type,
           request_fingerprint,
           created_at
         FROM request_audit_log
@@ -680,6 +686,7 @@ export async function handler(event) {
         pagePath: row.page_path,
         pageUrl: row.page_url,
         referrer: row.referrer,
+        audienceType: row.audience_type === 'member' ? 'member' : 'visitor',
         fingerprint: row.request_fingerprint,
         createdAt: toIsoDate(row.created_at),
       })),

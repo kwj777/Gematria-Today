@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Click Tracking Log | EndTimes.Today</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
+    <link rel="stylesheet" href="/api/public-theme-css" />
+    <link rel="stylesheet" href="/theme.css" />
+    <style>
+      .group-toggle { border: 0; background: transparent; font-weight: 600; }
+      .group-toggle:hover,
+      .group-toggle:focus-visible { text-decoration: underline; }
+      .click-group-collapsed { display: none; }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/admin-click-tracking.html">Click Tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-5">
+      <div class="container d-grid gap-4">
+        <section class="hero-panel p-4 p-lg-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+              <p class="section-kicker mb-2">Back Office Analytics</p>
+              <h1 class="display-6 fw-bold mb-2">Click tracking log</h1>
+              <p id="metaLine" class="on-dark-muted mb-0">Checking admin session…</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <select id="windowSelect" class="form-select form-select-sm" aria-label="Click log timeframe">
+                <option value="1h">Last hour (1h)</option>
+                <option value="6h">Last 6 hours</option>
+                <option value="12h">Last 12 hours</option>
+                <option value="1">Last 24 hours</option>
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="60">Last 60 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last 365 days</option>
+              </select>
+              <button id="refreshButton" class="btn btn-primary btn-sm" type="button">Refresh</button>
+            </div>
+          </div>
+        </section>
+
+        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+        <section class="content-panel p-4">
+          <p class="small on-light-muted mb-3">Click history is now timeframe-based. Admin clicks are excluded.</p>
+          <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+            <input type="text" id="clickTrackingFilter" class="form-control form-control-sm" style="max-width: 340px;" placeholder="Filter by action, source, page…" aria-label="Filter click tracking log" />
+            <select id="clickTrackingSort" class="form-select form-select-sm" style="max-width: 260px;" aria-label="Sort click tracking log">
+              <option value="recent">Most recent first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="action">Action (A-Z)</option>
+            </select>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0" id="clickTrackingTable">
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Source (label)</th>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Element</th>
+                  <th scope="col">Page</th>
+                  <th scope="col">Referrer</th>
+                </tr>
+              </thead>
+              <tbody id="clickTrackingBody"></tbody>
+            </table>
+          </div>
+          <p id="clickTrackingCount" class="small on-light-muted mt-2 mb-0"></p>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(Number(value || 0));
+      }
+
+      function parseWindowSelection(rawValue) {
+        const value = String(rawValue || '').trim().toLowerCase();
+        if (value.endsWith('h')) {
+          return { query: `hours=${Number.parseInt(value, 10) || 1}` };
+        }
+        return { query: `days=${Number.parseInt(value, 10) || 30}` };
+      }
+
+      async function request(url) {
+        const response = await fetch(url, { credentials: 'same-origin', headers: { 'content-type': 'application/json' } });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Request failed');
+        }
+        return payload;
+      }
+
+      const tableBody = document.getElementById('clickTrackingBody');
+      const countEl = document.getElementById('clickTrackingCount');
+      const filterInput = document.getElementById('clickTrackingFilter');
+      const sortSelect = document.getElementById('clickTrackingSort');
+      let currentRows = [];
+
+      function compareRows(a, b, sortMode) {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (sortMode === 'oldest') return aTime - bTime;
+        if (sortMode === 'action') {
+          const actionCompare = String(a.action || '').localeCompare(String(b.action || ''));
+          if (actionCompare !== 0) return actionCompare;
+        }
+        return bTime - aTime;
+      }
+
+      function renderGroupedRows() {
+        const lowerFilter = String(filterInput.value || '').toLowerCase();
+        const sortMode = String(sortSelect.value || 'recent').toLowerCase();
+
+        const filtered = currentRows.filter((row) => {
+          if (!lowerFilter) return true;
+          return (row.action || '').toLowerCase().includes(lowerFilter)
+            || (row.source || '').toLowerCase().includes(lowerFilter)
+            || (row.destination || '').toLowerCase().includes(lowerFilter)
+            || (row.pagePath || '').toLowerCase().includes(lowerFilter)
+            || (row.elementType || '').toLowerCase().includes(lowerFilter)
+            || (row.referrer || '').toLowerCase().includes(lowerFilter)
+            || (row.audienceType || '').toLowerCase().includes(lowerFilter);
+        }).sort((a, b) => compareRows(a, b, sortMode));
+
+        const groups = [
+          { key: 'member', label: 'Members' },
+          { key: 'visitor', label: 'Non-members' },
+        ];
+
+        const groupRows = groups.map((group, groupIndex) => {
+          const groupItems = filtered.filter((row) => String(row.audienceType || 'visitor').toLowerCase() === group.key);
+          const groupId = `group-${group.key}`;
+          const groupContent = groupItems.map((row) => {
+            const time = row.createdAt ? new Date(row.createdAt).toLocaleString() : '—';
+            const dest = row.destination || '—';
+            const source = row.source || '—';
+            const ref = row.referrer || '—';
+            return '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed">'
+              + '<td class="small text-nowrap">' + escapeHtml(time) + '</td>'
+              + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
+              + '<td class="small" title="' + escapeHtml(source) + '">' + escapeHtml(source.length > 50 ? source.slice(0, 47) + '…' : source) + '</td>'
+              + '<td class="small" title="' + escapeHtml(dest) + '">' + escapeHtml(dest.length > 60 ? dest.slice(0, 57) + '…' : dest) + '</td>'
+              + '<td class="small"><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
+              + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
+              + '<td class="small" title="' + escapeHtml(ref) + '">' + escapeHtml(ref.length > 40 ? ref.slice(0, 37) + '…' : ref) + '</td>'
+              + '</tr>';
+          }).join('');
+
+          return '<tr class="table-secondary">'
+            + '<td colspan="7">'
+            + '<button type="button" class="group-toggle" data-group-toggle="' + groupId + '" aria-expanded="false">'
+            + '▸ ' + escapeHtml(group.label) + ' (' + formatNumber(groupItems.length) + ')'
+            + '</button>'
+            + '</td>'
+            + '</tr>'
+            + (groupContent || '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed"><td colspan="7" class="small text-muted">No events in this group.</td></tr>');
+        }).join('');
+
+        tableBody.innerHTML = groupRows || '<tr><td colspan="7" class="small text-muted">No click tracking data available for this timeframe.</td></tr>';
+        countEl.textContent = `Showing ${formatNumber(filtered.length)} click events in timeframe.`;
+
+        document.querySelectorAll('[data-group-toggle]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const label = button.getAttribute('data-group-toggle') || '';
+            const groupKey = label.replace('group-', '');
+            const groupRowEls = tableBody.querySelectorAll(`.click-group-${CSS.escape(groupKey)}`);
+            const expanded = button.getAttribute('aria-expanded') === 'true';
+            groupRowEls.forEach((row) => row.classList.toggle('click-group-collapsed', expanded));
+            button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            button.textContent = `${expanded ? '▸' : '▾'} ${button.textContent.replace(/^[▸▾]\s+/, '')}`;
+          });
+        });
+      }
+
+      async function loadClickTracking() {
+        const selected = parseWindowSelection(document.getElementById('windowSelect').value);
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.classList.add('d-none');
+        try {
+          await request('/api/admin-session');
+          const payload = await request(`/api/admin-click-tracking?${selected.query}`);
+          currentRows = Array.isArray(payload.clickTrackingDetails) ? payload.clickTrackingDetails : [];
+          document.getElementById('metaLine').textContent = `Signed in as ${payload.user.username}. Window: ${payload.windowLabel}. Last refresh: ${new Date(payload.generatedAt).toLocaleString()}.`;
+          renderGroupedRows();
+        } catch (error) {
+          errorMessage.textContent = `${error.message}. Visit Admin to sign in, then return here.`;
+          errorMessage.classList.remove('d-none');
+          document.getElementById('metaLine').textContent = 'Not authenticated or unable to load click tracking data.';
+          tableBody.innerHTML = '<tr><td colspan="7" class="small text-muted">No click tracking data loaded.</td></tr>';
+          countEl.textContent = '';
+        }
+      }
+
+      document.getElementById('refreshButton').addEventListener('click', loadClickTracking);
+      document.getElementById('windowSelect').addEventListener('change', loadClickTracking);
+      filterInput.addEventListener('input', renderGroupedRows);
+      sortSelect.addEventListener('change', renderGroupedRows);
+      loadClickTracking();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>

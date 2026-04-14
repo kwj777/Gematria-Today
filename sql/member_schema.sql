@@ -12,6 +12,9 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS membership_expires_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
   ADD COLUMN IF NOT EXISTS stripe_last_checkout_session_id TEXT,
+  ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT,
+  ADD COLUMN IF NOT EXISTS stripe_subscription_status TEXT,
+  ADD COLUMN IF NOT EXISTS stripe_subscription_current_period_end TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active',
   ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 

@@ -1,5 +1,5 @@
 import { activateYearlyMembership, getAuthenticatedMember, jsonResponse } from './_member.mjs';
-import { getCheckoutSession, getMembershipPaymentConfig } from './_stripe.mjs';
+import { getCheckoutSession, getMembershipPaymentConfig, getSubscription } from './_stripe.mjs';
 import { logRequestAudit } from './_security.mjs';
 
 export async function handler(event) {
@@ -30,9 +30,15 @@ export async function handler(event) {
       return jsonResponse(400, { error: 'Unsupported membership product' });
     }
 
+    const subscriptionId = typeof checkoutSession.subscription === 'string' ? checkoutSession.subscription : checkoutSession.subscription?.id || '';
+    const subscription = subscriptionId ? await getSubscription(subscriptionId, sql) : null;
+
     const updatedMember = await activateYearlyMembership(sql, member.id, {
       stripeCustomerId: checkoutSession.customer || null,
       stripeCheckoutSessionId: checkoutSession.id,
+      stripeSubscriptionId: subscription?.id || subscriptionId || null,
+      stripeSubscriptionStatus: subscription?.status || null,
+      subscriptionCurrentPeriodEnd: subscription?.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
       purchasedAt: checkoutSession.created ? new Date(checkoutSession.created * 1000) : new Date(),
     });
 
@@ -51,6 +57,7 @@ export async function handler(event) {
         amountTotal: checkoutSession.amount_total,
         currency: checkoutSession.currency,
         status: checkoutSession.payment_status,
+        subscriptionId: subscription?.id || subscriptionId || null,
       },
       membership,
     });

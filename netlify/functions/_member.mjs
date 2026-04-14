@@ -38,6 +38,9 @@ export async function ensureMemberSchema(sql) {
     ADD COLUMN IF NOT EXISTS membership_expires_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
     ADD COLUMN IF NOT EXISTS stripe_last_checkout_session_id TEXT,
+    ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT,
+    ADD COLUMN IF NOT EXISTS stripe_subscription_status TEXT,
+    ADD COLUMN IF NOT EXISTS stripe_subscription_current_period_end TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active',
     ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE
   `;
@@ -169,6 +172,9 @@ export function formatMemberUser(row) {
     membershipExpiresAt: row.membership_expires_at,
     stripeCustomerId: row.stripe_customer_id,
     stripeLastCheckoutSessionId: row.stripe_last_checkout_session_id,
+    stripeSubscriptionId: row.stripe_subscription_id,
+    stripeSubscriptionStatus: row.stripe_subscription_status,
+    stripeSubscriptionCurrentPeriodEnd: row.stripe_subscription_current_period_end,
     status: row.status,
     emailVerified: row.email_verified,
     createdAt: row.created_at,
@@ -399,12 +405,21 @@ export async function deleteExpiredUnverifiedMemberByIdentifier(sql, identifier 
 }
 
 
-export async function activateYearlyMembership(sql, memberId, { stripeCustomerId = null, stripeCheckoutSessionId = null, purchasedAt = new Date() } = {}) {
+export async function activateYearlyMembership(sql, memberId, {
+  stripeCustomerId = null,
+  stripeCheckoutSessionId = null,
+  stripeSubscriptionId = null,
+  stripeSubscriptionStatus = null,
+  subscriptionCurrentPeriodEnd = null,
+  purchasedAt = new Date(),
+} = {}) {
   await ensureMemberSchema(sql);
 
   const startedAt = new Date(purchasedAt);
-  const expiresAt = new Date(startedAt);
-  expiresAt.setUTCDate(expiresAt.getUTCDate() + 365);
+  const expiresAt = subscriptionCurrentPeriodEnd ? new Date(subscriptionCurrentPeriodEnd) : new Date(startedAt);
+  if (!subscriptionCurrentPeriodEnd) {
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 365);
+  }
 
   const rows = await sql`
     UPDATE users
@@ -413,15 +428,70 @@ export async function activateYearlyMembership(sql, memberId, { stripeCustomerId
         membership_expires_at = ${expiresAt.toISOString()},
         stripe_customer_id = COALESCE(${stripeCustomerId}, stripe_customer_id),
         stripe_last_checkout_session_id = COALESCE(${stripeCheckoutSessionId}, stripe_last_checkout_session_id),
+        stripe_subscription_id = COALESCE(${stripeSubscriptionId}, stripe_subscription_id),
+        stripe_subscription_status = COALESCE(${stripeSubscriptionStatus}, stripe_subscription_status),
+        stripe_subscription_current_period_end = COALESCE(${subscriptionCurrentPeriodEnd ? expiresAt.toISOString() : null}, stripe_subscription_current_period_end),
         updated_at = NOW()
     WHERE id = ${memberId}
-    RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
+    RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_id, stripe_subscription_status, stripe_subscription_current_period_end, status, email_verified, created_at, updated_at
   `;
 
   if (!rows.length) {
     throw Object.assign(new Error('Member not found'), { statusCode: 404 });
   }
 
+  return formatMemberUser(rows[0]);
+}
+
+export async function syncMembershipFromStripeSubscription(sql, {
+  memberId = null,
+  stripeCustomerId = null,
+  stripeSubscriptionId = null,
+  stripeSubscriptionStatus = null,
+  currentPeriodStart = null,
+  currentPeriodEnd = null,
+} = {}) {
+  await ensureMemberSchema(sql);
+
+  const normalizedMemberId = String(memberId || '').trim() || null;
+  const normalizedCustomerId = String(stripeCustomerId || '').trim() || null;
+  const normalizedSubscriptionId = String(stripeSubscriptionId || '').trim() || null;
+  const normalizedStatus = String(stripeSubscriptionStatus || '').trim() || null;
+  if (!normalizedMemberId && !normalizedCustomerId && !normalizedSubscriptionId) {
+    throw Object.assign(new Error('Missing member or Stripe identity for subscription sync'), { statusCode: 400 });
+  }
+
+  const periodStart = currentPeriodStart ? new Date(currentPeriodStart) : null;
+  const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  const isActive = normalizedStatus ? ['trialing', 'active', 'past_due', 'unpaid'].includes(normalizedStatus) : false;
+  const nextMembershipLevel = isActive ? 'premium' : 'free';
+
+  const rows = await sql`
+    UPDATE users
+    SET membership_level = ${nextMembershipLevel},
+        membership_started_at = COALESCE(${periodStart ? periodStart.toISOString() : null}, membership_started_at),
+        membership_expires_at = ${periodEnd ? periodEnd.toISOString() : null},
+        stripe_customer_id = COALESCE(${normalizedCustomerId}, stripe_customer_id),
+        stripe_subscription_id = COALESCE(${normalizedSubscriptionId}, stripe_subscription_id),
+        stripe_subscription_status = COALESCE(${normalizedStatus}, stripe_subscription_status),
+        stripe_subscription_current_period_end = ${periodEnd ? periodEnd.toISOString() : null},
+        updated_at = NOW()
+    WHERE (
+      ${normalizedMemberId} IS NOT NULL
+      AND id = ${normalizedMemberId}
+    ) OR (
+      ${normalizedSubscriptionId} IS NOT NULL
+      AND stripe_subscription_id = ${normalizedSubscriptionId}
+    ) OR (
+      ${normalizedCustomerId} IS NOT NULL
+      AND stripe_customer_id = ${normalizedCustomerId}
+    )
+    RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_id, stripe_subscription_status, stripe_subscription_current_period_end, status, email_verified, created_at, updated_at
+  `;
+
+  if (!rows.length) {
+    return null;
+  }
   return formatMemberUser(rows[0]);
 }
 

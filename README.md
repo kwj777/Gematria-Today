@@ -169,7 +169,7 @@ Apply the SQL files in order when bootstrapping a database:
 
 The membership implementation now exposes member auth/profile/history endpoints (`member-register`, `member-login`, `member-session`, `member-profile`, and `member-history`) plus a published `/member.html` dashboard for registration, profile editing, and saved searches.
 
-Stripe-backed membership upgrades now also use `member-payment-checkout` and `member-payment-confirm`. Stripe credentials can now be managed from the admin back-office via `admin-settings`, with environment variables such as `STRIPE_SECRET_KEY` still supported as a fallback.
+Stripe-backed membership upgrades now use recurring yearly Checkout sessions via `member-payment-checkout` and `member-payment-confirm`. Stripe credentials can now be managed from the admin back-office via `admin-settings`, with environment variables such as `STRIPE_SECRET_KEY` still supported as a fallback. Configure `STRIPE_WEBHOOK_SIGNING_SECRET` (or its admin-settings equivalent) and point Stripe webhooks to `/api/stripe-webhook` so renewal/cancellation events keep membership state in sync.
 
 Member and admin account recovery now sends transactional emails through SendGrid only. Recovery requests require outbound email to be configured; recovery codes and username reminders are no longer shown on screen. SendGrid sender details/API credentials can now be saved from the admin back-office via `admin-settings`, with environment variables still supported as a fallback.
 
@@ -233,6 +233,7 @@ Application-level protections help, but you should still put the site behind a m
 - `/api/member-register`
 - `/api/member-payment-checkout`
 - `/api/member-payment-confirm`
+- `/api/stripe-webhook`
 - `/api/wordnikRelatedWords`
 - `/definition`
 

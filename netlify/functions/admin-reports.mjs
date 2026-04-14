@@ -450,7 +450,13 @@ export async function handler(event) {
             AND route NOT LIKE 'admin-%'
             AND route <> 'security-retention'
             AND outcome = 'success'
-            AND (action LIKE '%_click' OR action = 'image_download')
+            AND (
+              action ILIKE '%click%'
+              OR action = 'image_download'
+              OR metadata ? 'elementType'
+              OR metadata ? 'href'
+              OR metadata ? 'destination'
+            )
             AND (
               COALESCE(metadata->>'clientType', '') = 'human'
               OR (
@@ -527,7 +533,13 @@ export async function handler(event) {
           AND route NOT LIKE 'admin-%'
           AND route <> 'security-retention'
           AND outcome = 'success'
-          AND (action LIKE '%_click' OR action = 'image_download')
+          AND (
+            action ILIKE '%click%'
+            OR action = 'image_download'
+            OR metadata ? 'elementType'
+            OR metadata ? 'href'
+            OR metadata ? 'destination'
+          )
           AND (
             COALESCE(metadata->>'clientType', '') = 'human'
             OR (

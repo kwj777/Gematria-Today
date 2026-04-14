@@ -126,6 +126,9 @@
   [headers.values]
     Cache-Control = "no-store"
 
+[functions."admin-click-tracking"]
+  included_files = ["public/*.html"]
+
 [functions."member-prune-unverified"]
   schedule = "0 0 * * *"
 

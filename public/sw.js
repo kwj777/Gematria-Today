@@ -37,6 +37,21 @@ function shouldCacheResponse(response) {
   return !/no-store|private/i.test(cacheControl);
 }
 
+async function navigationFallback(request) {
+  const directMatch = await caches.match(request);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  const appShell = await caches.match('/index.html');
+  if (appShell) {
+    return appShell;
+  }
+
+  const offlinePage = await caches.match('/offline.html');
+  return offlinePage || Response.error();
+}
+
 
 async function refreshRuntimeCaches() {
   await Promise.all([
@@ -101,29 +116,24 @@ self.addEventListener('fetch', (event) => {
   }
 
   const pathname = url.pathname;
-  if (isSensitivePath(pathname)) {
-    event.respondWith(fetch(request));
-    return;
-  }
-
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       try {
         const networkResponse = await fetch(request);
-        if (shouldCacheResponse(networkResponse)) {
+        if (!isSensitivePath(pathname) && shouldCacheResponse(networkResponse)) {
           const cache = await caches.open(PAGE_CACHE);
           cache.put(request, networkResponse.clone());
         }
         return networkResponse;
       } catch {
-        const cached = await caches.match(request);
-        if (cached) {
-          return cached;
-        }
-        const offlinePage = await caches.match('/offline.html');
-        return offlinePage || Response.error();
+        return navigationFallback(request);
       }
     })());
+    return;
+  }
+
+  if (isSensitivePath(pathname)) {
+    event.respondWith(fetch(request));
     return;
   }
 

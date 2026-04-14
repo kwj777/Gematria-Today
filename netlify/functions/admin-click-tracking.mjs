@@ -1,8 +1,140 @@
 import { getAuthenticatedUser, jsonResponse, requireHttpMethod } from './_admin.mjs';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const ALLOWED_DAY_WINDOWS = new Set([1, 7, 30, 60, 90, 365]);
 const ALLOWED_HOUR_WINDOWS = new Set([1, 6, 12]);
 const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node-fetch|node\\.js|nodejs|node/|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SITE_PUBLIC_DIR = path.resolve(__dirname, '../../public');
+const EXCLUDED_REPORT_ROUTES = new Set(['/admin-click-tracking.html', '/unsupported-browser.html', '/offline.html']);
+
+function normalizePathname(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '/';
+  try {
+    const parsed = new URL(raw, 'https://endtimes.today');
+    let pathname = parsed.pathname || '/';
+    if (!pathname.startsWith('/')) pathname = `/${pathname}`;
+    pathname = pathname.replace(/\/+/g, '/');
+    return pathname;
+  } catch {
+    const cleaned = raw.split('?')[0].split('#')[0] || '/';
+    return cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+  }
+}
+
+function normalizeLinkDestination(value) {
+  const raw = String(value || '').trim();
+  if (!raw || raw.startsWith('#') || raw.startsWith('javascript:')) return '';
+  const pathname = normalizePathname(raw);
+  return pathname.replace(/\/index\.html$/i, '/').replace(/\.html$/i, '');
+}
+
+function normalizeButtonIdentity(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 180);
+}
+
+function extractAttribute(tag, attributeName) {
+  const pattern = new RegExp(`${attributeName}\\s*=\\s*(['"])(.*?)\\1`, 'i');
+  const match = tag.match(pattern);
+  return match ? match[2].trim() : '';
+}
+
+function stripHtml(rawText) {
+  return String(rawText || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function collectTrackableElements() {
+  let files;
+  try {
+    files = await fs.readdir(SITE_PUBLIC_DIR);
+  } catch {
+    return [];
+  }
+
+  const htmlFiles = files.filter((file) => file.endsWith('.html') && !file.startsWith('admin-') && !file.startsWith('member-'));
+  const elements = [];
+
+  for (const fileName of htmlFiles) {
+    const fullPath = path.join(SITE_PUBLIC_DIR, fileName);
+    const pagePath = normalizePathname(`/${fileName}`);
+    if (EXCLUDED_REPORT_ROUTES.has(pagePath)) continue;
+    let html = '';
+    try {
+      html = await fs.readFile(fullPath, 'utf8');
+    } catch {
+      continue;
+    }
+
+    const linkMatches = html.matchAll(/<a\b[^>]*href\s*=\s*(['"])(.*?)\1[^>]*>(.*?)<\/a>/gis);
+    for (const match of linkMatches) {
+      const tag = match[0];
+      const href = String(match[2] || '').trim();
+      const destination = normalizeLinkDestination(href);
+      if (!destination) continue;
+      const id = extractAttribute(tag, 'id');
+      const ariaLabel = extractAttribute(tag, 'aria-label');
+      const title = extractAttribute(tag, 'title');
+      const text = stripHtml(match[3] || '');
+      elements.push({
+        pagePath,
+        elementType: 'a',
+        destination,
+        descriptor: normalizeButtonIdentity(id || ariaLabel || title || text || href),
+        label: text || ariaLabel || title || href,
+      });
+    }
+
+    const buttonMatches = html.matchAll(/<button\b([^>]*)>(.*?)<\/button>/gis);
+    for (const match of buttonMatches) {
+      const attributes = String(match[1] || '');
+      const id = extractAttribute(attributes, 'id');
+      const ariaLabel = extractAttribute(attributes, 'aria-label');
+      const title = extractAttribute(attributes, 'title');
+      const text = stripHtml(match[2] || '');
+      const descriptor = normalizeButtonIdentity(id || ariaLabel || title || text);
+      if (!descriptor) continue;
+      elements.push({
+        pagePath,
+        elementType: 'button',
+        destination: '',
+        descriptor,
+        label: text || ariaLabel || title || id || 'button',
+      });
+    }
+  }
+
+  return elements;
+}
+
+function buildNeverClickedElementsReport(clickRows, trackableElements) {
+  const clickedLinks = new Set();
+  const clickedButtons = new Set();
+
+  clickRows.forEach((row) => {
+    const pagePath = normalizePathname(row.page_path || row.route || '/');
+    const elementType = String(row.element_type || '').trim().toLowerCase();
+    const destination = normalizeLinkDestination(row.destination || row.element_link || '');
+    const buttonIdentity = normalizeButtonIdentity(row.element_id || row.source || row.element_selector || '');
+
+    if ((elementType === 'a' || destination) && destination) {
+      clickedLinks.add(`${pagePath}|${destination}`);
+    }
+
+    if ((elementType === 'button' || elementType === 'input') && buttonIdentity) {
+      clickedButtons.add(`${pagePath}|${buttonIdentity}`);
+    }
+  });
+
+  return trackableElements.filter((element) => {
+    if (element.elementType === 'a') {
+      return !clickedLinks.has(`${element.pagePath}|${element.destination}`);
+    }
+    return !clickedButtons.has(`${element.pagePath}|${element.descriptor}`);
+  });
+}
 
 function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
@@ -96,6 +228,8 @@ export async function handler(event) {
         AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
       ORDER BY created_at DESC
     `;
+    const trackableElements = await collectTrackableElements();
+    const neverClickedElements = buildNeverClickedElementsReport(clickTrackingDetailRows, trackableElements);
 
     return jsonResponse(200, {
       generatedAt: new Date().toISOString(),
@@ -118,6 +252,12 @@ export async function handler(event) {
         audienceType: row.audience_type === 'member' ? 'member' : 'visitor',
         fingerprint: row.request_fingerprint,
         createdAt: toIsoDate(row.created_at),
+      })),
+      neverClickedElements: neverClickedElements.map((item) => ({
+        pagePath: item.pagePath,
+        elementType: item.elementType,
+        destination: item.destination,
+        label: item.label,
       })),
     });
   } catch (error) {

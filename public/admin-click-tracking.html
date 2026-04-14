@@ -83,7 +83,7 @@
               </div>
             </div>
           </div>
-          <h2 class="h5 mb-2">Most clicked (grouped by identical rows)</h2>
+          <h2 class="h5 mb-2">Most clicked (grouped by first 4 columns)</h2>
           <div class="table-responsive mb-4">
             <table class="table table-sm table-hover align-middle mb-0" id="mostClickedTable">
               <thead>
@@ -172,16 +172,13 @@
       function buildMostClickedRows(rows) {
         const grouped = new Map();
         rows.forEach((row) => {
+          const selectorHint = row.elementId ? `#${row.elementId}` : row.elementSelector;
+          const elementLabel = selectorHint ? `${row.elementType || 'element'} (${selectorHint})` : (row.elementType || 'element');
           const key = JSON.stringify([
             row.action || '',
             row.source || '',
             row.destination || '',
-            row.elementType || '',
-            row.pagePath || '',
-            row.referrer || '',
-            row.elementLink || '',
-            row.elementSelector || '',
-            row.elementId || '',
+            elementLabel,
           ]);
           const existing = grouped.get(key);
           if (existing) {
@@ -192,12 +189,10 @@
             action: row.action || '',
             source: row.source || '',
             destination: row.destination || '',
-            elementType: row.elementType || '',
+            elementLabel,
             pagePath: row.pagePath || '',
             referrer: row.referrer || '',
             elementLink: row.elementLink || row.pageUrl || '',
-            elementId: row.elementId || '',
-            elementSelector: row.elementSelector || '',
             clicks: 1,
           });
         });
@@ -221,14 +216,12 @@
         const mostClickedRows = buildMostClickedRows(rows);
         mostClickedBody.innerHTML = mostClickedRows.slice(0, 100).map((row) => {
           const link = row.elementLink || '';
-          const selectorHint = row.elementId ? `#${row.elementId}` : row.elementSelector;
-          const elementLabel = selectorHint ? `${row.elementType || 'element'} (${selectorHint})` : (row.elementType || 'element');
           return '<tr>'
             + '<td class="fw-semibold">' + formatNumber(row.clicks) + '</td>'
             + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
             + '<td class="small" title="' + escapeHtml(row.source || '—') + '">' + escapeHtml(row.source || '—') + '</td>'
             + '<td class="small" title="' + escapeHtml(row.destination || '—') + '">' + escapeHtml(row.destination || '—') + '</td>'
-            + '<td class="small" title="' + escapeHtml(elementLabel) + '">' + escapeHtml(elementLabel) + '</td>'
+            + '<td class="small" title="' + escapeHtml(row.elementLabel || 'element') + '">' + escapeHtml(row.elementLabel || 'element') + '</td>'
             + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
             + '<td class="small" title="' + escapeHtml(row.referrer || '—') + '">' + escapeHtml(row.referrer || '—') + '</td>'
             + '<td class="small">' + (link ? ('<a href="' + escapeHtml(link) + '" target="_blank" rel="noopener noreferrer">Open element</a>') : '<span class="text-muted">—</span>') + '</td>'

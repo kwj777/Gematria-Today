@@ -575,6 +575,19 @@
         return response.json();
       };
 
+      const resetHomeReadMoreButtons = () => {
+        document.querySelectorAll('.blog-home-featured-readmore').forEach((button) => {
+          button.setAttribute('aria-label', String(button.getAttribute('title') || 'Read more'));
+          const readMoreTextNode = button.childNodes[0];
+          if (readMoreTextNode) {
+            readMoreTextNode.textContent = 'Read more';
+          }
+        });
+        document.querySelectorAll('.hero-why-gematria-readmore').forEach((badge) => {
+          badge.textContent = 'Read more';
+        });
+      };
+
       const setHomeReadMoreWorkingState = () => {
         document.addEventListener('click', (event) => {
           const featuredReadMoreButton = event.target.closest('.blog-home-featured-readmore');
@@ -594,9 +607,14 @@
             heroReadMoreBadge.textContent = 'Working...';
           }
         });
+
+        window.addEventListener('pageshow', () => {
+          resetHomeReadMoreButtons();
+        });
       };
 
       setHomeReadMoreWorkingState();
+      resetHomeReadMoreButtons();
 
       document.getElementById('homeJoinCta')?.addEventListener('click', () => {
         window.endTimesTracking?.track('beginner_path_start_click', {

@@ -290,6 +290,13 @@ export async function handler(event) {
               WHEN route = '/' THEN '/index.html'
               ELSE route
             END AS route,
+            COALESCE(
+              NULLIF(BTRIM(metadata->>'pagePath'), ''),
+              CASE
+                WHEN route = '/' THEN '/index.html'
+                ELSE route
+              END
+            ) AS page_path,
             request_fingerprint,
             COALESCE(NULLIF(TRIM(metadata->>'country'), ''), 'Unknown') AS country,
             COALESCE(NULLIF(TRIM(metadata->>'region'), ''), 'Unknown') AS region,
@@ -309,24 +316,25 @@ export async function handler(event) {
         ),
         route_totals AS (
           SELECT
-            route,
+            page_path,
+            MIN(route) AS sample_route,
             COUNT(*)::int AS total_requests,
             COUNT(DISTINCT request_fingerprint)::int AS unique_page_views
           FROM filtered_requests
-          GROUP BY route
+          GROUP BY page_path
         ),
         route_country_totals AS (
           SELECT
-            route,
+            page_path,
             country,
             COUNT(*)::int AS total_requests,
             COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
           FROM filtered_requests
-          GROUP BY route, country
+          GROUP BY page_path, country
         ),
         route_country_location_totals AS (
           SELECT
-            route,
+            page_path,
             country,
             CASE
               WHEN city <> 'Unknown' AND region <> 'Unknown' THEN city || ', ' || region
@@ -337,35 +345,36 @@ export async function handler(event) {
             COUNT(*)::int AS total_requests,
             COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
           FROM filtered_requests
-          GROUP BY route, country, location
+          GROUP BY page_path, country, location
         ),
         ranked_countries AS (
           SELECT
-            route,
+            page_path,
             country,
             total_requests,
             unique_visitors,
             ROW_NUMBER() OVER (
-              PARTITION BY route
+              PARTITION BY page_path
               ORDER BY unique_visitors DESC, total_requests DESC, country ASC
             ) AS rank
           FROM route_country_totals
         ),
         ranked_locations AS (
           SELECT
-            route,
+            page_path,
             country,
             location,
             total_requests,
             unique_visitors,
             ROW_NUMBER() OVER (
-              PARTITION BY route, country
+              PARTITION BY page_path, country
               ORDER BY unique_visitors DESC, total_requests DESC, location ASC
             ) AS rank
           FROM route_country_location_totals
         )
         SELECT
-          route_totals.route,
+          route_totals.page_path,
+          route_totals.sample_route,
           route_totals.total_requests,
           route_totals.unique_page_views,
           COALESCE(
@@ -385,7 +394,7 @@ export async function handler(event) {
                       ORDER BY ranked_locations.rank
                     )
                     FROM ranked_locations
-                    WHERE ranked_locations.route = ranked_countries.route
+                    WHERE ranked_locations.page_path = ranked_countries.page_path
                       AND ranked_locations.country = ranked_countries.country
                       AND ranked_locations.rank <= 5
                   ),
@@ -398,10 +407,10 @@ export async function handler(event) {
           ) AS top_countries
         FROM route_totals
         LEFT JOIN ranked_countries
-          ON ranked_countries.route = route_totals.route
+          ON ranked_countries.page_path = route_totals.page_path
           AND ranked_countries.rank <= 3
-        GROUP BY route_totals.route, route_totals.total_requests, route_totals.unique_page_views
-        ORDER BY route_totals.unique_page_views DESC, route_totals.total_requests DESC, route_totals.route ASC
+        GROUP BY route_totals.page_path, route_totals.sample_route, route_totals.total_requests, route_totals.unique_page_views
+        ORDER BY route_totals.unique_page_views DESC, route_totals.total_requests DESC, route_totals.page_path ASC
         LIMIT 25
       `,
       sql`
@@ -582,7 +591,8 @@ export async function handler(event) {
         freeToPremiumRate,
       },
       publicPageViews: publicPageViewRows.map((row) => ({
-        route: row.route,
+        pagePath: row.page_path,
+        route: row.sample_route,
         totalRequests: Number(row.total_requests || 0),
         uniquePageViews: Number(row.unique_page_views || 0),
         topCountries: Array.isArray(row.top_countries)

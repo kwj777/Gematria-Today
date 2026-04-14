@@ -195,11 +195,21 @@ async function findAuthenticatedSession(event, sql, cookieName) {
 }
 
 export function createSessionCookie(token, expiresAt, cookieName = AUTH_COOKIES.admin) {
-  return `${cookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${cookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
 
 export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
-  return `${cookieName}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${cookieName}=; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 export async function createSession(sql, userId) {

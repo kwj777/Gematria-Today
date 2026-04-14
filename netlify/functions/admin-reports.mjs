@@ -440,7 +440,7 @@ export async function handler(event) {
             AND route NOT LIKE 'admin-%'
             AND route <> 'security-retention'
             AND outcome = 'success'
-            AND action IN ('share_button_click', 'image_download')
+            AND (action LIKE '%_click' OR action = 'image_download')
             AND (
               COALESCE(metadata->>'clientType', '') = 'human'
               OR (

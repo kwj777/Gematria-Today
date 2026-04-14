@@ -1,11 +1,6 @@
 import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 
-const ALLOWED_ACTIONS = new Set([
-  'share_button_click',
-  'image_download',
-]);
-
 function safeString(value, fallback = '') {
   const normalized = String(value ?? '').trim();
   return normalized || fallback;
@@ -21,7 +16,7 @@ function normalizeRoute(value, fallback = '/unknown') {
 
 function normalizeAction(value) {
   const raw = safeString(value).toLowerCase();
-  return ALLOWED_ACTIONS.has(raw) ? raw : null;
+  return /^[a-z0-9_]{2,80}$/.test(raw) ? raw : null;
 }
 
 function normalizeMetadata(value) {

@@ -11,6 +11,7 @@ import { handler as memberRegisterHandler } from '../netlify/functions/member-re
 import { handler as memberAccountRecoveryHandler } from '../netlify/functions/member-account-recovery.mjs';
 import { handler as memberPaymentCheckoutHandler } from '../netlify/functions/member-payment-checkout.mjs';
 import { handler as memberPaymentConfirmHandler } from '../netlify/functions/member-payment-confirm.mjs';
+import { handler as stripeWebhookHandler } from '../netlify/functions/stripe-webhook.mjs';
 import { handler as adminSessionHandler } from '../netlify/functions/admin-session.mjs';
 import { handler as adminLogoutHandler } from '../netlify/functions/admin-logout.mjs';
 import { handler as adminLoginHandler } from '../netlify/functions/admin-login.mjs';
@@ -50,6 +51,7 @@ const methodGuardCases = [
   { name: 'member-account-recovery', handler: memberAccountRecoveryHandler, allowedMethod: 'POST' },
   { name: 'member-payment-checkout', handler: memberPaymentCheckoutHandler, allowedMethod: 'POST' },
   { name: 'member-payment-confirm', handler: memberPaymentConfirmHandler, allowedMethod: 'POST' },
+  { name: 'stripe-webhook', handler: stripeWebhookHandler, allowedMethod: 'POST' },
   { name: 'admin-session', handler: adminSessionHandler, allowedMethod: 'GET' },
   { name: 'admin-logout', handler: adminLogoutHandler, allowedMethod: 'POST' },
   { name: 'admin-login', handler: adminLoginHandler, allowedMethod: 'POST' },

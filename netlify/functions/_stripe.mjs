@@ -1,5 +1,6 @@
 import { ensureAdminSchema } from './_admin.mjs';
 import { fetchWithTimeout, getProtectionConfig } from './_security.mjs';
+import crypto from 'node:crypto';
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
 const YEARLY_MEMBERSHIP_PRICE_CENTS = 555;
@@ -87,25 +88,36 @@ export function getMembershipPaymentConfig() {
   };
 }
 
+export function getMembershipStripePriceConfig() {
+  return {
+    recurringInterval: 'year',
+    recurringIntervalCount: 1,
+  };
+}
+
 export async function createMembershipCheckoutSession(event, member, sql = null) {
   const siteUrl = getSiteUrl(event);
   const membership = getMembershipPaymentConfig();
+  const priceConfig = getMembershipStripePriceConfig();
   const params = new URLSearchParams({
-    mode: 'payment',
+    mode: 'subscription',
     success_url: `${siteUrl}/member.html?payment=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/member.html?payment=cancelled`,
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][product_data][name]': membership.label,
     'line_items[0][price_data][product_data][description]': 'Unlock one year of premium EndTimes.Today membership access at the limited-time introductory special of $5.55 (regularly $7.77/year).',
+    'line_items[0][price_data][recurring][interval]': priceConfig.recurringInterval,
+    'line_items[0][price_data][recurring][interval_count]': String(priceConfig.recurringIntervalCount),
     'line_items[0][price_data][unit_amount]': String(membership.amountCents),
     'line_items[0][quantity]': '1',
     'metadata[user_id]': member.id,
     'metadata[membership_product]': membership.product,
+    'subscription_data[metadata][user_id]': member.id,
+    'subscription_data[metadata][membership_product]': membership.product,
     'customer_email': member.email,
     'client_reference_id': member.id,
     'allow_promotion_codes': 'false',
     'billing_address_collection': 'auto',
-    'submit_type': 'pay',
   });
 
   return stripeRequest('/checkout/sessions', { sql, method: 'POST', body: params });
@@ -117,4 +129,62 @@ export async function getCheckoutSession(sessionId, sql = null) {
   }
 
   return stripeRequest(`/checkout/sessions/${encodeURIComponent(sessionId)}`, { sql, method: 'GET' });
+}
+
+export async function getSubscription(subscriptionId, sql = null) {
+  if (!subscriptionId) {
+    throw Object.assign(new Error('Missing Stripe subscription ID'), { statusCode: 400 });
+  }
+  return stripeRequest(`/subscriptions/${encodeURIComponent(subscriptionId)}`, { sql, method: 'GET' });
+}
+
+function parseStripeSignature(signatureHeader = '') {
+  return String(signatureHeader || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((acc, part) => {
+      const [key, value] = part.split('=');
+      if (!key || !value) {
+        return acc;
+      }
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(value);
+      return acc;
+    }, {});
+}
+
+export function verifyStripeWebhookSignature({ payload, signatureHeader, signingSecret, toleranceSeconds = 300 }) {
+  const normalizedPayload = typeof payload === 'string' ? payload : String(payload || '');
+  const secret = String(signingSecret || '');
+  if (!normalizedPayload || !secret) {
+    return false;
+  }
+
+  const parsed = parseStripeSignature(signatureHeader);
+  const timestamp = Number(parsed.t?.[0]);
+  const candidateSignatures = parsed.v1 || [];
+  if (!Number.isFinite(timestamp) || !candidateSignatures.length) {
+    return false;
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestamp) > toleranceSeconds) {
+    return false;
+  }
+
+  const signedPayload = `${timestamp}.${normalizedPayload}`;
+  const expected = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+
+  return candidateSignatures.some((candidate) => {
+    try {
+      const candidateBuffer = Buffer.from(candidate, 'hex');
+      return candidateBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(candidateBuffer, expectedBuffer);
+    } catch (_error) {
+      return false;
+    }
+  });
 }

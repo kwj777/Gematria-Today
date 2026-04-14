@@ -126,7 +126,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, clickTrackingDetailRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -516,47 +516,6 @@ export async function handler(event) {
         ORDER BY grouped.clicks DESC, grouped.unique_visitors DESC, grouped.route ASC, grouped.action ASC
         LIMIT 50
       `,
-      sql`
-        SELECT
-          route,
-          action,
-          COALESCE(NULLIF(BTRIM(metadata->>'source'), ''), 'unknown') AS source,
-          COALESCE(NULLIF(BTRIM(metadata->>'destination'), ''), '') AS destination,
-          COALESCE(NULLIF(BTRIM(metadata->>'elementType'), ''), 'unknown') AS element_type,
-          COALESCE(NULLIF(BTRIM(metadata->>'pagePath'), ''), route) AS page_path,
-          COALESCE(NULLIF(BTRIM(metadata->>'pageUrl'), ''), '') AS page_url,
-          COALESCE(NULLIF(BTRIM(metadata->>'referrer'), ''), '') AS referrer,
-          CASE
-            WHEN COALESCE(NULLIF(BTRIM(metadata->>'audienceType'), ''), '') = 'member' THEN 'member'
-            WHEN COALESCE(NULLIF(BTRIM(metadata->>'memberId'), ''), '') <> '' THEN 'member'
-            WHEN LOWER(COALESCE(NULLIF(BTRIM(metadata->>'authenticated'), ''), 'false')) = 'true' THEN 'member'
-            ELSE 'visitor'
-          END AS audience_type,
-          request_fingerprint,
-          created_at
-        FROM request_audit_log
-        WHERE created_at >= NOW() - ${windowInterval}::interval
-          AND route NOT LIKE 'admin-%'
-          AND route <> 'security-retention'
-          AND outcome = 'success'
-          AND (
-            action ILIKE '%click%'
-            OR action = 'image_download'
-            OR metadata ? 'elementType'
-            OR metadata ? 'href'
-            OR metadata ? 'destination'
-          )
-          AND (
-            COALESCE(metadata->>'clientType', '') = 'human'
-            OR (
-              COALESCE(metadata->>'clientType', '') = ''
-              AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
-            )
-          )
-          AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
-        ORDER BY created_at DESC
-        LIMIT 200
-      `,
     ]);
 
     const overview = overviewRows[0] || {};
@@ -676,19 +635,6 @@ export async function handler(event) {
             }))
             .filter((detailRow) => detailRow.detail)
           : [],
-      })),
-      clickTrackingDetails: clickTrackingDetailRows.map((row) => ({
-        route: row.route,
-        action: row.action,
-        source: row.source,
-        destination: row.destination,
-        elementType: row.element_type,
-        pagePath: row.page_path,
-        pageUrl: row.page_url,
-        referrer: row.referrer,
-        audienceType: row.audience_type === 'member' ? 'member' : 'visitor',
-        fingerprint: row.request_fingerprint,
-        createdAt: toIsoDate(row.created_at),
       })),
       securityEvents: securityRows.map((row) => ({
         route: row.route,

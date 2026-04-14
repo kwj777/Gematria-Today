@@ -65,6 +65,9 @@ export async function handler(event) {
     }
 
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
+    if (user && user.isAdmin) {
+      return jsonResponse(202, { ok: true, skipped: true });
+    }
     if (!user) {
       await applyRateLimit(sql, event, {
         scope: 'public-button-report-ip',
@@ -112,6 +115,12 @@ export default async function onRequest(request) {
     }
 
     const { user } = await getOptionalAuthenticatedSession(request, { sql });
+    if (user && user.isAdmin) {
+      return new Response(JSON.stringify({ ok: true, skipped: true }), {
+        status: 202,
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+      });
+    }
     if (!user) {
       await applyRateLimit(sql, request, {
         scope: 'public-button-report-ip',

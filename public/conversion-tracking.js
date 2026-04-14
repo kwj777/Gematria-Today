@@ -103,6 +103,34 @@
     return normalized.slice(0, 120);
   }
 
+  function buildCssSelector(element) {
+    if (!(element instanceof Element)) {
+      return '';
+    }
+    if (element.id) {
+      return `#${element.id}`;
+    }
+
+    const segments = [];
+    let node = element;
+    while (node instanceof Element && node !== document.body && segments.length < 5) {
+      const tag = node.tagName.toLowerCase();
+      const classSegment = String(node.className || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((className) => `.${className.replace(/[^a-z0-9_-]/gi, '')}`)
+        .join('');
+      const siblingIndex = node.parentElement
+        ? Array.from(node.parentElement.children).filter((child) => child.tagName === node.tagName).indexOf(node) + 1
+        : 1;
+      segments.unshift(`${tag}${classSegment}:nth-of-type(${Math.max(siblingIndex, 1)})`);
+      node = node.parentElement;
+    }
+    return segments.join(' > ').slice(0, 240);
+  }
+
   function track(eventName, properties = {}) {
     const payload = {
       event: eventName,
@@ -137,11 +165,19 @@
     );
     const destination = target instanceof HTMLAnchorElement ? (target.getAttribute('href') || '') : '';
     const action = target.getAttribute('data-track-action') || 'sitewide_element_click';
+    const elementId = normalizeText(target.id || '');
+    const elementSelector = normalizeText(buildCssSelector(target));
+    const elementLink = elementId
+      ? `${window.location.origin}${window.location.pathname}#${encodeURIComponent(elementId)}`
+      : window.location.href;
 
     reportButtonEvent(action, {
       source: source || 'unknown',
       destination: normalizeText(destination),
       elementType: target.tagName.toLowerCase(),
+      elementId,
+      elementSelector,
+      elementLink,
       pagePath: window.location.pathname,
       pageUrl: window.location.href,
       referrer: document.referrer || '',

@@ -5,6 +5,20 @@
 
   window.__endTimesConversionTrackingInstalled = true;
 
+  function isAdminSession() {
+    try {
+      return document.cookie.split(';').some(function (c) {
+        return c.trim().startsWith('endtimes_admin_session=');
+      });
+    } catch {
+      return false;
+    }
+  }
+
+  if (isAdminSession()) {
+    return;
+  }
+
   function createSessionId() {
     if (window.crypto?.randomUUID) {
       return window.crypto.randomUUID();
@@ -112,6 +126,10 @@
       destination: normalizeText(destination),
       elementType: target.tagName.toLowerCase(),
       pagePath: window.location.pathname,
+      pageUrl: window.location.href,
+      referrer: document.referrer || '',
+      trackingSessionId,
+      timestamp: new Date().toISOString(),
     });
   }, { capture: true });
 

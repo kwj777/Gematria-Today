@@ -10,7 +10,9 @@ let SITE_PUBLIC_DIR = null;
 try {
   SITE_PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
 } catch {
-  // import.meta.url may not resolve to a file path in all bundling environments
+  // import.meta.url may not resolve to a file path in all bundling environments;
+  // fall back to process.cwd() which is the project root in netlify dev
+  SITE_PUBLIC_DIR = path.resolve(process.cwd(), 'public');
 }
 const EXCLUDED_REPORT_ROUTES = new Set(['/admin-click-tracking.html', '/unsupported-browser.html', '/offline.html']);
 

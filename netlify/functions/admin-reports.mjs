@@ -13,7 +13,7 @@ const MONITORED_ROUTE_CONFIG = [
   { route: 'wordnikDefinition', apiPath: '/definition', threshold: Number.parseInt(process.env.ALERT_WORDNIK_DEFINITION_SPIKE_5M || '120', 10) },
   { route: 'wordnikRelatedWords', apiPath: '/api/wordnikRelatedWords', threshold: Number.parseInt(process.env.ALERT_WORDNIK_RELATED_WORDS_SPIKE_5M || '80', 10) },
 ];
-const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
+const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node-fetch|node\\.js|nodejs|node/|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
 
 function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
@@ -439,6 +439,7 @@ export async function handler(event) {
             created_at,
             COALESCE(
               NULLIF(BTRIM(metadata->>'href'), ''),
+              NULLIF(BTRIM(metadata->>'destination'), ''),
               NULLIF(BTRIM(metadata->>'targetHref'), ''),
               NULLIF(BTRIM(metadata->>'slug'), ''),
               NULLIF(BTRIM(metadata->>'pagePath'), ''),

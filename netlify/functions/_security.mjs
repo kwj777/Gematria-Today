@@ -265,7 +265,7 @@ function normalizeGeoValue(value) {
 }
 
 function isAutomatedUserAgent(userAgent) {
-  return /(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)/i.test(String(userAgent || ''));
+  return /(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node-fetch|node\.js|nodejs|node\/|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)/i.test(String(userAgent || ''));
 }
 
 export function securityHeaders(extraHeaders = {}) {

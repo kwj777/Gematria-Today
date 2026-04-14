@@ -87,6 +87,9 @@ CREATE TABLE IF NOT EXISTS calculation_history (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS calculation_history_unique_entry_idx
+  ON calculation_history (user_id, LOWER(query_text), query_type, calculator_source);
+
 CREATE INDEX IF NOT EXISTS calculation_history_user_created_at_idx
   ON calculation_history (user_id, created_at DESC);
 

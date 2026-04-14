@@ -36,9 +36,12 @@ function extractWordFromEvent(event) {
 }
 
 async function processWord(sql, word) {
+  if (word === null || word === undefined || typeof word !== 'string') {
+    throw Object.assign(new Error('Missing required query parameter: word'), { statusCode: 400 });
+  }
   const trimmedWord = word.trim();
   const normalizedWord = trimmedWord.toLowerCase();
-  if (!trimmedWord) throw new Error('Missing required query parameter: word');
+  if (!trimmedWord) throw Object.assign(new Error('Missing required query parameter: word'), { statusCode: 400 });
 
   const cacheResult = await withCachedJson(sql, {
     cacheKey: buildCacheKey({ route: 'englishGematria', word: normalizedWord }),
@@ -122,7 +125,7 @@ export default async function onRequest(request) {
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: error.statusCode || (String(error.message).includes('Missing required') ? 400 : 500),
+      status: error.statusCode || 500,
       headers: { 'content-type': 'application/json; charset=utf-8', ...(error.headers || {}) },
     });
   }
@@ -156,6 +159,6 @@ export async function handler(event) {
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {
-    return jsonResponse(error.statusCode || (String(error.message).includes('Missing required') ? 400 : 500), { error: error.message }, error.headers || {});
+    return jsonResponse(error.statusCode || 500, { error: error.message }, error.headers || {});
   }
 }

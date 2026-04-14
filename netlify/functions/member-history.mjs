@@ -32,25 +32,6 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'queryText and resultPayload are required' });
       }
 
-      const normalizedQueryText = queryText.toLowerCase();
-      const existingRows = await sql`
-        SELECT *
-        FROM calculation_history
-        WHERE user_id = ${member.id}
-          AND LOWER(query_text) = ${normalizedQueryText}
-          AND query_type = ${queryType}
-          AND calculator_source = ${calculatorSource}
-        ORDER BY created_at DESC
-        LIMIT 1
-      `;
-
-      if (existingRows.length) {
-        return jsonResponse(200, {
-          duplicate: true,
-          item: formatCalculationHistory(existingRows[0]),
-        });
-      }
-
       if (member.membershipLevel === 'free') {
         const [{ count }] = await sql`
           SELECT COUNT(*)::int AS count
@@ -90,8 +71,24 @@ export async function handler(event) {
           ${typeof body.isBaseRoot === 'boolean' ? body.isBaseRoot : null},
           ${JSON.stringify(resultPayload)}::jsonb
         )
+        ON CONFLICT (user_id, LOWER(query_text), query_type, calculator_source) DO NOTHING
         RETURNING *
       `;
+
+      if (!rows.length) {
+        const normalizedQueryText = queryText.toLowerCase();
+        const [existing] = await sql`
+          SELECT *
+          FROM calculation_history
+          WHERE user_id = ${member.id}
+            AND LOWER(query_text) = ${normalizedQueryText}
+            AND query_type = ${queryType}
+            AND calculator_source = ${calculatorSource}
+          ORDER BY created_at DESC
+          LIMIT 1
+        `;
+        return jsonResponse(200, { duplicate: true, item: formatCalculationHistory(existing) });
+      }
 
       return jsonResponse(201, { item: formatCalculationHistory(rows[0]) });
     }

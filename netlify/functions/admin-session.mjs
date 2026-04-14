@@ -16,7 +16,11 @@ export async function handler(event) {
         await syncBootstrapAdminUser(sql);
 
         const optionalSession = await getOptionalAuthenticatedSession(event, { sql });
-        const isAdmin = optionalSession?.user && (optionalSession.user.role === 'admin');
+        const isAdmin = optionalSession?.user && (
+          optionalSession.user.role === 'admin'
+          || optionalSession.user.role === 'super_admin'
+          || optionalSession.user.isAdmin
+        );
         if (isAdmin) {
           const session = await createSession(sql, optionalSession.user.id);
           return jsonResponse(

@@ -27,11 +27,28 @@
   }
 
   const TRACKING_SESSION_KEY = 'endtimes_tracking_session_id';
-  const storedSessionId = window.sessionStorage.getItem(TRACKING_SESSION_KEY);
+
+  function getStoredSessionId() {
+    try {
+      return window.sessionStorage.getItem(TRACKING_SESSION_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  function persistSessionId(sessionId) {
+    try {
+      window.sessionStorage.setItem(TRACKING_SESSION_KEY, sessionId);
+    } catch {
+      // Ignore storage failures (Safari private mode / restricted WebView).
+    }
+  }
+
+  const storedSessionId = getStoredSessionId();
   const trackingSessionId = storedSessionId || createSessionId();
 
   if (!storedSessionId) {
-    window.sessionStorage.setItem(TRACKING_SESSION_KEY, trackingSessionId);
+    persistSessionId(trackingSessionId);
   }
 
   const REPORTABLE_ACTIONS = new Set(['image_download']);

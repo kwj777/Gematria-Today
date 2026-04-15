@@ -549,6 +549,15 @@ export function formatFaq(row) {
   };
 }
 
+export async function upsertSetting(sql, key, value, userId) {
+  await sql`
+    INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
+    VALUES (${key}, ${value ?? null}, ${userId}, NOW())
+    ON CONFLICT (setting_key)
+    DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW()
+  `;
+}
+
 export function formatBlogPostProposal(row) {
   return {
     id: row.id,

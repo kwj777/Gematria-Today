@@ -1212,6 +1212,34 @@ body.admin-render-pending footer {
   box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
 }
 
+.editorial-proposal-card {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.editorial-proposal-card__meta-badge {
+  background-color: rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+:root[data-bs-theme="dark"] .editorial-proposal-card {
+  background: rgba(11, 17, 28, 0.96);
+}
+
+:root[data-bs-theme="dark"] .editorial-proposal-card__meta-badge {
+  background-color: rgba(148, 163, 184, 0.22);
+  color: #e6edf5;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+:root[data-bs-theme="dark"] .editorial-proposal-card .btn-outline-secondary {
+  --bs-btn-color: #d6e0ed;
+  --bs-btn-border-color: rgba(148, 163, 184, 0.55);
+  --bs-btn-hover-color: #0e1623;
+  --bs-btn-hover-bg: #d6e0ed;
+  --bs-btn-hover-border-color: #d6e0ed;
+}
+
 
 
 .admin-dashboard-section {

@@ -212,12 +212,12 @@
           : state.proposals.filter((proposal) => (proposal.status || 'pending') === state.statusFilter);
         const list = document.getElementById('proposalList');
         list.innerHTML = filteredProposals.length ? filteredProposals.map((proposal) => `
-          <article class="admin-item-card mb-3 p-3">
+          <article class="admin-item-card editorial-proposal-card mb-3 p-3">
             <div class="d-flex justify-content-between gap-3">
               <div>
                 <div class="d-flex flex-wrap gap-2 mb-2">
                   <span class="badge ${proposal.status === 'pending' ? 'text-bg-danger' : 'text-bg-secondary'}">${escapeHtml(proposal.status || 'pending')}</span>
-                  <span class="badge text-bg-light">${escapeHtml(new Date(proposal.createdAt).toLocaleString())}</span>
+                  <span class="badge editorial-proposal-card__meta-badge">${escapeHtml(new Date(proposal.createdAt).toLocaleString())}</span>
                   ${proposal.attributionUsername ? `<span class="badge text-bg-info">@${escapeHtml(proposal.attributionUsername)}</span>` : ''}
                 </div>
                 <h2 class="h5 mb-2">${escapeHtml(proposal.title || 'Untitled proposal')}</h2>

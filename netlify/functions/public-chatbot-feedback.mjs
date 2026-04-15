@@ -6,7 +6,7 @@ import {
   parseBody,
   syncBootstrapAdminUser,
 } from './_admin.mjs';
-import { getOptionalAuthenticatedSession } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getOrCreateVisitorSession } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 
 function sanitizeSources(rawSources) {
@@ -44,6 +44,7 @@ export async function handler(event) {
       });
     }
 
+    const { visitorSessionId, isNew: isNewVisitor, visitorCookie } = getOrCreateVisitorSession(event);
     const payload = parseBody(event);
     const query = String(payload?.query || '').trim().slice(0, 400);
     const cleanedQuery = String(payload?.cleanedQuery || '').trim().slice(0, 400) || null;
@@ -81,13 +82,15 @@ export async function handler(event) {
       metadata: {
         hasSession: Boolean(user),
         wasExpected,
+        visitorSessionId,
       },
     });
 
+    const responseHeaders = isNewVisitor ? { 'set-cookie': visitorCookie } : {};
     return jsonResponse(201, {
       success: true,
       message: 'Feedback received and queued for admin review.',
-    });
+    }, responseHeaders);
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to submit chatbot feedback' }, error.headers || {});
   }

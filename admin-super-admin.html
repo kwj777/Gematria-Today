@@ -287,6 +287,22 @@
             </div>
             <div id="privateBootswatchThemeMeta" class="small text-muted mt-2">Private preview settings load after admin login.</div>
           </div>
+          <hr class="my-4">
+          <div>
+            <p class="section-kicker mb-1">Hub shared secret</p>
+            <p class="text-muted small mb-3">Generate a one-time <code>HUB_SHARED_SECRET</code> value for hub login setup. It is never saved by this page.</p>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-8 col-lg-6">
+                <label class="form-label" for="hubSharedSecretOutput">Generated HUB_SHARED_SECRET</label>
+                <input id="hubSharedSecretOutput" class="form-control" type="text" autocomplete="off" spellcheck="false" readonly placeholder="Click Generate secret" />
+              </div>
+              <div class="col-md-auto d-grid gap-2">
+                <button id="generateHubSharedSecretButton" type="button" class="btn btn-outline-primary">Generate secret</button>
+                <button id="copyHubSharedSecretButton" type="button" class="btn btn-outline-secondary" disabled>Copy secret</button>
+              </div>
+            </div>
+            <div id="hubSharedSecretMeta" class="small text-muted mt-2">This value only exists in your current browser tab until you leave or refresh.</div>
+          </div>
         </section>
       </div>
     </main>
@@ -305,6 +321,10 @@
       const savePrivateBootswatchThemeButton = document.getElementById('savePrivateBootswatchThemeButton');
       const privateBootswatchThemeResetButton = document.getElementById('privateBootswatchThemeResetButton');
       const privateBootswatchThemeMeta = document.getElementById('privateBootswatchThemeMeta');
+      const hubSharedSecretOutput = document.getElementById('hubSharedSecretOutput');
+      const generateHubSharedSecretButton = document.getElementById('generateHubSharedSecretButton');
+      const copyHubSharedSecretButton = document.getElementById('copyHubSharedSecretButton');
+      const hubSharedSecretMeta = document.getElementById('hubSharedSecretMeta');
 
       const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true, wordnik_wotd_slider: true, blog_home_slider: true, blog_home_featured_grid: true });
       let state = {
@@ -353,6 +373,12 @@
           activeThemeSlug: String(catalog?.activeThemeSlug || 'default').trim().toLowerCase(),
           presets: Array.isArray(catalog?.presets) ? catalog.presets : [],
         };
+      }
+
+      function generateHexSecret(bytesLength = 32) {
+        const randomBytes = new Uint8Array(bytesLength);
+        window.crypto.getRandomValues(randomBytes);
+        return Array.from(randomBytes, (value) => value.toString(16).padStart(2, '0')).join('');
       }
 
       function setPrivateThemePreviewSessionCookie(enabled) {
@@ -569,6 +595,30 @@
 
       privateBootswatchThemeResetButton?.addEventListener('click', () => {
         privateBootswatchThemeSelect.value = 'bootstrap';
+      });
+
+      generateHubSharedSecretButton?.addEventListener('click', () => {
+        clearMessage(errorMessage);
+        clearMessage(saveMessage);
+        const secret = generateHexSecret(32);
+        hubSharedSecretOutput.value = secret;
+        copyHubSharedSecretButton.disabled = false;
+        hubSharedSecretMeta.textContent = 'Secret generated in this browser tab only. Copy it now and add it to HUB_SHARED_SECRET.';
+      });
+
+      copyHubSharedSecretButton?.addEventListener('click', async () => {
+        const secret = String(hubSharedSecretOutput.value || '');
+        if (!secret) return;
+        try {
+          await navigator.clipboard.writeText(secret);
+          hubSharedSecretMeta.textContent = 'Secret copied to clipboard. This page does not save it.';
+        } catch (error) {
+          hubSharedSecretMeta.textContent = 'Clipboard copy failed. Select and copy the value manually.';
+        }
+      });
+
+      window.addEventListener('beforeunload', () => {
+        if (hubSharedSecretOutput) hubSharedSecretOutput.value = '';
       });
 
       loadSessionAndSettings();

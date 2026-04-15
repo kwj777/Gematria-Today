@@ -662,7 +662,14 @@
             throw new Error(payload?.error || 'Could not save HUB_SHARED_SECRET');
           }
           const savedSiteId = String(payload?.site?.id || currentSiteId || 'this site').trim();
-          showMessage(saveMessage, `Generated and stored HUB_SHARED_SECRET for ${savedSiteId}.`);
+          if (payload?.netlifySync?.saved === false) {
+            showMessage(
+              saveMessage,
+              `Generated HUB_SHARED_SECRET for ${savedSiteId}, but automatic Netlify sync failed. Copy this value and set HUB_SHARED_SECRET manually in Netlify: ${payload.sharedSecret}`,
+            );
+          } else {
+            showMessage(saveMessage, `Generated and stored HUB_SHARED_SECRET for ${savedSiteId}.`);
+          }
           await loadHubSites();
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to generate shared secret.');

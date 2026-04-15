@@ -56,6 +56,29 @@ function generateSharedSecret() {
   return crypto.randomBytes(32).toString('hex');
 }
 
+function normalizeSiteUrl(value) {
+  return String(value || '').trim().replace(/\/$/, '');
+}
+
+function getRequestOrigin(event) {
+  const fromRawUrl = String(event?.rawUrl || '').trim();
+  if (fromRawUrl) {
+    try {
+      return normalizeSiteUrl(new URL(fromRawUrl).origin);
+    } catch {
+      // ignore malformed rawUrl and continue fallback chain
+    }
+  }
+
+  const forwardedProto = String(event?.headers?.['x-forwarded-proto'] || '').trim();
+  const forwardedHost = String(event?.headers?.['x-forwarded-host'] || event?.headers?.host || '').trim();
+  if (forwardedProto && forwardedHost) {
+    return normalizeSiteUrl(`${forwardedProto}://${forwardedHost}`);
+  }
+
+  return normalizeSiteUrl(process.env.URL || '');
+}
+
 async function upsertNetlifySiteEnvVar(siteId, key, value) {
   const token = String(process.env.NETLIFY_API_TOKEN || '').trim();
   if (!token) {
@@ -115,6 +138,12 @@ async function getHubSites(sql) {
   } catch {
     return [];
   }
+}
+
+function findSiteByOrigin(sites, origin) {
+  const normalizedOrigin = normalizeSiteUrl(origin).toLowerCase();
+  if (!normalizedOrigin) return null;
+  return sites.find((site) => normalizeSiteUrl(site?.url).toLowerCase() === normalizedOrigin) || null;
 }
 
 /**
@@ -181,15 +210,39 @@ async function handlePost(sql, user, event) {
   }
 
   if (action === 'generate-shared-secret') {
-    const siteId = String(body.siteId || '').trim();
-    if (!siteId) return jsonResponse(400, { error: 'siteId is required' });
-
     const sites = await getHubSites(sql);
-    const siteIndex = sites.findIndex((site) => site.id === siteId);
-    if (siteIndex === -1) return jsonResponse(404, { error: 'Site not found' });
+    const requestedSiteId = String(body.siteId || '').trim();
+    const requestOrigin = getRequestOrigin(event);
+    const runtimeSiteId = String(process.env.SITE_ID || '').trim();
+    const runtimeSiteName = String(process.env.SITE_NAME || '').trim();
+
+    let siteIndex = requestedSiteId ? sites.findIndex((site) => site.id === requestedSiteId) : -1;
+    if (siteIndex === -1) {
+      const siteByOrigin = findSiteByOrigin(sites, requestOrigin);
+      if (siteByOrigin) {
+        siteIndex = sites.findIndex((site) => site.id === siteByOrigin.id);
+      }
+    }
+
+    if (siteIndex === -1) {
+      if (!runtimeSiteId || !requestOrigin) {
+        return jsonResponse(404, { error: 'Site not found. Save this site in the hub list first.' });
+      }
+
+      const inferredSiteId = requestedSiteId || runtimeSiteId;
+      const inferredSiteName = runtimeSiteName || requestedSiteId || requestOrigin;
+      sites.push({
+        id: inferredSiteId,
+        name: inferredSiteName,
+        url: requestOrigin,
+        sharedSecret: '',
+        netlifySiteId: runtimeSiteId,
+      });
+      siteIndex = sites.length - 1;
+    }
 
     const existingSite = sites[siteIndex] || {};
-    const netlifySiteId = String(existingSite.netlifySiteId || '').trim();
+    const netlifySiteId = String(existingSite.netlifySiteId || runtimeSiteId).trim();
     if (!netlifySiteId) {
       return jsonResponse(400, { error: 'This site is missing Netlify Site ID. Save one first, then try again.' });
     }
@@ -198,7 +251,12 @@ async function handlePost(sql, user, event) {
     await upsertNetlifySiteEnvVar(netlifySiteId, 'HUB_SHARED_SECRET', sharedSecret);
 
     const nextSites = [...sites];
-    nextSites[siteIndex] = { ...existingSite, sharedSecret };
+    nextSites[siteIndex] = {
+      ...existingSite,
+      url: normalizeSiteUrl(existingSite.url || requestOrigin),
+      netlifySiteId,
+      sharedSecret,
+    };
     await upsertSetting(sql, 'hub_sites', JSON.stringify(nextSites), user.id);
 
     return jsonResponse(200, {

@@ -471,7 +471,7 @@
         state.currentHubSite = findCurrentHubSite(state.hubSites);
         if (!state.currentHubSite) {
           hubSiteIdentity.textContent = 'This site is not currently registered in the admin hub.';
-          generateHubSharedSecretButton.disabled = true;
+          generateHubSharedSecretButton.disabled = false;
           removeFromHubButton.disabled = true;
           return;
         }
@@ -646,10 +646,6 @@
         clearMessage(errorMessage);
         clearMessage(saveMessage);
         const currentSiteId = String(state.currentHubSite?.id || '').trim();
-        if (!currentSiteId) {
-          showMessage(errorMessage, 'This site is not registered in the hub yet.');
-          return;
-        }
 
         const originalLabel = generateHubSharedSecretButton.textContent;
         generateHubSharedSecretButton.disabled = true;
@@ -657,12 +653,17 @@
         try {
           const payload = await request('/api/admin-hub', {
             method: 'POST',
-            body: JSON.stringify({ action: 'generate-shared-secret', siteId: currentSiteId }),
+            body: JSON.stringify({
+              action: 'generate-shared-secret',
+              ...(currentSiteId ? { siteId: currentSiteId } : {}),
+            }),
           });
           if (!payload?.saved || !payload?.sharedSecret) {
             throw new Error(payload?.error || 'Could not save HUB_SHARED_SECRET');
           }
-          showMessage(saveMessage, `Generated and stored HUB_SHARED_SECRET for ${currentSiteId}.`);
+          const savedSiteId = String(payload?.site?.id || currentSiteId || 'this site').trim();
+          showMessage(saveMessage, `Generated and stored HUB_SHARED_SECRET for ${savedSiteId}.`);
+          await loadHubSites();
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to generate shared secret.');
         } finally {

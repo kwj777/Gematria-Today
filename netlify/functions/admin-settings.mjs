@@ -1,4 +1,4 @@
-import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
+import { getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMethod, upsertSetting } from './_admin.mjs';
 import { clearCachedJson, logRequestAudit } from './_security.mjs';
 import { DEFAULT_SITE_MODULES } from './_site-modules.mjs';
 
@@ -229,31 +229,7 @@ export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
 
-    if (event.httpMethod === 'GET') {
-      const rows = await getSettingsRows(sql);
-      const { settings, emailTemplates } = mapSettingsFromRows(rows);
-      return jsonResponse(200, { settings: serializeSettings(settings), emailTemplates });
-    }
-
-    if (event.httpMethod === 'POST') {
-      const action = String(parseBody(event).action ?? event.queryStringParameters?.action ?? '').trim().toLowerCase();
-
-      if (action !== 'clear-cache') {
-        return jsonResponse(400, { error: 'Unsupported admin settings action' });
-      }
-
-      const cacheResult = await clearCachedJson(sql);
-      await logRequestAudit(sql, event, {
-        route: 'admin-settings',
-        action: 'clear_cache',
-        outcome: 'success',
-        metadata: { deletedCount: cacheResult.deletedCount, userId: user.id },
-      });
-
-      return jsonResponse(200, { cleared: true, deletedCount: cacheResult.deletedCount });
-    }
-
-    if (event.httpMethod === 'PUT' || event.httpMethod === 'PATCH') {
+    const handlePutPatch = async () => {
       const body = parseBody(event);
 
       if (body.emailTemplate) {
@@ -269,12 +245,7 @@ export async function handler(event) {
         ];
 
         for (const [key, value] of pairs) {
-          await sql`
-            INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
-            VALUES (${key}, ${value || null}, ${user.id}, NOW())
-            ON CONFLICT (setting_key)
-            DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW()
-          `;
+          await upsertSetting(sql, key, value || null, user.id);
         }
 
         const rows = await getSettingsRows(sql);
@@ -339,12 +310,7 @@ export async function handler(event) {
       ];
 
       for (const [key, value] of pairs) {
-        await sql`
-          INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
-          VALUES (${key}, ${value || null}, ${user.id}, NOW())
-          ON CONFLICT (setting_key)
-          DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW()
-        `;
+        await upsertSetting(sql, key, value || null, user.id);
       }
 
       const shouldRefreshCrawlerCache = JSON.stringify(existingSettings.siteModules) !== JSON.stringify(nextSettings.siteModules);
@@ -360,9 +326,36 @@ export async function handler(event) {
       const { emailTemplates } = mapSettingsFromRows(rows);
 
       return jsonResponse(200, { saved: true, settings: serializeSettings(nextSettings), emailTemplates });
-    }
+    };
 
-    return jsonResponse(405, { error: 'Method not allowed' });
+    return await routeByHttpMethod(event, {
+      GET: async () => {
+        const rows = await getSettingsRows(sql);
+        const { settings, emailTemplates } = mapSettingsFromRows(rows);
+        return jsonResponse(200, { settings: serializeSettings(settings), emailTemplates });
+      },
+
+      POST: async () => {
+        const action = String(parseBody(event).action ?? event.queryStringParameters?.action ?? '').trim().toLowerCase();
+
+        if (action !== 'clear-cache') {
+          return jsonResponse(400, { error: 'Unsupported admin settings action' });
+        }
+
+        const cacheResult = await clearCachedJson(sql);
+        await logRequestAudit(sql, event, {
+          route: 'admin-settings',
+          action: 'clear_cache',
+          outcome: 'success',
+          metadata: { deletedCount: cacheResult.deletedCount, userId: user.id },
+        });
+
+        return jsonResponse(200, { cleared: true, deletedCount: cacheResult.deletedCount });
+      },
+
+      PUT: handlePutPatch,
+      PATCH: handlePutPatch,
+    });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Settings request failed' });
   }

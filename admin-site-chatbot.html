@@ -43,6 +43,7 @@
     <link rel="stylesheet" href="/theme.css" />
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
+    <script src="/admin-theme.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -56,9 +57,16 @@
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Blog Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-forum.html">Forum Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
             <li class="nav-item"><a class="nav-link active" aria-current="page" href="/admin-site-chatbot.html">Site Chatbot</a></li>
             <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
           </ul>
+          <div class="d-flex ms-lg-3">
+            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+          </div>
         </div>
       </div>
     </nav>

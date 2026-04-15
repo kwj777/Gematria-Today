@@ -58,6 +58,7 @@
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />
+    <script src="/admin-theme.js"></script>
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/site-modules.js"></script>
@@ -557,7 +558,6 @@
       const authPanel = document.getElementById('authPanel');
       const dashboardPanel = document.getElementById('dashboardPanel');
       const authMessage = document.getElementById('authMessage');
-      const themeToggleButton = document.getElementById('themeToggleButton');
       const saveMessage = document.getElementById('saveMessage');
       const cacheMessage = document.getElementById('cacheMessage');
       const errorMessage = document.getElementById('errorMessage');
@@ -580,45 +580,10 @@
       const workspaceModules = Array.from(document.querySelectorAll('[data-admin-workspace]'));
       const siteModulesPanel = document.getElementById('siteModulesPanel');
       const siteModulesForm = document.getElementById('siteModulesForm');
-      const ADMIN_THEME_STORAGE_KEY = 'adminThemePreference';
-      const ADMIN_BOOTSWATCH_STORAGE_KEY = 'adminBootswatchTheme';
-      const bootswatchThemeSelect = document.getElementById('bootswatchThemeSelect');
-      const bootswatchThemeResetButton = document.getElementById('bootswatchThemeResetButton');
       const globalBootswatchThemeSelect = document.getElementById('globalBootswatchThemeSelect');
       const saveGlobalBootswatchThemeButton = document.getElementById('saveGlobalBootswatchThemeButton');
       const globalBootswatchThemeResetButton = document.getElementById('globalBootswatchThemeResetButton');
       const globalBootswatchThemeMeta = document.getElementById('globalBootswatchThemeMeta');
-      const bootstrapThemeStylesheet = document.getElementById('bootstrapThemeStylesheet');
-      const BOOTSTRAP_STYLESHEET = {
-        href: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-        integrity: 'sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH',
-      };
-      const BOOTSWATCH_THEME_OPTIONS = Object.freeze({
-        bootstrap: BOOTSTRAP_STYLESHEET,
-        cerulean: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/cerulean/bootstrap.min.css' },
-        cosmo: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/cosmo/bootstrap.min.css' },
-        darkly: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css' },
-        flatly: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/flatly/bootstrap.min.css' },
-        litera: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/litera/bootstrap.min.css' },
-        lumen: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lumen/bootstrap.min.css' },
-        lux: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lux/bootstrap.min.css' },
-        materia: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/materia/bootstrap.min.css' },
-        minty: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/minty/bootstrap.min.css' },
-        morph: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/morph/bootstrap.min.css' },
-        pulse: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/pulse/bootstrap.min.css' },
-        quartz: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/quartz/bootstrap.min.css' },
-        sandstone: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/sandstone/bootstrap.min.css' },
-        simplex: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/simplex/bootstrap.min.css' },
-        sketchy: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/sketchy/bootstrap.min.css' },
-        slate: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/slate/bootstrap.min.css' },
-        solar: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/solar/bootstrap.min.css' },
-        spacelab: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/spacelab/bootstrap.min.css' },
-        superhero: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/superhero/bootstrap.min.css' },
-        united: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/united/bootstrap.min.css' },
-        vapor: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/vapor/bootstrap.min.css' },
-        yeti: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/yeti/bootstrap.min.css' },
-        zephyr: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/zephyr/bootstrap.min.css' },
-      });
 
       const DEFAULT_SITE_MODULES = Object.freeze({
         forum: true,
@@ -682,78 +647,6 @@
         .map((tag) => `<span class="badge text-bg-warning">${escapeHtml(tag)}</span>`)
         .join('');
 
-      function normalizeTheme(theme) {
-        return theme === 'dark' ? 'dark' : 'light';
-      }
-
-      function updateThemeToggleButton(theme) {
-        if (!themeToggleButton) return;
-        const isDark = theme === 'dark';
-        themeToggleButton.textContent = isDark ? 'Light mode' : 'Dark mode';
-        themeToggleButton.setAttribute('aria-pressed', String(isDark));
-        themeToggleButton.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-      }
-
-      function applyTheme(theme) {
-        const normalizedTheme = normalizeTheme(theme);
-        document.documentElement.setAttribute('data-bs-theme', normalizedTheme);
-        updateThemeToggleButton(normalizedTheme);
-      }
-
-      function loadThemePreference() {
-        try {
-          return normalizeTheme(window.localStorage.getItem(ADMIN_THEME_STORAGE_KEY));
-        } catch (error) {
-          return 'light';
-        }
-      }
-
-      function persistThemePreference(theme) {
-        try {
-          window.localStorage.setItem(ADMIN_THEME_STORAGE_KEY, theme);
-        } catch (error) {
-          // Ignore localStorage failures in private mode/quota exhaustion.
-        }
-      }
-
-      function normalizeBootswatchTheme(themeId) {
-        return BOOTSWATCH_THEME_OPTIONS[themeId] ? themeId : 'bootstrap';
-      }
-
-      function applyBootswatchTheme(themeId) {
-        if (!bootstrapThemeStylesheet) {
-          return;
-        }
-        const normalizedThemeId = normalizeBootswatchTheme(themeId);
-        const selectedTheme = BOOTSWATCH_THEME_OPTIONS[normalizedThemeId];
-        bootstrapThemeStylesheet.setAttribute('href', selectedTheme.href);
-        if (selectedTheme.integrity) {
-          bootstrapThemeStylesheet.setAttribute('integrity', selectedTheme.integrity);
-        } else {
-          bootstrapThemeStylesheet.removeAttribute('integrity');
-        }
-        bootstrapThemeStylesheet.setAttribute('crossorigin', 'anonymous');
-        if (bootswatchThemeSelect) {
-          bootswatchThemeSelect.value = normalizedThemeId;
-        }
-      }
-
-      function loadBootswatchPreference() {
-        try {
-          return normalizeBootswatchTheme(window.localStorage.getItem(ADMIN_BOOTSWATCH_STORAGE_KEY));
-        } catch (error) {
-          return 'bootstrap';
-        }
-      }
-
-      function persistBootswatchPreference(themeId) {
-        try {
-          window.localStorage.setItem(ADMIN_BOOTSWATCH_STORAGE_KEY, normalizeBootswatchTheme(themeId));
-        } catch (error) {
-          // Ignore localStorage failures in private mode/quota exhaustion.
-        }
-      }
-
       function getBootswatchThemeLabel(themeId) {
         if (themeId === 'bootstrap') {
           return 'Bootstrap default';
@@ -774,11 +667,11 @@
         if (!activeSlug.startsWith('bootswatch-')) {
           return 'bootstrap';
         }
-        return normalizeBootswatchTheme(activeSlug.slice('bootswatch-'.length));
+        return window.adminTheme.normalizeBootswatchTheme(activeSlug.slice('bootswatch-'.length));
       }
 
       function buildThemeCatalogForBootswatch(themeId) {
-        const normalizedThemeId = normalizeBootswatchTheme(themeId);
+        const normalizedThemeId = window.adminTheme.normalizeBootswatchTheme(themeId);
         const existingCatalog = normalizeThemeCatalog(state.themeCatalog);
         const preservedPresets = existingCatalog.presets.filter((preset) => !String(preset?.slug || '').startsWith('bootswatch-'));
         if (normalizedThemeId === 'bootstrap') {
@@ -788,7 +681,7 @@
             presets: preservedPresets,
           };
         }
-        const selectedTheme = BOOTSWATCH_THEME_OPTIONS[normalizedThemeId];
+        const selectedTheme = window.adminTheme.BOOTSWATCH_THEME_OPTIONS[normalizedThemeId];
         const slug = `bootswatch-${normalizedThemeId}`;
         const preset = {
           name: getBootswatchThemeLabel(normalizedThemeId),
@@ -1822,7 +1715,7 @@
           return;
         }
 
-        const selectedTheme = normalizeBootswatchTheme(globalBootswatchThemeSelect?.value || 'bootstrap');
+        const selectedTheme = window.adminTheme.normalizeBootswatchTheme(globalBootswatchThemeSelect?.value || 'bootstrap');
         try {
           const payload = await request('/api/admin-settings', {
             method: 'PUT',
@@ -2172,31 +2065,11 @@
         }
       });
 
-      themeToggleButton?.addEventListener('click', () => {
-        const currentTheme = normalizeTheme(document.documentElement.getAttribute('data-bs-theme'));
-        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        applyTheme(nextTheme);
-        persistThemePreference(nextTheme);
-      });
-
-      bootswatchThemeSelect?.addEventListener('change', () => {
-        const nextTheme = normalizeBootswatchTheme(bootswatchThemeSelect.value);
-        applyBootswatchTheme(nextTheme);
-        persistBootswatchPreference(nextTheme);
-      });
-
-      bootswatchThemeResetButton?.addEventListener('click', () => {
-        applyBootswatchTheme('bootstrap');
-        persistBootswatchPreference('bootstrap');
-      });
-
       resetPostForm();
       resetFaqForm();
       renderMembershipGrantMeta();
       renderGlobalThemeSettings();
       resetEmailTemplateForm();
-      applyTheme(loadThemePreference());
-      applyBootswatchTheme(loadBootswatchPreference());
       withRenderOverlay(() => loadSession(), 'Checking admin session…');
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

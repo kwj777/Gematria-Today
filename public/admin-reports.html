@@ -44,6 +44,7 @@
     <link rel="stylesheet" href="/theme.css" />
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
+    <script src="/admin-theme.js"></script>
     <style>
       .report-bar { height: 0.75rem; }
       .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
@@ -111,10 +112,15 @@
             <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Blog Content</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-forum.html">Forum Admin</a></li>
+            <li class="nav-item"><a class="nav-link active" aria-current="page" href="/admin-reports.html">Reports</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-click-tracking.html">Click Tracking</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-site-chatbot.html">Site Chatbot</a></li>
             <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
           </ul>
+          <div class="d-flex ms-lg-3">
+            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+          </div>
         </div>
       </div>
     </nav>

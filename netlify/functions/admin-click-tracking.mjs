@@ -220,6 +220,7 @@ export async function handler(event) {
           WHEN LOWER(COALESCE(NULLIF(BTRIM(metadata->>'authenticated'), ''), 'false')) = 'true' THEN 'member'
           ELSE 'visitor'
         END AS audience_type,
+        COALESCE(NULLIF(BTRIM(metadata->>'visitorSessionId'), ''), '') AS visitor_session_id,
         request_fingerprint,
         created_at
       FROM request_audit_log
@@ -266,6 +267,7 @@ export async function handler(event) {
         pageUrl: row.page_url,
         referrer: row.referrer,
         audienceType: row.audience_type === 'member' ? 'member' : 'visitor',
+        visitorSessionId: row.visitor_session_id || null,
         fingerprint: row.request_fingerprint,
         createdAt: toIsoDate(row.created_at),
       })),

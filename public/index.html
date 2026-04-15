@@ -154,14 +154,6 @@
     <style>
       :root { color-scheme: dark; }
       body { margin: 0; background: #0f172a; color: #e2e8f0; }
-      body.is-static-content-loading #homeHeroTitle,
-      body.is-static-content-loading #homeHeroLead,
-      body.is-static-content-loading #homeHeroSecondaryTitle,
-      body.is-static-content-loading #homeHeroSecondaryLead,
-      body.is-static-content-loading #homeJoinCta,
-      body.is-static-content-loading #homeCalculatorCta,
-      body.is-static-content-loading #homeEschatologyCta,
-      body.is-static-content-loading #homeNewsCta { visibility: hidden; }
       .skip-link { position: absolute; left: -9999px; }
       .skip-link:focus { left: 1rem; top: 1rem; z-index: 2000; }
       .site-logo { max-width: 220px; height: auto; }
@@ -191,7 +183,7 @@
     </script>
       <script src="/pwa-register.js" defer></script>
   </head>
-  <body class="is-static-content-loading">
+  <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
@@ -756,10 +748,6 @@
         });
       });
 
-      const revealHomeHeroContent = () => {
-        document.body?.classList.remove('is-static-content-loading');
-      };
-
       const applyStaticContentPromise = Promise.race([
         fetch('/api/public-static-content?page=home')
           .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load static content'))),
@@ -851,8 +839,7 @@
             }
           }
         })
-        .catch(() => {})
-        .finally(revealHomeHeroContent);
+        .catch(() => {});
 
       Promise.all([
         applyStaticContentPromise,

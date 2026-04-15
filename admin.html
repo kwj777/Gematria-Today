@@ -658,6 +658,8 @@
       const globalBootswatchThemeResetButton = document.getElementById('globalBootswatchThemeResetButton');
       const globalBootswatchThemeMeta = document.getElementById('globalBootswatchThemeMeta');
 
+      document.body.classList.remove('admin-render-pending');
+
       const DEFAULT_SITE_MODULES = Object.freeze({
         forum: true,
         knowbot: true,

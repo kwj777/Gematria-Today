@@ -7,7 +7,20 @@
   const gaMeasurementId = 'G-R9DF4BNCR2';
   const consentModeRegions = ['AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK', 'GB'];
 
+  function isLocalDevelopmentHost(hostname) {
+    if (!hostname) {
+      return false;
+    }
+
+    const normalized = String(hostname).trim().toLowerCase();
+    return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1' || normalized.endsWith('.localhost');
+  }
+
   function isGoogleAnalyticsEnabled() {
+    if (isLocalDevelopmentHost(window.location && window.location.hostname)) {
+      return false;
+    }
+
     if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
       return false;
     }

@@ -20,22 +20,37 @@ export async function handler(event) {
       ttlSeconds: 120,
       compute: async () => {
         const rows = await sql`
-          SELECT setting_value
+          SELECT setting_key, setting_value
           FROM admin_settings
-          WHERE setting_key = 'site_modules'
-          LIMIT 1
+          WHERE setting_key IN ('site_modules', 'google_analytics_measurement_id', 'turnstile_site_key')
         `;
 
         let parsed = null;
-        if (rows.length) {
+        let googleAnalyticsMeasurementId = '';
+        let turnstileSiteKey = String(process.env.TURNSTILE_SITE_KEY || '').trim();
+        rows.forEach((row) => {
+          if (row.setting_key === 'google_analytics_measurement_id') {
+            googleAnalyticsMeasurementId = String(row.setting_value || '').trim().toUpperCase();
+          }
+          if (row.setting_key === 'turnstile_site_key') {
+            turnstileSiteKey = String(row.setting_value || '').trim();
+          }
+        });
+
+        const siteModulesRow = rows.find((row) => row.setting_key === 'site_modules');
+        if (siteModulesRow) {
           try {
-            parsed = JSON.parse(rows[0].setting_value || '{}');
+            parsed = JSON.parse(siteModulesRow.setting_value || '{}');
           } catch {
             parsed = null;
           }
         }
 
-        return { modules: normalizeSiteModules(parsed) };
+        return {
+          modules: normalizeSiteModules(parsed),
+          googleAnalyticsMeasurementId,
+          turnstileSiteKey,
+        };
       },
     });
 

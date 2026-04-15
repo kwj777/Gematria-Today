@@ -5,7 +5,7 @@ import {
   parseBody,
   syncBootstrapAdminUser,
 } from './_admin.mjs';
-import { getOptionalAuthenticatedSession } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getOrCreateVisitorSession } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 
 const STATIC_CONTENT_SETTINGS_KEY = 'static_content_workspace';
@@ -249,6 +249,7 @@ export async function handler(event) {
       });
     }
 
+    const { visitorSessionId, isNew: isNewVisitor, visitorCookie } = getOrCreateVisitorSession(event);
     const body = parseBody(event);
     const rawQuery = String(body?.query || '').trim().slice(0, MAX_QUERY_LENGTH);
     const query = stripConversationalPrefix(rawQuery);
@@ -288,9 +289,11 @@ export async function handler(event) {
       route: 'public-site-chatbot',
       action: 'search',
       outcome: ranked.length ? 'success' : 'no_match',
-      metadata: { queryLength: query.length, resultCount: ranked.length },
+      metadata: { queryLength: query.length, resultCount: ranked.length, visitorSessionId },
     });
 
+    const responseHeaders = { 'cache-control': 'no-store' };
+    if (isNewVisitor) responseHeaders['set-cookie'] = visitorCookie;
     return jsonResponse(200, {
       answer: buildAnswer(query, ranked),
       sources: ranked,
@@ -298,7 +301,7 @@ export async function handler(event) {
       highlightTerms: terms,
       corpusSize: corpus.length,
       siteOnly: true,
-    }, { 'cache-control': 'no-store' });
+    }, responseHeaders);
   } catch (error) {
     return jsonResponse(error?.statusCode || 500, { error: error?.message || 'Unable to run site chatbot search' }, error?.headers || {});
   }

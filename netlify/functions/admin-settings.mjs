@@ -1,4 +1,4 @@
-import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
+import { getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMethod, upsertSetting } from './_admin.mjs';
 import { clearCachedJson, logRequestAudit } from './_security.mjs';
 import { DEFAULT_SITE_MODULES } from './_site-modules.mjs';
 
@@ -11,7 +11,9 @@ const DEFAULT_SETTINGS = {
   sendgridFromName: '',
   sendgridReplyToEmail: '',
   sendgridApiKey: '',
+  turnstileSiteKey: '',
   publicSiteUrl: '',
+  googleAnalyticsMeasurementId: '',
   siteModules: {},
   themeCatalog: {
     activeThemeSlug: 'default',
@@ -53,6 +55,8 @@ function normalizeSiteModules(rawValue = null) {
 function normalizeSettings(body = {}) {
   const hasThemeCatalog = Object.hasOwn(body, 'themeCatalog');
   const hasPrivateThemeCatalog = Object.hasOwn(body, 'privateThemeCatalog');
+  const hasGoogleAnalyticsMeasurementId = Object.hasOwn(body, 'googleAnalyticsMeasurementId');
+  const hasTurnstileSiteKey = Object.hasOwn(body, 'turnstileSiteKey');
   return {
     stripeAccountId: String(body.stripeAccountId ?? '').trim(),
     stripePublishableKey: String(body.stripePublishableKey ?? '').trim(),
@@ -64,7 +68,11 @@ function normalizeSettings(body = {}) {
     sendgridFromName: String(body.sendgridFromName ?? '').trim(),
     sendgridReplyToEmail: String(body.sendgridReplyToEmail ?? '').trim().toLowerCase(),
     sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
+    turnstileSiteKey: hasTurnstileSiteKey ? String(body.turnstileSiteKey ?? '').trim() : undefined,
     publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
+    googleAnalyticsMeasurementId: hasGoogleAnalyticsMeasurementId
+      ? String(body.googleAnalyticsMeasurementId ?? '').trim().toUpperCase().slice(0, 32)
+      : undefined,
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
     siteModules: normalizeSiteModules(body.siteModules),
     themeCatalog: hasThemeCatalog ? normalizeThemeCatalog(body.themeCatalog) : undefined,
@@ -142,7 +150,9 @@ function serializeSettings(settings = {}) {
     sendgridFromEmail: settings.sendgridFromEmail || '',
     sendgridFromName: settings.sendgridFromName || '',
     sendgridReplyToEmail: settings.sendgridReplyToEmail || '',
+    turnstileSiteKey: settings.turnstileSiteKey || '',
     publicSiteUrl: settings.publicSiteUrl || '',
+    googleAnalyticsMeasurementId: settings.googleAnalyticsMeasurementId || '',
     hasSendgridApiKey: Boolean(settings.sendgridApiKey),
     emailDeliveryConfigured: Boolean(settings.sendgridApiKey && settings.sendgridFromEmail),
     siteModules: settings.siteModules && typeof settings.siteModules === 'object'
@@ -167,7 +177,9 @@ function mapSettingsFromRows(rows = []) {
     if (row.setting_key === 'sendgrid_from_name') settings.sendgridFromName = row.setting_value || '';
     if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
     if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
+    if (row.setting_key === 'turnstile_site_key') settings.turnstileSiteKey = row.setting_value || '';
     if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
+    if (row.setting_key === 'google_analytics_measurement_id') settings.googleAnalyticsMeasurementId = row.setting_value || '';
     if (row.setting_key === 'site_modules') {
       try {
         const parsedModules = JSON.parse(row.setting_value || '{}');
@@ -216,7 +228,9 @@ function getSettingsRows(sql) {
     FROM admin_settings
     WHERE setting_key LIKE 'stripe_%'
       OR setting_key LIKE 'sendgrid_%'
+      OR setting_key = 'turnstile_site_key'
       OR setting_key = 'public_site_url'
+      OR setting_key = 'google_analytics_measurement_id'
       OR setting_key = 'site_modules'
       OR setting_key = 'theme_catalog'
       OR setting_key = 'private_theme_catalog'
@@ -229,31 +243,7 @@ export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
 
-    if (event.httpMethod === 'GET') {
-      const rows = await getSettingsRows(sql);
-      const { settings, emailTemplates } = mapSettingsFromRows(rows);
-      return jsonResponse(200, { settings: serializeSettings(settings), emailTemplates });
-    }
-
-    if (event.httpMethod === 'POST') {
-      const action = String(parseBody(event).action ?? event.queryStringParameters?.action ?? '').trim().toLowerCase();
-
-      if (action !== 'clear-cache') {
-        return jsonResponse(400, { error: 'Unsupported admin settings action' });
-      }
-
-      const cacheResult = await clearCachedJson(sql);
-      await logRequestAudit(sql, event, {
-        route: 'admin-settings',
-        action: 'clear_cache',
-        outcome: 'success',
-        metadata: { deletedCount: cacheResult.deletedCount, userId: user.id },
-      });
-
-      return jsonResponse(200, { cleared: true, deletedCount: cacheResult.deletedCount });
-    }
-
-    if (event.httpMethod === 'PUT' || event.httpMethod === 'PATCH') {
+    const handlePutPatch = async () => {
       const body = parseBody(event);
 
       if (body.emailTemplate) {
@@ -269,12 +259,7 @@ export async function handler(event) {
         ];
 
         for (const [key, value] of pairs) {
-          await sql`
-            INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
-            VALUES (${key}, ${value || null}, ${user.id}, NOW())
-            ON CONFLICT (setting_key)
-            DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW()
-          `;
+          await upsertSetting(sql, key, value || null, user.id);
         }
 
         const rows = await getSettingsRows(sql);
@@ -312,7 +297,13 @@ export async function handler(event) {
         sendgridFromName: settings.sendgridFromName,
         sendgridReplyToEmail: settings.sendgridReplyToEmail,
         sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
+        turnstileSiteKey: settings.turnstileSiteKey === undefined
+          ? existingSettings.turnstileSiteKey
+          : settings.turnstileSiteKey,
         publicSiteUrl: settings.publicSiteUrl,
+        googleAnalyticsMeasurementId: settings.googleAnalyticsMeasurementId === undefined
+          ? existingSettings.googleAnalyticsMeasurementId
+          : settings.googleAnalyticsMeasurementId,
         siteModules: settings.siteModules === null ? existingSettings.siteModules : {
           ...DEFAULT_SITE_MODULES,
           ...settings.siteModules,
@@ -332,19 +323,16 @@ export async function handler(event) {
         ['sendgrid_from_name', nextSettings.sendgridFromName],
         ['sendgrid_reply_to_email', nextSettings.sendgridReplyToEmail],
         ['sendgrid_api_key', nextSettings.sendgridApiKey],
+        ['turnstile_site_key', nextSettings.turnstileSiteKey],
         ['public_site_url', nextSettings.publicSiteUrl],
+        ['google_analytics_measurement_id', nextSettings.googleAnalyticsMeasurementId],
         ['site_modules', JSON.stringify(nextSettings.siteModules || {})],
         ['theme_catalog', JSON.stringify(nextSettings.themeCatalog || normalizeThemeCatalog({}))],
         ['private_theme_catalog', JSON.stringify(nextSettings.privateThemeCatalog || normalizeThemeCatalog({}))],
       ];
 
       for (const [key, value] of pairs) {
-        await sql`
-          INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
-          VALUES (${key}, ${value || null}, ${user.id}, NOW())
-          ON CONFLICT (setting_key)
-          DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_by = EXCLUDED.updated_by, updated_at = NOW()
-        `;
+        await upsertSetting(sql, key, value || null, user.id);
       }
 
       const shouldRefreshCrawlerCache = JSON.stringify(existingSettings.siteModules) !== JSON.stringify(nextSettings.siteModules);
@@ -360,9 +348,36 @@ export async function handler(event) {
       const { emailTemplates } = mapSettingsFromRows(rows);
 
       return jsonResponse(200, { saved: true, settings: serializeSettings(nextSettings), emailTemplates });
-    }
+    };
 
-    return jsonResponse(405, { error: 'Method not allowed' });
+    return await routeByHttpMethod(event, {
+      GET: async () => {
+        const rows = await getSettingsRows(sql);
+        const { settings, emailTemplates } = mapSettingsFromRows(rows);
+        return jsonResponse(200, { settings: serializeSettings(settings), emailTemplates });
+      },
+
+      POST: async () => {
+        const action = String(parseBody(event).action ?? event.queryStringParameters?.action ?? '').trim().toLowerCase();
+
+        if (action !== 'clear-cache') {
+          return jsonResponse(400, { error: 'Unsupported admin settings action' });
+        }
+
+        const cacheResult = await clearCachedJson(sql);
+        await logRequestAudit(sql, event, {
+          route: 'admin-settings',
+          action: 'clear_cache',
+          outcome: 'success',
+          metadata: { deletedCount: cacheResult.deletedCount, userId: user.id },
+        });
+
+        return jsonResponse(200, { cleared: true, deletedCount: cacheResult.deletedCount });
+      },
+
+      PUT: handlePutPatch,
+      PATCH: handlePutPatch,
+    });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Settings request failed' });
   }

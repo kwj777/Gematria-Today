@@ -1,8 +1,126 @@
 <!doctype html>
 <html lang="en">
   <head>
+<!-- Google tag (gtag.js) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  var gaMeasurementId = 'G-R9DF4BNCR2';
+  var consentModeRegions = ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','GB'];
+
+  function isGoogleAnalyticsEnabled() {
+    if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
+      return false;
+    }
+
+    try {
+      var stored = window.localStorage.getItem('endtimes.siteModules');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (parsed && parsed.google_analytics === false) {
+          return false;
+        }
+      }
+    } catch (e) {
+      // Ignore storage parse errors.
+    }
+
+    try {
+      var moduleParam = new URLSearchParams(window.location.search).get('modules');
+      if (moduleParam) {
+        var requested = moduleParam.split(',').map(function (entry) { return String(entry).trim().toLowerCase(); }).filter(Boolean);
+        return requested.indexOf('google_analytics') !== -1;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors.
+    }
+
+    return true;
+  }
+
+  var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
+  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+
+  if (!googleAnalyticsEnabled) {
+    window['ga-disable-' + gaMeasurementId] = true;
+  } else {
+    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+
+    gtag('consent', 'default', {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500,
+      region: consentModeRegions
+    });
+
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+
+    function scheduleGoogleAnalyticsInitialization() {
+      var runWhenIdle = function () {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
+          return;
+        }
+
+        window.setTimeout(initializeGoogleAnalytics, 1500);
+      };
+
+      if (document.readyState === 'complete') {
+        runWhenIdle();
+        return;
+      }
+
+      window.addEventListener('load', runWhenIdle, { once: true });
+    }
+
+    scheduleGoogleAnalyticsInitialization();
+  }
+</script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var hasPromise = typeof window.Promise === 'function';
+        var hasFetch = typeof window.fetch === 'function';
+        if (hasPromise && hasFetch) {
+          return;
+        }
+
+        var pathname = (window.location && window.location.pathname) || '';
+        if (pathname === '/unsupported-browser.html') {
+          return;
+        }
+
+        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
+        window.location.replace(redirectUrl);
+      })();
+    </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,13 +154,47 @@
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />
+    <meta name="turnstile-site-key" content="" />
+    <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/conversion-tracking.js"></script>
     <script defer src="/site-modules.js"></script>
+    <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://endtimes.today/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Dashboard",
+                "item": "https://endtimes.today/member.html"
+              }
+            ]
+          },
+          {
+            "@type": "WebApplication",
+            "name": "EndTimes.Today Membership Dashboard",
+            "url": "https://endtimes.today/member.html",
+            "applicationCategory": "LifestyleApplication",
+            "operatingSystem": "Web browser"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
-    <div id="memberPageLoadingOverlay" class="calculator-loading-overlay" role="status" aria-live="polite"><p class="calculator-loading-overlay__message">Loading your dashboard...</p></div>
+    <div id="memberPageLoadingOverlay" class="calculator-loading-overlay" role="status" aria-live="polite" hidden><p class="calculator-loading-overlay__message">Loading your dashboard...</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -209,6 +361,11 @@
                   <label class="form-check-label" for="registerBlogSubscribe">Subscribe to blog updates (opens follow.it in a new tab)</label>
                 </div>
               </div>
+              <div class="col-12">
+                <label class="form-label mb-2" for="registerTurnstileContainer">Anti-robot check</label>
+                <div id="registerTurnstileContainer"></div>
+                <div class="form-text">Complete this check before creating your account.</div>
+              </div>
               <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create membership</button></div>
             </form>
           </div>
@@ -218,6 +375,11 @@
             <form id="loginForm" class="row g-3">
               <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" required /></div>
               <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" required /></div>
+              <div class="col-12">
+                <label class="form-label mb-2" for="loginTurnstileContainer">Anti-robot check</label>
+                <div id="loginTurnstileContainer"></div>
+                <div class="form-text">Complete this check before signing in.</div>
+              </div>
               <div class="col-12 d-grid"><button id="loginSubmitButton" class="btn btn-outline-primary" type="submit">Sign in</button></div>
               <div class="col-12 text-center">
                 <a class="link-primary text-decoration-none" href="/account-recovery.html">Forgot username/password</a>
@@ -576,6 +738,11 @@
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8';
       const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
+      const turnstileState = {
+        register: { widgetId: null, token: '' },
+        login: { widgetId: null, token: '' },
+      };
+      let turnstileRenderRetryCount = 0;
       const messageInboxCard = document.getElementById('messageInboxCard');
       const messageInboxOpenButton = document.getElementById('messageInboxOpenButton');
       const messageInboxCount = document.getElementById('messageInboxCount');
@@ -670,6 +837,7 @@
       const gemabotModuleEnabled = siteModules?.isEnabled('gemabot') !== false;
 
       let session = null;
+      let csrfToken = null;
       let historyItems = [];
       let favoriteHistoryIds = new Set();
       let showAllHistoryItems = false;
@@ -686,6 +854,7 @@
       let dashboardSyncRefreshInFlight = false;
       let lastDashboardSyncRefreshAt = 0;
       const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
+      let pageLoadOverlayTimeout = null;
 
 
       function ensureWorkingOverlay() {
@@ -724,16 +893,19 @@
       }
 
       function schedulePageLoadOverlay() {
-        if (memberPageLoadingOverlay) {
+        if (!memberPageLoadingOverlay) return;
+        window.clearTimeout(pageLoadOverlayTimeout);
+        pageLoadOverlayTimeout = window.setTimeout(() => {
           memberPageLoadingOverlay.hidden = false;
-        }
+        }, 350);
       }
 
       function completePageLoadOverlay() {
         hideWorkingOverlay();
-        if (memberPageLoadingOverlay) {
-          memberPageLoadingOverlay.hidden = true;
-        }
+        window.clearTimeout(pageLoadOverlayTimeout);
+        pageLoadOverlayTimeout = null;
+        if (!memberPageLoadingOverlay) return;
+        memberPageLoadingOverlay.hidden = true;
       }
 
       function showAlert(message, tone = 'danger') {
@@ -744,6 +916,83 @@
       function clearAlert() {
         memberAlert.textContent = '';
         memberAlert.className = 'alert d-none';
+      }
+
+      function isTurnstileRequired() {
+        return Boolean(getTurnstileSiteKey());
+      }
+
+      function getTurnstileSiteKey() {
+        return String(
+          window.ENDTIMES_TURNSTILE_SITE_KEY
+            || document.querySelector('meta[name="turnstile-site-key"]')?.content
+            || '',
+        ).trim();
+      }
+
+      function getTurnstileToken(formKey) {
+        return String(turnstileState[formKey]?.token || '').trim();
+      }
+
+      function resetTurnstileWidget(formKey) {
+        const state = turnstileState[formKey];
+        if (!state) {
+          return;
+        }
+        state.token = '';
+        if (typeof window.turnstile?.reset === 'function' && state.widgetId !== null) {
+          window.turnstile.reset(state.widgetId);
+        }
+      }
+
+      function renderTurnstileWidgets() {
+        const siteKey = getTurnstileSiteKey();
+        if (!siteKey) {
+          if (turnstileRenderRetryCount < 80) {
+            turnstileRenderRetryCount += 1;
+            window.setTimeout(renderTurnstileWidgets, 250);
+          }
+          return;
+        }
+        if (typeof window.turnstile?.render !== 'function') {
+          window.setTimeout(renderTurnstileWidgets, 150);
+          return;
+        }
+
+        const widgetConfigs = [
+          {
+            key: 'register',
+            containerId: 'registerTurnstileContainer',
+            action: 'member_register',
+          },
+          {
+            key: 'login',
+            containerId: 'loginTurnstileContainer',
+            action: 'member_login',
+          },
+        ];
+
+        widgetConfigs.forEach((config) => {
+          const state = turnstileState[config.key];
+          const container = document.getElementById(config.containerId);
+          if (!state || !container || state.widgetId !== null) {
+            return;
+          }
+
+          state.widgetId = window.turnstile.render(container, {
+            sitekey: siteKey,
+            action: config.action,
+            callback: (token) => {
+              state.token = String(token || '').trim();
+            },
+            'expired-callback': () => {
+              state.token = '';
+            },
+            'error-callback': () => {
+              state.token = '';
+            },
+          });
+        });
       }
 
       function escapeHtml(value) {
@@ -1103,9 +1352,13 @@
       }
 
       async function request(url, options = {}) {
+        const method = String(options.method || 'GET').toUpperCase();
+        const csrfHeaders = csrfToken && method !== 'GET' && method !== 'HEAD'
+          ? { 'x-csrf-token': csrfToken }
+          : {};
         const response = await fetch(url, {
           credentials: 'same-origin',
-          headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+          headers: { 'content-type': 'application/json', ...csrfHeaders, ...(options.headers || {}) },
           ...options,
         });
         const payload = await response.json().catch(() => ({}));
@@ -2175,7 +2428,19 @@
         }
 
         try {
+          const { csrfToken: preAuthCsrfToken } = await request('/api/member-csrf', { method: 'GET' });
+          if (preAuthCsrfToken) {
+            csrfToken = preAuthCsrfToken;
+          }
+        } catch {
+          // Non-fatal: proceed without pre-auth CSRF token
+        }
+
+        try {
           session = await request('/api/member-session', { method: 'GET' });
+          if (session?.csrfToken) {
+            csrfToken = session.csrfToken;
+          }
           membershipHeroReady = true;
           loadFavoriteHistoryIds();
           setLoggedIn(true);
@@ -2239,6 +2504,12 @@
           email: document.getElementById('registerEmail').value.trim(),
           password,
         };
+        const challengeToken = getTurnstileToken('register');
+        if (isTurnstileRequired() && !challengeToken) {
+          showAlert('Please complete the anti-robot check before creating your account.', 'warning');
+          return;
+        }
+        payload.challengeToken = challengeToken;
 
         registerButton.disabled = true;
         window.endTimesTracking?.track('sign_up_start', { source: 'member_register_form' });
@@ -2265,6 +2536,7 @@
           showAlert(error.message || 'Unable to create membership account.');
         } finally {
           registerButton.disabled = false;
+          resetTurnstileWidget('register');
         }
       });
 
@@ -2294,6 +2566,11 @@
       loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAlert();
+        const challengeToken = getTurnstileToken('login');
+        if (isTurnstileRequired() && !challengeToken) {
+          showAlert('Please complete the anti-robot check before signing in.', 'warning');
+          return;
+        }
         setLoginSubmittingState(true);
         showAlert('Signing in and loading your dashboard. This can take a few seconds…', 'info');
         try {
@@ -2302,8 +2579,12 @@
             body: JSON.stringify({
               identifier: document.getElementById('loginIdentifier').value.trim(),
               password: document.getElementById('loginPassword').value,
+              challengeToken,
             }),
           });
+          if (session?.csrfToken) {
+            csrfToken = session.csrfToken;
+          }
           if (session?.route === 'admin') {
             showAlert('Admin sign-in successful. Redirecting to admin dashboard…', 'success');
             window.setTimeout(() => {
@@ -2332,8 +2613,11 @@
           showAlert(error.message || 'Unable to sign in.');
         } finally {
           setLoginSubmittingState(false);
+          resetTurnstileWidget('login');
         }
       });
+
+      renderTurnstileWidgets();
 
       document.getElementById('profileForm').addEventListener('submit', async (event) => {
         event.preventDefault();

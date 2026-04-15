@@ -15,6 +15,7 @@ import { handler as stripeWebhookHandler } from '../netlify/functions/stripe-web
 import { handler as adminSessionHandler } from '../netlify/functions/admin-session.mjs';
 import { handler as adminLogoutHandler } from '../netlify/functions/admin-logout.mjs';
 import { handler as adminLoginHandler } from '../netlify/functions/admin-login.mjs';
+import { handler as adminClickTrackingHandler } from '../netlify/functions/admin-click-tracking.mjs';
 import { handler as adminReportsHandler } from '../netlify/functions/admin-reports.mjs';
 import { handler as adminMembershipsHandler } from '../netlify/functions/admin-memberships.mjs';
 import { handler as adminAccountRecoveryHandler } from '../netlify/functions/admin-account-recovery.mjs';
@@ -55,6 +56,7 @@ const methodGuardCases = [
   { name: 'admin-session', handler: adminSessionHandler, allowedMethod: 'GET' },
   { name: 'admin-logout', handler: adminLogoutHandler, allowedMethod: 'POST' },
   { name: 'admin-login', handler: adminLoginHandler, allowedMethod: 'POST' },
+  { name: 'admin-click-tracking', handler: adminClickTrackingHandler, allowedMethod: 'GET' },
   { name: 'admin-reports', handler: adminReportsHandler, allowedMethod: 'GET' },
   { name: 'admin-memberships', handler: adminMembershipsHandler, allowedMethod: 'POST' },
   { name: 'admin-account-recovery', handler: adminAccountRecoveryHandler, allowedMethod: 'POST' },

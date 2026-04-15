@@ -13,7 +13,7 @@ const MONITORED_ROUTE_CONFIG = [
   { route: 'wordnikDefinition', apiPath: '/definition', threshold: Number.parseInt(process.env.ALERT_WORDNIK_DEFINITION_SPIKE_5M || '120', 10) },
   { route: 'wordnikRelatedWords', apiPath: '/api/wordnikRelatedWords', threshold: Number.parseInt(process.env.ALERT_WORDNIK_RELATED_WORDS_SPIKE_5M || '80', 10) },
 ];
-const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
+const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node-fetch|node\\.js|nodejs|node/|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
 
 function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
@@ -126,7 +126,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, clickTrackingDetailRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -439,6 +439,7 @@ export async function handler(event) {
             created_at,
             COALESCE(
               NULLIF(BTRIM(metadata->>'href'), ''),
+              NULLIF(BTRIM(metadata->>'destination'), ''),
               NULLIF(BTRIM(metadata->>'targetHref'), ''),
               NULLIF(BTRIM(metadata->>'slug'), ''),
               NULLIF(BTRIM(metadata->>'pagePath'), ''),
@@ -449,7 +450,13 @@ export async function handler(event) {
             AND route NOT LIKE 'admin-%'
             AND route <> 'security-retention'
             AND outcome = 'success'
-            AND (action LIKE '%_click' OR action = 'image_download')
+            AND (
+              action ILIKE '%click%'
+              OR action = 'image_download'
+              OR metadata ? 'elementType'
+              OR metadata ? 'href'
+              OR metadata ? 'destination'
+            )
             AND (
               COALESCE(metadata->>'clientType', '') = 'human'
               OR (
@@ -511,32 +518,29 @@ export async function handler(event) {
       `,
       sql`
         SELECT
-          route,
-          action,
-          COALESCE(NULLIF(BTRIM(metadata->>'source'), ''), 'unknown') AS source,
-          COALESCE(NULLIF(BTRIM(metadata->>'destination'), ''), '') AS destination,
-          COALESCE(NULLIF(BTRIM(metadata->>'elementType'), ''), 'unknown') AS element_type,
-          COALESCE(NULLIF(BTRIM(metadata->>'pagePath'), ''), route) AS page_path,
-          COALESCE(NULLIF(BTRIM(metadata->>'pageUrl'), ''), '') AS page_url,
-          COALESCE(NULLIF(BTRIM(metadata->>'referrer'), ''), '') AS referrer,
-          request_fingerprint,
-          created_at
+          metadata->>'visitorSessionId' AS visitor_session_id,
+          COUNT(*)::int AS event_count,
+          MIN(created_at) AS first_seen_at,
+          MAX(created_at) AS last_seen_at,
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'route', route,
+              'action', action,
+              'pagePath', COALESCE(NULLIF(BTRIM(metadata->>'pagePath'), ''), route),
+              'createdAt', created_at
+            )
+            ORDER BY created_at ASC
+          ) AS events
         FROM request_audit_log
         WHERE created_at >= NOW() - ${windowInterval}::interval
+          AND metadata->>'visitorSessionId' IS NOT NULL
+          AND BTRIM(metadata->>'visitorSessionId') <> ''
           AND route NOT LIKE 'admin-%'
           AND route <> 'security-retention'
           AND outcome = 'success'
-          AND (action LIKE '%_click' OR action = 'image_download')
-          AND (
-            COALESCE(metadata->>'clientType', '') = 'human'
-            OR (
-              COALESCE(metadata->>'clientType', '') = ''
-              AND COALESCE(NULLIF(BTRIM(metadata->>'userAgent'), ''), '') <> ''
-            )
-          )
-          AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
-        ORDER BY created_at DESC
-        LIMIT 200
+        GROUP BY metadata->>'visitorSessionId'
+        ORDER BY last_seen_at DESC
+        LIMIT 50
       `,
     ]);
 
@@ -658,23 +662,25 @@ export async function handler(event) {
             .filter((detailRow) => detailRow.detail)
           : [],
       })),
-      clickTrackingDetails: clickTrackingDetailRows.map((row) => ({
-        route: row.route,
-        action: row.action,
-        source: row.source,
-        destination: row.destination,
-        elementType: row.element_type,
-        pagePath: row.page_path,
-        pageUrl: row.page_url,
-        referrer: row.referrer,
-        fingerprint: row.request_fingerprint,
-        createdAt: toIsoDate(row.created_at),
-      })),
       securityEvents: securityRows.map((row) => ({
         route: row.route,
         action: row.action,
         outcome: row.outcome,
         createdAt: toIsoDate(row.created_at),
+      })),
+      visitorJourneys: visitorJourneyRows.map((row) => ({
+        visitorSessionId: row.visitor_session_id,
+        eventCount: Number(row.event_count || 0),
+        firstSeenAt: toIsoDate(row.first_seen_at),
+        lastSeenAt: toIsoDate(row.last_seen_at),
+        events: Array.isArray(row.events)
+          ? row.events.slice(0, 20).map((e) => ({
+            route: e.route,
+            action: e.action,
+            pagePath: e.pagePath,
+            createdAt: toIsoDate(e.createdAt),
+          }))
+          : [],
       })),
       detailRows: {
         newMembers: newMembersRows.map((row) => ({

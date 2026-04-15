@@ -8,6 +8,7 @@ export const DEFAULT_SITE_MODULES = Object.freeze({
   wordnik_wotd_slider: true,
   blog_home_slider: true,
   blog_home_featured_grid: true,
+  google_analytics: false,
 });
 
 export const DEFAULT_SITE_ORIGIN = 'https://endtimes.today';

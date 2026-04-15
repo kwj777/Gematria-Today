@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var hasPromise = typeof window.Promise === 'function';
+        var hasFetch = typeof window.fetch === 'function';
+        if (hasPromise && hasFetch) {
+          return;
+        }
+        var pathname = (window.location && window.location.pathname) || '';
+        if (pathname === '/unsupported-browser.html') {
+          return;
+        }
+        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
+        window.location.replace(redirectUrl);
+      })();
+    </script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#355f8c" />
+    <title>Multi-Site Admin Hub | EndTimes.Today</title>
+    <meta name="description" content="Super admin hub for managing multiple site deployments." />
+    <meta name="robots" content="noindex,nofollow" />
+    <link
+      id="bootstrapThemeStylesheet"
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
+    <link rel="stylesheet" href="/api/public-theme-css" />
+    <link rel="stylesheet" href="/theme.css" />
+    <style>
+      body.hub-render-pending #hubPanel {
+        visibility: hidden;
+      }
+      .site-card {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        background: var(--bs-body-bg);
+        transition: box-shadow 0.15s ease;
+      }
+      .site-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      }
+      .site-card .site-url {
+        font-size: 0.8rem;
+        word-break: break-all;
+      }
+      #siteListEmpty {
+        color: var(--bs-secondary-color);
+      }
+      .hub-countdown {
+        font-variant-numeric: tabular-nums;
+        font-size: 0.75rem;
+      }
+    </style>
+    <script src="/admin-theme.js"></script>
+    <script defer src="/ui-feedback.js"></script>
+  </head>
+  <body class="hub-render-pending">
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html">
+          <img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" />
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav"
+          aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/admin-hub.html">Site Hub</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-super-admin.html">Super Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index.html">Public Site</a></li>
+          </ul>
+          <div class="d-flex ms-lg-3">
+            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button"
+              aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+
+        <!-- Access denied banner (hidden until needed) -->
+        <div id="accessDeniedBanner" class="alert alert-danger d-none" role="alert">
+          <strong>Access denied.</strong> This page requires super admin access.
+          <a href="/admin.html" class="alert-link ms-2">Go to admin login</a>
+        </div>
+
+        <section id="hubPanel" class="d-none">
+          <!-- Header -->
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Super Admin</p>
+              <h1 class="h3 mb-1">Multi-Site Admin Hub</h1>
+              <p id="sessionMeta" class="text-muted small mb-0"></p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-outline-secondary" href="/admin.html">Admin Dashboard</a>
+              <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
+            </div>
+          </div>
+
+          <div id="hubMessage" class="alert d-none mb-4" role="status"></div>
+
+          <!-- Site list -->
+          <section class="content-panel p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <p class="section-kicker mb-1">Registered Sites</p>
+                <h2 class="h5 mb-0">Quick admin entry</h2>
+              </div>
+              <button id="refreshSitesBtn" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
+            </div>
+
+            <div id="siteListLoading" class="text-muted small py-2">Loading sites&hellip;</div>
+            <p id="siteListEmpty" class="d-none py-2 mb-0">
+              No sites registered yet. Add one below.
+            </p>
+
+            <div id="siteList" class="row g-3"></div>
+          </section>
+
+          <!-- Manage sites -->
+          <section class="content-panel p-4 mb-4">
+            <p class="section-kicker mb-1">Configuration</p>
+            <h2 class="h5 mb-3">Manage registered sites</h2>
+
+            <p class="text-muted small mb-3">
+              Each spoke site must have a <code>HUB_SHARED_SECRET</code> environment variable set to a unique random
+              string. Generate one with:
+              <code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code>
+            </p>
+
+            <div id="siteEditor">
+              <!-- Rows injected by JS -->
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+              <button id="addSiteBtn" class="btn btn-outline-primary btn-sm" type="button">+ Add site</button>
+              <button id="saveSitesBtn" class="btn btn-primary btn-sm" type="button">Save changes</button>
+            </div>
+            <div id="saveResult" class="small mt-2"></div>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmB7m5BhEYN8P8mGGFH8Yz5K7UZ"
+      crossorigin="anonymous"></script>
+    <script>
+    (function () {
+      'use strict';
+
+      // -----------------------------------------------------------------------
+      // Utilities
+      // -----------------------------------------------------------------------
+
+      function showMessage(text, type) {
+        var el = document.getElementById('hubMessage');
+        el.className = 'alert alert-' + type + ' mb-4';
+        el.textContent = text;
+        el.classList.remove('d-none');
+        clearTimeout(el._timer);
+        el._timer = setTimeout(function () { el.classList.add('d-none'); }, 6000);
+      }
+
+      // -----------------------------------------------------------------------
+      // Auth
+      // -----------------------------------------------------------------------
+
+      var currentUser = null;
+
+      function checkSession() {
+        return fetch('/api/admin-session', { credentials: 'same-origin' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (!data.authenticated || data.user.role !== 'super_admin') {
+              document.getElementById('accessDeniedBanner').classList.remove('d-none');
+              document.body.classList.remove('hub-render-pending');
+              return false;
+            }
+            currentUser = data.user;
+            document.getElementById('sessionMeta').textContent =
+              'Signed in as ' + currentUser.username + ' \u00b7 Super Admin';
+            document.getElementById('hubPanel').classList.remove('d-none');
+            document.body.classList.remove('hub-render-pending');
+            return true;
+          })
+          .catch(function () {
+            window.location.href = '/admin.html';
+          });
+      }
+
+      document.getElementById('logoutButton').addEventListener('click', function () {
+        fetch('/api/admin-logout', { method: 'POST', credentials: 'same-origin' })
+          .finally(function () { window.location.href = '/admin.html'; });
+      });
+
+      // -----------------------------------------------------------------------
+      // Site list
+      // -----------------------------------------------------------------------
+
+      var registeredSites = [];
+
+      function loadSites() {
+        var loading = document.getElementById('siteListLoading');
+        var empty = document.getElementById('siteListEmpty');
+        var list = document.getElementById('siteList');
+
+        loading.classList.remove('d-none');
+        empty.classList.add('d-none');
+        list.innerHTML = '';
+
+        return fetch('/api/admin-hub', { credentials: 'same-origin' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            loading.classList.add('d-none');
+            registeredSites = data.sites || [];
+
+            if (!registeredSites.length) {
+              empty.classList.remove('d-none');
+              renderSiteEditor([]);
+              return;
+            }
+
+            registeredSites.forEach(function (site) {
+              list.appendChild(buildSiteCard(site));
+            });
+
+            renderSiteEditor(registeredSites);
+          })
+          .catch(function () {
+            loading.classList.add('d-none');
+            showMessage('Failed to load sites.', 'danger');
+          });
+      }
+
+      function buildSiteCard(site) {
+        var col = document.createElement('div');
+        col.className = 'col-md-6 col-xl-4';
+        col.innerHTML =
+          '<div class="site-card p-4 h-100 d-flex flex-column gap-3">' +
+            '<div>' +
+              '<h3 class="h6 mb-1">' + escHtml(site.name) + '</h3>' +
+              '<p class="site-url text-muted mb-0">' + escHtml(site.url) + '</p>' +
+            '</div>' +
+            '<div class="mt-auto">' +
+              '<button class="btn btn-primary btn-sm w-100" data-site-id="' + escHtml(site.id) + '" type="button">' +
+                'Enter as Admin' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+
+        col.querySelector('button').addEventListener('click', function () {
+          enterSite(site);
+        });
+
+        return col;
+      }
+
+      function enterSite(site) {
+        var btn = document.querySelector('[data-site-id="' + site.id + '"]');
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Generating token\u2026';
+        }
+
+        fetch('/api/admin-hub', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'generate-token', siteId: site.id }),
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (!data.loginUrl) {
+              throw new Error(data.error || 'No login URL returned');
+            }
+            // Open in new tab — the token is consumed on first load
+            window.open(data.loginUrl, '_blank', 'noopener,noreferrer');
+
+            if (btn) {
+              // Show a countdown so the user knows the token is expiring
+              var seconds = Number(data.expiresInSeconds || 300);
+              startCountdown(btn, site.name, seconds);
+            }
+          })
+          .catch(function (err) {
+            showMessage('Could not enter ' + site.name + ': ' + (err.message || 'Unknown error'), 'danger');
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Enter as Admin';
+            }
+          });
+      }
+
+      function startCountdown(btn, siteName, seconds) {
+        var remaining = seconds;
+        btn.classList.add('btn-secondary');
+        btn.classList.remove('btn-primary');
+
+        function tick() {
+          if (remaining <= 0) {
+            btn.disabled = false;
+            btn.textContent = 'Enter as Admin';
+            btn.classList.remove('btn-secondary');
+            btn.classList.add('btn-primary');
+            return;
+          }
+          btn.textContent = 'Opened \u2014 token expires in ' + remaining + 's';
+          remaining--;
+          setTimeout(tick, 1000);
+        }
+
+        tick();
+      }
+
+      document.getElementById('refreshSitesBtn').addEventListener('click', loadSites);
+
+      // -----------------------------------------------------------------------
+      // Site editor
+      // -----------------------------------------------------------------------
+
+      function renderSiteEditor(sites) {
+        var editor = document.getElementById('siteEditor');
+        editor.innerHTML = '';
+
+        (sites.length ? sites : []).forEach(function (site, i) {
+          editor.appendChild(buildEditorRow(site, i));
+        });
+
+        updateEditorIndices();
+      }
+
+      function buildEditorRow(site, index) {
+        var row = document.createElement('div');
+        row.className = 'row g-2 mb-2 align-items-end site-editor-row';
+        row.dataset.index = String(index);
+        row.innerHTML =
+          '<div class="col-md-2">' +
+            '<label class="form-label small mb-1">ID</label>' +
+            '<input class="form-control form-control-sm field-id" value="' + escHtml(site.id || '') + '" placeholder="site-1" />' +
+          '</div>' +
+          '<div class="col-md-3">' +
+            '<label class="form-label small mb-1">Name</label>' +
+            '<input class="form-control form-control-sm field-name" value="' + escHtml(site.name || '') + '" placeholder="My Site" />' +
+          '</div>' +
+          '<div class="col-md-3">' +
+            '<label class="form-label small mb-1">URL</label>' +
+            '<input class="form-control form-control-sm field-url" value="' + escHtml(site.url || '') + '" placeholder="https://example.com" />' +
+          '</div>' +
+          '<div class="col-md-3">' +
+            '<label class="form-label small mb-1">Shared Secret <span class="text-muted">(HUB_SHARED_SECRET)</span></label>' +
+            '<input class="form-control form-control-sm field-secret" type="password" value="' + escHtml(site.sharedSecret || '') + '" placeholder="Leave blank to keep existing" autocomplete="off" />' +
+          '</div>' +
+          '<div class="col-md-1 d-flex align-items-end">' +
+            '<button class="btn btn-outline-danger btn-sm remove-site-btn w-100" type="button" title="Remove site">&#x2715;</button>' +
+          '</div>';
+
+        row.querySelector('.remove-site-btn').addEventListener('click', function () {
+          row.remove();
+        });
+
+        return row;
+      }
+
+      function updateEditorIndices() {
+        document.querySelectorAll('.site-editor-row').forEach(function (row, i) {
+          row.dataset.index = String(i);
+        });
+      }
+
+      document.getElementById('addSiteBtn').addEventListener('click', function () {
+        var editor = document.getElementById('siteEditor');
+        var count = editor.querySelectorAll('.site-editor-row').length;
+        editor.appendChild(buildEditorRow({ id: '', name: '', url: '', sharedSecret: '' }, count));
+      });
+
+      document.getElementById('saveSitesBtn').addEventListener('click', function () {
+        var rows = document.querySelectorAll('.site-editor-row');
+        var sites = [];
+
+        rows.forEach(function (row) {
+          var id = row.querySelector('.field-id').value.trim();
+          var name = row.querySelector('.field-name').value.trim();
+          var url = row.querySelector('.field-url').value.trim();
+          var secret = row.querySelector('.field-secret').value.trim();
+
+          if (!id && !name && !url && !secret) return; // skip blank rows
+
+          // When the secret field is blank, carry the existing secret from
+          // the loaded site list (so admins don't have to re-enter it on every save).
+          var existingSecret = '';
+          var existingSite = registeredSites.find(function (s) { return s.id === id; });
+          if (!secret && existingSite) {
+            // We don't have the secret client-side (it's never sent), so we
+            // send a sentinel that tells the server to keep the existing value.
+            existingSecret = '__keep__';
+          }
+
+          sites.push({ id: id, name: name, url: url, sharedSecret: secret || existingSecret });
+        });
+
+        var saveResult = document.getElementById('saveResult');
+        var btn = document.getElementById('saveSitesBtn');
+        btn.disabled = true;
+        saveResult.textContent = 'Saving\u2026';
+
+        fetch('/api/admin-hub', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'save-sites', sites: sites }),
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            btn.disabled = false;
+            if (data.saved) {
+              saveResult.textContent = 'Saved ' + (data.sites || []).length + ' site(s).';
+              loadSites();
+            } else {
+              saveResult.textContent = 'Error: ' + (data.error || 'Unknown error');
+            }
+          })
+          .catch(function () {
+            btn.disabled = false;
+            saveResult.textContent = 'Network error — changes not saved.';
+          });
+      });
+
+      // -----------------------------------------------------------------------
+      // Escape helper
+      // -----------------------------------------------------------------------
+
+      function escHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // -----------------------------------------------------------------------
+      // Init
+      // -----------------------------------------------------------------------
+
+      checkSession().then(function (ok) {
+        if (ok) loadSites();
+      });
+
+    })();
+    </script>
+  </body>
+</html>

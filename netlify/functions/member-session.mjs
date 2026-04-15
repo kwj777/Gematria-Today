@@ -1,4 +1,4 @@
-import { AUTH_COOKIES, clearSessionCookie, jsonResponse } from './_auth.mjs';
+import { AUTH_COOKIES, clearSessionCookie, generateCsrfToken, jsonResponse } from './_auth.mjs';
 import { getAuthenticatedMember } from './_member.mjs';
 
 export async function handler(event) {
@@ -7,8 +7,8 @@ export async function handler(event) {
   }
 
   try {
-    const { user, member, profile } = await getAuthenticatedMember(event, { requireAuth: true });
-    return jsonResponse(200, { authenticated: true, user, member, profile });
+    const { user, member, profile, sessionToken } = await getAuthenticatedMember(event, { requireAuth: true });
+    return jsonResponse(200, { authenticated: true, user, member, profile, csrfToken: generateCsrfToken(sessionToken) });
   } catch (error) {
     return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
   }

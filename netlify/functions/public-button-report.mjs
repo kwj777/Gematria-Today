@@ -1,4 +1,4 @@
-import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getOrCreateVisitorSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 
 function safeString(value, fallback = '') {
@@ -79,74 +79,26 @@ export async function handler(event) {
       });
     }
 
+    const { visitorSessionId, isNew, visitorCookie } = getOrCreateVisitorSession(event);
+    const normalizedMetadata = normalizeMetadata(payload.metadata);
+    const audienceType = user && user.role === 'member' ? 'member' : 'visitor';
+
     await logRequestAudit(sql, event, {
       route,
       action,
       outcome: 'success',
-      metadata: normalizeMetadata(payload.metadata),
+      metadata: {
+        ...normalizedMetadata,
+        audienceType,
+        authenticated: audienceType === 'member' ? 'true' : (normalizedMetadata.authenticated || 'false'),
+        visitorSessionId,
+      },
     });
 
-    return jsonResponse(202, { ok: true });
+    const responseHeaders = isNew ? { 'set-cookie': visitorCookie } : {};
+    return jsonResponse(202, { ok: true }, responseHeaders);
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to store button tracking event' }, error.headers || {});
   }
 }
 
-export default async function onRequest(request) {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { allow: 'POST', 'content-type': 'application/json; charset=utf-8' },
-    });
-  }
-
-  try {
-    assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'public-button-report' });
-    const sql = getSqlClient();
-    const payload = await request.json().catch(() => ({}));
-    const action = normalizeAction(payload.action);
-    const route = normalizeRoute(payload.route || payload.pagePath || '/unknown');
-
-    if (!action) {
-      return new Response(JSON.stringify({ error: 'Invalid action' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
-      });
-    }
-
-    const { user } = await getOptionalAuthenticatedSession(request, { sql });
-    if (user && user.isAdmin) {
-      return new Response(JSON.stringify({ ok: true, skipped: true }), {
-        status: 202,
-        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-      });
-    }
-    if (!user) {
-      await applyRateLimit(sql, request, {
-        scope: 'public-button-report-ip',
-        key: getClientIp(request),
-        limit: 120,
-        windowMs: 60_000,
-        blockMs: 5 * 60_000,
-        message: 'Too many button tracking requests.',
-      });
-    }
-
-    await logRequestAudit(sql, request, {
-      route,
-      action,
-      outcome: 'success',
-      metadata: normalizeMetadata(payload.metadata),
-    });
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 202,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message || 'Unable to store button tracking event' }), {
-      status: error.statusCode || 500,
-      headers: { 'content-type': 'application/json; charset=utf-8', ...(error.headers || {}) },
-    });
-  }
-}

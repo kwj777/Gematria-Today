@@ -1,8 +1,126 @@
 <!doctype html>
 <html lang="en">
   <head>
+<!-- Google tag (gtag.js) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  var gaMeasurementId = 'G-R9DF4BNCR2';
+  var consentModeRegions = ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','GB'];
+
+  function isGoogleAnalyticsEnabled() {
+    if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
+      return false;
+    }
+
+    try {
+      var stored = window.localStorage.getItem('endtimes.siteModules');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (parsed && parsed.google_analytics === false) {
+          return false;
+        }
+      }
+    } catch (e) {
+      // Ignore storage parse errors.
+    }
+
+    try {
+      var moduleParam = new URLSearchParams(window.location.search).get('modules');
+      if (moduleParam) {
+        var requested = moduleParam.split(',').map(function (entry) { return String(entry).trim().toLowerCase(); }).filter(Boolean);
+        return requested.indexOf('google_analytics') !== -1;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors.
+    }
+
+    return true;
+  }
+
+  var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
+  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+
+  if (!googleAnalyticsEnabled) {
+    window['ga-disable-' + gaMeasurementId] = true;
+  } else {
+    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+
+    gtag('consent', 'default', {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500,
+      region: consentModeRegions
+    });
+
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+
+    function scheduleGoogleAnalyticsInitialization() {
+      var runWhenIdle = function () {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
+          return;
+        }
+
+        window.setTimeout(initializeGoogleAnalytics, 1500);
+      };
+
+      if (document.readyState === 'complete') {
+        runWhenIdle();
+        return;
+      }
+
+      window.addEventListener('load', runWhenIdle, { once: true });
+    }
+
+    scheduleGoogleAnalyticsInitialization();
+  }
+</script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var hasPromise = typeof window.Promise === 'function';
+        var hasFetch = typeof window.fetch === 'function';
+        if (hasPromise && hasFetch) {
+          return;
+        }
+
+        var pathname = (window.location && window.location.pathname) || '';
+        if (pathname === '/unsupported-browser.html') {
+          return;
+        }
+
+        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
+        window.location.replace(redirectUrl);
+      })();
+    </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +143,9 @@
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />
+    <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
+    <script src="/admin-theme.js"></script>
     <style>
       .report-bar { height: 0.75rem; }
       .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
@@ -91,11 +211,17 @@
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Blog Content</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-click-tracking.html">Click Tracking</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/admin-reports.html">Reports</a></li>
-            <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-forum.html">Forum Admin</a></li>
+            <li class="nav-item"><a class="nav-link active" aria-current="page" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-site-chatbot.html">Site Chatbot</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index.html">Public Site</a></li>
           </ul>
+          <div class="d-flex ms-lg-3">
+            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+          </div>
         </div>
       </div>
     </nav>
@@ -204,47 +330,8 @@
           </div>
         </section>
 
-        <section class="content-panel p-4">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 class="h4 mb-0">Button / action click stats</h2>
-            <button class="section-collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#buttonStatsCollapse" aria-controls="buttonStatsCollapse" aria-expanded="false" aria-label="Toggle button and action click stats section">
-            </button>
-          </div>
-          <div id="buttonStatsCollapse" class="collapse">
-            <div id="buttonStats" class="d-grid gap-2"></div>
-          </div>
-        </section>
+        <div id="buttonStats" class="d-none" aria-hidden="true"></div>
 
-        <section class="content-panel p-4">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 class="h4 mb-0">Click tracking log</h2>
-            <button class="section-collapse-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#clickTrackingCollapse" aria-controls="clickTrackingCollapse" aria-expanded="false" aria-label="Toggle click tracking log section">
-            </button>
-          </div>
-          <div id="clickTrackingCollapse" class="collapse">
-            <p class="small on-light-muted mb-2">Detailed log of individual click events (most recent first, up to 200). Admin clicks are excluded.</p>
-            <div class="mb-3 d-flex flex-wrap gap-2">
-              <input type="text" id="clickTrackingFilter" class="form-control form-control-sm" style="max-width: 300px;" placeholder="Filter by action, source, page…" aria-label="Filter click tracking log" />
-            </div>
-            <div class="table-responsive">
-              <table class="table table-sm table-striped align-middle mb-0" id="clickTrackingTable">
-                <thead>
-                  <tr>
-                    <th scope="col">Time</th>
-                    <th scope="col">Action</th>
-                    <th scope="col">Source (label)</th>
-                    <th scope="col">Destination</th>
-                    <th scope="col">Element</th>
-                    <th scope="col">Page</th>
-                    <th scope="col">Referrer</th>
-                  </tr>
-                </thead>
-                <tbody id="clickTrackingBody"></tbody>
-              </table>
-            </div>
-            <p id="clickTrackingCount" class="small on-light-muted mt-2 mb-0"></p>
-          </div>
-        </section>
       </div>
     </main>
 
@@ -557,66 +644,6 @@
         });
       }
 
-      function renderClickTrackingDetails(rows) {
-        const body = document.getElementById('clickTrackingBody');
-        const countEl = document.getElementById('clickTrackingCount');
-        const filterInput = document.getElementById('clickTrackingFilter');
-
-        if (!rows || !rows.length) {
-          body.innerHTML = '<tr><td colspan="7" class="on-light-muted">No click tracking data available for this window.</td></tr>';
-          countEl.textContent = '';
-          return;
-        }
-
-        function renderRows(filter) {
-          const lowerFilter = (filter || '').toLowerCase();
-          const filtered = lowerFilter
-            ? rows.filter(function (row) {
-              return (row.action || '').toLowerCase().includes(lowerFilter)
-                || (row.source || '').toLowerCase().includes(lowerFilter)
-                || (row.destination || '').toLowerCase().includes(lowerFilter)
-                || (row.pagePath || '').toLowerCase().includes(lowerFilter)
-                || (row.elementType || '').toLowerCase().includes(lowerFilter)
-                || (row.referrer || '').toLowerCase().includes(lowerFilter);
-            })
-            : rows;
-
-          if (!filtered.length) {
-            body.innerHTML = '<tr><td colspan="7" class="on-light-muted">No matching click events.</td></tr>';
-            countEl.textContent = 'Showing 0 of ' + formatNumber(rows.length) + ' events.';
-            return;
-          }
-
-          body.innerHTML = filtered.map(function (row) {
-            var time = row.createdAt ? new Date(row.createdAt).toLocaleString() : '—';
-            var dest = row.destination || '—';
-            var truncatedDest = dest.length > 60 ? dest.slice(0, 57) + '…' : dest;
-            var source = row.source || '—';
-            var truncatedSource = source.length > 50 ? source.slice(0, 47) + '…' : source;
-            var page = row.pagePath || '—';
-            var ref = row.referrer || '—';
-            var truncatedRef = ref.length > 40 ? ref.slice(0, 37) + '…' : ref;
-            return '<tr>'
-              + '<td class="small text-nowrap">' + escapeHtml(time) + '</td>'
-              + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
-              + '<td class="small" title="' + escapeHtml(source) + '">' + escapeHtml(truncatedSource) + '</td>'
-              + '<td class="small" title="' + escapeHtml(dest) + '">' + escapeHtml(truncatedDest) + '</td>'
-              + '<td class="small"><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
-              + '<td class="small">' + escapeHtml(page) + '</td>'
-              + '<td class="small" title="' + escapeHtml(ref) + '">' + escapeHtml(truncatedRef) + '</td>'
-              + '</tr>';
-          }).join('');
-
-          countEl.textContent = 'Showing ' + formatNumber(filtered.length) + ' of ' + formatNumber(rows.length) + ' events.';
-        }
-
-        renderRows('');
-
-        filterInput.addEventListener('input', function () {
-          renderRows(filterInput.value);
-        });
-      }
-
       function renderConversionFunnel(funnel) {
         const target = document.getElementById('conversionFunnel');
         if (!funnel) {
@@ -682,7 +709,6 @@
         renderConversionFunnel(reports.conversionFunnel);
         renderPublicPageViews(reports.publicPageViews, reports.publicTrafficSummary);
         renderButtonStats(reports.buttonStats);
-        renderClickTrackingDetails(reports.clickTrackingDetails);
         renderSecurityEvents(reports.securityEvents);
 
         const generated = new Date(reports.generatedAt).toLocaleString();

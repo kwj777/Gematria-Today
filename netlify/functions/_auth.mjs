@@ -104,7 +104,38 @@ export async function consumeAccountRecoveryRequest(sql, {
 export const AUTH_COOKIES = {
   admin: 'endtimes_admin_session',
   member: 'endtimes_member_session',
+  visitor: 'endtimes_visitor_session',
 };
+
+const VISITOR_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+
+export function getVisitorSessionToken(event) {
+  const cookies = parseCookies(event);
+  return cookies[AUTH_COOKIES.visitor] || null;
+}
+
+export function createVisitorSessionToken() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+export function createVisitorSessionCookie(token) {
+  const expiresAt = new Date(Date.now() + VISITOR_SESSION_TTL_MS);
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${AUTH_COOKIES.visitor}=${encodeURIComponent(token)}; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+}
+
+export function getOrCreateVisitorSession(event) {
+  const existing = getVisitorSessionToken(event);
+  if (existing) {
+    return { visitorSessionId: existing, isNew: false, visitorCookie: null };
+  }
+  const token = createVisitorSessionToken();
+  return { visitorSessionId: token, isNew: true, visitorCookie: createVisitorSessionCookie(token) };
+}
 
 export function getSqlClient() {
   if (!process.env.DATABASE_URL) {
@@ -195,11 +226,21 @@ async function findAuthenticatedSession(event, sql, cookieName) {
 }
 
 export function createSessionCookie(token, expiresAt, cookieName = AUTH_COOKIES.admin) {
-  return `${cookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${cookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
 
 export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
-  return `${cookieName}=; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${cookieName}=; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 export async function createSession(sql, userId) {
@@ -341,6 +382,45 @@ export async function verifyTurnstileToken(event, challengeToken, { timeoutMs = 
     action: verificationResult.action || null,
     challengeTs: verificationResult.challenge_ts || null,
   };
+}
+
+export const CSRF_TOKEN_HEADER = 'x-csrf-token';
+
+function getCsrfSecret() {
+  const secret = String(process.env.CSRF_SECRET || process.env.DATABASE_URL || '').trim();
+  if (!secret) {
+    throw new Error('Missing CSRF_SECRET environment variable');
+  }
+  return secret;
+}
+
+export function generateCsrfToken(sessionToken) {
+  return crypto.createHmac('sha256', getCsrfSecret())
+    .update('session:' + String(sessionToken || ''))
+    .digest('hex');
+}
+
+export function validateCsrfToken(providedToken, sessionToken) {
+  if (!providedToken || !sessionToken) {
+    return false;
+  }
+  const expected = generateCsrfToken(sessionToken);
+  const provided = String(providedToken);
+  if (provided.length !== expected.length) {
+    return false;
+  }
+  try {
+    return crypto.timingSafeEqual(Buffer.from(provided, 'utf8'), Buffer.from(expected, 'utf8'));
+  } catch {
+    return false;
+  }
+}
+
+export function getCsrfTokenFromRequest(event) {
+  if (typeof event?.headers?.get === 'function') {
+    return String(event.headers.get(CSRF_TOKEN_HEADER) || '').trim();
+  }
+  return String(event?.headers?.[CSRF_TOKEN_HEADER] || '').trim();
 }
 
 export async function getAuthenticatedUser(event, {

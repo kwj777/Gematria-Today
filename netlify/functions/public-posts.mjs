@@ -258,7 +258,7 @@ export async function handler(event) {
     const limitValue = Number.parseInt(event.queryStringParameters?.limit || '', 10);
     const requestedLimit = Number.isFinite(limitValue) && limitValue > 0 ? Math.min(limitValue, 12) : null;
     const offsetValue = Number.parseInt(event.queryStringParameters?.offset || '', 10);
-    const requestedOffset = Number.isFinite(offsetValue) && offsetValue > 0 ? offsetValue : 0;
+    const requestedOffset = Number.isFinite(offsetValue) ? Math.min(Math.max(offsetValue, 0), 10000) : 0;
 
     const cacheResult = await withCachedJson(sql, {
       cacheKey: buildCacheKey({

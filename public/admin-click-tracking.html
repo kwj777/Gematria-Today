@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+  <head>
+<!-- Google tag (gtag.js) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  var gaMeasurementId = 'G-R9DF4BNCR2';
+  var consentModeRegions = ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','GB'];
+
+  function isGoogleAnalyticsEnabled() {
+    if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
+      return false;
+    }
+
+    try {
+      var stored = window.localStorage.getItem('endtimes.siteModules');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (parsed && parsed.google_analytics === false) {
+          return false;
+        }
+      }
+    } catch (e) {
+      // Ignore storage parse errors.
+    }
+
+    try {
+      var moduleParam = new URLSearchParams(window.location.search).get('modules');
+      if (moduleParam) {
+        var requested = moduleParam.split(',').map(function (entry) { return String(entry).trim().toLowerCase(); }).filter(Boolean);
+        return requested.indexOf('google_analytics') !== -1;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors.
+    }
+
+    return true;
+  }
+
+  var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
+  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+
+  if (!googleAnalyticsEnabled) {
+    window['ga-disable-' + gaMeasurementId] = true;
+  } else {
+    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+
+    gtag('consent', 'default', {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500,
+      region: consentModeRegions
+    });
+
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+
+    function scheduleGoogleAnalyticsInitialization() {
+      var runWhenIdle = function () {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
+          return;
+        }
+
+        window.setTimeout(initializeGoogleAnalytics, 1500);
+      };
+
+      if (document.readyState === 'complete') {
+        runWhenIdle();
+        return;
+      }
+
+      window.addEventListener('load', runWhenIdle, { once: true });
+    }
+
+    scheduleGoogleAnalyticsInitialization();
+  }
+</script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Click Tracking Log | EndTimes.Today</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
+    <link rel="stylesheet" href="/api/public-theme-css" />
+    <link rel="stylesheet" href="/theme.css" />
+    <script src="/admin-theme.js"></script>
+    <style>
+      .group-toggle { border: 0; background: transparent; font-weight: 600; }
+      .group-toggle:hover,
+      .group-toggle:focus-visible { text-decoration: underline; }
+      .click-group-collapsed { display: none; }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Blog Content</a></li>
+            <li class="nav-item"><a class="nav-link active" aria-current="page" href="/admin-click-tracking.html">Click Tracking</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-forum.html">Forum Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-site-chatbot.html">Site Chatbot</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index.html">Public Site</a></li>
+          </ul>
+          <div class="d-flex ms-lg-3">
+            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container d-grid gap-4">
+        <section class="hero-panel p-4 p-lg-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+              <p class="section-kicker mb-2">Back Office Analytics</p>
+              <h1 class="display-6 fw-bold mb-2">Click tracking log</h1>
+              <p id="metaLine" class="on-dark-muted mb-0">Checking admin session…</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <select id="windowSelect" class="form-select form-select-sm" aria-label="Click log timeframe">
+                <option value="1h">Last hour (1h)</option>
+                <option value="6h">Last 6 hours</option>
+                <option value="12h">Last 12 hours</option>
+                <option value="1">Last 24 hours</option>
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="60">Last 60 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last 365 days</option>
+              </select>
+              <button id="refreshButton" class="btn btn-primary btn-sm" type="button">Refresh</button>
+            </div>
+          </div>
+        </section>
+
+        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+        <section class="content-panel p-4">
+          <p class="small on-light-muted mb-3">Click history is now timeframe-based. Admin clicks are excluded.</p>
+          <div class="row g-3 mb-3" id="clickTrackingReports">
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Total clicks</p>
+                <p id="reportTotalClicks" class="h4 mb-0">0</p>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Member clicks</p>
+                <p id="reportMemberClicks" class="h4 mb-0">0</p>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Non-member clicks</p>
+                <p id="reportVisitorClicks" class="h4 mb-0">0</p>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="border rounded p-3 h-100">
+                <p class="text-uppercase small text-muted mb-1">Never clicked links/buttons</p>
+                <p id="reportNeverClickedElements" class="h4 mb-0">0</p>
+              </div>
+            </div>
+          </div>
+          <h2 class="h5 mb-2">Never clicked in selected timeframe</h2>
+          <div class="table-responsive mb-4">
+            <table class="table table-sm table-striped align-middle mb-0" id="neverClickedTable">
+              <thead>
+                <tr>
+                  <th scope="col">Element type</th>
+                  <th scope="col">Page</th>
+                  <th scope="col">Label</th>
+                  <th scope="col">Destination</th>
+                </tr>
+              </thead>
+              <tbody id="neverClickedBody"></tbody>
+            </table>
+          </div>
+          <h2 class="h5 mb-2">Most clicked (grouped by first 4 columns)</h2>
+          <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+            <select id="mostClickedAudienceFilter" class="form-select form-select-sm" style="max-width: 220px;" aria-label="Filter most clicked by audience">
+              <option value="all">All audiences</option>
+              <option value="member">Members only</option>
+              <option value="visitor">Non-members only</option>
+              <option value="other">Other / unknown audience</option>
+            </select>
+            <select id="mostClickedActionFilter" class="form-select form-select-sm" style="max-width: 280px;" aria-label="Filter most clicked by action">
+              <option value="all">All actions</option>
+            </select>
+            <select id="mostClickedPageFilter" class="form-select form-select-sm" style="max-width: 280px;" aria-label="Filter most clicked by page">
+              <option value="all">All pages</option>
+            </select>
+          </div>
+          <div class="table-responsive mb-4">
+            <table class="table table-sm table-hover align-middle mb-0" id="mostClickedTable">
+              <thead>
+                <tr>
+                  <th scope="col">Total Clicks</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Source (label)</th>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Element</th>
+                  <th scope="col">Page</th>
+                  <th scope="col">Referrer</th>
+                  <th scope="col">Element link</th>
+                </tr>
+              </thead>
+              <tbody id="mostClickedBody"></tbody>
+            </table>
+          </div>
+          <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+            <input type="text" id="clickTrackingFilter" class="form-control form-control-sm" style="max-width: 340px;" placeholder="Filter by action, source, page…" aria-label="Filter click tracking log" />
+            <select id="clickTrackingSort" class="form-select form-select-sm" style="max-width: 260px;" aria-label="Sort click tracking log">
+              <option value="recent">Most recent first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="action">Action (A-Z)</option>
+            </select>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0" id="clickTrackingTable">
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Source (label)</th>
+                  <th scope="col">Destination</th>
+                  <th scope="col">Element</th>
+                  <th scope="col">Page</th>
+                  <th scope="col">Referrer</th>
+                  <th scope="col">Element link</th>
+                </tr>
+              </thead>
+              <tbody id="clickTrackingBody"></tbody>
+            </table>
+          </div>
+          <p id="clickTrackingCount" class="small on-light-muted mt-2 mb-0"></p>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(Number(value || 0));
+      }
+
+      function parseWindowSelection(rawValue) {
+        const value = String(rawValue || '').trim().toLowerCase();
+        if (value.endsWith('h')) {
+          return { query: `hours=${Number.parseInt(value, 10) || 1}` };
+        }
+        return { query: `days=${Number.parseInt(value, 10) || 30}` };
+      }
+
+      async function request(url) {
+        const response = await fetch(url, { credentials: 'same-origin', headers: { 'content-type': 'application/json' } });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || `Request failed (HTTP ${response.status})`);
+        }
+        return payload;
+      }
+
+      const tableBody = document.getElementById('clickTrackingBody');
+      const mostClickedBody = document.getElementById('mostClickedBody');
+      const neverClickedBody = document.getElementById('neverClickedBody');
+      const countEl = document.getElementById('clickTrackingCount');
+      const filterInput = document.getElementById('clickTrackingFilter');
+      const sortSelect = document.getElementById('clickTrackingSort');
+      const mostClickedAudienceFilter = document.getElementById('mostClickedAudienceFilter');
+      const mostClickedActionFilter = document.getElementById('mostClickedActionFilter');
+      const mostClickedPageFilter = document.getElementById('mostClickedPageFilter');
+      let currentRows = [];
+      let currentNeverClickedElements = [];
+
+      function normalizeAudienceType(rawAudienceType) {
+        const normalized = String(rawAudienceType || '').trim().toLowerCase();
+        if (normalized === 'member') return 'member';
+        if (normalized === 'visitor' || normalized === 'non-member' || normalized === 'nonmember') return 'visitor';
+        return 'other';
+      }
+
+      function updateMostClickedFilterOptions(rows) {
+        const actionCounts = new Map();
+        const pageCounts = new Map();
+        rows.forEach((row) => {
+          const action = String(row.action || '').trim() || '—';
+          const page = String(row.pagePath || '').trim() || '—';
+          actionCounts.set(action, (actionCounts.get(action) || 0) + 1);
+          pageCounts.set(page, (pageCounts.get(page) || 0) + 1);
+        });
+
+        const previousAction = String(mostClickedActionFilter.value || 'all');
+        const previousPage = String(mostClickedPageFilter.value || 'all');
+        const actionOptions = Array.from(actionCounts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+        const pageOptions = Array.from(pageCounts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+        mostClickedActionFilter.innerHTML = '<option value="all">All actions</option>' + actionOptions.map(([value, count]) => (
+          '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + ' (' + formatNumber(count) + ')</option>'
+        )).join('');
+        mostClickedPageFilter.innerHTML = '<option value="all">All pages</option>' + pageOptions.map(([value, count]) => (
+          '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + ' (' + formatNumber(count) + ')</option>'
+        )).join('');
+
+        mostClickedActionFilter.value = Array.from(mostClickedActionFilter.options).some((option) => option.value === previousAction) ? previousAction : 'all';
+        mostClickedPageFilter.value = Array.from(mostClickedPageFilter.options).some((option) => option.value === previousPage) ? previousPage : 'all';
+      }
+
+      function buildMostClickedRows(rows) {
+        const grouped = new Map();
+        rows.forEach((row) => {
+          const selectorHint = row.elementId ? `#${row.elementId}` : row.elementSelector;
+          const elementLabel = selectorHint ? `${row.elementType || 'element'} (${selectorHint})` : (row.elementType || 'element');
+          const key = JSON.stringify([
+            row.action || '',
+            row.source || '',
+            row.destination || '',
+            elementLabel,
+          ]);
+          const existing = grouped.get(key);
+          if (existing) {
+            existing.clicks += 1;
+            return;
+          }
+          grouped.set(key, {
+            action: row.action || '',
+            source: row.source || '',
+            destination: row.destination || '',
+            elementLabel,
+            pagePath: row.pagePath || '',
+            referrer: row.referrer || '',
+            elementLink: row.elementLink || row.pageUrl || '',
+            clicks: 1,
+          });
+        });
+
+        return Array.from(grouped.values()).sort((a, b) => (
+          b.clicks - a.clicks
+          || String(a.action).localeCompare(String(b.action))
+          || String(a.source).localeCompare(String(b.source))
+        ));
+      }
+
+      function renderReportCards(rows) {
+        const memberClicks = rows.filter((row) => normalizeAudienceType(row.audienceType) === 'member').length;
+        const visitorClicks = rows.length - memberClicks;
+        document.getElementById('reportTotalClicks').textContent = formatNumber(rows.length);
+        document.getElementById('reportMemberClicks').textContent = formatNumber(memberClicks);
+        document.getElementById('reportVisitorClicks').textContent = formatNumber(visitorClicks);
+        document.getElementById('reportNeverClickedElements').textContent = formatNumber(currentNeverClickedElements.length);
+      }
+
+      function renderNeverClickedTable() {
+        const rows = Array.isArray(currentNeverClickedElements) ? currentNeverClickedElements : [];
+        neverClickedBody.innerHTML = rows.slice(0, 200).map((row) => (
+          '<tr>'
+          + '<td><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
+          + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
+          + '<td class="small" title="' + escapeHtml(row.label || '—') + '">' + escapeHtml(row.label || '—') + '</td>'
+          + '<td class="small">' + (row.destination ? ('<code>' + escapeHtml(row.destination) + '</code>') : '<span class="text-muted">—</span>') + '</td>'
+          + '</tr>'
+        )).join('') || '<tr><td colspan="4" class="small text-muted">No never-clicked links or buttons found for this timeframe.</td></tr>';
+      }
+
+      function renderMostClickedTable(rows) {
+        const audienceFilter = String(mostClickedAudienceFilter.value || 'all').toLowerCase();
+        const actionFilter = String(mostClickedActionFilter.value || 'all');
+        const pageFilter = String(mostClickedPageFilter.value || 'all');
+
+        const mostClickedRows = buildMostClickedRows(rows.filter((row) => {
+          if (audienceFilter !== 'all' && normalizeAudienceType(row.audienceType) !== audienceFilter) return false;
+          if (actionFilter !== 'all' && String(row.action || '').trim() !== actionFilter) return false;
+          if (pageFilter !== 'all' && String(row.pagePath || '').trim() !== pageFilter) return false;
+          return true;
+        }));
+        mostClickedBody.innerHTML = mostClickedRows.slice(0, 100).map((row) => {
+          const link = row.elementLink || '';
+          return '<tr>'
+            + '<td class="fw-semibold">' + formatNumber(row.clicks) + '</td>'
+            + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
+            + '<td class="small" title="' + escapeHtml(row.source || '—') + '">' + escapeHtml(row.source || '—') + '</td>'
+            + '<td class="small" title="' + escapeHtml(row.destination || '—') + '">' + escapeHtml(row.destination || '—') + '</td>'
+            + '<td class="small" title="' + escapeHtml(row.elementLabel || 'element') + '">' + escapeHtml(row.elementLabel || 'element') + '</td>'
+            + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
+            + '<td class="small" title="' + escapeHtml(row.referrer || '—') + '">' + escapeHtml(row.referrer || '—') + '</td>'
+            + '<td class="small">' + (link ? ('<a href="' + escapeHtml(link) + '" target="_blank" rel="noopener noreferrer">Open element</a>') : '<span class="text-muted">—</span>') + '</td>'
+            + '</tr>';
+        }).join('') || '<tr><td colspan="8" class="small text-muted">No grouped click rows for the selected filters.</td></tr>';
+      }
+
+      function compareRows(a, b, sortMode) {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (sortMode === 'oldest') return aTime - bTime;
+        if (sortMode === 'action') {
+          const actionCompare = String(a.action || '').localeCompare(String(b.action || ''));
+          if (actionCompare !== 0) return actionCompare;
+        }
+        return bTime - aTime;
+      }
+
+      function renderGroupedRows() {
+        const sortMode = String(sortSelect.value || 'recent').toLowerCase();
+        const filtered = getSearchFilteredRows().sort((a, b) => compareRows(a, b, sortMode));
+
+        const groups = [
+          { key: 'member', label: 'Members' },
+          { key: 'visitor', label: 'Non-members' },
+        ];
+
+        const groupRows = groups.map((group, groupIndex) => {
+          const groupItems = filtered.filter((row) => normalizeAudienceType(row.audienceType) === group.key);
+          const groupId = `group-${group.key}`;
+          const groupContent = groupItems.map((row) => {
+            const time = row.createdAt ? new Date(row.createdAt).toLocaleString() : '—';
+            const dest = row.destination || '—';
+            const source = row.source || '—';
+            const ref = row.referrer || '—';
+            return '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed">'
+              + '<td class="small text-nowrap">' + escapeHtml(time) + '</td>'
+              + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
+              + '<td class="small" title="' + escapeHtml(source) + '">' + escapeHtml(source.length > 50 ? source.slice(0, 47) + '…' : source) + '</td>'
+              + '<td class="small" title="' + escapeHtml(dest) + '">' + escapeHtml(dest.length > 60 ? dest.slice(0, 57) + '…' : dest) + '</td>'
+              + '<td class="small"><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
+              + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
+              + '<td class="small" title="' + escapeHtml(ref) + '">' + escapeHtml(ref.length > 40 ? ref.slice(0, 37) + '…' : ref) + '</td>'
+              + '<td class="small">' + (row.elementLink ? ('<a href="' + escapeHtml(row.elementLink) + '" target="_blank" rel="noopener noreferrer">Open</a>') : '<span class="text-muted">—</span>') + '</td>'
+              + '</tr>';
+          }).join('');
+
+          return '<tr class="table-secondary">'
+            + '<td colspan="8">'
+            + '<button type="button" class="group-toggle" data-group-toggle="' + groupId + '" aria-expanded="false">'
+            + '▸ ' + escapeHtml(group.label) + ' (' + formatNumber(groupItems.length) + ')'
+            + '</button>'
+            + '</td>'
+            + '</tr>'
+            + (groupContent || '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed"><td colspan="8" class="small text-muted">No events in this group.</td></tr>');
+        }).join('');
+
+        tableBody.innerHTML = groupRows || '<tr><td colspan="8" class="small text-muted">No click tracking data available for this timeframe.</td></tr>';
+        countEl.textContent = `Showing ${formatNumber(filtered.length)} click events in timeframe.`;
+        renderReportCards(filtered);
+        renderNeverClickedTable();
+        updateMostClickedFilterOptions(filtered);
+        renderMostClickedTable(filtered);
+
+        document.querySelectorAll('[data-group-toggle]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const label = button.getAttribute('data-group-toggle') || '';
+            const groupKey = label.replace('group-', '');
+            const groupRowEls = tableBody.querySelectorAll(`.click-group-${CSS.escape(groupKey)}`);
+            const expanded = button.getAttribute('aria-expanded') === 'true';
+            groupRowEls.forEach((row) => row.classList.toggle('click-group-collapsed', expanded));
+            button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            button.textContent = `${expanded ? '▸' : '▾'} ${button.textContent.replace(/^[▸▾]\s+/, '')}`;
+          });
+        });
+      }
+
+      function getSearchFilteredRows() {
+        const lowerFilter = String(filterInput.value || '').toLowerCase();
+        return currentRows.filter((row) => {
+          if (!lowerFilter) return true;
+          return (row.action || '').toLowerCase().includes(lowerFilter)
+            || (row.source || '').toLowerCase().includes(lowerFilter)
+            || (row.destination || '').toLowerCase().includes(lowerFilter)
+            || (row.pagePath || '').toLowerCase().includes(lowerFilter)
+            || (row.elementType || '').toLowerCase().includes(lowerFilter)
+            || (row.referrer || '').toLowerCase().includes(lowerFilter)
+            || (row.audienceType || '').toLowerCase().includes(lowerFilter);
+        });
+      }
+
+      async function loadClickTracking() {
+        const selected = parseWindowSelection(document.getElementById('windowSelect').value);
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.classList.add('d-none');
+        try {
+          const session = await request('/api/admin-session');
+          if (!session.authenticated) {
+            throw new Error('Not authenticated');
+          }
+          const payload = await request(`/api/admin-click-tracking?${selected.query}`);
+          currentRows = Array.isArray(payload.clickTrackingDetails) ? payload.clickTrackingDetails : [];
+          currentNeverClickedElements = Array.isArray(payload.neverClickedElements) ? payload.neverClickedElements : [];
+          document.getElementById('metaLine').textContent = `Signed in as ${payload.user.username}. Window: ${payload.windowLabel}. Last refresh: ${new Date(payload.generatedAt).toLocaleString()}.`;
+          renderGroupedRows();
+        } catch (error) {
+          errorMessage.textContent = `${error.message}. Visit Admin to sign in, then return here.`;
+          errorMessage.classList.remove('d-none');
+          document.getElementById('metaLine').textContent = 'Not authenticated or unable to load click tracking data.';
+          tableBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No click tracking data loaded.</td></tr>';
+          mostClickedBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No grouped click rows loaded.</td></tr>';
+          neverClickedBody.innerHTML = '<tr><td colspan="4" class="small text-muted">No never-clicked rows loaded.</td></tr>';
+          currentNeverClickedElements = [];
+          countEl.textContent = '';
+          renderReportCards([]);
+        }
+      }
+
+      document.getElementById('refreshButton').addEventListener('click', loadClickTracking);
+      document.getElementById('windowSelect').addEventListener('change', loadClickTracking);
+      filterInput.addEventListener('input', renderGroupedRows);
+      sortSelect.addEventListener('change', renderGroupedRows);
+      mostClickedAudienceFilter.addEventListener('change', () => renderMostClickedTable(getSearchFilteredRows()));
+      mostClickedActionFilter.addEventListener('change', () => renderMostClickedTable(getSearchFilteredRows()));
+      mostClickedPageFilter.addEventListener('change', () => renderMostClickedTable(getSearchFilteredRows()));
+      loadClickTracking();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>

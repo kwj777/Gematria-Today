@@ -3,8 +3,6 @@
     return;
   }
 
-  window.__endTimesConversionTrackingInstalled = true;
-
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
@@ -19,6 +17,29 @@
     return;
   }
 
+  function hasTrackingConsent() {
+    try {
+      return window.localStorage.getItem('endtimes_cookie_consent') === 'accepted';
+    } catch {
+      return false;
+    }
+  }
+
+  if (!hasTrackingConsent()) {
+    if (!window.__endTimesConversionTrackingPending) {
+      window.__endTimesConversionTrackingPending = true;
+      window.addEventListener('endtimes:cookie-consent', function onConsentEvent(e) {
+        window.__endTimesConversionTrackingPending = false;
+        if (e.detail && e.detail.accepted) {
+          installConversionTracking();
+        }
+      }, { once: true });
+    }
+    return;
+  }
+
+  window.__endTimesConversionTrackingInstalled = true;
+
   function createSessionId() {
     if (window.crypto?.randomUUID) {
       return window.crypto.randomUUID();
@@ -27,11 +48,28 @@
   }
 
   const TRACKING_SESSION_KEY = 'endtimes_tracking_session_id';
-  const storedSessionId = window.sessionStorage.getItem(TRACKING_SESSION_KEY);
+
+  function getStoredSessionId() {
+    try {
+      return window.sessionStorage.getItem(TRACKING_SESSION_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  function persistSessionId(sessionId) {
+    try {
+      window.sessionStorage.setItem(TRACKING_SESSION_KEY, sessionId);
+    } catch {
+      // Ignore storage failures (Safari private mode / restricted WebView).
+    }
+  }
+
+  const storedSessionId = getStoredSessionId();
   const trackingSessionId = storedSessionId || createSessionId();
 
   if (!storedSessionId) {
-    window.sessionStorage.setItem(TRACKING_SESSION_KEY, trackingSessionId);
+    persistSessionId(trackingSessionId);
   }
 
   const REPORTABLE_ACTIONS = new Set(['image_download']);
@@ -86,6 +124,34 @@
     return normalized.slice(0, 120);
   }
 
+  function buildCssSelector(element) {
+    if (!(element instanceof Element)) {
+      return '';
+    }
+    if (element.id) {
+      return `#${element.id}`;
+    }
+
+    const segments = [];
+    let node = element;
+    while (node instanceof Element && node !== document.body && segments.length < 5) {
+      const tag = node.tagName.toLowerCase();
+      const classSegment = String(node.className || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((className) => `.${className.replace(/[^a-z0-9_-]/gi, '')}`)
+        .join('');
+      const siblingIndex = node.parentElement
+        ? Array.from(node.parentElement.children).filter((child) => child.tagName === node.tagName).indexOf(node) + 1
+        : 1;
+      segments.unshift(`${tag}${classSegment}:nth-of-type(${Math.max(siblingIndex, 1)})`);
+      node = node.parentElement;
+    }
+    return segments.join(' > ').slice(0, 240);
+  }
+
   function track(eventName, properties = {}) {
     const payload = {
       event: eventName,
@@ -120,11 +186,19 @@
     );
     const destination = target instanceof HTMLAnchorElement ? (target.getAttribute('href') || '') : '';
     const action = target.getAttribute('data-track-action') || 'sitewide_element_click';
+    const elementId = normalizeText(target.id || '');
+    const elementSelector = normalizeText(buildCssSelector(target));
+    const elementLink = elementId
+      ? `${window.location.origin}${window.location.pathname}#${encodeURIComponent(elementId)}`
+      : window.location.href;
 
     reportButtonEvent(action, {
       source: source || 'unknown',
       destination: normalizeText(destination),
       elementType: target.tagName.toLowerCase(),
+      elementId,
+      elementSelector,
+      elementLink,
       pagePath: window.location.pathname,
       pageUrl: window.location.href,
       referrer: document.referrer || '',

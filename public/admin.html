@@ -1,8 +1,126 @@
 <!doctype html>
 <html lang="en">
   <head>
+<!-- Google tag (gtag.js) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  var gaMeasurementId = 'G-R9DF4BNCR2';
+  var consentModeRegions = ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','GB'];
+
+  function isGoogleAnalyticsEnabled() {
+    if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
+      return false;
+    }
+
+    try {
+      var stored = window.localStorage.getItem('endtimes.siteModules');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (parsed && parsed.google_analytics === false) {
+          return false;
+        }
+      }
+    } catch (e) {
+      // Ignore storage parse errors.
+    }
+
+    try {
+      var moduleParam = new URLSearchParams(window.location.search).get('modules');
+      if (moduleParam) {
+        var requested = moduleParam.split(',').map(function (entry) { return String(entry).trim().toLowerCase(); }).filter(Boolean);
+        return requested.indexOf('google_analytics') !== -1;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors.
+    }
+
+    return true;
+  }
+
+  var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
+  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+
+  if (!googleAnalyticsEnabled) {
+    window['ga-disable-' + gaMeasurementId] = true;
+  } else {
+    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+
+    gtag('consent', 'default', {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500,
+      region: consentModeRegions
+    });
+
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+
+    function scheduleGoogleAnalyticsInitialization() {
+      var runWhenIdle = function () {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
+          return;
+        }
+
+        window.setTimeout(initializeGoogleAnalytics, 1500);
+      };
+
+      if (document.readyState === 'complete') {
+        runWhenIdle();
+        return;
+      }
+
+      window.addEventListener('load', runWhenIdle, { once: true });
+    }
+
+    scheduleGoogleAnalyticsInitialization();
+  }
+</script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var hasPromise = typeof window.Promise === 'function';
+        var hasFetch = typeof window.fetch === 'function';
+        if (hasPromise && hasFetch) {
+          return;
+        }
+
+        var pathname = (window.location && window.location.pathname) || '';
+        if (pathname === '/unsupported-browser.html') {
+          return;
+        }
+
+        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
+        window.location.replace(redirectUrl);
+      })();
+    </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,6 +159,14 @@
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />
+    <style>
+      body.admin-render-pending #authPanel,
+      body.admin-render-pending #dashboardPanel {
+        visibility: hidden;
+      }
+    </style>
+    <script src="/admin-theme.js"></script>
+    <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/site-modules.js"></script>
       <script src="/pwa-register.js" defer></script>
@@ -57,12 +183,12 @@
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link active" href="/admin.html">Admin Home</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-posts.html">Blog Content</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-editorial.html">Editorial Queue</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-forum.html">Forum Admin</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin-reports.html">Reports</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-site-chatbot.html">Site Chatbot</a></li>
-            <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
+            <li id="superAdminNavItem" class="nav-item d-none"><a class="nav-link" href="/admin-super-admin.html">Super Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index.html">Public Site</a></li>
           </ul>
           <div class="d-flex ms-lg-3">
             <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
@@ -70,13 +196,6 @@
         </div>
       </div>
     </nav>
-
-    <div id="adminRenderOverlay" class="admin-render-overlay" role="status" aria-live="polite" aria-label="Preparing admin dashboard">
-      <div class="admin-render-overlay__card">
-        <div class="spinner-border text-primary" role="presentation" aria-hidden="true"></div>
-        <p id="adminRenderOverlayLabel" class="mb-0 fw-semibold">Preparing admin dashboard…</p>
-      </div>
-    </div>
 
     <main id="mainContent" class="py-5">
       <div class="container">
@@ -139,11 +258,8 @@
               <h2 class="h3 mb-0">Admin dashboard</h2>
               <p id="sessionMeta" class="text-muted small mb-0"></p>
             </div>
-            <div class="d-flex gap-2">
-              <a class="btn btn-primary" href="/admin-posts.html">Publishing</a>
-              <a class="btn btn-outline-primary" href="/admin-forum.html">Forum Admin</a>
-              <a class="btn btn-outline-primary" href="/admin-reports.html">Reports</a>
-              <a id="superAdminWorkspaceLink" class="btn btn-outline-warning d-none" href="/admin-super-admin.html">Super Admin</a>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-outline-info" href="/admin-reports.html">Reports</a>
               <button id="refreshSiteCacheButton" class="btn btn-outline-warning" type="button">Refresh site cache</button>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Log out</button>
             </div>
@@ -219,7 +335,7 @@
               </section>
             </div>
 
-            <div class="col-md-6 admin-dashboard-masonry-item d-none" data-admin-workspace="content">
+            <div class="col-md-6 admin-dashboard-masonry-item d-none" data-admin-workspace="content" hidden style="display: none !important;">
               <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <a class="admin-section-toggle" href="/admin-posts.html" aria-label="Open blog post management page">
                   <span>
@@ -397,6 +513,29 @@
 
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
               <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
+                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#turnstileSectionBody" aria-expanded="false" aria-controls="turnstileSectionBody">
+                  <span>
+                    <span class="section-kicker d-block mb-2">Security</span>
+                    <span class="h4 mb-0 d-block">Cloudflare Turnstile</span>
+                  </span>
+                  <span class="d-inline-flex align-items-center gap-3">
+                    <span class="badge text-bg-dark">Turnstile</span>
+                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+                  </span>
+                </button>
+                <div id="turnstileSectionBody" class="collapse admin-section-body mt-4">
+                <p class="text-muted small">Set the public Turnstile site key used by member sign up and login anti-robot checks.</p>
+                <form id="turnstileSettingsForm" class="row g-3">
+                  <div class="col-12"><label class="form-label" for="turnstileSiteKey">Turnstile site key</label><input id="turnstileSiteKey" class="form-control" placeholder="0x4AAAA..." /></div>
+                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save Turnstile settings</button></div>
+                </form>
+                <div id="turnstileSettingsMeta" class="small text-muted mt-3">Turnstile settings have not been loaded yet.</div>
+                </div>
+              </section>
+            </div>
+
+            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
+              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailSectionBody" aria-expanded="false" aria-controls="emailSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Account Recovery</span>
@@ -519,33 +658,16 @@
     </footer>
 
     <script>
-      function setRenderPending(isPending, label = 'Preparing admin dashboard…') {
-        const overlay = document.getElementById('adminRenderOverlay');
-        const overlayLabel = document.getElementById('adminRenderOverlayLabel');
-        document.body.classList.toggle('admin-render-pending', isPending);
-        overlay.classList.toggle('d-none', !isPending);
-        overlayLabel.textContent = label;
-      }
-
-      async function withRenderOverlay(task, label) {
-        setRenderPending(true, label);
-        try {
-          await task();
-        } finally {
-          setRenderPending(false);
-        }
-      }
-
       const authPanel = document.getElementById('authPanel');
       const dashboardPanel = document.getElementById('dashboardPanel');
       const authMessage = document.getElementById('authMessage');
-      const themeToggleButton = document.getElementById('themeToggleButton');
       const saveMessage = document.getElementById('saveMessage');
       const cacheMessage = document.getElementById('cacheMessage');
       const errorMessage = document.getElementById('errorMessage');
       const proposalPendingCount = document.getElementById('proposalPendingCount');
       const taskCount = document.getElementById('taskCount');
       const sessionMeta = document.getElementById('sessionMeta');
+      const superAdminNavItem = document.getElementById('superAdminNavItem');
       const superAdminWorkspaceLink = document.getElementById('superAdminWorkspaceLink');
       const stripeSecretKeyInput = document.getElementById('stripeSecretKey');
       const stripeWebhookSigningSecretInput = document.getElementById('stripeWebhookSigningSecret');
@@ -562,45 +684,20 @@
       const workspaceModules = Array.from(document.querySelectorAll('[data-admin-workspace]'));
       const siteModulesPanel = document.getElementById('siteModulesPanel');
       const siteModulesForm = document.getElementById('siteModulesForm');
-      const ADMIN_THEME_STORAGE_KEY = 'adminThemePreference';
-      const ADMIN_BOOTSWATCH_STORAGE_KEY = 'adminBootswatchTheme';
-      const bootswatchThemeSelect = document.getElementById('bootswatchThemeSelect');
-      const bootswatchThemeResetButton = document.getElementById('bootswatchThemeResetButton');
       const globalBootswatchThemeSelect = document.getElementById('globalBootswatchThemeSelect');
       const saveGlobalBootswatchThemeButton = document.getElementById('saveGlobalBootswatchThemeButton');
       const globalBootswatchThemeResetButton = document.getElementById('globalBootswatchThemeResetButton');
       const globalBootswatchThemeMeta = document.getElementById('globalBootswatchThemeMeta');
-      const bootstrapThemeStylesheet = document.getElementById('bootstrapThemeStylesheet');
-      const BOOTSTRAP_STYLESHEET = {
-        href: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-        integrity: 'sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH',
-      };
-      const BOOTSWATCH_THEME_OPTIONS = Object.freeze({
-        bootstrap: BOOTSTRAP_STYLESHEET,
-        cerulean: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/cerulean/bootstrap.min.css' },
-        cosmo: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/cosmo/bootstrap.min.css' },
-        darkly: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css' },
-        flatly: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/flatly/bootstrap.min.css' },
-        litera: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/litera/bootstrap.min.css' },
-        lumen: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lumen/bootstrap.min.css' },
-        lux: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lux/bootstrap.min.css' },
-        materia: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/materia/bootstrap.min.css' },
-        minty: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/minty/bootstrap.min.css' },
-        morph: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/morph/bootstrap.min.css' },
-        pulse: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/pulse/bootstrap.min.css' },
-        quartz: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/quartz/bootstrap.min.css' },
-        sandstone: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/sandstone/bootstrap.min.css' },
-        simplex: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/simplex/bootstrap.min.css' },
-        sketchy: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/sketchy/bootstrap.min.css' },
-        slate: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/slate/bootstrap.min.css' },
-        solar: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/solar/bootstrap.min.css' },
-        spacelab: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/spacelab/bootstrap.min.css' },
-        superhero: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/superhero/bootstrap.min.css' },
-        united: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/united/bootstrap.min.css' },
-        vapor: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/vapor/bootstrap.min.css' },
-        yeti: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/yeti/bootstrap.min.css' },
-        zephyr: { href: 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/zephyr/bootstrap.min.css' },
-      });
+
+      let initialRenderSettled = false;
+
+      function settleInitialRender() {
+        if (initialRenderSettled) {
+          return;
+        }
+        initialRenderSettled = true;
+        document.body.classList.remove('admin-render-pending');
+      }
 
       const DEFAULT_SITE_MODULES = Object.freeze({
         forum: true,
@@ -610,6 +707,11 @@
         blog: true,
         membership: true,
       });
+
+      function updateSuperAdminUi(isSuperAdmin) {
+        superAdminNavItem?.classList.toggle('d-none', !isSuperAdmin);
+        superAdminWorkspaceLink?.classList.toggle('d-none', !isSuperAdmin);
+      }
 
       function applyWorkspaceFilter() {
         const selectedWorkspace = workspaceFilter?.value || 'all';
@@ -628,7 +730,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, turnstileSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -664,78 +766,6 @@
         .map((tag) => `<span class="badge text-bg-warning">${escapeHtml(tag)}</span>`)
         .join('');
 
-      function normalizeTheme(theme) {
-        return theme === 'dark' ? 'dark' : 'light';
-      }
-
-      function updateThemeToggleButton(theme) {
-        if (!themeToggleButton) return;
-        const isDark = theme === 'dark';
-        themeToggleButton.textContent = isDark ? 'Light mode' : 'Dark mode';
-        themeToggleButton.setAttribute('aria-pressed', String(isDark));
-        themeToggleButton.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-      }
-
-      function applyTheme(theme) {
-        const normalizedTheme = normalizeTheme(theme);
-        document.documentElement.setAttribute('data-bs-theme', normalizedTheme);
-        updateThemeToggleButton(normalizedTheme);
-      }
-
-      function loadThemePreference() {
-        try {
-          return normalizeTheme(window.localStorage.getItem(ADMIN_THEME_STORAGE_KEY));
-        } catch (error) {
-          return 'light';
-        }
-      }
-
-      function persistThemePreference(theme) {
-        try {
-          window.localStorage.setItem(ADMIN_THEME_STORAGE_KEY, theme);
-        } catch (error) {
-          // Ignore localStorage failures in private mode/quota exhaustion.
-        }
-      }
-
-      function normalizeBootswatchTheme(themeId) {
-        return BOOTSWATCH_THEME_OPTIONS[themeId] ? themeId : 'bootstrap';
-      }
-
-      function applyBootswatchTheme(themeId) {
-        if (!bootstrapThemeStylesheet) {
-          return;
-        }
-        const normalizedThemeId = normalizeBootswatchTheme(themeId);
-        const selectedTheme = BOOTSWATCH_THEME_OPTIONS[normalizedThemeId];
-        bootstrapThemeStylesheet.setAttribute('href', selectedTheme.href);
-        if (selectedTheme.integrity) {
-          bootstrapThemeStylesheet.setAttribute('integrity', selectedTheme.integrity);
-        } else {
-          bootstrapThemeStylesheet.removeAttribute('integrity');
-        }
-        bootstrapThemeStylesheet.setAttribute('crossorigin', 'anonymous');
-        if (bootswatchThemeSelect) {
-          bootswatchThemeSelect.value = normalizedThemeId;
-        }
-      }
-
-      function loadBootswatchPreference() {
-        try {
-          return normalizeBootswatchTheme(window.localStorage.getItem(ADMIN_BOOTSWATCH_STORAGE_KEY));
-        } catch (error) {
-          return 'bootstrap';
-        }
-      }
-
-      function persistBootswatchPreference(themeId) {
-        try {
-          window.localStorage.setItem(ADMIN_BOOTSWATCH_STORAGE_KEY, normalizeBootswatchTheme(themeId));
-        } catch (error) {
-          // Ignore localStorage failures in private mode/quota exhaustion.
-        }
-      }
-
       function getBootswatchThemeLabel(themeId) {
         if (themeId === 'bootstrap') {
           return 'Bootstrap default';
@@ -756,11 +786,11 @@
         if (!activeSlug.startsWith('bootswatch-')) {
           return 'bootstrap';
         }
-        return normalizeBootswatchTheme(activeSlug.slice('bootswatch-'.length));
+        return window.adminTheme.normalizeBootswatchTheme(activeSlug.slice('bootswatch-'.length));
       }
 
       function buildThemeCatalogForBootswatch(themeId) {
-        const normalizedThemeId = normalizeBootswatchTheme(themeId);
+        const normalizedThemeId = window.adminTheme.normalizeBootswatchTheme(themeId);
         const existingCatalog = normalizeThemeCatalog(state.themeCatalog);
         const preservedPresets = existingCatalog.presets.filter((preset) => !String(preset?.slug || '').startsWith('bootswatch-'));
         if (normalizedThemeId === 'bootstrap') {
@@ -770,7 +800,7 @@
             presets: preservedPresets,
           };
         }
-        const selectedTheme = BOOTSWATCH_THEME_OPTIONS[normalizedThemeId];
+        const selectedTheme = window.adminTheme.BOOTSWATCH_THEME_OPTIONS[normalizedThemeId];
         const slug = `bootswatch-${normalizedThemeId}`;
         const preset = {
           name: getBootswatchThemeLabel(normalizedThemeId),
@@ -1290,6 +1320,14 @@
             : 'No recovery email delivery settings saved yet.';
       }
 
+      function renderTurnstileSettings() {
+        const settings = state.turnstileSettings || {};
+        document.getElementById('turnstileSiteKey').value = settings.turnstileSiteKey || '';
+        document.getElementById('turnstileSettingsMeta').textContent = settings.turnstileSiteKey
+          ? 'Turnstile site key configured for member authentication.'
+          : 'No Turnstile site key saved yet.';
+      }
+
       function renderEmailTemplates() {
         const templates = Array.isArray(state.emailTemplates) ? state.emailTemplates : [];
         const list = document.getElementById('emailTemplateList');
@@ -1417,16 +1455,16 @@
         }
       }
 
+      let latestSecondaryDashboardLoadId = 0;
+
       async function refreshDashboard() {
-        const [feeds, posts, proposals, chatbotFeedback, faqs, tasks, settings, schemaFaqEntries] = await Promise.all([
+        const [feeds, posts, proposals, chatbotFeedback, faqs, tasks] = await Promise.all([
           request('/api/admin-feeds'),
           request('/api/admin-posts'),
           request('/api/admin-blog-proposals'),
           request('/api/admin-chatbot-feedback'),
           request('/api/admin-faqs'),
           request('/api/admin-tasks'),
-          request('/api/admin-settings'),
-          loadSchemaFaqEntries()
         ]);
         state.feeds = feeds.items || [];
         state.posts = posts.items || [];
@@ -1434,26 +1472,47 @@
         state.chatbotFeedback = chatbotFeedback.items || [];
         state.chatbotFeedbackStats = chatbotFeedback.stats || { expected: 0, unexpected: 0 };
         state.faqs = faqs.items || [];
-        state.schemaFaqs = schemaFaqEntries || [];
         state.tasks = tasks.items || [];
-        state.stripeSettings = settings.settings || null;
-        state.emailSettings = settings.settings || null;
-        state.emailTemplates = settings.emailTemplates || [];
-        state.siteModules = { ...DEFAULT_SITE_MODULES, ...((settings.settings && settings.settings.siteModules) || {}) };
-        state.themeCatalog = normalizeThemeCatalog(settings.settings?.themeCatalog || {});
         renderFeeds();
         renderPosts();
         renderBlogProposals();
         renderChatbotFeedback();
         renderFaqs();
         renderTasks();
-        renderStripeSettings();
-        renderEmailSettings();
-        renderEmailTemplates();
-        renderSiteModules();
-        renderGlobalThemeSettings();
         renderMembershipGrantMeta();
         renderMemberPromotionMeta();
+
+        const secondaryLoadId = ++latestSecondaryDashboardLoadId;
+        Promise.allSettled([
+          request('/api/admin-settings'),
+          loadSchemaFaqEntries()
+        ]).then((results) => {
+          if (secondaryLoadId !== latestSecondaryDashboardLoadId) {
+            return;
+          }
+
+          const [settingsResult, schemaFaqEntriesResult] = results;
+          if (settingsResult.status === 'fulfilled') {
+            const settings = settingsResult.value || {};
+            state.stripeSettings = settings.settings || null;
+            state.emailSettings = settings.settings || null;
+            state.turnstileSettings = settings.settings || null;
+            state.emailTemplates = settings.emailTemplates || [];
+            state.siteModules = { ...DEFAULT_SITE_MODULES, ...((settings.settings && settings.settings.siteModules) || {}) };
+            state.themeCatalog = normalizeThemeCatalog(settings.settings?.themeCatalog || {});
+            renderStripeSettings();
+            renderEmailSettings();
+            renderTurnstileSettings();
+            renderEmailTemplates();
+            renderSiteModules();
+            renderGlobalThemeSettings();
+          }
+
+          if (schemaFaqEntriesResult.status === 'fulfilled') {
+            state.schemaFaqs = schemaFaqEntriesResult.value || [];
+            renderFaqs();
+          }
+        });
       }
 
       async function loadSession() {
@@ -1461,7 +1520,7 @@
           const payload = await request('/api/admin-session', { method: 'GET' });
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
-          superAdminWorkspaceLink?.classList.toggle('d-none', payload.user.role !== 'super_admin');
+          updateSuperAdminUi(payload.user.role === 'super_admin');
           setLoggedIn(true);
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
@@ -1471,12 +1530,14 @@
         } catch (error) {
           state.user = null;
           sessionMeta.textContent = '';
-          superAdminWorkspaceLink?.classList.add('d-none');
+          updateSuperAdminUi(false);
           state.siteModules = { ...DEFAULT_SITE_MODULES };
           state.themeCatalog = { activeThemeSlug: 'default', presets: [] };
           renderSiteModules();
           renderGlobalThemeSettings();
           setLoggedIn(false);
+        } finally {
+          settleInitialRender();
         }
       }
 
@@ -1533,12 +1594,12 @@
           });
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
-          superAdminWorkspaceLink?.classList.toggle('d-none', payload.user.role !== 'super_admin');
+          updateSuperAdminUi(payload.user.role === 'super_admin');
           setLoggedIn(true);
           showMessage(saveMessage, payload.message || 'Admin password reset complete.');
           renderRecoveryPreview('Recovery code consumed.');
           event.target.reset();
-          await withRenderOverlay(() => refreshDashboard(), 'Loading admin dashboard…');
+          await refreshDashboard();
         } catch (error) {
           showMessage(authMessage, error.message);
         }
@@ -1558,7 +1619,7 @@
           });
           event.target.reset();
           showMessage(saveMessage, 'Admin dashboard unlocked.');
-          await withRenderOverlay(() => loadSession(), 'Loading admin dashboard…');
+          await loadSession();
         } catch (error) {
           showMessage(authMessage, error.message);
         }
@@ -1568,7 +1629,7 @@
         clearMessage(errorMessage);
         await request('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => null);
         state.user = null;
-        superAdminWorkspaceLink?.classList.add('d-none');
+        updateSuperAdminUi(false);
         setLoggedIn(false);
       });
 
@@ -1781,6 +1842,7 @@
               sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
               sendgridFromName: state.emailSettings?.sendgridFromName || '',
               sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
+              turnstileSiteKey: state.turnstileSettings?.turnstileSiteKey || '',
               publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
               replaceStripeSecretKey: false,
               replaceStripeWebhookSigningSecret: false,
@@ -1789,6 +1851,8 @@
             })
           });
           state.siteModules = { ...DEFAULT_SITE_MODULES, ...((payload.settings && payload.settings.siteModules) || {}) };
+          state.turnstileSettings = payload.settings || state.turnstileSettings;
+          renderTurnstileSettings();
           renderSiteModules();
           showMessage(saveMessage, 'Site module switches saved.', { timeoutMs: 10000 });
           window.alert('Site module switches saved. Please allow up to 10 minutes for changes to take effect.');
@@ -1804,7 +1868,7 @@
           return;
         }
 
-        const selectedTheme = normalizeBootswatchTheme(globalBootswatchThemeSelect?.value || 'bootstrap');
+        const selectedTheme = window.adminTheme.normalizeBootswatchTheme(globalBootswatchThemeSelect?.value || 'bootstrap');
         try {
           const payload = await request('/api/admin-settings', {
             method: 'PUT',
@@ -1814,6 +1878,7 @@
               sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
               sendgridFromName: state.emailSettings?.sendgridFromName || '',
               sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
+              turnstileSiteKey: state.turnstileSettings?.turnstileSiteKey || '',
               publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
               replaceStripeSecretKey: false,
               replaceStripeWebhookSigningSecret: false,
@@ -1822,6 +1887,8 @@
             }),
           });
           state.themeCatalog = normalizeThemeCatalog(payload.settings?.themeCatalog || {});
+          state.turnstileSettings = payload.settings || state.turnstileSettings;
+          renderTurnstileSettings();
           renderGlobalThemeSettings();
           showMessage(saveMessage, selectedTheme === 'bootstrap'
             ? 'Global theme reset to Bootstrap default.'
@@ -1907,11 +1974,43 @@
           });
           state.emailSettings = payload.settings || null;
           state.stripeSettings = payload.settings || null;
+          state.turnstileSettings = payload.settings || null;
           renderEmailSettings();
+          renderTurnstileSettings();
           state.emailTemplates = payload.emailTemplates || state.emailTemplates;
           renderEmailTemplates();
           showMessage(saveMessage, 'Recovery email delivery settings saved.');
           collapseAdminSection('emailSectionBody');
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
+
+      document.getElementById('turnstileSettingsForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearMessage(errorMessage);
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'PUT',
+            body: JSON.stringify({
+              stripeAccountId: state.stripeSettings?.stripeAccountId || '',
+              stripePublishableKey: state.stripeSettings?.stripePublishableKey || '',
+              sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
+              sendgridFromName: state.emailSettings?.sendgridFromName || '',
+              sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
+              turnstileSiteKey: document.getElementById('turnstileSiteKey').value,
+              publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
+              replaceStripeSecretKey: false,
+              replaceStripeWebhookSigningSecret: false,
+              replaceSendgridApiKey: false,
+            }),
+          });
+          state.turnstileSettings = payload.settings || null;
+          state.emailSettings = payload.settings || state.emailSettings;
+          state.stripeSettings = payload.settings || state.stripeSettings;
+          renderTurnstileSettings();
+          showMessage(saveMessage, 'Turnstile settings saved.');
+          collapseAdminSection('turnstileSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -1934,7 +2033,9 @@
           });
           state.stripeSettings = payload.settings || null;
           state.emailSettings = payload.settings || null;
+          state.turnstileSettings = payload.settings || null;
           renderStripeSettings();
+          renderTurnstileSettings();
           showMessage(saveMessage, 'Stripe account details saved.');
           collapseAdminSection('stripeSectionBody');
         } catch (error) {
@@ -1962,8 +2063,10 @@
           });
           state.emailTemplates = payload.emailTemplates || state.emailTemplates;
           state.emailSettings = payload.settings || state.emailSettings;
+          state.turnstileSettings = payload.settings || state.turnstileSettings;
           renderEmailTemplates();
           renderEmailSettings();
+          renderTurnstileSettings();
           startEmailTemplateEdit(templateId);
           showMessage(saveMessage, 'Email template saved.');
           collapseAdminSection('emailTemplatesSectionBody');
@@ -2154,32 +2257,12 @@
         }
       });
 
-      themeToggleButton?.addEventListener('click', () => {
-        const currentTheme = normalizeTheme(document.documentElement.getAttribute('data-bs-theme'));
-        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        applyTheme(nextTheme);
-        persistThemePreference(nextTheme);
-      });
-
-      bootswatchThemeSelect?.addEventListener('change', () => {
-        const nextTheme = normalizeBootswatchTheme(bootswatchThemeSelect.value);
-        applyBootswatchTheme(nextTheme);
-        persistBootswatchPreference(nextTheme);
-      });
-
-      bootswatchThemeResetButton?.addEventListener('click', () => {
-        applyBootswatchTheme('bootstrap');
-        persistBootswatchPreference('bootstrap');
-      });
-
       resetPostForm();
       resetFaqForm();
       renderMembershipGrantMeta();
       renderGlobalThemeSettings();
       resetEmailTemplateForm();
-      applyTheme(loadThemePreference());
-      applyBootswatchTheme(loadBootswatchPreference());
-      withRenderOverlay(() => loadSession(), 'Checking admin session…');
+      loadSession();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

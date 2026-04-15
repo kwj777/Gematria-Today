@@ -187,6 +187,7 @@
             <li class="nav-item"><a class="nav-link" href="/admin-forum.html">Forum Admin</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-site-chatbot.html">Site Chatbot</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
+            <li id="superAdminNavItem" class="nav-item d-none"><a class="nav-link" href="/admin-super-admin.html">Super Admin</a></li>
             <li class="nav-item"><a class="nav-link" href="/index.html">Public Site</a></li>
           </ul>
           <div class="d-flex ms-lg-3">
@@ -666,6 +667,7 @@
       const proposalPendingCount = document.getElementById('proposalPendingCount');
       const taskCount = document.getElementById('taskCount');
       const sessionMeta = document.getElementById('sessionMeta');
+      const superAdminNavItem = document.getElementById('superAdminNavItem');
       const superAdminWorkspaceLink = document.getElementById('superAdminWorkspaceLink');
       const stripeSecretKeyInput = document.getElementById('stripeSecretKey');
       const stripeWebhookSigningSecretInput = document.getElementById('stripeWebhookSigningSecret');
@@ -705,6 +707,11 @@
         blog: true,
         membership: true,
       });
+
+      function updateSuperAdminUi(isSuperAdmin) {
+        superAdminNavItem?.classList.toggle('d-none', !isSuperAdmin);
+        superAdminWorkspaceLink?.classList.toggle('d-none', !isSuperAdmin);
+      }
 
       function applyWorkspaceFilter() {
         const selectedWorkspace = workspaceFilter?.value || 'all';
@@ -1513,7 +1520,7 @@
           const payload = await request('/api/admin-session', { method: 'GET' });
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
-          superAdminWorkspaceLink?.classList.toggle('d-none', payload.user.role !== 'super_admin');
+          updateSuperAdminUi(payload.user.role === 'super_admin');
           setLoggedIn(true);
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
@@ -1523,7 +1530,7 @@
         } catch (error) {
           state.user = null;
           sessionMeta.textContent = '';
-          superAdminWorkspaceLink?.classList.add('d-none');
+          updateSuperAdminUi(false);
           state.siteModules = { ...DEFAULT_SITE_MODULES };
           state.themeCatalog = { activeThemeSlug: 'default', presets: [] };
           renderSiteModules();
@@ -1587,7 +1594,7 @@
           });
           state.user = payload.user;
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
-          superAdminWorkspaceLink?.classList.toggle('d-none', payload.user.role !== 'super_admin');
+          updateSuperAdminUi(payload.user.role === 'super_admin');
           setLoggedIn(true);
           showMessage(saveMessage, payload.message || 'Admin password reset complete.');
           renderRecoveryPreview('Recovery code consumed.');
@@ -1622,7 +1629,7 @@
         clearMessage(errorMessage);
         await request('/api/admin-logout', { method: 'POST', body: '{}' }).catch(() => null);
         state.user = null;
-        superAdminWorkspaceLink?.classList.add('d-none');
+        updateSuperAdminUi(false);
         setLoggedIn(false);
       });
 

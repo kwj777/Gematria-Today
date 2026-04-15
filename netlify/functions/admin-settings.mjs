@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS = {
   sendgridReplyToEmail: '',
   sendgridApiKey: '',
   publicSiteUrl: '',
+  googleAnalyticsMeasurementId: '',
   siteModules: {},
   themeCatalog: {
     activeThemeSlug: 'default',
@@ -53,6 +54,7 @@ function normalizeSiteModules(rawValue = null) {
 function normalizeSettings(body = {}) {
   const hasThemeCatalog = Object.hasOwn(body, 'themeCatalog');
   const hasPrivateThemeCatalog = Object.hasOwn(body, 'privateThemeCatalog');
+  const hasGoogleAnalyticsMeasurementId = Object.hasOwn(body, 'googleAnalyticsMeasurementId');
   return {
     stripeAccountId: String(body.stripeAccountId ?? '').trim(),
     stripePublishableKey: String(body.stripePublishableKey ?? '').trim(),
@@ -65,6 +67,9 @@ function normalizeSettings(body = {}) {
     sendgridReplyToEmail: String(body.sendgridReplyToEmail ?? '').trim().toLowerCase(),
     sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
     publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
+    googleAnalyticsMeasurementId: hasGoogleAnalyticsMeasurementId
+      ? String(body.googleAnalyticsMeasurementId ?? '').trim().toUpperCase().slice(0, 32)
+      : undefined,
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
     siteModules: normalizeSiteModules(body.siteModules),
     themeCatalog: hasThemeCatalog ? normalizeThemeCatalog(body.themeCatalog) : undefined,
@@ -143,6 +148,7 @@ function serializeSettings(settings = {}) {
     sendgridFromName: settings.sendgridFromName || '',
     sendgridReplyToEmail: settings.sendgridReplyToEmail || '',
     publicSiteUrl: settings.publicSiteUrl || '',
+    googleAnalyticsMeasurementId: settings.googleAnalyticsMeasurementId || '',
     hasSendgridApiKey: Boolean(settings.sendgridApiKey),
     emailDeliveryConfigured: Boolean(settings.sendgridApiKey && settings.sendgridFromEmail),
     siteModules: settings.siteModules && typeof settings.siteModules === 'object'
@@ -168,6 +174,7 @@ function mapSettingsFromRows(rows = []) {
     if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
     if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
     if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
+    if (row.setting_key === 'google_analytics_measurement_id') settings.googleAnalyticsMeasurementId = row.setting_value || '';
     if (row.setting_key === 'site_modules') {
       try {
         const parsedModules = JSON.parse(row.setting_value || '{}');
@@ -217,6 +224,7 @@ function getSettingsRows(sql) {
     WHERE setting_key LIKE 'stripe_%'
       OR setting_key LIKE 'sendgrid_%'
       OR setting_key = 'public_site_url'
+      OR setting_key = 'google_analytics_measurement_id'
       OR setting_key = 'site_modules'
       OR setting_key = 'theme_catalog'
       OR setting_key = 'private_theme_catalog'
@@ -284,6 +292,9 @@ export async function handler(event) {
         sendgridReplyToEmail: settings.sendgridReplyToEmail,
         sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
         publicSiteUrl: settings.publicSiteUrl,
+        googleAnalyticsMeasurementId: settings.googleAnalyticsMeasurementId === undefined
+          ? existingSettings.googleAnalyticsMeasurementId
+          : settings.googleAnalyticsMeasurementId,
         siteModules: settings.siteModules === null ? existingSettings.siteModules : {
           ...DEFAULT_SITE_MODULES,
           ...settings.siteModules,
@@ -304,6 +315,7 @@ export async function handler(event) {
         ['sendgrid_reply_to_email', nextSettings.sendgridReplyToEmail],
         ['sendgrid_api_key', nextSettings.sendgridApiKey],
         ['public_site_url', nextSettings.publicSiteUrl],
+        ['google_analytics_measurement_id', nextSettings.googleAnalyticsMeasurementId],
         ['site_modules', JSON.stringify(nextSettings.siteModules || {})],
         ['theme_catalog', JSON.stringify(nextSettings.themeCatalog || normalizeThemeCatalog({}))],
         ['private_theme_catalog', JSON.stringify(nextSettings.privateThemeCatalog || normalizeThemeCatalog({}))],

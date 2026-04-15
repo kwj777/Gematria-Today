@@ -9,12 +9,15 @@
     wordnik_wotd_slider: true,
     blog_home_slider: false,
     blog_home_featured_grid: true,
+    google_analytics: false,
   });
 
   const STORAGE_KEY = 'endtimes.siteModules';
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
   let activeModules = { ...DEFAULT_MODULES };
   let superAdminCanOverrideModules = false;
+  let googleAnalyticsMeasurementId = '';
+  let googleAnalyticsLoaded = false;
 
   const parseModuleOverrides = (rawValue) => {
     if (!rawValue || typeof rawValue !== 'object') {
@@ -199,6 +202,7 @@
       ['wordnik_wotd_slider', 'Word of the Day'],
       ['blog_home_slider', 'Home Blog Slider'],
       ['blog_home_featured_grid', 'Home Featured Grid'],
+      ['google_analytics', 'Google Analytics'],
     ];
 
     const panel = existingPanel || document.createElement('div');
@@ -248,10 +252,35 @@
         return {};
       }
       const payload = await response.json();
-      return parseModuleOverrides(payload?.modules);
+      return {
+        modules: parseModuleOverrides(payload?.modules),
+        googleAnalyticsMeasurementId: String(payload?.googleAnalyticsMeasurementId || '').trim().toUpperCase(),
+      };
     } catch {
-      return {};
+      return { modules: {}, googleAnalyticsMeasurementId: '' };
     }
+  };
+
+  const applyGoogleAnalytics = () => {
+    if (googleAnalyticsLoaded || !isEnabled('google_analytics') || !googleAnalyticsMeasurementId) {
+      return;
+    }
+
+    const scriptSrc = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsMeasurementId)}`;
+    if (!document.querySelector(`script[src*="${googleAnalyticsMeasurementId}"]`)) {
+      const externalScript = document.createElement('script');
+      externalScript.async = true;
+      externalScript.src = scriptSrc;
+      document.head.appendChild(externalScript);
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function gtag() {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', googleAnalyticsMeasurementId);
+    googleAnalyticsLoaded = true;
   };
 
   const isSuperAdminSession = async () => {
@@ -272,15 +301,16 @@
   };
 
   const applyModuleSettings = async () => {
-    const [globalModules, canOverride] = await Promise.all([
+    const [globalSettings, canOverride] = await Promise.all([
       fetchGlobalModules(),
       isSuperAdminSession(),
     ]);
     superAdminCanOverrideModules = canOverride;
+    googleAnalyticsMeasurementId = String(globalSettings.googleAnalyticsMeasurementId || '').trim().toUpperCase();
 
     activeModules = {
       ...DEFAULT_MODULES,
-      ...globalModules,
+      ...(globalSettings.modules || {}),
       ...parseModuleOverrides(window.SITE_MODULE_OVERRIDES || {}),
     };
 
@@ -294,6 +324,7 @@
 
     renderSuperAdminTogglePanel();
     applyModuleVisibility();
+    applyGoogleAnalytics();
   };
 
   window.EndTimesModules = Object.freeze({

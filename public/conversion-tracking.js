@@ -3,8 +3,6 @@
     return;
   }
 
-  window.__endTimesConversionTrackingInstalled = true;
-
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
@@ -18,6 +16,29 @@
   if (isAdminSession()) {
     return;
   }
+
+  function hasTrackingConsent() {
+    try {
+      return window.localStorage.getItem('endtimes_cookie_consent') === 'accepted';
+    } catch {
+      return false;
+    }
+  }
+
+  if (!hasTrackingConsent()) {
+    if (!window.__endTimesConversionTrackingPending) {
+      window.__endTimesConversionTrackingPending = true;
+      window.addEventListener('endtimes:cookie-consent', function onConsentEvent(e) {
+        window.__endTimesConversionTrackingPending = false;
+        if (e.detail && e.detail.accepted) {
+          installConversionTracking();
+        }
+      }, { once: true });
+    }
+    return;
+  }
+
+  window.__endTimesConversionTrackingInstalled = true;
 
   function createSessionId() {
     if (window.crypto?.randomUUID) {

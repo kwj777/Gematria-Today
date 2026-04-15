@@ -20,22 +20,32 @@ export async function handler(event) {
       ttlSeconds: 120,
       compute: async () => {
         const rows = await sql`
-          SELECT setting_value
+          SELECT setting_key, setting_value
           FROM admin_settings
-          WHERE setting_key = 'site_modules'
-          LIMIT 1
+          WHERE setting_key IN ('site_modules', 'google_analytics_measurement_id')
         `;
 
         let parsed = null;
-        if (rows.length) {
+        let googleAnalyticsMeasurementId = '';
+        rows.forEach((row) => {
+          if (row.setting_key === 'google_analytics_measurement_id') {
+            googleAnalyticsMeasurementId = String(row.setting_value || '').trim().toUpperCase();
+          }
+        });
+
+        const siteModulesRow = rows.find((row) => row.setting_key === 'site_modules');
+        if (siteModulesRow) {
           try {
-            parsed = JSON.parse(rows[0].setting_value || '{}');
+            parsed = JSON.parse(siteModulesRow.setting_value || '{}');
           } catch {
             parsed = null;
           }
         }
 
-        return { modules: normalizeSiteModules(parsed) };
+        return {
+          modules: normalizeSiteModules(parsed),
+          googleAnalyticsMeasurementId,
+        };
       },
     });
 

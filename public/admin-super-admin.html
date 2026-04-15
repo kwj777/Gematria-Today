@@ -40,6 +40,7 @@
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link" href="/admin.html">Admin Home</a></li>
             <li class="nav-item"><a class="nav-link active" aria-current="page" href="/admin-super-admin.html">Super Admin</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin-hub.html">Site Hub</a></li>
             <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
           </ul>
         </div>
@@ -56,6 +57,17 @@
 
         <div id="saveMessage" class="alert alert-success d-none" role="status"></div>
         <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+        <section class="content-panel p-3 p-lg-4 mb-4 d-none" id="hubEntryPanel">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+            <div>
+              <p class="section-kicker mb-1">Multi-site management</p>
+              <h2 class="h5 mb-1">Admin hub</h2>
+              <p class="text-muted small mb-0">Register spoke sites and enter any of them as super admin with a single click — no password required.</p>
+            </div>
+            <a href="/admin-hub.html" class="btn btn-primary flex-shrink-0">Open site hub</a>
+          </div>
+        </section>
 
         <section id="superAdminPanel" class="content-panel p-3 p-lg-4 mb-4 d-none">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
@@ -319,6 +331,7 @@
           renderGlobalThemeSettings();
           renderPrivateThemeSettings();
           superAdminPanel.classList.remove('d-none');
+          document.getElementById('hubEntryPanel').classList.remove('d-none');
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to verify super admin session.');
           sessionMeta.textContent = 'Unable to verify super admin session.';

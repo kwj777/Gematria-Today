@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-R9DF4BNCR2"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -64,8 +63,42 @@
       region: consentModeRegions
     });
 
-    gtag('js', new Date());
-    gtag('config', gaMeasurementId);
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+
+    function scheduleGoogleAnalyticsInitialization() {
+      var runWhenIdle = function () {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
+          return;
+        }
+
+        window.setTimeout(initializeGoogleAnalytics, 1500);
+      };
+
+      if (document.readyState === 'complete') {
+        runWhenIdle();
+        return;
+      }
+
+      window.addEventListener('load', runWhenIdle, { once: true });
+    }
+
+    scheduleGoogleAnalyticsInitialization();
   }
 </script>
 
@@ -516,34 +549,6 @@
               </section>
             </div>
 
-            <div id="googleAnalyticsSectionCard" class="col-md-6 admin-dashboard-masonry-item d-none" data-admin-workspace="revenue">
-              <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
-                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#googleAnalyticsSectionBody" aria-expanded="false" aria-controls="googleAnalyticsSectionBody">
-                  <span>
-                    <span class="section-kicker d-block mb-2">Analytics</span>
-                    <span class="h4 mb-0 d-block">Google Analytics settings</span>
-                  </span>
-                  <span class="d-inline-flex align-items-center gap-3">
-                    <span class="badge text-bg-warning">GA4</span>
-                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
-                  </span>
-                </button>
-                <div id="googleAnalyticsSectionBody" class="collapse admin-section-body mt-4">
-                <p class="text-muted small">This section appears only when the Google Analytics module is enabled in Super Admin. Use your GA4 measurement ID (<code>G-XXXXXXX</code>).</p>
-                <form id="googleAnalyticsSettingsForm" class="row g-3">
-                  <div class="col-12">
-                    <label class="form-label" for="googleAnalyticsMeasurementId">GA4 measurement ID</label>
-                    <input id="googleAnalyticsMeasurementId" class="form-control text-uppercase" placeholder="G-XXXXXXXXXX" />
-                  </div>
-                  <div class="col-12 d-grid">
-                    <button class="btn btn-primary" type="submit">Save Google Analytics settings</button>
-                  </div>
-                </form>
-                <div id="googleAnalyticsSettingsMeta" class="small text-muted mt-3">Google Analytics settings have not been loaded yet.</div>
-                </div>
-              </section>
-            </div>
-
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
               <section class="content-panel p-4 h-100 admin-dashboard-section admin-danger-zone">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailTemplatesSectionBody" aria-expanded="false" aria-controls="emailTemplatesSectionBody">
@@ -667,8 +672,6 @@
       const stripeWebhookSigningSecretToggle = document.getElementById('stripeWebhookSigningSecretToggle');
       const sendgridApiKeyInput = document.getElementById('sendgridApiKey');
       const sendgridApiKeyToggle = document.getElementById('sendgridApiKeyToggle');
-      const googleAnalyticsSectionCard = document.getElementById('googleAnalyticsSectionCard');
-      const googleAnalyticsMeasurementIdInput = document.getElementById('googleAnalyticsMeasurementId');
       const adminRecoveryResult = document.getElementById('adminRecoveryResult');
       const postImageUrlInput = document.getElementById('postImageUrl');
       const postImageDropzone = document.getElementById('postImageDropzone');
@@ -690,7 +693,6 @@
         news: true,
         blog: true,
         membership: true,
-        google_analytics: false,
       });
 
       function applyWorkspaceFilter() {
@@ -1067,7 +1069,6 @@
           ['blog', 'Blog'],
           ['membership', 'Membership'],
           ['wordnik_wotd_slider', 'Word of the Day'],
-          ['google_analytics', 'Google Analytics'],
         ];
 
         const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
@@ -1301,30 +1302,6 @@
             : 'No recovery email delivery settings saved yet.';
       }
 
-      function renderGoogleAnalyticsSettings() {
-        const settings = state.emailSettings || {};
-        const moduleEnabled = (state.siteModules || {}).google_analytics !== false;
-        googleAnalyticsSectionCard?.classList.toggle('d-none', !moduleEnabled);
-        googleAnalyticsMeasurementIdInput.value = settings.googleAnalyticsMeasurementId || '';
-
-        const meta = document.getElementById('googleAnalyticsSettingsMeta');
-        if (!meta) {
-          return;
-        }
-
-        if (!moduleEnabled) {
-          meta.textContent = 'Enable Google Analytics in Super Admin to manage this setting.';
-          return;
-        }
-
-        if (settings.googleAnalyticsMeasurementId) {
-          meta.textContent = `Tracking ID ${settings.googleAnalyticsMeasurementId} is configured.`;
-          return;
-        }
-
-        meta.textContent = 'Google Analytics is enabled but no GA4 measurement ID is saved yet.';
-      }
-
       function renderEmailTemplates() {
         const templates = Array.isArray(state.emailTemplates) ? state.emailTemplates : [];
         const list = document.getElementById('emailTemplateList');
@@ -1484,7 +1461,6 @@
         renderTasks();
         renderStripeSettings();
         renderEmailSettings();
-        renderGoogleAnalyticsSettings();
         renderEmailTemplates();
         renderSiteModules();
         renderGlobalThemeSettings();
@@ -1512,7 +1488,6 @@
           state.themeCatalog = { activeThemeSlug: 'default', presets: [] };
           renderSiteModules();
           renderGlobalThemeSettings();
-          renderGoogleAnalyticsSettings();
           setLoggedIn(false);
         }
       }
@@ -1949,39 +1924,6 @@
           renderEmailTemplates();
           showMessage(saveMessage, 'Recovery email delivery settings saved.');
           collapseAdminSection('emailSectionBody');
-        } catch (error) {
-          showMessage(errorMessage, error.message);
-        }
-      });
-
-      document.getElementById('googleAnalyticsSettingsForm')?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearMessage(errorMessage);
-        if ((state.siteModules || {}).google_analytics === false) {
-          showMessage(errorMessage, 'Enable Google Analytics in Super Admin before saving analytics settings.');
-          return;
-        }
-        try {
-          const payload = await request('/api/admin-settings', {
-            method: 'PUT',
-            body: JSON.stringify({
-              stripeAccountId: state.stripeSettings?.stripeAccountId || '',
-              stripePublishableKey: state.stripeSettings?.stripePublishableKey || '',
-              sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
-              sendgridFromName: state.emailSettings?.sendgridFromName || '',
-              sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
-              publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
-              replaceStripeSecretKey: false,
-              replaceStripeWebhookSigningSecret: false,
-              replaceSendgridApiKey: false,
-              googleAnalyticsMeasurementId: (googleAnalyticsMeasurementIdInput?.value || '').trim().toUpperCase(),
-            }),
-          });
-          state.emailSettings = payload.settings || null;
-          state.stripeSettings = payload.settings || null;
-          renderGoogleAnalyticsSettings();
-          showMessage(saveMessage, 'Google Analytics settings saved.');
-          collapseAdminSection('googleAnalyticsSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }

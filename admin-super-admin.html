@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-R9DF4BNCR2"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -64,8 +63,42 @@
       region: consentModeRegions
     });
 
-    gtag('js', new Date());
-    gtag('config', gaMeasurementId);
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+
+    function scheduleGoogleAnalyticsInitialization() {
+      var runWhenIdle = function () {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
+          return;
+        }
+
+        window.setTimeout(initializeGoogleAnalytics, 1500);
+      };
+
+      if (document.readyState === 'complete') {
+        runWhenIdle();
+        return;
+      }
+
+      window.addEventListener('load', runWhenIdle, { once: true });
+    }
+
+    scheduleGoogleAnalyticsInitialization();
   }
 </script>
 
@@ -273,7 +306,7 @@
       const privateBootswatchThemeResetButton = document.getElementById('privateBootswatchThemeResetButton');
       const privateBootswatchThemeMeta = document.getElementById('privateBootswatchThemeMeta');
 
-      const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true, wordnik_wotd_slider: true, blog_home_slider: true, blog_home_featured_grid: true, google_analytics: false });
+      const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true, wordnik_wotd_slider: true, blog_home_slider: true, blog_home_featured_grid: true });
       let state = {
         user: null,
         settings: null,
@@ -369,7 +402,7 @@
       }
 
       function renderSiteModules() {
-        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Word of the Day'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid'], ['google_analytics', 'Google Analytics']];
+        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Word of the Day'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
         const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
         siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `
           <div class="col-md-6 col-xl-4">

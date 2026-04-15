@@ -190,13 +190,6 @@
       </div>
     </nav>
 
-    <div id="adminRenderOverlay" class="admin-render-overlay" role="status" aria-live="polite" aria-label="Preparing admin dashboard">
-      <div class="admin-render-overlay__card">
-        <div class="spinner-border text-primary" role="presentation" aria-hidden="true"></div>
-        <p id="adminRenderOverlayLabel" class="mb-0 fw-semibold">Preparing admin dashboard…</p>
-      </div>
-    </div>
-
     <main id="mainContent" class="py-5">
       <div class="container">
         <h1 id="adminPageTitle" class="visually-hidden">Admin Dashboard</h1>
@@ -635,23 +628,6 @@
     </footer>
 
     <script>
-      function setRenderPending(isPending, label = 'Preparing admin dashboard…') {
-        const overlay = document.getElementById('adminRenderOverlay');
-        const overlayLabel = document.getElementById('adminRenderOverlayLabel');
-        document.body.classList.toggle('admin-render-pending', isPending);
-        overlay.classList.toggle('d-none', !isPending);
-        overlayLabel.textContent = label;
-      }
-
-      async function withRenderOverlay(task, label) {
-        setRenderPending(true, label);
-        try {
-          await task();
-        } finally {
-          setRenderPending(false);
-        }
-      }
-
       const authPanel = document.getElementById('authPanel');
       const dashboardPanel = document.getElementById('dashboardPanel');
       const authMessage = document.getElementById('authMessage');
@@ -1425,16 +1401,16 @@
         }
       }
 
+      let latestSecondaryDashboardLoadId = 0;
+
       async function refreshDashboard() {
-        const [feeds, posts, proposals, chatbotFeedback, faqs, tasks, settings, schemaFaqEntries] = await Promise.all([
+        const [feeds, posts, proposals, chatbotFeedback, faqs, tasks] = await Promise.all([
           request('/api/admin-feeds'),
           request('/api/admin-posts'),
           request('/api/admin-blog-proposals'),
           request('/api/admin-chatbot-feedback'),
           request('/api/admin-faqs'),
           request('/api/admin-tasks'),
-          request('/api/admin-settings'),
-          loadSchemaFaqEntries()
         ]);
         state.feeds = feeds.items || [];
         state.posts = posts.items || [];
@@ -1442,26 +1418,45 @@
         state.chatbotFeedback = chatbotFeedback.items || [];
         state.chatbotFeedbackStats = chatbotFeedback.stats || { expected: 0, unexpected: 0 };
         state.faqs = faqs.items || [];
-        state.schemaFaqs = schemaFaqEntries || [];
         state.tasks = tasks.items || [];
-        state.stripeSettings = settings.settings || null;
-        state.emailSettings = settings.settings || null;
-        state.emailTemplates = settings.emailTemplates || [];
-        state.siteModules = { ...DEFAULT_SITE_MODULES, ...((settings.settings && settings.settings.siteModules) || {}) };
-        state.themeCatalog = normalizeThemeCatalog(settings.settings?.themeCatalog || {});
         renderFeeds();
         renderPosts();
         renderBlogProposals();
         renderChatbotFeedback();
         renderFaqs();
         renderTasks();
-        renderStripeSettings();
-        renderEmailSettings();
-        renderEmailTemplates();
-        renderSiteModules();
-        renderGlobalThemeSettings();
         renderMembershipGrantMeta();
         renderMemberPromotionMeta();
+
+        const secondaryLoadId = ++latestSecondaryDashboardLoadId;
+        Promise.allSettled([
+          request('/api/admin-settings'),
+          loadSchemaFaqEntries()
+        ]).then((results) => {
+          if (secondaryLoadId !== latestSecondaryDashboardLoadId) {
+            return;
+          }
+
+          const [settingsResult, schemaFaqEntriesResult] = results;
+          if (settingsResult.status === 'fulfilled') {
+            const settings = settingsResult.value || {};
+            state.stripeSettings = settings.settings || null;
+            state.emailSettings = settings.settings || null;
+            state.emailTemplates = settings.emailTemplates || [];
+            state.siteModules = { ...DEFAULT_SITE_MODULES, ...((settings.settings && settings.settings.siteModules) || {}) };
+            state.themeCatalog = normalizeThemeCatalog(settings.settings?.themeCatalog || {});
+            renderStripeSettings();
+            renderEmailSettings();
+            renderEmailTemplates();
+            renderSiteModules();
+            renderGlobalThemeSettings();
+          }
+
+          if (schemaFaqEntriesResult.status === 'fulfilled') {
+            state.schemaFaqs = schemaFaqEntriesResult.value || [];
+            renderFaqs();
+          }
+        });
       }
 
       async function loadSession() {
@@ -1546,7 +1541,7 @@
           showMessage(saveMessage, payload.message || 'Admin password reset complete.');
           renderRecoveryPreview('Recovery code consumed.');
           event.target.reset();
-          await withRenderOverlay(() => refreshDashboard(), 'Loading admin dashboard…');
+          await refreshDashboard();
         } catch (error) {
           showMessage(authMessage, error.message);
         }
@@ -1566,7 +1561,7 @@
           });
           event.target.reset();
           showMessage(saveMessage, 'Admin dashboard unlocked.');
-          await withRenderOverlay(() => loadSession(), 'Loading admin dashboard…');
+          await loadSession();
         } catch (error) {
           showMessage(authMessage, error.message);
         }
@@ -2167,7 +2162,7 @@
       renderMembershipGrantMeta();
       renderGlobalThemeSettings();
       resetEmailTemplateForm();
-      withRenderOverlay(() => loadSession(), 'Checking admin session…');
+      loadSession();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

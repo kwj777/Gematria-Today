@@ -126,7 +126,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -516,6 +516,32 @@ export async function handler(event) {
         ORDER BY grouped.clicks DESC, grouped.unique_visitors DESC, grouped.route ASC, grouped.action ASC
         LIMIT 50
       `,
+      sql`
+        SELECT
+          metadata->>'visitorSessionId' AS visitor_session_id,
+          COUNT(*)::int AS event_count,
+          MIN(created_at) AS first_seen_at,
+          MAX(created_at) AS last_seen_at,
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'route', route,
+              'action', action,
+              'pagePath', COALESCE(NULLIF(BTRIM(metadata->>'pagePath'), ''), route),
+              'createdAt', created_at
+            )
+            ORDER BY created_at ASC
+          ) AS events
+        FROM request_audit_log
+        WHERE created_at >= NOW() - ${windowInterval}::interval
+          AND metadata->>'visitorSessionId' IS NOT NULL
+          AND BTRIM(metadata->>'visitorSessionId') <> ''
+          AND route NOT LIKE 'admin-%'
+          AND route <> 'security-retention'
+          AND outcome = 'success'
+        GROUP BY metadata->>'visitorSessionId'
+        ORDER BY last_seen_at DESC
+        LIMIT 50
+      `,
     ]);
 
     const overview = overviewRows[0] || {};
@@ -641,6 +667,20 @@ export async function handler(event) {
         action: row.action,
         outcome: row.outcome,
         createdAt: toIsoDate(row.created_at),
+      })),
+      visitorJourneys: visitorJourneyRows.map((row) => ({
+        visitorSessionId: row.visitor_session_id,
+        eventCount: Number(row.event_count || 0),
+        firstSeenAt: toIsoDate(row.first_seen_at),
+        lastSeenAt: toIsoDate(row.last_seen_at),
+        events: Array.isArray(row.events)
+          ? row.events.slice(0, 20).map((e) => ({
+            route: e.route,
+            action: e.action,
+            pagePath: e.pagePath,
+            createdAt: toIsoDate(e.createdAt),
+          }))
+          : [],
       })),
       detailRows: {
         newMembers: newMembersRows.map((row) => ({

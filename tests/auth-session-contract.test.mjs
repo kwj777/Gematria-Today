@@ -5,6 +5,14 @@ import { handler as adminLogoutHandler } from '../netlify/functions/admin-logout
 import { handler as memberLogoutHandler } from '../netlify/functions/member-logout.mjs';
 import { handler as adminSessionHandler } from '../netlify/functions/admin-session.mjs';
 import { handler as memberSessionHandler } from '../netlify/functions/member-session.mjs';
+import {
+  AUTH_COOKIES,
+  createVisitorSessionCookie,
+  createVisitorSessionToken,
+  getOrCreateVisitorSession,
+  getVisitorSessionToken,
+  parseCookies,
+} from '../netlify/functions/_auth.mjs';
 
 function parseBody(response) {
   return JSON.parse(response.body || '{}');
@@ -57,4 +65,77 @@ test('session endpoints reject non-GET methods with standard error payload', asy
   assert.equal(adminResponse.statusCode, 405);
   assert.deepEqual(parseBody(memberResponse), { error: 'Method not allowed' });
   assert.deepEqual(parseBody(adminResponse), { error: 'Method not allowed' });
+});
+
+test('AUTH_COOKIES includes visitor cookie name', () => {
+  assert.equal(AUTH_COOKIES.visitor, 'endtimes_visitor_session');
+});
+
+test('createVisitorSessionToken returns a 32-char hex string', () => {
+  const token = createVisitorSessionToken();
+  assert.match(token, /^[0-9a-f]{32}$/);
+});
+
+test('createVisitorSessionToken produces unique values', () => {
+  const tokens = new Set(Array.from({ length: 10 }, () => createVisitorSessionToken()));
+  assert.equal(tokens.size, 10);
+});
+
+test('createVisitorSessionCookie returns a valid Set-Cookie header string', () => {
+  const token = createVisitorSessionToken();
+  const cookie = createVisitorSessionCookie(token);
+  assert.ok(cookie.startsWith(`${AUTH_COOKIES.visitor}=`));
+  assert.ok(cookie.includes('Path=/'));
+  assert.ok(cookie.includes('HttpOnly'));
+  assert.ok(cookie.includes('SameSite=Lax'));
+  assert.ok(cookie.includes('Expires='));
+  assert.ok(cookie.includes(encodeURIComponent(token)));
+});
+
+test('getVisitorSessionToken returns null when no cookie is present', () => {
+  const event = { headers: {} };
+  assert.equal(getVisitorSessionToken(event), null);
+});
+
+test('getVisitorSessionToken reads existing visitor cookie', () => {
+  const token = createVisitorSessionToken();
+  const event = {
+    headers: { cookie: `${AUTH_COOKIES.visitor}=${token}` },
+  };
+  assert.equal(getVisitorSessionToken(event), token);
+});
+
+test('getOrCreateVisitorSession creates a new session when no cookie exists', () => {
+  const event = { headers: {} };
+  const result = getOrCreateVisitorSession(event);
+  assert.ok(result.isNew);
+  assert.match(result.visitorSessionId, /^[0-9a-f]{32}$/);
+  assert.ok(typeof result.visitorCookie === 'string');
+  assert.ok(result.visitorCookie.includes(AUTH_COOKIES.visitor));
+});
+
+test('getOrCreateVisitorSession returns existing session when cookie is present', () => {
+  const token = createVisitorSessionToken();
+  const event = {
+    headers: { cookie: `${AUTH_COOKIES.visitor}=${token}` },
+  };
+  const result = getOrCreateVisitorSession(event);
+  assert.equal(result.isNew, false);
+  assert.equal(result.visitorSessionId, token);
+  assert.equal(result.visitorCookie, null);
+});
+
+test('getOrCreateVisitorSession does not affect admin or member cookies', () => {
+  const adminToken = 'abc123';
+  const memberToken = 'def456';
+  const event = {
+    headers: {
+      cookie: `${AUTH_COOKIES.admin}=${adminToken}; ${AUTH_COOKIES.member}=${memberToken}`,
+    },
+  };
+  const result = getOrCreateVisitorSession(event);
+  assert.ok(result.isNew);
+  const cookies = parseCookies(event);
+  assert.equal(cookies[AUTH_COOKIES.admin], adminToken);
+  assert.equal(cookies[AUTH_COOKIES.member], memberToken);
 });

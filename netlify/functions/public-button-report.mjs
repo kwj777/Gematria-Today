@@ -1,4 +1,4 @@
-import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
+import { getOptionalAuthenticatedSession, getOrCreateVisitorSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 
 function safeString(value, fallback = '') {
@@ -79,6 +79,7 @@ export async function handler(event) {
       });
     }
 
+    const { visitorSessionId, isNew, visitorCookie } = getOrCreateVisitorSession(event);
     const normalizedMetadata = normalizeMetadata(payload.metadata);
     const audienceType = user && user.role === 'member' ? 'member' : 'visitor';
 
@@ -90,10 +91,12 @@ export async function handler(event) {
         ...normalizedMetadata,
         audienceType,
         authenticated: audienceType === 'member' ? 'true' : (normalizedMetadata.authenticated || 'false'),
+        visitorSessionId,
       },
     });
 
-    return jsonResponse(202, { ok: true });
+    const responseHeaders = isNew ? { 'set-cookie': visitorCookie } : {};
+    return jsonResponse(202, { ok: true }, responseHeaders);
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to store button tracking event' }, error.headers || {});
   }

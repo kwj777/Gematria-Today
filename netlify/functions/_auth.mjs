@@ -104,7 +104,38 @@ export async function consumeAccountRecoveryRequest(sql, {
 export const AUTH_COOKIES = {
   admin: 'endtimes_admin_session',
   member: 'endtimes_member_session',
+  visitor: 'endtimes_visitor_session',
 };
+
+const VISITOR_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+
+export function getVisitorSessionToken(event) {
+  const cookies = parseCookies(event);
+  return cookies[AUTH_COOKIES.visitor] || null;
+}
+
+export function createVisitorSessionToken() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+export function createVisitorSessionCookie(token) {
+  const expiresAt = new Date(Date.now() + VISITOR_SESSION_TTL_MS);
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${AUTH_COOKIES.visitor}=${encodeURIComponent(token)}; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+}
+
+export function getOrCreateVisitorSession(event) {
+  const existing = getVisitorSessionToken(event);
+  if (existing) {
+    return { visitorSessionId: existing, isNew: false, visitorCookie: null };
+  }
+  const token = createVisitorSessionToken();
+  return { visitorSessionId: token, isNew: true, visitorCookie: createVisitorSessionCookie(token) };
+}
 
 export function getSqlClient() {
   if (!process.env.DATABASE_URL) {

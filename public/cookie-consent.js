@@ -6,6 +6,12 @@
   window.__endTimesCookieConsentInstalled = true;
 
   var CONSENT_KEY = 'endtimes_cookie_consent';
+  var CONSENT_MODE_REGIONS = Array.isArray(window.ENDTIMES_CONSENT_MODE_REGIONS)
+    ? window.ENDTIMES_CONSENT_MODE_REGIONS
+    : [
+        'AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IS',
+        'IT', 'LI', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK', 'GB',
+      ];
 
   function getConsent() {
     try {
@@ -23,6 +29,23 @@
     }
   }
 
+  function isRegionScopedForBanner() {
+    try {
+      var timeZone = String((Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || '');
+      if (!timeZone) {
+        return true;
+      }
+
+      if (timeZone.indexOf('Europe/') === 0) {
+        return true;
+      }
+
+      return ['Atlantic/Canary', 'Atlantic/Faroe', 'Atlantic/Madeira', 'Atlantic/Reykjavik'].indexOf(timeZone) !== -1;
+    } catch (e) {
+      return true;
+    }
+  }
+
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
@@ -31,6 +54,21 @@
     } catch (e) {
       return false;
     }
+  }
+
+  function applyConsentMode(accepted) {
+    if (window.__endTimesGoogleAnalyticsEnabled !== true || typeof window.gtag !== 'function') {
+      return;
+    }
+
+    var status = accepted ? 'granted' : 'denied';
+    window.gtag('consent', 'update', {
+      analytics_storage: status,
+      ad_storage: status,
+      ad_user_data: status,
+      ad_personalization: status,
+      region: CONSENT_MODE_REGIONS,
+    });
   }
 
   function fireConsentEvent(accepted) {
@@ -68,7 +106,7 @@
     banner.innerHTML =
       '<div class="cookie-consent-inner">' +
       '<p class="cookie-consent-text">' +
-      'We use a session cookie to analyze anonymous site usage. No personal data is collected or shared with third parties. ' +
+      'We use analytics cookies to understand anonymous site usage and improve the experience. ' +
       '<a href="/privacy.html" class="cookie-consent-link">Privacy Policy</a>' +
       '</p>' +
       '<div class="cookie-consent-actions">' +
@@ -88,12 +126,14 @@
 
     document.getElementById('cookieConsentAccept').addEventListener('click', function () {
       setConsent('accepted');
+      applyConsentMode(true);
       fireConsentEvent(true);
       hideBanner(banner);
     });
 
     document.getElementById('cookieConsentDecline').addEventListener('click', function () {
       setConsent('declined');
+      applyConsentMode(false);
       fireConsentEvent(false);
       hideBanner(banner);
     });
@@ -103,10 +143,18 @@
   window.endTimesCookieConsent = Object.freeze({
     getConsent: getConsent,
     CONSENT_KEY: CONSENT_KEY,
+    consentModeRegions: CONSENT_MODE_REGIONS.slice(),
   });
 
-  // Skip for admin sessions or when the user has already decided.
-  if (isAdminSession() || getConsent() !== null) {
+  var savedConsent = getConsent();
+  if (savedConsent === 'accepted') {
+    applyConsentMode(true);
+  } else if (savedConsent === 'declined') {
+    applyConsentMode(false);
+  }
+
+  // Skip for admin sessions, out-of-scope regions, or when the user has already decided.
+  if (isAdminSession() || !isRegionScopedForBanner() || savedConsent !== null) {
     return;
   }
 

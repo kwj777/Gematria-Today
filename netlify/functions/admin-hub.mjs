@@ -105,6 +105,10 @@ async function upsertNetlifySiteEnvVar(siteId, key, value) {
   };
 
   const listResult = await request(`/sites/${encodeURIComponent(siteId)}/env`);
+  if (!listResult.ok) {
+    const message = listResult.payload?.message || 'Unable to read env vars from Netlify';
+    throw Object.assign(new Error(message), { statusCode: listResult.status || 502 });
+  }
   const envVars = Array.isArray(listResult.payload) ? listResult.payload : [];
   const existingVar = envVars.find((item) => String(item?.key || '').trim() === key);
 
@@ -256,7 +260,16 @@ async function handlePost(sql, user, event) {
     }
 
     const sharedSecret = generateSharedSecret();
-    await upsertNetlifySiteEnvVar(netlifySiteId, 'HUB_SHARED_SECRET', sharedSecret);
+    let netlifySync = { saved: true };
+    try {
+      await upsertNetlifySiteEnvVar(netlifySiteId, 'HUB_SHARED_SECRET', sharedSecret);
+    } catch (error) {
+      netlifySync = {
+        saved: false,
+        error: error?.message || 'Unable to store HUB_SHARED_SECRET in Netlify automatically',
+        statusCode: error?.statusCode || 502,
+      };
+    }
 
     const nextSites = [...sites];
     nextSites[siteIndex] = {
@@ -269,8 +282,14 @@ async function handlePost(sql, user, event) {
 
     return jsonResponse(200, {
       saved: true,
-      site: { id: existingSite.id, name: existingSite.name, url: existingSite.url, netlifySiteId },
+      site: {
+        id: nextSites[siteIndex]?.id,
+        name: nextSites[siteIndex]?.name,
+        url: nextSites[siteIndex]?.url,
+        netlifySiteId,
+      },
       sharedSecret,
+      netlifySync,
     });
   }
 

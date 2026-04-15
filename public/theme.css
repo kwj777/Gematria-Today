@@ -1,5 +1,19 @@
 .navbar-brand { letter-spacing: 0.04em; }
 
+.navbar-nav {
+  align-items: stretch;
+}
+
+.navbar-nav .nav-item {
+  display: flex;
+  align-items: stretch;
+}
+
+.navbar-nav .nav-link {
+  display: flex;
+  align-items: center;
+}
+
 .nav-search-link {
   font-size: 1.25rem;
   line-height: 1;

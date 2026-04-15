@@ -134,13 +134,13 @@
           </section>
 
           <!-- Manage sites -->
-          <section class="content-panel p-4 mb-4">
+          <section id="shared-secret-config" class="content-panel p-4 mb-4">
             <p class="section-kicker mb-1">Configuration</p>
             <h2 class="h5 mb-3">Manage registered sites</h2>
 
             <p class="text-muted small mb-3">
               Each spoke site must have a <code>HUB_SHARED_SECRET</code> environment variable set to a unique random
-              string. Generate one with:
+              string. You can generate + store one below if this hub has <code>NETLIFY_API_TOKEN</code> configured. Manual fallback:
               <code>node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code>
             </p>
 
@@ -355,24 +355,65 @@
             '<label class="form-label small mb-1">ID</label>' +
             '<input class="form-control form-control-sm field-id" value="' + escHtml(site.id || '') + '" placeholder="site-1" />' +
           '</div>' +
-          '<div class="col-md-3">' +
+          '<div class="col-md-2">' +
             '<label class="form-label small mb-1">Name</label>' +
             '<input class="form-control form-control-sm field-name" value="' + escHtml(site.name || '') + '" placeholder="My Site" />' +
           '</div>' +
-          '<div class="col-md-3">' +
+          '<div class="col-md-2">' +
             '<label class="form-label small mb-1">URL</label>' +
             '<input class="form-control form-control-sm field-url" value="' + escHtml(site.url || '') + '" placeholder="https://example.com" />' +
           '</div>' +
-          '<div class="col-md-3">' +
+          '<div class="col-md-2">' +
+            '<label class="form-label small mb-1">Netlify Site ID</label>' +
+            '<input class="form-control form-control-sm field-netlify-site-id" value="' + escHtml(site.netlifySiteId || '') + '" placeholder="1234abcd-..." autocomplete="off" />' +
+          '</div>' +
+          '<div class="col-md-2">' +
             '<label class="form-label small mb-1">Shared Secret <span class="text-muted">(HUB_SHARED_SECRET)</span></label>' +
             '<input class="form-control form-control-sm field-secret" type="password" value="' + escHtml(site.sharedSecret || '') + '" placeholder="Leave blank to keep existing" autocomplete="off" />' +
           '</div>' +
-          '<div class="col-md-1 d-flex align-items-end">' +
-            '<button class="btn btn-outline-danger btn-sm remove-site-btn w-100" type="button" title="Remove site">&#x2715;</button>' +
+          '<div class="col-md-2 d-grid gap-2">' +
+            '<button class="btn btn-outline-primary btn-sm store-secret-btn" type="button">Generate & store</button>' +
+            '<button class="btn btn-outline-danger btn-sm remove-site-btn" type="button" title="Remove site">Remove</button>' +
           '</div>';
 
         row.querySelector('.remove-site-btn').addEventListener('click', function () {
           row.remove();
+        });
+
+        row.querySelector('.store-secret-btn').addEventListener('click', function () {
+          var siteId = row.querySelector('.field-id').value.trim();
+          if (!siteId) {
+            showMessage('Enter and save a site ID before generating a shared secret.', 'warning');
+            return;
+          }
+
+          var btn = row.querySelector('.store-secret-btn');
+          btn.disabled = true;
+          btn.textContent = 'Saving...';
+
+          fetch('/api/admin-hub', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'generate-shared-secret', siteId: siteId }),
+          })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              btn.disabled = false;
+              btn.textContent = 'Generate & store';
+
+              if (!data.saved || !data.sharedSecret) {
+                throw new Error(data.error || 'Could not save HUB_SHARED_SECRET');
+              }
+
+              row.querySelector('.field-secret').value = data.sharedSecret;
+              showMessage('Generated and stored HUB_SHARED_SECRET in Netlify for ' + siteId + '.', 'success');
+            })
+            .catch(function (error) {
+              btn.disabled = false;
+              btn.textContent = 'Generate & store';
+              showMessage(error.message || 'Unable to generate shared secret.', 'danger');
+            });
         });
 
         return row;
@@ -399,8 +440,9 @@
           var name = row.querySelector('.field-name').value.trim();
           var url = row.querySelector('.field-url').value.trim();
           var secret = row.querySelector('.field-secret').value.trim();
+          var netlifySiteId = row.querySelector('.field-netlify-site-id').value.trim();
 
-          if (!id && !name && !url && !secret) return; // skip blank rows
+          if (!id && !name && !url && !secret && !netlifySiteId) return; // skip blank rows
 
           // When the secret field is blank, carry the existing secret from
           // the loaded site list (so admins don't have to re-enter it on every save).
@@ -412,7 +454,7 @@
             existingSecret = '__keep__';
           }
 
-          sites.push({ id: id, name: name, url: url, sharedSecret: secret || existingSecret });
+          sites.push({ id: id, name: name, url: url, netlifySiteId: netlifySiteId, sharedSecret: secret || existingSecret });
         });
 
         var saveResult = document.getElementById('saveResult');

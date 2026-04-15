@@ -51,6 +51,55 @@ function generateHubToken(userId, sharedSecret) {
   return `${payloadB64}.${sig}`;
 }
 
+
+function generateSharedSecret() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+async function upsertNetlifySiteEnvVar(siteId, key, value) {
+  const token = String(process.env.NETLIFY_API_TOKEN || '').trim();
+  if (!token) {
+    throw Object.assign(new Error('NETLIFY_API_TOKEN is not configured on the hub site'), { statusCode: 503 });
+  }
+
+  const envPayload = {
+    values: [{ value: String(value), context: 'all' }],
+    is_secret: true,
+  };
+
+  const request = async (path, options = {}) => {
+    const response = await fetch(`https://api.netlify.com/api/v1${path}`, {
+      method: options.method || 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    return { ok: response.ok, status: response.status, payload };
+  };
+
+  const patchResult = await request(`/sites/${encodeURIComponent(siteId)}/env/${encodeURIComponent(key)}`, {
+    method: 'PATCH',
+    body: envPayload,
+  });
+  if (patchResult.ok) return;
+
+  const postResult = await request(`/sites/${encodeURIComponent(siteId)}/env`, {
+    method: 'POST',
+    body: {
+      key,
+      ...envPayload,
+    },
+  });
+  if (postResult.ok) return;
+
+  const message = postResult.payload?.message || patchResult.payload?.message || 'Unable to save env var in Netlify';
+  throw Object.assign(new Error(message), { statusCode: postResult.status || patchResult.status || 502 });
+}
+
 // ---------------------------------------------------------------------------
 // Site registry helpers
 // ---------------------------------------------------------------------------
@@ -82,6 +131,7 @@ function validateSites(raw, existingSites = []) {
     const name = String(site.name || '').trim();
     const url = String(site.url || '').trim();
     let sharedSecret = String(site.sharedSecret || '').trim();
+    const netlifySiteId = String(site.netlifySiteId || '').trim();
 
     if (!id) throw Object.assign(new Error(`Site at index ${i} is missing an id`), { statusCode: 400 });
     if (!name) throw Object.assign(new Error(`Site "${id}" is missing a name`), { statusCode: 400 });
@@ -94,7 +144,7 @@ function validateSites(raw, existingSites = []) {
 
     if (!sharedSecret) throw Object.assign(new Error(`Site "${id}" is missing a sharedSecret`), { statusCode: 400 });
 
-    return { id, name, url: url.replace(/\/$/, ''), sharedSecret };
+    return { id, name, url: url.replace(/\/$/, ''), sharedSecret, netlifySiteId };
   });
 }
 
@@ -105,7 +155,7 @@ function validateSites(raw, existingSites = []) {
 async function handleGet(sql, _user) {
   const sites = await getHubSites(sql);
   return jsonResponse(200, {
-    sites: sites.map(({ id, name, url }) => ({ id, name, url })),
+    sites: sites.map(({ id, name, url, netlifySiteId }) => ({ id, name, url, netlifySiteId: netlifySiteId || '' })),
   });
 }
 
@@ -130,13 +180,41 @@ async function handlePost(sql, user, event) {
     });
   }
 
+  if (action === 'generate-shared-secret') {
+    const siteId = String(body.siteId || '').trim();
+    if (!siteId) return jsonResponse(400, { error: 'siteId is required' });
+
+    const sites = await getHubSites(sql);
+    const siteIndex = sites.findIndex((site) => site.id === siteId);
+    if (siteIndex === -1) return jsonResponse(404, { error: 'Site not found' });
+
+    const existingSite = sites[siteIndex] || {};
+    const netlifySiteId = String(existingSite.netlifySiteId || '').trim();
+    if (!netlifySiteId) {
+      return jsonResponse(400, { error: 'This site is missing Netlify Site ID. Save one first, then try again.' });
+    }
+
+    const sharedSecret = generateSharedSecret();
+    await upsertNetlifySiteEnvVar(netlifySiteId, 'HUB_SHARED_SECRET', sharedSecret);
+
+    const nextSites = [...sites];
+    nextSites[siteIndex] = { ...existingSite, sharedSecret };
+    await upsertSetting(sql, 'hub_sites', JSON.stringify(nextSites), user.id);
+
+    return jsonResponse(200, {
+      saved: true,
+      site: { id: existingSite.id, name: existingSite.name, url: existingSite.url, netlifySiteId },
+      sharedSecret,
+    });
+  }
+
   if (action === 'save-sites') {
     const existingSites = await getHubSites(sql);
     const sites = validateSites(body.sites, existingSites);
     await upsertSetting(sql, 'hub_sites', JSON.stringify(sites), user.id);
     return jsonResponse(200, {
       saved: true,
-      sites: sites.map(({ id, name, url }) => ({ id, name, url })),
+      sites: sites.map(({ id, name, url, netlifySiteId }) => ({ id, name, url, netlifySiteId: netlifySiteId || '' })),
     });
   }
 

@@ -20,7 +20,15 @@ const HUB_TOKEN_TTL_MS = 5 * 60 * 1000; // 5 minutes
 function getHubSecret() {
   const secret = String(process.env.HUB_SHARED_SECRET || '').trim();
   if (!secret) {
-    throw Object.assign(new Error('HUB_SHARED_SECRET is not configured on this site'), { statusCode: 503 });
+    const siteId = String(process.env.SITE_ID || '').trim() || 'unknown';
+    const context = String(process.env.CONTEXT || process.env.BRANCH || '').trim() || 'unknown';
+    throw Object.assign(
+      new Error(
+        `HUB_SHARED_SECRET is not configured for this deploy context (site: ${siteId}, context: ${context}). ` +
+          'Set HUB_SHARED_SECRET on the spoke site, ensure the value is available to Functions for this context, then redeploy.',
+      ),
+      { statusCode: 503 },
+    );
   }
   return secret;
 }

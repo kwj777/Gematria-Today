@@ -9,15 +9,13 @@
     wordnik_wotd_slider: true,
     blog_home_slider: false,
     blog_home_featured_grid: true,
-    google_analytics: false,
   });
 
   const STORAGE_KEY = 'endtimes.siteModules';
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
   let activeModules = { ...DEFAULT_MODULES };
   let superAdminCanOverrideModules = false;
-  let googleAnalyticsMeasurementId = '';
-  let googleAnalyticsLoaded = false;
+  let turnstileSiteKey = '';
 
   const parseModuleOverrides = (rawValue) => {
     if (!rawValue || typeof rawValue !== 'object') {
@@ -202,7 +200,6 @@
       ['wordnik_wotd_slider', 'Word of the Day'],
       ['blog_home_slider', 'Home Blog Slider'],
       ['blog_home_featured_grid', 'Home Featured Grid'],
-      ['google_analytics', 'Google Analytics'],
     ];
 
     const panel = existingPanel || document.createElement('div');
@@ -254,33 +251,11 @@
       const payload = await response.json();
       return {
         modules: parseModuleOverrides(payload?.modules),
-        googleAnalyticsMeasurementId: String(payload?.googleAnalyticsMeasurementId || '').trim().toUpperCase(),
+        turnstileSiteKey: String(payload?.turnstileSiteKey || '').trim(),
       };
     } catch {
-      return { modules: {}, googleAnalyticsMeasurementId: '' };
+      return { modules: {}, turnstileSiteKey: '' };
     }
-  };
-
-  const applyGoogleAnalytics = () => {
-    if (googleAnalyticsLoaded || !isEnabled('google_analytics') || !googleAnalyticsMeasurementId) {
-      return;
-    }
-
-    const scriptSrc = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsMeasurementId)}`;
-    if (!document.querySelector(`script[src*="${googleAnalyticsMeasurementId}"]`)) {
-      const externalScript = document.createElement('script');
-      externalScript.async = true;
-      externalScript.src = scriptSrc;
-      document.head.appendChild(externalScript);
-    }
-
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || function gtag() {
-      window.dataLayer.push(arguments);
-    };
-    window.gtag('js', new Date());
-    window.gtag('config', googleAnalyticsMeasurementId);
-    googleAnalyticsLoaded = true;
   };
 
   const isSuperAdminSession = async () => {
@@ -306,7 +281,8 @@
       isSuperAdminSession(),
     ]);
     superAdminCanOverrideModules = canOverride;
-    googleAnalyticsMeasurementId = String(globalSettings.googleAnalyticsMeasurementId || '').trim().toUpperCase();
+    turnstileSiteKey = String(globalSettings.turnstileSiteKey || '').trim();
+    window.ENDTIMES_TURNSTILE_SITE_KEY = turnstileSiteKey;
 
     activeModules = {
       ...DEFAULT_MODULES,
@@ -324,7 +300,6 @@
 
     renderSuperAdminTogglePanel();
     applyModuleVisibility();
-    applyGoogleAnalytics();
   };
 
   window.EndTimesModules = Object.freeze({

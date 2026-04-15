@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS = {
   sendgridFromName: '',
   sendgridReplyToEmail: '',
   sendgridApiKey: '',
+  turnstileSiteKey: '',
   publicSiteUrl: '',
   googleAnalyticsMeasurementId: '',
   siteModules: {},
@@ -55,6 +56,7 @@ function normalizeSettings(body = {}) {
   const hasThemeCatalog = Object.hasOwn(body, 'themeCatalog');
   const hasPrivateThemeCatalog = Object.hasOwn(body, 'privateThemeCatalog');
   const hasGoogleAnalyticsMeasurementId = Object.hasOwn(body, 'googleAnalyticsMeasurementId');
+  const hasTurnstileSiteKey = Object.hasOwn(body, 'turnstileSiteKey');
   return {
     stripeAccountId: String(body.stripeAccountId ?? '').trim(),
     stripePublishableKey: String(body.stripePublishableKey ?? '').trim(),
@@ -66,6 +68,7 @@ function normalizeSettings(body = {}) {
     sendgridFromName: String(body.sendgridFromName ?? '').trim(),
     sendgridReplyToEmail: String(body.sendgridReplyToEmail ?? '').trim().toLowerCase(),
     sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
+    turnstileSiteKey: hasTurnstileSiteKey ? String(body.turnstileSiteKey ?? '').trim() : undefined,
     publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
     googleAnalyticsMeasurementId: hasGoogleAnalyticsMeasurementId
       ? String(body.googleAnalyticsMeasurementId ?? '').trim().toUpperCase().slice(0, 32)
@@ -147,6 +150,7 @@ function serializeSettings(settings = {}) {
     sendgridFromEmail: settings.sendgridFromEmail || '',
     sendgridFromName: settings.sendgridFromName || '',
     sendgridReplyToEmail: settings.sendgridReplyToEmail || '',
+    turnstileSiteKey: settings.turnstileSiteKey || '',
     publicSiteUrl: settings.publicSiteUrl || '',
     googleAnalyticsMeasurementId: settings.googleAnalyticsMeasurementId || '',
     hasSendgridApiKey: Boolean(settings.sendgridApiKey),
@@ -173,6 +177,7 @@ function mapSettingsFromRows(rows = []) {
     if (row.setting_key === 'sendgrid_from_name') settings.sendgridFromName = row.setting_value || '';
     if (row.setting_key === 'sendgrid_reply_to_email') settings.sendgridReplyToEmail = row.setting_value || '';
     if (row.setting_key === 'sendgrid_api_key') settings.sendgridApiKey = row.setting_value || '';
+    if (row.setting_key === 'turnstile_site_key') settings.turnstileSiteKey = row.setting_value || '';
     if (row.setting_key === 'public_site_url') settings.publicSiteUrl = row.setting_value || '';
     if (row.setting_key === 'google_analytics_measurement_id') settings.googleAnalyticsMeasurementId = row.setting_value || '';
     if (row.setting_key === 'site_modules') {
@@ -223,6 +228,7 @@ function getSettingsRows(sql) {
     FROM admin_settings
     WHERE setting_key LIKE 'stripe_%'
       OR setting_key LIKE 'sendgrid_%'
+      OR setting_key = 'turnstile_site_key'
       OR setting_key = 'public_site_url'
       OR setting_key = 'google_analytics_measurement_id'
       OR setting_key = 'site_modules'
@@ -291,6 +297,9 @@ export async function handler(event) {
         sendgridFromName: settings.sendgridFromName,
         sendgridReplyToEmail: settings.sendgridReplyToEmail,
         sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
+        turnstileSiteKey: settings.turnstileSiteKey === undefined
+          ? existingSettings.turnstileSiteKey
+          : settings.turnstileSiteKey,
         publicSiteUrl: settings.publicSiteUrl,
         googleAnalyticsMeasurementId: settings.googleAnalyticsMeasurementId === undefined
           ? existingSettings.googleAnalyticsMeasurementId
@@ -314,6 +323,7 @@ export async function handler(event) {
         ['sendgrid_from_name', nextSettings.sendgridFromName],
         ['sendgrid_reply_to_email', nextSettings.sendgridReplyToEmail],
         ['sendgrid_api_key', nextSettings.sendgridApiKey],
+        ['turnstile_site_key', nextSettings.turnstileSiteKey],
         ['public_site_url', nextSettings.publicSiteUrl],
         ['google_analytics_measurement_id', nextSettings.googleAnalyticsMeasurementId],
         ['site_modules', JSON.stringify(nextSettings.siteModules || {})],

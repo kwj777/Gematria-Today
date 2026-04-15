@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-R9DF4BNCR2"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -64,8 +63,42 @@
       region: consentModeRegions
     });
 
-    gtag('js', new Date());
-    gtag('config', gaMeasurementId);
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+
+    function scheduleGoogleAnalyticsInitialization() {
+      var runWhenIdle = function () {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
+          return;
+        }
+
+        window.setTimeout(initializeGoogleAnalytics, 1500);
+      };
+
+      if (document.readyState === 'complete') {
+        runWhenIdle();
+        return;
+      }
+
+      window.addEventListener('load', runWhenIdle, { once: true });
+    }
+
+    scheduleGoogleAnalyticsInitialization();
   }
 </script>
 

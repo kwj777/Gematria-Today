@@ -127,6 +127,8 @@
 
   // Wire up interactive controls after the DOM is ready.
   document.addEventListener('DOMContentLoaded', function () {
+    updateThemeToggleButton(normalizeTheme(document.documentElement.getAttribute('data-bs-theme')));
+
     var themeToggleButton = document.getElementById('themeToggleButton');
     if (themeToggleButton) {
       themeToggleButton.addEventListener('click', function () {

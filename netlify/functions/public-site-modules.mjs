@@ -22,14 +22,18 @@ export async function handler(event) {
         const rows = await sql`
           SELECT setting_key, setting_value
           FROM admin_settings
-          WHERE setting_key IN ('site_modules', 'google_analytics_measurement_id')
+          WHERE setting_key IN ('site_modules', 'google_analytics_measurement_id', 'turnstile_site_key')
         `;
 
         let parsed = null;
         let googleAnalyticsMeasurementId = '';
+        let turnstileSiteKey = String(process.env.TURNSTILE_SITE_KEY || '').trim();
         rows.forEach((row) => {
           if (row.setting_key === 'google_analytics_measurement_id') {
             googleAnalyticsMeasurementId = String(row.setting_value || '').trim().toUpperCase();
+          }
+          if (row.setting_key === 'turnstile_site_key') {
+            turnstileSiteKey = String(row.setting_value || '').trim();
           }
         });
 
@@ -45,6 +49,7 @@ export async function handler(event) {
         return {
           modules: normalizeSiteModules(parsed),
           googleAnalyticsMeasurementId,
+          turnstileSiteKey,
         };
       },
     });

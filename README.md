@@ -210,6 +210,7 @@ Set these in Netlify to tune protection behavior:
 - `ALERT_WORDNIK_DEFINITION_SPIKE_5M=120` for definition endpoint spike alerts
 - `ALERT_WORDNIK_RELATED_WORDS_SPIKE_5M=80` for related words endpoint spike alerts
 - `TURNSTILE_SECRET_KEY=...` if you want auth flows to require and verify a client-side anti-bot challenge token against Cloudflare Turnstile
+- `TURNSTILE_SITE_KEY=...` optional fallback public Turnstile site key used when no admin-stored key is set
 - `TURNSTILE_EXPECTED_HOSTNAME=...` to pin Turnstile verification to a specific hostname instead of deriving it from the incoming request host header
 - `SENDGRID_API_KEY=...` to enable transactional email delivery for admin/member account recovery
 - `SENDGRID_FROM_EMAIL=...` verified sender address used for recovery emails

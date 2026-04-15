@@ -15,6 +15,7 @@
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
   let activeModules = { ...DEFAULT_MODULES };
   let superAdminCanOverrideModules = false;
+  let turnstileSiteKey = '';
 
   const parseModuleOverrides = (rawValue) => {
     if (!rawValue || typeof rawValue !== 'object') {
@@ -248,9 +249,12 @@
         return {};
       }
       const payload = await response.json();
-      return parseModuleOverrides(payload?.modules);
+      return {
+        modules: parseModuleOverrides(payload?.modules),
+        turnstileSiteKey: String(payload?.turnstileSiteKey || '').trim(),
+      };
     } catch {
-      return {};
+      return { modules: {}, turnstileSiteKey: '' };
     }
   };
 
@@ -272,15 +276,17 @@
   };
 
   const applyModuleSettings = async () => {
-    const [globalModules, canOverride] = await Promise.all([
+    const [globalSettings, canOverride] = await Promise.all([
       fetchGlobalModules(),
       isSuperAdminSession(),
     ]);
     superAdminCanOverrideModules = canOverride;
+    turnstileSiteKey = String(globalSettings.turnstileSiteKey || '').trim();
+    window.ENDTIMES_TURNSTILE_SITE_KEY = turnstileSiteKey;
 
     activeModules = {
       ...DEFAULT_MODULES,
-      ...globalModules,
+      ...(globalSettings.modules || {}),
       ...parseModuleOverrides(window.SITE_MODULE_OVERRIDES || {}),
     };
 

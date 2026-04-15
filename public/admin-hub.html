@@ -371,50 +371,9 @@
             '<label class="form-label small mb-1">Shared Secret <span class="text-muted">(HUB_SHARED_SECRET)</span></label>' +
             '<input class="form-control form-control-sm field-secret" type="password" value="' + escHtml(site.sharedSecret || '') + '" placeholder="Leave blank to keep existing" autocomplete="off" />' +
           '</div>' +
-          '<div class="col-md-2 d-grid gap-2">' +
-            '<button class="btn btn-outline-primary btn-sm store-secret-btn" type="button">Generate & store</button>' +
-            '<button class="btn btn-outline-danger btn-sm remove-site-btn" type="button" title="Remove site">Remove</button>' +
+          '<div class="col-md-2">' +
+            '<p class="small text-muted mb-2">Manage secret + removal from this site\'s <a href="/admin-super-admin.html">Super Admin</a> page.</p>' +
           '</div>';
-
-        row.querySelector('.remove-site-btn').addEventListener('click', function () {
-          row.remove();
-        });
-
-        row.querySelector('.store-secret-btn').addEventListener('click', function () {
-          var siteId = row.querySelector('.field-id').value.trim();
-          if (!siteId) {
-            showMessage('Enter and save a site ID before generating a shared secret.', 'warning');
-            return;
-          }
-
-          var btn = row.querySelector('.store-secret-btn');
-          btn.disabled = true;
-          btn.textContent = 'Saving...';
-
-          fetch('/api/admin-hub', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'generate-shared-secret', siteId: siteId }),
-          })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-              btn.disabled = false;
-              btn.textContent = 'Generate & store';
-
-              if (!data.saved || !data.sharedSecret) {
-                throw new Error(data.error || 'Could not save HUB_SHARED_SECRET');
-              }
-
-              row.querySelector('.field-secret').value = data.sharedSecret;
-              showMessage('Generated and stored HUB_SHARED_SECRET in Netlify for ' + siteId + '.', 'success');
-            })
-            .catch(function (error) {
-              btn.disabled = false;
-              btn.textContent = 'Generate & store';
-              showMessage(error.message || 'Unable to generate shared secret.', 'danger');
-            });
-        });
 
         return row;
       }

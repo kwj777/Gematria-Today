@@ -104,11 +104,19 @@ async function upsertNetlifySiteEnvVar(siteId, key, value) {
     return { ok: response.ok, status: response.status, payload };
   };
 
-  const patchResult = await request(`/sites/${encodeURIComponent(siteId)}/env/${encodeURIComponent(key)}`, {
-    method: 'PATCH',
-    body: envPayload,
-  });
-  if (patchResult.ok) return;
+  const listResult = await request(`/sites/${encodeURIComponent(siteId)}/env`);
+  const envVars = Array.isArray(listResult.payload) ? listResult.payload : [];
+  const existingVar = envVars.find((item) => String(item?.key || '').trim() === key);
+
+  if (existingVar?.id) {
+    const patchResult = await request(`/sites/${encodeURIComponent(siteId)}/env/${encodeURIComponent(existingVar.id)}`, {
+      method: 'PATCH',
+      body: envPayload,
+    });
+    if (patchResult.ok) return;
+    const message = patchResult.payload?.message || 'Unable to update env var in Netlify';
+    throw Object.assign(new Error(message), { statusCode: patchResult.status || 502 });
+  }
 
   const postResult = await request(`/sites/${encodeURIComponent(siteId)}/env`, {
     method: 'POST',
@@ -119,8 +127,8 @@ async function upsertNetlifySiteEnvVar(siteId, key, value) {
   });
   if (postResult.ok) return;
 
-  const message = postResult.payload?.message || patchResult.payload?.message || 'Unable to save env var in Netlify';
-  throw Object.assign(new Error(message), { statusCode: postResult.status || patchResult.status || 502 });
+  const message = postResult.payload?.message || 'Unable to save env var in Netlify';
+  throw Object.assign(new Error(message), { statusCode: postResult.status || 502 });
 }
 
 // ---------------------------------------------------------------------------

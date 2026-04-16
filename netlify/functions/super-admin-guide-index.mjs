@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getAuthenticatedUser } from './_admin.mjs';
 
 const GUIDE_SUFFIX = '-site-adaptation-guide.html';
@@ -46,7 +47,7 @@ export async function handler(event) {
     };
   }
 
-  const secureDirPath = path.fileURLToPath(SECURE_GUIDE_ROOT);
+  const secureDirPath = fileURLToPath(SECURE_GUIDE_ROOT);
   let entries = [];
   try {
     entries = await fs.readdir(secureDirPath, { withFileTypes: true });

@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getAuthenticatedUser } from './_admin.mjs';
 
 const GUIDE_SUFFIX = '-site-adaptation-guide.html';
@@ -67,7 +68,7 @@ export async function handler(event) {
     };
   }
 
-  const absoluteFilePath = path.join(path.fileURLToPath(SECURE_GUIDE_ROOT), requestedFile);
+  const absoluteFilePath = path.join(fileURLToPath(SECURE_GUIDE_ROOT), requestedFile);
   let content = '';
   try {
     content = await fs.readFile(absoluteFilePath, 'utf8');

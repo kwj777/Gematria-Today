@@ -23,28 +23,14 @@
   status = 301
 
 [[redirects]]
-  from = "/architect-site-adaptation-guide.html"
-  to = "/.netlify/functions/site-adaptation-guide"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/:guide-site-adaptation-guide.html"
-  to = "/.netlify/functions/site-adaptation-guide"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/architect-site-adaptation-guide.md"
-  to = "/.netlify/functions/site-adaptation-guide"
-  status = 200
-  force = true
+  to = "/architect-site-adaptation-guide.html"
+  status = 301
 
 [[redirects]]
   from = "/:guide-site-adaptation-guide.md"
-  to = "/.netlify/functions/site-adaptation-guide"
-  status = 200
-  force = true
+  to = "/:guide-site-adaptation-guide.html"
+  status = 301
 
 [[redirects]]
   from = "/api/*"
@@ -90,18 +76,6 @@
   from = "/assets/icons/icon-maskable-512.png"
   to = "/.netlify/functions/pwa-icon?size=512&variant=maskable"
   status = 200
-
-[[headers]]
-  for = "/*-site-adaptation-guide.html"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet"
-    Cache-Control = "no-store"
-
-[[headers]]
-  for = "/*-site-adaptation-guide.md"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet"
-    Cache-Control = "no-store"
 
 [[headers]]
   for = "/*"
@@ -166,9 +140,6 @@
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"
-
-[functions."site-adaptation-guide"]
-  included_files = ["public/*-site-adaptation-guide.html", "public/*-site-adaptation-guide.md"]
 
 [functions."admin-click-tracking"]
   included_files = ["public/*.html"]

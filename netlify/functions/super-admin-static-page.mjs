@@ -7,6 +7,11 @@ const GUIDE_SUFFIX = '-site-adaptation-guide.html';
 const ALLOWED_FILE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
 const SECURE_GUIDE_ROOT = new URL('../../secure/site-adaptation-guides/', import.meta.url);
 
+function canAccessSiteAdaptationGuides(user) {
+  if (!user || typeof user !== 'object') return false;
+  return user.role === 'super_admin' || user.role === 'admin' || user.is_admin === true;
+}
+
 async function resolveGuideFilePath(fileName) {
   const candidateDirectories = [
     fileURLToPath(SECURE_GUIDE_ROOT),
@@ -53,6 +58,7 @@ function htmlResponse(statusCode, body, headers = {}) {
 }
 
 export const __testUtils = {
+  canAccessSiteAdaptationGuides,
   resolveRequestedGuideFile,
 };
 
@@ -77,7 +83,7 @@ export async function handler(event) {
     user = null;
   }
 
-  if (!user || user.role !== 'super_admin') {
+  if (!canAccessSiteAdaptationGuides(user)) {
     return {
       statusCode: 302,
       headers: {

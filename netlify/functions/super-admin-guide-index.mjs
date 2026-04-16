@@ -7,6 +7,11 @@ const GUIDE_SUFFIX = '-site-adaptation-guide.html';
 const ALLOWED_FILE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
 const SECURE_GUIDE_ROOT = new URL('../../secure/site-adaptation-guides/', import.meta.url);
 
+function canAccessSiteAdaptationGuides(user) {
+  if (!user || typeof user !== 'object') return false;
+  return user.role === 'super_admin' || user.role === 'admin' || user.is_admin === true;
+}
+
 async function resolveGuideDirectory() {
   const candidateDirectories = [
     fileURLToPath(SECURE_GUIDE_ROOT),
@@ -36,6 +41,7 @@ function toDisplayName(fileName) {
 }
 
 export const __testUtils = {
+  canAccessSiteAdaptationGuides,
   toDisplayName,
 };
 
@@ -55,7 +61,7 @@ export async function handler(event) {
     user = null;
   }
 
-  if (!user || user.role !== 'super_admin') {
+  if (!canAccessSiteAdaptationGuides(user)) {
     return {
       statusCode: 403,
       headers: {

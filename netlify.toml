@@ -28,13 +28,13 @@
   status = 301
 
 [[redirects]]
-  from = "/:guide-site-adaptation-guide.md"
-  to = "/:guide-site-adaptation-guide.html"
+  from = "/*-site-adaptation-guide.md"
+  to = "/:splat-site-adaptation-guide.html"
   status = 301
 
 [[redirects]]
-  from = "/:guide-site-adaptation-guide.html"
-  to = "/.netlify/functions/super-admin-static-page?file=:guide-site-adaptation-guide.html"
+  from = "/*-site-adaptation-guide.html"
+  to = "/.netlify/functions/super-admin-static-page"
   status = 200
   force = true
 

@@ -7,6 +7,26 @@ const GUIDE_SUFFIX = '-site-adaptation-guide.html';
 const ALLOWED_FILE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
 const SECURE_GUIDE_ROOT = new URL('../../secure/site-adaptation-guides/', import.meta.url);
 
+async function resolveGuideFilePath(fileName) {
+  const candidateDirectories = [
+    fileURLToPath(SECURE_GUIDE_ROOT),
+    path.join(process.cwd(), 'secure', 'site-adaptation-guides'),
+    path.join(process.cwd(), '..', 'secure', 'site-adaptation-guides'),
+  ];
+
+  for (const directoryPath of candidateDirectories) {
+    try {
+      const absolutePath = path.join(directoryPath, fileName);
+      const stat = await fs.stat(absolutePath);
+      if (stat.isFile()) return absolutePath;
+    } catch {
+      // Ignore missing candidate files and continue checking fallbacks.
+    }
+  }
+
+  return path.join(candidateDirectories[0], fileName);
+}
+
 function resolveRequestedGuideFile(event = {}) {
   const rawPath = String(event?.path || event?.rawUrl || '').trim();
   const requestedFromPath = rawPath.split('/').pop() || '';
@@ -68,7 +88,7 @@ export async function handler(event) {
     };
   }
 
-  const absoluteFilePath = path.join(fileURLToPath(SECURE_GUIDE_ROOT), requestedFile);
+  const absoluteFilePath = await resolveGuideFilePath(requestedFile);
   let content = '';
   try {
     content = await fs.readFile(absoluteFilePath, 'utf8');

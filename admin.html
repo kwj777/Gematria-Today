@@ -189,7 +189,7 @@
             <li class="nav-item"><a class="nav-link" href="/admin-site-chatbot.html">Site Chatbot</a></li>
             <li class="nav-item"><a class="nav-link" href="/admin-static-content.html">Static Content</a></li>
             <li id="superAdminNavItem" class="nav-item d-none"><a class="nav-link" href="/admin-super-admin.html">Super Admin</a></li>
-            <li class="nav-item"><a class="nav-link" href="/index.html">Public Site</a></li>
+            <li class="nav-item"><a id="siteHubNavLink" class="nav-link" href="/index.html">Public Site</a></li>
           </ul>
           <div class="d-flex ms-lg-3">
             <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
@@ -673,6 +673,7 @@
       const taskCount = document.getElementById('taskCount');
       const sessionMeta = document.getElementById('sessionMeta');
       const superAdminNavItem = document.getElementById('superAdminNavItem');
+      const siteHubNavLink = document.getElementById('siteHubNavLink');
       const superAdminWorkspaceLink = document.getElementById('superAdminWorkspaceLink');
       const stripeSecretKeyInput = document.getElementById('stripeSecretKey');
       const stripeWebhookSigningSecretInput = document.getElementById('stripeWebhookSigningSecret');
@@ -716,6 +717,10 @@
       function updateSuperAdminUi(isSuperAdmin) {
         superAdminNavItem?.classList.toggle('d-none', !isSuperAdmin);
         superAdminWorkspaceLink?.classList.toggle('d-none', !isSuperAdmin);
+        if (siteHubNavLink) {
+          siteHubNavLink.textContent = isSuperAdmin ? 'Site Hub' : 'Public Site';
+          siteHubNavLink.href = isSuperAdmin ? '/admin-hub.html' : '/index.html';
+        }
       }
 
       function applyWorkspaceFilter() {

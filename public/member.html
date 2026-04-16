@@ -557,7 +557,7 @@
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
                     <p class="section-kicker mb-2">History</p>
-                    <h3 class="h4 mb-0">Saved calculations</h3>
+                    <h3 id="historySectionTitle" class="h4 mb-0">Saved calculations (0)</h3>
                   </div>
                   <button
                     id="historySectionToggleButton"
@@ -585,7 +585,7 @@
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
                     <p class="section-kicker mb-2">AI Agent Sessions</p>
-                    <h3 class="h4 mb-0">Saved chat sessions</h3>
+                    <h3 id="chatSessionSectionTitle" class="h4 mb-0">Saved chat sessions (0)</h3>
                   </div>
                   <button
                     id="chatSessionSectionToggleButton"
@@ -755,11 +755,13 @@
       const historySectionToggleButton = document.getElementById('historySectionToggleButton');
       const historySectionToggleLabel = document.getElementById('historySectionToggleLabel');
       const historySectionToggleArrow = document.getElementById('historySectionToggleArrow');
+      const historySectionTitle = document.getElementById('historySectionTitle');
       const chatSessionList = document.getElementById('chatSessionList');
       const chatSessionSectionContent = document.getElementById('chatSessionSectionContent');
       const chatSessionSectionToggleButton = document.getElementById('chatSessionSectionToggleButton');
       const chatSessionSectionToggleLabel = document.getElementById('chatSessionSectionToggleLabel');
       const chatSessionSectionToggleArrow = document.getElementById('chatSessionSectionToggleArrow');
+      const chatSessionSectionTitle = document.getElementById('chatSessionSectionTitle');
       const profileSectionContent = document.getElementById('profileSectionContent');
       const profileSectionToggleButton = document.getElementById('profileSectionToggleButton');
       const profileSectionToggleLabel = document.getElementById('profileSectionToggleLabel');
@@ -2154,7 +2156,21 @@
         renderHistory();
       }
 
+      function updateDashboardSavedTitles() {
+        const historyCount = Array.isArray(historyItems) ? historyItems.length : 0;
+        const chatSessionCount = Array.isArray(chatSessions) ? chatSessions.length : 0;
+
+        if (historySectionTitle) {
+          historySectionTitle.textContent = `Saved calculations (${historyCount})`;
+        }
+
+        if (chatSessionSectionTitle) {
+          chatSessionSectionTitle.textContent = `Saved chat sessions (${chatSessionCount})`;
+        }
+      }
+
       function renderHistory() {
+        updateDashboardSavedTitles();
         const isPremiumMember = session?.member?.membershipLevel !== 'free';
         const sortedHistoryItems = sortHistoryItems(historyItems);
         const canExpandHistoryList = isPremiumMember && sortedHistoryItems.length > FREE_MEMBERSHIP_SAVE_LIMIT;
@@ -2239,6 +2255,7 @@
       }
 
       function renderChatSessions() {
+        updateDashboardSavedTitles();
         if (!gemabotModuleEnabled) {
           chatSessionList.innerHTML = '<p class="text-muted mb-0">GemaBot module is disabled for this site build.</p>';
           return;

@@ -374,7 +374,7 @@
         if (openButton) {
           var openIndex = Number.parseInt(openButton.getAttribute('data-open-site-adaptation') || '', 10);
           var adaptation = Number.isInteger(openIndex) ? siteAdaptations[openIndex] : null;
-          var url = String((adaptation && adaptation.url) || '').trim();
+          var url = resolveSiteAdaptationUrl((adaptation && adaptation.url) || '');
           if (!url) return;
           window.open(url, '_blank', 'noopener,noreferrer');
           return;
@@ -408,6 +408,22 @@
         siteAdaptations.push({ label: '', url: '' });
         renderSiteAdaptations();
       });
+
+      function resolveSiteAdaptationUrl(rawUrl) {
+        var value = String(rawUrl || '').trim();
+        if (!value) return '';
+
+        var guideMatch = value.match(/([a-z0-9-]+-site-adaptation-guide\.html)$/i);
+        if (guideMatch && guideMatch[1]) {
+          return '/' + guideMatch[1].toLowerCase();
+        }
+
+        if (/^(https?:)?\/\//i.test(value)) {
+          return value;
+        }
+
+        return value.charAt(0) === '/' ? value : '/' + value;
+      }
 
       // -----------------------------------------------------------------------
       // Site editor

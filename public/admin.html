@@ -228,22 +228,18 @@
                   <p class="text-muted small mb-0">Admin recovery details are sent only by email. Set <code>ADMIN_EMAIL</code> for bootstrap admins so forgotten username recovery can work.</p>
                 </div>
                 <div class="col-12">
+                  <label class="form-label mb-2" for="adminRecoveryTurnstileContainer">Anti-robot check</label>
+                  <div id="adminRecoveryTurnstileContainer"></div>
+                </div>
+                <div class="col-12">
                   <form id="adminForgotUseridForm" class="row g-2">
                     <div class="col-12"><label class="form-label" for="adminRecoveryEmail">Recover admin username by email</label><input id="adminRecoveryEmail" class="form-control" type="email" required /></div>
-                    <div class="col-12">
-                      <label class="form-label mb-2" for="adminRecoveryUseridTurnstileContainer">Anti-robot check</label>
-                      <div id="adminRecoveryUseridTurnstileContainer"></div>
-                    </div>
                     <div class="col-12 d-grid"><button class="btn btn-outline-secondary" type="submit">Find admin username</button></div>
                   </form>
                 </div>
                 <div class="col-12">
                   <form id="adminForgotPasswordForm" class="row g-2">
                     <div class="col-12"><label class="form-label" for="adminRecoveryIdentifier">Reset admin password with username or email</label><input id="adminRecoveryIdentifier" class="form-control" required /></div>
-                    <div class="col-12">
-                      <label class="form-label mb-2" for="adminRecoveryPasswordTurnstileContainer">Anti-robot check</label>
-                      <div id="adminRecoveryPasswordTurnstileContainer"></div>
-                    </div>
                     <div class="col-12 d-grid"><button class="btn btn-outline-secondary" type="submit">Get admin reset code</button></div>
                   </form>
                 </div>
@@ -251,10 +247,6 @@
                   <form id="adminResetPasswordForm" class="row g-2">
                     <div class="col-md-6"><label class="form-label" for="adminResetRecoveryCode">Recovery code</label><input id="adminResetRecoveryCode" class="form-control" required /></div>
                     <div class="col-md-6"><label class="form-label" for="adminResetNewPassword">New password</label><input id="adminResetNewPassword" class="form-control" type="password" minlength="8" required /></div>
-                    <div class="col-12">
-                      <label class="form-label mb-2" for="adminRecoveryResetTurnstileContainer">Anti-robot check</label>
-                      <div id="adminRecoveryResetTurnstileContainer"></div>
-                    </div>
                     <div class="col-12 d-grid"><button class="btn btn-outline-success" type="submit">Reset admin password</button></div>
                   </form>
                 </div>
@@ -745,9 +737,9 @@
       const TAG_SEPARATOR_PATTERN = /[;,]/;
       const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, turnstileSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const recoveryTurnstileState = {
-        forgotUserid: { widgetId: null, token: '', containerId: 'adminRecoveryUseridTurnstileContainer' },
-        forgotPassword: { widgetId: null, token: '', containerId: 'adminRecoveryPasswordTurnstileContainer' },
-        resetPassword: { widgetId: null, token: '', containerId: 'adminRecoveryResetTurnstileContainer' },
+        widgetId: null,
+        token: '',
+        containerId: 'adminRecoveryTurnstileContainer',
       };
       let recoveryTurnstileRenderRetryCount = 0;
       const escapeHtml = (value = '') => String(value)
@@ -1360,18 +1352,14 @@
         return Boolean(getTurnstileSiteKey());
       }
 
-      function getRecoveryTurnstileToken(formKey) {
-        return String(recoveryTurnstileState[formKey]?.token || '').trim();
+      function getRecoveryTurnstileToken() {
+        return String(recoveryTurnstileState.token || '').trim();
       }
 
-      function resetRecoveryTurnstileWidget(formKey) {
-        const widgetState = recoveryTurnstileState[formKey];
-        if (!widgetState) {
-          return;
-        }
-        widgetState.token = '';
-        if (typeof window.turnstile?.reset === 'function' && widgetState.widgetId !== null) {
-          window.turnstile.reset(widgetState.widgetId);
+      function resetRecoveryTurnstileWidget() {
+        recoveryTurnstileState.token = '';
+        if (typeof window.turnstile?.reset === 'function' && recoveryTurnstileState.widgetId !== null) {
+          window.turnstile.reset(recoveryTurnstileState.widgetId);
         }
       }
 
@@ -1387,26 +1375,25 @@
           }
           return;
         }
-        Object.entries(recoveryTurnstileState).forEach(([formKey, widgetState]) => {
-          if (widgetState.widgetId !== null) {
-            return;
-          }
-          const container = document.getElementById(widgetState.containerId);
-          if (!container) {
-            return;
-          }
-          widgetState.widgetId = window.turnstile.render(container, {
-            sitekey: siteKey,
-            callback: (token) => {
-              widgetState.token = String(token || '').trim();
-            },
-            'expired-callback': () => {
-              widgetState.token = '';
-            },
-            'error-callback': () => {
-              widgetState.token = '';
-            },
-          });
+        if (recoveryTurnstileState.widgetId !== null) {
+          return;
+        }
+        const container = document.getElementById(recoveryTurnstileState.containerId);
+        if (!container) {
+          return;
+        }
+
+        recoveryTurnstileState.widgetId = window.turnstile.render(container, {
+          sitekey: siteKey,
+          callback: (token) => {
+            recoveryTurnstileState.token = String(token || '').trim();
+          },
+          'expired-callback': () => {
+            recoveryTurnstileState.token = '';
+          },
+          'error-callback': () => {
+            recoveryTurnstileState.token = '';
+          },
         });
       }
 
@@ -1628,7 +1615,7 @@
         clearMessage(authMessage);
         clearMessage(errorMessage);
         try {
-          const challengeToken = getRecoveryTurnstileToken('forgotUserid');
+          const challengeToken = getRecoveryTurnstileToken();
           if (isTurnstileRequired() && !challengeToken) {
             throw new Error('Please complete the anti-robot check before continuing.');
           }
@@ -1642,10 +1629,10 @@
           });
           showMessage(saveMessage, payload.message);
           renderRecoveryPreview('If the account exists, check the configured admin email for username recovery details.');
-          resetRecoveryTurnstileWidget('forgotUserid');
+          resetRecoveryTurnstileWidget();
         } catch (error) {
           showMessage(authMessage, error.message);
-          resetRecoveryTurnstileWidget('forgotUserid');
+          resetRecoveryTurnstileWidget();
         }
       });
 
@@ -1654,7 +1641,7 @@
         clearMessage(authMessage);
         clearMessage(errorMessage);
         try {
-          const challengeToken = getRecoveryTurnstileToken('forgotPassword');
+          const challengeToken = getRecoveryTurnstileToken();
           if (isTurnstileRequired() && !challengeToken) {
             throw new Error('Please complete the anti-robot check before continuing.');
           }
@@ -1668,10 +1655,10 @@
           });
           showMessage(saveMessage, payload.message);
           renderRecoveryPreview('If the account exists, check the configured admin email for the one-time reset code.');
-          resetRecoveryTurnstileWidget('forgotPassword');
+          resetRecoveryTurnstileWidget();
         } catch (error) {
           showMessage(authMessage, error.message);
-          resetRecoveryTurnstileWidget('forgotPassword');
+          resetRecoveryTurnstileWidget();
         }
       });
 
@@ -1680,7 +1667,7 @@
         clearMessage(authMessage);
         clearMessage(errorMessage);
         try {
-          const challengeToken = getRecoveryTurnstileToken('resetPassword');
+          const challengeToken = getRecoveryTurnstileToken();
           if (isTurnstileRequired() && !challengeToken) {
             throw new Error('Please complete the anti-robot check before continuing.');
           }
@@ -1700,11 +1687,11 @@
           showMessage(saveMessage, payload.message || 'Admin password reset complete.');
           renderRecoveryPreview('Recovery code consumed.');
           event.target.reset();
-          resetRecoveryTurnstileWidget('resetPassword');
+          resetRecoveryTurnstileWidget();
           await refreshDashboard();
         } catch (error) {
           showMessage(authMessage, error.message);
-          resetRecoveryTurnstileWidget('resetPassword');
+          resetRecoveryTurnstileWidget();
         }
       });
 

@@ -28,6 +28,11 @@
   status = 301
 
 [[redirects]]
+  from = "/:guide-site-adaptation-guide.md"
+  to = "/:guide-site-adaptation-guide.html"
+  status = 301
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200

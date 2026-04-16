@@ -1,10 +1,10 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const mode = process.argv.includes('--check') ? 'check' : 'write';
 const rootDir = process.cwd();
-const markdownPath = path.join(rootDir, 'public', 'architect-site-adaptation-guide.md');
-const htmlPath = path.join(rootDir, 'public', 'architect-site-adaptation-guide.html');
+const publicDir = path.join(rootDir, 'public');
+const guidePattern = /-site-adaptation-guide\.md$/;
 
 function normalize(content) {
   return content.replace(/\r\n/g, '\n');
@@ -14,15 +14,25 @@ function escapeForScriptTag(content) {
   return content.replace(/<\/script>/gi, '<\\/script>');
 }
 
-function buildHtml(markdown) {
+function toTitle(fileName) {
+  const baseName = fileName.replace(/-site-adaptation-guide\.md$/, '');
+  const words = baseName
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+  const label = words.length ? `${words.join(' ')} Site Adaptation Guide` : 'Site Adaptation Guide';
+  return label;
+}
+
+function buildHtml(markdown, titleText) {
   const escapedMarkdown = escapeForScriptTag(markdown);
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Architect Site Adaptation Guide</title>
-    <meta name="description" content="Guide for adapting this codebase into an architecture portfolio and business website." />
+    <title>${titleText}</title>
+    <meta name="description" content="Guide for adapting this codebase into a niche website implementation." />
     <link rel="stylesheet" href="/theme.css" />
     <style>
       main.guide-container {
@@ -96,26 +106,53 @@ function buildHtml(markdown) {
 `;
 }
 
-const markdownSource = readFileSync(markdownPath, 'utf8');
-const expectedHtml = buildHtml(markdownSource);
+const guideFiles = readdirSync(publicDir)
+  .filter((name) => guidePattern.test(name))
+  .sort();
 
-let currentHtml = '';
-try {
-  currentHtml = readFileSync(htmlPath, 'utf8');
-} catch {
-  currentHtml = '';
+if (guideFiles.length === 0) {
+  console.log('No site adaptation markdown guides found.');
+  process.exit(0);
 }
 
-if (normalize(currentHtml) === normalize(expectedHtml)) {
-  console.log('Architect adaptation guide HTML is already in sync.');
+const drifted = [];
+for (const mdFileName of guideFiles) {
+  const markdownPath = path.join(publicDir, mdFileName);
+  const htmlFileName = mdFileName.replace(/\.md$/, '.html');
+  const htmlPath = path.join(publicDir, htmlFileName);
+
+  const markdownSource = readFileSync(markdownPath, 'utf8');
+  const expectedHtml = buildHtml(markdownSource, toTitle(mdFileName));
+
+  let currentHtml = '';
+  try {
+    currentHtml = readFileSync(htmlPath, 'utf8');
+  } catch {
+    currentHtml = '';
+  }
+
+  if (normalize(currentHtml) !== normalize(expectedHtml)) {
+    drifted.push({ mdFileName, htmlFileName, expectedHtml, htmlPath });
+  }
+}
+
+if (drifted.length === 0) {
+  console.log(`Site adaptation guide HTML is in sync (${guideFiles.length} file(s)).`);
   process.exit(0);
 }
 
 if (mode === 'check') {
-  console.error('public/architect-site-adaptation-guide.html is out of sync with public/architect-site-adaptation-guide.md.');
-  console.error('Run: npm run sync:architect-guide');
+  console.error('The following site adaptation guide HTML files are out of sync:');
+  for (const item of drifted) {
+    console.error(` - ${item.htmlFileName} (source: ${item.mdFileName})`);
+  }
+  console.error('Run: npm run sync:site-adaptation-guides');
   process.exit(1);
 }
 
-writeFileSync(htmlPath, expectedHtml, 'utf8');
-console.log('Synced public/architect-site-adaptation-guide.html from markdown source.');
+for (const item of drifted) {
+  writeFileSync(item.htmlPath, item.expectedHtml, 'utf8');
+  console.log(`Synced ${item.htmlFileName} from ${item.mdFileName}`);
+}
+
+console.log(`Synced ${drifted.length} site adaptation guide file(s).`);

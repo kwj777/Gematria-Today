@@ -33,6 +33,11 @@
   status = 301
 
 [[redirects]]
+  from = "/secure/site-adaptation-guides/*-site-adaptation-guide.html"
+  to = "/:splat-site-adaptation-guide.html"
+  status = 301
+
+[[redirects]]
   from = "/*-site-adaptation-guide.html"
   to = "/.netlify/functions/super-admin-static-page"
   status = 200

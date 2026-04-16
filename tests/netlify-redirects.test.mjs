@@ -34,3 +34,19 @@ test('site adaptation markdown redirects use wildcard splat pattern', async () =
     new RegExp(markdownRedirectBlock.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
   );
 });
+
+test('secure guide folder paths are canonicalized to root guide URLs', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+
+  const secureGuideRedirectBlock = [
+    '[[redirects]]',
+    '  from = "/secure/site-adaptation-guides/*-site-adaptation-guide.html"',
+    '  to = "/:splat-site-adaptation-guide.html"',
+    '  status = 301',
+  ].join('\n');
+
+  assert.match(
+    netlifyToml,
+    new RegExp(secureGuideRedirectBlock.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  );
+});

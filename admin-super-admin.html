@@ -214,12 +214,6 @@
           </div>
         </section>
 
-        <section id="siteAdaptationsPanel" class="content-panel p-3 p-lg-4 mb-4 d-none">
-          <p class="section-kicker mb-1">Site resources</p>
-          <h2 class="h5 mb-2">Site Adaptations</h2>
-          <ul id="siteAdaptationsList" class="list-unstyled mb-3"></ul>
-          <button id="addSiteAdaptationButton" type="button" class="btn btn-outline-primary btn-sm">Add site adaptation</button>
-        </section>
 
         <section id="superAdminPanel" class="content-panel p-3 p-lg-4 mb-4 d-none">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
@@ -329,9 +323,6 @@
     <script>
       const sessionMeta = document.getElementById('sessionMeta');
       const superAdminPanel = document.getElementById('superAdminPanel');
-      const siteAdaptationsPanel = document.getElementById('siteAdaptationsPanel');
-      const siteAdaptationsList = document.getElementById('siteAdaptationsList');
-      const addSiteAdaptationButton = document.getElementById('addSiteAdaptationButton');
       const siteModulesForm = document.getElementById('siteModulesForm');
       const saveMessage = document.getElementById('saveMessage');
       const errorMessage = document.getElementById('errorMessage');
@@ -348,12 +339,10 @@
       const hubSiteIdentity = document.getElementById('hubSiteIdentity');
 
       const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true, wordnik_wotd_slider: true, blog_home_slider: true, blog_home_featured_grid: true });
-      const DEFAULT_SITE_ADAPTATIONS = Object.freeze([{ label: 'Architect/Designer Site', url: '/architect-site-adaptation-guide.html' }]);
       let state = {
         user: null,
         settings: null,
         siteModules: { ...DEFAULT_SITE_MODULES },
-        siteAdaptations: DEFAULT_SITE_ADAPTATIONS.map((adaptation) => ({ ...adaptation })),
         themeCatalog: { activeThemeSlug: 'default', presets: [] },
         privateThemeCatalog: { activeThemeSlug: 'default', presets: [] },
         hubSites: [],
@@ -458,27 +447,6 @@
           </div>`).join('');
       }
 
-      function renderSiteAdaptations() {
-        siteAdaptationsList.innerHTML = state.siteAdaptations.map((adaptation, index) => `
-          <li class="border rounded p-2 mb-2">
-            <div class="row g-2 align-items-end">
-              <div class="col-lg-4">
-                <label class="form-label small mb-1" for="siteAdaptationLabel${index}">Title</label>
-                <input id="siteAdaptationLabel${index}" data-site-adaptation-label="${index}" type="text" class="form-control form-control-sm" value="${String(adaptation.label || '').replace(/"/g, '&quot;')}" />
-              </div>
-              <div class="col-lg-6">
-                <label class="form-label small mb-1" for="siteAdaptationUrl${index}">URL</label>
-                <input id="siteAdaptationUrl${index}" data-site-adaptation-url="${index}" type="text" class="form-control form-control-sm" value="${String(adaptation.url || '').replace(/"/g, '&quot;')}" />
-              </div>
-              <div class="col-lg-1 d-grid">
-                <button data-open-site-adaptation="${index}" type="button" class="btn btn-outline-primary btn-sm">Open</button>
-              </div>
-              <div class="col-lg-1 d-grid">
-                <button data-delete-site-adaptation="${index}" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
-              </div>
-            </div>
-          </li>`).join('');
-      }
 
       function renderGlobalThemeSettings() {
         const selectedThemeId = getGlobalBootswatchThemeId(state.themeCatalog);
@@ -548,12 +516,10 @@
           state.themeCatalog = normalizeThemeCatalog(state.settings.themeCatalog || {});
           state.privateThemeCatalog = normalizeThemeCatalog(state.settings.privateThemeCatalog || {});
           renderSiteModules();
-          renderSiteAdaptations();
           renderGlobalThemeSettings();
           renderPrivateThemeSettings();
           superAdminPanel.classList.remove('d-none');
           document.getElementById('hubEntryPanel').classList.remove('d-none');
-          siteAdaptationsPanel.classList.remove('d-none');
           await loadHubSites();
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to verify super admin session.');
@@ -602,47 +568,6 @@
         await saveSiteModules();
       });
 
-      siteAdaptationsList?.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        const openButton = target.closest('[data-open-site-adaptation]');
-        if (openButton) {
-          const openIndex = Number.parseInt(openButton.getAttribute('data-open-site-adaptation') || '', 10);
-          const adaptation = Number.isInteger(openIndex) ? state.siteAdaptations[openIndex] : null;
-          const url = String(adaptation?.url || '').trim();
-          if (!url) return;
-          window.open(url, '_blank', 'noopener,noreferrer');
-          return;
-        }
-
-        const deleteButton = target.closest('[data-delete-site-adaptation]');
-        if (!deleteButton) return;
-        const index = Number.parseInt(deleteButton.getAttribute('data-delete-site-adaptation') || '', 10);
-        if (!Number.isInteger(index) || index < 0 || index >= state.siteAdaptations.length) return;
-        state.siteAdaptations.splice(index, 1);
-        renderSiteAdaptations();
-      });
-
-      siteAdaptationsList?.addEventListener('input', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) return;
-        if (target.hasAttribute('data-site-adaptation-label')) {
-          const index = Number.parseInt(target.getAttribute('data-site-adaptation-label') || '', 10);
-          if (!Number.isInteger(index) || !state.siteAdaptations[index]) return;
-          state.siteAdaptations[index].label = target.value;
-          return;
-        }
-        if (target.hasAttribute('data-site-adaptation-url')) {
-          const index = Number.parseInt(target.getAttribute('data-site-adaptation-url') || '', 10);
-          if (!Number.isInteger(index) || !state.siteAdaptations[index]) return;
-          state.siteAdaptations[index].url = target.value;
-        }
-      });
-
-      addSiteAdaptationButton?.addEventListener('click', () => {
-        state.siteAdaptations.push({ label: '', url: '' });
-        renderSiteAdaptations();
-      });
 
       saveGlobalBootswatchThemeButton?.addEventListener('click', async () => {
         clearMessage(errorMessage);

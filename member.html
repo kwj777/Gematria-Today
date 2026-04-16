@@ -692,7 +692,7 @@
                   <form id="profileForm" class="row g-3">
                     <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
                     <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
-                    <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save profile</button></div>
+                    <div class="col-12 d-grid"><button id="profileSaveButton" class="btn btn-primary" type="submit">Save profile</button></div>
                   </form>
                 </div>
               </section>
@@ -735,6 +735,7 @@
       const registerPasswordMismatchAlert = document.getElementById('registerPasswordMismatchAlert');
       const registerPasswordInput = document.getElementById('registerPassword');
       const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
+      const profileSaveButton = document.getElementById('profileSaveButton');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8';
       const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
@@ -2619,8 +2620,37 @@
 
       renderTurnstileWidgets();
 
+      let isProfileSaving = false;
+
+      function setProfileSaveButtonState(state) {
+        if (!profileSaveButton) return;
+        if (state === 'saving') {
+          profileSaveButton.textContent = 'Saving...';
+          profileSaveButton.disabled = true;
+          profileSaveButton.classList.add('btn-primary');
+          profileSaveButton.classList.remove('btn-secondary');
+          return;
+        }
+        if (state === 'saved') {
+          profileSaveButton.textContent = 'Saved';
+          profileSaveButton.disabled = true;
+          profileSaveButton.classList.remove('btn-primary');
+          profileSaveButton.classList.add('btn-secondary');
+          return;
+        }
+        profileSaveButton.textContent = 'Save profile';
+        profileSaveButton.disabled = false;
+        profileSaveButton.classList.add('btn-primary');
+        profileSaveButton.classList.remove('btn-secondary');
+      }
+
       document.getElementById('profileForm').addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (isProfileSaving) {
+          return;
+        }
+        isProfileSaving = true;
+        setProfileSaveButtonState('saving');
         clearAlert();
         try {
           const existingPreferences = session?.profile?.preferences && typeof session.profile.preferences === 'object'
@@ -2638,10 +2668,23 @@
           });
           session = { ...session, authenticated: true, member: payload.member, profile: payload.profile };
           populateProfile(payload.member, payload.profile, session?.user);
+          setProfileSaveButtonState('saved');
           showAlert('Profile saved.', 'success');
         } catch (error) {
+          setProfileSaveButtonState('default');
           showAlert(error.message || 'Unable to save profile.');
+        } finally {
+          isProfileSaving = false;
         }
+      });
+
+      ['profileDisplayName', 'profileNotes'].forEach((id) => {
+        const field = document.getElementById(id);
+        if (!field) return;
+        field.addEventListener('input', () => {
+          if (isProfileSaving) return;
+          setProfileSaveButtonState('default');
+        });
       });
 
       blogSubscriptionForm.addEventListener('submit', async (event) => {

@@ -116,7 +116,7 @@
           <div id="hubMessage" class="alert d-none mb-4" role="status"></div>
 
           <!-- Site list -->
-          <section class="content-panel p-4 mb-4">
+          <section id="siteListPanel" class="content-panel p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <div>
                 <p class="section-kicker mb-1">Registered Sites</p>
@@ -207,17 +207,30 @@
         return fetch('/api/admin-session', { credentials: 'same-origin' })
           .then(function (res) { return res.json(); })
           .then(function (data) {
-            if (!data.authenticated || data.user.role !== 'super_admin') {
+            if (!data.authenticated) {
               document.getElementById('accessDeniedBanner').classList.remove('d-none');
               document.body.classList.remove('hub-render-pending');
-              return false;
+              return null;
             }
-            currentUser = data.user;
+            var user = data.user;
+            var isSuperAdmin = user.role === 'super_admin';
+            var isAdmin = isSuperAdmin || user.role === 'admin' || user.isAdmin === true;
+            if (!isAdmin) {
+              document.getElementById('accessDeniedBanner').classList.remove('d-none');
+              document.body.classList.remove('hub-render-pending');
+              return null;
+            }
+            currentUser = user;
+            var roleLabel = isSuperAdmin ? 'Super Admin' : 'Admin';
             document.getElementById('sessionMeta').textContent =
-              'Signed in as ' + currentUser.username + ' \u00b7 Super Admin';
+              'Signed in as ' + currentUser.username + ' \u00b7 ' + roleLabel;
             document.getElementById('hubPanel').classList.remove('d-none');
+            if (!isSuperAdmin) {
+              document.getElementById('siteListPanel').classList.add('d-none');
+              document.getElementById('shared-secret-config').classList.add('d-none');
+            }
             document.body.classList.remove('hub-render-pending');
-            return true;
+            return isSuperAdmin ? 'super_admin' : 'admin';
           })
           .catch(function () {
             window.location.href = '/admin.html';
@@ -535,9 +548,9 @@
       // Init
       // -----------------------------------------------------------------------
 
-      checkSession().then(function (ok) {
-        if (!ok) return;
-        loadSites();
+      checkSession().then(function (role) {
+        if (!role) return;
+        if (role === 'super_admin') loadSites();
         loadSiteAdaptationGuides();
       });
 

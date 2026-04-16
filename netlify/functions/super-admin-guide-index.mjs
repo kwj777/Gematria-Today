@@ -9,7 +9,7 @@ const SECURE_GUIDE_ROOT = new URL('../../secure/site-adaptation-guides/', import
 
 function canAccessSiteAdaptationGuides(user) {
   if (!user || typeof user !== 'object') return false;
-  return user.role === 'super_admin' || user.role === 'admin' || user.is_admin === true;
+  return user.role === 'super_admin' || user.role === 'admin' || user.isAdmin === true;
 }
 
 async function resolveGuideDirectory() {

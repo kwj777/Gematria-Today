@@ -151,7 +151,7 @@
   included_files = ["public/*.html"]
 
 [functions."super-admin-static-page"]
-  included_files = ["public/*-site-adaptation-guide.html"]
+  included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
 
 [functions."member-prune-unverified"]
   schedule = "0 0 * * *"

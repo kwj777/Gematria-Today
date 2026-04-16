@@ -1,9 +1,9 @@
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const mode = process.argv.includes('--check') ? 'check' : 'write';
 const rootDir = process.cwd();
-const publicDir = path.join(rootDir, 'public');
+const outputDir = path.join(rootDir, 'secure', 'site-adaptation-guides');
 const guidePattern = /-site-adaptation-guide\.md$/;
 
 function normalize(content) {
@@ -106,7 +106,7 @@ function buildHtml(markdown, titleText) {
 `;
 }
 
-const guideFiles = readdirSync(publicDir)
+const guideFiles = readdirSync(rootDir)
   .filter((name) => guidePattern.test(name))
   .sort();
 
@@ -117,9 +117,9 @@ if (guideFiles.length === 0) {
 
 const drifted = [];
 for (const mdFileName of guideFiles) {
-  const markdownPath = path.join(publicDir, mdFileName);
+  const markdownPath = path.join(rootDir, mdFileName);
   const htmlFileName = mdFileName.replace(/\.md$/, '.html');
-  const htmlPath = path.join(publicDir, htmlFileName);
+  const htmlPath = path.join(outputDir, htmlFileName);
 
   const markdownSource = readFileSync(markdownPath, 'utf8');
   const expectedHtml = buildHtml(markdownSource, toTitle(mdFileName));
@@ -149,6 +149,8 @@ if (mode === 'check') {
   console.error('Run: npm run sync:site-adaptation-guides');
   process.exit(1);
 }
+
+mkdirSync(outputDir, { recursive: true });
 
 for (const item of drifted) {
   writeFileSync(item.htmlPath, item.expectedHtml, 'utf8');

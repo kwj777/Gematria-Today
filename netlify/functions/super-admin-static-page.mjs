@@ -4,7 +4,7 @@ import { getAuthenticatedUser } from './_admin.mjs';
 
 const GUIDE_SUFFIX = '-site-adaptation-guide.html';
 const ALLOWED_FILE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
-const PUBLIC_ROOT = new URL('../../public/', import.meta.url);
+const SECURE_GUIDE_ROOT = new URL('../../secure/site-adaptation-guides/', import.meta.url);
 
 function resolveRequestedGuideFile(event = {}) {
   const rawPath = String(event?.path || event?.rawUrl || '').trim();
@@ -67,7 +67,7 @@ export async function handler(event) {
     };
   }
 
-  const absoluteFilePath = path.join(path.fileURLToPath(PUBLIC_ROOT), requestedFile);
+  const absoluteFilePath = path.join(path.fileURLToPath(SECURE_GUIDE_ROOT), requestedFile);
   let content = '';
   try {
     content = await fs.readFile(absoluteFilePath, 'utf8');

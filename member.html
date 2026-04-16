@@ -455,6 +455,8 @@
               <a id="premiumResearchLink" class="btn btn-outline-secondary premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
                             <button id="messageCenterOpenButton" class="btn btn-outline-dark d-none" type="button">Message Center</button>
               <a id="adminPageButton" class="btn btn-outline-dark d-none" href="/admin.html">Admin page</a>
+              <a id="superAdminPageButton" class="btn btn-outline-dark d-none" href="/admin-super-admin.html">Super Admin</a>
+              <a id="siteHubPageButton" class="btn btn-outline-dark d-none" href="/admin-hub.html">Site Hub</a>
               <button id="logoutButton" class="btn btn-outline-danger" type="button">Sign out</button>
             </div>
           </div>
@@ -773,6 +775,8 @@
       const membershipUpgradeContent = document.getElementById('membershipUpgradeContent');
       const premiumResearchLink = document.getElementById('premiumResearchLink');
       const adminPageButton = document.getElementById('adminPageButton');
+      const superAdminPageButton = document.getElementById('superAdminPageButton');
+      const siteHubPageButton = document.getElementById('siteHubPageButton');
       const authTabRegister = document.getElementById('authTabRegister');
       const authTabLogin = document.getElementById('authTabLogin');
       const authPanelRegister = document.getElementById('authPanelRegister');
@@ -1520,8 +1524,11 @@
       }
 
       function syncAdminPageButton(member = session?.member, user = session?.user) {
-        const isAdminLevel = Boolean(user?.isAdmin) || user?.role === 'admin' || member?.role === 'admin' || Boolean(member?.isAdmin);
+        const isSuperAdmin = user?.role === 'super_admin' || member?.role === 'super_admin';
+        const isAdminLevel = Boolean(user?.isAdmin) || user?.role === 'admin' || member?.role === 'admin' || Boolean(member?.isAdmin) || isSuperAdmin;
         adminPageButton.classList.toggle('d-none', !isAdminLevel);
+        superAdminPageButton?.classList.toggle('d-none', !isSuperAdmin);
+        siteHubPageButton?.classList.toggle('d-none', !isSuperAdmin);
       }
 
       function isPremiumMembershipLevel(level) {

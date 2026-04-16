@@ -11,6 +11,10 @@ const BASE_DISALLOWS = Object.freeze([
   '/premium-research.html',
   '/api/',
   '/.netlify/functions/',
+  '/architect-site-adaptation-guide.html',
+  '/architect-site-adaptation-guide.md',
+  '/*-site-adaptation-guide.html',
+  '/*-site-adaptation-guide.md',
 ]);
 
 function buildRobotsTxt({ siteOrigin, modules }) {

@@ -67,6 +67,11 @@
   status = 200
 
 [[redirects]]
+  from = "/:page"
+  to = "/:page.html"
+  status = 301
+
+[[redirects]]
   from = "/apple-touch-icon.png"
   to = "/.netlify/functions/pwa-icon?size=180&variant=default"
   status = 200

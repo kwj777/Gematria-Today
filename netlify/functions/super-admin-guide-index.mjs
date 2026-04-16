@@ -7,6 +7,25 @@ const GUIDE_SUFFIX = '-site-adaptation-guide.html';
 const ALLOWED_FILE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
 const SECURE_GUIDE_ROOT = new URL('../../secure/site-adaptation-guides/', import.meta.url);
 
+async function resolveGuideDirectory() {
+  const candidateDirectories = [
+    fileURLToPath(SECURE_GUIDE_ROOT),
+    path.join(process.cwd(), 'secure', 'site-adaptation-guides'),
+    path.join(process.cwd(), '..', 'secure', 'site-adaptation-guides'),
+  ];
+
+  for (const directoryPath of candidateDirectories) {
+    try {
+      const stat = await fs.stat(directoryPath);
+      if (stat.isDirectory()) return directoryPath;
+    } catch {
+      // Ignore missing candidate paths and continue checking fallbacks.
+    }
+  }
+
+  return candidateDirectories[0];
+}
+
 function toDisplayName(fileName) {
   return String(fileName || '')
     .replace(/\.html$/, '')
@@ -47,7 +66,7 @@ export async function handler(event) {
     };
   }
 
-  const secureDirPath = fileURLToPath(SECURE_GUIDE_ROOT);
+  const secureDirPath = await resolveGuideDirectory();
   let entries = [];
   try {
     entries = await fs.readdir(secureDirPath, { withFileTypes: true });

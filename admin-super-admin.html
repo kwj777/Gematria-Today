@@ -470,7 +470,10 @@
                 <label class="form-label small mb-1" for="siteAdaptationUrl${index}">URL</label>
                 <input id="siteAdaptationUrl${index}" data-site-adaptation-url="${index}" type="text" class="form-control form-control-sm" value="${String(adaptation.url || '').replace(/"/g, '&quot;')}" />
               </div>
-              <div class="col-lg-2 d-grid">
+              <div class="col-lg-1 d-grid">
+                <button data-open-site-adaptation="${index}" type="button" class="btn btn-outline-primary btn-sm">Open</button>
+              </div>
+              <div class="col-lg-1 d-grid">
                 <button data-delete-site-adaptation="${index}" type="button" class="btn btn-outline-danger btn-sm">Delete</button>
               </div>
             </div>
@@ -602,9 +605,19 @@
       siteAdaptationsList?.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
-        const button = target.closest('[data-delete-site-adaptation]');
-        if (!button) return;
-        const index = Number.parseInt(button.getAttribute('data-delete-site-adaptation') || '', 10);
+        const openButton = target.closest('[data-open-site-adaptation]');
+        if (openButton) {
+          const openIndex = Number.parseInt(openButton.getAttribute('data-open-site-adaptation') || '', 10);
+          const adaptation = Number.isInteger(openIndex) ? state.siteAdaptations[openIndex] : null;
+          const url = String(adaptation?.url || '').trim();
+          if (!url) return;
+          window.open(url, '_blank', 'noopener,noreferrer');
+          return;
+        }
+
+        const deleteButton = target.closest('[data-delete-site-adaptation]');
+        if (!deleteButton) return;
+        const index = Number.parseInt(deleteButton.getAttribute('data-delete-site-adaptation') || '', 10);
         if (!Number.isInteger(index) || index < 0 || index >= state.siteAdaptations.length) return;
         state.siteAdaptations.splice(index, 1);
         renderSiteAdaptations();

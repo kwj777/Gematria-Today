@@ -1366,6 +1366,10 @@
       function renderRecoveryTurnstileWidgets() {
         const siteKey = getTurnstileSiteKey();
         if (!siteKey) {
+          if (recoveryTurnstileRenderRetryCount < 80) {
+            recoveryTurnstileRenderRetryCount += 1;
+            window.setTimeout(renderRecoveryTurnstileWidgets, 250);
+          }
           return;
         }
         if (typeof window.turnstile?.render !== 'function') {

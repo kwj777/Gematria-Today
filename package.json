@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "lint": "node scripts/check-static-analysis.mjs",
+    "lint": "npm run check:architect-guide && node scripts/check-static-analysis.mjs",
     "format:check": "node scripts/check-formatting.mjs",
     "test": "node --test tests/*.test.mjs",
     "count-lines": "find . -not -path './.git/*' -not -path './node_modules/*' -type f \\( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.mjs' -o -name '*.sql' -o -name '*.toml' -o -name '*.json' \\) -print0 | xargs -0 wc -l",
@@ -11,7 +11,9 @@
     "check-root-pages": "node scripts/sync-root-pages.mjs --check",
     "audit:accessibility": "node scripts/accessibility-audit.mjs",
     "screenshot": "node scripts/capture-screenshot.mjs",
-    "map:markdown-post": "node scripts/map-markdown-post.mjs"
+    "map:markdown-post": "node scripts/map-markdown-post.mjs",
+    "sync:architect-guide": "node scripts/sync-architect-site-adaptation-guide.mjs --write",
+    "check:architect-guide": "node scripts/sync-architect-site-adaptation-guide.mjs --check"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",

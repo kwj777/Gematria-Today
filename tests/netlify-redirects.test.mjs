@@ -50,3 +50,20 @@ test('secure guide folder paths are canonicalized to root guide URLs', async () 
     new RegExp(secureGuideRedirectBlock.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
   );
 });
+
+
+test('site adaptation guide URLs with duplicated .html segments are canonicalized', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+
+  const duplicateHtmlRedirectBlock = [
+    '[[redirects]]',
+    '  from = "/*-site-adaptation-guide.html.html*"',
+    '  to = "/:splat-site-adaptation-guide.html"',
+    '  status = 301',
+  ].join('\n');
+
+  assert.match(
+    netlifyToml,
+    new RegExp(duplicateHtmlRedirectBlock.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  );
+});

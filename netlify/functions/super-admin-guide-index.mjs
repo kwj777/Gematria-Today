@@ -5,7 +5,15 @@ import { getAuthenticatedUser } from './_admin.mjs';
 
 const GUIDE_SUFFIX = '-site-adaptation-guide.html';
 const ALLOWED_FILE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
-const SECURE_GUIDE_ROOT = new URL('../../secure/site-adaptation-guides/', import.meta.url);
+
+let SECURE_GUIDE_DIR = null;
+try {
+  SECURE_GUIDE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../secure/site-adaptation-guides');
+} catch {
+  // import.meta.url may not resolve to a file path in all bundling environments;
+  // fall back to process.cwd() which is the project root in Netlify dev
+  SECURE_GUIDE_DIR = path.join(process.cwd(), 'secure', 'site-adaptation-guides');
+}
 
 function canAccessSiteAdaptationGuides(user) {
   if (!user || typeof user !== 'object') return false;
@@ -13,22 +21,21 @@ function canAccessSiteAdaptationGuides(user) {
 }
 
 async function resolveGuideDirectory() {
-  const candidateDirectories = [
-    fileURLToPath(SECURE_GUIDE_ROOT),
-    path.join(process.cwd(), 'secure', 'site-adaptation-guides'),
-    path.join(process.cwd(), '..', 'secure', 'site-adaptation-guides'),
-  ];
+  const candidates = SECURE_GUIDE_DIR ? [SECURE_GUIDE_DIR] : [];
+  const cwdDir = path.join(process.cwd(), 'secure', 'site-adaptation-guides');
+  if (SECURE_GUIDE_DIR !== cwdDir) candidates.push(cwdDir);
+  candidates.push(path.join(process.cwd(), '..', 'secure', 'site-adaptation-guides'));
 
-  for (const directoryPath of candidateDirectories) {
+  for (const dirPath of candidates) {
     try {
-      const stat = await fs.stat(directoryPath);
-      if (stat.isDirectory()) return directoryPath;
+      const stat = await fs.stat(dirPath);
+      if (stat.isDirectory()) return dirPath;
     } catch {
       // Ignore missing candidate paths and continue checking fallbacks.
     }
   }
 
-  return candidateDirectories[0];
+  return candidates[0] || cwdDir;
 }
 
 function toDisplayName(fileName) {

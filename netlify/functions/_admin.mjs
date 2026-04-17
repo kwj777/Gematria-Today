@@ -361,7 +361,12 @@ export function slugify(value) {
 }
 
 export async function syncBootstrapAdminUser(sql) {
-  const superAdminUsername = 'KevAdmin';
+  const defaultSuperAdminUsernames = ['KevAdmin'];
+  const configuredSuperAdminUsernames = String(process.env.SUPER_ADMIN_USERNAMES || '')
+    .split(',')
+    .map((username) => username.trim())
+    .filter(Boolean);
+  const superAdminUsernames = [...new Set([...defaultSuperAdminUsernames, ...configuredSuperAdminUsernames])];
 
   for (const seededUser of SEEDED_ADMIN_USERS) {
     await sql`
@@ -374,19 +379,10 @@ export async function syncBootstrapAdminUser(sql) {
 
   await sql`
     UPDATE users
-    SET role = 'admin',
-        is_admin = TRUE,
-        updated_at = NOW()
-    WHERE role = 'super_admin'
-      AND LOWER(username) <> LOWER(${superAdminUsername})
-  `;
-
-  await sql`
-    UPDATE users
     SET role = 'super_admin',
         is_admin = TRUE,
         updated_at = NOW()
-    WHERE LOWER(username) = LOWER(${superAdminUsername})
+    WHERE LOWER(username) = ANY(${superAdminUsernames.map((username) => username.toLowerCase())})
   `;
 
   const username = process.env.ADMIN_USERNAME;

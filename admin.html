@@ -1594,6 +1594,11 @@
       }
 
       function consumeSafeNextRedirect() {
+        const redirectAlreadyAttempted = new URLSearchParams(window.location.search).get('nextAttempted') === '1';
+        if (redirectAlreadyAttempted) {
+          return null;
+        }
+
         const nextParam = new URLSearchParams(window.location.search).get('next');
         if (!nextParam || !nextParam.startsWith('/') || nextParam.startsWith('//')) {
           return null;
@@ -1634,7 +1639,9 @@
           setLoggedIn(true);
           const nextParam = consumeSafeNextRedirect();
           if (nextParam) {
-            window.location.href = nextParam;
+            const redirectTarget = new URL(nextParam, window.location.origin);
+            redirectTarget.searchParams.set('adminNextAttempted', '1');
+            window.location.href = redirectTarget.pathname + redirectTarget.search + redirectTarget.hash;
             return;
           }
           await refreshDashboard();

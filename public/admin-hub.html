@@ -60,6 +60,12 @@
         font-variant-numeric: tabular-nums;
         font-size: 0.75rem;
       }
+      #siteListPanelHeader {
+        gap: 0.75rem;
+      }
+      #siteListPanelHeader .admin-section-toggle {
+        flex: 1 1 auto;
+      }
     </style>
     <script src="/admin-theme.js"></script>
     <script defer src="/ui-feedback.js"></script>
@@ -117,20 +123,25 @@
 
           <!-- Site list -->
           <section id="siteListPanel" class="content-panel p-4 mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <p class="section-kicker mb-1">Registered Sites</p>
-                <h2 class="h5 mb-0">Quick admin entry</h2>
-              </div>
-              <button id="refreshSitesBtn" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
+            <div id="siteListPanelHeader" class="d-flex justify-content-between align-items-center mb-0">
+              <button class="admin-section-toggle collapsed p-0 mb-0" type="button" data-bs-toggle="collapse" data-bs-target="#siteListPanelBody" aria-expanded="false" aria-controls="siteListPanelBody">
+                <span>
+                  <span class="section-kicker d-block mb-1">Registered Sites</span>
+                  <span class="h5 mb-0 d-block">Quick admin entry</span>
+                </span>
+                <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
+              </button>
+              <button id="refreshSitesBtn" class="btn btn-outline-secondary btn-sm d-none" type="button">Refresh</button>
             </div>
 
-            <div id="siteListLoading" class="text-muted small py-2">Loading sites&hellip;</div>
-            <p id="siteListEmpty" class="d-none py-2 mb-0">
-              No sites registered yet. Add one below.
-            </p>
+            <div id="siteListPanelBody" class="collapse mt-3">
+              <div id="siteListLoading" class="text-muted small py-2">Loading sites&hellip;</div>
+              <p id="siteListEmpty" class="d-none py-2 mb-0">
+                No sites registered yet. Add one below.
+              </p>
 
-            <div id="siteList" class="row g-3"></div>
+              <div id="siteList" class="row g-3"></div>
+            </div>
           </section>
 
           <!-- Manage sites -->
@@ -258,6 +269,8 @@
       var refreshSiteAdaptationGuidesButton = document.getElementById('refreshSiteAdaptationGuidesButton');
       var openSiteAdaptationGuideButton = document.getElementById('openSiteAdaptationGuideButton');
       var siteAdaptationStatus = document.getElementById('siteAdaptationStatus');
+      var siteListPanelBody = document.getElementById('siteListPanelBody');
+      var refreshSitesBtn = document.getElementById('refreshSitesBtn');
 
       function loadSites() {
         var loading = document.getElementById('siteListLoading');
@@ -372,7 +385,15 @@
         tick();
       }
 
-      document.getElementById('refreshSitesBtn').addEventListener('click', loadSites);
+      siteListPanelBody.addEventListener('show.bs.collapse', function () {
+        refreshSitesBtn.classList.remove('d-none');
+      });
+
+      siteListPanelBody.addEventListener('hide.bs.collapse', function () {
+        refreshSitesBtn.classList.add('d-none');
+      });
+
+      refreshSitesBtn.addEventListener('click', loadSites);
 
       function setSiteAdaptationStatus(message, isError) {
         siteAdaptationStatus.textContent = message;

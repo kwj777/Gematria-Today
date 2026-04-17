@@ -18,7 +18,7 @@ try {
 function canAccessSiteAdaptationGuides(user) {
   if (!user || typeof user !== 'object') return false;
   const normalizedRole = String(user.role || '').trim().toLowerCase();
-  return normalizedRole === 'super_admin' || normalizedRole === 'super_admins' || normalizedRole === 'super-admin';
+  return /^super[-_\s]?admins?$/.test(normalizedRole);
 }
 
 function hasAuthenticatedAdminSession(user) {

@@ -47,13 +47,20 @@ async function resolveGuideFilePath(fileName) {
 function resolveRequestedGuideFile(event = {}) {
   const requestedFromPath = extractRequestedPathFileName(event);
   const requestedFromQuery = getRequestQueryParam(event, 'file');
-  const candidate = (requestedFromQuery || requestedFromPath).toLowerCase();
+  const candidate = normalizeGuideFileName(requestedFromQuery || requestedFromPath);
 
   if (!candidate.endsWith(GUIDE_SUFFIX) || !ALLOWED_FILE_PATTERN.test(candidate)) {
     return null;
   }
 
   return candidate;
+}
+
+function normalizeGuideFileName(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/(-site-adaptation-guide)(?:\.html)+$/, '$1.html');
 }
 
 function getRequestQueryParam(event = {}, key) {
@@ -139,6 +146,18 @@ function buildUnauthenticatedRedirect(requestedFile, { nextRedirectAttempted = f
   return `/admin?${searchParams.toString()}`;
 }
 
+function buildCanonicalGuideRedirect(event = {}, requestedFile = '') {
+  const requestedFromPath = extractRequestedPathFileName(event);
+  const canonicalPathFile = normalizeGuideFileName(requestedFromPath);
+  if (!requestedFromPath || !canonicalPathFile || canonicalPathFile === requestedFromPath.toLowerCase()) {
+    return '';
+  }
+  if (requestedFile !== canonicalPathFile) {
+    return '';
+  }
+  return `/${canonicalPathFile}`;
+}
+
 function buildRedirectLoopGuardResponse() {
   return htmlResponse(
     401,
@@ -153,6 +172,8 @@ export const __testUtils = {
   hasNextRedirectAttemptMarker,
   buildUnauthenticatedRedirect,
   buildRedirectLoopGuardResponse,
+  normalizeGuideFileName,
+  buildCanonicalGuideRedirect,
 };
 
 export async function handler(event) {
@@ -167,6 +188,18 @@ export async function handler(event) {
   const requestedFile = resolveRequestedGuideFile(event);
   if (!requestedFile) {
     return htmlResponse(404, '<!doctype html><title>Not found</title><p>Not found.</p>');
+  }
+
+  const canonicalGuidePath = buildCanonicalGuideRedirect(event, requestedFile);
+  if (canonicalGuidePath) {
+    return {
+      statusCode: 301,
+      headers: {
+        location: canonicalGuidePath,
+        'cache-control': 'no-store',
+      },
+      body: '',
+    };
   }
 
   let user = null;

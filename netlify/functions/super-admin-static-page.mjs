@@ -45,9 +45,8 @@ async function resolveGuideFilePath(fileName) {
 }
 
 function resolveRequestedGuideFile(event = {}) {
-  const rawPath = String(event?.path || event?.rawUrl || '').trim();
-  const requestedFromPath = rawPath.split('/').pop() || '';
-  const requestedFromQuery = String(event?.queryStringParameters?.file || '').trim();
+  const requestedFromPath = extractRequestedPathFileName(event);
+  const requestedFromQuery = getRequestQueryParam(event, 'file');
   const candidate = (requestedFromQuery || requestedFromPath).toLowerCase();
 
   if (!candidate.endsWith(GUIDE_SUFFIX) || !ALLOWED_FILE_PATTERN.test(candidate)) {
@@ -55,6 +54,59 @@ function resolveRequestedGuideFile(event = {}) {
   }
 
   return candidate;
+}
+
+function getRequestQueryParam(event = {}, key) {
+  const normalizedKey = String(key || '').trim();
+  if (!normalizedKey) {
+    return '';
+  }
+
+  const directValue = event?.queryStringParameters?.[normalizedKey];
+  if (typeof directValue === 'string' && directValue.trim()) {
+    return directValue.trim();
+  }
+
+  const rawQueryString = String(event?.rawQuery || event?.rawQueryString || '').trim();
+  if (rawQueryString) {
+    const value = new URLSearchParams(rawQueryString).get(normalizedKey);
+    if (value && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  const rawUrl = String(event?.rawUrl || '').trim();
+  if (rawUrl) {
+    try {
+      const value = new URL(rawUrl, 'https://example.com').searchParams.get(normalizedKey);
+      if (value && value.trim()) {
+        return value.trim();
+      }
+    } catch {
+      // rawUrl may be malformed in tests or edge bundling environments.
+    }
+  }
+
+  return '';
+}
+
+function extractRequestedPathFileName(event = {}) {
+  const rawPath = String(event?.path || '').trim();
+  if (rawPath) {
+    return rawPath.split('/').pop() || '';
+  }
+
+  const rawUrl = String(event?.rawUrl || '').trim();
+  if (!rawUrl) {
+    return '';
+  }
+
+  try {
+    const pathname = new URL(rawUrl, 'https://example.com').pathname;
+    return String(pathname || '').split('/').pop() || '';
+  } catch {
+    return rawUrl.split('?')[0].split('#')[0].split('/').pop() || '';
+  }
 }
 
 function htmlResponse(statusCode, body, headers = {}) {
@@ -70,8 +122,8 @@ function htmlResponse(statusCode, body, headers = {}) {
 }
 
 function hasNextRedirectAttemptMarker(event = {}) {
-  const adminMarker = String(event?.queryStringParameters?.adminNextAttempted || '').trim();
-  const legacyMarker = String(event?.queryStringParameters?.nextAttempted || '').trim();
+  const adminMarker = getRequestQueryParam(event, 'adminNextAttempted');
+  const legacyMarker = getRequestQueryParam(event, 'nextAttempted');
   return adminMarker === '1' || legacyMarker === '1';
 }
 

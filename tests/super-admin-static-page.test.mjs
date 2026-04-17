@@ -50,6 +50,13 @@ test('canAccessSiteAdaptationGuides supports admin and super admin users', () =>
   assert.equal(__testUtils.canAccessSiteAdaptationGuides(undefined), false);
 });
 
+test('hasAuthenticatedAdminSession distinguishes signed-in and anonymous visitors', () => {
+  assert.equal(__testUtils.hasAuthenticatedAdminSession({ role: 'admin' }), true);
+  assert.equal(__testUtils.hasAuthenticatedAdminSession({ role: 'member' }), true);
+  assert.equal(__testUtils.hasAuthenticatedAdminSession(null), false);
+  assert.equal(__testUtils.hasAuthenticatedAdminSession(undefined), false);
+});
+
 test('buildUnauthenticatedRedirect uses /admin (no .html) to prevent redirect loop', () => {
   const url = __testUtils.buildUnauthenticatedRedirect('architect-site-adaptation-guide.html');
   assert.ok(url.startsWith('/admin?'), 'redirect must start with /admin? not /admin.html?');

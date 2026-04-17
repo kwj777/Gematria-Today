@@ -20,6 +20,10 @@ function canAccessSiteAdaptationGuides(user) {
   return user.role === 'super_admin' || user.role === 'admin' || user.isAdmin === true;
 }
 
+function hasAuthenticatedAdminSession(user) {
+  return Boolean(user && typeof user === 'object');
+}
+
 async function resolveGuideFilePath(fileName) {
   const candidates = SECURE_GUIDE_DIR ? [SECURE_GUIDE_DIR] : [];
   const cwdDir = path.join(process.cwd(), 'secure', 'site-adaptation-guides');
@@ -70,6 +74,7 @@ function buildUnauthenticatedRedirect(requestedFile) {
 
 export const __testUtils = {
   canAccessSiteAdaptationGuides,
+  hasAuthenticatedAdminSession,
   resolveRequestedGuideFile,
   buildUnauthenticatedRedirect,
 };
@@ -96,6 +101,9 @@ export async function handler(event) {
   }
 
   if (!canAccessSiteAdaptationGuides(user)) {
+    if (hasAuthenticatedAdminSession(user)) {
+      return htmlResponse(403, '<!doctype html><title>Forbidden</title><p>You are signed in, but your account cannot access this guide.</p>');
+    }
     return {
       statusCode: 302,
       headers: {

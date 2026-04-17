@@ -23,6 +23,9 @@
  */
 
 import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   ensureAdminSchema,
   getAuthenticatedUser,
@@ -35,6 +38,93 @@ import {
 import { getSqlClient } from './_auth.mjs';
 
 const HUB_TOKEN_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+// ---------------------------------------------------------------------------
+// Adaptation guide helpers
+// ---------------------------------------------------------------------------
+
+const GUIDE_SUFFIX = '-site-adaptation-guide.html';
+const ALLOWED_GUIDE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
+
+let SECURE_GUIDE_DIR = null;
+try {
+  SECURE_GUIDE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../secure/site-adaptation-guides');
+} catch {
+  SECURE_GUIDE_DIR = path.join(process.cwd(), 'secure', 'site-adaptation-guides');
+}
+
+async function resolveGuideDirectory() {
+  const candidates = SECURE_GUIDE_DIR ? [SECURE_GUIDE_DIR] : [];
+  const cwdDir = path.join(process.cwd(), 'secure', 'site-adaptation-guides');
+  if (SECURE_GUIDE_DIR !== cwdDir) candidates.push(cwdDir);
+  candidates.push(path.join(process.cwd(), '..', 'secure', 'site-adaptation-guides'));
+  for (const dirPath of candidates) {
+    try {
+      const stat = await fs.stat(dirPath);
+      if (stat.isDirectory()) return dirPath;
+    } catch {
+      // ignore missing candidate paths
+    }
+  }
+  return candidates[0] || cwdDir;
+}
+
+function guideDisplayName(fileName) {
+  return String(fileName || '')
+    .replace(/\.html$/, '')
+    .split('-')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+function normalizeGuideName(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/(-site-adaptation-guide)(?:\.html)+$/, '$1.html');
+}
+
+async function handleGuideIndex() {
+  const dir = await resolveGuideDirectory();
+  let entries = [];
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    entries = [];
+  }
+  const guides = entries
+    .filter((e) => e.isFile())
+    .map((e) => e.name.toLowerCase())
+    .filter((n) => n.endsWith(GUIDE_SUFFIX) && ALLOWED_GUIDE_PATTERN.test(n))
+    .sort((a, b) => a.localeCompare(b))
+    .map((file) => ({ file, displayName: guideDisplayName(file) }));
+  return jsonResponse(200, { guides });
+}
+
+async function handleGuideContent(rawFile) {
+  const file = normalizeGuideName(rawFile);
+  if (!file || !ALLOWED_GUIDE_PATTERN.test(file)) {
+    return jsonResponse(400, { error: 'Invalid guide file name' });
+  }
+  const dir = await resolveGuideDirectory();
+  const absolutePath = path.join(dir, file);
+  let content = '';
+  try {
+    content = await fs.readFile(absolutePath, 'utf8');
+  } catch {
+    return jsonResponse(404, { error: 'Guide not found' });
+  }
+  return {
+    statusCode: 200,
+    headers: {
+      'content-type': 'text/html; charset=UTF-8',
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex, nofollow, noarchive',
+    },
+    body: content,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Token generation
@@ -193,7 +283,16 @@ function validateSites(raw, existingSites = []) {
 // Route handlers
 // ---------------------------------------------------------------------------
 
-async function handleGet(sql, _user) {
+async function handleGet(sql, _user, event) {
+  const action = String(event?.queryStringParameters?.action || '').trim();
+
+  if (action === 'guide-index') return handleGuideIndex();
+
+  if (action === 'guide-content') {
+    const file = String(event?.queryStringParameters?.file || '').trim();
+    return handleGuideContent(file);
+  }
+
   const sites = await getHubSites(sql);
   return jsonResponse(200, {
     sites: sites.map(({ id, name, url, netlifySiteId }) => ({ id, name, url, netlifySiteId: netlifySiteId || '' })),
@@ -325,7 +424,7 @@ export async function handler(event) {
     }
 
     return routeByHttpMethod(event, {
-      GET: () => handleGet(sql, user),
+      GET: () => handleGet(sql, user, event),
       POST: () => handlePost(sql, user, event),
     });
   } catch (error) {

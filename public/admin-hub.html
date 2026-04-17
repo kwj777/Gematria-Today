@@ -62,9 +62,25 @@
       }
       #siteListPanelHeader {
         gap: 0.75rem;
+        position: relative;
       }
       #siteListPanelHeader .admin-section-toggle {
         flex: 1 1 auto;
+      }
+      #siteListPanelHeader.site-list-expanded {
+        padding-right: 10.5rem;
+      }
+      #siteListPanelHeader.site-list-expanded #refreshSitesBtn {
+        position: absolute;
+        right: 2.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      #siteListPanelHeader.site-list-expanded .admin-section-toggle-icon {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%) rotate(180deg);
       }
     </style>
     <script src="/admin-theme.js"></script>
@@ -269,6 +285,7 @@
       var refreshSiteAdaptationGuidesButton = document.getElementById('refreshSiteAdaptationGuidesButton');
       var openSiteAdaptationGuideButton = document.getElementById('openSiteAdaptationGuideButton');
       var siteAdaptationStatus = document.getElementById('siteAdaptationStatus');
+      var siteListPanelHeader = document.getElementById('siteListPanelHeader');
       var siteListPanelBody = document.getElementById('siteListPanelBody');
       var refreshSitesBtn = document.getElementById('refreshSitesBtn');
       var collapseButtons = document.querySelectorAll('.admin-section-toggle[data-bs-toggle="collapse"]');
@@ -418,10 +435,12 @@
       }
 
       siteListPanelBody.addEventListener('show.bs.collapse', function () {
+        siteListPanelHeader.classList.add('site-list-expanded');
         refreshSitesBtn.classList.remove('d-none');
       });
 
       siteListPanelBody.addEventListener('hide.bs.collapse', function () {
+        siteListPanelHeader.classList.remove('site-list-expanded');
         refreshSitesBtn.classList.add('d-none');
       });
 

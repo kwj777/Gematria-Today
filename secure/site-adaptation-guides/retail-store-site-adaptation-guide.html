@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retail Store Site Adaptation Guide</title>
+    <meta name="description" content="Guide for adapting this codebase into a retail store website with physical and ecommerce flows." />
+    <link rel="stylesheet" href="/theme.css" />
+    <style>
+      main.guide-container {
+        max-width: 920px;
+        margin: 3rem auto;
+        padding: 0 1rem 4rem;
+      }
+      .guide-content {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+      }
+      .guide-content h1,
+      .guide-content h2,
+      .guide-content h3,
+      .guide-content h4 {
+        margin-top: 1.5rem;
+      }
+      .guide-content hr {
+        margin: 2rem 0;
+      }
+      .guide-content code {
+        background: #f4f5f7;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .guide-content pre {
+        background: #101826;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .guide-content blockquote {
+        border-left: 4px solid #d0d7de;
+        margin-left: 0;
+        padding-left: 1rem;
+        color: #57606a;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  </head>
+  <body>
+    <main class="guide-container">
+      <article class="guide-content" id="guideContent" aria-live="polite"></article>
+      <script type="text/plain" id="markdownSource"># Reusing this basic site for a Retail Store (Physical Location + Online Sales)
+
+If you want to adapt this codebase for a retail business with a brick-and-mortar store and ecommerce goals, keep the core structure and rework content, navigation, product flows, and local conversion paths.
+
+## 1) Rebrand around your store identity and trust signals
+
+Start by replacing global identity elements:
+- Store name and category (e.g., boutique, hardware, specialty food)
+- Primary value proposition (local expertise, curated products, same-day pickup)
+- Meta description, Open Graph, Twitter preview, and canonical URLs
+- Logo, favicon, and preview images
+- Footer business identity details
+
+Primary file to begin with:
+- `public/index.html`
+
+Key updates:
+- Replace niche-specific copy with your store promise and strongest product categories.
+- Add visible trust cues: years in business, local ratings, pickup/returns policy.
+- Ensure brand consistency across all top-level pages.
+
+## 2) Rebuild navigation for omnichannel shopping
+
+Recommended top navigation for local + online retail:
+- Home
+- Shop
+- Categories
+- New Arrivals
+- Best Sellers
+- In-Store Pickup
+- Store Info
+- Contact / Support
+
+Useful utility links/actions:
+- Search
+- Cart
+- Account
+- Order Tracking
+
+Files to update:
+- `public/index.html` and related pages in `public/`
+
+Recommended new pages:
+- `public/shop.html`
+- `public/category.html`
+- `public/product-detail.html`
+- `public/cart.html`
+- `public/checkout.html`
+- `public/store-locator.html`
+- `public/shipping-returns.html`
+
+## 3) Rework homepage for in-store and online conversion
+
+Replace current sections with retail outcomes:
+- Hero featuring seasonal campaign + primary CTA (Shop Now)
+- Category tiles for high-margin departments
+- Featured products (new arrivals + best sellers)
+- Local store strip (address, hours, phone, map, pickup window)
+- Promo block (coupon, loyalty offer, email/SMS sign-up)
+- Social proof (reviews, UGC, testimonials)
+- Final CTA cluster: Shop Online, Visit Store, Call Us
+
+Design each section with one primary action to reduce choice overload.
+
+## 4) Define product and inventory data model early
+
+Suggested **product** fields:
+- `sku`
+- `slug`
+- `name`
+- `brand`
+- `category`
+- `price`
+- `compare_at_price`
+- `description`
+- `images[]`
+- `in_stock`
+- `store_stock_qty`
+- `warehouse_stock_qty`
+- `pickup_eligible`
+- `shipping_class`
+
+Suggested **location** fields:
+- `store_id`
+- `name`
+- `address`
+- `hours`
+- `phone`
+- `pickup_cutoff_time`
+
+If inventory sync is planned, map SKU and stock states before UI work so product badges remain accurate.
+
+## 5) Add omnichannel flows (critical for physical retailers)
+
+Prioritize these flows:
+- Buy Online, Pick Up In Store (BOPIS)
+- Reserve online, pay in store (if needed for your sector)
+- Local delivery radius options
+- Real-time “in stock at this store” indicators
+
+Files to review for implementation routing:
+- `public/contact.html` (if reused for support)
+- `netlify/functions/` endpoints for server-side validation and data handling
+
+## 6) Convert content engine into retail merchandising content
+
+Repurpose blog/news features into:
+- Buying guides
+- Seasonal lookbooks or gift guides
+- Product education and comparison pages
+- Event landing pages (in-store demos, workshops, launches)
+
+Likely touchpoints:
+- `public/blog.html`
+- Related `netlify/functions/` content endpoints if dynamic publishing remains enabled
+
+## 7) Update visual system for product-first scanning
+
+Primary style layers:
+- `public/theme.css`
+- Inline page styles where used
+
+High-impact changes:
+- Strong product card hierarchy (image, title, price, rating, CTA)
+- Consistent sale/discount badge system
+- Prominent stock and pickup labels
+- Sticky mobile add-to-cart on product detail pages
+- Clean filters/sorting controls on listing pages
+
+Keep typography and spacing optimized for quick scanning on mobile.
+
+## 8) Configure modules and disable non-retail features
+
+This project supports feature toggles via:
+- `public/site-modules.js`
+
+Action:
+- Keep only launch-critical modules.
+- Disable forum/chatbot/member modules unless they support support or merchandising goals.
+- If chat is enabled, constrain it to order support and product help use cases.
+
+## 9) Build retail support and policy UX
+
+Essential support pages/workflows:
+- Shipping policy
+- Returns and exchanges
+- Order tracking
+- Contact/support form with order lookup fields
+- FAQ for delivery windows, pickup timing, and refund status
+
+Files to review:
+- `public/contact.html`
+- `public/faq.html`
+- Any related support handlers in `netlify/functions/`
+
+## 10) Local SEO + ecommerce SEO essentials
+
+For local discovery and product visibility, add:
+- Accurate NAP (name, address, phone) on key pages
+- Store hours + holiday hours updates
+- LocalBusiness schema for store profile
+- Product schema on PDP templates
+- Collection/category metadata and canonical rules
+- Google Business Profile consistency with website info
+
+Also ensure every product image has useful alt text and every category page has crawlable copy.
+
+## 11) Security, payments, and abuse prevention
+
+If taking orders or account data:
+- Validate/sanitize all form and cart input server-side
+- Protect checkout/session endpoints from replay and abuse
+- Avoid exposing inventory admin controls publicly
+- Log sensitive actions (refund requests, account edits, admin updates)
+- Follow PCI-safe integration patterns through payment providers
+
+Review:
+- `netlify/functions/_security.mjs`
+- Payment/session-related functions in `netlify/functions/`
+
+## 12) Launch checklist for retail conversion
+
+- Replace all prior niche copy, media, and metadata
+- Validate category/product route structure
+- Confirm stock badges and pickup eligibility logic
+- Test full cart and checkout journey on mobile and desktop
+- Verify store locator details (address, hours, map, phone)
+- Test support forms, order status, and returns flows
+- Run static checks and audits
+- Sync deployable root pages if needed:
+  - `npm run sync-root-pages`
+
+---
+
+## Estimated timeline
+
+- **Fast MVP (catalog + basic cart + local store pages): 28–45 hours**
+  - Rebrand + homepage + nav + policy pages: 8–14 hours
+  - Category/PDP/cart UX pass: 10–16 hours
+  - QA, metadata, and launch checks: 10–15 hours
+
+- **Omnichannel standard launch (pickup + better merchandising): 50–90 hours**
+  - Includes inventory states, pickup messaging, improved merchandising templates, and deeper responsive tuning
+
+- **Advanced ecommerce launch (dynamic inventory + richer automation): 90–160+ hours**
+  - Includes integrations, operational tooling, analytics events, and post-launch optimization
+
+## Suggested implementation priorities (first two sprints)
+
+1. **Sprint 1 (core conversion):** brand, nav, homepage, category/PDP layout, cart basics
+2. **Sprint 2 (omnichannel):** pickup flow, store details UX, policy/support pages, SEO schema, analytics events
+
+This order reduces launch risk while quickly enabling both local foot traffic and online revenue.
+</script>
+    </main>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const markdownSource = document.getElementById('markdownSource');
+        const guideContent = document.getElementById('guideContent');
+        const markdown = markdownSource ? markdownSource.textContent : '';
+
+        if (!window.marked) {
+          guideContent.textContent = markdown;
+          return;
+        }
+
+        marked.setOptions({
+          gfm: true,
+          breaks: false,
+          headerIds: true,
+          mangle: false,
+        });
+        guideContent.innerHTML = marked.parse(markdown);
+      });
+    </script>
+  </body>
+</html>

@@ -49,3 +49,11 @@ test('canAccessSiteAdaptationGuides supports admin and super admin users', () =>
   assert.equal(__testUtils.canAccessSiteAdaptationGuides({ role: 'member' }), false);
   assert.equal(__testUtils.canAccessSiteAdaptationGuides(undefined), false);
 });
+
+test('buildUnauthenticatedRedirect uses /admin (no .html) to prevent redirect loop', () => {
+  const url = __testUtils.buildUnauthenticatedRedirect('architect-site-adaptation-guide.html');
+  assert.ok(url.startsWith('/admin?'), 'redirect must start with /admin? not /admin.html?');
+  assert.ok(!url.startsWith('/admin.html'), 'redirect must not use /admin.html which can trigger /:page loop');
+  assert.ok(url.includes('next='), 'redirect must include next parameter');
+  assert.ok(url.includes('architect-site-adaptation-guide.html'), 'redirect must preserve the guide filename');
+});

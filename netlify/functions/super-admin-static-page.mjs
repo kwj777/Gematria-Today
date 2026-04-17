@@ -64,9 +64,14 @@ function htmlResponse(statusCode, body, headers = {}) {
   };
 }
 
+function buildUnauthenticatedRedirect(requestedFile) {
+  return `/admin?next=${encodeURIComponent(`/${requestedFile}`)}`;
+}
+
 export const __testUtils = {
   canAccessSiteAdaptationGuides,
   resolveRequestedGuideFile,
+  buildUnauthenticatedRedirect,
 };
 
 export async function handler(event) {
@@ -94,7 +99,7 @@ export async function handler(event) {
     return {
       statusCode: 302,
       headers: {
-        location: `/admin.html?next=${encodeURIComponent(`/${requestedFile}`)}`,
+        location: buildUnauthenticatedRedirect(requestedFile),
         'cache-control': 'no-store',
       },
       body: '',

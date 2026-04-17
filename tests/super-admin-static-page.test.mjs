@@ -75,7 +75,7 @@ test('buildUnauthenticatedRedirect includes nextAttempted when a redirect was al
   assert.ok(url.includes('nextAttempted=1'));
 });
 
-test('hasNextRedirectAttemptMarker reads the adminNextAttempted query marker', () => {
+test('hasNextRedirectAttemptMarker reads both adminNextAttempted and nextAttempted markers', () => {
   assert.equal(__testUtils.hasNextRedirectAttemptMarker({
     queryStringParameters: {
       adminNextAttempted: '1',
@@ -87,4 +87,17 @@ test('hasNextRedirectAttemptMarker reads the adminNextAttempted query marker', (
       adminNextAttempted: '0',
     },
   }), false);
+
+  assert.equal(__testUtils.hasNextRedirectAttemptMarker({
+    queryStringParameters: {
+      nextAttempted: '1',
+    },
+  }), true);
+});
+
+test('buildRedirectLoopGuardResponse returns an explicit sign-in response instead of redirecting again', () => {
+  const response = __testUtils.buildRedirectLoopGuardResponse();
+  assert.equal(response.statusCode, 401);
+  assert.match(String(response.body || ''), /Sign in required/i);
+  assert.equal(response.headers['cache-control'], 'no-store');
 });

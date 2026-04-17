@@ -1059,17 +1059,75 @@
         return `${getCanonicalOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
       }
 
+      function withFileExtension(filename, extension) {
+        const rawName = String(filename || 'download').trim() || 'download';
+        const normalizedExtension = String(extension || '').trim().replace(/^\./, '');
+        if (!normalizedExtension) {
+          return rawName;
+        }
+
+        return rawName.replace(/\.[a-z0-9]+$/i, `.${normalizedExtension}`);
+      }
+
       async function downloadShareImage(shareImageUrlCandidate, filename) {
-        const response = await fetch(shareImageUrlCandidate);
+        const response = await fetch(shareImageUrlCandidate, { cache: 'no-store' });
         if (!response.ok) {
           throw new Error('Unable to download image right now. Please try again.');
         }
 
         const imageBlob = await response.blob();
-        const objectUrl = URL.createObjectURL(imageBlob);
+        let jpegBlob = imageBlob.type === 'image/jpeg' ? imageBlob : null;
+        if (!jpegBlob) {
+          try {
+            jpegBlob = await new Promise((resolve, reject) => {
+              const imageUrl = URL.createObjectURL(imageBlob);
+              const image = new Image();
+              image.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.naturalWidth || image.width;
+                canvas.height = image.naturalHeight || image.height;
+                const context = canvas.getContext('2d');
+                if (!context) {
+                  URL.revokeObjectURL(imageUrl);
+                  reject(new Error('no 2d context'));
+                  return;
+                }
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((convertedBlob) => {
+                  URL.revokeObjectURL(imageUrl);
+                  if (convertedBlob) {
+                    resolve(convertedBlob);
+                    return;
+                  }
+                  reject(new Error('jpeg conversion failed'));
+                }, 'image/jpeg', 0.92);
+              };
+              image.onerror = () => {
+                URL.revokeObjectURL(imageUrl);
+                reject(new Error('image decode failed'));
+              };
+              image.src = imageUrl;
+            });
+          } catch {
+            jpegBlob = null;
+          }
+        }
+
+        const downloadableBlob = jpegBlob || imageBlob;
+        const extensionByType = {
+          'image/jpeg': 'jpg',
+          'image/png': 'png',
+          'image/webp': 'webp',
+          'image/gif': 'gif',
+        };
+        const filenameWithExtension = withFileExtension(
+          filename,
+          extensionByType[downloadableBlob.type] || 'jpg'
+        );
+        const objectUrl = URL.createObjectURL(downloadableBlob);
         const downloadAnchor = document.createElement('a');
         downloadAnchor.href = objectUrl;
-        downloadAnchor.download = filename;
+        downloadAnchor.download = filenameWithExtension;
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();

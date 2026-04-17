@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Family Tree Creator Site Adaptation Guide</title>
+    <meta name="description" content="Guide for adapting this codebase into a niche website implementation." />
+    <link rel="stylesheet" href="/theme.css" />
+    <style>
+      main.guide-container {
+        max-width: 920px;
+        margin: 3rem auto;
+        padding: 0 1rem 4rem;
+      }
+      .guide-content {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+      }
+      .guide-content h1,
+      .guide-content h2,
+      .guide-content h3,
+      .guide-content h4 {
+        margin-top: 1.5rem;
+      }
+      .guide-content hr {
+        margin: 2rem 0;
+      }
+      .guide-content code {
+        background: #f4f5f7;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .guide-content pre {
+        background: #101826;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .guide-content blockquote {
+        border-left: 4px solid #d0d7de;
+        margin-left: 0;
+        padding-left: 1rem;
+        color: #57606a;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  </head>
+  <body>
+    <main class="guide-container">
+      <article class="guide-content" id="guideContent" aria-live="polite"></article>
+      <script type="text/plain" id="markdownSource"># Reusing this basic site for a Family Tree Creator Platform
+
+If you want to adapt this codebase into a family tree creator product, keep the shared page structure and rework it around onboarding, tree-building workflows, collaboration, and privacy controls.
+
+## 1) Define product model and user promise first
+
+Before editing UI, lock in the core promise and target audience:
+- Who the product serves (casual hobbyists, genealogy enthusiasts, schools, family historians)
+- Primary outcome (build one tree quickly, preserve family history, collaborate with relatives)
+- Monetization model (free tier + paid plans, one-time purchase, subscription)
+- Data sensitivity posture (private by default, invite-only sharing, export control)
+
+This will determine navigation, feature scope, and required backend flows.
+
+## 2) Rebrand global identity around heritage and trust
+
+Update all brand surfaces:
+- Product name, tagline, and hero message
+- `<title>`, meta descriptions, canonical URLs, and social share metadata
+- Logo, favicon, and support/legal copy
+- Trust language emphasizing data ownership and privacy
+
+Start with:
+- `public/index.html`
+- Shared static pages in `public/*.html`
+- Brand assets in `public/assets/`
+
+## 3) Replace navigation with creator-first information architecture
+
+Recommended top-level navigation:
+- Home
+- Features
+- How It Works
+- Pricing
+- Templates
+- Family Stories (blog/resources)
+- Help Center
+- Sign In / Get Started
+
+Recommended account-area navigation:
+- My Trees
+- People
+- Relationships
+- Timeline
+- Media Vault
+- Invitations
+- Settings
+
+Keep global navigation focused on activation (start tree) and trust (privacy + support).
+
+## 4) Build core page set for acquisition + activation
+
+Create or repurpose pages:
+- `public/features.html`
+- `public/how-it-works.html`
+- `public/pricing.html`
+- `public/templates.html`
+- `public/help-center.html`
+- `public/tree-builder.html` (app shell)
+- `public/tree-share.html` (invite/collaboration landing)
+
+Goal: smooth journey from visitor → signup → first tree created in under 10 minutes.
+
+## 5) Define a practical genealogy data model early
+
+Suggested person node fields:
+- `id`
+- `first_name`
+- `middle_name`
+- `last_name`
+- `preferred_name`
+- `birth_date`
+- `birth_location`
+- `death_date`
+- `death_location`
+- `gender`
+- `notes`
+- `media_ids[]`
+- `privacy_level`
+
+Suggested relationship edge fields:
+- `id`
+- `source_person_id`
+- `target_person_id`
+- `relationship_type` (parent, child, spouse, sibling, guardian)
+- `start_date`
+- `end_date`
+- `confidence`
+- `notes`
+
+Suggested tree-level fields:
+- `tree_id`
+- `owner_member_id`
+- `tree_name`
+- `visibility`
+- `invite_policy`
+- `created_at`
+- `updated_at`
+
+Locking these structures early prevents expensive migration work later.
+
+## 6) Rework homepage for conversion into first tree creation
+
+Homepage section blueprint:
+- Heritage-focused hero with one CTA: **Start Your Family Tree**
+- “How it works” 3-step flow: add people → connect relationships → share with family
+- Template gallery (nuclear family, extended tree, ancestry branch)
+- Trust signals (private by default, export any time, cross-device access)
+- Social proof (user stories, testimonials)
+- Final CTA to create account
+
+Keep every section connected to activation, not generic content.
+
+## 7) Design high-impact tree-builder UX patterns
+
+Prioritize:
+- Quick-add person modal
+- Drag-and-connect relationship actions
+- Keyboard shortcuts for power users
+- Timeline view for major family events
+- Search and filter (name, generation, branch)
+- Undo/redo and autosave
+- Conflict prompts for duplicate or contradictory records
+
+Style touchpoints:
+- `public/theme.css`
+- Page-level styles in `public/*.html`
+
+## 8) Configure modules for collaboration and support
+
+Feature gating lives in:
+- `public/site-modules.js`
+
+For a family tree product:
+- Keep account/auth modules enabled
+- Keep chatbot only if scoped to onboarding/support
+- Disable unrelated community modules unless social features are part of roadmap
+- Keep content modules (blog/help) for SEO and onboarding education
+
+## 9) Adapt backend flows for member data and collaboration
+
+Review and repurpose function endpoints under `netlify/functions/` for:
+- Account registration/login/recovery
+- Tree CRUD operations (create/read/update/archive)
+- Collaboration invites and role-based permissions
+- Media upload metadata and retrieval
+- Export flows (JSON/CSV/PDF/GEDCOM if supported)
+
+Also validate authorization boundaries in:
+- `netlify/functions/_auth.mjs`
+- `netlify/functions/_security.mjs`
+
+## 10) Implement privacy, consent, and safety controls
+
+Because family data may include living people, include:
+- Visibility options (private, invite-only, public profile mode)
+- Per-person privacy controls (mask birth dates/locations)
+- Invite role types (viewer, editor, owner)
+- Audit log for edits and collaboration actions
+- Data export and deletion controls
+
+Update legal pages accordingly:
+- `public/privacy.html`
+- `public/terms.html`
+- `public/disclaimer.html`
+
+## 11) SEO and discoverability plan for genealogy intent
+
+Build content around search intent:
+- “How to build a family tree” guides
+- Relationship terminology explainers
+- Family history interview checklists
+- Record-keeping best practices
+
+SEO checks:
+- Unique metadata for feature and guide pages
+- Structured internal linking between help articles and product pages
+- Descriptive alt text on tree screenshots/graphics
+- Performance optimization for media-heavy pages
+
+## 12) Launch readiness checklist
+
+- [ ] Brand, metadata, and trust copy replaced globally
+- [ ] Visitor flow to first tree creation validated on mobile + desktop
+- [ ] Collaboration permissions and invite states tested
+- [ ] Privacy toggles and legal copy reviewed
+- [ ] Export/deletion flows validated
+- [ ] `npm run sync:site-adaptation-guides` completed
+- [ ] `npm run check:site-adaptation-guides` passes
+- [ ] `npm run check-root-pages` passes if any root/public mirrors changed
+
+---
+
+## Delivery estimates
+
+- **Fast MVP (single-owner tree builder): 32–56 hours**
+  - Rebrand, core pages, basic tree editor shell, account flows
+- **Standard launch (collaboration + templates): 60–110 hours**
+  - Invites, role permissions, richer onboarding, help content
+- **Advanced launch (historical workflows + exports): 120–220+ hours**
+  - Large-tree performance, advanced search, robust import/export and quality controls
+
+## Suggested two-sprint rollout
+
+1. **Sprint 1 (activation path):** rebrand, marketing pages, signup flow, basic tree creation/editing
+2. **Sprint 2 (retention + trust):** collaboration, privacy controls, help content, QA hardening and launch prep
+</script>
+    </main>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const markdownSource = document.getElementById('markdownSource');
+        const guideContent = document.getElementById('guideContent');
+        const markdown = markdownSource ? markdownSource.textContent : '';
+
+        if (!window.marked) {
+          guideContent.textContent = markdown;
+          return;
+        }
+
+        marked.setOptions({
+          gfm: true,
+          breaks: false,
+          headerIds: true,
+          mangle: false,
+        });
+        guideContent.innerHTML = marked.parse(markdown);
+      });
+    </script>
+  </body>
+</html>

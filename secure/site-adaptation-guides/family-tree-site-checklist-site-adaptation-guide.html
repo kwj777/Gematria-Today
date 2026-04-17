@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Family Tree Site Checklist Site Adaptation Guide</title>
+    <meta name="description" content="Guide for adapting this codebase into a niche website implementation." />
+    <link rel="stylesheet" href="/theme.css" />
+    <style>
+      main.guide-container {
+        max-width: 920px;
+        margin: 3rem auto;
+        padding: 0 1rem 4rem;
+      }
+      .guide-content {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+      }
+      .guide-content h1,
+      .guide-content h2,
+      .guide-content h3,
+      .guide-content h4 {
+        margin-top: 1.5rem;
+      }
+      .guide-content hr {
+        margin: 2rem 0;
+      }
+      .guide-content code {
+        background: #f4f5f7;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .guide-content pre {
+        background: #101826;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .guide-content blockquote {
+        border-left: 4px solid #d0d7de;
+        margin-left: 0;
+        padding-left: 1rem;
+        color: #57606a;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  </head>
+  <body>
+    <main class="guide-container">
+      <article class="guide-content" id="guideContent" aria-live="polite"></article>
+      <script type="text/plain" id="markdownSource"># Family Tree Site Checklist
+
+Use this checklist to adapt this codebase into a **Family Tree Creator Platform** while keeping the shared page structure and refocusing on onboarding, tree-building workflows, collaboration, and privacy controls.
+
+## 1) Define product model and user promise first
+
+- [ ] Confirm target audience (casual hobbyists, genealogy enthusiasts, schools, family historians).
+- [ ] Define primary outcome (build one tree quickly, preserve family history, collaborate with relatives).
+- [ ] Choose monetization model (free tier + paid plans, one-time purchase, subscription).
+- [ ] Set data sensitivity posture (private by default, invite-only sharing, export control).
+- [ ] Validate that navigation, feature scope, and backend flow decisions align with the above.
+
+## 2) Rebrand global identity around heritage and trust
+
+- [ ] Replace product name, tagline, and hero message.
+- [ ] Update `<title>`, meta descriptions, canonical URLs, and social share metadata.
+- [ ] Replace logo, favicon, and support/legal copy.
+- [ ] Add trust language emphasizing data ownership and privacy.
+- [ ] Update `public/index.html`.
+- [ ] Update shared static pages in `public/*.html`.
+- [ ] Update brand assets in `public/assets/`.
+
+## 3) Replace navigation with creator-first information architecture
+
+- [ ] Add/confirm top-level nav: Home, Features, How It Works, Pricing, Templates, Family Stories, Help Center, Sign In / Get Started.
+- [ ] Add/confirm account-area nav: My Trees, People, Relationships, Timeline, Media Vault, Invitations, Settings.
+- [ ] Ensure global navigation is focused on activation (start tree) and trust (privacy + support).
+
+## 4) Build core page set for acquisition + activation
+
+- [ ] Create or repurpose `public/features.html`.
+- [ ] Create or repurpose `public/how-it-works.html`.
+- [ ] Create or repurpose `public/pricing.html`.
+- [ ] Create or repurpose `public/templates.html`.
+- [ ] Create or repurpose `public/help-center.html`.
+- [ ] Create or repurpose `public/tree-builder.html` (app shell).
+- [ ] Create or repurpose `public/tree-share.html` (invite/collaboration landing).
+- [ ] Validate visitor → signup → first tree flow can be completed in under 10 minutes.
+
+## 5) Define a practical genealogy data model early
+
+### Person node fields
+
+- [ ] `id`
+- [ ] `first_name`
+- [ ] `middle_name`
+- [ ] `last_name`
+- [ ] `preferred_name`
+- [ ] `birth_date`
+- [ ] `birth_location`
+- [ ] `death_date`
+- [ ] `death_location`
+- [ ] `gender`
+- [ ] `notes`
+- [ ] `media_ids[]`
+- [ ] `privacy_level`
+
+### Relationship edge fields
+
+- [ ] `id`
+- [ ] `source_person_id`
+- [ ] `target_person_id`
+- [ ] `relationship_type` (parent, child, spouse, sibling, guardian)
+- [ ] `start_date`
+- [ ] `end_date`
+- [ ] `confidence`
+- [ ] `notes`
+
+### Tree-level fields
+
+- [ ] `tree_id`
+- [ ] `owner_member_id`
+- [ ] `tree_name`
+- [ ] `visibility`
+- [ ] `invite_policy`
+- [ ] `created_at`
+- [ ] `updated_at`
+
+- [ ] Freeze these structures early to avoid expensive migrations.
+
+## 6) Rework homepage for conversion into first tree creation
+
+- [ ] Add heritage-focused hero with one CTA: **Start Your Family Tree**.
+- [ ] Add 3-step flow: add people → connect relationships → share with family.
+- [ ] Add template gallery (nuclear family, extended tree, ancestry branch).
+- [ ] Add trust signals (private by default, export any time, cross-device access).
+- [ ] Add social proof (user stories, testimonials).
+- [ ] Add final CTA to create account.
+- [ ] Ensure every section is tied to activation.
+
+## 7) Design high-impact tree-builder UX patterns
+
+- [ ] Add quick-add person modal.
+- [ ] Add drag-and-connect relationship actions.
+- [ ] Add keyboard shortcuts for power users.
+- [ ] Add timeline view for major family events.
+- [ ] Add search and filter (name, generation, branch).
+- [ ] Add undo/redo and autosave.
+- [ ] Add conflict prompts for duplicate or contradictory records.
+- [ ] Update style touchpoints in `public/theme.css` and page-level styles in `public/*.html`.
+
+## 8) Configure modules for collaboration and support
+
+- [ ] Review feature gating in `public/site-modules.js`.
+- [ ] Keep account/auth modules enabled.
+- [ ] Keep chatbot only if scoped to onboarding/support.
+- [ ] Disable unrelated community modules unless social features are in roadmap.
+- [ ] Keep content modules (blog/help) for SEO and onboarding education.
+
+## 9) Adapt backend flows for member data and collaboration
+
+- [ ] Review and repurpose account registration/login/recovery endpoints in `netlify/functions/`.
+- [ ] Implement tree CRUD (create/read/update/archive).
+- [ ] Implement collaboration invites and role-based permissions.
+- [ ] Implement media upload metadata and retrieval.
+- [ ] Implement export flows (JSON/CSV/PDF/GEDCOM if supported).
+- [ ] Validate authorization boundaries in `netlify/functions/_auth.mjs`.
+- [ ] Validate authorization boundaries in `netlify/functions/_security.mjs`.
+
+## 10) Implement privacy, consent, and safety controls
+
+- [ ] Add visibility options (private, invite-only, public profile mode).
+- [ ] Add per-person privacy controls (mask birth dates/locations).
+- [ ] Add invite roles (viewer, editor, owner).
+- [ ] Add audit log for edits and collaboration actions.
+- [ ] Add data export and deletion controls.
+- [ ] Update `public/privacy.html`.
+- [ ] Update `public/terms.html`.
+- [ ] Update `public/disclaimer.html`.
+
+## 11) SEO and discoverability plan for genealogy intent
+
+- [ ] Publish “How to build a family tree” guides.
+- [ ] Publish relationship terminology explainers.
+- [ ] Publish family history interview checklists.
+- [ ] Publish record-keeping best practices.
+- [ ] Ensure unique metadata for feature and guide pages.
+- [ ] Ensure structured internal linking between help articles and product pages.
+- [ ] Ensure descriptive alt text on tree screenshots/graphics.
+- [ ] Optimize performance for media-heavy pages.
+
+## 12) Launch readiness checklist
+
+- [ ] Brand, metadata, and trust copy replaced globally.
+- [ ] Visitor flow to first tree creation validated on mobile + desktop.
+- [ ] Collaboration permissions and invite states tested.
+- [ ] Privacy toggles and legal copy reviewed.
+- [ ] Export/deletion flows validated.
+- [ ] `npm run sync:site-adaptation-guides` completed.
+- [ ] `npm run check:site-adaptation-guides` passes.
+- [ ] `npm run check-root-pages` passes (if any root/public mirrors changed).
+</script>
+    </main>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const markdownSource = document.getElementById('markdownSource');
+        const guideContent = document.getElementById('guideContent');
+        const markdown = markdownSource ? markdownSource.textContent : '';
+
+        if (!window.marked) {
+          guideContent.textContent = markdown;
+          return;
+        }
+
+        marked.setOptions({
+          gfm: true,
+          breaks: false,
+          headerIds: true,
+          mangle: false,
+        });
+        guideContent.innerHTML = marked.parse(markdown);
+      });
+    </script>
+  </body>
+</html>

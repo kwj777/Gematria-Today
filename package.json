@@ -15,7 +15,8 @@
     "sync:architect-guide": "npm run sync:site-adaptation-guides",
     "check:architect-guide": "npm run check:site-adaptation-guides",
     "sync:site-adaptation-guides": "node scripts/sync-site-adaptation-guides.mjs --write",
-    "check:site-adaptation-guides": "node scripts/sync-site-adaptation-guides.mjs --check"
+    "check:site-adaptation-guides": "node scripts/sync-site-adaptation-guides.mjs --check",
+    "audit:redirects": "node scripts/audit-sitemap-redirects.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",

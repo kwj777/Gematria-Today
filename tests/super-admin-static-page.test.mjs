@@ -44,6 +44,8 @@ test('resolveRequestedGuideFile rejects traversal and non-guide files', () => {
 
 test('canAccessSiteAdaptationGuides only supports super admin users', () => {
   assert.equal(__testUtils.canAccessSiteAdaptationGuides({ role: 'super_admin' }), true);
+  assert.equal(__testUtils.canAccessSiteAdaptationGuides({ role: 'super_admins' }), true);
+  assert.equal(__testUtils.canAccessSiteAdaptationGuides({ role: 'super-admin' }), true);
   assert.equal(__testUtils.canAccessSiteAdaptationGuides({ role: 'admin' }), false);
   assert.equal(__testUtils.canAccessSiteAdaptationGuides({ isAdmin: true }), false);
   assert.equal(__testUtils.canAccessSiteAdaptationGuides({ role: 'member' }), false);

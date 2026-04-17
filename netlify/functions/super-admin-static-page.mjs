@@ -190,7 +190,11 @@ export async function handler(event) {
     return htmlResponse(404, '<!doctype html><title>Not found</title><p>Not found.</p>');
   }
 
-  const canonicalGuidePath = buildCanonicalGuideRedirect(event, requestedFile);
+  // Skip canonicalization when the loop-guard marker is already present so that
+  // the marker is not lost in the 301 and the auth/loop-guard check runs immediately.
+  const canonicalGuidePath = hasNextRedirectAttemptMarker(event)
+    ? ''
+    : buildCanonicalGuideRedirect(event, requestedFile);
   if (canonicalGuidePath) {
     return {
       statusCode: 301,

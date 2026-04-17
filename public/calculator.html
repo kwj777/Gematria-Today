@@ -397,7 +397,38 @@ const lookupForm = document.querySelector('#lookup-form');
         }
 
         const imageBlob = await response.blob();
-        const objectUrl = URL.createObjectURL(imageBlob);
+        const jpegBlob = imageBlob.type === 'image/jpeg'
+          ? imageBlob
+          : await new Promise((resolve, reject) => {
+              const imageUrl = URL.createObjectURL(imageBlob);
+              const image = new Image();
+              image.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.naturalWidth || image.width;
+                canvas.height = image.naturalHeight || image.height;
+                const context = canvas.getContext('2d');
+                if (!context) {
+                  URL.revokeObjectURL(imageUrl);
+                  reject(new Error('Unable to process image for download right now. Please try again.'));
+                  return;
+                }
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((convertedBlob) => {
+                  URL.revokeObjectURL(imageUrl);
+                  if (convertedBlob) {
+                    resolve(convertedBlob);
+                    return;
+                  }
+                  reject(new Error('Unable to process image for download right now. Please try again.'));
+                }, 'image/jpeg', 0.92);
+              };
+              image.onerror = () => {
+                URL.revokeObjectURL(imageUrl);
+                reject(new Error('Unable to process image for download right now. Please try again.'));
+              };
+              image.src = imageUrl;
+            });
+        const objectUrl = URL.createObjectURL(jpegBlob);
         const downloadAnchor = document.createElement('a');
         downloadAnchor.href = objectUrl;
         downloadAnchor.download = filename;

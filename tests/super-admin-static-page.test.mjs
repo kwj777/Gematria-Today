@@ -24,6 +24,13 @@ test('resolveRequestedGuideFile accepts valid guide file names', () => {
     }),
     'architect-site-adaptation-guide.html',
   );
+
+  assert.equal(
+    __testUtils.resolveRequestedGuideFile({
+      path: '/architect-site-adaptation-guide.html.html.html',
+    }),
+    'architect-site-adaptation-guide.html',
+  );
 });
 
 test('resolveRequestedGuideFile rejects traversal and non-guide files', () => {
@@ -82,6 +89,24 @@ test('buildUnauthenticatedRedirect includes nextAttempted when a redirect was al
   });
 
   assert.ok(url.includes('nextAttempted=1'));
+});
+
+test('buildCanonicalGuideRedirect returns canonical single-.html path when request path is duplicated', () => {
+  const redirectPath = __testUtils.buildCanonicalGuideRedirect(
+    { path: '/architect-site-adaptation-guide.html.html.html' },
+    'architect-site-adaptation-guide.html',
+  );
+
+  assert.equal(redirectPath, '/architect-site-adaptation-guide.html');
+});
+
+test('buildCanonicalGuideRedirect does not redirect already-canonical guide requests', () => {
+  const redirectPath = __testUtils.buildCanonicalGuideRedirect(
+    { path: '/architect-site-adaptation-guide.html' },
+    'architect-site-adaptation-guide.html',
+  );
+
+  assert.equal(redirectPath, '');
 });
 
 test('hasNextRedirectAttemptMarker reads both adminNextAttempted and nextAttempted markers', () => {

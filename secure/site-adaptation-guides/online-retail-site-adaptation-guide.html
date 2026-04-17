@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Online Retail Site Adaptation Guide</title>
+    <meta name="description" content="Guide for adapting this codebase into a niche website implementation." />
+    <link rel="stylesheet" href="/theme.css" />
+    <style>
+      main.guide-container {
+        max-width: 920px;
+        margin: 3rem auto;
+        padding: 0 1rem 4rem;
+      }
+      .guide-content {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+      }
+      .guide-content h1,
+      .guide-content h2,
+      .guide-content h3,
+      .guide-content h4 {
+        margin-top: 1.5rem;
+      }
+      .guide-content hr {
+        margin: 2rem 0;
+      }
+      .guide-content code {
+        background: #f4f5f7;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .guide-content pre {
+        background: #101826;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .guide-content blockquote {
+        border-left: 4px solid #d0d7de;
+        margin-left: 0;
+        padding-left: 1rem;
+        color: #57606a;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  </head>
+  <body>
+    <main class="guide-container">
+      <article class="guide-content" id="guideContent" aria-live="polite"></article>
+      <script type="text/plain" id="markdownSource"># Reusing this basic site for an Online Retail Brand
+
+If you want to adapt this codebase into an online retail storefront, you can keep the existing structure and replace content, navigation, catalog flows, and conversion modules.
+
+## 1) Rebrand your storefront identity first
+
+Update global brand surfaces before touching page-level features:
+- Store name, category focus, and value proposition
+- Meta description, canonical URL, Open Graph/Twitter image tags
+- Logo, favicon, and footer contact identity
+- Primary conversion promise (fast shipping, curated catalog, easy returns)
+
+Start with:
+- `public/index.html`
+
+## 2) Replace navigation with ecommerce-first information architecture
+
+Recommended top navigation:
+- Home
+- Shop All
+- Categories
+- New Arrivals
+- Best Sellers
+- Sale
+- Help Center
+- Contact
+
+Recommended utility actions:
+- Search
+- Account
+- Cart
+- Order Tracking
+
+Files to edit:
+- `public/index.html`
+- Related pages in `public/` that share header/footer markup
+
+## 3) Add core ecommerce page set
+
+Create or repurpose these pages:
+- `public/shop.html` (product listing)
+- `public/category.html` (category listing)
+- `public/product-detail.html` (PDP)
+- `public/cart.html`
+- `public/checkout.html`
+- `public/order-tracking.html`
+- `public/shipping-returns.html`
+
+Goal: a complete browse → cart → checkout → post-purchase support journey.
+
+## 4) Rework homepage for merchandising and conversion
+
+Use sections focused on product discovery:
+- Hero campaign with one clear CTA (Shop Now)
+- Category tiles for high-value collections
+- Featured products (new, trending, best sellers)
+- Promo strip (free shipping threshold, limited-time offer)
+- Social proof (ratings, reviews, UGC)
+- Email/SMS capture with discount incentive
+- Final CTA to continue shopping
+
+Keep each block focused on one action to reduce drop-off.
+
+## 5) Define product/catalog data model early
+
+Suggested product fields:
+- `sku`
+- `slug`
+- `name`
+- `brand`
+- `category`
+- `price`
+- `compare_at_price`
+- `images[]`
+- `description`
+- `in_stock`
+- `stock_qty`
+- `shipping_class`
+- `tags[]`
+
+Suggested category fields:
+- `slug`
+- `name`
+- `description`
+- `hero_image`
+- `sort_rules`
+
+Mapping data structures early avoids rework in filters, badges, and search.
+
+## 6) Build high-impact retail UX patterns
+
+Prioritize:
+- Faceted filters (price, size, color, brand)
+- Sorting (best selling, newest, price low/high)
+- Product badges (sale, low stock, new)
+- Sticky mobile add-to-cart on PDP
+- Recently viewed products
+- Cart upsell/cross-sell slots
+
+Style layers to edit:
+- `public/theme.css`
+- Any inline page styles in `public/*.html`
+
+## 7) Repurpose existing content engine into retail content marketing
+
+Convert blog/news sections into:
+- Buying guides
+- Product comparison pages
+- Seasonal collections
+- Gift guides
+- FAQ-based support articles
+
+Touchpoints:
+- `public/blog.html`
+- Related content functions in `netlify/functions/` if dynamic publishing remains enabled
+
+## 8) Configure modules for retail-only launch scope
+
+This project supports module toggles in:
+- `public/site-modules.js`
+
+For online retail launch:
+- Keep only modules that support merchandising, checkout, and customer support
+- Disable forum/community modules unless part of your CX strategy
+- Keep chatbot only if bounded to shopping help/order support
+
+## 9) Implement trust, policy, and support foundations
+
+Include essential support and compliance pages:
+- Shipping policy
+- Returns/refunds policy
+- Privacy policy and terms
+- Contact/support with order lookup fields
+- FAQ for fulfillment and returns
+
+Likely files:
+- `public/contact.html`
+- `public/faq.html`
+- `public/terms.html`
+- `public/privacy.html`
+
+## 10) Ecommerce SEO checklist
+
+Set up:
+- Product schema for PDPs
+- Category metadata and canonical rules
+- Descriptive alt text for product imagery
+- Internal linking between category ↔ PDP ↔ guides
+- Fast-loading media and Core Web Vitals hygiene
+
+This improves both crawlability and conversion intent matching.
+
+## 11) Security and payment hardening
+
+Before accepting orders:
+- Validate/sanitize cart and checkout inputs server-side
+- Protect session endpoints and anti-abuse controls
+- Avoid exposing admin write routes publicly
+- Log sensitive flows (refund requests, account updates)
+- Use PCI-safe payment provider patterns
+
+Review:
+- `netlify/functions/_security.mjs`
+- Payment/session functions in `netlify/functions/`
+
+## 12) Launch checklist
+
+- Replace all prior niche copy/assets/metadata
+- Validate route and navigation integrity
+- Test full browse → checkout path (mobile + desktop)
+- Verify tax/shipping/discount logic if configured
+- Confirm transactional email and order tracking links
+- Run static checks and site sync scripts as needed
+- Sync deployable root pages:
+  - `npm run sync-root-pages`
+
+---
+
+## Delivery timeline estimates
+
+- **Fast MVP ecommerce shell: 24–40 hours**
+  - Rebrand, nav, homepage, core shop/cart pages, policy setup
+- **Standard launch: 45–80 hours**
+  - Better merchandising UX, stronger PDPs, support flows, SEO pass
+- **Advanced launch: 80–150+ hours**
+  - Deeper automation, richer integrations, analytics and optimization
+
+## Suggested two-sprint rollout
+
+1. **Sprint 1 (core revenue path):** rebrand, homepage, catalog, PDP, cart, checkout shell
+2. **Sprint 2 (trust + optimization):** support/policy pages, content guides, SEO, analytics, QA hardening
+</script>
+    </main>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const markdownSource = document.getElementById('markdownSource');
+        const guideContent = document.getElementById('guideContent');
+        const markdown = markdownSource ? markdownSource.textContent : '';
+
+        if (!window.marked) {
+          guideContent.textContent = markdown;
+          return;
+        }
+
+        marked.setOptions({
+          gfm: true,
+          breaks: false,
+          headerIds: true,
+          mangle: false,
+        });
+        guideContent.innerHTML = marked.parse(markdown);
+      });
+    </script>
+  </body>
+</html>

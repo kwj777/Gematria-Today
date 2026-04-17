@@ -1593,6 +1593,38 @@
         });
       }
 
+      function consumeSafeNextRedirect() {
+        const nextParam = new URLSearchParams(window.location.search).get('next');
+        if (!nextParam || !nextParam.startsWith('/') || nextParam.startsWith('//')) {
+          return null;
+        }
+
+        const storageKey = 'adminNextRedirectTarget';
+        let previousTarget = '';
+        try {
+          previousTarget = sessionStorage.getItem(storageKey) || '';
+        } catch {
+          previousTarget = '';
+        }
+
+        if (previousTarget === nextParam) {
+          try {
+            sessionStorage.removeItem(storageKey);
+          } catch {
+            // Ignore storage availability issues.
+          }
+          return null;
+        }
+
+        try {
+          sessionStorage.setItem(storageKey, nextParam);
+        } catch {
+          // Ignore storage availability issues.
+        }
+
+        return nextParam;
+      }
+
       async function loadSession() {
         try {
           const payload = await request('/api/admin-session', { method: 'GET' });
@@ -1600,6 +1632,11 @@
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
           updateSuperAdminUi(payload.user.role === 'super_admin');
           setLoggedIn(true);
+          const nextParam = consumeSafeNextRedirect();
+          if (nextParam) {
+            window.location.href = nextParam;
+            return;
+          }
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
           if (loadProposalFromQuery) {

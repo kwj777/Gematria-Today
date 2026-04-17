@@ -17,7 +17,7 @@ try {
 
 function canAccessSiteAdaptationGuides(user) {
   if (!user || typeof user !== 'object') return false;
-  return user.role === 'super_admin' || user.role === 'admin' || user.isAdmin === true;
+  return user.role === 'super_admin';
 }
 
 function hasAuthenticatedAdminSession(user) {

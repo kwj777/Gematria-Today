@@ -162,6 +162,9 @@
   [headers.values]
     Cache-Control = "no-store"
 
+[functions."admin-hub"]
+  included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
+
 [functions."admin-click-tracking"]
   included_files = ["public/*.html"]
 

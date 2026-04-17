@@ -70,8 +70,9 @@ function htmlResponse(statusCode, body, headers = {}) {
 }
 
 function hasNextRedirectAttemptMarker(event = {}) {
-  const marker = String(event?.queryStringParameters?.adminNextAttempted || '').trim();
-  return marker === '1';
+  const adminMarker = String(event?.queryStringParameters?.adminNextAttempted || '').trim();
+  const legacyMarker = String(event?.queryStringParameters?.nextAttempted || '').trim();
+  return adminMarker === '1' || legacyMarker === '1';
 }
 
 function buildUnauthenticatedRedirect(requestedFile, { nextRedirectAttempted = false } = {}) {
@@ -86,12 +87,20 @@ function buildUnauthenticatedRedirect(requestedFile, { nextRedirectAttempted = f
   return `/admin?${searchParams.toString()}`;
 }
 
+function buildRedirectLoopGuardResponse() {
+  return htmlResponse(
+    401,
+    '<!doctype html><title>Sign in required</title><p>Sign in required to open this guide. <a href="/admin">Go to admin sign-in</a>.</p>',
+  );
+}
+
 export const __testUtils = {
   canAccessSiteAdaptationGuides,
   hasAuthenticatedAdminSession,
   resolveRequestedGuideFile,
   hasNextRedirectAttemptMarker,
   buildUnauthenticatedRedirect,
+  buildRedirectLoopGuardResponse,
 };
 
 export async function handler(event) {
@@ -119,11 +128,14 @@ export async function handler(event) {
     if (hasAuthenticatedAdminSession(user)) {
       return htmlResponse(403, '<!doctype html><title>Forbidden</title><p>You are signed in, but your account cannot access this guide.</p>');
     }
+    if (hasNextRedirectAttemptMarker(event)) {
+      return buildRedirectLoopGuardResponse();
+    }
     return {
       statusCode: 302,
       headers: {
         location: buildUnauthenticatedRedirect(requestedFile, {
-          nextRedirectAttempted: hasNextRedirectAttemptMarker(event),
+          nextRedirectAttempted: false,
         }),
         'cache-control': 'no-store',
       },

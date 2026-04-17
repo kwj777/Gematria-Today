@@ -1600,6 +1600,11 @@
           sessionMeta.textContent = `Signed in as ${payload.user.username} (${payload.user.role || 'admin'})`;
           updateSuperAdminUi(payload.user.role === 'super_admin');
           setLoggedIn(true);
+          const nextParam = new URLSearchParams(window.location.search).get('next');
+          if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')) {
+            window.location.href = nextParam;
+            return;
+          }
           await refreshDashboard();
           const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
           if (loadProposalFromQuery) {

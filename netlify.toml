@@ -38,6 +38,11 @@
   status = 301
 
 [[redirects]]
+  from = "/*-site-adaptation-guide.html.html"
+  to = "/:splat-site-adaptation-guide.html"
+  status = 301
+
+[[redirects]]
   from = "/*-site-adaptation-guide.html.html*"
   to = "/:splat-site-adaptation-guide.html"
   status = 301

@@ -1,0 +1,231 @@
+# Reusing this basic site for a Nonprofit Organization Website
+
+If you want to adapt this codebase into a nonprofit website, keep the existing framework and refocus it around mission storytelling, donations, volunteer action, programs, and transparent impact reporting.
+
+## 1) Rebrand around mission, trust, and credibility
+
+Start with core identity updates across the site:
+- Organization name, mission statement, and service area
+- Meta description, Open Graph/Twitter tags, canonical URLs
+- Logo, favicon, social preview image, and footer legal details
+- EIN/tax status references where appropriate
+
+Primary file to start with:
+- `public/index.html`
+
+Key changes:
+- Replace niche-specific copy with your nonprofit mission and beneficiary outcomes.
+- Make your primary calls to action visible: **Donate**, **Volunteer**, **Get Help**, **Partner**.
+- Add trust elements early (years active, accreditations, partner logos, impact stats).
+
+## 2) Redesign navigation for supporter and beneficiary journeys
+
+Recommended navigation for most nonprofits:
+- Home
+- About
+- Programs
+- Get Help (if applicable)
+- Get Involved
+- Events
+- Impact
+- Donate
+- Contact
+
+Files to update:
+- `public/index.html` (header and homepage sections)
+- Other templates in `public/` to match the final navigation
+
+Recommended new pages:
+- `public/programs.html`
+- `public/get-involved.html`
+- `public/volunteer.html`
+- `public/donate.html`
+- `public/impact.html`
+- `public/events.html`
+- `public/partners.html`
+
+## 3) Rework homepage for nonprofit conversion goals
+
+Replace current sections with nonprofit outcomes:
+- Hero with clear mission + one primary CTA
+- “Who We Serve” section with concise beneficiary context
+- Program highlights with measurable outcomes
+- Impact-at-a-glance metrics (people served, meals delivered, scholarships funded)
+- Volunteer opportunities and event spotlight
+- Donor/social proof section (testimonials, partners, awards)
+- Final CTA band: Donate, Volunteer, Subscribe
+
+Keep copy action-oriented and avoid mission language that is too abstract.
+
+## 4) Build a donation-first experience
+
+Donation conversion often determines nonprofit sustainability. Prioritize:
+- Quick one-time gift and recurring monthly options
+- Suggested giving tiers tied to impact examples
+- Dedicated campaign pages for urgent initiatives
+- Mobile-friendly donation form with minimal steps
+
+Files to review:
+- `public/contact.html` (if reused for supporter forms)
+- `netlify/functions/member-payment-checkout.mjs`
+- `netlify/functions/member-payment-confirm.mjs`
+- `netlify/functions/_stripe.mjs`
+- `netlify/functions/stripe-webhook.mjs`
+
+If legal/compliance requirements apply, coordinate donation receipts and record retention policy.
+
+## 5) Add volunteer and partner workflows
+
+Recommended capture fields for volunteer intake:
+- Interest areas
+- Availability
+- Skills/certifications
+- Location preference
+- Consent and communication preferences
+
+Recommended partner/sponsor intake fields:
+- Organization type
+- Sponsorship interests
+- In-kind support options
+- Preferred contact and timeline
+
+Likely files:
+- `public/contact.html`
+- Relevant intake handlers in `netlify/functions/`
+
+## 6) Convert blog/news into mission communications
+
+Repurpose content features into:
+- Impact stories and beneficiary spotlights
+- Program updates and field reports
+- Event recaps and campaign milestones
+- Resource guides and advocacy updates
+
+Likely touchpoints:
+- `public/blog.html`
+- Related content endpoints in `netlify/functions/`
+
+## 7) Define data models for programs, outcomes, and events
+
+Suggested **program** fields:
+- `slug`
+- `name`
+- `summary`
+- `target_population`
+- `service_area`
+- `eligibility`
+- `delivery_model`
+- `contact_email`
+
+Suggested **impact metric** fields:
+- `metric_key`
+- `label`
+- `value`
+- `reporting_period`
+- `source_note`
+
+Suggested **event** fields:
+- `slug`
+- `title`
+- `description`
+- `location`
+- `start_at`
+- `end_at`
+- `registration_url`
+- `volunteer_slots`
+
+## 8) Adjust visual system for empathy and clarity
+
+Primary style touchpoints:
+- `public/theme.css`
+- Inline styles in `public/index.html`
+
+Design recommendations:
+- Warm, accessible color palette with strong contrast
+- Real program photography over generic stock images
+- Clear section hierarchy and larger CTA buttons
+- Consistent card patterns for programs, stories, and events
+
+Use alt text that explains context, not just objects in images.
+
+## 9) Configure modules and disable irrelevant features
+
+This repository uses feature toggles in:
+- `public/site-modules.js`
+
+Action:
+- Keep only mission-critical modules for launch.
+- Disable forum/chatbot/member features unless there is a defined operational need.
+- If chatbot is enabled, limit it to donor FAQs, service routing, and volunteer guidance.
+
+## 10) Accessibility and inclusion essentials
+
+Nonprofits often serve broad and diverse communities. Prioritize:
+- Readable font sizes and clear heading structure
+- Keyboard-navigable forms and menus
+- Captions/transcripts for video storytelling
+- Plain-language copy for critical actions (donate, get help, volunteer)
+- Multilingual support where your audience needs it
+
+Suggested check:
+- `npm run audit:accessibility`
+
+## 11) Compliance, privacy, and moderation considerations
+
+If you collect donor/beneficiary data:
+- Validate and sanitize all submitted inputs server-side
+- Limit exposure of sensitive beneficiary details
+- Publish privacy policy and consent language
+- Restrict admin tools and monitor access
+
+Review:
+- `netlify/functions/_security.mjs`
+- `netlify/functions/_auth.mjs`
+- Admin/member handlers in `netlify/functions/`
+
+## 12) SEO and discoverability for nonprofit growth
+
+Improve discovery with:
+- Localized pages for programs/service regions
+- Organization schema and event schema
+- Donation page metadata optimized for campaign intent
+- Consistent NAP/contact details and strong internal linking
+
+Track conversions for:
+- Donations started/completed
+- Volunteer form submissions
+- Newsletter sign-ups
+- Event registrations
+
+## 13) Launch checklist
+
+- Replace all niche copy and legacy assets
+- Validate donation flows (one-time and recurring)
+- Test volunteer, contact, and event registration forms
+- Confirm legal pages: privacy, terms, donation policy
+- Run accessibility and core QA checks
+- Sync root pages if needed:
+  - `npm run sync-root-pages`
+
+---
+
+## Estimated timeline
+
+- **Fast MVP launch (static nonprofit site): 18–32 hours**
+  - Rebrand + navigation + homepage rebuild: 6–10 hours
+  - Programs, Donate, Get Involved, Impact, Contact pages: 8–14 hours
+  - QA, accessibility pass, launch prep: 4–8 hours
+
+- **Polished launch (campaign-ready): 40–75 hours**
+  - Includes donation UX improvements, deeper storytelling templates, and better analytics setup
+
+- **Dynamic program/event/content workflow: 70–120+ hours**
+  - Includes data modeling, API wiring, governance, and post-launch optimization
+
+## Suggested service packaging (optional)
+
+If delivering this as a client implementation:
+- **Launch package:** strategy + build + migration + analytics baseline
+- **Monthly support:** campaign landing pages, content updates, donor funnel optimization, maintenance
+
+This keeps nonprofit teams focused on mission work rather than ongoing technical overhead.

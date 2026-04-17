@@ -108,7 +108,9 @@
       (function () {
         var hasPromise = typeof window.Promise === 'function';
         var hasFetch = typeof window.fetch === 'function';
-        if (hasPromise && hasFetch) {
+        var userAgent = ((window.navigator && window.navigator.userAgent) || '').toLowerCase();
+        var isBot = /bot|crawl|spider|slurp|bingpreview|google web preview|facebookexternalhit|whatsapp|telegrambot|linkedinbot|twitterbot/.test(userAgent);
+        if ((hasPromise && hasFetch) || isBot) {
           return;
         }
 

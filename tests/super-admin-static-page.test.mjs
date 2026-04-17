@@ -64,3 +64,25 @@ test('buildUnauthenticatedRedirect uses /admin (no .html) to prevent redirect lo
   assert.ok(url.includes('next='), 'redirect must include next parameter');
   assert.ok(url.includes('architect-site-adaptation-guide.html'), 'redirect must preserve the guide filename');
 });
+
+test('buildUnauthenticatedRedirect includes nextAttempted when a redirect was already attempted', () => {
+  const url = __testUtils.buildUnauthenticatedRedirect('architect-site-adaptation-guide.html', {
+    nextRedirectAttempted: true,
+  });
+
+  assert.ok(url.includes('nextAttempted=1'));
+});
+
+test('hasNextRedirectAttemptMarker reads the adminNextAttempted query marker', () => {
+  assert.equal(__testUtils.hasNextRedirectAttemptMarker({
+    queryStringParameters: {
+      adminNextAttempted: '1',
+    },
+  }), true);
+
+  assert.equal(__testUtils.hasNextRedirectAttemptMarker({
+    queryStringParameters: {
+      adminNextAttempted: '0',
+    },
+  }), false);
+});

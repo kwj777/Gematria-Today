@@ -68,14 +68,28 @@ function htmlResponse(statusCode, body, headers = {}) {
   };
 }
 
-function buildUnauthenticatedRedirect(requestedFile) {
-  return `/admin?next=${encodeURIComponent(`/${requestedFile}`)}`;
+function hasNextRedirectAttemptMarker(event = {}) {
+  const marker = String(event?.queryStringParameters?.adminNextAttempted || '').trim();
+  return marker === '1';
+}
+
+function buildUnauthenticatedRedirect(requestedFile, { nextRedirectAttempted = false } = {}) {
+  const searchParams = new URLSearchParams({
+    next: `/${requestedFile}`,
+  });
+
+  if (nextRedirectAttempted) {
+    searchParams.set('nextAttempted', '1');
+  }
+
+  return `/admin?${searchParams.toString()}`;
 }
 
 export const __testUtils = {
   canAccessSiteAdaptationGuides,
   hasAuthenticatedAdminSession,
   resolveRequestedGuideFile,
+  hasNextRedirectAttemptMarker,
   buildUnauthenticatedRedirect,
 };
 
@@ -107,7 +121,9 @@ export async function handler(event) {
     return {
       statusCode: 302,
       headers: {
-        location: buildUnauthenticatedRedirect(requestedFile),
+        location: buildUnauthenticatedRedirect(requestedFile, {
+          nextRedirectAttempted: hasNextRedirectAttemptMarker(event),
+        }),
         'cache-control': 'no-store',
       },
       body: '',

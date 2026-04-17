@@ -271,6 +271,38 @@
       var siteAdaptationStatus = document.getElementById('siteAdaptationStatus');
       var siteListPanelBody = document.getElementById('siteListPanelBody');
       var refreshSitesBtn = document.getElementById('refreshSitesBtn');
+      var collapseButtons = document.querySelectorAll('.admin-section-toggle[data-bs-toggle="collapse"]');
+
+      function bindManualCollapseToggle(button) {
+        var targetSelector = button.getAttribute('data-bs-target');
+        if (!targetSelector || !window.bootstrap || !window.bootstrap.Collapse) {
+          return;
+        }
+        var panel = document.querySelector(targetSelector);
+        if (!panel) {
+          return;
+        }
+
+        var collapseInstance = window.bootstrap.Collapse.getOrCreateInstance(panel, { toggle: false });
+
+        button.addEventListener('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          collapseInstance.toggle();
+        });
+
+        panel.addEventListener('shown.bs.collapse', function () {
+          button.classList.remove('collapsed');
+          button.setAttribute('aria-expanded', 'true');
+        });
+
+        panel.addEventListener('hidden.bs.collapse', function () {
+          button.classList.add('collapsed');
+          button.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      collapseButtons.forEach(bindManualCollapseToggle);
 
       function loadSites() {
         var loading = document.getElementById('siteListLoading');

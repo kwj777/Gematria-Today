@@ -25,7 +25,14 @@ const SENSITIVE_PREFIXES = [
 ];
 
 function isSensitivePath(pathname) {
-  return SENSITIVE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
+  if (SENSITIVE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix))) {
+    return true;
+  }
+  // Site adaptation guides are served by an auth-gated function; never cache them.
+  if (pathname.endsWith('-site-adaptation-guide.html')) {
+    return true;
+  }
+  return false;
 }
 
 function shouldCacheResponse(response) {

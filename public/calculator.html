@@ -389,6 +389,16 @@ const lookupForm = document.querySelector('#lookup-form');
         }).catch(() => {});
       }
 
+      function withFileExtension(filename, extension) {
+        const rawName = String(filename || 'download').trim() || 'download';
+        const normalizedExtension = String(extension || '').trim().replace(/^\./, '');
+        if (!normalizedExtension) {
+          return rawName;
+        }
+
+        return rawName.replace(/\.[a-z0-9]+$/i, `.${normalizedExtension}`);
+      }
+
       async function downloadShareImage(shareImageUrlCandidate, filename) {
         const shareImageUrl = toCanonicalShareUrl(shareImageUrlCandidate);
         const response = await fetch(shareImageUrl, { cache: 'no-store' });
@@ -397,9 +407,10 @@ const lookupForm = document.querySelector('#lookup-form');
         }
 
         const imageBlob = await response.blob();
-        const jpegBlob = imageBlob.type === 'image/jpeg'
-          ? imageBlob
-          : await new Promise((resolve, reject) => {
+        let jpegBlob = imageBlob.type === 'image/jpeg' ? imageBlob : null;
+        if (!jpegBlob) {
+          try {
+            jpegBlob = await new Promise((resolve, reject) => {
               const imageUrl = URL.createObjectURL(imageBlob);
               const image = new Image();
               image.onload = () => {
@@ -409,7 +420,7 @@ const lookupForm = document.querySelector('#lookup-form');
                 const context = canvas.getContext('2d');
                 if (!context) {
                   URL.revokeObjectURL(imageUrl);
-                  reject(new Error('Unable to process image for download right now. Please try again.'));
+                  reject(new Error('no 2d context'));
                   return;
                 }
                 context.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -419,19 +430,35 @@ const lookupForm = document.querySelector('#lookup-form');
                     resolve(convertedBlob);
                     return;
                   }
-                  reject(new Error('Unable to process image for download right now. Please try again.'));
+                  reject(new Error('jpeg conversion failed'));
                 }, 'image/jpeg', 0.92);
               };
               image.onerror = () => {
                 URL.revokeObjectURL(imageUrl);
-                reject(new Error('Unable to process image for download right now. Please try again.'));
+                reject(new Error('image decode failed'));
               };
               image.src = imageUrl;
             });
-        const objectUrl = URL.createObjectURL(jpegBlob);
+          } catch {
+            jpegBlob = null;
+          }
+        }
+
+        const downloadableBlob = jpegBlob || imageBlob;
+        const extensionByType = {
+          'image/jpeg': 'jpg',
+          'image/png': 'png',
+          'image/webp': 'webp',
+          'image/gif': 'gif',
+        };
+        const filenameWithExtension = withFileExtension(
+          filename,
+          extensionByType[downloadableBlob.type] || 'jpg'
+        );
+        const objectUrl = URL.createObjectURL(downloadableBlob);
         const downloadAnchor = document.createElement('a');
         downloadAnchor.href = objectUrl;
-        downloadAnchor.download = filename;
+        downloadAnchor.download = filenameWithExtension;
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();

@@ -17,6 +17,13 @@ test('resolveRequestedGuideFile accepts valid guide file names', () => {
     }),
     'architect-site-adaptation-guide.html',
   );
+
+  assert.equal(
+    __testUtils.resolveRequestedGuideFile({
+      rawUrl: 'https://endtimes.today/architect-site-adaptation-guide.html?adminNextAttempted=1',
+    }),
+    'architect-site-adaptation-guide.html',
+  );
 });
 
 test('resolveRequestedGuideFile rejects traversal and non-guide files', () => {
@@ -94,6 +101,14 @@ test('hasNextRedirectAttemptMarker reads both adminNextAttempted and nextAttempt
     queryStringParameters: {
       nextAttempted: '1',
     },
+  }), true);
+
+  assert.equal(__testUtils.hasNextRedirectAttemptMarker({
+    rawQuery: 'adminNextAttempted=1',
+  }), true);
+
+  assert.equal(__testUtils.hasNextRedirectAttemptMarker({
+    rawUrl: 'https://endtimes.today/architect-site-adaptation-guide.html?nextAttempted=1',
   }), true);
 });
 

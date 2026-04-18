@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Development Business Site Adaptation Guide</title>
+    <meta name="description" content="Guide for adapting this codebase into a niche website implementation." />
+    <link rel="stylesheet" href="/theme.css" />
+    <style>
+      main.guide-container {
+        max-width: 920px;
+        margin: 3rem auto;
+        padding: 0 1rem 4rem;
+      }
+      .guide-content {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+      }
+      .guide-content h1,
+      .guide-content h2,
+      .guide-content h3,
+      .guide-content h4 {
+        margin-top: 1.5rem;
+      }
+      .guide-content hr {
+        margin: 2rem 0;
+      }
+      .guide-content code {
+        background: #f4f5f7;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .guide-content pre {
+        background: #101826;
+        color: #f8fafc;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .guide-content blockquote {
+        border-left: 4px solid #d0d7de;
+        margin-left: 0;
+        padding-left: 1rem;
+        color: #57606a;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  </head>
+  <body>
+    <main class="guide-container">
+      <article class="guide-content" id="guideContent" aria-live="polite"></article>
+      <script type="text/plain" id="markdownSource"># Reusing this basic site for a Web Development business
+
+If you want to adapt this codebase into a web development agency/freelance business website, keep the shared structure and replace content, modules, and conversion flows to support lead generation and project sales.
+
+## 1) Reposition the brand around outcomes, not just coding
+
+Start by reframing the homepage and metadata around business value:
+- Faster launch cycles
+- Better conversion rates
+- Scalable and maintainable web platforms
+- Ongoing optimization and support
+
+Update in:
+- `public/index.html`
+- Other high-traffic pages in `public/*.html`
+
+Replace brand-level elements:
+- Site name/tagline
+- `<title>` and meta description
+- Open Graph/Twitter copy and image
+- Canonical URL and favicon/logo
+
+## 2) Set a web-dev focused information architecture
+
+Replace niche navigation with an agency-oriented sitemap:
+- Home
+- Services
+- Portfolio (or Case Studies)
+- Process
+- Pricing (or Engagement Models)
+- About
+- Blog/Resources (optional)
+- Contact
+
+Recommended page additions:
+- `public/services.html`
+- `public/portfolio.html`
+- `public/case-study.html`
+- `public/process.html`
+- `public/pricing.html`
+
+## 3) Rebuild homepage sections for lead conversion
+
+High-performing web-dev homepages typically include:
+- Hero: clear niche + measurable outcome + CTA
+- Service cards (design, development, performance, SEO/CRO, maintenance)
+- Case study preview with before/after metrics
+- Tech stack/partner trust strip
+- Testimonials and proof points
+- CTA block for discovery call or project brief form
+
+Good primary CTAs:
+- “Book a Strategy Call”
+- “Request a Website Audit”
+- “Start Your Project”
+
+## 4) Package services in buyer-friendly offers
+
+Define 3–5 productized service lines so visitors can self-qualify quickly:
+- Marketing websites
+- Ecommerce builds
+- Landing page optimization/CRO
+- Website speed and technical SEO improvements
+- Ongoing maintenance retainers
+
+For each offer, include:
+- Problem solved
+- Deliverables
+- Typical timeline
+- Starting price range or pricing model
+- Success metric examples
+
+## 5) Update module toggles for an agency-style build
+
+This codebase uses feature toggles in:
+- `public/site-modules.js`
+
+For most web development businesses, disable modules that distract from sales flow unless intentionally used:
+- `forum`
+- `knowbot`
+- `gemabot`
+- `membership`
+
+Keep only what supports lead gen, content marketing, and project delivery visibility.
+
+## 6) Modernize visual system for credibility
+
+Apply visual updates in:
+- `public/theme.css`
+- Remaining inline style blocks in page files
+
+Suggested direction:
+- Crisp neutral base with one bold accent color
+- Strong typography hierarchy and generous spacing
+- Clear button variants and high-contrast focus styles
+- Consistent card system for services and case studies
+- Tight mobile layouts for proposal-stage decision makers on phones
+
+## 7) Turn content engine into authority marketing
+
+If keeping content, repurpose blog/news pages into practical growth assets:
+- Build guides
+- Performance optimization explainers
+- SEO technical checklists
+- Platform comparisons
+- Client case breakdowns
+
+Likely touchpoints:
+- `public/blog.html`
+- Existing post templates/content workflows if still used
+
+## 8) Upgrade forms to qualify leads better
+
+Update contact and project inquiry forms to collect key scoping data:
+- Company/site URL
+- Project type (new build, redesign, ecommerce, optimization)
+- Budget range
+- Timeline target
+- Required integrations (CRM, payments, email, analytics)
+- Decision-maker readiness
+
+Files to review:
+- `public/contact.html`
+- Any related serverless functions in `netlify/functions/`
+
+Make sure form confirmations set expectations on response time and next steps.
+
+## 9) Add case-study structure for sales conversations
+
+Use a repeatable case study format:
+- Client context and objective
+- Constraints
+- Build approach
+- Stack/tools used
+- Quantified outcomes (e.g., speed, conversion, leads, revenue)
+- Post-launch support details
+
+This format helps prospects understand both execution quality and business impact.
+
+## 10) SEO, trust, and compliance baseline
+
+Before launch, verify:
+- Unique metadata per indexable page
+- Correct canonical URLs and social preview images
+- Clear heading hierarchy and alt text
+- Updated legal pages (`privacy`, `terms`, `disclaimer`, `accessibility`)
+- LocalBusiness/Organization schema where appropriate
+- Analytics and conversion tracking events on CTA/form milestones
+
+## 11) Sync guide artifacts and mirrored pages
+
+When adding/updating adaptation guides:
+
+```bash
+npm run sync:site-adaptation-guides
+npm run check:site-adaptation-guides
+```
+
+If deployable pages/scripts changed, sync root mirrors:
+
+```bash
+npm run sync-root-pages
+npm run check-root-pages
+```
+
+## 12) Delivery checklist for a web-dev business launch
+
+- [ ] Brand positioning rewritten around outcomes
+- [ ] Service pages and portfolio/case studies published
+- [ ] CTA strategy aligned to one primary conversion action
+- [ ] Inquiry forms capture qualification details
+- [ ] Module toggles stripped to essentials
+- [ ] SEO/legal/accessibility baseline complete
+- [ ] Guide sync and root sync checks pass
+- [ ] Mobile + desktop smoke test complete
+
+---
+
+## Suggested execution order (fastest reliable path)
+
+1. Define target client segment and core offer ladder
+2. Rebrand homepage, metadata, and global navigation
+3. Build Services, Portfolio/Case Studies, and Contact flows
+4. Update styling system and trust/proof components
+5. Configure forms, tracking, and follow-up automation
+6. Run sync and QA checks
+7. Launch, then iterate monthly using real lead data
+
+## Timeline and pricing guidance (U.S. market)
+
+Practical ranges for packaging your own adapted web-dev business site:
+
+- **Lean launch: 12–24 hours**
+  - Messaging + homepage conversion rewrite
+  - Core services/contact pages
+  - Essential styling and metadata cleanup
+
+- **Polished conversion launch: 30–55 hours**
+  - Stronger case studies, visual system pass, better lead qualification UX
+  - Technical SEO and analytics event coverage
+
+- **Advanced authority launch: 60–110+ hours**
+  - Full content engine, automation workflows, deeper CRO instrumentation
+
+Example service pricing bands you can present on-site:
+- Starter website package: **$3,000–$6,500**
+- Growth redesign/performance package: **$6,500–$15,000**
+- Ongoing maintenance + optimization: **$300–$2,000/mo**
+
+Use clear tiers and scope boundaries so prospects can quickly choose the right engagement level.
+</script>
+    </main>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const markdownSource = document.getElementById('markdownSource');
+        const guideContent = document.getElementById('guideContent');
+        const markdown = markdownSource ? markdownSource.textContent : '';
+
+        if (!window.marked) {
+          guideContent.textContent = markdown;
+          return;
+        }
+
+        marked.setOptions({
+          gfm: true,
+          breaks: false,
+          headerIds: true,
+          mangle: false,
+        });
+        guideContent.innerHTML = marked.parse(markdown);
+      });
+    </script>
+  </body>
+</html>

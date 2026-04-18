@@ -623,6 +623,9 @@ const form = document.querySelector('#name-form');
         }
 
         const imageBlob = await response.blob();
+        if (!(imageBlob instanceof Blob) || !String(imageBlob.type || '').toLowerCase().startsWith('image/')) {
+          throw new Error('Downloaded file was not a valid image. Please try again.');
+        }
         let jpegBlob = imageBlob.type === 'image/jpeg' ? imageBlob : null;
         if (!jpegBlob) {
           try {
@@ -677,8 +680,10 @@ const form = document.querySelector('#name-form');
         downloadAnchor.download = filenameWithExtension;
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
-        downloadAnchor.remove();
-        URL.revokeObjectURL(objectUrl);
+        setTimeout(() => {
+          downloadAnchor.remove();
+          URL.revokeObjectURL(objectUrl);
+        }, 1000);
       }
 
       async function shareUrl(payload) {

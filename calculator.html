@@ -399,6 +399,27 @@ const lookupForm = document.querySelector('#lookup-form');
         return rawName.replace(/\.[a-z0-9]+$/i, `.${normalizedExtension}`);
       }
 
+      function normalizeImageMimeType(blobType) {
+        return String(blobType || '').toLowerCase().split(';')[0].trim();
+      }
+
+      function fileExtensionFromImageBlob(blob) {
+        const normalizedType = normalizeImageMimeType(blob?.type);
+        const extensionByType = {
+          'image/jpeg': 'jpg',
+          'image/png': 'png',
+          'image/webp': 'webp',
+          'image/gif': 'gif',
+          'image/svg+xml': 'svg',
+          'image/avif': 'avif',
+        };
+        if (extensionByType[normalizedType]) {
+          return extensionByType[normalizedType];
+        }
+        const subtype = normalizedType.match(/^image\/([a-z0-9.+-]+)$/i)?.[1] || '';
+        return subtype.replace(/^svg\+xml$/i, 'svg') || 'img';
+      }
+
       async function downloadShareImage(shareImageUrlCandidate, filename) {
         const shareImageUrl = toCanonicalShareUrl(shareImageUrlCandidate);
         const response = await fetch(shareImageUrl, { cache: 'no-store' });
@@ -407,10 +428,11 @@ const lookupForm = document.querySelector('#lookup-form');
         }
 
         const imageBlob = await response.blob();
-        if (!(imageBlob instanceof Blob) || !String(imageBlob.type || '').toLowerCase().startsWith('image/')) {
+        const originalImageType = normalizeImageMimeType(imageBlob?.type);
+        if (!(imageBlob instanceof Blob) || !originalImageType.startsWith('image/')) {
           throw new Error('Downloaded file was not a valid image. Please try again.');
         }
-        let jpegBlob = imageBlob.type === 'image/jpeg' ? imageBlob : null;
+        let jpegBlob = originalImageType === 'image/jpeg' ? imageBlob : null;
         if (!jpegBlob) {
           try {
             jpegBlob = await new Promise((resolve, reject) => {
@@ -448,15 +470,9 @@ const lookupForm = document.querySelector('#lookup-form');
         }
 
         const downloadableBlob = jpegBlob || imageBlob;
-        const extensionByType = {
-          'image/jpeg': 'jpg',
-          'image/png': 'png',
-          'image/webp': 'webp',
-          'image/gif': 'gif',
-        };
         const filenameWithExtension = withFileExtension(
           filename,
-          extensionByType[downloadableBlob.type] || 'jpg'
+          fileExtensionFromImageBlob(downloadableBlob)
         );
         const objectUrl = URL.createObjectURL(downloadableBlob);
         const downloadAnchor = document.createElement('a');

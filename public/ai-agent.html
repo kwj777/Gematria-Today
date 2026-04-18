@@ -567,6 +567,24 @@
         return learnings.entries.find((entry) => normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)) || null;
       }
 
+      async function submitChatbotFeedback(query, answerText, wasExpected, feedbackText) {
+        try {
+          await fetch('/api/public-chatbot-feedback', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              query: String(query || '').trim().slice(0, 400),
+              answerText: String(answerText || '').trim().slice(0, 2000) || null,
+              wasExpected,
+              feedbackText: feedbackText ? String(feedbackText).trim().slice(0, 1500) : null,
+            }),
+          });
+        } catch {
+          // Silently ignore — feedback submission is non-critical
+        }
+      }
+
 
 
       function extractQuotedTargets(prompt) {
@@ -958,7 +976,7 @@
         return 'Chat session saved to your membership dashboard.';
       }
 
-      function attachResultFeedbackUi(messageElement, originalPrompt) {
+      function attachResultFeedbackUi(messageElement, originalPrompt, answerText) {
         if (!messageElement || !originalPrompt) return;
 
         const feedbackContainer = document.createElement('div');
@@ -993,6 +1011,7 @@
             status.hidden = false;
             status.textContent = 'Great — thanks for confirming.';
           }
+          submitChatbotFeedback(originalPrompt, answerText, true, null);
         });
 
         noButton?.addEventListener('click', () => {
@@ -1013,6 +1032,7 @@
             return;
           }
           saveButton.disabled = true;
+          submitChatbotFeedback(originalPrompt, answerText, false, explanation);
           const savedGlobally = await saveLearnedResponse(originalPrompt, explanation);
           if (status) {
             status.hidden = false;
@@ -1842,7 +1862,7 @@ View results: ${shareUrl}`.trim(),
         try {
           const replyHtml = await buildAgentReply(prompt);
           const assistantMessage = addMessage('assistant', replyHtml);
-          attachResultFeedbackUi(assistantMessage, prompt);
+          attachResultFeedbackUi(assistantMessage, prompt, replyHtml);
         } finally {
           window.hideWorkingOverlay?.();
           setComposerWaitingState(false);
@@ -1895,7 +1915,7 @@ View results: ${shareUrl}`.trim(),
           const replyHtml = await buildJsonLinkPreviewReply(href, previewType);
           window.hideWorkingOverlay?.();
           const assistantMessage = addMessage('assistant', replyHtml);
-          attachResultFeedbackUi(assistantMessage, href);
+          attachResultFeedbackUi(assistantMessage, href, replyHtml);
           return;
         }
 
@@ -1909,7 +1929,7 @@ View results: ${shareUrl}`.trim(),
           try {
             const replyHtml = await buildAgentReply(`"${selectedWord}"`);
             const assistantMessage = addMessage('assistant', replyHtml);
-            attachResultFeedbackUi(assistantMessage, selectedWord);
+            attachResultFeedbackUi(assistantMessage, selectedWord, replyHtml);
           } finally {
             window.hideWorkingOverlay?.();
             setComposerWaitingState(false);

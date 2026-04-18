@@ -87,7 +87,8 @@
   .navbar .dropdown:hover > .dropdown-menu,
   .navbar .dropdown:focus-within > .dropdown-menu {
     display: block;
-    margin-top: 0;
+    top: 100%;
+    margin-top: 0.35rem;
   }
 
   .navbar .dropdown:hover > .dropdown-toggle,

@@ -35,6 +35,10 @@
   border-color: transparent;
 }
 
+.navbar .dropdown-menu[data-bs-popper] {
+  top: calc(100% + 0.35rem);
+}
+
 
 .skip-link {
   position: absolute;

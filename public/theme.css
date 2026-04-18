@@ -99,6 +99,20 @@
   }
 }
 
+.navbar .dropdown-menu {
+  --bs-dropdown-link-hover-bg: rgba(var(--bs-primary-rgb), 0.14);
+  --bs-dropdown-link-hover-color: #0b3d6e;
+}
+
+.navbar .dropdown-item {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+:root[data-bs-theme="dark"] .navbar .dropdown-menu {
+  --bs-dropdown-link-hover-bg: rgba(var(--bs-primary-rgb), 0.3);
+  --bs-dropdown-link-hover-color: #93c5fd;
+}
+
 .hero-panel,
 .content-panel,
 .stat-card,

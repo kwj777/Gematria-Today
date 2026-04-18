@@ -110,11 +110,57 @@ export async function handler(event) {
     if (method === 'PATCH') {
       const payload = parseBody(event);
       const id = String(payload?.id || '').trim();
+      const action = String(payload?.action || '').trim().toLowerCase();
+
+      if (!id) return jsonResponse(400, { error: 'id is required' });
+
+      if (action === 'train') {
+        const [item] = await sql`SELECT * FROM chatbot_search_feedback WHERE id = ${id}`;
+        if (!item) return jsonResponse(404, { error: 'Feedback not found' });
+
+        const prompt = String(item.cleaned_query || item.query || '')
+          .replace(/\s+/g, ' ').trim().toLowerCase().slice(0, 240);
+        const explanation = String(item.feedback_text || '')
+          .replace(/\s+/g, ' ').trim().slice(0, 600);
+
+        if (!prompt || !explanation) {
+          return jsonResponse(400, { error: 'Feedback must have a query and feedback text to use as training data' });
+        }
+
+        const SETTINGS_KEY = 'ai_agent_global_learnings_v1';
+        const settingRows = await sql`
+          SELECT setting_value FROM admin_settings WHERE setting_key = ${SETTINGS_KEY} LIMIT 1
+        `;
+        let entries = [];
+        try {
+          const raw = settingRows[0]?.setting_value;
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          entries = Array.isArray(parsed?.entries) ? parsed.entries : [];
+        } catch {}
+
+        const deduped = entries.filter((e) => String(e?.prompt || '').toLowerCase() !== prompt);
+        deduped.unshift({ prompt, explanation });
+        const trimmed = deduped.slice(0, 200);
+
+        await sql`
+          INSERT INTO admin_settings (setting_key, setting_value, updated_by, updated_at)
+          VALUES (${SETTINGS_KEY}, ${JSON.stringify({ entries: trimmed })}, ${user.id}, NOW())
+          ON CONFLICT (setting_key) DO UPDATE SET
+            setting_value = EXCLUDED.setting_value,
+            updated_by = EXCLUDED.updated_by,
+            updated_at = NOW()
+        `;
+        await sql`
+          UPDATE chatbot_search_feedback SET status = 'closed', updated_at = NOW() WHERE id = ${id}
+        `;
+
+        return jsonResponse(200, { trained: true, entriesCount: trimmed.length });
+      }
+
       const status = String(payload?.status || '').trim().toLowerCase();
       const adminReplyRaw = payload?.adminReply;
       const adminReply = adminReplyRaw == null ? null : String(adminReplyRaw).trim().slice(0, 2000);
 
-      if (!id) return jsonResponse(400, { error: 'id is required' });
       if (status && !['new', 'reviewed', 'replied', 'closed'].includes(status)) {
         return jsonResponse(400, { error: 'status must be one of new, reviewed, replied, closed' });
       }

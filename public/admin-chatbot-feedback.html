@@ -272,6 +272,7 @@
               <button class="btn btn-sm btn-primary" type="button" data-submit-feedback-reply="${escapeHtml(item.id)}">Save reply</button>
               <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-feedback-reviewed="${escapeHtml(item.id)}">Mark reviewed</button>
               <button class="btn btn-sm btn-outline-dark" type="button" data-mark-feedback-closed="${escapeHtml(item.id)}">Close</button>
+              ${item.feedbackText ? `<button class="btn btn-sm btn-success" type="button" data-train-from-feedback="${escapeHtml(item.id)}" title="Use this query + feedback as a GemaBot learned response">Train from this</button>` : ''}
             </div>
           </article>
         `).join('') : '<p class="text-muted small mb-0">No feedback entries match the selected status.</p>';
@@ -305,11 +306,22 @@
         const submitFeedbackReply = event.target.closest('[data-submit-feedback-reply]')?.dataset?.submitFeedbackReply;
         const markFeedbackReviewed = event.target.closest('[data-mark-feedback-reviewed]')?.dataset?.markFeedbackReviewed;
         const markFeedbackClosed = event.target.closest('[data-mark-feedback-closed]')?.dataset?.markFeedbackClosed;
+        const trainFromFeedback = event.target.closest('[data-train-from-feedback]')?.dataset?.trainFromFeedback;
 
-        if (!submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed) return;
+        if (!submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed && !trainFromFeedback) return;
 
         try {
-          if (submitFeedbackReply) {
+          if (trainFromFeedback) {
+            const btn = event.target.closest('[data-train-from-feedback]');
+            btn.disabled = true;
+            btn.textContent = 'Training…';
+            const result = await request('/api/admin-chatbot-feedback', {
+              method: 'PATCH',
+              body: JSON.stringify({ id: trainFromFeedback, action: 'train' })
+            });
+            setStatusMessage(`Trained. GemaBot now has ${result.entriesCount} learned response(s).`, 'success');
+            removeFeedbackFromCurrentScreen(trainFromFeedback);
+          } else if (submitFeedbackReply) {
             const replyField = document.getElementById(`feedbackReply-${submitFeedbackReply}`);
             const adminReply = String(replyField?.value || '').trim();
             if (!adminReply) {
@@ -334,6 +346,8 @@
             await refreshFeedback();
           }
         } catch (error) {
+          const btn = event.target.closest('[data-train-from-feedback]');
+          if (btn) { btn.disabled = false; btn.textContent = 'Train from this'; }
           setStatusMessage(error.message || 'Unable to update feedback right now.', 'danger');
         }
       });

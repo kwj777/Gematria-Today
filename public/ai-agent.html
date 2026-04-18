@@ -1507,7 +1507,14 @@ View results: ${shareUrl}`.trim(),
         const normalizedPrompt = normalizeCandidate(prompt);
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
-        const gematriaValueLookupMatch = normalizedPrompt.match(/\b(?:gematria\s+value|value|number|calculation)\s*(?:of|for|=|is)?\s*(\d+)\b/i);
+        const gematriaValueLookupMatch = normalizedPrompt.match(
+          /\b(?:gematria(?:\s+value)?|value|number|calculation)\s*(?:of|for|=|is|to|at)?\s*(\d+)\b/i
+        ) || normalizedPrompt.match(/\b(\d+)\b/);
+        const requestingWordListByGematria = /\b(?:show|list|find|get|give|which|what)\b[\s\S]*\bwords?\b/i.test(normalizedPrompt)
+          && (
+            /\bgematria\b/i.test(normalizedPrompt)
+            || /\b(?:equal|equals|matching|match|total|totals|value|number|calculation)\b/i.test(normalizedPrompt)
+          );
         const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
         const explicitRelatedWordsTarget = extractRelatedWordsCalculationTarget(normalizedPrompt);
         const affirmativeFollowup = isAffirmativePrompt(normalizedPrompt);
@@ -1533,14 +1540,14 @@ View results: ${shareUrl}`.trim(),
           return '<p class="mb-0">I could not load the live word count right now. Please try again in a moment.</p>';
         }
 
-        if (gematriaValueLookupMatch && /\bwords?\b/i.test(normalizedPrompt)) {
+        if (requestingWordListByGematria && gematriaValueLookupMatch) {
           const gematriaValue = Number(gematriaValueLookupMatch[1]);
           if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) {
             return '<p class="mb-0">Please provide a positive gematria number so I can search the word database.</p>';
           }
 
           if (gematriaValue % 6 !== 0) {
-            return '<p class="mb-0">I can only run this database word-list lookup for gematria values that are multiples of 6.</p>';
+            return '<p class="mb-0">The gematria value must be a Base-6 Gematria value (multiple of 6).</p>';
           }
 
           const words = await fetchWordsByGematriaValue(gematriaValue);

@@ -25,6 +25,7 @@ function formatFeedback(row) {
     feedbackText: row.feedback_text,
     status: row.status,
     adminReply: row.admin_reply,
+    adminNote: row.admin_reply,
     repliedBy: row.replied_by,
     repliedAt: row.replied_at,
     archivedByMemberAt: row.archived_by_member_at,
@@ -158,7 +159,7 @@ export async function handler(event) {
       }
 
       const status = String(payload?.status || '').trim().toLowerCase();
-      const adminReplyRaw = payload?.adminReply;
+      const adminReplyRaw = payload?.adminReply ?? payload?.adminNote ?? payload?.note;
       const adminReply = adminReplyRaw == null ? null : String(adminReplyRaw).trim().slice(0, 2000);
 
       if (status && !['new', 'reviewed', 'replied', 'closed'].includes(status)) {

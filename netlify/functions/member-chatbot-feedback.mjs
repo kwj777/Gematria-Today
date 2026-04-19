@@ -24,6 +24,7 @@ function formatFeedback(row) {
     feedbackText: row.feedback_text,
     status: row.status,
     adminReply: row.admin_reply,
+    adminNote: row.admin_reply,
     repliedBy: row.replied_by,
     repliedAt: row.replied_at,
     createdAt: row.created_at,

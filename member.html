@@ -1758,16 +1758,16 @@
           renderMemberChatbotFeedback();
           return;
         }
-        try {
-          const [activePayload, archivedPayload] = await Promise.all([
-            request('/api/member-chatbot-feedback', { method: 'GET' }),
-            request('/api/member-chatbot-feedback?view=archived', { method: 'GET' }),
-          ]);
-          memberChatbotFeedback = Array.isArray(activePayload.items) ? activePayload.items : [];
-          archivedMemberChatbotFeedback = Array.isArray(archivedPayload.items) ? archivedPayload.items : [];
-        } catch (_) {
-          memberChatbotFeedback = [];
-          archivedMemberChatbotFeedback = [];
+        const [activeResult, archivedResult] = await Promise.allSettled([
+          request('/api/member-chatbot-feedback', { method: 'GET' }),
+          request('/api/member-chatbot-feedback?view=archived', { method: 'GET' }),
+        ]);
+
+        if (activeResult.status === 'fulfilled') {
+          memberChatbotFeedback = Array.isArray(activeResult.value.items) ? activeResult.value.items : [];
+        }
+        if (archivedResult.status === 'fulfilled') {
+          archivedMemberChatbotFeedback = Array.isArray(archivedResult.value.items) ? archivedResult.value.items : [];
         }
         renderMemberChatbotFeedback();
       }
@@ -1781,16 +1781,16 @@
           return;
         }
 
-        try {
-          const [activePayload, archivedPayload] = await Promise.all([
-            request('/api/member-blog-proposals', { method: 'GET' }),
-            request('/api/member-blog-proposals?view=archived', { method: 'GET' }),
-          ]);
-          memberProposals = Array.isArray(activePayload.items) ? activePayload.items : [];
-          archivedMemberProposals = Array.isArray(archivedPayload.items) ? archivedPayload.items : [];
-        } catch (error) {
-          memberProposals = [];
-          archivedMemberProposals = [];
+        const [activeResult, archivedResult] = await Promise.allSettled([
+          request('/api/member-blog-proposals', { method: 'GET' }),
+          request('/api/member-blog-proposals?view=archived', { method: 'GET' }),
+        ]);
+
+        if (activeResult.status === 'fulfilled') {
+          memberProposals = Array.isArray(activeResult.value.items) ? activeResult.value.items : [];
+        }
+        if (archivedResult.status === 'fulfilled') {
+          archivedMemberProposals = Array.isArray(archivedResult.value.items) ? archivedResult.value.items : [];
         }
         renderMemberProposalFeedback();
         renderForumNotifications();

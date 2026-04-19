@@ -1808,15 +1808,6 @@
           });
         }
 
-        const repliedFeedbackCount = memberChatbotFeedback.filter((item) => Boolean(item.adminReply || item.adminNote)).length;
-        if (repliedFeedbackCount) {
-          entries.push({
-            tone: 'success',
-            title: `${repliedFeedbackCount} chatbot feedback repl${repliedFeedbackCount === 1 ? 'y' : 'ies'} from admin`,
-            body: 'Open Message Center to see the message(s).',
-          });
-        }
-
         const activeThreadCount = recentForumThreads.filter((thread) => {
           if (!thread?.lastActivityAt) {
             return false;

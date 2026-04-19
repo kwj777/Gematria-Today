@@ -2793,6 +2793,7 @@
           body: JSON.stringify({ id: feedbackId, action: 'archive' }),
         });
         memberChatbotFeedback = memberChatbotFeedback.filter((item) => item.id !== feedbackId);
+        renderMessageCenter();
         renderMemberChatbotFeedback();
         renderForumNotifications();
       }

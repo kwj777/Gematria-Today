@@ -217,9 +217,6 @@ Set these in Netlify to tune protection behavior:
 - `SENDGRID_FROM_NAME="EndTimes.Today"` optional sender display name shown in recovery emails
 - `SENDGRID_REPLY_TO_EMAIL=...` optional reply-to address for recovery emails
 - `PUBLIC_SITE_URL=https://example.com` optional canonical site URL used in recovery email links
-- `ADMIN_EMAIL=...` bootstrap admin email address needed for admin username recovery
-
-
 ### Dashboards, alerts, and high alert operations
 
 - `admin-reports` now includes a `trafficAlerts` dashboard payload that highlights spike conditions for `/api/member-login`, `/api/member-register`, and expensive public endpoints.

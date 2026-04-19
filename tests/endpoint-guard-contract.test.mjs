@@ -18,7 +18,6 @@ import { handler as adminLoginHandler } from '../netlify/functions/admin-login.m
 import { handler as adminClickTrackingHandler } from '../netlify/functions/admin-click-tracking.mjs';
 import { handler as adminReportsHandler } from '../netlify/functions/admin-reports.mjs';
 import { handler as adminMembershipsHandler } from '../netlify/functions/admin-memberships.mjs';
-import { handler as adminAccountRecoveryHandler } from '../netlify/functions/admin-account-recovery.mjs';
 import { handler as wordnikDefinitionHandler } from '../netlify/functions/wordnikDefinition.mjs';
 import { handler as wordnikRelatedWordsHandler } from '../netlify/functions/wordnikRelatedWords.mjs';
 
@@ -59,7 +58,6 @@ const methodGuardCases = [
   { name: 'admin-click-tracking', handler: adminClickTrackingHandler, allowedMethod: 'GET' },
   { name: 'admin-reports', handler: adminReportsHandler, allowedMethod: 'GET' },
   { name: 'admin-memberships', handler: adminMembershipsHandler, allowedMethod: 'POST' },
-  { name: 'admin-account-recovery', handler: adminAccountRecoveryHandler, allowedMethod: 'POST' },
 ];
 
 for (const endpoint of methodGuardCases) {

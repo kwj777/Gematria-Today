@@ -2793,8 +2793,9 @@
           body: JSON.stringify({ id: feedbackId, action: 'archive' }),
         });
         memberChatbotFeedback = memberChatbotFeedback.filter((item) => item.id !== feedbackId);
-        renderMessageCenter();
-        renderMemberChatbotFeedback();
+        messageCenterSentList?.querySelector(`[data-archive-chatbot-feedback="${feedbackId}"]`)?.closest('article')?.remove();
+        messageCenterInboxList?.querySelector(`[data-archive-chatbot-feedback="${feedbackId}"]`)?.closest('article')?.remove();
+        updateMessageInboxSummary(getMessageCenterInboxItems().length);
         renderForumNotifications();
       }
 

@@ -1627,7 +1627,7 @@
           : 'No unread admin replies in your message center inbox.';
       }
 
-      function renderMessageCenter() {
+      function renderMessageCenter({ renderLists = !isMessageCenterOpen } = {}) {
         if (!messageCenterSentList || !messageCenterInboxList) {
           return;
         }
@@ -1638,6 +1638,7 @@
           messageCenterOpenButton.textContent = inboxCount ? `Message Center (${inboxCount})` : 'Message Center';
           updateMessageInboxSummary(inboxCount);
         }
+        if (!renderLists) return;
         if (messageCenterInboxHeading) {
           messageCenterInboxHeading.textContent = isArchiveViewOpen ? 'Archived inbox messages' : 'Inbox (until archived)';
         }
@@ -2929,7 +2930,7 @@
 
       messageCenterArchiveToggleButton?.addEventListener('click', () => {
         isArchiveViewOpen = !isArchiveViewOpen;
-        renderMessageCenter();
+        renderMessageCenter({ renderLists: true });
       });
 
       messageCenterCloseButton?.addEventListener('click', () => {

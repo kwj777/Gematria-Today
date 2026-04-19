@@ -2916,16 +2916,15 @@
         }
       });
 
-      messageCenterOpenButton?.addEventListener('click', () => {
+      messageCenterOpenButton?.addEventListener('click', async () => {
         if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
           showAlert('Message Center is available to premium members only.', 'warning');
           return;
         }
         isArchiveViewOpen = false;
+        await Promise.allSettled([loadMemberChatbotFeedback(), loadMemberProposals()]);
         renderMessageCenter();
         setMessageCenterOpen(true);
-        loadMemberChatbotFeedback();
-        loadMemberProposals();
       });
 
       messageCenterArchiveToggleButton?.addEventListener('click', () => {
@@ -2937,17 +2936,16 @@
         setMessageCenterOpen(false);
       });
 
-      messageInboxCard?.addEventListener('click', () => {
+      messageInboxCard?.addEventListener('click', async () => {
         if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
           showAlert('Message Center is available to premium members only.', 'warning');
           return;
         }
         isArchiveViewOpen = false;
+        await Promise.allSettled([loadMemberChatbotFeedback(), loadMemberProposals()]);
         renderMessageCenter();
         setMessageCenterOpen(true);
         messageCenterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        loadMemberChatbotFeedback();
-        loadMemberProposals();
       });
 
       messageInboxCard?.addEventListener('keydown', (event) => {

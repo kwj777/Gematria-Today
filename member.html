@@ -2795,9 +2795,6 @@
           body: JSON.stringify({ id: feedbackId, action: 'archive' }),
         });
         memberChatbotFeedback = memberChatbotFeedback.filter((item) => item.id !== feedbackId);
-        messageCenterSentList?.querySelector(`[data-archive-chatbot-feedback="${feedbackId}"]`)?.closest('article')?.remove();
-        messageCenterInboxList?.querySelector(`[data-archive-chatbot-feedback="${feedbackId}"]`)?.closest('article')?.remove();
-        updateMessageInboxSummary(getMessageCenterInboxItems().length);
         renderForumNotifications();
       }
 
@@ -2815,6 +2812,8 @@
             proposalId: proposalButton?.dataset.archiveProposal || null,
             feedbackId: feedbackButton?.dataset.archiveChatbotFeedback || null,
           });
+          await Promise.allSettled([loadMemberChatbotFeedback(), loadMemberProposals()]);
+          renderMessageCenter({ renderLists: true });
           showAlert('Message archived.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to archive message.');
@@ -2836,6 +2835,8 @@
             proposalId: proposalButton?.dataset.archiveProposal || null,
             feedbackId: feedbackButton?.dataset.archiveChatbotFeedback || null,
           });
+          await Promise.allSettled([loadMemberChatbotFeedback(), loadMemberProposals()]);
+          renderMessageCenter({ renderLists: true });
           showAlert('Message archived.', 'success');
         } catch (error) {
           showAlert(error.message || 'Unable to archive message.');

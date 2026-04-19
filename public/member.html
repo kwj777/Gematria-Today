@@ -1721,7 +1721,7 @@
 
       function renderMemberChatbotFeedback() {
         if (!memberChatbotFeedbackList) {
-          renderMessageCenter();
+          updateMessageInboxSummary(getMessageCenterInboxItems().length);
           return;
         }
 

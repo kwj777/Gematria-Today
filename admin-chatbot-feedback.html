@@ -269,7 +269,7 @@
             <label class="form-label form-label-sm mt-2" for="feedbackReply-${escapeHtml(item.id)}">Reply for member dashboard</label>
             <textarea id="feedbackReply-${escapeHtml(item.id)}" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Write a response that the member will see in their dashboard.">${escapeHtml(item.adminReply || '')}</textarea>
             <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-sm btn-primary" type="button" data-submit-feedback-reply="${escapeHtml(item.id)}">Save reply</button>
+              <button class="btn btn-sm btn-primary" type="button" data-submit-feedback-reply="${escapeHtml(item.id)}">Send reply</button>
               <button class="btn btn-sm btn-outline-secondary" type="button" data-mark-feedback-reviewed="${escapeHtml(item.id)}">Mark reviewed</button>
               <button class="btn btn-sm btn-outline-dark" type="button" data-mark-feedback-closed="${escapeHtml(item.id)}">Close</button>
               ${item.feedbackText ? `<button class="btn btn-sm btn-success" type="button" data-train-from-feedback="${escapeHtml(item.id)}" title="Use this query + feedback as a GemaBot learned response">Train from this</button>` : ''}
@@ -322,16 +322,19 @@
             setStatusMessage(`Trained. GemaBot now has ${result.entriesCount} learned response(s).`, 'success');
             removeFeedbackFromCurrentScreen(trainFromFeedback);
           } else if (submitFeedbackReply) {
+            const replyBtn = event.target.closest('[data-submit-feedback-reply]');
             const replyField = document.getElementById(`feedbackReply-${submitFeedbackReply}`);
             const adminReply = String(replyField?.value || '').trim();
             if (!adminReply) {
-              throw new Error('Please add a reply before saving.');
+              throw new Error('Please add a reply before sending.');
             }
+            if (replyBtn) { replyBtn.disabled = true; replyBtn.textContent = 'Sending…'; }
             await request('/api/admin-chatbot-feedback', {
               method: 'PATCH',
               body: JSON.stringify({ id: submitFeedbackReply, adminReply })
             });
-            setStatusMessage('Reply saved.', 'success');
+            if (replyBtn) { replyBtn.textContent = 'Sent'; }
+            setStatusMessage('Reply sent.', 'success');
           } else {
             const feedbackId = markFeedbackReviewed || markFeedbackClosed;
             const status = markFeedbackReviewed ? 'reviewed' : 'closed';
@@ -346,8 +349,10 @@
             await refreshFeedback();
           }
         } catch (error) {
-          const btn = event.target.closest('[data-train-from-feedback]');
-          if (btn) { btn.disabled = false; btn.textContent = 'Train from this'; }
+          const trainBtn = event.target.closest('[data-train-from-feedback]');
+          const replyBtn = event.target.closest('[data-submit-feedback-reply]');
+          if (trainBtn) { trainBtn.disabled = false; trainBtn.textContent = 'Train from this'; }
+          if (replyBtn && replyBtn.textContent !== 'Sent') { replyBtn.disabled = false; replyBtn.textContent = 'Send reply'; }
           setStatusMessage(error.message || 'Unable to update feedback right now.', 'danger');
         }
       });

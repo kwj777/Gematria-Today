@@ -1577,7 +1577,7 @@
             type: 'chatbot-feedback',
             title: item.query || 'Search feedback',
             body: item.feedbackText || 'No feedback text submitted.',
-            status: item.adminReply ? 'replied' : 'pending',
+            status: (item.adminReply || item.adminNote) ? 'replied' : 'pending',
             createdAt: item.createdAt,
           }));
         return [...proposalItems, ...chatbotItems].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
@@ -1596,12 +1596,12 @@
             repliedAt: proposal.reviewedAt || proposal.updatedAt || proposal.createdAt,
           }));
         const feedbackReplies = feedback
-          .filter((item) => Boolean(item.adminReply))
+          .filter((item) => Boolean(item.adminReply || item.adminNote))
           .map((item) => ({
             id: item.id,
             type: 'chatbot-feedback',
             title: item.query || 'Search feedback',
-            reply: item.adminReply,
+            reply: item.adminReply || item.adminNote,
             repliedAt: item.repliedAt || item.updatedAt || item.createdAt,
           }));
         return [...proposalReplies, ...feedbackReplies].sort((a, b) => new Date(b.repliedAt || 0).getTime() - new Date(a.repliedAt || 0).getTime());
@@ -1725,7 +1725,8 @@
         }
 
         memberChatbotFeedbackList.innerHTML = memberChatbotFeedback.length ? memberChatbotFeedback.map((item) => {
-          const hasReply = Boolean(item.adminReply);
+          const adminReplyMessage = item.adminReply || item.adminNote || '';
+          const hasReply = Boolean(adminReplyMessage);
           const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleString() : '';
           const repliedAt = item.repliedAt ? new Date(item.repliedAt).toLocaleString() : '';
           return `
@@ -1736,7 +1737,7 @@
               </div>
               ${item.feedbackText ? `<p class="small mb-1 mt-2"><strong>Your feedback:</strong> ${escapeHtml(item.feedbackText)}</p>` : ''}
               ${hasReply
-                ? `<div class="alert alert-info small mb-2 mt-2"><strong>Admin reply:</strong> ${escapeHtml(item.adminReply)}</div>`
+                ? `<div class="alert alert-info small mb-2 mt-2"><strong>Admin reply:</strong> ${escapeHtml(adminReplyMessage)}</div>`
                 : '<p class="small text-muted mb-2 mt-2">Awaiting admin reply.</p>'}
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <span class="small text-muted">${hasReply && repliedAt ? `Replied: ${escapeHtml(repliedAt)}` : `Submitted: ${escapeHtml(createdAt)}`}</span>
@@ -1807,7 +1808,7 @@
           });
         }
 
-        const repliedFeedbackCount = memberChatbotFeedback.filter((item) => Boolean(item.adminReply)).length;
+        const repliedFeedbackCount = memberChatbotFeedback.filter((item) => Boolean(item.adminReply || item.adminNote)).length;
         if (repliedFeedbackCount) {
           entries.push({
             tone: 'success',

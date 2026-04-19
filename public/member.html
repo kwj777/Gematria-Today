@@ -1808,15 +1808,6 @@
           });
         }
 
-        const repliedFeedbackCount = memberChatbotFeedback.filter((item) => Boolean(item.adminReply || item.adminNote)).length;
-        if (repliedFeedbackCount) {
-          entries.push({
-            tone: 'success',
-            title: `${repliedFeedbackCount} chatbot feedback repl${repliedFeedbackCount === 1 ? 'y' : 'ies'} from admin`,
-            body: 'Open Message Center to see the message(s).',
-          });
-        }
-
         const activeThreadCount = recentForumThreads.filter((thread) => {
           if (!thread?.lastActivityAt) {
             return false;
@@ -2930,6 +2921,8 @@
         isArchiveViewOpen = false;
         renderMessageCenter();
         setMessageCenterOpen(true);
+        loadMemberChatbotFeedback();
+        loadMemberProposals();
       });
 
       messageCenterArchiveToggleButton?.addEventListener('click', () => {
@@ -2950,6 +2943,8 @@
         renderMessageCenter();
         setMessageCenterOpen(true);
         messageCenterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        loadMemberChatbotFeedback();
+        loadMemberProposals();
       });
 
       messageInboxCard?.addEventListener('keydown', (event) => {

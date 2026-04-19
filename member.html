@@ -2930,6 +2930,8 @@
         isArchiveViewOpen = false;
         renderMessageCenter();
         setMessageCenterOpen(true);
+        loadMemberChatbotFeedback();
+        loadMemberProposals();
       });
 
       messageCenterArchiveToggleButton?.addEventListener('click', () => {
@@ -2950,6 +2952,8 @@
         renderMessageCenter();
         setMessageCenterOpen(true);
         messageCenterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        loadMemberChatbotFeedback();
+        loadMemberProposals();
       });
 
       messageInboxCard?.addEventListener('keydown', (event) => {

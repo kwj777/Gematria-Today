@@ -418,8 +418,6 @@ const applyStaticContentPromise = () => Promise.race([
   .catch(() => {});
 
 const initializeHomePage = () => {
-  renderHomepageSlider([]);
-  renderHomepageFeaturedGrid([]);
   renderHomeHeroIndicators();
   applyHomeHeroImageOptimization();
   resetHomeReadMoreButtons();

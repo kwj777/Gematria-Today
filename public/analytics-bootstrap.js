@@ -4,7 +4,7 @@
     window.dataLayer.push(arguments);
   }
 
-  const gaMeasurementId = 'G-R9DF4BNCR2';
+  const gaMeasurementId = 'G-E611H84D6Y';
   const consentModeRegions = ['AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK', 'GB'];
 
   function isLocalDevelopmentHost(hostname) {

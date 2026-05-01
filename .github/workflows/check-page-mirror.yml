@@ -19,3 +19,4 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run check-root-pages
+      - run: npm run check:google-analytics

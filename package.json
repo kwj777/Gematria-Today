@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "lint": "npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs",
+    "lint": "npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs && node scripts/check-google-analytics.mjs",
+    "check:google-analytics": "node scripts/check-google-analytics.mjs",
     "format:check": "node scripts/check-formatting.mjs",
     "test": "node --test tests/*.test.mjs",
     "count-lines": "find . -not -path './.git/*' -not -path './node_modules/*' -type f \\( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.mjs' -o -name '*.sql' -o -name '*.toml' -o -name '*.json' \\) -print0 | xargs -0 wc -l",

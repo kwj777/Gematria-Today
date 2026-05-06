@@ -92,24 +92,5 @@
     gtag('js', new Date());
     gtag('config', gaMeasurementId);
   }
-
-  function scheduleGoogleAnalyticsInitialization() {
-    const runWhenIdle = () => {
-      if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(initializeGoogleAnalytics, { timeout: 2000 });
-        return;
-      }
-
-      window.setTimeout(initializeGoogleAnalytics, 1500);
-    };
-
-    if (document.readyState === 'complete') {
-      runWhenIdle();
-      return;
-    }
-
-    window.addEventListener('load', runWhenIdle, { once: true });
-  }
-
-  scheduleGoogleAnalyticsInitialization();
+  initializeGoogleAnalytics();
 })();

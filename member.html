@@ -826,7 +826,7 @@
       let csrfToken = null;
       let historyItems = [];
       let favoriteHistoryIds = new Set();
-      let historyNotes = new Map();
+      const pendingHistoryNoteTimers = new Map();
       let showAllHistoryItems = false;
       let paymentConfirmationInFlight = false;
       let membershipHeroReady = false;
@@ -2200,47 +2200,83 @@
         return favoriteHistoryIds.has(String(item.id));
       }
 
-      function getNotesStorageKey() {
-        const memberId = session?.member?.id ?? 'guest';
-        return `member-history-notes:${memberId}`;
+      const HISTORY_NOTE_SAVE_DELAY_MS = 600;
+
+      function getHistoryNote(item) {
+        return typeof item?.note === 'string' ? item.note : '';
       }
 
-      function loadHistoryNotes() {
+      async function saveHistoryNoteToServer(id, noteText) {
         try {
-          const saved = window.localStorage.getItem(getNotesStorageKey());
-          const parsed = JSON.parse(saved || '{}');
-          historyNotes = new Map();
-          if (parsed && typeof parsed === 'object') {
-            Object.entries(parsed).forEach(([key, value]) => {
-              historyNotes.set(String(key), String(value ?? ''));
-            });
+          const payload = await request('/api/member-history', {
+            method: 'PATCH',
+            body: JSON.stringify({ id, note: noteText }),
+          });
+          const updated = payload?.item;
+          if (updated) {
+            const index = historyItems.findIndex((existing) => String(existing.id) === String(updated.id));
+            if (index !== -1) {
+              historyItems[index] = { ...historyItems[index], ...updated };
+            }
           }
-        } catch {
-          historyNotes = new Map();
+        } catch (error) {
+          showAlert(error.message || 'Unable to save note.');
         }
       }
 
-      function persistHistoryNotes() {
-        const serialised = {};
-        historyNotes.forEach((value, key) => {
-          serialised[key] = value;
-        });
-        window.localStorage.setItem(getNotesStorageKey(), JSON.stringify(serialised));
-      }
-
-      function getHistoryNote(id) {
-        return historyNotes.get(String(id)) || '';
-      }
-
-      function setHistoryNote(id, value) {
+      function scheduleHistoryNoteSave(id, noteText) {
         const key = String(id);
-        const text = String(value ?? '');
-        if (text.length === 0) {
-          historyNotes.delete(key);
-        } else {
-          historyNotes.set(key, text);
+        const existingTimer = pendingHistoryNoteTimers.get(key);
+        if (existingTimer) {
+          window.clearTimeout(existingTimer);
         }
-        persistHistoryNotes();
+        const timer = window.setTimeout(() => {
+          pendingHistoryNoteTimers.delete(key);
+          saveHistoryNoteToServer(key, noteText);
+        }, HISTORY_NOTE_SAVE_DELAY_MS);
+        pendingHistoryNoteTimers.set(key, timer);
+      }
+
+      function flushPendingHistoryNoteSaves() {
+        pendingHistoryNoteTimers.forEach((timer) => window.clearTimeout(timer));
+        pendingHistoryNoteTimers.clear();
+      }
+
+      async function migrateLegacyHistoryNotesToServer() {
+        const memberId = session?.member?.id;
+        if (!memberId) {
+          return;
+        }
+        const key = `member-history-notes:${memberId}`;
+        let parsed;
+        try {
+          parsed = JSON.parse(window.localStorage.getItem(key) || 'null');
+        } catch {
+          parsed = null;
+        }
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          return;
+        }
+        const entries = Object.entries(parsed);
+        if (!entries.length) {
+          window.localStorage.removeItem(key);
+          return;
+        }
+        for (const [id, noteText] of entries) {
+          const text = String(noteText ?? '').trim();
+          if (!text) {
+            continue;
+          }
+          const existing = historyItems.find((item) => String(item.id) === String(id));
+          if (existing && !getHistoryNote(existing)) {
+            try {
+              await saveHistoryNoteToServer(String(id), text);
+            } catch {
+              return;
+            }
+          }
+        }
+        window.localStorage.removeItem(key);
       }
 
       function sortHistoryItems(items) {
@@ -2290,7 +2326,7 @@
         historyList.innerHTML = visibleHistoryItems.length ? visibleHistoryItems.map((item) => {
           const favorited = isFavorited(item);
           const noteId = `member-history-note-${item.id}`;
-          const noteValue = getHistoryNote(item.id);
+          const noteValue = getHistoryNote(item);
           return `
           <article class="admin-item-card member-history-card mb-3 p-3${favorited ? ' is-favorited' : ''}">
             <div class="d-flex justify-content-between flex-wrap gap-3">
@@ -2354,8 +2390,11 @@
               });
               favoriteHistoryIds.delete(String(button.dataset.deleteId));
               persistFavoriteHistoryIds();
-              historyNotes.delete(String(button.dataset.deleteId));
-              persistHistoryNotes();
+              const pendingTimer = pendingHistoryNoteTimers.get(String(button.dataset.deleteId));
+              if (pendingTimer) {
+                window.clearTimeout(pendingTimer);
+                pendingHistoryNoteTimers.delete(String(button.dataset.deleteId));
+              }
               showAlert('History entry deleted.', 'success');
               await loadHistory();
             } catch (error) {
@@ -2378,7 +2417,16 @@
 
         historyList.querySelectorAll('[data-note-id]').forEach((textarea) => {
           textarea.addEventListener('input', () => {
-            setHistoryNote(textarea.dataset.noteId, textarea.value);
+            scheduleHistoryNoteSave(textarea.dataset.noteId, textarea.value);
+          });
+          textarea.addEventListener('blur', () => {
+            const key = String(textarea.dataset.noteId);
+            const timer = pendingHistoryNoteTimers.get(key);
+            if (timer) {
+              window.clearTimeout(timer);
+              pendingHistoryNoteTimers.delete(key);
+              saveHistoryNoteToServer(key, textarea.value);
+            }
           });
         });
       }
@@ -2478,13 +2526,8 @@
           }
         });
         persistFavoriteHistoryIds();
-        Array.from(historyNotes.keys()).forEach((id) => {
-          if (!historyItems.some((item) => String(item.id) === id)) {
-            historyNotes.delete(id);
-          }
-        });
-        persistHistoryNotes();
         renderHistory();
+        migrateLegacyHistoryNotesToServer().catch(() => {});
       }
 
       async function loadChatSessions() {
@@ -2596,7 +2639,6 @@
           }
           membershipHeroReady = true;
           loadFavoriteHistoryIds();
-          loadHistoryNotes();
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
           if (forumModuleEnabled) {
@@ -2624,7 +2666,7 @@
         } catch {
           session = null;
           favoriteHistoryIds = new Set();
-          historyNotes = new Map();
+          flushPendingHistoryNoteSaves();
           membershipHeroReady = true;
           setLoggedIn(false);
           historyItems = [];
@@ -2673,7 +2715,7 @@
           session = await request('/api/member-register', { method: 'POST', body: JSON.stringify(payload) });
           session = null;
           favoriteHistoryIds = new Set();
-          historyNotes = new Map();
+          flushPendingHistoryNoteSaves();
           setLoggedIn(false);
           showAlert('Membership account created. Please check your email and verify your account before signing in.', 'success');
           window.endTimesTracking?.track('sign_up_complete', { source: 'member_register_form' });
@@ -2749,7 +2791,6 @@
             return;
           }
           loadFavoriteHistoryIds();
-          loadHistoryNotes();
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
@@ -3014,7 +3055,7 @@
         } finally {
           session = null;
           favoriteHistoryIds = new Set();
-          historyNotes = new Map();
+          flushPendingHistoryNoteSaves();
           setLoggedIn(false);
           chatSessions = [];
           renderChatSessions();

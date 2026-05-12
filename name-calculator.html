@@ -275,26 +275,6 @@ const form = document.querySelector('#name-form');
         return memberSession;
       }
 
-      function persistHistoryNoteForItem(itemId, noteText) {
-        if (!itemId) {
-          return;
-        }
-        const trimmedNote = String(noteText ?? '').trim();
-        if (!trimmedNote) {
-          return;
-        }
-        try {
-          const memberId = memberSession?.member?.id ?? 'guest';
-          const key = `member-history-notes:${memberId}`;
-          const existing = JSON.parse(window.localStorage.getItem(key) || '{}');
-          const updated = existing && typeof existing === 'object' ? existing : {};
-          updated[String(itemId)] = trimmedNote;
-          window.localStorage.setItem(key, JSON.stringify(updated));
-        } catch {
-          // Ignore localStorage write failures (private mode, quota, etc.).
-        }
-      }
-
       async function saveCurrentSearch(noteText = '') {
         if (!currentSearchPayload) {
           memberSaveMeta.textContent = 'Run a name calculation before saving history.';
@@ -309,19 +289,22 @@ const form = document.querySelector('#name-form');
         saveHistoryButton.disabled = true;
         memberSaveMeta.textContent = 'Saving name calculator results to your account...';
 
+        const requestBody = {
+          ...currentSearchPayload,
+          note: String(noteText ?? '').trim(),
+        };
+
         const response = await fetch('/api/member-history', {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(currentSearchPayload),
+          body: JSON.stringify(requestBody),
         });
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(payload.error || 'Unable to save name calculator results.');
         }
-
-        persistHistoryNoteForItem(payload?.item?.id, noteText);
 
         memberSaveMeta.textContent = 'Saved to your account history.';
         notifyDashboardUpdate('history');

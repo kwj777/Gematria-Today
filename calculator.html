@@ -663,26 +663,6 @@ View results: ${shareUrl}`.trim(),
         memberDashboardSyncChannel?.postMessage(update);
       }
 
-      function persistHistoryNoteForItem(itemId, noteText) {
-        if (!itemId) {
-          return;
-        }
-        const trimmedNote = String(noteText ?? '').trim();
-        if (!trimmedNote) {
-          return;
-        }
-        try {
-          const memberId = memberSession?.member?.id ?? 'guest';
-          const key = `member-history-notes:${memberId}`;
-          const existing = JSON.parse(window.localStorage.getItem(key) || '{}');
-          const updated = existing && typeof existing === 'object' ? existing : {};
-          updated[String(itemId)] = trimmedNote;
-          window.localStorage.setItem(key, JSON.stringify(updated));
-        } catch {
-          // Ignore localStorage write failures (private mode, quota, etc.).
-        }
-      }
-
       async function saveCurrentSearch(noteText = '') {
         if (!currentSearchPayload) {
           memberSaveMeta.textContent = 'Run a lookup before saving history.';
@@ -697,19 +677,22 @@ View results: ${shareUrl}`.trim(),
         saveHistoryButton.disabled = true;
         memberSaveMeta.textContent = 'Saving search to your account...';
 
+        const requestBody = {
+          ...currentSearchPayload,
+          note: String(noteText ?? '').trim(),
+        };
+
         const response = await fetch('/api/member-history', {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(currentSearchPayload),
+          body: JSON.stringify(requestBody),
         });
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(payload.error || 'Unable to save search history.');
         }
-
-        persistHistoryNoteForItem(payload?.item?.id, noteText);
 
         memberSaveMeta.textContent = memberSession?.member?.membershipLevel === 'free'
           ? `Saved to your account history. Free memberships can store up to ${FREE_MEMBERSHIP_SAVE_LIMIT} saved searches.`

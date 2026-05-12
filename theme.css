@@ -1898,19 +1898,21 @@ body.page-render-pending footer {
 }
 
 .feature-card-icon__icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.6rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(var(--brand-amber-rgb), 0.14);
+  background: rgba(var(--brand-amber-rgb), 0.22);
+  border: 1px solid rgba(var(--brand-amber-rgb), 0.4);
   color: var(--brand-amber);
+  box-shadow: 0 0 0 4px rgba(var(--brand-amber-rgb), 0.06);
 }
 
 .feature-card-icon__icon svg {
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .feature-card-icon__title {
@@ -1933,4 +1935,33 @@ body.page-render-pending footer {
   .hero-panel .display-5 {
     font-size: clamp(1.85rem, 2.2vw + 1rem, 2.4rem);
   }
+}
+
+@media (max-width: 575.98px) {
+  .hero-panel h1.display-5,
+  .hero-panel .display-5 {
+    font-size: 1.6rem;
+    line-height: 1.2;
+  }
+
+  .hero-panel .lead {
+    font-size: 1rem;
+  }
+}
+
+.word-of-day-spotlight--compact {
+  border-radius: 1rem;
+}
+
+.word-of-day-spotlight--compact .word-of-day-spotlight__card {
+  max-height: 240px;
+  min-height: 160px;
+}
+
+.content-panel--soft {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+:root[data-bs-theme="dark"] .content-panel--soft {
+  background: rgba(17, 24, 34, 0.72);
 }

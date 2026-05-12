@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-labelledby="title desc">
+  <title id="title">Daniel 7 — Son of Man and the Everlasting Kingdom</title>
+  <desc id="desc">A dark blue 16 by 9 blog hero graphic inspired by the reference image, showing the Son of Man coming with clouds toward the Ancient of Days, saints below, and an everlasting kingdom motif.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#071327"/>
+      <stop offset="48%" stop-color="#12264c"/>
+      <stop offset="100%" stop-color="#071327"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="47%" cy="31%" r="38%">
+      <stop offset="0%" stop-color="#f7df9a" stop-opacity="0.82"/>
+      <stop offset="34%" stop-color="#d9bc71" stop-opacity="0.38"/>
+      <stop offset="72%" stop-color="#1b2442" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#071327" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="horizon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7da2d6" stop-opacity="0.78"/>
+      <stop offset="42%" stop-color="#284f82" stop-opacity="0.52"/>
+      <stop offset="100%" stop-color="#08142a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="goldStroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d6b56d" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#d6b56d" stop-opacity=".75"/>
+      <stop offset="50%" stop-color="#fff3bf" stop-opacity=".9"/>
+      <stop offset="80%" stop-color="#d6b56d" stop-opacity=".75"/>
+      <stop offset="100%" stop-color="#d6b56d" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="softBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="textShadow" x="-10%" y="-20%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" rx="22" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1600" height="900" rx="22" fill="url(#glow)"/>
+  <path d="M85 72 C360 66, 546 73, 802 70 C1045 67, 1260 63, 1515 73" fill="none" stroke="url(#goldStroke)" stroke-width="2" opacity=".5"/>
+  <path d="M85 828 C360 836, 546 827, 802 831 C1045 835, 1260 838, 1515 828" fill="none" stroke="url(#goldStroke)" stroke-width="2" opacity=".45"/>
+
+  <g opacity=".22" stroke="#d8c58f" stroke-width="1.5" fill="none">
+    <path d="M1288 207 C1368 267, 1425 346, 1458 455"/>
+    <path d="M1324 178 C1418 247, 1486 337, 1521 456"/>
+    <path d="M1268 246 C1328 292, 1375 353, 1406 432"/>
+  </g>
+  <circle cx="1270" cy="181" r="10" fill="#d9bd78" opacity=".75"/>
+
+  <g transform="translate(0,560)">
+    <rect width="1600" height="40" fill="url(#horizon)"/>
+    <path d="M0 58 C170 34, 278 42, 430 51 C620 62, 736 23, 902 42 C1054 60, 1184 17, 1350 36 C1458 48, 1536 43, 1600 31 L1600 340 L0 340 Z" fill="#08142b" opacity=".7"/>
+    <path d="M0 24 C181 26, 292 27, 455 26 C647 25, 790 20, 945 26 C1133 34, 1322 22, 1600 27" fill="none" stroke="#78a4d9" stroke-width="6" opacity=".42"/>
+  </g>
+
+  <!-- Title copy -->
+  <g filter="url(#textShadow)">
+    <text x="140" y="185" font-family="Georgia, 'Times New Roman', serif" font-size="24" letter-spacing="2" fill="#ffd36c" font-weight="700">DANIEL 7 + REVELATION 20</text>
+    <text x="140" y="282" font-family="Georgia, 'Times New Roman', serif" font-size="76" letter-spacing="2" fill="#fff1cf" font-weight="700">EVERLASTING KINGDOM</text>
+    <text x="140" y="338" font-family="Georgia, 'Times New Roman', serif" font-size="34" fill="#d9e5ff" font-weight="700">Son of Man — present reign, final consummation</text>
+    <text x="140" y="386" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#ffffff" font-weight="700">Amillennial reading: inaugurated now, revealed in fullness at the end.</text>
+  </g>
+
+  <!-- Heavenly throne / Ancient of Days -->
+  <g transform="translate(1110 290)" opacity=".92">
+    <path d="M88 0 L120 74 L160 74 L192 0 Z" fill="#a8b9dc" opacity=".85"/>
+    <rect x="107" y="72" width="66" height="135" fill="#879cca"/>
+    <rect x="94" y="122" width="21" height="85" fill="#7890c0"/>
+    <rect x="165" y="122" width="21" height="85" fill="#7890c0"/>
+    <path d="M78 207 H202" stroke="#b6c6e9" stroke-width="8" opacity=".65"/>
+    <path d="M115 72 H165" stroke="#e9edf7" stroke-width="8" opacity=".65"/>
+    <circle cx="140" cy="-15" r="20" fill="#f1f1ed" opacity=".9"/>
+    <path d="M112 18 C126 36,155 37,170 18" fill="none" stroke="#f1f1ed" stroke-width="11" stroke-linecap="round" opacity=".85"/>
+  </g>
+
+  <!-- Son of Man on clouds, approaching the throne -->
+  <g transform="translate(725 300)">
+    <path d="M-112 91 C-80 44,-9 43,20 83 C44 42,106 45,127 88 C168 88,197 112,196 145 C196 184,154 199,111 189 C83 217,25 219,-6 188 C-43 206,-102 194,-124 160 C-149 122,-139 101,-112 91Z" fill="#d9e6f4" opacity=".88" filter="url(#softBlur)"/>
+    <path d="M-128 94 C-91 62,-33 66,-1 98 C34 61,96 66,127 102 C165 98,200 122,194 154 C186 194,126 196,94 176 C54 204,5 200,-23 174 C-63 199,-120 182,-137 145 C-146 122,-144 105,-128 94Z" fill="#dce8f4" opacity=".76"/>
+    <g transform="translate(18 2)">
+      <circle cx="0" cy="28" r="18" fill="#f4dfbd"/>
+      <path d="M-14 50 C-24 87,-36 124,-44 166" stroke="#e8dfcf" stroke-width="15" stroke-linecap="round"/>
+      <path d="M15 51 C38 82,59 106,87 125" stroke="#e8dfcf" stroke-width="13" stroke-linecap="round"/>
+      <path d="M-9 58 C18 86,31 118,36 160" stroke="#b698e8" stroke-width="14" stroke-linecap="round"/>
+      <path d="M-18 78 C-42 103,-61 126,-85 143" stroke="#b698e8" stroke-width="12" stroke-linecap="round"/>
+      <path d="M-48 58 C-8 80,31 80,68 58 C50 102,42 138,36 181 C9 164,-17 162,-53 179 C-51 133,-50 92,-48 58Z" fill="#ece6f4" opacity=".95"/>
+    </g>
+  </g>
+
+  <!-- Saints below possess the kingdom -->
+  <g transform="translate(255 650)">
+    <ellipse cx="80" cy="40" rx="82" ry="38" fill="#9fb3d5" opacity=".9"/>
+    <circle cx="168" cy="0" r="16" fill="#f4d4a0"/>
+    <path d="M160 18 C150 50,140 70,117 82" stroke="#b698e8" stroke-width="13" stroke-linecap="round"/>
+    <path d="M176 19 C193 48,213 67,240 75" stroke="#e8dbcc" stroke-width="12" stroke-linecap="round"/>
+    <path d="M145 55 C169 82,194 86,223 67 C214 100,206 124,202 155 C172 135,147 139,118 154 C127 116,137 83,145 55Z" fill="#f5ebd7"/>
+    <ellipse cx="260" cy="80" rx="60" ry="32" fill="#f5ebd7"/>
+    <circle cx="309" cy="59" r="16" fill="#f5ebd7"/>
+    <circle cx="317" cy="55" r="4" fill="#17264a"/>
+  </g>
+
+  <!-- Palm / new creation motif -->
+  <g transform="translate(650 535)">
+    <rect x="106" y="31" width="24" height="185" rx="10" fill="#5a3718"/>
+    <path d="M120 40 C82 -3,22 -24,-68 12 C-3 11,66 25,120 40Z" fill="#42b57b"/>
+    <path d="M118 45 C49 20,-48 40,-117 88 C-45 75,35 69,118 45Z" fill="#5dc992"/>
+    <path d="M123 42 C168 -2,247 -24,326 8 C256 6,194 23,123 42Z" fill="#4bc083"/>
+    <path d="M124 56 C191 31,282 45,366 94 C278 83,201 88,124 56Z" fill="#5ad08e"/>
+  </g>
+
+  <!-- Small kingdom/city silhouette -->
+  <g transform="translate(1038 365)" fill="#8fa8d9" opacity=".9">
+    <rect x="0" y="5" width="23" height="155"/>
+    <rect x="35" y="-32" width="25" height="192"/>
+    <rect x="75" y="25" width="23" height="135"/>
+    <rect x="112" y="-70" width="25" height="230"/>
+    <rect x="151" y="-15" width="24" height="175"/>
+    <rect x="189" y="31" width="22" height="129"/>
+    <path d="M230 -60 L256 0 L204 0 Z"/>
+    <rect x="217" y="0" width="26" height="160"/>
+  </g>
+
+  <text x="140" y="805" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#d2ddf7" opacity=".78">Daniel 7:13–14 • 1 Corinthians 15:23–28 • John 5:25–29</text>
+</svg>

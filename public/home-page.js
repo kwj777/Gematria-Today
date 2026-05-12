@@ -365,20 +365,6 @@ const applyStaticContentPromise = () => Promise.race([
       }
     }
 
-    if (content.heroHeadlineSecondary) {
-      const secondaryHeadlineNode = document.getElementById('homeHeroSecondaryTitle');
-      if (secondaryHeadlineNode) {
-        secondaryHeadlineNode.textContent = content.heroHeadlineSecondary;
-      }
-    }
-
-    if (content.heroBodySecondary) {
-      const secondaryBodyNode = document.getElementById('homeHeroSecondaryLead');
-      if (secondaryBodyNode) {
-        secondaryBodyNode.textContent = content.heroBodySecondary;
-      }
-    }
-
     const primaryCtaNode = document.getElementById('homeJoinCta');
     if (primaryCtaNode) {
       if (content.ctaLabel) {
@@ -396,16 +382,6 @@ const applyStaticContentPromise = () => Promise.race([
       }
       if (content.ctaUrlSecondary) {
         secondaryCtaNode.setAttribute('href', content.ctaUrlSecondary);
-      }
-    }
-
-    const tertiaryCtaNode = document.getElementById('homeEschatologyCta');
-    if (tertiaryCtaNode) {
-      if (content.ctaLabelTertiary) {
-        tertiaryCtaNode.textContent = content.ctaLabelTertiary;
-      }
-      if (content.ctaUrlTertiary) {
-        tertiaryCtaNode.setAttribute('href', content.ctaUrlTertiary);
       }
     }
 
@@ -438,13 +414,6 @@ const initializeHomePage = () => {
     window.endTimesTracking?.track('beginner_path_try_calculator_click', {
       source: 'home_hero_secondary_cta',
       destination: '/calculator.html',
-    });
-  });
-
-  document.getElementById('homeEschatologyCta')?.addEventListener('click', () => {
-    window.endTimesTracking?.track('home_eschatology_cta_click', {
-      source: 'home_hero_eschatology_slide',
-      destination: '/blog.html',
     });
   });
 

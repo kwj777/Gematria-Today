@@ -2045,9 +2045,94 @@
         return `/calculator.html?query=${encodeURIComponent(queryText)}`;
       }
 
+      function getPerLetterValuesLabel(input) {
+        const letters = Array.from(String(input || '').toUpperCase())
+          .filter((char) => char >= 'A' && char <= 'Z')
+          .map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`);
+        return letters.length ? letters.join(', ') : 'n/a';
+      }
+
+      function stripHtmlTags(value) {
+        return String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+
+      async function fetchDefinitionPreview(word) {
+        const normalizedWord = String(word || '').trim();
+        if (!normalizedWord) {
+          return '';
+        }
+        const extractText = (definition) => String(
+          definition?.text || definition?.definition || definition?.display || definition?.gloss || ''
+        ).trim();
+        const getDefinitionList = (payload) => {
+          if (Array.isArray(payload)) return payload;
+          if (Array.isArray(payload?.definitions)) return payload.definitions;
+          if (Array.isArray(payload?.data?.definitions)) return payload.data.definitions;
+          return [];
+        };
+        const endpoints = [
+          `/api/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+          `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+        ];
+        try {
+          for (const endpoint of endpoints) {
+            const response = await fetch(endpoint, { headers: { accept: 'application/json' } });
+            if (!response.ok) continue;
+            const payload = await response.json();
+            const definitions = getDefinitionList(payload);
+            const firstDefinition = definitions.find((definition) => extractText(definition));
+            const preview = stripHtmlTags(extractText(firstDefinition));
+            if (preview) return preview;
+          }
+        } catch {
+          return '';
+        }
+        return '';
+      }
+
+      async function buildHistoryShareUrl(item) {
+        if (item.calculatorSource === 'name-calculator') {
+          const names = Array.isArray(item.resultPayload?.names) ? item.resultPayload.names.filter(Boolean) : [];
+          const url = new URL('/name-calculator.html', getCanonicalShareOrigin());
+          names.slice(0, 3).forEach((name, index) => {
+            url.searchParams.set(`name${index + 1}`, name);
+          });
+          const totals = Array.isArray(item.resultPayload?.results)
+            ? item.resultPayload.results
+                .filter((result) => !result?.error && result?.gematria?.gematria?.total != null)
+                .map((result) => String(result.gematria.gematria.total))
+            : [];
+          if (totals.length) {
+            url.searchParams.set('totals', totals.join(','));
+          }
+          url.hash = 'name-form';
+          return url.toString();
+        }
+
+        const queryText = String(item.queryText || '').trim();
+        const url = new URL('/calculator.html', getCanonicalShareOrigin());
+        url.searchParams.set('query', queryText);
+        if (item.gematriaTotal != null) {
+          url.searchParams.set('total', String(item.gematriaTotal));
+        }
+        if (item.digitalRoot != null) {
+          url.searchParams.set('digitalRoot', String(item.digitalRoot));
+        }
+        if (typeof item.isBaseRoot === 'boolean') {
+          url.searchParams.set('isBaseRoot', String(item.isBaseRoot));
+        }
+        const perLetterValues = getPerLetterValuesLabel(queryText);
+        if (perLetterValues && perLetterValues !== 'n/a') {
+          url.searchParams.set('perLetterValues', perLetterValues);
+        }
+        const definitionPreview = await fetchDefinitionPreview(queryText);
+        url.searchParams.set('definitionPreview', definitionPreview || 'Definition preview unavailable.');
+        url.hash = 'gematria-result';
+        return url.toString();
+      }
+
       async function shareHistoryItem(item) {
-        const reopenPath = getHistoryReopenUrl(item);
-        const shareUrl = toCanonicalShareUrl(reopenPath);
+        const shareUrl = toCanonicalShareUrl(await buildHistoryShareUrl(item));
         const sharePayload = {
           title: 'EndTimes.Today saved search',
           text: `Saved search: ${item.queryText || 'Gematria lookup'}\nView results: ${shareUrl}`,

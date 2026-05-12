@@ -110,6 +110,8 @@ export async function ensureMemberSchema(sql) {
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS calculation_history_unique_entry_idx
+      ON calculation_history (user_id, LOWER(query_text), query_type, calculator_source)`;
     await sql`CREATE INDEX IF NOT EXISTS calculation_history_user_created_at_idx ON calculation_history (user_id, created_at DESC)`;
     await sql`CREATE INDEX IF NOT EXISTS calculation_history_query_type_idx ON calculation_history (query_type, created_at DESC)`;
     await sql`CREATE INDEX IF NOT EXISTS calculation_history_calculator_source_idx ON calculation_history (calculator_source, created_at DESC)`;

@@ -1025,22 +1025,24 @@ View results: ${shareUrl}`.trim(),
         resetResultsView();
       });
 
-      const saveHistoryNoteModalElement = document.getElementById('save-history-note-modal');
-      const saveHistoryNoteInput = document.getElementById('save-history-note-input');
-      const saveHistoryNoteConfirmButton = document.getElementById('save-history-note-confirm');
       let saveHistoryNoteModal = null;
+      let saveHistoryNoteModalShownBound = false;
 
       function getSaveHistoryNoteModal() {
-        if (!saveHistoryNoteModal && saveHistoryNoteModalElement && window.bootstrap?.Modal) {
-          saveHistoryNoteModal = new window.bootstrap.Modal(saveHistoryNoteModalElement);
+        const modalElement = document.getElementById('save-history-note-modal');
+        if (!modalElement || !window.bootstrap?.Modal) {
+          return null;
+        }
+        if (!saveHistoryNoteModal) {
+          saveHistoryNoteModal = window.bootstrap.Modal.getOrCreateInstance(modalElement);
+        }
+        if (!saveHistoryNoteModalShownBound) {
+          modalElement.addEventListener('shown.bs.modal', () => {
+            document.getElementById('save-history-note-input')?.focus();
+          });
+          saveHistoryNoteModalShownBound = true;
         }
         return saveHistoryNoteModal;
-      }
-
-      if (saveHistoryNoteModalElement) {
-        saveHistoryNoteModalElement.addEventListener('shown.bs.modal', () => {
-          saveHistoryNoteInput?.focus();
-        });
       }
 
       async function performSaveWithNote(noteText) {
@@ -1063,8 +1065,9 @@ View results: ${shareUrl}`.trim(),
         }
 
         const modal = getSaveHistoryNoteModal();
-        if (saveHistoryNoteInput) {
-          saveHistoryNoteInput.value = '';
+        const noteInput = document.getElementById('save-history-note-input');
+        if (noteInput) {
+          noteInput.value = '';
         }
         if (modal) {
           modal.show();
@@ -1073,8 +1076,13 @@ View results: ${shareUrl}`.trim(),
         }
       });
 
-      saveHistoryNoteConfirmButton?.addEventListener('click', async () => {
-        const noteText = saveHistoryNoteInput?.value ?? '';
+      document.addEventListener('click', async (event) => {
+        const target = event.target.closest('#save-history-note-confirm');
+        if (!target) {
+          return;
+        }
+        const noteInput = document.getElementById('save-history-note-input');
+        const noteText = noteInput?.value ?? '';
         getSaveHistoryNoteModal()?.hide();
         await performSaveWithNote(noteText);
       });

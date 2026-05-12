@@ -663,7 +663,27 @@ View results: ${shareUrl}`.trim(),
         memberDashboardSyncChannel?.postMessage(update);
       }
 
-      async function saveCurrentSearch() {
+      function persistHistoryNoteForItem(itemId, noteText) {
+        if (!itemId) {
+          return;
+        }
+        const trimmedNote = String(noteText ?? '').trim();
+        if (!trimmedNote) {
+          return;
+        }
+        try {
+          const memberId = memberSession?.member?.id ?? 'guest';
+          const key = `member-history-notes:${memberId}`;
+          const existing = JSON.parse(window.localStorage.getItem(key) || '{}');
+          const updated = existing && typeof existing === 'object' ? existing : {};
+          updated[String(itemId)] = trimmedNote;
+          window.localStorage.setItem(key, JSON.stringify(updated));
+        } catch {
+          // Ignore localStorage write failures (private mode, quota, etc.).
+        }
+      }
+
+      async function saveCurrentSearch(noteText = '') {
         if (!currentSearchPayload) {
           memberSaveMeta.textContent = 'Run a lookup before saving history.';
           return;
@@ -688,6 +708,8 @@ View results: ${shareUrl}`.trim(),
         if (!response.ok) {
           throw new Error(payload.error || 'Unable to save search history.');
         }
+
+        persistHistoryNoteForItem(payload?.item?.id, noteText);
 
         memberSaveMeta.textContent = memberSession?.member?.membershipLevel === 'free'
           ? `Saved to your account history. Free memberships can store up to ${FREE_MEMBERSHIP_SAVE_LIMIT} saved searches.`
@@ -1390,17 +1412,27 @@ View results: ${shareUrl}`.trim(),
         });
       });
 
-      saveHistoryButton.addEventListener('click', async (event) => {
-        if (!memberSession?.authenticated) {
-          event.preventDefault();
-          showMembersOnlySaveMessage();
-          saveHistoryPopover?.show();
-          window.endTimesTracking?.track('sign_up_start', { source: 'calculator_save_button' });
-          return;
-        }
+      const saveHistoryNoteModalElement = document.getElementById('save-history-note-modal');
+      const saveHistoryNoteInput = document.getElementById('save-history-note-input');
+      const saveHistoryNoteConfirmButton = document.getElementById('save-history-note-confirm');
+      let saveHistoryNoteModal = null;
 
+      function getSaveHistoryNoteModal() {
+        if (!saveHistoryNoteModal && saveHistoryNoteModalElement && window.bootstrap?.Modal) {
+          saveHistoryNoteModal = new window.bootstrap.Modal(saveHistoryNoteModalElement);
+        }
+        return saveHistoryNoteModal;
+      }
+
+      if (saveHistoryNoteModalElement) {
+        saveHistoryNoteModalElement.addEventListener('shown.bs.modal', () => {
+          saveHistoryNoteInput?.focus();
+        });
+      }
+
+      async function performSaveWithNote(noteText) {
         try {
-          await saveCurrentSearch();
+          await saveCurrentSearch(noteText);
           window.endTimesTracking?.track('calculator_save_history_complete', {
             source: 'calculator_page',
           });
@@ -1411,6 +1443,37 @@ View results: ${shareUrl}`.trim(),
           });
           memberSaveMeta.textContent = error.message || 'Unable to save search history.';
         }
+      }
+
+      saveHistoryButton.addEventListener('click', (event) => {
+        if (!memberSession?.authenticated) {
+          event.preventDefault();
+          showMembersOnlySaveMessage();
+          saveHistoryPopover?.show();
+          window.endTimesTracking?.track('sign_up_start', { source: 'calculator_save_button' });
+          return;
+        }
+
+        if (!currentSearchPayload) {
+          memberSaveMeta.textContent = 'Run a lookup before saving history.';
+          return;
+        }
+
+        const modal = getSaveHistoryNoteModal();
+        if (saveHistoryNoteInput) {
+          saveHistoryNoteInput.value = '';
+        }
+        if (modal) {
+          modal.show();
+        } else {
+          performSaveWithNote('');
+        }
+      });
+
+      saveHistoryNoteConfirmButton?.addEventListener('click', async () => {
+        const noteText = saveHistoryNoteInput?.value ?? '';
+        getSaveHistoryNoteModal()?.hide();
+        await performSaveWithNote(noteText);
       });
 
       window.addEventListener('DOMContentLoaded', async () => {
@@ -1430,6 +1493,25 @@ View results: ${shareUrl}`.trim(),
         }
       });
       </script>
+      <div class="modal fade" id="save-history-note-modal" tabindex="-1" aria-labelledby="save-history-note-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="save-history-note-modal-title">Save search</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="small text-muted mb-2">Add an optional private note to keep with this saved search. You can edit it later from your dashboard.</p>
+              <label class="form-label" for="save-history-note-input">Notes (optional)</label>
+              <textarea id="save-history-note-input" class="form-control" rows="5" placeholder="Add private notes about this saved search..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="save-history-note-confirm">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">

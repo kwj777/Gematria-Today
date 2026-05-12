@@ -105,10 +105,10 @@
             <li class="nav-item"><a class="nav-link active" href="/index.html">Home</a></li>
             <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
+            <li class="nav-item"><a class="nav-link" href="/calculator.html">Calculator</a></li>
             <li class="nav-item dropdown">
               <button class="nav-link dropdown-toggle" type="button" id="gematriaMenu" data-bs-toggle="dropdown" aria-expanded="false">Gematria</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="gematriaMenu">
-                <li><a class="dropdown-item" href="/calculator.html">Word/Phrase Calculator</a></li>
                 <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
                 <li data-module="gemabot"><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
               </ul>
@@ -130,6 +130,7 @@
               <p id="homeHeroLead" class="lead mb-4">A guided path from your first calculation to real pattern analysis.</p>
               <div class="d-flex flex-wrap gap-2">
                 <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg" href="/gematria-account-setup.html">Find my number</a>
+                <a class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html">Try a word first</a>
               </div>
             </div>
             <div class="col-lg-5">
@@ -186,7 +187,7 @@
           </div>
         </section>
 
-        <section class="content-panel p-4 p-lg-5 mb-5" data-module="blog_home_featured_grid">
+        <section class="content-panel content-panel--soft p-4 p-lg-5 mb-5" data-module="blog_home_featured_grid">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div>
               <p class="section-kicker mb-2">Featured Picks</p>
@@ -206,15 +207,15 @@
           </div>
         </section>
 
-        <section class="word-of-day-spotlight p-4 p-lg-5 mb-5" data-module="wordnik_wotd_slider">
+        <section class="word-of-day-spotlight word-of-day-spotlight--compact p-3 p-lg-4 mb-5" data-module="wordnik_wotd_slider">
           <div class="row g-4 align-items-center">
             <div class="col-lg-7">
               <p class="section-kicker text-warning-emphasis mb-2">Wordnik Word of the Day</p>
-              <h2 id="homeWordnikWotdTitle" class="display-6 fw-bold mb-3">Daily gematria spotlight is loading…</h2>
-              <p id="homeWordnikWotdDefinition" class="lead mb-4">Fetching today's Wordnik word and calculation preview.</p>
+              <h2 id="homeWordnikWotdTitle" class="h3 fw-bold mb-2">Daily gematria spotlight is loading…</h2>
+              <p id="homeWordnikWotdDefinition" class="mb-3">Fetching today's Wordnik word and calculation preview.</p>
               <div class="d-flex flex-wrap gap-2">
-                <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning btn-lg touch-target-lg" href="/definition" target="_blank" rel="noopener noreferrer">Open full definition</a>
-                <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html" target="_blank" rel="noopener noreferrer">Open in calculator</a>
+                <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning touch-target-lg" href="/definition" target="_blank" rel="noopener noreferrer">Open full definition</a>
+                <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light touch-target-lg" href="/calculator.html" target="_blank" rel="noopener noreferrer">Open in calculator</a>
               </div>
             </div>
             <div class="col-lg-5">
@@ -226,7 +227,7 @@
                   alt="Gematria calculation preview for Wordnik word of the day."
                   width="1200"
                   height="675"
-                  loading="lazy"
+                  loading="eager"
                   decoding="async"
                 />
                 <span class="word-of-day-spotlight__overlay">
@@ -281,7 +282,6 @@
           <a href="/disclaimer.html">Disclaimer</a>
           <a href="/accessibility.html">Accessibility</a>
           <a href="/contact.html">Contact</a>
-          <a href="/admin.html">Admin</a>
         </div>
         <div class="site-credit text-center text-lg-start mt-2">
           &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="http://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.

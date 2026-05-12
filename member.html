@@ -826,6 +826,7 @@
       let csrfToken = null;
       let historyItems = [];
       let favoriteHistoryIds = new Set();
+      let historyNotes = new Map();
       let showAllHistoryItems = false;
       let paymentConfirmationInFlight = false;
       let membershipHeroReady = false;
@@ -2199,6 +2200,49 @@
         return favoriteHistoryIds.has(String(item.id));
       }
 
+      function getNotesStorageKey() {
+        const memberId = session?.member?.id ?? 'guest';
+        return `member-history-notes:${memberId}`;
+      }
+
+      function loadHistoryNotes() {
+        try {
+          const saved = window.localStorage.getItem(getNotesStorageKey());
+          const parsed = JSON.parse(saved || '{}');
+          historyNotes = new Map();
+          if (parsed && typeof parsed === 'object') {
+            Object.entries(parsed).forEach(([key, value]) => {
+              historyNotes.set(String(key), String(value ?? ''));
+            });
+          }
+        } catch {
+          historyNotes = new Map();
+        }
+      }
+
+      function persistHistoryNotes() {
+        const serialised = {};
+        historyNotes.forEach((value, key) => {
+          serialised[key] = value;
+        });
+        window.localStorage.setItem(getNotesStorageKey(), JSON.stringify(serialised));
+      }
+
+      function getHistoryNote(id) {
+        return historyNotes.get(String(id)) || '';
+      }
+
+      function setHistoryNote(id, value) {
+        const key = String(id);
+        const text = String(value ?? '');
+        if (text.length === 0) {
+          historyNotes.delete(key);
+        } else {
+          historyNotes.set(key, text);
+        }
+        persistHistoryNotes();
+      }
+
       function sortHistoryItems(items) {
         return [...items].sort((left, right) => {
           const favoriteDelta = Number(isFavorited(right)) - Number(isFavorited(left));
@@ -2245,6 +2289,8 @@
 
         historyList.innerHTML = visibleHistoryItems.length ? visibleHistoryItems.map((item) => {
           const favorited = isFavorited(item);
+          const noteId = `member-history-note-${item.id}`;
+          const noteValue = getHistoryNote(item.id);
           return `
           <article class="admin-item-card member-history-card mb-3 p-3${favorited ? ' is-favorited' : ''}">
             <div class="d-flex justify-content-between flex-wrap gap-3">
@@ -2268,6 +2314,16 @@
                 <button class="btn btn-warning btn-sm fw-semibold share-action-button" type="button" data-share-id="${item.id}">Share</button>
                 <button class="btn btn-outline-danger btn-sm" type="button" data-delete-id="${item.id}">Delete</button>
               </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label small text-muted mb-1" for="${noteId}">Notes</label>
+              <textarea
+                id="${noteId}"
+                class="form-control form-control-sm"
+                rows="4"
+                placeholder="Add private notes about this saved search..."
+                data-note-id="${item.id}"
+              >${escapeHtml(noteValue)}</textarea>
             </div>
           </article>
         `;
@@ -2298,6 +2354,8 @@
               });
               favoriteHistoryIds.delete(String(button.dataset.deleteId));
               persistFavoriteHistoryIds();
+              historyNotes.delete(String(button.dataset.deleteId));
+              persistHistoryNotes();
               showAlert('History entry deleted.', 'success');
               await loadHistory();
             } catch (error) {
@@ -2315,6 +2373,12 @@
             }
 
             await shareHistoryItem(selected);
+          });
+        });
+
+        historyList.querySelectorAll('[data-note-id]').forEach((textarea) => {
+          textarea.addEventListener('input', () => {
+            setHistoryNote(textarea.dataset.noteId, textarea.value);
           });
         });
       }
@@ -2414,6 +2478,12 @@
           }
         });
         persistFavoriteHistoryIds();
+        Array.from(historyNotes.keys()).forEach((id) => {
+          if (!historyItems.some((item) => String(item.id) === id)) {
+            historyNotes.delete(id);
+          }
+        });
+        persistHistoryNotes();
         renderHistory();
       }
 
@@ -2526,6 +2596,7 @@
           }
           membershipHeroReady = true;
           loadFavoriteHistoryIds();
+          loadHistoryNotes();
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
           if (forumModuleEnabled) {
@@ -2553,6 +2624,7 @@
         } catch {
           session = null;
           favoriteHistoryIds = new Set();
+          historyNotes = new Map();
           membershipHeroReady = true;
           setLoggedIn(false);
           historyItems = [];
@@ -2601,6 +2673,7 @@
           session = await request('/api/member-register', { method: 'POST', body: JSON.stringify(payload) });
           session = null;
           favoriteHistoryIds = new Set();
+          historyNotes = new Map();
           setLoggedIn(false);
           showAlert('Membership account created. Please check your email and verify your account before signing in.', 'success');
           window.endTimesTracking?.track('sign_up_complete', { source: 'member_register_form' });
@@ -2676,6 +2749,7 @@
             return;
           }
           loadFavoriteHistoryIds();
+          loadHistoryNotes();
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
@@ -2940,6 +3014,7 @@
         } finally {
           session = null;
           favoriteHistoryIds = new Set();
+          historyNotes = new Map();
           setLoggedIn(false);
           chatSessions = [];
           renderChatSessions();

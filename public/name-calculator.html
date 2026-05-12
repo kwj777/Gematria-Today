@@ -215,6 +215,7 @@ const form = document.querySelector('#name-form');
       const FULL_RELATED_WORD_LIMIT = 100;
       const AUTHENTICATED_RELATED_WORD_LIMIT = 250;
       let currentSearchPayload = null;
+      let lastSavedSearchPayload = null;
       let memberSession = null;
       const MEMBER_DASHBOARD_SYNC_KEY = 'memberDashboardUpdate';
       const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
@@ -303,12 +304,15 @@ const form = document.querySelector('#name-form');
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
+          saveHistoryButton.disabled = !currentSearchPayload;
           throw new Error(payload.error || 'Unable to save name calculator results.');
         }
 
         memberSaveMeta.textContent = 'Saved to your account history.';
         notifyDashboardUpdate('history');
-        saveHistoryButton.disabled = false;
+        lastSavedSearchPayload = currentSearchPayload;
+        saveHistoryButton.textContent = 'Saved';
+        saveHistoryButton.disabled = true;
       }
 
       function notifyDashboardUpdate(kind) {
@@ -327,6 +331,7 @@ const form = document.querySelector('#name-form');
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
           saveHistoryButton.disabled = false;
+          saveHistoryButton.textContent = 'Save results';
           saveHistoryButton.classList.add('member-save-button--guest');
           saveHistoryButton.setAttribute('aria-disabled', 'true');
           saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
@@ -339,7 +344,13 @@ const form = document.querySelector('#name-form');
         saveHistoryButton.classList.remove('member-save-button--guest');
         saveHistoryButton.removeAttribute('aria-disabled');
         saveHistoryButton.removeAttribute('title');
-        saveHistoryButton.disabled = !currentSearchPayload;
+        if (currentSearchPayload && currentSearchPayload === lastSavedSearchPayload) {
+          saveHistoryButton.textContent = 'Saved';
+          saveHistoryButton.disabled = true;
+        } else {
+          saveHistoryButton.textContent = 'Save results';
+          saveHistoryButton.disabled = !currentSearchPayload;
+        }
         memberSaveMeta.textContent = currentSearchPayload
           ? `Signed in as ${memberSession.member.displayName || memberSession.member.username}. Save these results to history.`
           : `Signed in as ${memberSession.member.displayName || memberSession.member.username}. Run a name calculation to save it.`;

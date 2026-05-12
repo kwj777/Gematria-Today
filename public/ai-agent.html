@@ -2044,14 +2044,21 @@ View results: ${shareUrl}`.trim(),
           actionButton.disabled = true;
           const originalText = actionButton.textContent;
           actionButton.textContent = 'Saving...';
+          let savedSuccessfully = false;
           try {
             const savedMessage = await saveCalculationToDashboard(meta, note);
             window.alert(savedMessage);
+            savedSuccessfully = true;
           } catch (error) {
             window.alert(error.message || 'Unable to save to membership dashboard.');
           } finally {
-            actionButton.disabled = false;
-            actionButton.textContent = originalText;
+            if (savedSuccessfully) {
+              actionButton.textContent = 'Saved';
+              actionButton.disabled = true;
+            } else {
+              actionButton.textContent = originalText;
+              actionButton.disabled = false;
+            }
           }
           return;
         }

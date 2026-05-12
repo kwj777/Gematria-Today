@@ -585,6 +585,7 @@ View results: ${shareUrl}`.trim(),
         : null;
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       let currentSearchPayload = null;
+      let lastSavedSearchPayload = null;
       let memberSession = null;
 
       async function requestJson(endpoint, searchParams) {
@@ -691,6 +692,7 @@ View results: ${shareUrl}`.trim(),
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
+          saveHistoryButton.disabled = !currentSearchPayload;
           throw new Error(payload.error || 'Unable to save search history.');
         }
 
@@ -698,7 +700,9 @@ View results: ${shareUrl}`.trim(),
           ? `Saved to your account history. Free memberships can store up to ${FREE_MEMBERSHIP_SAVE_LIMIT} saved searches.`
           : 'Saved to your account history.';
         notifyDashboardUpdate('history');
-        saveHistoryButton.disabled = false;
+        lastSavedSearchPayload = currentSearchPayload;
+        saveHistoryButton.textContent = 'Saved';
+        saveHistoryButton.disabled = true;
       }
 
       function updateMemberSaveState() {
@@ -713,6 +717,7 @@ View results: ${shareUrl}`.trim(),
             memberLink.classList.add('btn-primary');
           }
           saveHistoryButton.disabled = false;
+          saveHistoryButton.textContent = 'Save result';
           saveHistoryButton.classList.add('member-save-button--guest');
           saveHistoryButton.setAttribute('aria-disabled', 'true');
           saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
@@ -738,7 +743,13 @@ View results: ${shareUrl}`.trim(),
         saveHistoryButton.classList.remove('member-save-button--guest');
         saveHistoryButton.removeAttribute('aria-disabled');
         saveHistoryButton.removeAttribute('title');
-        saveHistoryButton.disabled = !currentSearchPayload;
+        if (currentSearchPayload && currentSearchPayload === lastSavedSearchPayload) {
+          saveHistoryButton.textContent = 'Saved';
+          saveHistoryButton.disabled = true;
+        } else {
+          saveHistoryButton.textContent = 'Save result';
+          saveHistoryButton.disabled = !currentSearchPayload;
+        }
         const memberName = memberSession.member.displayName || memberSession.member.username;
         const freeTierSuffix = memberSession.member.membershipLevel === 'free'
           ? ` Free memberships can save up to ${FREE_MEMBERSHIP_SAVE_LIMIT} searches.`

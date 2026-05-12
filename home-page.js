@@ -83,6 +83,8 @@ function renderHomepageFeaturedGrid(posts) {
     return;
   }
 
+  grid.setAttribute('aria-busy', 'false');
+
   if (!spots.length) {
     grid.innerHTML = `
       <div class="col-12">
@@ -130,6 +132,8 @@ function renderHomepageSlider(posts) {
   if (!indicators || !carouselInner) {
     return;
   }
+
+  carouselInner.setAttribute('aria-busy', 'false');
 
   if (!normalizedPosts.length) {
     indicators.innerHTML = '';

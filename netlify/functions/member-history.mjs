@@ -27,6 +27,9 @@ export async function handler(event) {
       const queryType = String(body.queryType ?? 'word').trim() || 'word';
       const calculatorSource = String(body.calculatorSource ?? 'calculator').trim() || 'calculator';
       const resultPayload = body.resultPayload && typeof body.resultPayload === 'object' ? body.resultPayload : null;
+      const noteInput = body.note === undefined || body.note === null
+        ? null
+        : (String(body.note).trim() || null);
 
       if (!queryText || !resultPayload) {
         return jsonResponse(400, { error: 'queryText and resultPayload are required' });
@@ -58,7 +61,8 @@ export async function handler(event) {
           gematria_total,
           digital_root,
           is_base_root,
-          result_payload
+          result_payload,
+          note
         )
         VALUES (
           ${crypto.randomUUID()},
@@ -69,7 +73,8 @@ export async function handler(event) {
           ${body.gematriaTotal ?? null},
           ${body.digitalRoot ?? null},
           ${typeof body.isBaseRoot === 'boolean' ? body.isBaseRoot : null},
-          ${JSON.stringify(resultPayload)}::jsonb
+          ${JSON.stringify(resultPayload)}::jsonb,
+          ${noteInput}
         )
         ON CONFLICT (user_id, LOWER(query_text), query_type, calculator_source) DO NOTHING
         RETURNING *
@@ -77,20 +82,63 @@ export async function handler(event) {
 
       if (!rows.length) {
         const normalizedQueryText = queryText.toLowerCase();
-        const [existing] = await sql`
-          SELECT *
-          FROM calculation_history
-          WHERE user_id = ${member.id}
-            AND LOWER(query_text) = ${normalizedQueryText}
-            AND query_type = ${queryType}
-            AND calculator_source = ${calculatorSource}
-          ORDER BY created_at DESC
-          LIMIT 1
-        `;
+        let existing;
+        if (noteInput !== null) {
+          [existing] = await sql`
+            UPDATE calculation_history
+            SET note = ${noteInput}, updated_at = NOW()
+            WHERE user_id = ${member.id}
+              AND LOWER(query_text) = ${normalizedQueryText}
+              AND query_type = ${queryType}
+              AND calculator_source = ${calculatorSource}
+            RETURNING *
+          `;
+        } else {
+          [existing] = await sql`
+            SELECT *
+            FROM calculation_history
+            WHERE user_id = ${member.id}
+              AND LOWER(query_text) = ${normalizedQueryText}
+              AND query_type = ${queryType}
+              AND calculator_source = ${calculatorSource}
+            ORDER BY created_at DESC
+            LIMIT 1
+          `;
+        }
         return jsonResponse(200, { duplicate: true, item: formatCalculationHistory(existing) });
       }
 
       return jsonResponse(201, { item: formatCalculationHistory(rows[0]) });
+    }
+
+    if (event.httpMethod === 'PATCH') {
+      const body = parseBody(event);
+      const id = String(body.id ?? '').trim();
+      if (!id) {
+        return jsonResponse(400, { error: 'id is required' });
+      }
+
+      if (body.note === undefined) {
+        return jsonResponse(400, { error: 'No updatable fields provided' });
+      }
+
+      const noteValue = body.note === null
+        ? null
+        : (String(body.note).trim() || null);
+
+      const rows = await sql`
+        UPDATE calculation_history
+        SET note = ${noteValue}, updated_at = NOW()
+        WHERE id = ${id}
+          AND user_id = ${member.id}
+        RETURNING *
+      `;
+
+      if (!rows.length) {
+        return jsonResponse(404, { error: 'History item not found' });
+      }
+
+      return jsonResponse(200, { item: formatCalculationHistory(rows[0]) });
     }
 
     if (event.httpMethod === 'DELETE') {

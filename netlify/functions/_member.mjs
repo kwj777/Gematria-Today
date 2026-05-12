@@ -110,6 +110,9 @@ export async function ensureMemberSchema(sql) {
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
+    await sql`ALTER TABLE calculation_history
+      ADD COLUMN IF NOT EXISTS note TEXT`;
+
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS calculation_history_unique_entry_idx
       ON calculation_history (user_id, LOWER(query_text), query_type, calculator_source)`;
     await sql`CREATE INDEX IF NOT EXISTS calculation_history_user_created_at_idx ON calculation_history (user_id, created_at DESC)`;
@@ -206,6 +209,7 @@ export function formatCalculationHistory(row) {
     digitalRoot: row.digital_root,
     isBaseRoot: row.is_base_root,
     resultPayload: row.result_payload,
+    note: row.note ?? '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

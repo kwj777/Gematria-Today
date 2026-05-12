@@ -83,9 +83,13 @@ CREATE TABLE IF NOT EXISTS calculation_history (
   digital_root INTEGER,
   is_base_root BOOLEAN,
   result_payload JSONB NOT NULL,
+  note TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE calculation_history
+  ADD COLUMN IF NOT EXISTS note TEXT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS calculation_history_unique_entry_idx
   ON calculation_history (user_id, LOWER(query_text), query_type, calculator_source);

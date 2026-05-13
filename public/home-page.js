@@ -231,8 +231,13 @@ function renderHomeHeroIndicators() {
 }
 
 async function loadWordnikWordOfDayHero() {
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timeoutId = controller ? window.setTimeout(() => controller.abort(), 8000) : null;
   try {
-    const response = await fetch('/api/wordnikWordOfDay', { headers: { accept: 'application/json' } });
+    const response = await fetch('/api/wordnikWordOfDay', {
+      headers: { accept: 'application/json' },
+      signal: controller ? controller.signal : undefined,
+    });
     if (!response.ok) {
       throw new Error('Failed to load Wordnik word of the day.');
     }
@@ -264,8 +269,23 @@ async function loadWordnikWordOfDayHero() {
     if (definitionCta) definitionCta.href = definitionHref;
     if (calculatorCta) calculatorCta.href = calculatorHref;
   } catch (_error) {
+    const title = document.getElementById('homeWordnikWotdTitle');
     const definition = document.getElementById('homeWordnikWotdDefinition');
-    if (definition) definition.textContent = 'Word of the day is temporarily unavailable. Please check back soon.';
+    const overlayMeta = document.getElementById('homeWordnikWotdOverlayMeta');
+    const definitionCta = document.getElementById('homeWordnikWotdDefinitionCta');
+    if (title) title.textContent = 'Word of the day is unavailable right now';
+    if (definition) definition.textContent = 'We couldn’t load today’s Wordnik selection. You can still explore the calculator below.';
+    if (overlayMeta) overlayMeta.textContent = 'Reload the page to try again.';
+    if (definitionCta) {
+      definitionCta.textContent = 'Reload page';
+      definitionCta.href = window.location.pathname + window.location.search;
+      definitionCta.removeAttribute('target');
+      definitionCta.removeAttribute('rel');
+    }
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
   }
 }
 

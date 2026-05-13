@@ -175,7 +175,10 @@
         </section>
 
         <section class="content-panel p-4 p-lg-5 mx-auto mb-4" style="max-width: 720px;">
-          <div id="recoveryAlert" class="alert d-none" role="alert"></div>
+          <div id="recoveryAlert" class="alert d-none d-flex align-items-start gap-2" role="alert">
+            <span id="recoveryAlertIcon" aria-hidden="true" class="recovery-alert-icon"></span>
+            <span id="recoveryAlertText" class="flex-grow-1"></span>
+          </div>
           <form id="recoveryRequestForm" class="row g-3">
             <div class="col-12">
               <label class="form-label" for="recoveryEmail">Account email</label>
@@ -201,8 +204,9 @@
           <h2 class="h4 mb-3">Use your recovery code</h2>
           <form id="recoveryResetForm" class="row g-3">
             <div class="col-12">
-              <label class="form-label" for="recoveryCode">Recovery code</label>
-              <input id="recoveryCode" class="form-control" autocomplete="one-time-code" required />
+              <label class="form-label fw-semibold" for="recoveryCode">Recovery code</label>
+              <input id="recoveryCode" class="form-control font-monospace" autocomplete="one-time-code" inputmode="text" autocapitalize="characters" autocorrect="off" spellcheck="false" pattern="[A-Za-z0-9\-]{6,64}" maxlength="64" placeholder="e.g. ABC123-XYZ789" aria-describedby="recoveryCodeHelp" required />
+              <div id="recoveryCodeHelp" class="form-text">Paste the code from the recovery email exactly as shown.</div>
             </div>
             <div class="col-md-6">
               <label class="form-label" for="newPassword">New password</label>
@@ -241,15 +245,27 @@
 
     <script>
       const recoveryAlert = document.getElementById('recoveryAlert');
+      const recoveryAlertIcon = document.getElementById('recoveryAlertIcon');
+      const recoveryAlertText = document.getElementById('recoveryAlertText');
+
+      const ALERT_ICONS = {
+        success: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"></circle><path d="M8 12l3 3 5-6"></path></svg>',
+        danger: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16.5" x2="12" y2="16.5"></line></svg>',
+        warning: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l10 18H2L12 3z"></path><line x1="12" y1="10" x2="12" y2="14"></line><line x1="12" y1="17" x2="12" y2="17"></line></svg>',
+        info: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="11" x2="12" y2="16"></line><line x1="12" y1="8" x2="12" y2="8"></line></svg>',
+      };
 
       function showAlert(message, tone = 'danger') {
-        recoveryAlert.textContent = message;
-        recoveryAlert.className = `alert alert-${tone}`;
+        recoveryAlertText.textContent = message;
+        recoveryAlertIcon.innerHTML = ALERT_ICONS[tone] || ALERT_ICONS.info;
+        recoveryAlert.className = `alert alert-${tone} d-flex align-items-start gap-2`;
+        recoveryAlert.setAttribute('aria-live', tone === 'danger' ? 'assertive' : 'polite');
       }
 
       function clearAlert() {
-        recoveryAlert.textContent = '';
-        recoveryAlert.className = 'alert d-none';
+        recoveryAlertText.textContent = '';
+        recoveryAlertIcon.innerHTML = '';
+        recoveryAlert.className = 'alert d-none d-flex align-items-start gap-2';
       }
 
       document.getElementById('recoveryRequestForm').addEventListener('submit', async (event) => {

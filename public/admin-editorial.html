@@ -242,7 +242,7 @@
                 ${proposal.proposedImageUrl ? `<p class="small text-muted mb-2">Suggested image URL: <span class="text-break">${escapeHtml(proposal.proposedImageUrl)}</span></p>` : ''}
                 <details>
                   <summary class="small">View draft content</summary>
-                  <pre class="small mt-2 mb-0 text-wrap" style="white-space: pre-wrap;">${escapeHtml(proposal.body || '')}</pre>
+                  <pre class="small mt-2 mb-0 text-wrap" style="white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;">${escapeHtml(proposal.body || '')}</pre>
                 </details>
               </div>
               <div class="d-flex flex-column gap-2" style="min-width: 220px;">

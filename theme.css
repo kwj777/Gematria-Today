@@ -17,6 +17,32 @@
   --color-border-dark: var(--color-border-dark);
   --color-text-on-dark: #f8fafc;
 
+  /* Type scale. Static rungs for body / UI; fluid clamps reserved for
+     display-sized headings only. Forum-specific aliases live in
+     forum-theme.css and should converge onto this scale over time. */
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.0625rem;
+  --font-size-lg: 1.15rem;
+  --font-size-xl: 1.3rem;
+  --font-size-2xl: 1.45rem;
+  --font-size-3xl: 1.75rem;
+  --font-size-4xl: 2rem;
+  --font-size-h3: clamp(1.25rem, 0.8vw + 1.05rem, 1.65rem);
+  --font-size-h2: clamp(1.5rem, 1.5vw + 1.1rem, 2.1rem);
+  --font-size-h1: clamp(1.85rem, 2.5vw + 1.25rem, 2.75rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.25;
+  --leading-normal: 1.45;
+  --leading-relaxed: 1.62;
+
+  --tracking-tight: -0.005em;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.08em;
+  --tracking-widest: 0.14em;
+
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 0.85rem;
@@ -27,7 +53,7 @@
 
 h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6, .navbar-brand {
   font-family: var(--brand-heading-font);
-  letter-spacing: -0.005em;
+  letter-spacing: var(--tracking-tight);
 }
 
 /* Canonical brand button. Use `.btn-warning` or `.btn-amber` for the primary
@@ -420,9 +446,9 @@ button[aria-disabled="true"]:not(:disabled):hover {
 }
 
 .hero-why-gematria-title {
-  font-size: clamp(1rem, 1.2vw + 0.75rem, 1.3rem);
+  font-size: var(--font-size-xl);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: var(--leading-tight);
 }
 
 .hero-why-gematria-excerpt {
@@ -482,7 +508,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
 }
 
 .word-of-day-spotlight__word {
-  font-size: 1.3rem;
+  font-size: var(--font-size-xl);
   font-weight: 700;
 }
 
@@ -875,7 +901,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
 }
 
 .metric-value {
-  font-size: 2rem;
+  font-size: var(--font-size-4xl);
   font-weight: 700;
 }
 

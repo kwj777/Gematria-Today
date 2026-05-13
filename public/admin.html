@@ -159,7 +159,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -286,7 +286,7 @@
                 <div id="feedSectionBody" class="collapse admin-section-body mt-4">
                 <form id="feedForm" class="row g-3">
                   <div class="col-12"><label class="form-label" for="feedName">Feed name</label><input id="feedName" class="form-control" required /></div>
-                  <div class="col-12"><label class="form-label" for="feedUrl">RSS URL</label><input id="feedUrl" class="form-control" type="url" placeholder="https://example.com/feed.xml" required /></div>
+                  <div class="col-12"><label class="form-label" for="feedUrl">RSS URL</label><input id="feedUrl" class="form-control" type="url" aria-describedby="feedUrlHelp" required /><div id="feedUrlHelp" class="form-text">Example: https://example.com/feed.xml</div></div>
                   <div class="col-12"><label class="form-label" for="feedCategory">Category</label><input id="feedCategory" class="form-control" placeholder="World, Alerts, Analysis" /></div>
                   <div class="col-12"><label class="form-label" for="feedNotes">Editorial notes</label><textarea id="feedNotes" class="form-control" rows="3"></textarea></div>
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save RSS feed</button></div>
@@ -318,11 +318,11 @@
                   <div class="col-md-6"><label class="form-label" for="postReadTime">Read time</label><input id="postReadTime" class="form-control" placeholder="5 minute read" /></div>
                   <div class="col-12">
                     <label class="form-label" for="postImageUrl">Cover image URL</label>
-                    <input id="postImageUrl" class="form-control" type="text" placeholder="https://example.com/blog-cover.jpg or /assets/blog-cover.jpg" />
+                    <input id="postImageUrl" class="form-control" type="text" aria-describedby="postImageUrlHelp" />
                     <div class="d-flex justify-content-end mt-2">
                       <button id="postClearImageUrlButton" class="btn btn-sm btn-outline-secondary" type="button">Delete current image URL</button>
                     </div>
-                    <div class="form-text">Use a landscape image (around 16:9) for best results.</div>
+                    <div id="postImageUrlHelp" class="form-text">Use a landscape image (around 16:9) for best results. Example: https://example.com/blog-cover.jpg or /assets/blog-cover.jpg.</div>
                     <div id="postImageDropzone" class="post-image-dropzone mt-2" role="button" tabindex="0" aria-label="Upload cover image">
                       <strong class="d-block mb-1">Drag and drop an image here</strong>
                       <span class="small text-muted">or click to choose a file. We will create and fill the image URL automatically.</span>
@@ -332,7 +332,7 @@
                     <div id="postImageUploadMeta" class="small text-muted mt-2"></div>
                     <div id="postImagePreview" class="post-image-preview mt-2 d-none"></div>
                   </div>
-                  <div class="col-12"><label class="form-label" for="postSliderImageUrl">Home slider image URL</label><input id="postSliderImageUrl" class="form-control" type="text" placeholder="https://example.com/home-slider.jpg or /assets/home-slider.jpg" /><div class="form-text">Optional: this image is used only in the home slider (16:9 recommended) and is not shown in the full blog post card.</div></div>
+                  <div class="col-12"><label class="form-label" for="postSliderImageUrl">Home slider image URL</label><input id="postSliderImageUrl" class="form-control" type="text" aria-describedby="postSliderImageUrlHelp" /><div id="postSliderImageUrlHelp" class="form-text">Optional: this image is used only in the home slider (16:9 recommended) and is not shown in the full blog post card. Example: https://example.com/home-slider.jpg or /assets/home-slider.jpg.</div></div>
                   <div class="col-12">
                     <div class="form-check">
                       <input id="postShowOnHomepage" class="form-check-input" type="checkbox" />
@@ -513,7 +513,7 @@
                   <div class="col-12"><label class="form-label" for="sendgridFromEmail">From email</label><input id="sendgridFromEmail" class="form-control" type="email" placeholder="support@example.com" /></div>
                   <div class="col-12"><label class="form-label" for="sendgridFromName">From name</label><input id="sendgridFromName" class="form-control" placeholder="EndTimes.Today" /></div>
                   <div class="col-12"><label class="form-label" for="sendgridReplyToEmail">Reply-to email</label><input id="sendgridReplyToEmail" class="form-control" type="email" placeholder="help@example.com" /></div>
-                  <div class="col-12"><label class="form-label" for="publicSiteUrl">Public site URL</label><input id="publicSiteUrl" class="form-control" type="url" placeholder="https://example.com" /></div>
+                  <div class="col-12"><label class="form-label" for="publicSiteUrl">Public site URL</label><input id="publicSiteUrl" class="form-control" type="url" aria-describedby="publicSiteUrlHelp" /><div id="publicSiteUrlHelp" class="form-text">Example: https://example.com</div></div>
                   <div class="col-12">
                     <label class="form-label" for="sendgridApiKey">SendGrid API key</label>
                     <div class="input-group">

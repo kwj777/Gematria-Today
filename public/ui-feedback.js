@@ -208,6 +208,31 @@
   }
 })();
 
+(function installPasswordVisibilityToggle() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
+  function handleClick(event) {
+    const button = event.target instanceof Element ? event.target.closest('[data-password-toggle]') : null;
+    if (!button) {
+      return;
+    }
+    const targetId = button.getAttribute('data-password-toggle');
+    const input = targetId ? document.getElementById(targetId) : null;
+    if (!input) {
+      return;
+    }
+    const isHidden = input.getAttribute('type') === 'password';
+    input.setAttribute('type', isHidden ? 'text' : 'password');
+    button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+    button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    button.textContent = isHidden ? 'Hide' : 'Show';
+  }
+
+  document.addEventListener('click', handleClick);
+})();
+
 (function highlightActiveNavLink() {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return;

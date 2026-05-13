@@ -2200,3 +2200,111 @@ body.page-render-pending footer {
 :root[data-bs-theme="dark"] .content-panel--soft {
   background: rgba(17, 24, 34, 0.72);
 }
+
+/* ----- Form controls: focus, validation, touch targets ------------------- */
+/* Gives every Bootstrap form-control a consistent brand-amber focus ring,
+   a real .is-invalid state, and a 44px touch target on mobile. Buttons in
+   an aria-disabled state get a not-allowed cursor (Bootstrap only dims). */
+.form-control,
+.form-select {
+  min-height: 2.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--brand-amber);
+  box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.18);
+  outline: none;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid,
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+  border-color: #dc3545;
+}
+
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus,
+.was-validated .form-control:invalid:focus,
+.was-validated .form-select:invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.18);
+}
+
+.invalid-feedback {
+  display: block;
+  color: #b02a37;
+  font-size: var(--font-size-sm);
+  margin-top: 0.25rem;
+}
+
+:root[data-bs-theme="dark"] .invalid-feedback {
+  color: #f5b1b8;
+}
+
+.btn[aria-disabled="true"],
+.btn:disabled,
+.btn.disabled {
+  cursor: not-allowed;
+}
+
+/* ----- Mobile navbar polish --------------------------------------------- */
+/* The default Bootstrap toggler has no visible label and a faint focus ring.
+   Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a
+   ::after pseudo-element so the affordance is obvious without editing 29
+   pages of markup, (2) give it a real focus ring, (3) animate the collapse,
+   and (4) inline-expand dropdowns so users can drill into Tools on mobile. */
+@media (max-width: 991.98px) {
+  .navbar-toggler {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .navbar-toggler::after {
+    content: "Menu";
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .navbar-toggler:focus-visible {
+    box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.45);
+    outline: none;
+  }
+
+  .navbar-collapse.collapsing,
+  .navbar-collapse.show {
+    animation: navbarSlideDown 0.18s ease-out;
+  }
+
+  @keyframes navbarSlideDown {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .navbar-nav .nav-link {
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-nav .dropdown-menu {
+    position: static;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.25rem 0;
+    margin: 0.25rem 0 0.5rem;
+    box-shadow: none;
+  }
+
+  .navbar-nav .dropdown-item {
+    color: inherit;
+    padding-left: 1.75rem;
+  }
+}

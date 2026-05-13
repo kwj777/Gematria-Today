@@ -603,6 +603,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
   border-radius: var(--radius-xl);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(18, 48, 74, 0.04);
 }
 
 .membership-comparison-table thead th {
@@ -612,6 +613,15 @@ button[aria-disabled="true"]:not(:disabled):hover {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   border-bottom-width: 0;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.membership-comparison-table thead th.comparison-col--premium {
+  background: linear-gradient(180deg, rgba(212, 160, 23, 0.22), rgba(212, 160, 23, 0.08));
+  color: #5a3d00;
+  font-size: 0.86rem;
+  font-weight: 800;
 }
 
 .membership-comparison-table tbody th {
@@ -623,18 +633,50 @@ button[aria-disabled="true"]:not(:disabled):hover {
 .membership-comparison-table td,
 .membership-comparison-table th {
   padding: 0.9rem 0.85rem;
-  border-color: rgba(53, 95, 140, 0.12);
+  border-color: rgba(53, 95, 140, 0.08);
+}
+
+.membership-comparison-table tbody tr:nth-child(odd) > * {
+  background-color: rgba(53, 95, 140, 0.025);
+}
+
+.membership-comparison-table .comparison-col--premium {
+  background-color: rgba(212, 160, 23, 0.06);
+}
+
+.membership-comparison-table tbody tr:nth-child(odd) .comparison-col--premium {
+  background-color: rgba(212, 160, 23, 0.09);
+}
+
+.membership-comparison-table tbody tr:last-child > * {
+  border-bottom-width: 0;
+}
+
+.comparison-current-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid rgba(53, 95, 140, 0.5);
+  color: #355f8c;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
 }
 
 .comparison-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.6rem;
+  padding: 0.35rem 0.65rem;
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 600;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .comparison-pill--included {
@@ -643,35 +685,53 @@ button[aria-disabled="true"]:not(:disabled):hover {
 }
 
 .comparison-pill--highlight {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(25, 135, 84, 0.24));
-  color: #0f5132;
-  border: 1px solid rgba(255, 193, 7, 0.65);
-  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
+  background: linear-gradient(135deg, rgba(212, 160, 23, 0.28), rgba(212, 160, 23, 0.18));
+  color: #5a3d00;
+  border: 1px solid rgba(212, 160, 23, 0.6);
+  box-shadow: 0 1px 2px rgba(212, 160, 23, 0.18);
 }
 
 .comparison-pill--limited {
-  background: rgba(255, 193, 7, 0.2);
+  background: rgba(255, 193, 7, 0.18);
   color: #6c5200;
+  border: 1px solid rgba(255, 193, 7, 0.45);
 }
 
 .comparison-pill--muted {
-  background: rgba(108, 117, 125, 0.15);
-  color: #495057;
+  background: rgba(108, 117, 125, 0.12);
+  color: #6c757d;
+}
+
+.comparison-pill--unavailable {
+  display: inline-block;
+  padding: 0.35rem 0.5rem;
+  color: #adb5bd;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .comparison-pill--neutral {
-  background: rgba(13, 110, 253, 0.12);
+  background: rgba(13, 110, 253, 0.1);
   color: #0b4ca4;
 }
 
 .comparison-pill--premium {
-  background: linear-gradient(135deg, rgba(53, 95, 140, 0.2), rgba(255, 193, 7, 0.32));
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  background: linear-gradient(135deg, rgba(53, 95, 140, 0.18), rgba(212, 160, 23, 0.32));
   color: #12304a;
+  padding: 0.4rem 0.75rem;
+  white-space: normal;
+  text-align: center;
 }
 
 .comparison-pill--premium small {
-  font-size: 0.73rem;
-  opacity: 0.8;
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.75;
 }
 
 @media (max-width: 767.98px) {

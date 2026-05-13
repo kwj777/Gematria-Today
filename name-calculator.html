@@ -137,6 +137,7 @@
     <link rel="stylesheet" href="/theme.css" />
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
+    <script defer src="/members-only-save-popover.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -204,6 +205,22 @@ const form = document.querySelector('#name-form');
       const clearNamesButton = document.querySelector('#clear-names');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
+      let saveHistoryPopover = null;
+
+      function createMembersOnlyPopover() {
+        if (!saveHistoryButton || saveHistoryPopover) {
+          return;
+        }
+        saveHistoryPopover = window.createMembersOnlySavePopover?.(saveHistoryButton) || null;
+      }
+
+      function destroyMembersOnlyPopover() {
+        if (!saveHistoryPopover) {
+          return;
+        }
+        saveHistoryPopover.dispose();
+        saveHistoryPopover = null;
+      }
       const learningPathReturnNode = document.querySelector('#learning-path-return');
       const learningPathReturnLink = document.querySelector('#learning-path-return-link');
       let shouldShowLearningPathReturn = false;
@@ -334,16 +351,16 @@ const form = document.querySelector('#name-form');
           saveHistoryButton.textContent = 'Save results';
           saveHistoryButton.classList.add('member-save-button--guest');
           saveHistoryButton.setAttribute('aria-disabled', 'true');
-          saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
+          createMembersOnlyPopover();
           memberSaveMeta.textContent = currentSearchPayload
             ? 'Sign in to save these name calculator results to your account.'
             : 'Sign in to save your name calculator results to your account.';
           return;
         }
 
+        destroyMembersOnlyPopover();
         saveHistoryButton.classList.remove('member-save-button--guest');
         saveHistoryButton.removeAttribute('aria-disabled');
-        saveHistoryButton.removeAttribute('title');
         if (currentSearchPayload && currentSearchPayload === lastSavedSearchPayload) {
           saveHistoryButton.textContent = 'Saved';
           saveHistoryButton.disabled = true;

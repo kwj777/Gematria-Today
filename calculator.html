@@ -139,6 +139,7 @@
     <link rel="stylesheet" href="/theme.css" />
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
+    <script defer src="/members-only-save-popover.js"></script>
     <script defer src="/conversion-tracking.js"></script>
   </head>
   <body>
@@ -629,17 +630,10 @@ View results: ${shareUrl}`.trim(),
       }
 
       function createMembersOnlyPopover() {
-        if (!window.bootstrap?.Popover || saveHistoryPopover || !saveHistoryButton) {
+        if (!saveHistoryButton || saveHistoryPopover) {
           return;
         }
-
-        saveHistoryPopover = new window.bootstrap.Popover(saveHistoryButton, {
-          container: 'body',
-          html: true,
-          trigger: 'hover focus',
-          placement: 'top',
-          content: 'Only registered members can save searches. <a href="/member.html#registerForm">Join</a>.',
-        });
+        saveHistoryPopover = window.createMembersOnlySavePopover?.(saveHistoryButton) || null;
       }
 
       function destroyMembersOnlyPopover() {
@@ -719,7 +713,6 @@ View results: ${shareUrl}`.trim(),
           saveHistoryButton.disabled = false;
           saveHistoryButton.textContent = 'Sign up to save';
           saveHistoryButton.classList.add('member-save-button--guest');
-          saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
           createMembersOnlyPopover();
           memberSaveMeta.textContent = currentSearchPayload
             ? 'Join for free to save this result and see related words.'

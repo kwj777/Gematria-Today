@@ -1434,14 +1434,50 @@
         return payload;
       }
 
+      const MEMBERSHIP_UPGRADE_AUTO_OPEN_INTERVAL_MS = 14 * 24 * 60 * 60 * 1000;
+
+      function membershipUpgradeAutoOpenStorageKey(member) {
+        const memberId = String(member?.id || member?.memberId || member?.email || '').trim().toLowerCase();
+        return memberId
+          ? `membershipUpgradeAutoOpenAt:${memberId}`
+          : 'membershipUpgradeAutoOpenAt';
+      }
+
+      function shouldAutoOpenMembershipUpgrade(member) {
+        try {
+          const key = membershipUpgradeAutoOpenStorageKey(member);
+          const lastOpenedRaw = window.localStorage?.getItem(key);
+          const lastOpened = Number(lastOpenedRaw);
+          if (!Number.isFinite(lastOpened) || lastOpened <= 0) {
+            return true;
+          }
+          return Date.now() - lastOpened >= MEMBERSHIP_UPGRADE_AUTO_OPEN_INTERVAL_MS;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function recordMembershipUpgradeAutoOpen(member) {
+        try {
+          const key = membershipUpgradeAutoOpenStorageKey(member);
+          window.localStorage?.setItem(key, String(Date.now()));
+        } catch (error) {
+          /* storage unavailable */
+        }
+      }
+
       function syncMembershipUpgradePanel(member = session?.member) {
         const level = member?.membershipLevel;
         const isFree = level === 'free';
         membershipUpgradeSection.classList.toggle('d-none', !isFree);
-        membershipUpgradeContent.classList.remove('show');
-        membershipUpgradeToggleButton.setAttribute('aria-expanded', 'false');
-        membershipUpgradeToggleArrow.textContent = '▼';
+        const autoOpen = isFree && shouldAutoOpenMembershipUpgrade(member);
+        membershipUpgradeContent.classList.toggle('show', autoOpen);
+        membershipUpgradeToggleButton.setAttribute('aria-expanded', autoOpen ? 'true' : 'false');
+        membershipUpgradeToggleArrow.textContent = autoOpen ? '▲' : '▼';
         membershipUpgradeToggleLabel.textContent = 'Upgrade to Premium';
+        if (autoOpen) {
+          recordMembershipUpgradeAutoOpen(member);
+        }
       }
 
       function syncComparisonCurrentLevel(member = session?.member) {

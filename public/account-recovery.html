@@ -141,7 +141,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -210,11 +210,17 @@
             </div>
             <div class="col-md-6">
               <label class="form-label" for="newPassword">New password</label>
-              <input id="newPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required />
+              <div class="input-group">
+                <input id="newPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required />
+                <button class="btn btn-outline-secondary" type="button" data-password-toggle="newPassword" aria-label="Show password" aria-pressed="false">Show</button>
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label" for="confirmNewPassword">Confirm new password</label>
-              <input id="confirmNewPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required />
+              <div class="input-group">
+                <input id="confirmNewPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required />
+                <button class="btn btn-outline-secondary" type="button" data-password-toggle="confirmNewPassword" aria-label="Show password" aria-pressed="false">Show</button>
+              </div>
             </div>
             <div class="col-12 d-grid d-sm-flex gap-2 justify-content-sm-end">
               <button class="btn btn-success" type="submit">Reset password and sign in</button>

@@ -145,7 +145,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/index.html"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -717,9 +717,8 @@ View results: ${shareUrl}`.trim(),
             memberLink.classList.add('btn-primary');
           }
           saveHistoryButton.disabled = false;
-          saveHistoryButton.textContent = 'Save result';
+          saveHistoryButton.textContent = 'Sign up to save';
           saveHistoryButton.classList.add('member-save-button--guest');
-          saveHistoryButton.setAttribute('aria-disabled', 'true');
           saveHistoryButton.setAttribute('title', 'Only registered members can save searches. Join to unlock this feature.');
           createMembersOnlyPopover();
           memberSaveMeta.textContent = currentSearchPayload

@@ -453,7 +453,7 @@
                     <label class="form-label" for="stripeSecretKey">Secret key</label>
                     <div class="input-group">
                       <input id="stripeSecretKey" class="form-control" type="password" placeholder="Enter a new Stripe secret key" autocomplete="new-password" data-secret-input="stripeSecretKey" disabled />
-                      <button id="stripeSecretKeyToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeSecretKey">Change</button>
+                      <button id="stripeSecretKeyToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeSecretKey" aria-label="Replace Stripe secret key">Change</button>
                     </div>
                     <div id="stripeSecretKeyHelp" class="form-text text-muted">Hidden after save. Use Change only when replacing the stored key.</div>
                   </div>
@@ -461,7 +461,7 @@
                     <label class="form-label" for="stripeWebhookSigningSecret">Webhook signing secret</label>
                     <div class="input-group">
                       <input id="stripeWebhookSigningSecret" class="form-control" type="password" placeholder="Enter a new Stripe webhook secret" autocomplete="new-password" data-secret-input="stripeWebhookSigningSecret" disabled />
-                      <button id="stripeWebhookSigningSecretToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeWebhookSigningSecret">Change</button>
+                      <button id="stripeWebhookSigningSecretToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeWebhookSigningSecret" aria-label="Replace Stripe webhook signing secret">Change</button>
                     </div>
                     <div id="stripeWebhookSigningSecretHelp" class="form-text text-muted">Hidden after save. Use Change only when replacing the stored secret.</div>
                   </div>
@@ -518,7 +518,7 @@
                     <label class="form-label" for="sendgridApiKey">SendGrid API key</label>
                     <div class="input-group">
                       <input id="sendgridApiKey" class="form-control" type="password" placeholder="Enter a new SendGrid API key" autocomplete="new-password" data-secret-input="sendgridApiKey" disabled />
-                      <button id="sendgridApiKeyToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="sendgridApiKey">Change</button>
+                      <button id="sendgridApiKeyToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="sendgridApiKey" aria-label="Replace SendGrid API key">Change</button>
                     </div>
                     <div class="form-text text-muted">Hidden after save. Use Change only when replacing the stored SendGrid API key.</div>
                   </div>
@@ -2242,6 +2242,10 @@
             showMessage(saveMessage, `Feedback marked as ${status}.`);
           }
           if (deleteFeed) {
+            const confirmedFeedDelete = window.confirm('Remove this RSS feed? This action cannot be undone.');
+            if (!confirmedFeedDelete) {
+              return;
+            }
             await request(`/api/admin-feeds?id=${encodeURIComponent(deleteFeed)}`, { method: 'DELETE' });
             showMessage(saveMessage, 'RSS feed removed.');
           }
@@ -2259,6 +2263,10 @@
             showMessage(saveMessage, 'Blog post removed.');
           }
           if (deleteFaq) {
+            const confirmedFaqDelete = window.confirm('Delete this FAQ entry? This action cannot be undone.');
+            if (!confirmedFaqDelete) {
+              return;
+            }
             await request(`/api/admin-faqs?id=${encodeURIComponent(deleteFaq)}`, { method: 'DELETE' });
             if (state.editingFaqId === deleteFaq) {
               resetFaqForm();

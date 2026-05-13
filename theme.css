@@ -167,6 +167,26 @@ button[aria-disabled="true"]:not(:disabled):hover {
   }
 }
 
+.form-label {
+  font-weight: 600;
+}
+
+.footer-home-link {
+  color: inherit;
+  font-weight: 600;
+}
+
+.footer-home-link:hover,
+.footer-home-link:focus-visible {
+  color: var(--brand-amber);
+}
+
+.recovery-alert-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
 .share-action-button {
   box-shadow: 0 0.35rem 0.9rem rgba(255, 124, 53, 0.28);
   border-width: 2px;

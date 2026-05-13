@@ -1,5 +1,6 @@
 import {
   AUTH_COOKIES,
+  clearMemberTierCookie,
   clearSessionCookie,
   createMemberEmailVerificationRequest,
   getOptionalAuthenticatedSession,
@@ -71,7 +72,7 @@ export async function handler(event) {
       },
       ...(delivery.verificationUrl ? { verificationUrl: delivery.verificationUrl } : {}),
     }, {
-      'set-cookie': clearSessionCookie(AUTH_COOKIES.member),
+      'set-cookie': [clearSessionCookie(AUTH_COOKIES.member), clearMemberTierCookie()],
     });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Failed to register member' }, error.headers || {});

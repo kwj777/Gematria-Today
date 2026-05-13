@@ -1,7 +1,9 @@
 import {
   AUTH_COOKIES,
   authenticateMemberCredentials,
+  clearMemberTierCookie,
   clearSessionCookie,
+  createMemberTierCookie,
   createSession,
   createSessionCookie,
   ensureMemberProfile,
@@ -64,7 +66,9 @@ export async function handler(event) {
         metadata: { identifier: normalizedIdentifier },
       });
 
-      return jsonResponse(401, { error: 'Invalid username/email or password' }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
+      return jsonResponse(401, { error: 'Invalid username/email or password' }, {
+        'set-cookie': [clearSessionCookie(AUTH_COOKIES.member), clearMemberTierCookie()],
+      });
     }
 
     if (admin) {
@@ -120,7 +124,10 @@ export async function handler(event) {
       profile,
       csrfToken: generateCsrfToken(token),
     }, {
-      'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.member),
+      'set-cookie': [
+        createSessionCookie(token, expiresAt, AUTH_COOKIES.member),
+        createMemberTierCookie(member.membershipLevel, expiresAt),
+      ],
     });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Failed to sign in' }, error.headers || {});

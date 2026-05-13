@@ -1,5 +1,7 @@
-import { AUTH_COOKIES, clearSessionCookie, deleteSession, jsonResponse } from './_auth.mjs';
+import { AUTH_COOKIES, clearMemberTierCookie, clearSessionCookie, deleteSession, jsonResponse } from './_auth.mjs';
 import { getAuthenticatedMember } from './_member.mjs';
+
+const clearedCookies = () => [clearSessionCookie(AUTH_COOKIES.member), clearMemberTierCookie()];
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -12,8 +14,8 @@ export async function handler(event) {
       await deleteSession(sql, sessionToken);
     }
 
-    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
+    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearedCookies() });
   } catch {
-    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
+    return jsonResponse(200, { authenticated: false }, { 'set-cookie': clearedCookies() });
   }
 }

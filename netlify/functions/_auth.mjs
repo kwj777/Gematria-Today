@@ -104,6 +104,7 @@ export async function consumeAccountRecoveryRequest(sql, {
 export const AUTH_COOKIES = {
   admin: 'endtimes_admin_session',
   member: 'endtimes_member_session',
+  memberTier: 'endtimes_member_tier',
   visitor: 'endtimes_visitor_session',
 };
 
@@ -241,6 +242,27 @@ export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
     : process.env.CONTEXT !== 'dev';
   const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
   return `${cookieName}=; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}
+
+const ALLOWED_MEMBER_TIERS = new Set(['free', 'premium', 'lifetime']);
+
+export function createMemberTierCookie(level, expiresAt) {
+  const normalized = ALLOWED_MEMBER_TIERS.has(level) ? level : 'free';
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${AUTH_COOKIES.memberTier}=${normalized}; Path=/${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+}
+
+export function clearMemberTierCookie() {
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  return `${AUTH_COOKIES.memberTier}=; Path=/${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 export async function createSession(sql, userId) {

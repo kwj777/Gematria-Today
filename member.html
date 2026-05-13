@@ -326,12 +326,12 @@
             <p class="section-kicker mb-2">New Member</p>
             <h3 class="h4 mb-3">Create account</h3>
             <form id="registerForm" class="row g-3">
-              <div class="col-md-6"><label class="form-label" for="registerUsername">Username</label><input id="registerUsername" class="form-control" required /></div>
-              <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" /></div>
-              <div class="col-12"><label class="form-label" for="registerEmail">Email</label><input id="registerEmail" class="form-control" type="email" required /></div>
+              <div class="col-md-6"><label class="form-label" for="registerUsername">Username</label><input id="registerUsername" class="form-control" autocomplete="username" required /></div>
+              <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" autocomplete="nickname" /></div>
+              <div class="col-12"><label class="form-label" for="registerEmail">Email</label><input id="registerEmail" class="form-control" type="email" autocomplete="email" required /></div>
               <div id="registerPasswordMismatchAlert" class="col-12 alert alert-warning d-none mb-0" role="alert">Password and confirm password do not match.</div>
-              <div class="col-12"><label class="form-label" for="registerPassword">Password</label><input id="registerPassword" class="form-control" type="password" minlength="8" required /></div>
-              <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password</label><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" required /></div>
+              <div class="col-12"><label class="form-label" for="registerPassword">Password</label><input id="registerPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required /></div>
+              <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password</label><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required /></div>
               <div class="col-12">
                 <div class="form-check">
                   <input id="registerBlogSubscribe" class="form-check-input" type="checkbox" />
@@ -350,8 +350,8 @@
             <p class="section-kicker mb-2">Returning Member</p>
             <h3 class="h4 mb-3">Sign in</h3>
             <form id="loginForm" class="row g-3">
-              <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" required /></div>
-              <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" required /></div>
+              <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" autocomplete="username" required /></div>
+              <div class="col-12"><label class="form-label" for="loginPassword">Password</label><input id="loginPassword" class="form-control" type="password" autocomplete="current-password" required /></div>
               <div class="col-12">
                 <label class="form-label mb-2" for="loginTurnstileContainer">Anti-robot check</label>
                 <div id="loginTurnstileContainer"></div>

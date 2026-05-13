@@ -2708,7 +2708,27 @@
           }
         } finally {
           completePageLoadOverlay();
+          scrollToInitialHashTarget();
         }
+      }
+
+      function scrollToInitialHashTarget() {
+        const rawHash = window.location.hash;
+        if (!rawHash || rawHash === '#') {
+          return;
+        }
+        let target = null;
+        try {
+          target = document.querySelector(rawHash);
+        } catch {
+          return;
+        }
+        if (!target || target.offsetParent === null) {
+          return;
+        }
+        window.requestAnimationFrame(() => {
+          target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
       }
 
       document.getElementById('registerForm').addEventListener('submit', async (event) => {

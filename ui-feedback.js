@@ -280,3 +280,37 @@
     apply();
   }
 })();
+
+(function autoCloseMobileNavOnLinkTap() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
+  const LG_BREAKPOINT = 992;
+
+  function wire() {
+    const collapse = document.querySelector('.navbar .navbar-collapse');
+    if (!collapse) {
+      return;
+    }
+    collapse.addEventListener('click', (event) => {
+      if (window.innerWidth >= LG_BREAKPOINT) {
+        return;
+      }
+      const link = event.target.closest('a.nav-link, a.dropdown-item');
+      if (!link || !collapse.classList.contains('show')) {
+        return;
+      }
+      const toggler = document.querySelector('.navbar .navbar-toggler');
+      if (toggler) {
+        toggler.click();
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wire, { once: true });
+  } else {
+    wire();
+  }
+})();

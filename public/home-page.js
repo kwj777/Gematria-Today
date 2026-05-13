@@ -76,7 +76,7 @@ const applyHomeHeroImageOptimization = (scope = document) => {
   });
 };
 
-function renderHomepageFeaturedGrid(posts) {
+function renderHomepageFeaturedGrid(posts, state = 'data') {
   const spots = posts.slice(0, 6);
   const grid = document.getElementById('homeFeaturedPostsGrid');
   if (!grid) {
@@ -84,6 +84,20 @@ function renderHomepageFeaturedGrid(posts) {
   }
 
   grid.setAttribute('aria-busy', 'false');
+
+  if (state === 'error') {
+    grid.innerHTML = `
+      <div class="col-12">
+        <article class="blog-home-featured-card p-4 p-lg-5">
+          <span class="badge text-bg-danger mb-3">Couldn't load</span>
+          <h3 class="mb-3">Featured posts are temporarily unavailable.</h3>
+          <p class="text-muted mb-4">We couldn't reach the server. Try refreshing the page, or jump straight to the blog.</p>
+          <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
+        </article>
+      </div>
+    `;
+    return;
+  }
 
   if (!spots.length) {
     grid.innerHTML = `
@@ -124,7 +138,7 @@ function renderHomepageFeaturedGrid(posts) {
   }).join('');
 }
 
-function renderHomepageSlider(posts) {
+function renderHomepageSlider(posts, state = 'data') {
   const normalizedPosts = posts.slice(0, 5);
   const indicators = document.getElementById('blogPostsCarouselIndicators');
   const carouselInner = document.getElementById('blogPostsCarouselInner');
@@ -134,6 +148,21 @@ function renderHomepageSlider(posts) {
   }
 
   carouselInner.setAttribute('aria-busy', 'false');
+
+  if (state === 'error') {
+    indicators.innerHTML = '';
+    carouselInner.innerHTML = `
+      <div class="carousel-item active">
+        <article class="blog-slide-card p-4 p-lg-5">
+          <span class="badge text-bg-danger mb-3">Couldn't load</span>
+          <h3 class="mb-3">Featured posts are temporarily unavailable.</h3>
+          <p class="text-muted mb-4">We couldn't reach the server. Try refreshing the page, or jump straight to the blog.</p>
+          <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
+        </article>
+      </div>
+    `;
+    return;
+  }
 
   if (!normalizedPosts.length) {
     indicators.innerHTML = '';
@@ -449,12 +478,13 @@ const initializeHomePage = () => {
       Promise.race([
         fetchFeaturedPosts(),
         new Promise((_, reject) => window.setTimeout(() => reject(new Error('Timed out while loading featured posts')), 4000)),
-      ]).catch(() => ({ items: [] })),
+      ]).catch(() => ({ items: [], error: true })),
     ])
       .then(([, featuredPostsPayload]) => {
         const featuredItems = featuredPostsPayload?.items || [];
-        renderHomepageSlider(featuredItems);
-        renderHomepageFeaturedGrid(featuredItems);
+        const state = featuredPostsPayload?.error ? 'error' : 'data';
+        renderHomepageSlider(featuredItems, state);
+        renderHomepageFeaturedGrid(featuredItems, state);
       });
   });
 };

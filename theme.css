@@ -46,14 +46,15 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 }
 
 .nav-search-link {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   line-height: 1;
   color: #4a3600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: auto;
-  min-height: auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -99,8 +100,91 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 .skip-link:focus,
 .skip-link:focus-visible {
   transform: translateY(0);
-  outline: 2px solid #fff;
+  outline: 3px solid var(--brand-amber);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(var(--brand-amber-rgb), 0.35);
+}
+
+.btn[aria-disabled="true"]:not(:disabled),
+button[aria-disabled="true"]:not(:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+
+.btn[aria-disabled="true"]:not(:disabled):hover,
+button[aria-disabled="true"]:not(:disabled):hover {
+  opacity: 0.7;
+  filter: grayscale(0.2);
+}
+
+@media (max-width: 575.98px) {
+  .table-stack-sm thead {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+  }
+
+  .table-stack-sm tbody,
+  .table-stack-sm tr,
+  .table-stack-sm td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-stack-sm tr {
+    border: 1px solid rgba(53, 65, 79, 0.12);
+    border-radius: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 255, 255, 0.65);
+  }
+
+  .table-stack-sm.table-striped tr:nth-of-type(odd) {
+    background: rgba(248, 250, 252, 0.85);
+  }
+
+  .table-stack-sm td {
+    border: 0;
+    padding: 0.35rem 0;
+    text-align: left;
+  }
+
+  .table-stack-sm td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(55, 65, 81, 0.75);
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+  }
+}
+
+.form-label {
+  font-weight: 600;
+}
+
+.footer-home-link {
+  color: inherit;
+  font-weight: 600;
+}
+
+.footer-home-link:hover,
+.footer-home-link:focus-visible {
+  color: var(--brand-amber);
+}
+
+.recovery-alert-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
 }
 
 .share-action-button {

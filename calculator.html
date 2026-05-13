@@ -196,7 +196,7 @@
         <section class="content-panel p-4 p-lg-5 form-shell">
           <section class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-primary">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-warning btn-lg fw-bold">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-outline-primary" type="button" disabled>Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
             </div>
           </section>
         </section>
@@ -1155,9 +1155,10 @@ View results: ${shareUrl}`.trim(),
             imageUrl: toShareImageAssetUrl(shareImageUrl.toString()),
           });
         });
+        shareButton.classList.remove('mt-2');
         const downloadImageButton = document.createElement('button');
         downloadImageButton.type = 'button';
-        downloadImageButton.className = 'btn btn-outline-warning btn-sm mt-2 ms-2 fw-semibold share-action-button';
+        downloadImageButton.className = 'btn btn-outline-warning btn-sm fw-semibold share-action-button';
         downloadImageButton.textContent = 'Download image';
         downloadImageButton.addEventListener('click', async () => {
           reportButtonEvent('image_download', { source: 'calculator_lookup' });
@@ -1188,8 +1189,12 @@ View results: ${shareUrl}`.trim(),
           createPerLetterValuesNode(searchGematria.word),
           document.createElement('br'),
           document.createElement('br'),
-          shareButton,
-          downloadImageButton
+          (() => {
+            const shareActions = document.createElement('div');
+            shareActions.className = 'd-flex flex-column flex-sm-row gap-2 mt-2';
+            shareActions.append(shareButton, downloadImageButton);
+            return shareActions;
+          })()
         );
       }
 

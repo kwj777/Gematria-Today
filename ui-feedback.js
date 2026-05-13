@@ -166,3 +166,92 @@
     return nativeFetch(input, init).finally(stopLoading);
   };
 })();
+
+(function addFooterHomeLink() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
+  function isHomePage() {
+    const path = String(window.location.pathname || '').split('?')[0].split('#')[0];
+    return path === '/' || path === '' || path === '/index.html' || path === '/index';
+  }
+
+  function apply() {
+    if (isHomePage()) {
+      return;
+    }
+    const footer = document.querySelector('footer.site-footer');
+    if (!footer) {
+      return;
+    }
+    if (footer.querySelector('[data-footer-home-link]')) {
+      return;
+    }
+    const topRow = footer.querySelector('.d-flex.justify-content-between')
+      || footer.querySelector('.container > div:first-child');
+    if (!topRow) {
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = '/index.html';
+    link.textContent = 'Back to home ↑';
+    link.className = 'text-decoration-none footer-home-link';
+    link.setAttribute('data-footer-home-link', 'true');
+    topRow.appendChild(link);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', apply, { once: true });
+  } else {
+    apply();
+  }
+})();
+
+(function highlightActiveNavLink() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
+  function normalize(pathname) {
+    if (!pathname) {
+      return '/index.html';
+    }
+    let path = String(pathname).split('?')[0].split('#')[0];
+    if (path === '/' || path === '') {
+      return '/index.html';
+    }
+    if (path.endsWith('/')) {
+      path = path.slice(0, -1);
+    }
+    if (!path.includes('.') && !path.endsWith('.html')) {
+      path = `${path}.html`;
+    }
+    return path;
+  }
+
+  function apply() {
+    const current = normalize(window.location.pathname);
+    const links = document.querySelectorAll('.navbar .nav-link[href]');
+    links.forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
+        return;
+      }
+      const target = normalize(href);
+      const isActive = target === current;
+      link.classList.toggle('active', isActive);
+      if (isActive) {
+        link.setAttribute('aria-current', 'page');
+      } else if (link.getAttribute('aria-current') === 'page') {
+        link.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', apply, { once: true });
+  } else {
+    apply();
+  }
+})();

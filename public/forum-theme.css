@@ -1,4 +1,9 @@
-/* Forum-specific design tokens and components (kept separate to avoid unused CSS on non-forum pages). */
+/* Forum-specific design tokens and components (kept separate to avoid unused CSS on non-forum pages).
+   Sizes and line-heights tier into the main type scale defined in theme.css
+   (--font-size-*, --leading-*). The two clamps below are forum-only and stay
+   inline because they smoothly interpolate between scale rungs; the static
+   sizes are routed through the main tokens so a future scale change updates
+   the forum in lockstep. */
 :root {
   --forum-space-1: 0.5rem;
   --forum-space-2: 0.75rem;
@@ -6,13 +11,13 @@
   --forum-space-4: 1.5rem;
   --forum-space-5: 2rem;
   --forum-space-6: 2.5rem;
-  --forum-title-size: clamp(1.15rem, 0.5vw + 1rem, 1.45rem);
-  --forum-subtitle-size: clamp(1rem, 0.25vw + 0.95rem, 1.15rem);
-  --forum-meta-size: 0.8125rem;
-  --forum-body-size: clamp(1rem, 0.2vw + 0.98rem, 1.0625rem);
-  --forum-title-line-height: 1.25;
+  --forum-title-size: clamp(var(--font-size-lg), 0.5vw + 1rem, var(--font-size-2xl));
+  --forum-subtitle-size: clamp(var(--font-size-base), 0.25vw + 0.95rem, var(--font-size-lg));
+  --forum-meta-size: var(--font-size-xs);
+  --forum-body-size: clamp(var(--font-size-base), 0.2vw + 0.98rem, var(--font-size-md));
+  --forum-title-line-height: var(--leading-snug);
   --forum-meta-line-height: 1.35;
-  --forum-body-line-height: 1.62;
+  --forum-body-line-height: var(--leading-relaxed);
 }
 
 /* Forum typography + spacing scales */

@@ -5,6 +5,57 @@
   --brand-amber-hover: #b45309;
   --brand-amber-rgb: 217, 119, 6;
   --brand-heading-font: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif;
+
+  /* Surfaces & borders. Use these for all panel/card backgrounds and hairline
+     borders so the neutral "off-white" / "near-dark" tones stay consistent. */
+  --color-bg-subtle: #f8fafc;
+  --color-surface: rgba(255, 255, 255, 0.92);
+  --color-surface-strong: var(--color-surface-strong);
+  --color-surface-dark: var(--color-surface-dark);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-soft: var(--color-border-soft);
+  --color-border-dark: var(--color-border-dark);
+  --color-text-on-dark: #f8fafc;
+
+  /* Type scale. Static rungs for body / UI; fluid clamps reserved for
+     display-sized headings only. Forum-specific aliases live in
+     forum-theme.css and should converge onto this scale over time. */
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.0625rem;
+  --font-size-lg: 1.15rem;
+  --font-size-xl: 1.3rem;
+  --font-size-2xl: 1.45rem;
+  --font-size-3xl: 1.75rem;
+  --font-size-4xl: 2rem;
+  --font-size-h3: clamp(1.25rem, 0.8vw + 1.05rem, 1.65rem);
+  --font-size-h2: clamp(1.5rem, 1.5vw + 1.1rem, 2.1rem);
+  --font-size-h1: clamp(1.85rem, 2.5vw + 1.25rem, 2.75rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.25;
+  --leading-normal: 1.45;
+  --leading-relaxed: 1.62;
+
+  --tracking-tight: -0.005em;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.08em;
+  --tracking-widest: 0.14em;
+
+  /* Elevation. Use the semantic aliases (--shadow-card, --shadow-panel,
+     --shadow-card-hover) for component styling; the numeric --shadow-sm..xl
+     rungs back them and are available for one-off elevation needs.
+     Values match the dominant existing card shadow so previously-empty
+     references now render in keeping with the rest of the surface. */
+  --shadow-sm: 0 1px 2px rgba(18, 48, 74, 0.04);
+  --shadow-md: 0 0.75rem 1.5rem rgba(63, 64, 58, 0.07);
+  --shadow-lg: 0 1rem 2rem rgba(63, 64, 58, 0.06);
+  --shadow-xl: 0 1.25rem 2.5rem rgba(63, 64, 58, 0.12);
+  --shadow-card: var(--shadow-lg);
+  --shadow-card-hover: var(--shadow-xl);
+  --shadow-panel: var(--shadow-lg);
+
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 0.85rem;
@@ -15,9 +66,12 @@
 
 h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6, .navbar-brand {
   font-family: var(--brand-heading-font);
-  letter-spacing: -0.005em;
+  letter-spacing: var(--tracking-tight);
 }
 
+/* Canonical brand button. Use `.btn-warning` or `.btn-amber` for the primary
+   amber CTA across the site. Pill/shape variants (e.g. `.membership-upgrade-cta`)
+   must reuse these same brand-amber tokens so the button family stays unified. */
 .btn-warning,
 .btn-amber {
   --bs-btn-color: #ffffff;
@@ -166,7 +220,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
   }
 
   .table-stack-sm tr {
-    border: 1px solid rgba(53, 65, 79, 0.12);
+    border: 1px solid var(--color-border-soft);
     border-radius: 0.6rem;
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.75rem;
@@ -261,14 +315,17 @@ button[aria-disabled="true"]:not(:disabled):hover {
 .stat-card,
 .feature-card,
 .faq-card {
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-panel);
 }
 
 .hero-panel {
+  position: relative;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 10% 14%, rgba(255, 212, 77, 0.24) 0%, rgba(255, 212, 77, 0) 40%),
-    linear-gradient(135deg, rgba(17, 44, 75, 0.98) 0%, rgba(43, 94, 143, 0.96) 48%, rgba(49, 141, 184, 0.94) 100%);
+    radial-gradient(ellipse at 95% 0%, rgba(217, 119, 6, 0.28) 0%, rgba(217, 119, 6, 0) 55%),
+    radial-gradient(circle at 0% 100%, rgba(96, 165, 250, 0.18) 0%, rgba(96, 165, 250, 0) 50%),
+    linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #2d5a8c 100%);
   color: #fff;
   border-radius: var(--radius-3xl);
 }
@@ -290,14 +347,14 @@ button[aria-disabled="true"]:not(:disabled):hover {
 .content-panel,
 .feature-card,
 .faq-card,
-.stat-card { background: rgba(255,255,255,0.92); border-radius: var(--radius-xl); }
+.stat-card { background: var(--color-surface); border-radius: var(--radius-xl); }
 
 :root[data-bs-theme="dark"] .content-panel,
 :root[data-bs-theme="dark"] .feature-card,
 :root[data-bs-theme="dark"] .faq-card,
 :root[data-bs-theme="dark"] .stat-card {
-  background: rgba(23, 30, 41, 0.92);
-  border-color: rgba(148, 177, 215, 0.22);
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
   box-shadow: 0 1rem 2.5rem rgba(5, 9, 14, 0.45);
 }
 
@@ -308,7 +365,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
 :root[data-bs-theme="dark"] .admin-item-card,
 :root[data-bs-theme="dark"] .border,
 :root[data-bs-theme="dark"] .rounded-3 {
-  border-color: rgba(148, 177, 215, 0.22) !important;
+  border-color: var(--color-border-dark) !important;
 }
 
 :root[data-bs-theme="dark"] .admin-item-card {
@@ -402,9 +459,9 @@ button[aria-disabled="true"]:not(:disabled):hover {
 }
 
 .hero-why-gematria-title {
-  font-size: clamp(1rem, 1.2vw + 0.75rem, 1.3rem);
+  font-size: var(--font-size-xl);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: var(--leading-tight);
 }
 
 .hero-why-gematria-excerpt {
@@ -427,7 +484,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
   border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: var(--radius-2xl);
   background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.3), rgba(30, 64, 112, 0.78) 55%), linear-gradient(140deg, rgba(37, 99, 175, 0.72), rgba(15, 23, 42, 0.82));
-  color: #f8fafc;
+  color: var(--color-text-on-dark);
   box-shadow: 0 1.5rem 3rem rgba(15, 23, 42, 0.35);
 }
 
@@ -460,11 +517,11 @@ button[aria-disabled="true"]:not(:disabled):hover {
   gap: 0.4rem;
   padding: 1.25rem;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.72));
-  color: #f8fafc;
+  color: var(--color-text-on-dark);
 }
 
 .word-of-day-spotlight__word {
-  font-size: 1.3rem;
+  font-size: var(--font-size-xl);
   font-weight: 700;
 }
 
@@ -857,7 +914,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
 }
 
 .metric-value {
-  font-size: 2rem;
+  font-size: var(--font-size-4xl);
   font-weight: 700;
 }
 
@@ -874,10 +931,10 @@ button[aria-disabled="true"]:not(:disabled):hover {
 
 .result-list .list-group-item,
 .table-shell,
-.form-shell { background: rgba(255,255,255,0.92); }
+.form-shell { background: var(--color-surface); }
 
 footer.site-footer {
-  border-top: 1px solid rgba(53, 65, 79, 0.08);
+  border-top: 1px solid var(--color-border-subtle);
   background: rgba(255,255,255,0.65);
 }
 
@@ -889,7 +946,7 @@ footer.site-footer {
 #related-words-result .related-word { word-spacing: 6px; }
 #related-words-result li { padding-bottom: 12px; }
 #related-words-result ul, #results-shell .word-list { padding-left: 1.2rem; }
-#results-shell .result-card { border: 1px solid rgba(53,65,79,.08); border-radius: var(--radius-xl); background: rgba(255,255,255,.92); box-shadow: 0 1rem 2rem rgba(63,64,58,.06); padding: 1rem; }
+#results-shell .result-card { border: 1px solid rgba(53,65,79,.08); border-radius: var(--radius-xl); background: rgba(255,255,255,.92); box-shadow: var(--shadow-card); padding: 1rem; }
 #word-list .word-item { list-style: none; }
 
 .results-grid {
@@ -944,8 +1001,8 @@ footer.site-footer {
 .blog-slide-card,
 .blog-post-card,
 .blog-mini-link {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
 }
 
@@ -961,7 +1018,7 @@ footer.site-footer {
   position: relative;
   border-radius: 0.9rem;
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   box-shadow: var(--shadow-card-hover);
   background: rgba(15, 23, 42, 0.96);
 }
@@ -993,7 +1050,7 @@ footer.site-footer {
   display: flex;
   flex-direction: column;
   background: rgba(255,255,255,0.94);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
   box-shadow: 0 0.8rem 1.6rem rgba(63,64,58,.07);
 }
@@ -1018,7 +1075,7 @@ footer.site-footer {
   height: clamp(8rem, 20vw, 11rem);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   background: rgba(15, 23, 42, 0.95);
 }
 
@@ -1034,7 +1091,7 @@ footer.site-footer {
   margin: 0;
   border-radius: 0.9rem;
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   box-shadow: var(--shadow-card-hover);
   background: rgba(237, 243, 249, 0.9);
 }
@@ -1067,7 +1124,7 @@ footer.site-footer {
 .post-image-preview {
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   background: rgba(237, 243, 249, 0.9);
 }
 
@@ -1128,8 +1185,8 @@ footer.site-footer {
 .followit-card {
   padding: clamp(0.9rem, 2vw, 1.15rem);
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(53, 65, 79, 0.12);
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.94));
+  border: 1px solid var(--color-border-soft);
+  background: linear-gradient(155deg, var(--color-surface-strong), rgba(248, 251, 255, 0.94));
   box-shadow: 0 0.9rem 2rem rgba(63, 64, 58, 0.08);
 }
 
@@ -1263,7 +1320,7 @@ footer.site-footer {
 
 
 .news-section-header {
-  border-bottom: 1px solid rgba(53, 65, 79, 0.08);
+  border-bottom: 1px solid var(--color-border-subtle);
   padding-bottom: 0.75rem;
 }
 
@@ -1271,10 +1328,10 @@ footer.site-footer {
 .news-preview-card,
 .news-summary-card,
 .news-placeholder-panel {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-2xl);
-  box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
+  box-shadow: var(--shadow-card);
 }
 
 .news-feature-card {
@@ -1359,10 +1416,10 @@ footer.site-footer {
 }
 
 .async-shell-card {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
-  box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
+  box-shadow: var(--shadow-card);
 }
 
 .async-shell-line {
@@ -1415,7 +1472,7 @@ body.page-render-pending footer {
   border-radius: var(--radius-xl);
   padding: 0.9rem 1.1rem;
   background: rgba(255, 255, 255, 0.97);
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.14);
 }
 
@@ -1425,14 +1482,14 @@ body.page-render-pending footer {
 }
 
 .admin-item-card {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
-  box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
+  box-shadow: var(--shadow-card);
 }
 
 .editorial-proposal-card {
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--color-surface-strong);
 }
 
 .editorial-proposal-card__meta-badge {
@@ -1523,7 +1580,7 @@ body.page-render-pending footer {
 
 .admin-danger-zone {
   border: 1px solid rgba(176, 34, 34, 0.25);
-  background: linear-gradient(180deg, rgba(255, 245, 245, 0.92), rgba(255, 255, 255, 0.96));
+  background: linear-gradient(180deg, rgba(255, 245, 245, 0.92), var(--color-surface-strong));
 }
 
 .admin-danger-zone .section-kicker {
@@ -1531,7 +1588,7 @@ body.page-render-pending footer {
 }
 
 .admin-section-body {
-  border-top: 1px solid rgba(53, 65, 79, 0.08);
+  border-top: 1px solid var(--color-border-subtle);
   padding-top: 1.25rem;
 }
 
@@ -1598,9 +1655,9 @@ body.page-render-pending footer {
 }
 
 .membership-upgrade-cta {
-  background: linear-gradient(180deg, #ffd871, #f7b928);
-  border: none;
-  color: #432300;
+  background: var(--brand-amber);
+  border: 1px solid var(--brand-amber);
+  color: #ffffff;
   font-weight: 700;
   border-radius: 999px;
   padding: 0.55rem 1rem;
@@ -1608,8 +1665,9 @@ body.page-render-pending footer {
 
 .membership-upgrade-cta:hover,
 .membership-upgrade-cta:focus-visible {
-  background: linear-gradient(180deg, #ffdc80, #f8c03b);
-  color: #2f1900;
+  background: var(--brand-amber-hover);
+  border-color: var(--brand-amber-hover);
+  color: #ffffff;
 }
 
 .membership-price-badge {
@@ -1894,7 +1952,7 @@ body.page-render-pending footer {
   min-width: min(90vw, 16rem);
   padding: 1.2rem 1.4rem;
   border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--color-surface-strong);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
 }
 
@@ -2058,8 +2116,8 @@ body.page-render-pending footer {
 }
 
 .feature-card-icon {
-  background: rgba(23, 30, 41, 0.92);
-  border: 1px solid rgba(148, 177, 215, 0.22);
+  background: var(--color-surface-dark);
+  border: 1px solid var(--color-border-dark);
   border-radius: var(--radius-xl);
   padding: 1.5rem;
   height: 100%;
@@ -2097,7 +2155,7 @@ body.page-render-pending footer {
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0;
-  color: #f8fafc;
+  color: var(--color-text-on-dark);
 }
 
 .feature-card-icon__body {
@@ -2141,4 +2199,112 @@ body.page-render-pending footer {
 
 :root[data-bs-theme="dark"] .content-panel--soft {
   background: rgba(17, 24, 34, 0.72);
+}
+
+/* ----- Form controls: focus, validation, touch targets ------------------- */
+/* Gives every Bootstrap form-control a consistent brand-amber focus ring,
+   a real .is-invalid state, and a 44px touch target on mobile. Buttons in
+   an aria-disabled state get a not-allowed cursor (Bootstrap only dims). */
+.form-control,
+.form-select {
+  min-height: 2.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--brand-amber);
+  box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.18);
+  outline: none;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid,
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+  border-color: #dc3545;
+}
+
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus,
+.was-validated .form-control:invalid:focus,
+.was-validated .form-select:invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.18);
+}
+
+.invalid-feedback {
+  display: block;
+  color: #b02a37;
+  font-size: var(--font-size-sm);
+  margin-top: 0.25rem;
+}
+
+:root[data-bs-theme="dark"] .invalid-feedback {
+  color: #f5b1b8;
+}
+
+.btn[aria-disabled="true"],
+.btn:disabled,
+.btn.disabled {
+  cursor: not-allowed;
+}
+
+/* ----- Mobile navbar polish --------------------------------------------- */
+/* The default Bootstrap toggler has no visible label and a faint focus ring.
+   Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a
+   ::after pseudo-element so the affordance is obvious without editing 29
+   pages of markup, (2) give it a real focus ring, (3) animate the collapse,
+   and (4) inline-expand dropdowns so users can drill into Tools on mobile. */
+@media (max-width: 991.98px) {
+  .navbar-toggler {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .navbar-toggler::after {
+    content: "Menu";
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .navbar-toggler:focus-visible {
+    box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.45);
+    outline: none;
+  }
+
+  .navbar-collapse.collapsing,
+  .navbar-collapse.show {
+    animation: navbarSlideDown 0.18s ease-out;
+  }
+
+  @keyframes navbarSlideDown {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .navbar-nav .nav-link {
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-nav .dropdown-menu {
+    position: static;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.25rem 0;
+    margin: 0.25rem 0 0.5rem;
+    box-shadow: none;
+  }
+
+  .navbar-nav .dropdown-item {
+    color: inherit;
+    padding-left: 1.75rem;
+  }
 }

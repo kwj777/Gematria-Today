@@ -1,4 +1,5 @@
-import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
+import { getSqlClient, jsonResponse } from './_auth.mjs';
+import { getAuthenticatedMember } from './_member.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
 
 const DEFAULT_WORDNIK_RELATIONSHIP_TYPE = 'synonym';
@@ -12,9 +13,9 @@ const ALLOWED_WORDNIK_RELATIONSHIP_TYPES = new Set([
   'variant',
   'same-context',
 ]);
-const DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE = 250;
-const MAX_LIMIT_PER_RELATIONSHIP_TYPE = 250;
-const ANONYMOUS_LIMIT_PER_RELATIONSHIP_TYPE = 100;
+const PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE = 250;
+const FREE_LIMIT_PER_RELATIONSHIP_TYPE = 100;
+const PREMIUM_TIERS = new Set(['premium', 'lifetime']);
 
 function toResponse(statusCode, payload, extraHeaders = {}) {
   return new Response(JSON.stringify(payload), {
@@ -43,13 +44,16 @@ function extractRequestOptionsFromEvent(event) {
   return { term: null, limit: null, relationshipType: null };
 }
 
-function parseLimit(limit, { isAuthenticated = false } = {}) {
-  const defaultLimit = isAuthenticated ? DEFAULT_LIMIT_PER_RELATIONSHIP_TYPE : ANONYMOUS_LIMIT_PER_RELATIONSHIP_TYPE;
-  const maxLimit = isAuthenticated ? MAX_LIMIT_PER_RELATIONSHIP_TYPE : ANONYMOUS_LIMIT_PER_RELATIONSHIP_TYPE;
-  if (limit == null || limit === '') return defaultLimit;
+function getTierLimit(membershipLevel) {
+  return PREMIUM_TIERS.has(membershipLevel) ? PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE : FREE_LIMIT_PER_RELATIONSHIP_TYPE;
+}
+
+function parseLimit(limit, { membershipLevel } = {}) {
+  const tierLimit = getTierLimit(membershipLevel);
+  if (limit == null || limit === '') return tierLimit;
   const parsedLimit = Number.parseInt(limit, 10);
   if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) throw new Error('Query parameter "limit" must be a positive integer');
-  if (parsedLimit > maxLimit) throw new Error(`Query parameter "limit" must not exceed ${maxLimit}`);
+  if (parsedLimit > tierLimit) throw new Error(`Query parameter "limit" must not exceed ${tierLimit}`);
   return parsedLimit;
 }
 
@@ -84,11 +88,11 @@ function getErrorStatusCode(error) {
   return error.statusCode || 500;
 }
 
-async function fetchRelatedWords(sql, source, term, limit, relationshipType, { isAuthenticated = false } = {}) {
+async function fetchRelatedWords(sql, source, term, limit, relationshipType, { membershipLevel } = {}) {
   const trimmedTerm = term.trim();
   const normalizedTerm = trimmedTerm.toLowerCase();
   if (!normalizedTerm) throw new Error('Missing required query parameter: word');
-  const parsedLimit = parseLimit(limit, { isAuthenticated });
+  const parsedLimit = parseLimit(limit, { membershipLevel });
   const parsedRelationshipType = parseRelationshipType(relationshipType);
 
   const cacheResult = await withCachedJson(sql, {
@@ -133,22 +137,20 @@ export default async function onRequest(request) {
   if (!term?.trim()) return toResponse(400, { error: 'Missing required query parameter: word' });
 
   try {
-    assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikRelatedWords' });
-    const sql = getSqlClient();
-    const { user } = await getOptionalAuthenticatedSession(request, { sql });
-    if (!user) {
-      await applyRateLimit(sql, request, {
-        scope: 'wordnikRelatedWords-ip',
-        key: getClientIp(request),
-        limit: 20,
-        windowMs: 60_000,
-        blockMs: 10 * 60_000,
-        message: 'Too many related-word lookups.',
-      });
-    }
-    const cacheResult = await fetchRelatedWords(sql, request, term, limit, relationshipType, { isAuthenticated: Boolean(user) });
+    assertEndpointEnabled({ publicRoute: false, expensive: true, route: 'wordnikRelatedWords' });
+    const { sql, member } = await getAuthenticatedMember(request, { requireAuth: true });
+    if (!member) throw Object.assign(new Error('Membership required for related-word lookups.'), { statusCode: 401 });
+    await applyRateLimit(sql, request, {
+      scope: 'wordnikRelatedWords-member',
+      key: member.id || getClientIp(request),
+      limit: 60,
+      windowMs: 60_000,
+      blockMs: 5 * 60_000,
+      message: 'Too many related-word lookups.',
+    });
+    const cacheResult = await fetchRelatedWords(sql, request, term, limit, relationshipType, { membershipLevel: member.membershipLevel });
     return toResponse(200, cacheResult.payload, {
-      'cache-control': 'public, max-age=600, stale-while-revalidate=120',
+      'cache-control': 'private, max-age=600',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {
@@ -161,22 +163,20 @@ export async function handler(event) {
   if (!term?.trim()) return jsonResponse(400, { error: 'Missing required query parameter: word' });
 
   try {
-    assertEndpointEnabled({ publicRoute: true, expensive: true, route: 'wordnikRelatedWords' });
-    const sql = getSqlClient();
-    const { user } = await getOptionalAuthenticatedSession(event, { sql });
-    if (!user) {
-      await applyRateLimit(sql, event, {
-        scope: 'wordnikRelatedWords-ip',
-        key: getClientIp(event),
-        limit: 20,
-        windowMs: 60_000,
-        blockMs: 10 * 60_000,
-        message: 'Too many related-word lookups.',
-      });
-    }
-    const cacheResult = await fetchRelatedWords(sql, event, term, limit, relationshipType, { isAuthenticated: Boolean(user) });
+    assertEndpointEnabled({ publicRoute: false, expensive: true, route: 'wordnikRelatedWords' });
+    const { sql, member } = await getAuthenticatedMember(event, { requireAuth: true });
+    if (!member) throw Object.assign(new Error('Membership required for related-word lookups.'), { statusCode: 401 });
+    await applyRateLimit(sql, event, {
+      scope: 'wordnikRelatedWords-member',
+      key: member.id || getClientIp(event),
+      limit: 60,
+      windowMs: 60_000,
+      blockMs: 5 * 60_000,
+      message: 'Too many related-word lookups.',
+    });
+    const cacheResult = await fetchRelatedWords(sql, event, term, limit, relationshipType, { membershipLevel: member.membershipLevel });
     return jsonResponse(200, cacheResult.payload, {
-      'cache-control': 'public, max-age=600, stale-while-revalidate=120',
+      'cache-control': 'private, max-age=600',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {

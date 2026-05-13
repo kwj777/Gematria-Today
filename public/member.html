@@ -201,7 +201,6 @@
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
-    <div id="memberPageLoadingOverlay" class="calculator-loading-overlay" role="status" aria-live="polite" hidden><p class="calculator-loading-overlay__message">Loading your dashboard...</p></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
@@ -919,9 +918,6 @@
       let isArchiveViewOpen = false;
       let dashboardSyncRefreshInFlight = false;
       let lastDashboardSyncRefreshAt = 0;
-      const memberPageLoadingOverlay = document.getElementById('memberPageLoadingOverlay');
-      let pageLoadOverlayTimeout = null;
-
 
       function ensureWorkingOverlay() {
         let overlay = document.getElementById('globalLoadingOverlay');
@@ -956,22 +952,6 @@
           return;
         }
         overlay.classList.remove('global-loading-overlay--visible');
-      }
-
-      function schedulePageLoadOverlay() {
-        if (!memberPageLoadingOverlay) return;
-        window.clearTimeout(pageLoadOverlayTimeout);
-        pageLoadOverlayTimeout = window.setTimeout(() => {
-          memberPageLoadingOverlay.hidden = false;
-        }, 350);
-      }
-
-      function completePageLoadOverlay() {
-        hideWorkingOverlay();
-        window.clearTimeout(pageLoadOverlayTimeout);
-        pageLoadOverlayTimeout = null;
-        if (!memberPageLoadingOverlay) return;
-        memberPageLoadingOverlay.hidden = true;
       }
 
       function showAlert(message, tone = 'danger') {
@@ -2706,7 +2686,6 @@
         const verifyEmailToken = url.searchParams.get('verify_email_token');
         const authView = normalizeAuthView(url.searchParams.get('auth'));
 
-        schedulePageLoadOverlay();
         setAuthView(authView, { updateUrl: false });
 
         if (verifyEmailToken) {
@@ -2773,14 +2752,14 @@
           renderHistory();
           chatSessions = [];
           renderChatSessions();
-          completePageLoadOverlay();
+          hideWorkingOverlay();
           await loadMemberProposals();
           await loadMemberChatbotFeedback();
           if (paymentState === 'success') {
             showAlert('Sign in to finish activating your Stripe payment.', 'warning');
           }
         } finally {
-          completePageLoadOverlay();
+          hideWorkingOverlay();
           scrollToInitialHashTarget();
         }
       }

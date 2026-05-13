@@ -62,25 +62,33 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--premium { display: flex; }
 .navbar-nav .nav-cta .btn { white-space: nowrap; align-self: center; }
 
 .nav-search-link {
-  font-size: 1.5rem;
+  font-size: 0.95rem;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.7);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0.5rem;
-  background: transparent;
-  border: none;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  min-height: 36px;
+  padding: 0.4rem 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
   box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-search-link__label {
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 .nav-search-link:hover,
 .nav-search-link:focus-visible {
   color: #ffffff;
-  background: transparent;
-  border-color: transparent;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 @media (min-width: 992px) {
@@ -2039,18 +2047,10 @@ body.page-render-pending footer {
 }
 
 .nav-search-link svg {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1rem;
+  height: 1rem;
   display: block;
-}
-
-.nav-search-link {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.nav-search-link:hover,
-.nav-search-link:focus-visible {
-  color: #ffffff;
+  flex-shrink: 0;
 }
 
 .feature-card-icon {

@@ -61,6 +61,10 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--premium { display: flex; }
 .navbar-nav .nav-item.nav-cta { align-items: center; }
 .navbar-nav .nav-cta .btn { white-space: nowrap; align-self: center; }
 
+@media (min-width: 992px) {
+  .navbar-nav .nav-item.nav-search { margin-left: 0.5rem; }
+}
+
 .nav-search-link {
   font-size: 0.95rem;
   line-height: 1;

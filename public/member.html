@@ -2773,6 +2773,7 @@
           renderHistory();
           chatSessions = [];
           renderChatSessions();
+          completePageLoadOverlay();
           await loadMemberProposals();
           await loadMemberChatbotFeedback();
           if (paymentState === 'success') {

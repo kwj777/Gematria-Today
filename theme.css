@@ -5,6 +5,18 @@
   --brand-amber-hover: #b45309;
   --brand-amber-rgb: 217, 119, 6;
   --brand-heading-font: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif;
+
+  /* Surfaces & borders. Use these for all panel/card backgrounds and hairline
+     borders so the neutral "off-white" / "near-dark" tones stay consistent. */
+  --color-bg-subtle: #f8fafc;
+  --color-surface: rgba(255, 255, 255, 0.92);
+  --color-surface-strong: var(--color-surface-strong);
+  --color-surface-dark: var(--color-surface-dark);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-soft: var(--color-border-soft);
+  --color-border-dark: var(--color-border-dark);
+  --color-text-on-dark: #f8fafc;
+
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 0.85rem;
@@ -169,7 +181,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
   }
 
   .table-stack-sm tr {
-    border: 1px solid rgba(53, 65, 79, 0.12);
+    border: 1px solid var(--color-border-soft);
     border-radius: 0.6rem;
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.75rem;
@@ -264,7 +276,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
 .stat-card,
 .feature-card,
 .faq-card {
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-panel);
 }
 
@@ -296,14 +308,14 @@ button[aria-disabled="true"]:not(:disabled):hover {
 .content-panel,
 .feature-card,
 .faq-card,
-.stat-card { background: rgba(255,255,255,0.92); border-radius: var(--radius-xl); }
+.stat-card { background: var(--color-surface); border-radius: var(--radius-xl); }
 
 :root[data-bs-theme="dark"] .content-panel,
 :root[data-bs-theme="dark"] .feature-card,
 :root[data-bs-theme="dark"] .faq-card,
 :root[data-bs-theme="dark"] .stat-card {
-  background: rgba(23, 30, 41, 0.92);
-  border-color: rgba(148, 177, 215, 0.22);
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
   box-shadow: 0 1rem 2.5rem rgba(5, 9, 14, 0.45);
 }
 
@@ -314,7 +326,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
 :root[data-bs-theme="dark"] .admin-item-card,
 :root[data-bs-theme="dark"] .border,
 :root[data-bs-theme="dark"] .rounded-3 {
-  border-color: rgba(148, 177, 215, 0.22) !important;
+  border-color: var(--color-border-dark) !important;
 }
 
 :root[data-bs-theme="dark"] .admin-item-card {
@@ -433,7 +445,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
   border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: var(--radius-2xl);
   background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.3), rgba(30, 64, 112, 0.78) 55%), linear-gradient(140deg, rgba(37, 99, 175, 0.72), rgba(15, 23, 42, 0.82));
-  color: #f8fafc;
+  color: var(--color-text-on-dark);
   box-shadow: 0 1.5rem 3rem rgba(15, 23, 42, 0.35);
 }
 
@@ -466,7 +478,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
   gap: 0.4rem;
   padding: 1.25rem;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.72));
-  color: #f8fafc;
+  color: var(--color-text-on-dark);
 }
 
 .word-of-day-spotlight__word {
@@ -880,10 +892,10 @@ button[aria-disabled="true"]:not(:disabled):hover {
 
 .result-list .list-group-item,
 .table-shell,
-.form-shell { background: rgba(255,255,255,0.92); }
+.form-shell { background: var(--color-surface); }
 
 footer.site-footer {
-  border-top: 1px solid rgba(53, 65, 79, 0.08);
+  border-top: 1px solid var(--color-border-subtle);
   background: rgba(255,255,255,0.65);
 }
 
@@ -950,8 +962,8 @@ footer.site-footer {
 .blog-slide-card,
 .blog-post-card,
 .blog-mini-link {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
 }
 
@@ -967,7 +979,7 @@ footer.site-footer {
   position: relative;
   border-radius: 0.9rem;
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   box-shadow: var(--shadow-card-hover);
   background: rgba(15, 23, 42, 0.96);
 }
@@ -999,7 +1011,7 @@ footer.site-footer {
   display: flex;
   flex-direction: column;
   background: rgba(255,255,255,0.94);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
   box-shadow: 0 0.8rem 1.6rem rgba(63,64,58,.07);
 }
@@ -1024,7 +1036,7 @@ footer.site-footer {
   height: clamp(8rem, 20vw, 11rem);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   background: rgba(15, 23, 42, 0.95);
 }
 
@@ -1040,7 +1052,7 @@ footer.site-footer {
   margin: 0;
   border-radius: 0.9rem;
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   box-shadow: var(--shadow-card-hover);
   background: rgba(237, 243, 249, 0.9);
 }
@@ -1073,7 +1085,7 @@ footer.site-footer {
 .post-image-preview {
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   background: rgba(237, 243, 249, 0.9);
 }
 
@@ -1134,8 +1146,8 @@ footer.site-footer {
 .followit-card {
   padding: clamp(0.9rem, 2vw, 1.15rem);
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(53, 65, 79, 0.12);
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.94));
+  border: 1px solid var(--color-border-soft);
+  background: linear-gradient(155deg, var(--color-surface-strong), rgba(248, 251, 255, 0.94));
   box-shadow: 0 0.9rem 2rem rgba(63, 64, 58, 0.08);
 }
 
@@ -1269,7 +1281,7 @@ footer.site-footer {
 
 
 .news-section-header {
-  border-bottom: 1px solid rgba(53, 65, 79, 0.08);
+  border-bottom: 1px solid var(--color-border-subtle);
   padding-bottom: 0.75rem;
 }
 
@@ -1277,8 +1289,8 @@ footer.site-footer {
 .news-preview-card,
 .news-summary-card,
 .news-placeholder-panel {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-2xl);
   box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
 }
@@ -1365,8 +1377,8 @@ footer.site-footer {
 }
 
 .async-shell-card {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
   box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
 }
@@ -1421,7 +1433,7 @@ body.page-render-pending footer {
   border-radius: var(--radius-xl);
   padding: 0.9rem 1.1rem;
   background: rgba(255, 255, 255, 0.97);
-  border: 1px solid rgba(53, 65, 79, 0.12);
+  border: 1px solid var(--color-border-soft);
   box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.14);
 }
 
@@ -1431,14 +1443,14 @@ body.page-render-pending footer {
 }
 
 .admin-item-card {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(53, 65, 79, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
   box-shadow: 0 1rem 2rem rgba(63,64,58,.06);
 }
 
 .editorial-proposal-card {
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--color-surface-strong);
 }
 
 .editorial-proposal-card__meta-badge {
@@ -1529,7 +1541,7 @@ body.page-render-pending footer {
 
 .admin-danger-zone {
   border: 1px solid rgba(176, 34, 34, 0.25);
-  background: linear-gradient(180deg, rgba(255, 245, 245, 0.92), rgba(255, 255, 255, 0.96));
+  background: linear-gradient(180deg, rgba(255, 245, 245, 0.92), var(--color-surface-strong));
 }
 
 .admin-danger-zone .section-kicker {
@@ -1537,7 +1549,7 @@ body.page-render-pending footer {
 }
 
 .admin-section-body {
-  border-top: 1px solid rgba(53, 65, 79, 0.08);
+  border-top: 1px solid var(--color-border-subtle);
   padding-top: 1.25rem;
 }
 
@@ -1901,7 +1913,7 @@ body.page-render-pending footer {
   min-width: min(90vw, 16rem);
   padding: 1.2rem 1.4rem;
   border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--color-surface-strong);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
 }
 
@@ -2065,8 +2077,8 @@ body.page-render-pending footer {
 }
 
 .feature-card-icon {
-  background: rgba(23, 30, 41, 0.92);
-  border: 1px solid rgba(148, 177, 215, 0.22);
+  background: var(--color-surface-dark);
+  border: 1px solid var(--color-border-dark);
   border-radius: var(--radius-xl);
   padding: 1.5rem;
   height: 100%;
@@ -2104,7 +2116,7 @@ body.page-render-pending footer {
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0;
-  color: #f8fafc;
+  color: var(--color-text-on-dark);
 }
 
 .feature-card-icon__body {

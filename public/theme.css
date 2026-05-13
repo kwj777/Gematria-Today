@@ -327,6 +327,25 @@ button[aria-disabled="true"]:not(:disabled):hover {
   border-radius: var(--radius-3xl);
 }
 
+/* Bootstrap 5.3 sets headings to var(--bs-heading-color, inherit). When the
+   variable resolves to a concrete color, it lands on the heading directly
+   and beats the .hero-panel { color: #fff } parent rule via inheritance,
+   leaving hero titles rendered dark. Force white explicitly. */
+.hero-panel h1,
+.hero-panel h2,
+.hero-panel h3,
+.hero-panel h4,
+.hero-panel h5,
+.hero-panel h6,
+.hero-panel .display-1,
+.hero-panel .display-2,
+.hero-panel .display-3,
+.hero-panel .display-4,
+.hero-panel .display-5,
+.hero-panel .display-6 {
+  color: #fff;
+}
+
 .hero-panel .btn-outline-primary {
   --bs-btn-color: #ffffff;
   --bs-btn-border-color: rgba(255, 255, 255, 0.85);

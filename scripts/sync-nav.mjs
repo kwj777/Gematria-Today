@@ -29,9 +29,10 @@ const ACTIVE_LINK_BY_FILE = {
   'member.html': '/member.html',
 };
 
-// hrefs that live inside the Gematria dropdown — when one is active, the
+// hrefs that live inside the Tools dropdown — when one is active, the
 // dropdown-toggle button is also marked active so the menu reads as current.
-const GEMATRIA_DROPDOWN_HREFS = new Set([
+const TOOLS_DROPDOWN_HREFS = new Set([
+  '/calculator.html',
   '/name-calculator.html',
   '/ai-agent.html',
 ]);
@@ -58,8 +59,8 @@ function applyActiveState(nav, activeHref) {
   }
   result = matched;
 
-  // If the active link lives inside the Gematria dropdown, mark the toggle too.
-  if (GEMATRIA_DROPDOWN_HREFS.has(activeHref)) {
+  // If the active link lives inside the Tools dropdown, mark the toggle too.
+  if (TOOLS_DROPDOWN_HREFS.has(activeHref)) {
     result = result.replace(
       '<button class="nav-link dropdown-toggle"',
       '<button class="nav-link dropdown-toggle active"',

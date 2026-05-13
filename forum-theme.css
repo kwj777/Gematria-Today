@@ -100,7 +100,7 @@
 
 .forum-reply-card {
   border: 1px solid rgba(53, 65, 79, 0.14);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 0.35rem 1rem rgba(63, 64, 58, 0.06);
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
@@ -122,7 +122,7 @@
 .forum-empty-state {
   padding: var(--forum-space-4);
   border: 1px dashed rgba(53, 95, 140, 0.35);
-  border-radius: 0.85rem;
+  border-radius: var(--radius-lg);
   background: linear-gradient(180deg, rgba(251, 253, 255, 0.95), rgba(241, 247, 255, 0.9));
   text-align: center;
   animation: forum-fade-in 0.2s ease-out;
@@ -318,7 +318,7 @@
 @media (max-width: 767.98px) {
   #forumFilterControls {
     border: 1px solid rgba(53, 65, 79, 0.14);
-    border-radius: 0.85rem;
+    border-radius: var(--radius-lg);
     padding: var(--forum-space-2);
     background: rgba(255, 255, 255, 0.9);
   }

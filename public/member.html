@@ -339,12 +339,12 @@
               <h2 class="h3 mb-0">Create account or sign in</h2>
             </div>
           </div>
-          <ul class="nav nav-pills gap-2 mb-4" role="tablist" aria-label="Membership authentication options">
+          <ul class="nav nav-tabs mb-4" role="tablist" aria-label="Membership authentication options">
             <li class="nav-item" role="presentation">
-              <button id="authTabRegister" class="btn btn-primary active" type="button" data-auth-view="register" aria-selected="true">Create account</button>
+              <button id="authTabRegister" class="nav-link active" type="button" data-auth-view="register" role="tab" aria-selected="true" aria-controls="authPanelRegister">Create account</button>
             </li>
             <li class="nav-item" role="presentation">
-              <button id="authTabLogin" class="btn btn-outline-primary" type="button" data-auth-view="login" aria-selected="false">Sign in</button>
+              <button id="authTabLogin" class="nav-link" type="button" data-auth-view="login" role="tab" aria-selected="false" aria-controls="authPanelLogin">Sign in</button>
             </li>
           </ul>
           <div id="memberAlert" class="alert d-none mb-4" role="alert"></div>
@@ -1981,13 +1981,9 @@
         const normalizedView = normalizeAuthView(view);
         const registerSelected = normalizedView === 'register';
 
-        authTabRegister.classList.toggle('btn-primary', registerSelected);
-        authTabRegister.classList.toggle('btn-outline-primary', !registerSelected);
         authTabRegister.classList.toggle('active', registerSelected);
         authTabRegister.setAttribute('aria-selected', registerSelected ? 'true' : 'false');
 
-        authTabLogin.classList.toggle('btn-primary', !registerSelected);
-        authTabLogin.classList.toggle('btn-outline-primary', registerSelected);
         authTabLogin.classList.toggle('active', !registerSelected);
         authTabLogin.setAttribute('aria-selected', registerSelected ? 'false' : 'true');
 

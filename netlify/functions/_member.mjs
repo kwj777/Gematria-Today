@@ -1,7 +1,9 @@
 import crypto from 'node:crypto';
 import {
   AUTH_COOKIES,
+  clearMemberTierCookie,
   clearSessionCookie,
+  createMemberTierCookie,
   createSession,
   createSessionCookie,
   getOptionalAuthenticatedSession,
@@ -17,7 +19,7 @@ import {
 import { ensureSecuritySchema } from './_security.mjs';
 import { ensureAdminSchema } from './_admin.mjs';
 
-export { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, getSqlClient, hashPassword, jsonResponse, parseBody, verifyTurnstileToken };
+export { AUTH_COOKIES, clearMemberTierCookie, clearSessionCookie, createMemberTierCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, getSqlClient, hashPassword, jsonResponse, parseBody, verifyTurnstileToken };
 const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 let memberSchemaReadyPromise = null;
 

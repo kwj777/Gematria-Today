@@ -1,6 +1,8 @@
-import { activateYearlyMembership, getAuthenticatedMember, jsonResponse } from './_member.mjs';
+import { activateYearlyMembership, createMemberTierCookie, getAuthenticatedMember, jsonResponse } from './_member.mjs';
 import { getCheckoutSession, getMembershipPaymentConfig, getSubscription } from './_stripe.mjs';
 import { logRequestAudit } from './_security.mjs';
+
+const MEMBER_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -49,6 +51,7 @@ export async function handler(event) {
       metadata: { memberId: member.id, sessionId: checkoutSession.id },
     });
 
+    const tierExpiresAt = new Date(Date.now() + MEMBER_SESSION_TTL_MS);
     return jsonResponse(200, {
       confirmed: true,
       member: updatedMember,
@@ -60,6 +63,8 @@ export async function handler(event) {
         subscriptionId: subscription?.id || subscriptionId || null,
       },
       membership,
+    }, {
+      'set-cookie': createMemberTierCookie(updatedMember?.membershipLevel || 'premium', tierExpiresAt),
     });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to confirm membership payment' }, error.headers || {});

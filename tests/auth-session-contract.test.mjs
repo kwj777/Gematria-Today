@@ -18,18 +18,31 @@ function parseBody(response) {
   return JSON.parse(response.body || '{}');
 }
 
+function collectSetCookies(response) {
+  const single = response.headers?.['set-cookie'];
+  const multi = response.multiValueHeaders?.['set-cookie'];
+  const values = [];
+  if (Array.isArray(multi)) values.push(...multi);
+  else if (typeof multi === 'string') values.push(multi);
+  if (Array.isArray(single)) values.push(...single);
+  else if (typeof single === 'string') values.push(single);
+  return values.join('\n');
+}
+
 test('member logout is idempotent and returns 200 with authenticated false', async () => {
   const response = await memberLogoutHandler({ httpMethod: 'POST', headers: {} });
   assert.equal(response.statusCode, 200);
   assert.deepEqual(parseBody(response), { authenticated: false });
-  assert.match(String(response.headers?.['set-cookie'] || ''), /endtimes_member_session=/);
+  const cookies = collectSetCookies(response);
+  assert.match(cookies, /endtimes_member_session=/);
+  assert.match(cookies, /endtimes_member_tier=/);
 });
 
 test('admin logout is idempotent and returns 200 with authenticated false', async () => {
   const response = await adminLogoutHandler({ httpMethod: 'POST', headers: {} });
   assert.equal(response.statusCode, 200);
   assert.deepEqual(parseBody(response), { authenticated: false });
-  assert.match(String(response.headers?.['set-cookie'] || ''), /endtimes_admin_session=/);
+  assert.match(collectSetCookies(response), /endtimes_admin_session=/);
 });
 
 test('logout endpoints reject non-POST methods with standard error payload', async () => {

@@ -280,6 +280,16 @@ export function securityHeaders(extraHeaders = {}) {
 }
 
 export function jsonResponse(statusCode, payload, extraHeaders = {}) {
+  const setCookie = extraHeaders['set-cookie'];
+  if (Array.isArray(setCookie)) {
+    const { 'set-cookie': _omit, ...rest } = extraHeaders;
+    return {
+      statusCode,
+      headers: securityHeaders(rest),
+      multiValueHeaders: { 'set-cookie': setCookie },
+      body: JSON.stringify(payload),
+    };
+  }
   return {
     statusCode,
     headers: securityHeaders(extraHeaders),

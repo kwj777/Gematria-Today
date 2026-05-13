@@ -52,6 +52,14 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
   align-items: center;
 }
 
+.navbar-nav .nav-item.nav-auth { display: none; }
+html.auth-anon     .navbar-nav .nav-item.nav-auth--anon,
+html.auth-free     .navbar-nav .nav-item.nav-auth--free,
+html.auth-premium  .navbar-nav .nav-item.nav-auth--premium,
+html.auth-lifetime .navbar-nav .nav-item.nav-auth--premium { display: flex; }
+
+.navbar-nav .nav-cta .btn { white-space: nowrap; }
+
 .nav-search-link {
   font-size: 1.5rem;
   line-height: 1;

@@ -424,6 +424,63 @@
               </button>
             </div>
             <div id="membershipUpgradeContent" class="collapse">
+              <div class="mb-4">
+                <p class="section-kicker mb-2">What you unlock</p>
+                <h4 class="h5 mb-3">Premium benefits at a glance</h4>
+                <div class="table-responsive membership-comparison-wrap">
+                  <table class="table membership-comparison-table align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col" class="comparison-col comparison-col--member">Free Member <span class="comparison-current-badge">Current</span></th>
+                        <th scope="col" class="comparison-col comparison-col--premium">Premium Member</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Saved gematria history</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Save up to 3 calculations</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Unlimited saved calculations</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Related word search depth</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Up to 100 related words</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Up to 250 related words</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Premium Research (Wordnik deep related-word explorer with clickable drill-down)</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">GemaBot AI assistant</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Premium forum categories</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Read &amp; post</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Submit proposed blog posts</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Message Center inbox (admin replies)</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Price</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium"><span>$5.55 intro / year</span><small>regularly $7.77</small></span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
               <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
                 <div>
                   <h4 class="h5 mb-2">Pay with Stripe</h4>
@@ -1377,14 +1434,50 @@
         return payload;
       }
 
+      const MEMBERSHIP_UPGRADE_AUTO_OPEN_INTERVAL_MS = 14 * 24 * 60 * 60 * 1000;
+
+      function membershipUpgradeAutoOpenStorageKey(member) {
+        const memberId = String(member?.id || member?.memberId || member?.email || '').trim().toLowerCase();
+        return memberId
+          ? `membershipUpgradeAutoOpenAt:${memberId}`
+          : 'membershipUpgradeAutoOpenAt';
+      }
+
+      function shouldAutoOpenMembershipUpgrade(member) {
+        try {
+          const key = membershipUpgradeAutoOpenStorageKey(member);
+          const lastOpenedRaw = window.localStorage?.getItem(key);
+          const lastOpened = Number(lastOpenedRaw);
+          if (!Number.isFinite(lastOpened) || lastOpened <= 0) {
+            return true;
+          }
+          return Date.now() - lastOpened >= MEMBERSHIP_UPGRADE_AUTO_OPEN_INTERVAL_MS;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function recordMembershipUpgradeAutoOpen(member) {
+        try {
+          const key = membershipUpgradeAutoOpenStorageKey(member);
+          window.localStorage?.setItem(key, String(Date.now()));
+        } catch (error) {
+          /* storage unavailable */
+        }
+      }
+
       function syncMembershipUpgradePanel(member = session?.member) {
         const level = member?.membershipLevel;
         const isFree = level === 'free';
         membershipUpgradeSection.classList.toggle('d-none', !isFree);
-        membershipUpgradeContent.classList.remove('show');
-        membershipUpgradeToggleButton.setAttribute('aria-expanded', 'false');
-        membershipUpgradeToggleArrow.textContent = '▼';
+        const autoOpen = isFree && shouldAutoOpenMembershipUpgrade(member);
+        membershipUpgradeContent.classList.toggle('show', autoOpen);
+        membershipUpgradeToggleButton.setAttribute('aria-expanded', autoOpen ? 'true' : 'false');
+        membershipUpgradeToggleArrow.textContent = autoOpen ? '▲' : '▼';
         membershipUpgradeToggleLabel.textContent = 'Upgrade to Premium';
+        if (autoOpen) {
+          recordMembershipUpgradeAutoOpen(member);
+        }
       }
 
       function syncComparisonCurrentLevel(member = session?.member) {

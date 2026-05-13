@@ -235,37 +235,13 @@
       <div id="membershipPageContent" class="container d-none">
         <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5 d-none">
           <div class="row g-4 align-items-center">
-            <div class="col-lg-8">
+            <div class="col-12 col-lg-9">
               <p id="membershipHeroKicker" class="section-kicker mb-3">Member Access</p>
               <h1 id="membershipHeroTitle" class="display-5 fw-bold mb-3">Start free. Save searches. Unlock related words.</h1>
-              <p id="membershipHeroLead" class="lead mb-0">Create a free account to save searches and run related-word lookups. Once you are signed in, you can upgrade to premium for deeper limits, favorites, and advanced research.</p>
+              <p id="membershipHeroLead" class="lead mb-0">Create a free account to save searches and look up related words. Upgrade to premium to unlock GemaBot, Premium Research, premium forum access, and the message-center inbox.</p>
             </div>
-            <div id="membershipHeroCardColumn" class="col-lg-4">
-              <div class="membership-hero-card h-100">
-                <div class="membership-hero-card__header">
-                  <p id="membershipHeroCardEyebrow" class="membership-hero-card__eyebrow mb-2">Membership Benefits</p>
-                  <h2 id="membershipHeroCardTitle" class="h5 mb-0">Begin with free access, then upgrade when ready.</h2>
-                </div>
-                <div id="membershipHeroFreeTier" class="membership-tier membership-tier--free">
-                  <div class="membership-tier__label">Free Membership</div>
-                  <ul class="list-unstyled mb-0 membership-tier__list">
-                    <li>Store up to <strong>3 calculations</strong>.</li>
-                    <li>Search up to <strong>100 related words</strong>.</li>
-                  </ul>
-                </div>
-                <div id="membershipHeroPremiumTier" class="membership-tier membership-tier--premium">
-                  <div class="membership-tier__label">Premium Membership</div>
-                  <ul class="list-unstyled mb-0 membership-tier__list">
-                    <li><strong>Unlimited history</strong> for saved calculations.</li>
-                    <li>Search up to <strong>250 related words</strong>.</li>
-                    <li>Full <strong>Premium Research</strong> with Wordnik-powered related-word exploration and clickable word drill-down.</li>
-                    <li>Access to <strong>GemaBot</strong> AI assistant for gematria analysis.</li>
-                    <li>Access <strong>premium forum categories</strong>.</li>
-                    <li>Submit proposed blog posts and get published!</li>
-                    <li><strong>Message Center inbox</strong> for admin replies.</li>
-                  </ul>
-                </div>
-              </div>
+            <div class="col-12 col-lg-3 text-lg-end">
+              <a id="membershipHeroCta" class="btn btn-primary btn-lg" href="#authSection">Create free account</a>
             </div>
           </div>
         </section>
@@ -376,7 +352,7 @@
           <div id="memberAlert" class="alert d-none mb-4" role="alert"></div>
           <div id="authPanelRegister" data-auth-panel="register">
             <p class="section-kicker mb-3">New Member</p>
-            <p class="mb-3"><a id="registerBenefitsPreviewLink" class="link-primary text-decoration-none" href="#membershipHero">Curious what you get? See membership benefits</a></p>
+            <p class="mb-3"><a id="registerBenefitsPreviewLink" class="link-primary text-decoration-none" href="#comparisonSection">Curious what you get? See membership benefits</a></p>
             <form id="registerForm" class="row g-3">
               <div class="col-md-6"><label class="form-label" for="registerUsername">Username <span class="text-danger" aria-hidden="true">*</span></label><input id="registerUsername" class="form-control" autocomplete="username" required /></div>
               <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" autocomplete="nickname" /></div>
@@ -813,11 +789,7 @@
       const membershipHeroKicker = document.getElementById('membershipHeroKicker');
       const membershipHeroTitle = document.getElementById('membershipHeroTitle');
       const membershipHeroLead = document.getElementById('membershipHeroLead');
-      const membershipHeroCardColumn = document.getElementById('membershipHeroCardColumn');
-      const membershipHeroCardEyebrow = document.getElementById('membershipHeroCardEyebrow');
-      const membershipHeroCardTitle = document.getElementById('membershipHeroCardTitle');
-      const membershipHeroFreeTier = document.getElementById('membershipHeroFreeTier');
-      const membershipHeroPremiumTier = document.getElementById('membershipHeroPremiumTier');
+      const membershipHeroCta = document.getElementById('membershipHeroCta');
       const comparisonSection = document.getElementById('comparisonSection');
       const comparisonCurrentLevel = document.getElementById('comparisonCurrentLevel');
       const comparisonVisitorCurrent = document.getElementById('comparisonVisitorCurrent');
@@ -1467,36 +1439,22 @@
 
         membershipHero.classList.toggle('d-none', (isLoggedIn && isPremiumMember) || isFreeMember);
 
-        if (isFreeMember) {
-          membershipHeroKicker.textContent = 'Free Membership Active';
-          membershipHeroTitle.textContent = 'Your account is ready';
-          membershipHeroLead.textContent = 'You already have access to saved searches and related-word lookup. Upgrade is optional in the Membership Upgrade panel when you need deeper limits.';
-          membershipHeroCardEyebrow.textContent = 'Free Member Status';
-          membershipHeroCardTitle.textContent = 'Use your dashboard now and upgrade only when needed.';
-          membershipHeroFreeTier.classList.remove('d-none');
-          membershipHeroPremiumTier.classList.add('d-none');
-          membershipHeroCardColumn.classList.remove('d-none');
-          return;
-        }
-
         if (loginOnlyMode) {
           membershipHeroKicker.textContent = 'Premium Member Access';
           membershipHeroTitle.textContent = 'Welcome back! Sign in below.';
           membershipHeroLead.textContent = justVerifiedEmail
-            ? 'Your email is verified. Sign in to access premium tools, saved favorites, and advanced research workflows for the first time.'
-            : 'Sign in to access your premium tools, saved favorites, and advanced research workflows.';
-          membershipHeroCardColumn.classList.add('d-none');
+            ? 'Your email is verified. Sign in to access premium tools and your saved research.'
+            : 'Sign in to access your premium tools and saved research.';
+          membershipHeroCta.textContent = 'Sign in';
+          membershipHeroCta.setAttribute('href', '#authSection');
           return;
         }
 
         membershipHeroKicker.textContent = 'Member Access';
         membershipHeroTitle.textContent = 'Start free. Save searches. Unlock related words.';
-        membershipHeroLead.textContent = 'Create a free account to save searches and run related-word lookups. Once you are signed in, you can upgrade to premium for deeper limits, favorites, and advanced research.';
-        membershipHeroCardEyebrow.textContent = 'Membership Benefits';
-        membershipHeroCardTitle.textContent = 'Begin with free access, then upgrade when ready.';
-        membershipHeroFreeTier.classList.remove('d-none');
-        membershipHeroPremiumTier.classList.remove('d-none');
-        membershipHeroCardColumn.classList.remove('d-none');
+        membershipHeroLead.textContent = 'Create a free account to save searches and look up related words. Upgrade to premium to unlock GemaBot, Premium Research, premium forum access, and the message-center inbox.';
+        membershipHeroCta.textContent = 'Create free account';
+        membershipHeroCta.setAttribute('href', '#authSection');
       }
 
       function hasLearningPathStep1Intent() {

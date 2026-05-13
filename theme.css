@@ -18,6 +18,9 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
   letter-spacing: -0.005em;
 }
 
+/* Canonical brand button. Use `.btn-warning` or `.btn-amber` for the primary
+   amber CTA across the site. Pill/shape variants (e.g. `.membership-upgrade-cta`)
+   must reuse these same brand-amber tokens so the button family stays unified. */
 .btn-warning,
 .btn-amber {
   --bs-btn-color: #ffffff;
@@ -1601,9 +1604,9 @@ body.page-render-pending footer {
 }
 
 .membership-upgrade-cta {
-  background: linear-gradient(180deg, #ffd871, #f7b928);
-  border: none;
-  color: #432300;
+  background: var(--brand-amber);
+  border: 1px solid var(--brand-amber);
+  color: #ffffff;
   font-weight: 700;
   border-radius: 999px;
   padding: 0.55rem 1rem;
@@ -1611,8 +1614,9 @@ body.page-render-pending footer {
 
 .membership-upgrade-cta:hover,
 .membership-upgrade-cta:focus-visible {
-  background: linear-gradient(180deg, #ffdc80, #f8c03b);
-  color: #2f1900;
+  background: var(--brand-amber-hover);
+  border-color: var(--brand-amber-hover);
+  color: #ffffff;
 }
 
 .membership-price-badge {

@@ -10,11 +10,11 @@
      borders so the neutral "off-white" / "near-dark" tones stay consistent. */
   --color-bg-subtle: #f8fafc;
   --color-surface: rgba(255, 255, 255, 0.92);
-  --color-surface-strong: var(--color-surface-strong);
-  --color-surface-dark: var(--color-surface-dark);
-  --color-border-subtle: var(--color-border-subtle);
-  --color-border-soft: var(--color-border-soft);
-  --color-border-dark: var(--color-border-dark);
+  --color-surface-strong: rgba(255, 255, 255, 0.96);
+  --color-surface-dark: rgba(23, 30, 41, 0.92);
+  --color-border-subtle: rgba(53, 65, 79, 0.08);
+  --color-border-soft: rgba(53, 65, 79, 0.12);
+  --color-border-dark: rgba(148, 177, 215, 0.22);
   --color-text-on-dark: #f8fafc;
 
   /* Type scale. Static rungs for body / UI; fluid clamps reserved for

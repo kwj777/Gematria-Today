@@ -3,15 +3,25 @@
   <head>
     <script>
       (function () {
-        try {
-          var m = document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
-          var tier = m ? decodeURIComponent(m[1]) : 'anon';
-          if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
+        var TIERS = ['anon', 'free', 'premium', 'lifetime'];
+        function applyAuthState() {
+          var tier;
+          try {
+            var m = document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
+            tier = m ? decodeURIComponent(m[1]) : 'anon';
+            if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
+          } catch (_) {
+            tier = 'anon';
+          }
           window.__endtimesAuthTier = tier;
-          document.documentElement.classList.add('auth-' + tier);
-        } catch (_) {
-          document.documentElement.classList.add('auth-anon');
+          var root = document.documentElement;
+          for (var i = 0; i < TIERS.length; i++) {
+            root.classList.remove('auth-' + TIERS[i]);
+          }
+          root.classList.add('auth-' + tier);
         }
+        window.__endtimesSyncAuthState = applyAuthState;
+        applyAuthState();
       })();
     </script>
 
@@ -1476,6 +1486,9 @@
       function setLoggedIn(isLoggedIn) {
         if (isLoggedIn) {
           window.sessionStorage.removeItem('memberJustVerifiedEmail');
+        }
+        if (typeof window.__endtimesSyncAuthState === 'function') {
+          window.__endtimesSyncAuthState();
         }
         syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);

@@ -366,15 +366,15 @@
 
       function reportActionButtons(reportId) {
         return [
-          ['In review', 'in_review', 'none'],
-          ['Resolve', 'resolved', 'resolve'],
-          ['Dismiss', 'dismissed', 'dismiss'],
-          ['Remove post', 'actioned', 'remove_post'],
-          ['Hide thread', 'actioned', 'hide_thread'],
-          ['Warn user', 'actioned', 'warn_user'],
-          ['Suspend', 'actioned', 'suspend_user'],
-          ['Escalate', 'in_review', 'escalate'],
-        ].map(([label, status, action]) => `<button class="btn btn-outline-secondary btn-sm" data-report-action="${reportId}" data-status="${status}" data-action="${action}" type="button">${label}</button>`).join('');
+          ['In review', 'in_review', 'none', 'btn-outline-secondary'],
+          ['Resolve', 'resolved', 'resolve', 'btn-outline-success'],
+          ['Dismiss', 'dismissed', 'dismiss', 'btn-outline-secondary'],
+          ['Remove post', 'actioned', 'remove_post', 'btn-outline-danger'],
+          ['Hide thread', 'actioned', 'hide_thread', 'btn-outline-warning'],
+          ['Warn user', 'actioned', 'warn_user', 'btn-outline-warning'],
+          ['Suspend', 'actioned', 'suspend_user', 'btn-outline-danger'],
+          ['Escalate', 'in_review', 'escalate', 'btn-outline-warning'],
+        ].map(([label, status, action, variant]) => `<button class="btn ${variant} btn-sm" data-report-action="${reportId}" data-status="${status}" data-action="${action}" type="button">${label}</button>`).join('');
       }
 
       async function updateReports(payload, successMessage) {
@@ -391,7 +391,7 @@
             <div class="d-flex justify-content-between align-items-start gap-3">
               <div class="w-100">
                 <div class="d-flex gap-2 align-items-center mb-1">
-                  <input type="checkbox" class="form-check-input" data-select-report="${report.id}" ${selectedReports.has(report.id) ? 'checked' : ''} />
+                  <input type="checkbox" class="form-check-input" data-select-report="${report.id}" aria-label="Select report ${esc(report.reason || report.id)} for bulk action" ${selectedReports.has(report.id) ? 'checked' : ''} />
                   <p class="mb-0"><strong>${esc(report.reason)}</strong> · by ${esc(report.reporterUsername)} · ${formatDate(report.createdAt)}</p>
                 </div>
                 <p class="report-meta text-muted mb-1">
@@ -402,10 +402,10 @@
                 <p class="small text-muted mb-1">Category: ${esc(report.categoryName || 'Unknown')} · Thread: ${esc(report.threadTitle || report.threadId || 'Unknown')} · Reply: ${esc(report.postId || 'n/a')}</p>
                 <p class="mb-2">${esc((report.details || report.reportedBodyPreview || 'No details').slice(0, 260))}</p>
                 <div class="row g-2 mb-2">
-                  <div class="col-md-3"><input class="form-control form-control-sm" placeholder="Assign moderator" data-assign-input="${report.id}" value="${esc(report.assignedModeratorUsername || '')}" /></div>
-                  <div class="col-md-3"><select class="form-select form-select-sm" data-canned-template="${report.id}"><option value="">Canned reply</option><option value="policy_warning">Policy warning</option><option value="no_violation">No violation</option><option value="content_removed">Content removed</option></select></div>
-                  <div class="col-md-3"><input class="form-control form-control-sm" placeholder="Moderator note" data-moderator-note="${report.id}" value="${esc(report.moderatorNote || '')}" /></div>
-                  <div class="col-md-3"><input class="form-control form-control-sm" placeholder="Internal note" data-internal-note="${report.id}" value="${esc(report.internalNote || '')}" /></div>
+                  <div class="col-md-6 col-lg-3"><input class="form-control form-control-sm" placeholder="Assign moderator" aria-label="Assign moderator" data-assign-input="${report.id}" value="${esc(report.assignedModeratorUsername || '')}" /></div>
+                  <div class="col-md-6 col-lg-3"><select class="form-select form-select-sm" aria-label="Canned reply template" data-canned-template="${report.id}"><option value="">Canned reply</option><option value="policy_warning">Policy warning</option><option value="no_violation">No violation</option><option value="content_removed">Content removed</option></select></div>
+                  <div class="col-md-6 col-lg-3"><input class="form-control form-control-sm" placeholder="Moderator note" aria-label="Moderator note (visible to reporter)" data-moderator-note="${report.id}" value="${esc(report.moderatorNote || '')}" /></div>
+                  <div class="col-md-6 col-lg-3"><input class="form-control form-control-sm" placeholder="Internal note" aria-label="Internal note (moderators only)" data-internal-note="${report.id}" value="${esc(report.internalNote || '')}" /></div>
                 </div>
                 <div class="d-flex flex-wrap gap-2">${reportActionButtons(report.id)}</div>
               </div>
@@ -472,9 +472,9 @@
               <div class="col-md-5"><label class="form-label small">Guidelines</label><input class="form-control" name="guidelines" value="${esc(category.guidelines || '')}" /></div>
               <div class="col-md-12"><label class="form-label small">Thread template prompt</label><input class="form-control" name="threadTemplatePrompt" value="${esc(category.threadTemplatePrompt || '')}" /></div>
               <div class="col-12 d-flex flex-wrap gap-3 mt-2">
-                <div class="form-check"><input class="form-check-input" type="checkbox" name="isArchived" ${category.isArchived ? 'checked' : ''}><label class="form-check-label">Archived</label></div>
-                <div class="form-check"><input class="form-check-input" type="checkbox" name="isLocked" ${category.isLocked ? 'checked' : ''}><label class="form-check-label">Locked</label></div>
-                <div class="form-check"><input class="form-check-input" type="checkbox" name="requireApproval" ${category.requireApproval ? 'checked' : ''}><label class="form-check-label">Require approval</label></div>
+                <label class="form-check"><input class="form-check-input" type="checkbox" name="isArchived" ${category.isArchived ? 'checked' : ''}><span class="form-check-label">Archived</span></label>
+                <label class="form-check"><input class="form-check-input" type="checkbox" name="isLocked" ${category.isLocked ? 'checked' : ''}><span class="form-check-label">Locked</span></label>
+                <label class="form-check"><input class="form-check-input" type="checkbox" name="requireApproval" ${category.requireApproval ? 'checked' : ''}><span class="form-check-label">Require approval</span></label>
               </div>
               <div class="col-12 d-flex justify-content-end gap-2 mt-2"><button class="btn btn-outline-primary btn-sm" type="submit">Save</button><button class="btn btn-outline-danger btn-sm" type="button" data-delete-category="${category.id}">Delete</button></div>
             </div>

@@ -58,7 +58,8 @@ html.auth-free     .navbar-nav .nav-item.nav-auth--free,
 html.auth-premium  .navbar-nav .nav-item.nav-auth--premium,
 html.auth-lifetime .navbar-nav .nav-item.nav-auth--premium { display: flex; }
 
-.navbar-nav .nav-cta .btn { white-space: nowrap; }
+.navbar-nav .nav-item.nav-cta { align-items: center; }
+.navbar-nav .nav-cta .btn { white-space: nowrap; align-self: center; }
 
 .nav-search-link {
   font-size: 1.5rem;

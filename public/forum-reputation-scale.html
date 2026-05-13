@@ -154,21 +154,21 @@
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="/news.html">News</a></li>
-            <li class="nav-item"><a class="nav-link" href="/blog.html">Blog</a></li>
+            <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
+            <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item"><a class="nav-link" href="/calculator.html">Calculator</a></li>
             <li class="nav-item dropdown">
               <button class="nav-link dropdown-toggle" type="button" id="gematriaMenu" data-bs-toggle="dropdown" aria-expanded="false">Gematria</button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="gematriaMenu">
                 <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
-                <li><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
+                <li data-module="gemabot"><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
               </ul>
             </li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></a></li>
+            <li class="nav-item" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></a></li>
             <li class="nav-item nav-auth nav-auth--free" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--premium" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="/member.html">Join Free</a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="/member.html">Join Free/Login</a></li>
           </ul>
         </div>
       </div>

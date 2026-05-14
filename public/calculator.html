@@ -940,15 +940,55 @@ View results: ${shareUrl}`.trim(),
         window.history.replaceState({}, '', url);
       }
 
+      function computeDigitalRoot(value) {
+        let root = Math.abs(Math.trunc(Number(value) || 0));
+        while (root >= 10) {
+          root = String(root).split('').reduce((sum, digit) => sum + Number(digit), 0);
+        }
+        return root;
+      }
+
+      function createReverseLookupShareUrl(gematriaValue) {
+        const shareUrl = new URL('/calculator.html', getCanonicalShareOrigin());
+        shareUrl.searchParams.set('query', String(gematriaValue));
+        shareUrl.hash = 'gematria-result';
+        return shareUrl.toString();
+      }
+
+      function appendReverseLookupShareButton(payload) {
+        const shareButton = document.createElement('button');
+        shareButton.type = 'button';
+        shareButton.className = 'btn btn-warning btn-sm fw-semibold share-action-button';
+        shareButton.textContent = 'Share this lookup';
+        shareButton.addEventListener('click', async () => {
+          reportButtonEvent('share_button_click', { source: 'calculator_reverse_lookup' });
+          const shareUrl = createReverseLookupShareUrl(payload.gematria);
+          await sharePage({
+            title: `Words with gematria ${payload.gematria}`,
+            text: `Look at what I found on EndTimes.Today :) ${payload.count} word${payload.count === 1 ? '' : 's'} in our database with gematria value ${payload.gematria}.`,
+            url: shareUrl,
+          });
+        });
+
+        const shareActions = document.createElement('div');
+        shareActions.className = 'd-flex flex-column flex-sm-row gap-2 mt-2';
+        shareActions.appendChild(shareButton);
+        gematriaResult.append(document.createElement('br'), shareActions);
+      }
+
       async function renderGematriaMatches(gematriaValue) {
         lookupStatus.textContent = `Searching for words with gematria ${gematriaValue}...`;
         gematriaResult.textContent = '';
         relatedWordsResult.innerHTML = '';
+        currentSearchPayload = null;
+        updateMemberSaveState();
 
         try {
           const payload = await requestWordsByGematria(gematriaValue);
           lookupStatus.textContent = '';
           gematriaResult.textContent = `Words in the database with gematria ${payload.gematria}: ${payload.count}`;
+
+          appendReverseLookupShareButton(payload);
 
           const wrapper = document.createElement('section');
           const heading = document.createElement('h3');
@@ -973,12 +1013,26 @@ View results: ${shareUrl}`.trim(),
           }
 
           relatedWordsResult.appendChild(wrapper);
+
+          const numericTotal = Number(payload.gematria);
+          currentSearchPayload = {
+            queryText: String(payload.gematria),
+            queryType: 'gematria',
+            calculatorSource: 'calculator',
+            gematriaTotal: numericTotal,
+            digitalRoot: computeDigitalRoot(numericTotal),
+            isBaseRoot: (numericTotal - 6) % 54 === 0,
+            resultPayload: { reverseLookup: payload },
+          };
+          updateMemberSaveState();
         } catch (error) {
           window.endTimesTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
           setStatusMessage(lookupStatus, error.message || 'Unable to search by gematria value.');
+          currentSearchPayload = null;
+          updateMemberSaveState();
         }
       }
 

@@ -253,12 +253,19 @@
           </div>
         </section>
 
-        <section class="word-of-day-spotlight word-of-day-spotlight--compact p-3 p-lg-4 mb-5" data-module="wordnik_wotd_slider">
+        <section class="word-of-day-spotlight word-of-day-spotlight--compact p-3 p-lg-4 mb-5" data-module="wordnik_wotd_slider" aria-busy="true">
           <div class="row g-4 align-items-center">
             <div class="col-lg-7">
               <p class="section-kicker text-warning-emphasis mb-2">Wordnik Word of the Day</p>
-              <h2 id="homeWordnikWotdTitle" class="h3 fw-bold mb-2">Daily gematria spotlight is loading…</h2>
-              <p id="homeWordnikWotdDefinition" class="mb-3">Fetching today's Wordnik word and calculation preview.</p>
+              <h2 id="homeWordnikWotdTitle" class="h3 fw-bold mb-2 placeholder-glow">
+                <span class="visually-hidden">Daily gematria spotlight is loading.</span>
+                <span class="placeholder async-shell-line async-shell-line--lg col-9" aria-hidden="true"></span>
+              </h2>
+              <p id="homeWordnikWotdDefinition" class="mb-3 placeholder-glow">
+                <span class="visually-hidden">Fetching today's Wordnik word and calculation preview.</span>
+                <span class="placeholder async-shell-line col-11" aria-hidden="true"></span>
+                <span class="placeholder async-shell-line col-7 mt-1" aria-hidden="true"></span>
+              </p>
               <div class="d-flex flex-wrap gap-2">
                 <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning touch-target-lg" href="/definition">Open full definition</a>
                 <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light touch-target-lg" href="/calculator.html">Open in calculator</a>

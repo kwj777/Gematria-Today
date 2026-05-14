@@ -315,6 +315,10 @@ async function loadWordnikWordOfDayHero() {
     if (timeoutId !== null) {
       window.clearTimeout(timeoutId);
     }
+    const section = document.querySelector('[data-module="wordnik_wotd_slider"]');
+    section?.setAttribute('aria-busy', 'false');
+    document.getElementById('homeWordnikWotdTitle')?.classList.remove('placeholder-glow');
+    document.getElementById('homeWordnikWotdDefinition')?.classList.remove('placeholder-glow');
   }
 }
 

@@ -283,12 +283,34 @@ button:disabled {
 }
 
 /* aria-disabled doesn't block pointer events the way :disabled does, so the
-   hover state can still fire. Give it a slightly less-muted treatment so the
-   user can tell their cursor is over the control without implying it works. */
+   Bootstrap .btn:hover rule still fires and swaps in --bs-btn-hover-bg /
+   --bs-btn-hover-color. Pin those tokens to the disabled equivalents so the
+   background doesn't drift toward the active hover color on aria-disabled
+   buttons. */
+.btn[aria-disabled="true"] {
+  --bs-btn-hover-color: var(--bs-btn-disabled-color);
+  --bs-btn-hover-bg: var(--bs-btn-disabled-bg);
+  --bs-btn-hover-border-color: var(--bs-btn-disabled-border-color);
+}
+
+/* Hover on an aria-disabled control must NOT look like it's becoming
+   interactive. Keep the resting opacity/grayscale (no lightening) and add a
+   faint inset ring so the user still gets confirmation that the cursor is
+   over the control -- in a "blocked" register, not an "active" one. */
 .btn[aria-disabled="true"]:not(:disabled):hover,
-button[aria-disabled="true"]:not(:disabled):hover {
-  opacity: 0.7;
-  filter: grayscale(0.2);
+.btn[aria-disabled="true"]:not(:disabled):focus-visible,
+button[aria-disabled="true"]:not(:disabled):hover,
+button[aria-disabled="true"]:not(:disabled):focus-visible {
+  opacity: 0.55;
+  filter: grayscale(0.35);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-bs-theme="dark"] .btn[aria-disabled="true"]:not(:disabled):hover,
+:root[data-bs-theme="dark"] .btn[aria-disabled="true"]:not(:disabled):focus-visible,
+:root[data-bs-theme="dark"] button[aria-disabled="true"]:not(:disabled):hover,
+:root[data-bs-theme="dark"] button[aria-disabled="true"]:not(:disabled):focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 
 @media (max-width: 575.98px) {

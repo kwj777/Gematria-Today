@@ -90,6 +90,17 @@
      uniform regardless of whatever stroke-width an author inlined. */
   --icon-stroke-width: 1.5;
 
+  /* Vertical rhythm. Use `.section` or `.section--lg` on top-level
+     children of `<main>` for consistent block spacing instead of ad-hoc
+     `mb-5` / padding utilities. Clamps scale with viewport. */
+  --section-gap: clamp(2.5rem, 4vw, 4rem);
+  --section-gap-lg: clamp(3.5rem, 6vw, 6rem);
+
+  /* Brand the global focus-ring colour so keyboard focus reads as
+     intentional/branded rather than the default Bootstrap blue halo. */
+  --bs-focus-ring-color: rgba(var(--brand-amber-rgb), 0.45);
+  --bs-focus-ring-width: 0.2rem;
+
   /* Z-index scale. Names describe the layer, not the file the rule lives in.
      Migrated from previously ad-hoc literals (1080, 1200, 2999, 3000, 4000,
      9000, 9100) so future additions land on a known rung. */
@@ -105,6 +116,16 @@
 h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6, .navbar-brand {
   font-family: var(--brand-heading-font);
   letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+/* Fraunces optical-size axis: nudge to display weight on larger headings
+   so the serif reads with the right contrast/stress for editorial use. */
+h1, .display-1, .display-2, .display-3, .display-4, .display-5 {
+  font-variation-settings: "opsz" 96;
+}
+h2, h3 {
+  font-variation-settings: "opsz" 32;
 }
 
 /* Button hierarchy (site-wide rules).
@@ -155,6 +176,23 @@ body {
   border-bottom: 1px solid var(--color-border-dark);
 }
 
+/* Vertical-rhythm utility. Apply `.section` to a top-level child of
+   <main> to space it from its siblings using --section-gap. Use
+   `.section--lg` between editorially "weighty" blocks (hero -> first
+   content row, content end -> CTA, etc.). Backwards compatible: existing
+   `mb-4` / `mb-5` usage is unaffected; this just gives new layouts a
+   single knob to turn. */
+.section {
+  margin-block-end: var(--section-gap);
+}
+.section--lg {
+  margin-block-end: var(--section-gap-lg);
+}
+.section:last-child,
+.section--lg:last-child {
+  margin-block-end: 0;
+}
+
 /* Unified inline SVG icon weight. Apply `.icon` to any inline SVG used as
    a UI icon; CSS forces a consistent stroke regardless of the value an
    author may have inlined on the element. */
@@ -163,6 +201,17 @@ body {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Branded focus-visible ring for non-Bootstrap interactive elements
+   (plain anchors, summary, etc.). Bootstrap controls already pick up the
+   amber tint via --bs-focus-ring-color above; this catches the rest so
+   keyboard navigation reads consistently across the platform. */
+a:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--brand-amber);
+  outline-offset: 2px;
 }
 
 /* Button radii. Tightens Bootstrap's defaults a touch and keeps every
@@ -557,7 +606,7 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
 :root[data-bs-theme="dark"] .stat-card {
   background: var(--color-surface-dark);
   border-color: var(--color-border-dark);
-  box-shadow: 0 1rem 2.5rem rgba(5, 9, 14, 0.45);
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
 }
 
 :root[data-bs-theme="dark"] .text-muted {

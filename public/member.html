@@ -166,6 +166,7 @@
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/conversion-tracking.js"></script>
     <script defer src="/site-modules.js"></script>
+    <script defer src="/register-form.js"></script>
     <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
     <script type="application/ld+json">
       {
@@ -1228,14 +1229,6 @@
         link.click();
         link.remove();
         URL.revokeObjectURL(objectUrl);
-      }
-
-      function showRegisterPasswordMismatchAlert() {
-        registerPasswordMismatchAlert.classList.remove('d-none');
-      }
-
-      function clearRegisterPasswordMismatchAlert() {
-        registerPasswordMismatchAlert.classList.add('d-none');
       }
 
       function scheduleFollowItTabAutoClose(followItWindow, minDelayMs = 15000, maxDelayMs = 300000) {
@@ -2832,76 +2825,47 @@
         });
       }
 
-      document.getElementById('registerForm').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearAlert();
-        clearRegisterPasswordMismatchAlert();
-        const password = registerPasswordInput.value;
-        const confirmPassword = registerConfirmPasswordInput.value;
-        if (password !== confirmPassword) {
-          showRegisterPasswordMismatchAlert();
-          return;
-        }
-        const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
-        const registerEmail = document.getElementById('registerEmail').value.trim();
-        const payload = {
-          username: document.getElementById('registerUsername').value.trim(),
-          displayName: document.getElementById('registerDisplayName').value.trim(),
-          email: document.getElementById('registerEmail').value.trim(),
-          password,
-        };
-        const challengeToken = getTurnstileToken('register');
-        if (isTurnstileRequired() && !challengeToken) {
-          showAlert('Please complete the anti-robot check before creating your account.', 'warning');
-          return;
-        }
-        payload.challengeToken = challengeToken;
-
-        registerButton.disabled = true;
-        window.endTimesTracking?.track('sign_up_start', { source: 'member_register_form' });
-
-        try {
-          session = await request('/api/member-register', { method: 'POST', body: JSON.stringify(payload) });
-          session = null;
-          favoriteHistoryIds = new Set();
-          flushPendingHistoryNoteSaves();
-          setLoggedIn(false);
-          showAlert('Membership account created. Please check your email and verify your account before signing in.', 'success');
-          window.endTimesTracking?.track('sign_up_complete', { source: 'member_register_form' });
-          historyItems = [];
-          renderHistory();
-          event.target.reset();
-          if (shouldSubscribeToBlog) {
-            rememberFollowItSubscriptionIntent(registerEmail);
-          }
-          setAuthView('login', { updateUrl: true });
-        } catch (error) {
-          window.endTimesTracking?.track('sign_up_error', {
-            source: 'member_register_form',
-            errorMessage: error?.message || 'unknown_error',
-          });
-          showAlert(error.message || 'Unable to create membership account.');
-        } finally {
-          registerButton.disabled = false;
-          resetTurnstileWidget('register');
-        }
+      window.addEventListener('DOMContentLoaded', () => {
+        window.EndTimesRegisterForm.initRegisterForm({
+          form: document.getElementById('registerForm'),
+          fields: {
+            username: document.getElementById('registerUsername'),
+            displayName: document.getElementById('registerDisplayName'),
+            email: document.getElementById('registerEmail'),
+            password: registerPasswordInput,
+            confirmPassword: registerConfirmPasswordInput,
+          },
+          submitButton: registerButton,
+          passwordMismatchAlert: registerPasswordMismatchAlert,
+          confirmMismatchHint: document.getElementById('registerConfirmPasswordMismatch'),
+          alert: { show: showAlert, clear: clearAlert },
+          source: 'member_register_form',
+          request,
+          challenge: {
+            getToken: () => getTurnstileToken('register'),
+            reset: () => resetTurnstileWidget('register'),
+          },
+          onSuccess: (_response, ctx) => {
+            const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
+            const registerEmail = document.getElementById('registerEmail').value.trim();
+            session = null;
+            favoriteHistoryIds = new Set();
+            flushPendingHistoryNoteSaves();
+            setLoggedIn(false);
+            showAlert('Membership account created. Please check your email and verify your account before signing in.', 'success');
+            historyItems = [];
+            renderHistory();
+            ctx.form.reset();
+            if (shouldSubscribeToBlog) {
+              rememberFollowItSubscriptionIntent(registerEmail);
+            }
+            setAuthView('login', { updateUrl: true });
+          },
+          onError: (error) => {
+            showAlert(error.message || 'Unable to create membership account.');
+          },
+        });
       });
-
-      registerPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
-      registerConfirmPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
-
-      const registerConfirmPasswordMismatch = document.getElementById('registerConfirmPasswordMismatch');
-      function syncRegisterConfirmInline() {
-        if (!registerConfirmPasswordMismatch) return;
-        const confirm = registerConfirmPasswordInput.value;
-        const password = registerPasswordInput.value;
-        const mismatch = confirm.length > 0 && confirm !== password;
-        registerConfirmPasswordMismatch.classList.toggle('d-none', !mismatch);
-        registerConfirmPasswordInput.setAttribute('aria-invalid', mismatch ? 'true' : 'false');
-      }
-      registerConfirmPasswordInput.addEventListener('input', syncRegisterConfirmInline);
-      registerConfirmPasswordInput.addEventListener('blur', syncRegisterConfirmInline);
-      registerPasswordInput.addEventListener('input', syncRegisterConfirmInline);
 
       authTabRegister.addEventListener('click', () => {
         window.endTimesTracking?.track('sign_up_start', { source: 'member_auth_tab' });

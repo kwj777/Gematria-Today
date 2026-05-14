@@ -323,6 +323,112 @@
   }
 })();
 
+(function installToastPrimitive() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+  if (window.__toastPrimitiveInstalled) {
+    return;
+  }
+  window.__toastPrimitiveInstalled = true;
+
+  const AUTO_DISMISS_MS = 6000;
+  const TONES = new Set(['success', 'danger', 'warning', 'info']);
+  let container = null;
+  let stylesInjected = false;
+
+  function injectStyles() {
+    if (stylesInjected) {
+      return;
+    }
+    stylesInjected = true;
+    const style = document.createElement('style');
+    style.setAttribute('data-toast-primitive', 'true');
+    style.textContent = [
+      '.ui-toast-container{position:fixed;top:1rem;right:1rem;z-index:1080;display:flex;flex-direction:column;gap:0.5rem;max-width:min(22rem,calc(100vw - 2rem));pointer-events:none;}',
+      '.ui-toast{pointer-events:auto;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#212529);border:1px solid rgba(0,0,0,0.1);border-left:4px solid var(--bs-info,#0dcaf0);border-radius:0.375rem;box-shadow:0 0.5rem 1rem rgba(0,0,0,0.15);padding:0.75rem 0.75rem 0.75rem 1rem;display:flex;align-items:flex-start;gap:0.5rem;animation:ui-toast-in 160ms ease-out;}',
+      '.ui-toast--success{border-left-color:var(--bs-success,#198754);}',
+      '.ui-toast--danger{border-left-color:var(--bs-danger,#dc3545);}',
+      '.ui-toast--warning{border-left-color:var(--bs-warning,#ffc107);}',
+      '.ui-toast--info{border-left-color:var(--bs-info,#0dcaf0);}',
+      '.ui-toast__message{flex:1;font-size:0.9rem;line-height:1.35;}',
+      '.ui-toast__close{background:transparent;border:0;font-size:1.25rem;line-height:1;padding:0 0.25rem;color:inherit;opacity:0.6;cursor:pointer;}',
+      '.ui-toast__close:hover,.ui-toast__close:focus{opacity:1;}',
+      '.ui-toast--leaving{animation:ui-toast-out 160ms ease-in forwards;}',
+      '@keyframes ui-toast-in{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}',
+      '@keyframes ui-toast-out{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-8px);}}',
+      '@media (prefers-reduced-motion: reduce){.ui-toast,.ui-toast--leaving{animation:none;}}',
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  function ensureContainer() {
+    if (container && document.body.contains(container)) {
+      return container;
+    }
+    container = document.createElement('div');
+    container.className = 'ui-toast-container';
+    container.setAttribute('aria-live', 'polite');
+    container.setAttribute('aria-atomic', 'false');
+    document.body.appendChild(container);
+    return container;
+  }
+
+  function dismiss(toast) {
+    if (!toast || toast.dataset.leaving === 'true') {
+      return;
+    }
+    toast.dataset.leaving = 'true';
+    toast.classList.add('ui-toast--leaving');
+    const cleanup = () => toast.remove();
+    toast.addEventListener('animationend', cleanup, { once: true });
+    window.setTimeout(cleanup, 240);
+  }
+
+  function show(message, tone = 'info', options = {}) {
+    const text = String(message == null ? '' : message).trim();
+    if (!text) {
+      return null;
+    }
+    const safeTone = TONES.has(tone) ? tone : 'info';
+
+    injectStyles();
+    const host = ensureContainer();
+
+    const toast = document.createElement('div');
+    toast.className = `ui-toast ui-toast--${safeTone}`;
+    toast.setAttribute('role', safeTone === 'danger' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', safeTone === 'danger' ? 'assertive' : 'polite');
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'ui-toast__message';
+    msgEl.textContent = text;
+    toast.appendChild(msgEl);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'ui-toast__close';
+    closeBtn.setAttribute('aria-label', 'Dismiss notification');
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', () => dismiss(toast));
+    toast.appendChild(closeBtn);
+
+    host.appendChild(toast);
+
+    const explicitMs = typeof options.autoDismiss === 'number' ? options.autoDismiss : null;
+    const shouldAutoDismiss = options.autoDismiss !== false
+      && (explicitMs !== null ? explicitMs > 0 : safeTone !== 'danger');
+    if (shouldAutoDismiss) {
+      window.setTimeout(() => dismiss(toast), explicitMs !== null ? explicitMs : AUTO_DISMISS_MS);
+    }
+
+    return toast;
+  }
+
+  window.showToast = show;
+  window.dismissToast = dismiss;
+})();
+
 (function installBackToTopButton() {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return;

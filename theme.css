@@ -4,6 +4,11 @@
   --brand-amber: #d97706;
   --brand-amber-hover: #b45309;
   --brand-amber-rgb: 217, 119, 6;
+  /* Foreground (text/icon) color used on filled brand-amber surfaces. */
+  --brand-amber-fg: #ffffff;
+  /* Muted-tan background applied to brand-amber buttons when they're in the
+     :disabled state -- a desaturated cousin of --brand-amber, not a neutral. */
+  --brand-amber-disabled-bg: #b8a48a;
   --brand-heading-font: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif;
 
   /* Surfaces & borders. Use these for all panel/card backgrounds and hairline
@@ -12,10 +17,20 @@
   --color-surface: rgba(255, 255, 255, 0.92);
   --color-surface-strong: rgba(255, 255, 255, 0.96);
   --color-surface-dark: rgba(23, 30, 41, 0.92);
+  /* Soft blue-tinted highlight layered on top of light surfaces (e.g. the
+     followit-card gradient). Not a base surface -- it's only legible when
+     stacked over --color-surface-strong or similar. */
+  --color-surface-highlight-soft: rgba(248, 251, 255, 0.94);
   --color-border-subtle: rgba(53, 65, 79, 0.08);
   --color-border-soft: rgba(53, 65, 79, 0.12);
   --color-border-dark: rgba(148, 177, 215, 0.22);
   --color-text-on-dark: #f8fafc;
+
+  /* Nav-search pill tokens. The pill sits on the dark navbar, so its text
+     and chrome are tinted-white at varying alpha. Two rungs (resting/hover)
+     are tokenised so callers don't reach for raw rgba whites. */
+  --nav-on-dark-text: rgba(255, 255, 255, 0.88);
+  --nav-on-dark-border-hover: rgba(255, 255, 255, 0.35);
 
   /* Type scale. Static rungs for body / UI; fluid clamps reserved for
      display-sized headings only. Forum-specific aliases live in
@@ -97,19 +112,19 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
    `.btn-warning` so the button family stays unified. */
 .btn-warning,
 .btn-amber {
-  --bs-btn-color: #ffffff;
+  --bs-btn-color: var(--brand-amber-fg);
   --bs-btn-bg: var(--brand-amber);
   --bs-btn-border-color: var(--brand-amber);
-  --bs-btn-hover-color: #ffffff;
+  --bs-btn-hover-color: var(--brand-amber-fg);
   --bs-btn-hover-bg: var(--brand-amber-hover);
   --bs-btn-hover-border-color: var(--brand-amber-hover);
   --bs-btn-focus-shadow-rgb: var(--brand-amber-rgb);
-  --bs-btn-active-color: #ffffff;
+  --bs-btn-active-color: var(--brand-amber-fg);
   --bs-btn-active-bg: var(--brand-amber-hover);
   --bs-btn-active-border-color: var(--brand-amber-hover);
-  --bs-btn-disabled-color: #ffffff;
-  --bs-btn-disabled-bg: #b8a48a;
-  --bs-btn-disabled-border-color: #b8a48a;
+  --bs-btn-disabled-color: var(--brand-amber-fg);
+  --bs-btn-disabled-bg: var(--brand-amber-disabled-bg);
+  --bs-btn-disabled-border-color: var(--brand-amber-disabled-bg);
   --bs-btn-disabled-opacity: 0.75;
 }
 
@@ -170,7 +185,7 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
 .nav-search-link {
   font-size: 0.9rem;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--nav-on-dark-text);
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -194,7 +209,7 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
 .nav-search-link:focus-visible {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: var(--nav-on-dark-border-hover);
 }
 
 @media (min-width: 992px) {
@@ -272,17 +287,45 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
   --bs-btn-active-bg: rgba(158, 197, 254, 0.18);
 }
 
-.btn[aria-disabled="true"]:not(:disabled),
-button[aria-disabled="true"]:not(:disabled) {
+.btn[aria-disabled="true"],
+.btn:disabled,
+.btn.disabled,
+button[aria-disabled="true"],
+button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   filter: grayscale(0.35);
 }
 
+/* aria-disabled doesn't block pointer events the way :disabled does, so the
+   Bootstrap .btn:hover rule still fires and swaps in --bs-btn-hover-bg /
+   --bs-btn-hover-color. Pin those tokens to the disabled equivalents so the
+   background doesn't drift toward the active hover color on aria-disabled
+   buttons. */
+.btn[aria-disabled="true"] {
+  --bs-btn-hover-color: var(--bs-btn-disabled-color);
+  --bs-btn-hover-bg: var(--bs-btn-disabled-bg);
+  --bs-btn-hover-border-color: var(--bs-btn-disabled-border-color);
+}
+
+/* Hover on an aria-disabled control must NOT look like it's becoming
+   interactive. Keep the resting opacity/grayscale (no lightening) and add a
+   faint inset ring so the user still gets confirmation that the cursor is
+   over the control -- in a "blocked" register, not an "active" one. */
 .btn[aria-disabled="true"]:not(:disabled):hover,
-button[aria-disabled="true"]:not(:disabled):hover {
-  opacity: 0.7;
-  filter: grayscale(0.2);
+.btn[aria-disabled="true"]:not(:disabled):focus-visible,
+button[aria-disabled="true"]:not(:disabled):hover,
+button[aria-disabled="true"]:not(:disabled):focus-visible {
+  opacity: 0.55;
+  filter: grayscale(0.35);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-bs-theme="dark"] .btn[aria-disabled="true"]:not(:disabled):hover,
+:root[data-bs-theme="dark"] .btn[aria-disabled="true"]:not(:disabled):focus-visible,
+:root[data-bs-theme="dark"] button[aria-disabled="true"]:not(:disabled):hover,
+:root[data-bs-theme="dark"] button[aria-disabled="true"]:not(:disabled):focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 
 @media (max-width: 575.98px) {
@@ -1340,7 +1383,7 @@ footer.site-footer a:focus-visible {
   padding: clamp(0.9rem, 2vw, 1.15rem);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border-soft);
-  background: linear-gradient(155deg, var(--color-surface-strong), rgba(248, 251, 255, 0.94));
+  background: linear-gradient(155deg, var(--color-surface-strong), var(--color-surface-highlight-soft));
   box-shadow: 0 0.9rem 2rem rgba(63, 64, 58, 0.08);
 }
 
@@ -2433,8 +2476,8 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
 
 /* ----- Form controls: focus, validation, touch targets ------------------- */
 /* Gives every Bootstrap form-control a consistent brand-amber focus ring,
-   a real .is-invalid state, and a 44px touch target on mobile. Buttons in
-   an aria-disabled state get a not-allowed cursor (Bootstrap only dims). */
+   a real .is-invalid state, and a 44px touch target on mobile. The disabled
+   visual treatment for buttons lives near the .btn-ghost rule above. */
 .form-control,
 .form-select {
   min-height: 2.75rem;
@@ -2473,12 +2516,6 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
 
 :root[data-bs-theme="dark"] .invalid-feedback {
   color: #f5b1b8;
-}
-
-.btn[aria-disabled="true"],
-.btn:disabled,
-.btn.disabled {
-  cursor: not-allowed;
 }
 
 /* Password visibility toggles are injected by ui-feedback.js as plain

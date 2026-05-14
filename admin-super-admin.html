@@ -539,7 +539,7 @@
           state.siteModules = { ...DEFAULT_SITE_MODULES, ...(state.settings.siteModules || {}) };
           renderSiteModules();
           showMessage(saveMessage, 'Site module switches saved.');
-          window.alert('Site module switches saved. Please allow up to 10 minutes for changes to take effect.');
+          window.showToast?.('Site module switches saved. Please allow up to 10 minutes for changes to take effect.', 'info');
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to save site module switches.');
         }
@@ -579,7 +579,7 @@
           showMessage(saveMessage, selectedTheme === 'bootstrap'
             ? 'Global theme reset to Bootstrap default.'
             : `Global theme updated to ${getBootswatchThemeLabel(selectedTheme)}.`);
-          window.alert('Global theme saved. Please allow up to 10 minutes for cached pages to refresh.');
+          window.showToast?.('Global theme saved. Please allow up to 10 minutes for cached pages to refresh.', 'info');
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to save global theme.');
         }
@@ -618,7 +618,7 @@
           showMessage(saveMessage, selectedTheme === 'bootstrap'
             ? 'Private preview theme reset to Bootstrap default.'
             : `Private preview theme updated to ${getBootswatchThemeLabel(selectedTheme)}.`);
-          window.alert('Private preview theme saved for this browser session only and applied immediately.');
+          window.showToast?.('Private preview theme saved for this browser session only and applied immediately.', 'info');
         } catch (error) {
           showMessage(errorMessage, error.message || 'Unable to save private preview theme.');
         }

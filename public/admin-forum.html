@@ -120,6 +120,7 @@
     <link rel="stylesheet" href="/api/public-theme-css" />
     <link rel="stylesheet" href="/theme.css" />
     <script src="/admin-theme.js"></script>
+    <script defer src="/ui-feedback.js"></script>
     <style>
       .admin-section-title { letter-spacing: 0.01em; }
       .report-card { border-left: 4px solid rgba(13, 110, 253, 0.35); }
@@ -486,7 +487,7 @@
             event.preventDefault();
             const formData = new FormData(form);
             ['isArchived', 'isLocked', 'requireApproval'].forEach((name) => formData.set(name, form.querySelector(`[name="${name}"]`).checked ? 'true' : 'false'));
-            try { hideAlert(); await request('/api/admin-forum', { method: 'PATCH', body: JSON.stringify(Object.fromEntries(formData.entries())) }); await load(); showAlert('Category updated.', 'success'); window.alert('Category changes saved successfully.'); }
+            try { hideAlert(); await request('/api/admin-forum', { method: 'PATCH', body: JSON.stringify(Object.fromEntries(formData.entries())) }); await load(); showAlert('Category updated.', 'success'); window.showToast?.('Category changes saved successfully.', 'success'); }
             catch (error) { showAlert(error.message); }
           });
         });

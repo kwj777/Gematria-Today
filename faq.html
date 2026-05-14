@@ -212,7 +212,7 @@
             <li class="nav-item"><a class="nav-link active" href="/faq.html" aria-current="page">FAQ</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
-            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search&hellip;</span></a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>
@@ -271,7 +271,13 @@
           <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-7"></span></p>
         </div>
         <div id="faqError" class="alert alert-danger d-none" role="alert"></div>
+        <div id="faqSearchShell" class="content-panel p-3 p-lg-4 mb-3 d-none">
+          <label class="form-label fw-semibold" for="faqSearch">Search FAQ</label>
+          <input id="faqSearch" type="search" class="form-control" placeholder="Type a keyword to filter questions" autocomplete="off" />
+          <p id="faqSearchStatus" class="form-text mb-0 mt-2" aria-live="polite"></p>
+        </div>
         <div id="faqAccordion" class="accordion d-none async-content-shell async-content-shell--md"></div>
+        <p id="faqNoResults" class="text-muted small mt-3 d-none" role="status">No FAQ entries match your search. Try different keywords.</p>
       </div>
     </main>
     <footer class="site-footer py-4 mt-5">
@@ -356,7 +362,7 @@
           faqLoading.classList.add('d-none');
           faqAccordion.classList.remove('d-none');
           faqAccordion.innerHTML = items.map((item, index) => `
-            <div class="accordion-item faq-card ${index < items.length - 1 ? 'mb-3' : ''} border-0">
+            <div class="accordion-item faq-card ${index < items.length - 1 ? 'mb-3' : ''} border-0" data-faq-question="${escapeHtml(item.question.toLowerCase())}" data-faq-answer="${escapeHtml(item.answer.toLowerCase())}">
               <h2 class="accordion-header" id="faqHeading${index}">
                 <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#faqPanel${index}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="faqPanel${index}">${escapeHtml(item.question)}</button>
               </h2>
@@ -364,6 +370,41 @@
                 <div class="accordion-body">${escapeHtml(item.answer).replaceAll('\n', '<br /><br />')}</div>
               </div>
             </div>`).join('');
+
+          const faqSearchShell = document.getElementById('faqSearchShell');
+          const faqSearch = document.getElementById('faqSearch');
+          const faqSearchStatus = document.getElementById('faqSearchStatus');
+          const faqNoResults = document.getElementById('faqNoResults');
+          if (faqSearchShell) faqSearchShell.classList.remove('d-none');
+          if (faqSearchStatus) faqSearchStatus.textContent = `${items.length} questions available.`;
+
+          let faqSearchTimer = null;
+          faqSearch?.addEventListener('input', () => {
+            if (faqSearchTimer) window.clearTimeout(faqSearchTimer);
+            faqSearchTimer = window.setTimeout(() => {
+              const term = faqSearch.value.trim().toLowerCase();
+              const accordionItems = faqAccordion.querySelectorAll('.accordion-item');
+              let visible = 0;
+              accordionItems.forEach((node) => {
+                if (!term) {
+                  node.hidden = false;
+                  visible++;
+                  return;
+                }
+                const q = node.getAttribute('data-faq-question') || '';
+                const a = node.getAttribute('data-faq-answer') || '';
+                const match = q.includes(term) || a.includes(term);
+                node.hidden = !match;
+                if (match) visible++;
+              });
+              if (faqSearchStatus) {
+                faqSearchStatus.textContent = term
+                  ? `${visible} of ${items.length} questions match "${term}".`
+                  : `${items.length} questions available.`;
+              }
+              if (faqNoResults) faqNoResults.classList.toggle('d-none', visible > 0);
+            }, 120);
+          });
         })
         .catch((error) => {
           faqLoading.classList.add('d-none');

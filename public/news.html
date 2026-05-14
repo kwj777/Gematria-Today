@@ -217,13 +217,18 @@
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
-            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search&hellip;</span></a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>
     </nav>
     <main id="mainContent" class="py-5">
       <div class="container">
+        <noscript>
+          <div class="alert alert-warning" role="alert">
+            <strong>JavaScript is disabled.</strong> RSS feeds, filters, and refresh actions on this page all need JavaScript. Please enable JavaScript to load the latest headlines.
+          </div>
+        </noscript>
         <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
           <p class="section-kicker mb-3">News Feed</p>
           <div class="row g-4 align-items-center">
@@ -310,19 +315,27 @@
           <div id="feedGrid" class="row g-4" aria-busy="true" aria-live="polite">
             <p class="visually-hidden">Loading RSS source previews…</p>
             <div class="col-md-6 col-xl-4" aria-hidden="true">
-              <article class="news-preview-card h-100 p-4 news-placeholder-panel">
+              <article class="news-preview-card h-100 p-4 news-placeholder-panel d-flex flex-column">
                 <p class="placeholder-glow mb-3"><span class="placeholder col-5"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-8"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-10"></span></p>
-                <p class="placeholder-glow mb-0"><span class="placeholder col-6"></span></p>
+                <p class="placeholder-glow mb-4"><span class="placeholder col-6"></span></p>
+                <div class="mt-auto d-flex justify-content-between gap-3">
+                  <span class="placeholder-glow"><span class="placeholder col-4 small"></span></span>
+                  <span class="placeholder-glow"><span class="placeholder col-3 small"></span></span>
+                </div>
               </article>
             </div>
             <div class="col-md-6 col-xl-4 d-none d-md-block" aria-hidden="true">
-              <article class="news-preview-card h-100 p-4 news-placeholder-panel">
+              <article class="news-preview-card h-100 p-4 news-placeholder-panel d-flex flex-column">
                 <p class="placeholder-glow mb-3"><span class="placeholder col-4"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-9"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-7"></span></p>
-                <p class="placeholder-glow mb-0"><span class="placeholder col-5"></span></p>
+                <p class="placeholder-glow mb-4"><span class="placeholder col-5"></span></p>
+                <div class="mt-auto d-flex justify-content-between gap-3">
+                  <span class="placeholder-glow"><span class="placeholder col-4 small"></span></span>
+                  <span class="placeholder-glow"><span class="placeholder col-3 small"></span></span>
+                </div>
               </article>
             </div>
           </div>

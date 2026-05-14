@@ -1351,6 +1351,30 @@
           return null;
         }
 
+        async function recordCompletionForSignedInMember() {
+          try {
+            const csrfResponse = await fetch('/api/member-csrf', {
+              credentials: 'same-origin',
+              headers: { accept: 'application/json' },
+            });
+            if (!csrfResponse.ok) return;
+            const csrfPayload = await csrfResponse.json().catch(() => ({}));
+            const token = csrfPayload && csrfPayload.csrfToken;
+            if (!token) return; // Anonymous visitor; nothing to persist.
+            await fetch('/api/member-learning-path-complete', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: {
+                'content-type': 'application/json',
+                'x-csrf-token': token,
+              },
+              body: '{}',
+            });
+          } catch {
+            // Non-fatal: banner is shown regardless of server-side persistence.
+          }
+        }
+
         function maybeShow() {
           const banner = document.getElementById('learningPathCompletionBanner');
           if (!banner) return;
@@ -1365,6 +1389,7 @@
 
           banner.classList.remove('d-none');
           window.endTimesTracking?.track?.('learning_path_completion_view', { source });
+          recordCompletionForSignedInMember();
 
           const dismiss = document.getElementById('learningPathCompletionBannerDismiss');
           dismiss?.addEventListener('click', () => {

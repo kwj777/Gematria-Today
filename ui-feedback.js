@@ -257,7 +257,9 @@
 
   function apply() {
     const current = normalize(window.location.pathname);
-    const links = document.querySelectorAll('.navbar .nav-link[href]');
+    const links = document.querySelectorAll(
+      '.navbar .nav-link[href], .navbar .dropdown-item[href]',
+    );
     links.forEach((link) => {
       const href = link.getAttribute('href') || '';
       if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
@@ -271,6 +273,12 @@
       } else if (link.getAttribute('aria-current') === 'page') {
         link.removeAttribute('aria-current');
       }
+    });
+
+    document.querySelectorAll('.navbar .dropdown-toggle').forEach((toggle) => {
+      const dropdown = toggle.closest('.dropdown');
+      const hasActiveChild = Boolean(dropdown && dropdown.querySelector('.dropdown-item.active'));
+      toggle.classList.toggle('active', hasActiveChild);
     });
   }
 

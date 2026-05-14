@@ -258,7 +258,7 @@
 
         <section class="content-panel p-3 p-lg-4 mb-4" aria-labelledby="newsFiltersHeading">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 id="newsFiltersHeading" class="h6 mb-0">Filters</h2>
+            <h2 id="newsFiltersHeading" class="h5 mb-0">Filters</h2>
             <div class="d-flex flex-wrap align-items-center gap-3">
               <span class="small text-muted" id="newsLastUpdated" aria-live="polite">Last updated: …</span>
               <button id="newsRefreshButton" type="button" class="btn btn-outline-primary btn-sm">Refresh</button>
@@ -482,7 +482,7 @@
         const node = document.getElementById('newsLastUpdated');
         if (!node) return;
         const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
         node.textContent = `Last updated: ${time}`;
       }
 

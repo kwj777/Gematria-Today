@@ -62,6 +62,17 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
   --radius-3xl: 1.5rem;
+
+  /* Z-index scale. Names describe the layer, not the file the rule lives in.
+     Migrated from previously ad-hoc literals (1080, 1200, 2999, 3000, 4000,
+     9000, 9100) so future additions land on a known rung. */
+  --z-sticky: 1080;
+  --z-overlay-page: 1200;
+  --z-modal: 2999;
+  --z-modal-backdrop: 3000;
+  --z-loading: 4000;
+  --z-floating: 9000;
+  --z-banner: 9100;
 }
 
 h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6, .navbar-brand {
@@ -194,7 +205,7 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  z-index: 1080;
+  z-index: var(--z-sticky);
   padding: 0.6rem 0.9rem;
   border-radius: var(--radius-sm);
   background: #111;
@@ -1552,7 +1563,7 @@ body.page-render-pending footer {
 .page-render-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--z-overlay-page);
   display: grid;
   place-items: center;
   background: rgba(248, 250, 252, 0.9);
@@ -1782,7 +1793,7 @@ body.page-render-pending footer {
 .global-loading-overlay {
   position: fixed;
   inset: 0;
-  z-index: 4000;
+  z-index: var(--z-loading);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1957,7 +1968,7 @@ body.page-render-pending footer {
   position: fixed;
   right: 1rem;
   bottom: 1rem;
-  z-index: 1080;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -2030,7 +2041,7 @@ body.page-render-pending footer {
 .pwa-launch-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2999;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2087,7 +2098,7 @@ body.page-render-pending footer {
   padding: 1.5rem;
   background: rgba(15, 23, 42, 0.62);
   backdrop-filter: blur(2px);
-  z-index: 3000;
+  z-index: var(--z-modal-backdrop);
 }
 
 .calculator-loading-overlay[hidden] {
@@ -2117,7 +2128,7 @@ body.page-render-pending footer {
   position: fixed;
   right: 1.25rem;
   bottom: 1.25rem;
-  z-index: 9000;
+  z-index: var(--z-floating);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2171,7 +2182,7 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9100;
+  z-index: var(--z-banner);
   background: #1e293b;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.45);
@@ -2544,3 +2555,53 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
     border-top-color: Highlight;
   }
 }
+
+/* Print: strip site chrome, overlays, and floating widgets so the printed
+   page shows page content only. Restores readable black-on-white text. */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .navbar,
+  .site-footer,
+  .skip-link,
+  .back-to-top-button,
+  .cookie-consent-banner,
+  .pwa-install-cta,
+  .pwa-launch-overlay,
+  .page-render-overlay,
+  .global-loading-overlay,
+  .calculator-loading-overlay,
+  #feedStatusBanner,
+  #startupOverlay,
+  [data-print-hide],
+  .visually-hidden-print {
+    display: none !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+  .content-panel,
+  .card,
+  .feature-card,
+  .faq-card {
+    box-shadow: none !important;
+    border: 1px solid #d4d4d4 !important;
+    page-break-inside: avoid;
+  }
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+

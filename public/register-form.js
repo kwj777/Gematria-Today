@@ -157,12 +157,16 @@
         return;
       }
 
+      const extras = typeof config.extraFields === 'function'
+        ? (config.extraFields() || {})
+        : (config.extraFields || {});
       const payload = {
         username: fields.username.value.trim(),
         displayName: fields.displayName ? fields.displayName.value.trim() : '',
         email: fields.email.value.trim(),
         password: fields.password.value,
         challengeToken,
+        ...extras,
       };
 
       const originalButtonHtml = submitButton.innerHTML;

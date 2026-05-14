@@ -1546,8 +1546,16 @@
         membershipHeroCta.setAttribute('href', '#authSection');
       }
 
-      function hasLearningPathStep1Intent() {
+      function hasLocalLearningPathStep1Intent() {
         return window.localStorage.getItem('learningPathStep1Intent') === 'true';
+      }
+
+      function hasServerLearningPathStep1Intent(profile = session?.profile) {
+        return profile?.preferences?.learningPathStep1Intent === true;
+      }
+
+      function hasLearningPathStep1Intent() {
+        return hasLocalLearningPathStep1Intent() || hasServerLearningPathStep1Intent();
       }
 
       function syncLearningPathStep1Cta(member = session?.member) {
@@ -1555,9 +1563,20 @@
         learningPathStep1Section.classList.toggle('d-none', !shouldShow);
       }
 
+      function clearServerLearningPathStep1Intent() {
+        if (session?.profile?.preferences) {
+          delete session.profile.preferences.learningPathStep1Intent;
+        }
+        request('/api/member-learning-path-consume', { method: 'POST', body: '{}' })
+          .catch(() => {
+            // Non-fatal: localStorage clear and client-side state still apply.
+          });
+      }
+
       function consumeLearningPathStep1Redirect() {
         if (!hasLearningPathStep1Intent()) return false;
         window.localStorage.removeItem('learningPathStep1Intent');
+        clearServerLearningPathStep1Intent();
         window.endTimesTracking?.track?.('cta_ladder_click', {
           step: 'learning_path_step_1',
           location: 'member_dashboard_auto_redirect',
@@ -3378,6 +3397,7 @@
           authenticated: Boolean(session?.member),
         });
         window.localStorage.removeItem('learningPathStep1Intent');
+        clearServerLearningPathStep1Intent();
       });
 
       window.addEventListener('DOMContentLoaded', bootstrapSession);

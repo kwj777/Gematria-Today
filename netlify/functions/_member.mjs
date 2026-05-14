@@ -237,7 +237,15 @@ export async function ensureMemberProfile(sql, userId, profile = {}) {
   return formatMemberProfile(rows[0]);
 }
 
-export async function registerMember(sql, { username, email, password, displayName = '' }) {
+export const LEARNING_PATH_LEVEL_0_SOURCE = 'learning_path_level_0';
+
+function buildInitialPreferencesForSignupSource(signupSource) {
+  return String(signupSource || '').trim() === LEARNING_PATH_LEVEL_0_SOURCE
+    ? { learningPathStep1Intent: true }
+    : {};
+}
+
+export async function registerMember(sql, { username, email, password, displayName = '', signupSource = '' }) {
   await ensureMemberSchema(sql);
 
   const normalizedUsername = normalizeUsername(username);
@@ -296,7 +304,8 @@ export async function registerMember(sql, { username, email, password, displayNa
   `;
 
   const member = rows[0];
-  const profile = await ensureMemberProfile(sql, member.id, {});
+  const initialPreferences = buildInitialPreferencesForSignupSource(signupSource);
+  const profile = await ensureMemberProfile(sql, member.id, { preferences: initialPreferences });
   return { member: formatMemberUser(member), profile };
 }
 

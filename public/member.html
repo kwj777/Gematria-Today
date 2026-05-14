@@ -357,8 +357,8 @@
               <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" autocomplete="nickname" /></div>
               <div class="col-12"><label class="form-label" for="registerEmail">Email <span class="text-danger" aria-hidden="true">*</span></label><input id="registerEmail" class="form-control" type="email" autocomplete="email" required /></div>
               <div id="registerPasswordMismatchAlert" class="col-12 alert alert-warning d-none mb-0" role="alert">Password and confirm password do not match.</div>
-              <div class="col-12"><label class="form-label" for="registerPassword">Password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerPassword" aria-label="Show password" aria-pressed="false">Show</button></div></div>
-              <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerConfirmPassword" aria-label="Show password" aria-pressed="false">Show</button></div></div>
+              <div class="col-12"><label class="form-label" for="registerPassword">Password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerPasswordRequirements" /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerPassword" aria-label="Show password" aria-pressed="false">Show</button></div><div id="registerPasswordRequirements" class="form-text">Must be at least 8 characters.</div></div>
+              <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerConfirmPasswordHint registerConfirmPasswordMismatch" /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerConfirmPassword" aria-label="Show password" aria-pressed="false">Show</button></div><div id="registerConfirmPasswordHint" class="form-text">Re-enter the password to confirm.</div><div id="registerConfirmPasswordMismatch" class="form-text text-danger d-none">Passwords don't match yet.</div></div>
               <div class="col-12">
                 <div class="form-check">
                   <input id="registerBlogSubscribe" class="form-check-input" type="checkbox" />
@@ -2840,6 +2840,19 @@
 
       registerPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
       registerConfirmPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
+
+      const registerConfirmPasswordMismatch = document.getElementById('registerConfirmPasswordMismatch');
+      function syncRegisterConfirmInline() {
+        if (!registerConfirmPasswordMismatch) return;
+        const confirm = registerConfirmPasswordInput.value;
+        const password = registerPasswordInput.value;
+        const mismatch = confirm.length > 0 && confirm !== password;
+        registerConfirmPasswordMismatch.classList.toggle('d-none', !mismatch);
+        registerConfirmPasswordInput.setAttribute('aria-invalid', mismatch ? 'true' : 'false');
+      }
+      registerConfirmPasswordInput.addEventListener('input', syncRegisterConfirmInline);
+      registerConfirmPasswordInput.addEventListener('blur', syncRegisterConfirmInline);
+      registerPasswordInput.addEventListener('input', syncRegisterConfirmInline);
 
       authTabRegister.addEventListener('click', () => {
         window.endTimesTracking?.track('sign_up_start', { source: 'member_auth_tab' });

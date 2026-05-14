@@ -223,7 +223,7 @@
         <section class="content-panel p-4 p-lg-5 form-shell">
           <section class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-warning btn-lg fw-bold">Calculate and Find Related Words</button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-outline-primary" type="button" disabled title="Calculate a value first to enable saving" aria-label="Save result (calculate a value first)">Save result</button></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase</label><input id="lookup-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-warning btn-lg fw-bold"><span class="spinner-border spinner-border-sm me-2 d-none" data-lookup-submit-spinner aria-hidden="true"></span><span data-lookup-submit-label>Calculate and Find Related Words</span></button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear Search</button><button id="save-history-button" class="btn btn-outline-primary" type="button" disabled aria-describedby="save-history-hint">Save result</button></div><div class="col-12" id="save-history-hint-row"><p id="save-history-hint" class="form-text mb-0">Calculate a value first to enable saving.</p></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
             </div>
           </section>
         </section>
@@ -246,6 +246,26 @@ const lookupForm = document.querySelector('#lookup-form');
       const calculatorError = document.querySelector('#calculator-error');
       const calculatorErrorMessage = document.querySelector('#calculator-error-message');
       const calculatorRetryButton = document.querySelector('#calculator-retry-button');
+      const lookupSubmitSpinner = lookupSubmitButton.querySelector('[data-lookup-submit-spinner]');
+      const lookupSubmitLabelNode = lookupSubmitButton.querySelector('[data-lookup-submit-label]');
+
+      function setLookupSubmitBusy(isBusy) {
+        if (!lookupSubmitButton) return;
+        if (isBusy) {
+          lookupSubmitButton.dataset.previousLabel = lookupSubmitLabelNode?.textContent || '';
+          lookupSubmitButton.disabled = true;
+          lookupSubmitButton.setAttribute('aria-busy', 'true');
+          if (lookupSubmitLabelNode) lookupSubmitLabelNode.textContent = 'Calculating…';
+          lookupSubmitSpinner?.classList.remove('d-none');
+        } else {
+          lookupSubmitButton.disabled = false;
+          lookupSubmitButton.removeAttribute('aria-busy');
+          const previous = lookupSubmitButton.dataset.previousLabel;
+          if (lookupSubmitLabelNode && previous) lookupSubmitLabelNode.textContent = previous;
+          delete lookupSubmitButton.dataset.previousLabel;
+          lookupSubmitSpinner?.classList.add('d-none');
+        }
+      }
 
       function showCalculatorLoadingOverlay() {
         window.showWorkingOverlay?.();
@@ -723,6 +743,14 @@ View results: ${shareUrl}`.trim(),
         lastSavedSearchPayload = currentSearchPayload;
         saveHistoryButton.textContent = 'Saved';
         saveHistoryButton.disabled = true;
+        syncSaveHistoryHint();
+      }
+
+      const saveHistoryHintRow = document.getElementById('save-history-hint-row');
+      function syncSaveHistoryHint() {
+        if (!saveHistoryHintRow) return;
+        const needsCalc = saveHistoryButton.disabled && saveHistoryButton.textContent === 'Save result';
+        saveHistoryHintRow.hidden = !needsCalc;
       }
 
       function updateMemberSaveState() {
@@ -743,8 +771,9 @@ View results: ${shareUrl}`.trim(),
           memberSaveMeta.textContent = currentSearchPayload
             ? 'Join for free to save this result and see related words.'
             : 'Join for free to save searches and see related words.';
-          lookupSubmitButton.textContent = 'Calculate';
+          if (lookupSubmitLabelNode) lookupSubmitLabelNode.textContent = 'Calculate';
           updateNextStepsState();
+          syncSaveHistoryHint();
           return;
         }
 
@@ -775,8 +804,9 @@ View results: ${shareUrl}`.trim(),
         memberSaveMeta.textContent = currentSearchPayload
           ? `Signed in as ${memberName}. Save this result to history.${freeTierSuffix}`
           : `Signed in as ${memberName}. Run a lookup to save it.${freeTierSuffix}`;
-        lookupSubmitButton.textContent = 'Calculate and Find Related Words';
+        if (lookupSubmitLabelNode) lookupSubmitLabelNode.textContent = 'Calculate and Find Related Words';
         updateNextStepsState();
+        syncSaveHistoryHint();
       }
 
       function updateNextStepsState() {
@@ -1322,6 +1352,7 @@ View results: ${shareUrl}`.trim(),
           return;
         }
         showCalculatorLoadingOverlay();
+        setLookupSubmitBusy(true);
 
         lookupStatus.textContent = memberSession?.authenticated
           ? 'Searching for gematria and related words...'
@@ -1407,6 +1438,7 @@ View results: ${shareUrl}`.trim(),
         } finally {
           focusLookupAreaFromHash();
           hideCalculatorLoadingOverlay();
+          setLookupSubmitBusy(false);
           lookupForm.reset();
           if (window.location.hash !== '#gematria-result') {
             lookupInput.focus();

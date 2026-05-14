@@ -79,6 +79,17 @@
   --radius-2xl: 1.25rem;
   --radius-3xl: 1.5rem;
 
+  /* Button radii. Tighter than panel/card radii so buttons read as
+     enterprise/editorial rather than consumer/casual. Override Bootstrap's
+     --bs-btn-border-radius family. */
+  --radius-btn: 0.5rem;
+  --radius-btn-lg: 0.625rem;
+  --radius-btn-sm: 0.375rem;
+
+  /* Default stroke-width for inline SVG .icon elements. Keeps icon weight
+     uniform regardless of whatever stroke-width an author inlined. */
+  --icon-stroke-width: 1.5;
+
   /* Z-index scale. Names describe the layer, not the file the rule lives in.
      Migrated from previously ad-hoc literals (1080, 1200, 2999, 3000, 4000,
      9000, 9100) so future additions land on a known rung. */
@@ -142,6 +153,28 @@ body {
 
 .home-section__header {
   border-bottom: 1px solid var(--color-border-dark);
+}
+
+/* Unified inline SVG icon weight. Apply `.icon` to any inline SVG used as
+   a UI icon; CSS forces a consistent stroke regardless of the value an
+   author may have inlined on the element. */
+.icon {
+  stroke-width: var(--icon-stroke-width);
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Button radii. Tightens Bootstrap's defaults a touch and keeps every
+   button size on the same scale via --radius-btn tokens. */
+.btn {
+  --bs-btn-border-radius: var(--radius-btn);
+}
+.btn-lg {
+  --bs-btn-border-radius: var(--radius-btn-lg);
+}
+.btn-sm {
+  --bs-btn-border-radius: var(--radius-btn-sm);
 }
 
 main > .container > nav[aria-label="Breadcrumb"] .breadcrumb {

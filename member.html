@@ -495,10 +495,11 @@
               </div>
               <form id="paymentForm" class="membership-payment-form row g-3 align-items-end">
                 <div class="col-md-7">
-                  <label class="form-label" for="paymentPlan">Membership plan</label>
+                  <label class="form-label" for="paymentPlan">Membership plan <span class="text-muted small">(USD)</span></label>
                   <select id="paymentPlan" class="form-select" disabled>
-                    <option value="yearly" selected>One year membership — $5.55 introductory special (regularly $7.77/year)</option>
+                    <option value="yearly" selected>One year membership — US$5.55 introductory special (regularly US$7.77/year)</option>
                   </select>
+                  <div class="form-text">All prices are billed in US dollars. Your card issuer may convert and apply a foreign-transaction fee outside the US.</div>
                 </div>
                 <div class="col-md-5 d-grid">
                   <button id="paymentButton" class="btn btn-primary btn-lg" type="submit">Continue to Stripe</button>

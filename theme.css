@@ -472,6 +472,7 @@ button[aria-disabled="true"]:not(:disabled):hover {
   position: relative;
   isolation: isolate;
   min-height: clamp(220px, 40vw, 320px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .hero-why-gematria-link::after {
@@ -485,9 +486,25 @@ button[aria-disabled="true"]:not(:disabled):hover {
   transition: opacity 0.2s ease;
 }
 
+.hero-why-gematria-link:hover,
+.hero-why-gematria-link:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0.75rem 2rem rgba(15, 23, 42, 0.5);
+}
+
 .hero-why-gematria-link:hover::after,
 .hero-why-gematria-link:focus-visible::after {
   opacity: 0.88;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-why-gematria-link {
+    transition: none;
+  }
+  .hero-why-gematria-link:hover,
+  .hero-why-gematria-link:focus-visible {
+    transform: none;
+  }
 }
 
 .hero-why-gematria-overlay {
@@ -2093,6 +2110,59 @@ body.page-render-pending footer {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ── Back to top floating button ────────────────────────────────────────── */
+.back-to-top-button {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 9000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(15, 23, 42, 0.92);
+  color: #e2e8f0;
+  cursor: pointer;
+  box-shadow: 0 0.6rem 1.4rem rgba(3, 7, 12, 0.45);
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.back-to-top-button[hidden] {
+  display: none;
+}
+
+body:has(.cookie-consent-banner--visible) .back-to-top-button {
+  bottom: 5.25rem;
+}
+
+.back-to-top-button:hover,
+.back-to-top-button:focus-visible {
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-2px);
+}
+
+.back-to-top-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 575.98px) {
+  .back-to-top-button {
+    right: 0.85rem;
+    bottom: 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top-button { transition: none; }
+  .back-to-top-button:hover, .back-to-top-button:focus-visible { transform: none; }
 }
 
 /* ── Cookie consent banner ──────────────────────────────────────────────── */

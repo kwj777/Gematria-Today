@@ -163,6 +163,7 @@
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/site-modules.js"></script>
+    <script defer src="/register-form.js"></script>
     <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
     <script src="/pwa-register.js" defer></script>
   </head>
@@ -324,162 +325,49 @@
     </footer>
 
     <script>
-      (function () {
+      window.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('levelZeroRegisterForm');
-        if (!form) return;
+        if (!form || !window.EndTimesRegisterForm) return;
 
         const alertEl = document.getElementById('signUpAlert');
         const successPanel = document.getElementById('signUpSuccessPanel');
-        const submitBtn = document.getElementById('lzRegSubmit');
-        const passwordInput = document.getElementById('lzRegPassword');
-        const confirmInput = document.getElementById('lzRegConfirmPassword');
-        const mismatchAlert = document.getElementById('lzRegPasswordMismatchAlert');
-        const confirmMismatchHint = document.getElementById('lzRegConfirmPasswordMismatch');
-        const turnstileContainer = document.getElementById('lzRegTurnstileContainer');
 
-        let csrfToken = null;
-        const turnstileState = { token: '', widgetId: null };
-        let turnstileRenderRetryCount = 0;
+        const pageAlert = {
+          show(message, level) {
+            if (!alertEl) return;
+            alertEl.textContent = message;
+            alertEl.classList.remove('d-none', 'alert-success', 'alert-warning', 'alert-danger', 'alert-info');
+            alertEl.classList.add('alert-' + (level || 'danger'));
+          },
+          clear() {
+            alertEl?.classList.add('d-none');
+            if (alertEl) alertEl.textContent = '';
+          },
+        };
 
-        function showAlert(message, level) {
-          if (!alertEl) return;
-          alertEl.textContent = message;
-          alertEl.classList.remove('d-none', 'alert-success', 'alert-warning', 'alert-danger', 'alert-info');
-          alertEl.classList.add('alert-' + (level || 'danger'));
-        }
-        function clearAlert() {
-          alertEl?.classList.add('d-none');
-          if (alertEl) alertEl.textContent = '';
-        }
-
-        function getTurnstileSiteKey() {
-          return String(
-            window.ENDTIMES_TURNSTILE_SITE_KEY
-              || document.querySelector('meta[name="turnstile-site-key"]')?.content
-              || '',
-          ).trim();
-        }
-        function isTurnstileRequired() {
-          return Boolean(getTurnstileSiteKey());
-        }
-        function resetTurnstile() {
-          turnstileState.token = '';
-          if (typeof window.turnstile?.reset === 'function' && turnstileState.widgetId !== null) {
-            window.turnstile.reset(turnstileState.widgetId);
-          }
-        }
-        function renderTurnstile() {
-          const siteKey = getTurnstileSiteKey();
-          if (!siteKey) {
-            if (turnstileRenderRetryCount < 80) {
-              turnstileRenderRetryCount += 1;
-              window.setTimeout(renderTurnstile, 250);
-            }
-            return;
-          }
-          if (typeof window.turnstile?.render !== 'function') {
-            window.setTimeout(renderTurnstile, 150);
-            return;
-          }
-          if (!turnstileContainer || turnstileState.widgetId !== null) return;
-          turnstileState.widgetId = window.turnstile.render(turnstileContainer, {
-            sitekey: siteKey,
-            action: 'member_register',
-            callback: (token) => { turnstileState.token = String(token || '').trim(); },
-            'expired-callback': () => { turnstileState.token = ''; },
-            'error-callback': () => { turnstileState.token = ''; },
-          });
-        }
-        renderTurnstile();
-
-        async function request(url, options) {
-          const opts = options || {};
-          const method = String(opts.method || 'GET').toUpperCase();
-          const csrfHeaders = csrfToken && method !== 'GET' && method !== 'HEAD'
-            ? { 'x-csrf-token': csrfToken }
-            : {};
-          const response = await fetch(url, {
-            credentials: 'same-origin',
-            headers: { 'content-type': 'application/json', ...csrfHeaders, ...(opts.headers || {}) },
-            ...opts,
-          });
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(payload.error || 'Request failed');
-          }
-          return payload;
-        }
-
-        (async () => {
-          try {
-            const { csrfToken: token } = await request('/api/member-csrf', { method: 'GET' });
-            if (token) csrfToken = token;
-          } catch {
-            // Non-fatal: server will reject the submit and surface a clearer error.
-          }
-        })();
-
-        function syncConfirmMismatch() {
-          const confirm = confirmInput.value;
-          const password = passwordInput.value;
-          const mismatch = confirm.length > 0 && confirm !== password;
-          confirmMismatchHint?.classList.toggle('d-none', !mismatch);
-          confirmInput.setAttribute('aria-invalid', mismatch ? 'true' : 'false');
-        }
-        passwordInput.addEventListener('input', () => {
-          mismatchAlert?.classList.add('d-none');
-          syncConfirmMismatch();
-        });
-        confirmInput.addEventListener('input', () => {
-          mismatchAlert?.classList.add('d-none');
-          syncConfirmMismatch();
-        });
-
-        form.addEventListener('submit', async (event) => {
-          event.preventDefault();
-          clearAlert();
-          mismatchAlert?.classList.add('d-none');
-
-          if (passwordInput.value !== confirmInput.value) {
-            mismatchAlert?.classList.remove('d-none');
-            return;
-          }
-
-          if (isTurnstileRequired() && !turnstileState.token) {
-            showAlert('Please complete the anti-robot check before creating your account.', 'warning');
-            return;
-          }
-
-          const payload = {
-            username: document.getElementById('lzRegUsername').value.trim(),
-            displayName: document.getElementById('lzRegDisplayName').value.trim(),
-            email: document.getElementById('lzRegEmail').value.trim(),
-            password: passwordInput.value,
-            challengeToken: turnstileState.token,
-          };
-
-          submitBtn.disabled = true;
-          window.endTimesTracking?.track('sign_up_start', { source: 'level_zero_register_form' });
-
-          try {
-            await request('/api/member-register', { method: 'POST', body: JSON.stringify(payload) });
+        window.EndTimesRegisterForm.initRegisterForm({
+          form,
+          fields: {
+            username: document.getElementById('lzRegUsername'),
+            displayName: document.getElementById('lzRegDisplayName'),
+            email: document.getElementById('lzRegEmail'),
+            password: document.getElementById('lzRegPassword'),
+            confirmPassword: document.getElementById('lzRegConfirmPassword'),
+          },
+          submitButton: document.getElementById('lzRegSubmit'),
+          passwordMismatchAlert: document.getElementById('lzRegPasswordMismatchAlert'),
+          confirmMismatchHint: document.getElementById('lzRegConfirmPasswordMismatch'),
+          turnstileContainer: document.getElementById('lzRegTurnstileContainer'),
+          alert: pageAlert,
+          source: 'level_zero_register_form',
+          onSuccess() {
             window.localStorage.setItem('learningPathStep1Intent', 'true');
-            window.endTimesTracking?.track('sign_up_complete', { source: 'level_zero_register_form' });
             form.classList.add('d-none');
             successPanel?.classList.remove('d-none');
             successPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } catch (error) {
-            window.endTimesTracking?.track('sign_up_error', {
-              source: 'level_zero_register_form',
-              errorMessage: error?.message || 'unknown_error',
-            });
-            showAlert(error.message || 'Unable to create membership account.');
-          } finally {
-            submitBtn.disabled = false;
-            resetTurnstile();
-          }
+          },
         });
-      })();
+      });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

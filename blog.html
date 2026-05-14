@@ -308,6 +308,28 @@
             </aside>
           </div>
           <div class="col-lg-8">
+            <aside id="learningPathCompletionBanner" class="content-panel learning-path-completion-banner p-4 p-lg-5 mb-4 d-none" role="status" aria-live="polite">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                <div>
+                  <p class="section-kicker text-success mb-2">Path complete</p>
+                  <h2 class="h3 mb-2">You finished the beginner learning path!</h2>
+                  <p class="mb-0">You worked through Levels 0–3 — account setup, the basics, pattern grouping, and name analysis. This checklist is your reference for everything you've learned. Keep it close as you run searches on your own.</p>
+                </div>
+                <button id="learningPathCompletionBannerDismiss" type="button" class="btn-close" aria-label="Dismiss completion banner"></button>
+              </div>
+              <ol class="small mb-3 ps-3">
+                <li>Level 0 — Account setup</li>
+                <li>Level 1 — Gematria Basics</li>
+                <li>Level 2 — Pattern Grouping</li>
+                <li>Level 3 — Name Analysis</li>
+                <li><strong>Level 4 — Beginner's checklist (you're here)</strong></li>
+              </ol>
+              <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-warning fw-semibold" href="/calculator.html">Try your first independent search</a>
+                <a class="btn btn-outline-primary" href="/blog.html">Browse more research posts</a>
+                <a class="btn btn-ghost" href="/member.html">Go to my dashboard</a>
+              </div>
+            </aside>
             <div id="blogPosts" class="d-grid gap-4 async-content-shell async-content-shell--lg" aria-live="polite">
               <article class="blog-post-card p-4 p-lg-5 news-placeholder-panel">
                 <p class="placeholder-glow mb-3"><span class="placeholder async-shell-line async-shell-line--lg col-8"></span></p>
@@ -1299,6 +1321,90 @@
 
       void applyStaticContentPromise;
       void renderPostsPromise;
+    </script>
+    <script>
+      (function () {
+        const CHECKLIST_SLUG = 'a-beginner-s-gematria-research-checklist-before-you-draw-conclusions';
+        const DISMISS_KEY = 'learningPathCompletionBannerDismissed';
+        const LEARNING_PATH_REFERRERS = ['/gematria-name-analysis'];
+
+        function getParams() {
+          try { return new URLSearchParams(window.location.search); }
+          catch { return new URLSearchParams(''); }
+        }
+
+        function getRequestedSlug() {
+          const params = getParams();
+          const fromQuery = params.get('post') || window.location.hash.slice(1);
+          if (fromQuery) {
+            try { return decodeURIComponent(fromQuery); } catch { return fromQuery; }
+          }
+          const match = window.location.pathname.match(/^\/blog\/([^/?#]+)/i);
+          if (!match) return '';
+          try { return decodeURIComponent(match[1]); } catch { return match[1]; }
+        }
+
+        function detectSource() {
+          if (getParams().get('from') === 'learning-path') return 'param';
+          const ref = String(document.referrer || '').toLowerCase();
+          if (LEARNING_PATH_REFERRERS.some((token) => ref.includes(token))) return 'referrer';
+          return null;
+        }
+
+        async function recordCompletionForSignedInMember() {
+          try {
+            const csrfResponse = await fetch('/api/member-csrf', {
+              credentials: 'same-origin',
+              headers: { accept: 'application/json' },
+            });
+            if (!csrfResponse.ok) return;
+            const csrfPayload = await csrfResponse.json().catch(() => ({}));
+            const token = csrfPayload && csrfPayload.csrfToken;
+            if (!token) return; // Anonymous visitor; nothing to persist.
+            await fetch('/api/member-learning-path-complete', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: {
+                'content-type': 'application/json',
+                'x-csrf-token': token,
+              },
+              body: '{}',
+            });
+          } catch {
+            // Non-fatal: banner is shown regardless of server-side persistence.
+          }
+        }
+
+        function maybeShow() {
+          const banner = document.getElementById('learningPathCompletionBanner');
+          if (!banner) return;
+          try {
+            if (window.sessionStorage.getItem(DISMISS_KEY) === 'true') return;
+          } catch {
+            // sessionStorage may be blocked; proceed without dismissal memory.
+          }
+          if (getRequestedSlug().toLowerCase() !== CHECKLIST_SLUG) return;
+          const source = detectSource();
+          if (!source) return;
+
+          banner.classList.remove('d-none');
+          window.endTimesTracking?.track?.('learning_path_completion_view', { source });
+          recordCompletionForSignedInMember();
+
+          const dismiss = document.getElementById('learningPathCompletionBannerDismiss');
+          dismiss?.addEventListener('click', () => {
+            try { window.sessionStorage.setItem(DISMISS_KEY, 'true'); } catch {}
+            banner.classList.add('d-none');
+            window.endTimesTracking?.track?.('learning_path_completion_dismiss', { source });
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', maybeShow);
+        } else {
+          maybeShow();
+        }
+      })();
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>

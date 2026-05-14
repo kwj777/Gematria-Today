@@ -410,6 +410,20 @@
             >Go to Learning Path Step 1</a>
           </section>
 
+          <section id="learningPathCompletedSection" class="content-panel learning-path-completion-banner p-4 mb-4 d-none" aria-live="polite">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-2">
+              <div>
+                <span class="learning-path-complete-badge mb-2"><span aria-hidden="true">🎉</span> Path complete</span>
+                <h3 class="h4 mt-2 mb-1">You finished the beginner learning path</h3>
+                <p id="learningPathCompletedAtText" class="mb-0 small text-muted"></p>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <a class="btn btn-warning fw-semibold" href="/calculator.html">Start a new search</a>
+              <a class="btn btn-outline-primary" href="/blog.html">Browse research posts</a>
+            </div>
+          </section>
+
           <section id="membershipUpgradeSection" class="content-panel membership-upgrade-panel--compact p-3 p-lg-4 mb-4 d-none">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
               <div>
@@ -866,6 +880,8 @@
       const comparisonPremiumColumns = comparisonSection.querySelectorAll('.comparison-col--premium');
       const learningPathStep1Section = document.getElementById('learningPathStep1Section');
       const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
+      const learningPathCompletedSection = document.getElementById('learningPathCompletedSection');
+      const learningPathCompletedAtText = document.getElementById('learningPathCompletedAtText');
       const messageCenterOpenButton = document.getElementById('messageCenterOpenButton');
       const messageCenterSection = document.getElementById('messageCenterSection');
       const messageCenterCloseButton = document.getElementById('messageCenterCloseButton');
@@ -1563,6 +1579,28 @@
         learningPathStep1Section.classList.toggle('d-none', !shouldShow);
       }
 
+      function syncLearningPathCompletedBadge(member = session?.member, profile = session?.profile) {
+        if (!learningPathCompletedSection) return;
+        const completedAt = profile?.preferences?.learningPathCompletedAt;
+        const shouldShow = Boolean(member) && Boolean(completedAt);
+        learningPathCompletedSection.classList.toggle('d-none', !shouldShow);
+        if (!shouldShow) {
+          if (learningPathCompletedAtText) learningPathCompletedAtText.textContent = '';
+          return;
+        }
+        if (!learningPathCompletedAtText) return;
+        const parsed = new Date(completedAt);
+        if (!Number.isFinite(parsed.getTime())) {
+          learningPathCompletedAtText.textContent = '';
+          return;
+        }
+        try {
+          learningPathCompletedAtText.textContent = `Completed on ${parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}.`;
+        } catch {
+          learningPathCompletedAtText.textContent = `Completed on ${parsed.toISOString().slice(0, 10)}.`;
+        }
+      }
+
       function clearServerLearningPathStep1Intent() {
         if (session?.profile?.preferences) {
           delete session.profile.preferences.learningPathStep1Intent;
@@ -1604,6 +1642,10 @@
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
         syncComparisonVisibility(isLoggedIn ? session?.member : null);
         syncLearningPathStep1Cta(isLoggedIn ? session?.member : null);
+        syncLearningPathCompletedBadge(
+          isLoggedIn ? session?.member : null,
+          isLoggedIn ? session?.profile : null,
+        );
         authSection.classList.toggle('d-none', isLoggedIn);
         dashboardSection.classList.toggle('d-none', !isLoggedIn);
         syncPaymentButton(isLoggedIn ? session?.member : null);

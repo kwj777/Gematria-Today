@@ -2630,6 +2630,57 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   background: rgba(17, 24, 34, 0.72);
 }
 
+.learning-path-completion-banner {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(250, 204, 21, 0.14));
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  box-shadow: 0 1rem 2rem -1.25rem rgba(34, 197, 94, 0.45);
+}
+
+.learning-path-completion-banner::before {
+  content: "🎉";
+  position: absolute;
+  top: -0.5rem;
+  right: 1rem;
+  font-size: 4rem;
+  opacity: 0.18;
+  pointer-events: none;
+  transform: rotate(15deg);
+}
+
+.learning-path-completion-banner .section-kicker {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+:root[data-bs-theme="dark"] .learning-path-completion-banner {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(250, 204, 21, 0.12));
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 1rem 2rem -1.25rem rgba(34, 197, 94, 0.6);
+}
+
+.learning-path-complete-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(34, 197, 94, 0.15);
+  color: #166534;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+:root[data-bs-theme="dark"] .learning-path-complete-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: #bbf7d0;
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
 /* ----- Form controls: focus, validation, touch targets ------------------- */
 /* Gives every Bootstrap form-control a consistent brand-amber focus ring,
    a real .is-invalid state, and a 44px touch target on mobile. The disabled

@@ -2326,4 +2326,17 @@ body.page-render-pending footer {
     color: inherit;
     padding-left: 1.75rem;
   }
+
+  /* In the collapsed mobile menu the CTA button only carries a top margin,
+     so the search pill that follows it ends up flush against (and visually
+     overlapping) the button. Give the button breathing room below it and
+     restore the search link's compact pill padding, which would otherwise be
+     inflated by the mobile .nav-link padding rule above. */
+  .navbar-nav .nav-cta .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .navbar-nav .nav-link.nav-search-link {
+    padding: 0.4rem 0.85rem;
+  }
 }

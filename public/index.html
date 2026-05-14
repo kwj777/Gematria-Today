@@ -253,42 +253,41 @@
           </div>
         </section>
 
-        <section class="word-of-day-spotlight word-of-day-spotlight--compact p-3 p-lg-4 mb-5" data-module="wordnik_wotd_slider" aria-busy="true">
-          <div class="row g-4 align-items-center">
-            <div class="col-lg-7">
-              <p class="section-kicker text-warning-emphasis mb-2">Wordnik Word of the Day</p>
-              <h2 id="homeWordnikWotdTitle" class="h3 fw-bold mb-2 placeholder-glow">
-                <span class="visually-hidden">Daily gematria spotlight is loading.</span>
-                <span class="placeholder async-shell-line async-shell-line--lg col-9" aria-hidden="true"></span>
-              </h2>
-              <p id="homeWordnikWotdDefinition" class="mb-3 placeholder-glow">
-                <span class="visually-hidden">Fetching today's Wordnik word and calculation preview.</span>
-                <span class="placeholder async-shell-line col-11" aria-hidden="true"></span>
-                <span class="placeholder async-shell-line col-7 mt-1" aria-hidden="true"></span>
-              </p>
-              <div class="d-flex flex-wrap gap-2">
-                <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning touch-target-lg" href="/definition">Open full definition</a>
-                <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light touch-target-lg" href="/calculator.html">Open in calculator</a>
-              </div>
+        <section class="word-of-day-spotlight p-4 p-lg-5 mb-5" data-module="wordnik_wotd_slider" aria-busy="true">
+          <header class="mb-4">
+            <p class="section-kicker text-warning-emphasis mb-2">Wordnik Word of the Day</p>
+            <h2 id="homeWordnikWotdTitle" class="display-5 fw-bold mb-2 placeholder-glow">
+              <span class="visually-hidden">Daily word is loading.</span>
+              <span class="placeholder async-shell-line async-shell-line--lg col-5" aria-hidden="true"></span>
+            </h2>
+            <p id="homeWordnikWotdDefinition" class="mb-0 lead placeholder-glow">
+              <span class="visually-hidden">Fetching today's Wordnik word.</span>
+              <span class="placeholder async-shell-line col-11" aria-hidden="true"></span>
+              <span class="placeholder async-shell-line col-9 mt-1" aria-hidden="true"></span>
+            </p>
+          </header>
+
+          <dl class="wotd-stats mb-4" aria-live="polite">
+            <div class="wotd-stat">
+              <dt class="wotd-stat__label">Total</dt>
+              <dd id="homeWordnikWotdTotal" class="wotd-stat__value">—</dd>
             </div>
-            <div class="col-lg-5">
-              <a id="homeWordnikWotdCardLink" class="word-of-day-spotlight__card p-0 overflow-hidden h-100 text-decoration-none" href="/calculator.html" aria-label="Open Wordnik word of the day in calculator">
-                <img
-                  id="homeWordnikWotdImage"
-                  class="word-of-day-spotlight__image"
-                  src="/assets/blog-hero-gematria.svg"
-                  alt="Gematria calculation preview for Wordnik word of the day."
-                  width="1200"
-                  height="675"
-                  loading="eager"
-                  decoding="async"
-                />
-                <span class="word-of-day-spotlight__overlay">
-                  <span class="word-of-day-spotlight__meta" id="homeWordnikWotdOverlayMeta">Daily gematria total and digital root update automatically.</span>
-                  <span class="btn btn-warning btn-sm" aria-hidden="true">See in calculator</span>
-                </span>
-              </a>
+            <div class="wotd-stat">
+              <dt class="wotd-stat__label">Digital root</dt>
+              <dd id="homeWordnikWotdRoot" class="wotd-stat__value">—</dd>
             </div>
+          </dl>
+
+          <div class="wotd-breakdown mb-4">
+            <p class="wotd-breakdown__label mb-2">Letter breakdown</p>
+            <p id="homeWordnikWotdBreakdown" class="wotd-breakdown__values mb-0 placeholder-glow" aria-live="polite">
+              <span class="placeholder async-shell-line col-9" aria-hidden="true"></span>
+            </p>
+          </div>
+
+          <div class="d-flex flex-column flex-sm-row flex-wrap gap-3 align-items-sm-center">
+            <a id="homeWordnikWotdCalculatorCta" class="btn btn-warning touch-target-lg" href="/calculator.html">Open in calculator</a>
+            <a id="homeWordnikWotdDefinitionCta" class="wotd-link" href="/definition">Read full definition <span aria-hidden="true">→</span></a>
           </div>
         </section>
 

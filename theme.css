@@ -1719,6 +1719,9 @@ body.page-render-pending footer {
   font-size: 1.25rem;
   font-weight: 600;
   line-height: 1;
+  background-image: none;
+  width: auto;
+  height: auto;
   transform: rotate(0deg);
   transition: transform 0.2s ease;
 }

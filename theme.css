@@ -953,8 +953,41 @@ button[aria-disabled="true"]:not(:disabled):hover {
 .form-shell { background: var(--color-surface); }
 
 footer.site-footer {
+  border-top: 1px solid var(--color-border-dark);
+  background: rgba(15, 23, 42, 0.92);
+  color: #cbd5e1;
+}
+
+footer.site-footer .text-muted {
+  color: #94a3b8 !important;
+}
+
+footer.site-footer a {
+  color: #93c5fd;
+}
+
+footer.site-footer a:hover,
+footer.site-footer a:focus-visible {
+  color: #bfdbfe;
+}
+
+:root[data-bs-theme="light"] footer.site-footer {
   border-top: 1px solid var(--color-border-subtle);
-  background: rgba(255,255,255,0.65);
+  background: rgba(255, 255, 255, 0.65);
+  color: inherit;
+}
+
+:root[data-bs-theme="light"] footer.site-footer .text-muted {
+  color: var(--bs-secondary-color) !important;
+}
+
+:root[data-bs-theme="light"] footer.site-footer a {
+  color: var(--bs-primary);
+}
+
+:root[data-bs-theme="light"] footer.site-footer a:hover,
+:root[data-bs-theme="light"] footer.site-footer a:focus-visible {
+  color: var(--bs-link-hover-color, var(--bs-primary));
 }
 
 #related-words-result .panel, #results-shell .result-card { margin-top: 1rem; }

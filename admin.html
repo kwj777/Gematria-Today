@@ -1873,7 +1873,7 @@
           renderTurnstileSettings();
           renderSiteModules();
           showMessage(saveMessage, 'Site module switches saved.', { timeoutMs: 10000 });
-          window.alert('Site module switches saved. Please allow up to 10 minutes for changes to take effect.');
+          window.showToast?.('Site module switches saved. Please allow up to 10 minutes for changes to take effect.', 'info');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -1911,7 +1911,7 @@
           showMessage(saveMessage, selectedTheme === 'bootstrap'
             ? 'Global theme reset to Bootstrap default.'
             : `Global theme updated to ${getBootswatchThemeLabel(selectedTheme)}.`, { timeoutMs: 10000 });
-          window.alert('Global theme saved. Please allow up to 10 minutes for cached pages to refresh.');
+          window.showToast?.('Global theme saved. Please allow up to 10 minutes for cached pages to refresh.', 'info');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }

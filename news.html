@@ -217,7 +217,7 @@
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
-            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search</span></a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>
@@ -286,9 +286,16 @@
         </section>
 
         <div id="feedStatusBanner" class="alert alert-warning d-none mb-4" role="status" aria-live="polite">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <span id="feedStatusBannerMessage">Live RSS feeds could not be loaded. Showing placeholder content below.</span>
-            <button type="button" class="btn btn-sm btn-outline-dark" id="feedStatusRetryButton">Try again</button>
+          <div class="d-flex flex-wrap align-items-start gap-3">
+            <svg class="flex-shrink-0 mt-1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path>
+            </svg>
+            <div class="flex-grow-1">
+              <p id="feedStatusBannerMessage" class="mb-0">Live RSS feeds could not be loaded. Showing placeholder content below.</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-dark flex-shrink-0" id="feedStatusRetryButton">Try again</button>
           </div>
         </div>
 

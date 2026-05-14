@@ -172,7 +172,27 @@
 
       <section class="content-panel p-4 mb-4">
         <h2 class="h4 mb-3 admin-section-title">Moderation summary</h2>
-        <div id="summaryCards" class="row g-3"></div>
+        <div id="summaryCards" class="row g-3" aria-busy="true" aria-live="polite">
+          <div class="col-sm-6 col-lg-4" aria-hidden="true">
+            <article class="border rounded p-3 placeholder-glow">
+              <p class="placeholder col-6 mb-2"></p>
+              <p class="placeholder col-4 mb-0" style="height:1.5rem"></p>
+            </article>
+          </div>
+          <div class="col-sm-6 col-lg-4" aria-hidden="true">
+            <article class="border rounded p-3 placeholder-glow">
+              <p class="placeholder col-7 mb-2"></p>
+              <p class="placeholder col-3 mb-0" style="height:1.5rem"></p>
+            </article>
+          </div>
+          <div class="col-sm-6 col-lg-4" aria-hidden="true">
+            <article class="border rounded p-3 placeholder-glow">
+              <p class="placeholder col-5 mb-2"></p>
+              <p class="placeholder col-4 mb-0" style="height:1.5rem"></p>
+            </article>
+          </div>
+          <span class="visually-hidden">Loading moderation summary…</span>
+        </div>
       </section>
 
       <section class="content-panel p-4 mb-4">
@@ -204,14 +224,35 @@
             <button id="refreshButton" class="btn btn-outline-primary btn-sm" type="button">Refresh</button>
           </div>
         </div>
-        <div id="reportsList"></div>
+        <div id="reportsList" aria-busy="true" aria-live="polite">
+          <div class="placeholder-glow" aria-hidden="true">
+            <p class="placeholder col-12 mb-2" style="height:2.5rem"></p>
+            <p class="placeholder col-12 mb-2" style="height:2.5rem"></p>
+            <p class="placeholder col-12 mb-0" style="height:2.5rem"></p>
+          </div>
+          <span class="visually-hidden">Loading reports…</span>
+        </div>
       </section>
 
       <section class="content-panel p-4 mb-4">
         <h2 class="h4 mb-3 admin-section-title">Abuse signals (last 30 days)</h2>
         <div class="row g-3">
-          <div class="col-md-6"><h3 class="h6">Top reasons</h3><div id="topReasons"></div></div>
-          <div class="col-md-6"><h3 class="h6">Top reporters</h3><div id="topReporters"></div></div>
+          <div class="col-md-6">
+            <h3 class="h6">Top reasons</h3>
+            <div id="topReasons" aria-busy="true">
+              <p class="placeholder-glow mb-1" aria-hidden="true"><span class="placeholder col-8"></span></p>
+              <p class="placeholder-glow mb-1" aria-hidden="true"><span class="placeholder col-6"></span></p>
+              <p class="placeholder-glow mb-0" aria-hidden="true"><span class="placeholder col-7"></span></p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h3 class="h6">Top reporters</h3>
+            <div id="topReporters" aria-busy="true">
+              <p class="placeholder-glow mb-1" aria-hidden="true"><span class="placeholder col-7"></span></p>
+              <p class="placeholder-glow mb-1" aria-hidden="true"><span class="placeholder col-9"></span></p>
+              <p class="placeholder-glow mb-0" aria-hidden="true"><span class="placeholder col-5"></span></p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -242,12 +283,25 @@
 
       <section class="content-panel p-4 mb-4">
         <h2 class="h4 mb-3 admin-section-title">Categories</h2>
-        <div id="categoriesList"></div>
+        <div id="categoriesList" aria-busy="true" aria-live="polite">
+          <div class="placeholder-glow" aria-hidden="true">
+            <p class="placeholder col-12 mb-2" style="height:2rem"></p>
+            <p class="placeholder col-12 mb-0" style="height:2rem"></p>
+          </div>
+          <span class="visually-hidden">Loading categories…</span>
+        </div>
       </section>
 
       <section class="content-panel p-4">
         <h2 class="h4 mb-3 admin-section-title">Admin audit trail</h2>
-        <div id="auditTrail"></div>
+        <div id="auditTrail" aria-busy="true" aria-live="polite">
+          <div class="placeholder-glow" aria-hidden="true">
+            <p class="placeholder col-12 mb-2" style="height:1.4rem"></p>
+            <p class="placeholder col-12 mb-2" style="height:1.4rem"></p>
+            <p class="placeholder col-12 mb-0" style="height:1.4rem"></p>
+          </div>
+          <span class="visually-hidden">Loading audit trail…</span>
+        </div>
       </section>
     </main>
 
@@ -508,14 +562,38 @@
         auditTrailEl.innerHTML = `<div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>When</th><th>Action</th><th>Target</th><th>Actor</th></tr></thead><tbody>${entries.map((entry) => `<tr><td>${formatDate(entry.created_at)}</td><td>${esc(entry.action)}</td><td>${esc(entry.target_type)}:${esc(entry.target_id)}</td><td>${esc(entry.actor_user_id)}</td></tr>`).join('')}</tbody></table></div>`;
       }
 
+      function clearSectionPlaceholders(errored = false) {
+        const sections = [
+          [summaryCardsEl, 'No moderation summary available.'],
+          [reportsListEl, 'No reports to display.'],
+          [topReasonsEl, 'No reason data.'],
+          [topReportersEl, 'No reporter data.'],
+          [categoriesListEl, 'No categories to display.'],
+          [auditTrailEl, 'No audit entries to display.'],
+        ];
+        sections.forEach(([el, fallbackText]) => {
+          if (!el) return;
+          el.removeAttribute('aria-busy');
+          if (errored && el.querySelector('.placeholder-glow')) {
+            el.innerHTML = `<p class="text-muted small mb-0">${fallbackText}</p>`;
+          }
+        });
+      }
+
       async function load() {
         const query = queryFromFilters();
-        const payload = await request(`/api/admin-forum${query ? `?${query}` : ''}`);
-        renderSummary(payload.moderationSummary || {});
-        renderReports(payload.reports || []);
-        renderCategories(payload.categories || []);
-        renderAbuseSignals(payload.abuseSignals || {});
-        renderAuditTrail(payload.auditTrail || []);
+        try {
+          const payload = await request(`/api/admin-forum${query ? `?${query}` : ''}`);
+          renderSummary(payload.moderationSummary || {});
+          renderReports(payload.reports || []);
+          renderCategories(payload.categories || []);
+          renderAbuseSignals(payload.abuseSignals || {});
+          renderAuditTrail(payload.auditTrail || []);
+          clearSectionPlaceholders(false);
+        } catch (error) {
+          clearSectionPlaceholders(true);
+          throw error;
+        }
       }
 
       document.getElementById('reportFilters').addEventListener('submit', (event) => { event.preventDefault(); load().catch((error) => showAlert(error.message)); });

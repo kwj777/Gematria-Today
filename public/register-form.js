@@ -165,7 +165,11 @@
         challengeToken,
       };
 
+      const originalButtonHtml = submitButton.innerHTML;
       submitButton.disabled = true;
+      submitButton.setAttribute('aria-busy', 'true');
+      submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating account…';
+      pageAlert.show?.('Creating your account—thanks for your patience. This can take a few seconds.', 'info');
       window.endTimesTracking?.track?.('sign_up_start', { source });
 
       try {
@@ -173,6 +177,7 @@
           method: 'POST',
           body: JSON.stringify(payload),
         });
+        pageAlert.clear?.();
         window.endTimesTracking?.track?.('sign_up_complete', { source });
         config.onSuccess?.(response, { payload, form });
       } catch (error) {
@@ -190,6 +195,8 @@
         }
       } finally {
         submitButton.disabled = false;
+        submitButton.removeAttribute('aria-busy');
+        submitButton.innerHTML = originalButtonHtml;
         challenge.reset();
       }
     });

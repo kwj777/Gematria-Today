@@ -219,29 +219,10 @@ const digitalRoot = (value) => {
   return total;
 };
 
-const buildWotdGematriaSvgDataUri = ({ word, total, root, definitionPreview }) => {
+const buildLetterBreakdown = (word) => {
   const letters = String(word ?? '').toUpperCase().replace(/[^A-Z]/g, '').split('');
-  const letterBreakdown = letters.map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`).join(' · ') || 'No alphabetical letters';
-  const previewText = String(definitionPreview || 'No definition preview available today.').slice(0, 220);
-  const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
-  <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="675" fill="url(#bg)"/>
-  <text x="68" y="98" fill="#fbbf24" font-size="33" font-family="Arial, sans-serif" font-weight="700">Wordnik Word of the Day</text>
-  <text x="68" y="172" fill="#f8fafc" font-size="64" font-family="Arial, sans-serif" font-weight="800">${escapeHtml(String(word || 'Unknown'))}</text>
-  <text x="68" y="240" fill="#e2e8f0" font-size="32" font-family="Arial, sans-serif">Total: ${Number(total) || englishGematria(word)}</text>
-  <text x="390" y="240" fill="#e2e8f0" font-size="32" font-family="Arial, sans-serif">Digital root: ${Number(root) || digitalRoot(total)}</text>
-  <text x="68" y="292" fill="#93c5fd" font-size="23" font-family="Arial, sans-serif">${escapeHtml(letterBreakdown)}</text>
-  <foreignObject x="68" y="338" width="1064" height="240">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;color:#cbd5e1;font-size:26px;line-height:1.35;">${escapeHtml(previewText)}</div>
-  </foreignObject>
-</svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  if (letters.length === 0) return 'No alphabetical letters';
+  return letters.map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`).join(' · ');
 };
 
 function renderHomeHeroIndicators() {
@@ -276,35 +257,39 @@ async function loadWordnikWordOfDayHero() {
       throw new Error('Missing word of the day.');
     }
 
-    const total = Number(payload?.total);
-    const root = Number(payload?.digitalRoot);
+    const total = Number(payload?.total) || englishGematria(word);
+    const root = Number(payload?.digitalRoot) || digitalRoot(total);
     const definitionPreview = String(payload?.definitionPreview || '').trim();
     const definitionHref = `/definition?word=${encodeURIComponent(word)}`;
     const calculatorHref = `/calculator.html?query=${encodeURIComponent(word)}`;
 
     const title = document.getElementById('homeWordnikWotdTitle');
     const definition = document.getElementById('homeWordnikWotdDefinition');
-    const overlayMeta = document.getElementById('homeWordnikWotdOverlayMeta');
-    const image = document.getElementById('homeWordnikWotdImage');
-    const cardLink = document.getElementById('homeWordnikWotdCardLink');
+    const totalEl = document.getElementById('homeWordnikWotdTotal');
+    const rootEl = document.getElementById('homeWordnikWotdRoot');
+    const breakdownEl = document.getElementById('homeWordnikWotdBreakdown');
     const definitionCta = document.getElementById('homeWordnikWotdDefinitionCta');
     const calculatorCta = document.getElementById('homeWordnikWotdCalculatorCta');
 
-    if (title) title.textContent = `${word}: daily gematria calculation`;
+    if (title) title.textContent = word;
     if (definition) definition.textContent = definitionPreview || 'Definition preview unavailable today.';
-    if (overlayMeta) overlayMeta.textContent = `Total ${total} • Digital root ${root}`;
-    if (image) image.src = optimizeHomeHeroImageUrl(buildWotdGematriaSvgDataUri({ word, total, root, definitionPreview }));
-    if (cardLink) cardLink.href = calculatorHref;
+    if (totalEl) totalEl.textContent = String(total);
+    if (rootEl) rootEl.textContent = String(root);
+    if (breakdownEl) breakdownEl.textContent = buildLetterBreakdown(word);
     if (definitionCta) definitionCta.href = definitionHref;
     if (calculatorCta) calculatorCta.href = calculatorHref;
   } catch (_error) {
     const title = document.getElementById('homeWordnikWotdTitle');
     const definition = document.getElementById('homeWordnikWotdDefinition');
-    const overlayMeta = document.getElementById('homeWordnikWotdOverlayMeta');
+    const totalEl = document.getElementById('homeWordnikWotdTotal');
+    const rootEl = document.getElementById('homeWordnikWotdRoot');
+    const breakdownEl = document.getElementById('homeWordnikWotdBreakdown');
     const definitionCta = document.getElementById('homeWordnikWotdDefinitionCta');
-    if (title) title.textContent = 'Word of the day is unavailable right now';
+    if (title) title.textContent = 'Word of the day is unavailable';
     if (definition) definition.textContent = 'We couldn’t load today’s Wordnik selection. You can still explore the calculator below.';
-    if (overlayMeta) overlayMeta.textContent = 'Reload the page to try again.';
+    if (totalEl) totalEl.textContent = '—';
+    if (rootEl) rootEl.textContent = '—';
+    if (breakdownEl) breakdownEl.textContent = 'Reload the page to try again.';
     if (definitionCta) {
       definitionCta.textContent = 'Reload page';
       definitionCta.href = window.location.pathname + window.location.search;
@@ -319,6 +304,7 @@ async function loadWordnikWordOfDayHero() {
     section?.setAttribute('aria-busy', 'false');
     document.getElementById('homeWordnikWotdTitle')?.classList.remove('placeholder-glow');
     document.getElementById('homeWordnikWotdDefinition')?.classList.remove('placeholder-glow');
+    document.getElementById('homeWordnikWotdBreakdown')?.classList.remove('placeholder-glow');
   }
 }
 

@@ -2409,6 +2409,21 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   cursor: not-allowed;
 }
 
+/* Password visibility toggles are injected by ui-feedback.js as plain
+   .btn.btn-outline-secondary inside an .input-group; give them a brand
+   focus ring so keyboard users can see where focus landed. */
+[data-password-toggle]:focus-visible {
+  outline: 2px solid var(--brand-amber);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+/* Legal-page section anchors. The sticky navbar would otherwise obscure
+   the heading when users click a TOC link. */
+.legal-copy h2[id] {
+  scroll-margin-top: 5rem;
+}
+
 /* ----- Mobile navbar polish --------------------------------------------- */
 /* The default Bootstrap toggler has no visible label and a faint focus ring.
    Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a

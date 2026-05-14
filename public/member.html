@@ -611,7 +611,8 @@
             <form id="blogSubscriptionForm" class="row g-3">
               <div class="col-12">
                 <label class="form-label" for="blogSubscriptionEmail">Membership email</label>
-                <input id="blogSubscriptionEmail" class="form-control" type="email" readonly />
+                <input id="blogSubscriptionEmail" class="form-control" type="email" readonly aria-describedby="blogSubscriptionEmailHint" />
+                <div id="blogSubscriptionEmailHint" class="form-text">Subscriptions are tied to your membership email. To use a different address, update your account email first.</div>
               </div>
               <div class="col-12 d-grid">
                 <button id="blogSubscriptionButton" class="btn btn-outline-primary" type="submit">Subscribe to blog updates</button>
@@ -961,14 +962,29 @@
         overlay.classList.remove('global-loading-overlay--visible');
       }
 
+      let memberAlertDismissTimer = null;
+
       function showAlert(message, tone = 'danger') {
         memberAlert.textContent = message;
         memberAlert.className = `alert alert-${tone}`;
+        if (memberAlertDismissTimer) {
+          window.clearTimeout(memberAlertDismissTimer);
+          memberAlertDismissTimer = null;
+        }
+        if (tone === 'success' || tone === 'info') {
+          memberAlertDismissTimer = window.setTimeout(() => {
+            clearAlert();
+          }, 6000);
+        }
       }
 
       function clearAlert() {
         memberAlert.textContent = '';
         memberAlert.className = 'alert d-none';
+        if (memberAlertDismissTimer) {
+          window.clearTimeout(memberAlertDismissTimer);
+          memberAlertDismissTimer = null;
+        }
       }
 
       function isTurnstileRequired() {

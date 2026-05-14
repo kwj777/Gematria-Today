@@ -137,15 +137,14 @@
             <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item nav-auth nav-auth--free" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--premium" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
+            <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
-            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search&hellip;</span></a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>
     </nav>
-    <main id="homePageContent" class="py-5" aria-busy="false">
+    <main id="mainContent" class="py-5" aria-busy="false">
       <div class="container">
         <noscript>
           <div class="alert alert-warning" role="alert">
@@ -159,8 +158,8 @@
               <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number. What's yours hiding?</h1>
               <p id="homeHeroLead" class="lead mb-4">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
               <div class="d-flex flex-column flex-sm-row flex-wrap gap-2">
-                <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Find my number — free</a>
-                <a class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html">Try without signing up</a>
+                <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Get my number — free</a>
+                <a class="btn btn-light btn-lg touch-target-lg" href="/calculator.html">Try the calculator</a>
               </div>
             </div>
             <div class="col-lg-5">
@@ -261,12 +260,12 @@
               <h2 id="homeWordnikWotdTitle" class="h3 fw-bold mb-2">Daily gematria spotlight is loading…</h2>
               <p id="homeWordnikWotdDefinition" class="mb-3">Fetching today's Wordnik word and calculation preview.</p>
               <div class="d-flex flex-wrap gap-2">
-                <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning touch-target-lg" href="/definition" target="_blank" rel="noopener noreferrer">Open full definition</a>
-                <a id="homeWordnikWotdCalculatorCta" class="btn btn-outline-light touch-target-lg" href="/calculator.html" target="_blank" rel="noopener noreferrer">Open in calculator</a>
+                <a id="homeWordnikWotdDefinitionCta" class="btn btn-warning touch-target-lg" href="/definition">Open full definition</a>
+                <a id="homeWordnikWotdCalculatorCta" class="btn btn-light touch-target-lg" href="/calculator.html">Open in calculator</a>
               </div>
             </div>
             <div class="col-lg-5">
-              <a id="homeWordnikWotdCardLink" class="word-of-day-spotlight__card p-0 overflow-hidden h-100 text-decoration-none" href="/calculator.html" target="_blank" rel="noopener noreferrer" aria-label="Open Wordnik word of the day in calculator">
+              <a id="homeWordnikWotdCardLink" class="word-of-day-spotlight__card p-0 overflow-hidden h-100 text-decoration-none" href="/calculator.html" aria-label="Open Wordnik word of the day in calculator">
                 <img
                   id="homeWordnikWotdImage"
                   class="word-of-day-spotlight__image"
@@ -331,7 +330,7 @@
           <a href="/contact.html">Contact</a>
         </div>
         <div class="site-credit text-center text-lg-start mt-2">
-          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="http://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
+          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="https://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
         </div>
       </div>
     </footer>

@@ -221,16 +221,22 @@
             <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item nav-auth nav-auth--free" data-module="membership"><a class="nav-link active" href="/member.html" aria-current="page">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--premium" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
+            <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link active" href="/member.html" aria-current="page">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
-            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search&hellip;</span></a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>
     </nav>
 
     <main id="mainContent" class="py-5">
+      <noscript>
+        <div class="container">
+          <div class="alert alert-warning" role="alert">
+            <strong>JavaScript is disabled.</strong> The membership dashboard, sign-in, and registration forms all need JavaScript to load. Please enable JavaScript, or read the <a href="/faq.html" class="alert-link">FAQ</a> or <a href="/contact.html" class="alert-link">contact us</a> directly.
+          </div>
+        </div>
+      </noscript>
       <div id="membershipPageContent" class="container d-none">
         <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5 d-none">
           <div class="row g-4 align-items-center">
@@ -357,8 +363,8 @@
               <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" autocomplete="nickname" /></div>
               <div class="col-12"><label class="form-label" for="registerEmail">Email <span class="text-danger" aria-hidden="true">*</span></label><input id="registerEmail" class="form-control" type="email" autocomplete="email" required /></div>
               <div id="registerPasswordMismatchAlert" class="col-12 alert alert-warning d-none mb-0" role="alert">Password and confirm password do not match.</div>
-              <div class="col-12"><label class="form-label" for="registerPassword">Password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerPassword" aria-label="Show password" aria-pressed="false">Show</button></div></div>
-              <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerConfirmPassword" aria-label="Show password" aria-pressed="false">Show</button></div></div>
+              <div class="col-12"><label class="form-label" for="registerPassword">Password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerPasswordRequirements" /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerPassword" aria-label="Show password" aria-pressed="false">Show</button></div><div id="registerPasswordRequirements" class="form-text">Must be at least 8 characters.</div></div>
+              <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerConfirmPasswordHint registerConfirmPasswordMismatch" /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerConfirmPassword" aria-label="Show password" aria-pressed="false">Show</button></div><div id="registerConfirmPasswordHint" class="form-text">Re-enter the password to confirm.</div><div id="registerConfirmPasswordMismatch" class="form-text text-danger d-none">Passwords don't match yet.</div></div>
               <div class="col-12">
                 <div class="form-check">
                   <input id="registerBlogSubscribe" class="form-check-input" type="checkbox" />
@@ -489,10 +495,11 @@
               </div>
               <form id="paymentForm" class="membership-payment-form row g-3 align-items-end">
                 <div class="col-md-7">
-                  <label class="form-label" for="paymentPlan">Membership plan</label>
+                  <label class="form-label" for="paymentPlan">Membership plan <span class="text-muted small">(USD)</span></label>
                   <select id="paymentPlan" class="form-select" disabled>
-                    <option value="yearly" selected>One year membership — $5.55 introductory special (regularly $7.77/year)</option>
+                    <option value="yearly" selected>One year membership — US$5.55 introductory special (regularly US$7.77/year)</option>
                   </select>
+                  <div class="form-text">All prices are billed in US dollars. Your card issuer may convert and apply a foreign-transaction fee outside the US.</div>
                 </div>
                 <div class="col-md-5 d-grid">
                   <button id="paymentButton" class="btn btn-primary btn-lg" type="submit">Continue to Stripe</button>
@@ -779,7 +786,7 @@
           <a href="/member.html">Dashboard</a>
         </div>
         <div class="site-credit text-center text-lg-start mt-2">
-          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="http://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
+          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="https://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
         </div>
       </div>
     </footer>
@@ -2840,6 +2847,19 @@
 
       registerPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
       registerConfirmPasswordInput.addEventListener('input', clearRegisterPasswordMismatchAlert);
+
+      const registerConfirmPasswordMismatch = document.getElementById('registerConfirmPasswordMismatch');
+      function syncRegisterConfirmInline() {
+        if (!registerConfirmPasswordMismatch) return;
+        const confirm = registerConfirmPasswordInput.value;
+        const password = registerPasswordInput.value;
+        const mismatch = confirm.length > 0 && confirm !== password;
+        registerConfirmPasswordMismatch.classList.toggle('d-none', !mismatch);
+        registerConfirmPasswordInput.setAttribute('aria-invalid', mismatch ? 'true' : 'false');
+      }
+      registerConfirmPasswordInput.addEventListener('input', syncRegisterConfirmInline);
+      registerConfirmPasswordInput.addEventListener('blur', syncRegisterConfirmInline);
+      registerPasswordInput.addEventListener('input', syncRegisterConfirmInline);
 
       authTabRegister.addEventListener('click', () => {
         window.endTimesTracking?.track('sign_up_start', { source: 'member_auth_tab' });

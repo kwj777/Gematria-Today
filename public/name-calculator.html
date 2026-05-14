@@ -185,16 +185,20 @@
             <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item nav-auth nav-auth--free" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--premium" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
+            <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
-            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search&hellip;</span></a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>
     </nav>
     <main id="mainContent" class="py-5">
       <div class="container">
+        <noscript>
+          <div class="alert alert-warning" role="alert">
+            <strong>JavaScript is disabled.</strong> The name calculator needs JavaScript to score and compare names. You can still browse the <a href="/faq.html" class="alert-link">FAQ</a>, the <a href="/blog.html" class="alert-link">blog</a>, or the <a href="/gematria-guide.html" class="alert-link">learning path</a>.
+          </div>
+        </noscript>
         <section class="hero-panel p-4 p-lg-5 mb-5">
           <p class="section-kicker mb-3">Calculator</p>
           <div class="row g-4 align-items-center">
@@ -218,7 +222,7 @@
           </div>
         </section>
         <section class="content-panel p-4 p-lg-5 form-shell">
-          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your name calculator results to your account.</div></div><div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-primary btn-sm" href="/member.html">Go to My Dashboard</a><button id="save-history-button" class="btn btn-outline-primary btn-sm" type="button" disabled title="Calculate name values first to enable saving" aria-label="Save results (calculate name values first)">Save results</button></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-guide.html">Nice! Back to Level 1</a></div><section class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><form id="name-form" class="row g-3"><div class="col-lg-4"><label for="name-1" class="visually-hidden">First name</label><input id="name-1" name="name1" type="text" class="form-control form-control-lg" placeholder="First name" autocomplete="given-name" /></div><div class="col-lg-4"><label for="name-2" class="visually-hidden">Second name</label><input id="name-2" name="name2" type="text" class="form-control form-control-lg" placeholder="Second name" autocomplete="additional-name" /></div><div class="col-lg-4"><label for="name-3" class="visually-hidden">Third name</label><input id="name-3" name="name3" type="text" class="form-control form-control-lg" placeholder="Third name" autocomplete="family-name" /></div><div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-warning btn-lg fw-bold">Calculate</button><button id="clear-names" type="button" class="btn btn-outline-secondary">Clear</button></div></form><p id="status" class="small text-muted mt-3 mb-2"></p><div id="name-calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="name-calculator-error-message" class="mb-1 mt-1"></p><button id="name-calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><p id="mobile-note" class="small text-muted mb-0"></p></div></section><section id="results-shell" class="content-panel p-3 p-lg-4" hidden><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="h4 mb-0">Results</h2><div id="results-actions" class="d-flex"></div></div><div id="results-grid" class="results-grid"></div></section>
+          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Sign in to save your name calculator results to your account.</div></div><div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-primary btn-sm" href="/member.html">Go to My Dashboard</a><button id="save-history-button" class="btn btn-outline-primary btn-sm" type="button" disabled aria-describedby="save-history-hint">Save results</button></div><p id="save-history-hint" class="form-text mb-0 w-100">Calculate name values first to enable saving.</p></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-guide.html">Nice! Back to Level 1</a></div><section class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><form id="name-form" class="row g-3"><div class="col-lg-4"><label for="name-1" class="visually-hidden">First name</label><input id="name-1" name="name1" type="text" class="form-control form-control-lg" placeholder="First name" autocomplete="given-name" /></div><div class="col-lg-4"><label for="name-2" class="visually-hidden">Second name</label><input id="name-2" name="name2" type="text" class="form-control form-control-lg" placeholder="Second name" autocomplete="additional-name" /></div><div class="col-lg-4"><label for="name-3" class="visually-hidden">Third name</label><input id="name-3" name="name3" type="text" class="form-control form-control-lg" placeholder="Third name" autocomplete="family-name" /></div><div class="col-12 d-flex flex-wrap gap-2"><button id="name-submit-button" type="submit" class="btn btn-warning btn-lg fw-bold"><span class="spinner-border spinner-border-sm me-2 d-none" data-name-submit-spinner aria-hidden="true"></span><span data-name-submit-label>Calculate</span></button><button id="clear-names" type="button" class="btn btn-outline-secondary">Clear</button></div></form><p id="status" class="small text-muted mt-3 mb-2"></p><div id="name-calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="name-calculator-error-message" class="mb-1 mt-1"></p><button id="name-calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><p id="mobile-note" class="small text-muted mb-0"></p></div></section><section id="results-shell" class="content-panel p-3 p-lg-4" hidden><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="h4 mb-0">Results</h2><div id="results-actions" class="d-flex"></div></div><div id="results-grid" class="results-grid"></div></section>
         </section>
       </div>
       <script>
@@ -231,7 +235,35 @@ const form = document.querySelector('#name-form');
       const clearNamesButton = document.querySelector('#clear-names');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
+      const saveHistoryHint = document.getElementById('save-history-hint');
+      const nameSubmitButton = document.getElementById('name-submit-button');
+      const nameSubmitSpinner = nameSubmitButton?.querySelector('[data-name-submit-spinner]');
+      const nameSubmitLabelNode = nameSubmitButton?.querySelector('[data-name-submit-label]');
       let saveHistoryPopover = null;
+
+      function setNameSubmitBusy(isBusy) {
+        if (!nameSubmitButton) return;
+        if (isBusy) {
+          nameSubmitButton.dataset.previousLabel = nameSubmitLabelNode?.textContent || '';
+          nameSubmitButton.disabled = true;
+          nameSubmitButton.setAttribute('aria-busy', 'true');
+          if (nameSubmitLabelNode) nameSubmitLabelNode.textContent = 'Calculating…';
+          nameSubmitSpinner?.classList.remove('d-none');
+        } else {
+          nameSubmitButton.disabled = false;
+          nameSubmitButton.removeAttribute('aria-busy');
+          const previous = nameSubmitButton.dataset.previousLabel;
+          if (nameSubmitLabelNode && previous) nameSubmitLabelNode.textContent = previous;
+          delete nameSubmitButton.dataset.previousLabel;
+          nameSubmitSpinner?.classList.add('d-none');
+        }
+      }
+
+      function syncSaveHistoryHint() {
+        if (!saveHistoryHint) return;
+        const needsCalc = saveHistoryButton.disabled && saveHistoryButton.textContent === 'Save results';
+        saveHistoryHint.hidden = !needsCalc;
+      }
 
       function createMembersOnlyPopover() {
         if (!saveHistoryButton || saveHistoryPopover) {
@@ -356,6 +388,7 @@ const form = document.querySelector('#name-form');
         lastSavedSearchPayload = currentSearchPayload;
         saveHistoryButton.textContent = 'Saved';
         saveHistoryButton.disabled = true;
+        syncSaveHistoryHint();
       }
 
       function notifyDashboardUpdate(kind) {
@@ -381,6 +414,7 @@ const form = document.querySelector('#name-form');
           memberSaveMeta.textContent = currentSearchPayload
             ? 'Sign in to save these name calculator results to your account.'
             : 'Sign in to save your name calculator results to your account.';
+          syncSaveHistoryHint();
           return;
         }
 
@@ -397,6 +431,7 @@ const form = document.querySelector('#name-form');
         memberSaveMeta.textContent = currentSearchPayload
           ? `Signed in as ${memberSession.member.displayName || memberSession.member.username}. Save these results to history.`
           : `Signed in as ${memberSession.member.displayName || memberSession.member.username}. Run a name calculation to save it.`;
+        syncSaveHistoryHint();
       }
 
       async function requestJson(endpoint, searchParams) {
@@ -1059,6 +1094,7 @@ View results: ${shareUrl}`.trim(),
           return;
         }
         showCalculatorLoadingOverlay();
+        setNameSubmitBusy(true);
 
         try {
           await renderResults(names);
@@ -1067,6 +1103,7 @@ View results: ${shareUrl}`.trim(),
           showNameError(error?.message || 'Unable to calculate names right now. Please try again.');
         } finally {
           hideCalculatorLoadingOverlay();
+          setNameSubmitBusy(false);
         }
       });
 
@@ -1192,7 +1229,7 @@ View results: ${shareUrl}`.trim(),
           <a href="/contact.html">Contact</a>
         </div>
         <div class="site-credit text-center text-lg-start mt-2">
-          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="http://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
+          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="https://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
         </div>
       </div>
     </footer>

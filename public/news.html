@@ -215,16 +215,20 @@
             <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item" data-module="news"><a class="nav-link active" href="/news.html" aria-current="page">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item nav-auth nav-auth--free" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--premium" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
+            <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
-            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search&hellip;</span></a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>
     </nav>
     <main id="mainContent" class="py-5">
       <div class="container">
+        <noscript>
+          <div class="alert alert-warning" role="alert">
+            <strong>JavaScript is disabled.</strong> RSS feeds, filters, and refresh actions on this page all need JavaScript. Please enable JavaScript to load the latest headlines.
+          </div>
+        </noscript>
         <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
           <p class="section-kicker mb-3">News Feed</p>
           <div class="row g-4 align-items-center">
@@ -252,6 +256,35 @@
 
 
 
+        <section class="content-panel p-3 p-lg-4 mb-4" aria-labelledby="newsFiltersHeading">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 id="newsFiltersHeading" class="h6 mb-0">Filters</h2>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <span class="small text-muted" id="newsLastUpdated" aria-live="polite">Last updated: …</span>
+              <button id="newsRefreshButton" type="button" class="btn btn-outline-primary btn-sm">Refresh</button>
+            </div>
+          </div>
+          <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label" for="newsCategoryFilter">Category</label>
+              <select id="newsCategoryFilter" class="form-select">
+                <option value="">All categories</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="newsSort">Sort</label>
+              <select id="newsSort" class="form-select">
+                <option value="default">Default order</option>
+                <option value="source">Source name (A–Z)</option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label" for="newsSearch">Search</label>
+              <input id="newsSearch" type="search" class="form-control" placeholder="Search title, source, or excerpt" autocomplete="off" />
+            </div>
+          </div>
+        </section>
+
         <section class="mb-5">
           <div class="news-section-header d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
             <div>
@@ -259,13 +292,14 @@
               <h2 class="h3 mb-0">Featured Source Preview</h2>
             </div>
           </div>
-          <article id="featuredFeed" class="news-feature-card p-4 p-lg-5">
-            <div class="news-placeholder-panel">
+          <article id="featuredFeed" class="news-feature-card p-4 p-lg-5" aria-busy="true" aria-live="polite">
+            <div class="news-placeholder-panel" aria-hidden="true">
               <p class="placeholder-glow mb-3"><span class="placeholder col-3"></span></p>
               <p class="placeholder-glow mb-2"><span class="placeholder col-9"></span></p>
               <p class="placeholder-glow mb-4"><span class="placeholder col-7"></span></p>
               <p class="placeholder-glow mb-0"><span class="placeholder col-5"></span></p>
             </div>
+            <p class="visually-hidden">Loading featured source preview…</p>
           </article>
         </section>
 
@@ -278,21 +312,30 @@
             <span class="text-muted small">Browse recently added sources and open any story to read more.</span>
           </div>
 
-          <div id="feedGrid" class="row g-4">
-            <div class="col-md-6 col-xl-4">
-              <article class="news-preview-card h-100 p-4 news-placeholder-panel">
+          <div id="feedGrid" class="row g-4" aria-busy="true" aria-live="polite">
+            <p class="visually-hidden">Loading RSS source previews…</p>
+            <div class="col-md-6 col-xl-4" aria-hidden="true">
+              <article class="news-preview-card h-100 p-4 news-placeholder-panel d-flex flex-column">
                 <p class="placeholder-glow mb-3"><span class="placeholder col-5"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-8"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-10"></span></p>
-                <p class="placeholder-glow mb-0"><span class="placeholder col-6"></span></p>
+                <p class="placeholder-glow mb-4"><span class="placeholder col-6"></span></p>
+                <div class="mt-auto d-flex justify-content-between gap-3">
+                  <span class="placeholder-glow"><span class="placeholder col-4 small"></span></span>
+                  <span class="placeholder-glow"><span class="placeholder col-3 small"></span></span>
+                </div>
               </article>
             </div>
-            <div class="col-md-6 col-xl-4 d-none d-md-block">
-              <article class="news-preview-card h-100 p-4 news-placeholder-panel">
+            <div class="col-md-6 col-xl-4 d-none d-md-block" aria-hidden="true">
+              <article class="news-preview-card h-100 p-4 news-placeholder-panel d-flex flex-column">
                 <p class="placeholder-glow mb-3"><span class="placeholder col-4"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-9"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder col-7"></span></p>
-                <p class="placeholder-glow mb-0"><span class="placeholder col-5"></span></p>
+                <p class="placeholder-glow mb-4"><span class="placeholder col-5"></span></p>
+                <div class="mt-auto d-flex justify-content-between gap-3">
+                  <span class="placeholder-glow"><span class="placeholder col-4 small"></span></span>
+                  <span class="placeholder-glow"><span class="placeholder col-3 small"></span></span>
+                </div>
               </article>
             </div>
           </div>
@@ -313,7 +356,7 @@
           <a href="/contact.html">Contact</a>
         </div>
         <div class="site-credit text-center text-lg-start mt-2">
-          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="http://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
+          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="https://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
         </div>
       </div>
     </footer>
@@ -364,14 +407,110 @@
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
 
+      let allFeeds = [];
+
+      function renderFeaturedEmpty(featuredFeedNode) {
+        featuredFeedNode.innerHTML = `<div class="text-center text-muted"><h3 class="h5 mb-2">No feeds match your filters</h3><p class="mb-0 small">Try clearing the search box or selecting "All categories".</p></div>`;
+      }
+
       function renderFeeds(feeds) {
+        const featuredFeedNode = document.getElementById('featuredFeed');
+        const feedGridNode = document.getElementById('feedGrid');
+        featuredFeedNode.setAttribute('aria-busy', 'false');
+        feedGridNode.setAttribute('aria-busy', 'false');
+
+        if (!feeds.length) {
+          renderFeaturedEmpty(featuredFeedNode);
+          feedGridNode.innerHTML = '';
+          return;
+        }
+
         const featured = feeds[0];
         const featuredArticle = featured.latestArticle || {};
-        document.getElementById('featuredFeed').innerHTML = `<div><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-warning">Featured</span><span class="badge news-source-badge">${escapeHtml(featured.category || 'RSS Feed')}</span><span class="text-muted small align-self-center">${escapeHtml(featuredArticle.publishedAtLabel || 'Latest article')}</span></div><h3 class="display-6 fw-semibold mb-3">${escapeHtml(featuredArticle.title || featured.name)}</h3><p class="mb-3">${escapeHtml(featuredArticle.excerpt || featured.notes || 'Use the admin page to add notes for this source.')}</p>${featured.notes ? `<p class="text-muted small mb-4">Feed notes: ${escapeHtml(featured.notes)}</p>` : '<div class="mb-4"></div>'}<div class="d-flex flex-wrap gap-3 align-items-center"><a class="btn btn-primary" href="${escapeHtml(featuredArticle.link || featured.url)}" target="_blank" rel="noopener noreferrer">Read full article</a></div>${featured.latestArticleError ? `<p class="text-muted small mt-3 mb-0">Latest article unavailable: ${escapeHtml(featured.latestArticleError)}</p>` : '<p class="text-muted small mt-3 mb-0">Opens in a new window.</p>'}</div>`;
-        document.getElementById('feedGrid').innerHTML = feeds.map((feed) => {
+        featuredFeedNode.innerHTML = `<div><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-warning">Featured</span><span class="badge news-source-badge">${escapeHtml(featured.category || 'RSS Feed')}</span><span class="text-muted small align-self-center">${escapeHtml(featuredArticle.publishedAtLabel || 'Latest article')}</span></div><h3 class="display-6 fw-semibold mb-3">${escapeHtml(featuredArticle.title || featured.name)}</h3><p class="mb-3">${escapeHtml(featuredArticle.excerpt || featured.notes || 'Use the admin page to add notes for this source.')}</p>${featured.notes ? `<p class="text-muted small mb-4">Feed notes: ${escapeHtml(featured.notes)}</p>` : '<div class="mb-4"></div>'}<div class="d-flex flex-wrap gap-3 align-items-center"><a class="btn btn-primary" href="${escapeHtml(featuredArticle.link || featured.url)}" target="_blank" rel="noopener noreferrer">Read full article</a></div>${featured.latestArticleError ? `<p class="text-muted small mt-3 mb-0">Latest article unavailable: ${escapeHtml(featured.latestArticleError)}</p>` : '<p class="text-muted small mt-3 mb-0">Opens in a new window.</p>'}</div>`;
+        feedGridNode.innerHTML = feeds.map((feed) => {
           const article = feed.latestArticle || {};
           return `<div class="col-md-6 col-xl-4"><article class="news-preview-card h-100 p-4 d-flex flex-column"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-info">${escapeHtml(feed.category || 'RSS Feed')}</span></div><p class="text-muted small mb-2">${escapeHtml(feed.name)}</p><h3 class="h5 mb-3">${escapeHtml(article.title || `${feed.name} latest article unavailable`)}</h3><p class="text-muted mb-3">${escapeHtml(article.excerpt || feed.notes || 'No article excerpt was available from this feed.')}</p>${feed.notes ? `<p class="small text-muted mb-4">Feed notes: ${escapeHtml(feed.notes)}</p>` : '<div class="mb-4"></div>'}<div class="mt-auto d-flex justify-content-between align-items-center gap-3"><span class="small text-muted">${escapeHtml(article.publishedAtLabel || 'Latest article')}</span><a class="news-inline-link" href="${escapeHtml(article.link || feed.url)}" target="_blank" rel="noopener noreferrer">Open article</a></div>${feed.latestArticleError ? `<p class="text-muted small mt-3 mb-0">${escapeHtml(feed.latestArticleError)}</p>` : ''}</article></div>`;
         }).join('');
+      }
+
+      function getFilteredFeeds() {
+        const categoryValue = document.getElementById('newsCategoryFilter')?.value || '';
+        const sortValue = document.getElementById('newsSort')?.value || 'default';
+        const searchValue = (document.getElementById('newsSearch')?.value || '').trim().toLowerCase();
+
+        let result = allFeeds.slice();
+        if (categoryValue) {
+          result = result.filter((feed) => (feed.category || '') === categoryValue);
+        }
+        if (searchValue) {
+          result = result.filter((feed) => {
+            const article = feed.latestArticle || {};
+            const haystack = [feed.name, feed.category, feed.notes, article.title, article.excerpt]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase();
+            return haystack.includes(searchValue);
+          });
+        }
+        if (sortValue === 'source') {
+          result.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+        }
+        return result;
+      }
+
+      function populateCategoryFilter() {
+        const select = document.getElementById('newsCategoryFilter');
+        if (!select) return;
+        const previous = select.value;
+        const categories = Array.from(new Set(allFeeds.map((feed) => feed.category).filter(Boolean))).sort();
+        select.innerHTML = '<option value="">All categories</option>' +
+          categories.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        if (categories.includes(previous)) {
+          select.value = previous;
+        }
+      }
+
+      function updateLastUpdatedLabel() {
+        const node = document.getElementById('newsLastUpdated');
+        if (!node) return;
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        node.textContent = `Last updated: ${time}`;
+      }
+
+      function applyFeeds(feeds) {
+        allFeeds = Array.isArray(feeds) ? feeds : [];
+        populateCategoryFilter();
+        renderFeeds(getFilteredFeeds());
+        updateLastUpdatedLabel();
+      }
+
+      function wireNewsFilters() {
+        document.getElementById('newsCategoryFilter')?.addEventListener('change', () => renderFeeds(getFilteredFeeds()));
+        document.getElementById('newsSort')?.addEventListener('change', () => renderFeeds(getFilteredFeeds()));
+        const searchInput = document.getElementById('newsSearch');
+        let searchTimer = null;
+        searchInput?.addEventListener('input', () => {
+          if (searchTimer) window.clearTimeout(searchTimer);
+          searchTimer = window.setTimeout(() => renderFeeds(getFilteredFeeds()), 120);
+        });
+        document.getElementById('newsRefreshButton')?.addEventListener('click', () => {
+          const featuredFeedNode = document.getElementById('featuredFeed');
+          const feedGridNode = document.getElementById('feedGrid');
+          featuredFeedNode?.setAttribute('aria-busy', 'true');
+          feedGridNode?.setAttribute('aria-busy', 'true');
+          fetch('/api/public-feeds', { cache: 'no-store' })
+            .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load feeds')))
+            .then((payload) => applyFeeds(payload.items?.length ? payload.items : fallbackFeeds))
+            .catch(() => applyFeeds(fallbackFeeds));
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireNewsFilters, { once: true });
+      } else {
+        wireNewsFilters();
       }
 
       const completeNewsPageRender = () => {
@@ -410,8 +549,8 @@
 
       const renderFeedsPromise = fetch('/api/public-feeds')
         .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load feeds')))
-        .then((payload) => renderFeeds(payload.items?.length ? payload.items : fallbackFeeds))
-        .catch(() => renderFeeds(fallbackFeeds));
+        .then((payload) => applyFeeds(payload.items?.length ? payload.items : fallbackFeeds))
+        .catch(() => applyFeeds(fallbackFeeds));
 
       Promise.allSettled([applyStaticContentPromise, renderFeedsPromise])
         .finally(() => {

@@ -919,7 +919,13 @@
         const shouldShow = !detailViewActive && !previewModeActive && hasMorePublishedPosts;
         wrap.classList.toggle('d-none', !shouldShow);
         button.disabled = loadingMorePosts;
-        button.textContent = loadingMorePosts ? 'Loading…' : 'Load older posts';
+        if (loadingMorePosts) {
+          button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading…';
+          button.setAttribute('aria-busy', 'true');
+        } else {
+          button.textContent = 'Load older posts';
+          button.removeAttribute('aria-busy');
+        }
       };
 
       const renderTagFilters = (posts) => {

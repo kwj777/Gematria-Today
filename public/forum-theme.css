@@ -214,91 +214,92 @@
 }
 
 
-@media (prefers-color-scheme: dark) {
-  .forum-thread-list-panel {
-    background: linear-gradient(180deg, rgba(23, 31, 47, 0.92), rgba(14, 22, 37, 0.9));
-    border-color: rgba(148, 163, 184, 0.2);
-  }
+/* Dark mode forum styling. Driven by [data-bs-theme="dark"] (set by the
+   site theme toggle) so it matches theme.css instead of only following the
+   OS-level prefers-color-scheme media query. */
+:root[data-bs-theme="dark"] .forum-thread-list-panel {
+  background: linear-gradient(180deg, rgba(23, 31, 47, 0.92), rgba(14, 22, 37, 0.9));
+  border-color: rgba(148, 163, 184, 0.2);
+}
 
-  .forum-thread-card {
-    border-color: rgba(148, 163, 184, 0.28);
-    background: rgba(15, 23, 42, 0.88);
-    box-shadow: 0 0.45rem 1rem rgba(2, 6, 23, 0.45);
-    color: rgba(241, 245, 249, 0.95);
-  }
+:root[data-bs-theme="dark"] .forum-thread-card {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: 0 0.45rem 1rem rgba(2, 6, 23, 0.45);
+  color: rgba(241, 245, 249, 0.95);
+}
 
-  .forum-thread-card:hover,
-  .forum-thread-card:focus-visible {
-    border-color: rgba(125, 211, 252, 0.52);
-    box-shadow: 0 0.9rem 1.8rem rgba(56, 189, 248, 0.18);
-  }
+:root[data-bs-theme="dark"] .forum-thread-card:hover,
+:root[data-bs-theme="dark"] .forum-thread-card:focus-visible {
+  border-color: rgba(125, 211, 252, 0.52);
+  box-shadow: 0 0.9rem 1.8rem rgba(56, 189, 248, 0.18);
+}
 
-  .forum-thread-detail {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(17, 34, 56, 0.93));
-    border-color: rgba(125, 211, 252, 0.28);
-    color: rgba(241, 245, 249, 0.95);
-  }
+:root[data-bs-theme="dark"] .forum-thread-detail {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(17, 34, 56, 0.93));
+  border-color: rgba(125, 211, 252, 0.28);
+  color: rgba(241, 245, 249, 0.95);
+}
 
-  .forum-reply-card {
-    border-color: rgba(148, 163, 184, 0.26);
-    background: rgba(17, 25, 40, 0.9);
-    box-shadow: 0 0.45rem 1rem rgba(2, 6, 23, 0.35);
-    color: rgba(241, 245, 249, 0.95);
-  }
+:root[data-bs-theme="dark"] .forum-reply-card {
+  border-color: rgba(148, 163, 184, 0.26);
+  background: rgba(17, 25, 40, 0.9);
+  box-shadow: 0 0.45rem 1rem rgba(2, 6, 23, 0.35);
+  color: rgba(241, 245, 249, 0.95);
+}
 
-  .forum-reply-card:hover,
-  .forum-reply-card:focus-within {
-    border-color: rgba(125, 211, 252, 0.45);
-    box-shadow: 0 0.85rem 1.6rem rgba(56, 189, 248, 0.16);
-  }
+:root[data-bs-theme="dark"] .forum-reply-card:hover,
+:root[data-bs-theme="dark"] .forum-reply-card:focus-within {
+  border-color: rgba(125, 211, 252, 0.45);
+  box-shadow: 0 0.85rem 1.6rem rgba(56, 189, 248, 0.16);
+}
 
-  .forum-composer-panel .form-control,
-  .forum-composer-panel .form-select {
-    border-color: rgba(148, 163, 184, 0.34);
-    background: rgba(15, 23, 42, 0.82);
-    color: rgba(241, 245, 249, 0.95);
-  }
+:root[data-bs-theme="dark"] .forum-composer-panel .form-control,
+:root[data-bs-theme="dark"] .forum-composer-panel .form-select {
+  border-color: rgba(148, 163, 184, 0.34);
+  background: rgba(15, 23, 42, 0.82);
+  color: rgba(241, 245, 249, 0.95);
+}
 
-  .forum-composer-panel .form-control:focus,
-  .forum-composer-panel .form-select:focus {
-    border-color: rgba(125, 211, 252, 0.58);
-    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.2);
-  }
+:root[data-bs-theme="dark"] .forum-composer-panel .form-control:focus,
+:root[data-bs-theme="dark"] .forum-composer-panel .form-select:focus {
+  border-color: rgba(125, 211, 252, 0.58);
+  box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.2);
+}
 
-  .forum-empty-state {
-    border-color: rgba(125, 211, 252, 0.35);
-    background: linear-gradient(180deg, rgba(17, 25, 40, 0.9), rgba(17, 34, 56, 0.88));
-  }
+:root[data-bs-theme="dark"] .forum-empty-state {
+  border-color: rgba(125, 211, 252, 0.35);
+  background: linear-gradient(180deg, rgba(17, 25, 40, 0.9), rgba(17, 34, 56, 0.88));
+}
 
-  .forum-empty-title {
-    color: rgba(241, 245, 249, 0.95);
-  }
+:root[data-bs-theme="dark"] .forum-empty-title {
+  color: rgba(241, 245, 249, 0.95);
+}
 
-  .forum-empty-copy,
-  .forum-meta,
-  .forum-thread-card .text-muted,
-  .forum-reply-card .text-muted,
-  .forum-thread-detail .text-muted {
-    color: rgba(191, 209, 232, 0.9) !important;
-  }
+:root[data-bs-theme="dark"] .forum-empty-copy,
+:root[data-bs-theme="dark"] .forum-meta,
+:root[data-bs-theme="dark"] .forum-thread-card .text-muted,
+:root[data-bs-theme="dark"] .forum-reply-card .text-muted,
+:root[data-bs-theme="dark"] .forum-thread-detail .text-muted {
+  color: rgba(191, 209, 232, 0.9) !important;
+}
 
-  .forum-skeleton {
-    background: linear-gradient(
-      90deg,
-      rgba(51, 65, 85, 0.88) 0%,
-      rgba(71, 85, 105, 0.94) 45%,
-      rgba(51, 65, 85, 0.88) 100%
-    );
-  }
+:root[data-bs-theme="dark"] .forum-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(51, 65, 85, 0.88) 0%,
+    rgba(71, 85, 105, 0.94) 45%,
+    rgba(51, 65, 85, 0.88) 100%
+  );
+}
 
-  #forumFilterControls {
-    border-color: rgba(148, 163, 184, 0.3);
-    background: rgba(15, 23, 42, 0.82);
-  }
+:root[data-bs-theme="dark"] #forumFilterControls {
+  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.82);
+}
 
-  .forum-composer-actions {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.95) 40%);
-  }
+:root[data-bs-theme="dark"] .forum-composer-actions {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.95) 40%);
 }
 
 @media (prefers-reduced-motion: reduce) {

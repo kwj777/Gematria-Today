@@ -2873,3 +2873,54 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   }
 }
 
+/* Narrow-viewport refinements (iPhone SE / ~360-380px wide). Existing
+   breakpoints at 575.98px cover phones broadly; this block tightens padding,
+   logo size, and headings further so content does not crush at <=380px. */
+@media (max-width: 380px) {
+  .site-logo {
+    height: 28px;
+  }
+
+  .hero-panel,
+  .hero-panel--compact {
+    padding: 1.25rem;
+    border-radius: var(--radius-xl);
+  }
+
+  .hero-panel h1.display-5,
+  .hero-panel .display-5 {
+    font-size: 1.45rem;
+    line-height: 1.18;
+  }
+
+  .hero-panel .lead {
+    font-size: 0.95rem;
+  }
+
+  .container,
+  .container-fluid {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
+  .content-panel,
+  .feature-card,
+  .faq-card,
+  .stat-card {
+    padding: 1rem;
+  }
+
+  /* Stack adjacent action buttons that share a flex row so they get full
+     width and a 44px tap target instead of squeezing side-by-side. */
+  .hero-panel .d-flex.flex-sm-row,
+  .hero-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .hero-panel .d-flex.flex-sm-row > .btn,
+  .hero-actions > .btn {
+    width: 100%;
+  }
+}
+

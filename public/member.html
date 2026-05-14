@@ -1555,9 +1555,28 @@
         learningPathStep1Section.classList.toggle('d-none', !shouldShow);
       }
 
+      function consumeLearningPathStep1Redirect() {
+        if (!hasLearningPathStep1Intent()) return false;
+        window.localStorage.removeItem('learningPathStep1Intent');
+        window.endTimesTracking?.track?.('cta_ladder_click', {
+          step: 'learning_path_step_1',
+          location: 'member_dashboard_auto_redirect',
+          destination: '/gematria-basics.html',
+          authenticated: true,
+        });
+        showAlert('Signed in. Routing you to Level 1…', 'success');
+        window.setTimeout(() => {
+          window.location.assign('/gematria-basics.html');
+        }, 400);
+        return true;
+      }
+
       function setLoggedIn(isLoggedIn) {
         if (isLoggedIn) {
           window.sessionStorage.removeItem('memberJustVerifiedEmail');
+          if (consumeLearningPathStep1Redirect()) {
+            return;
+          }
         }
         if (typeof window.__endtimesSyncAuthState === 'function') {
           window.__endtimesSyncAuthState();

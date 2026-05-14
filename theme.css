@@ -2391,6 +2391,18 @@ a.badge,
   justify-content: center;
 }
 
+/* On touch devices, grow .btn-sm to the WCAG 44px tap target. Bootstrap's
+   default sm height is ~31px which is fine for mouse precision but tight
+   for fingers, especially in the dense admin action rows. Scoped to
+   pointer: coarse so desktop density is unchanged, and only the vertical
+   axis is enlarged so tag-pill rows don't stretch. */
+@media (pointer: coarse) {
+  .btn-sm,
+  .btn-group-sm > .btn {
+    min-height: 44px;
+  }
+}
+
 /* ── Back to top floating button ────────────────────────────────────────── */
 .back-to-top-button {
   position: fixed;

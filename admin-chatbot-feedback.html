@@ -180,7 +180,21 @@
               </select>
             </label>
           </div>
-          <div id="chatbotFeedbackList" class="admin-list"></div>
+          <div id="chatbotFeedbackList" class="admin-list" aria-busy="true" aria-live="polite">
+            <div class="placeholder-glow" aria-hidden="true">
+              <article class="admin-item-card mb-3 p-3">
+                <p class="placeholder col-3 mb-2"></p>
+                <p class="placeholder col-10 mb-1"></p>
+                <p class="placeholder col-7 mb-0"></p>
+              </article>
+              <article class="admin-item-card mb-0 p-3">
+                <p class="placeholder col-4 mb-2"></p>
+                <p class="placeholder col-11 mb-1"></p>
+                <p class="placeholder col-6 mb-0"></p>
+              </article>
+            </div>
+            <span class="visually-hidden">Loading chatbot feedback…</span>
+          </div>
         </section>
       </div>
     </main>
@@ -237,6 +251,7 @@
           ? state.feedbackItems
           : state.feedbackItems.filter((item) => (item.status || 'new') === state.statusFilter);
 
+        chatbotFeedbackList.removeAttribute('aria-busy');
         chatbotFeedbackList.innerHTML = filteredItems.length ? filteredItems.map((item) => `
           <article class="admin-item-card mb-3 p-3">
             <div class="d-flex flex-wrap gap-2 mb-2">

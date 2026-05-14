@@ -209,7 +209,14 @@
           <p class="text-muted small mb-2">Enable or disable major modules site-wide. Disabling a module hides related UI elements for visitors.</p>
           <p class="text-info-emphasis small mb-2"><strong>Status is saved upon switching toggles.</strong></p>
           <p class="text-muted small mb-3">Note: these switches are global and do not create super-admin-only module access.</p>
-          <form id="siteModulesForm" class="row g-3"></form>
+          <form id="siteModulesForm" class="row g-3" aria-busy="true" aria-live="polite">
+            <div class="col-12 placeholder-glow" aria-hidden="true">
+              <p class="placeholder col-6 mb-2" style="height:1.6rem"></p>
+              <p class="placeholder col-7 mb-2" style="height:1.6rem"></p>
+              <p class="placeholder col-5 mb-0" style="height:1.6rem"></p>
+            </div>
+            <span class="visually-hidden">Loading site module settings…</span>
+          </form>
           <hr class="my-4">
           <div>
             <p class="section-kicker mb-1">Personal preview</p>
@@ -421,6 +428,7 @@
       function renderSiteModules() {
         const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Word of the Day'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
         const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
+        siteModulesForm.removeAttribute('aria-busy');
         siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `
           <div class="col-md-6 col-xl-4">
             <label class="form-check form-switch">

@@ -611,7 +611,8 @@
             <form id="blogSubscriptionForm" class="row g-3">
               <div class="col-12">
                 <label class="form-label" for="blogSubscriptionEmail">Membership email</label>
-                <input id="blogSubscriptionEmail" class="form-control" type="email" readonly />
+                <input id="blogSubscriptionEmail" class="form-control" type="email" readonly aria-describedby="blogSubscriptionEmailHint" />
+                <div id="blogSubscriptionEmailHint" class="form-text">Subscriptions are tied to your membership email. To use a different address, update your account email first.</div>
               </div>
               <div class="col-12 d-grid">
                 <button id="blogSubscriptionButton" class="btn btn-outline-primary" type="submit">Subscribe to blog updates</button>
@@ -961,14 +962,29 @@
         overlay.classList.remove('global-loading-overlay--visible');
       }
 
+      let memberAlertDismissTimer = null;
+
       function showAlert(message, tone = 'danger') {
         memberAlert.textContent = message;
         memberAlert.className = `alert alert-${tone}`;
+        if (memberAlertDismissTimer) {
+          window.clearTimeout(memberAlertDismissTimer);
+          memberAlertDismissTimer = null;
+        }
+        if (tone === 'success' || tone === 'info') {
+          memberAlertDismissTimer = window.setTimeout(() => {
+            clearAlert();
+          }, 6000);
+        }
       }
 
       function clearAlert() {
         memberAlert.textContent = '';
         memberAlert.className = 'alert d-none';
+        if (memberAlertDismissTimer) {
+          window.clearTimeout(memberAlertDismissTimer);
+          memberAlertDismissTimer = null;
+        }
       }
 
       function isTurnstileRequired() {
@@ -2470,6 +2486,9 @@
 
         historyList.querySelectorAll('[data-delete-id]').forEach((button) => {
           button.addEventListener('click', async () => {
+            if (!window.confirm('Delete this saved search? This cannot be undone.')) {
+              return;
+            }
             try {
               await request('/api/member-history', {
                 method: 'DELETE',
@@ -2574,6 +2593,9 @@
 
         chatSessionList.querySelectorAll('[data-delete-chat-session-id]').forEach((button) => {
           button.addEventListener('click', async () => {
+            if (!window.confirm('Delete this chat session? This cannot be undone.')) {
+              return;
+            }
             try {
               await request('/api/member-chat-sessions', {
                 method: 'DELETE',
@@ -2973,20 +2995,30 @@
           const existingPreferences = session?.profile?.preferences && typeof session.profile.preferences === 'object'
             ? session.profile.preferences
             : {};
+          const nextDisplayName = document.getElementById('profileDisplayName').value.trim();
+          const nextNotes = document.getElementById('profileNotes').value.trim();
+          const prevDisplayName = (session?.member?.displayName || '').trim();
+          const prevNotes = (existingPreferences?.notes || '').trim();
+          const changedFields = [];
+          if (nextDisplayName !== prevDisplayName) changedFields.push('display name');
+          if (nextNotes !== prevNotes) changedFields.push('notes');
           const payload = await request('/api/member-profile', {
             method: 'PATCH',
             body: JSON.stringify({
-              displayName: document.getElementById('profileDisplayName').value.trim(),
+              displayName: nextDisplayName,
               preferences: {
                 ...existingPreferences,
-                notes: document.getElementById('profileNotes').value.trim(),
+                notes: nextNotes,
               },
             }),
           });
           session = { ...session, authenticated: true, member: payload.member, profile: payload.profile };
           populateProfile(payload.member, payload.profile, session?.user);
           setProfileSaveButtonState('saved');
-          showAlert('Profile saved.', 'success');
+          const savedMessage = changedFields.length
+            ? `Profile saved (${changedFields.join(' and ')} updated).`
+            : 'Profile saved (no changes).';
+          showAlert(savedMessage, 'success');
         } catch (error) {
           setProfileSaveButtonState('default');
           showAlert(error.message || 'Unable to save profile.');

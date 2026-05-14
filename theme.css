@@ -62,6 +62,17 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
   --radius-3xl: 1.5rem;
+
+  /* Z-index scale. Names describe the layer, not the file the rule lives in.
+     Migrated from previously ad-hoc literals (1080, 1200, 2999, 3000, 4000,
+     9000, 9100) so future additions land on a known rung. */
+  --z-sticky: 1080;
+  --z-overlay-page: 1200;
+  --z-modal: 2999;
+  --z-modal-backdrop: 3000;
+  --z-loading: 4000;
+  --z-floating: 9000;
+  --z-banner: 9100;
 }
 
 h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6, .navbar-brand {
@@ -194,7 +205,7 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  z-index: 1080;
+  z-index: var(--z-sticky);
   padding: 0.6rem 0.9rem;
   border-radius: var(--radius-sm);
   background: #111;
@@ -1035,7 +1046,7 @@ footer.site-footer a:focus-visible {
 #related-words-result .panel, #results-shell .result-card { margin-top: 1rem; }
 #related-words-result .matching-word, .meta-highlight { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: rgba(var(--bs-warning-rgb), .18); color: #7a4e00; font-weight: 600; }
 .meta-highlight a { color: inherit; font-weight: inherit; text-decoration: none; }
-.meta-highlight a:hover, .meta-highlight a:focus { text-decoration: underline; }
+.meta-highlight a:hover, .meta-highlight a:focus-visible { text-decoration: underline; }
 #related-words-result .word-link, #related-words-result .definition-link, #related-words-result .inline-button, #results-shell .inline-button, #results-shell .word-button, #word-list a { color: var(--bs-primary); }
 #related-words-result .related-word { word-spacing: 6px; }
 #related-words-result li { padding-bottom: 12px; }
@@ -1552,7 +1563,7 @@ body.page-render-pending footer {
 .page-render-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--z-overlay-page);
   display: grid;
   place-items: center;
   background: rgba(248, 250, 252, 0.9);
@@ -1782,7 +1793,7 @@ body.page-render-pending footer {
 .global-loading-overlay {
   position: fixed;
   inset: 0;
-  z-index: 4000;
+  z-index: var(--z-loading);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1957,7 +1968,7 @@ body.page-render-pending footer {
   position: fixed;
   right: 1rem;
   bottom: 1rem;
-  z-index: 1080;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -2030,7 +2041,7 @@ body.page-render-pending footer {
 .pwa-launch-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2999;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2087,7 +2098,7 @@ body.page-render-pending footer {
   padding: 1.5rem;
   background: rgba(15, 23, 42, 0.62);
   backdrop-filter: blur(2px);
-  z-index: 3000;
+  z-index: var(--z-modal-backdrop);
 }
 
 .calculator-loading-overlay[hidden] {
@@ -2117,7 +2128,7 @@ body.page-render-pending footer {
   position: fixed;
   right: 1.25rem;
   bottom: 1.25rem;
-  z-index: 9000;
+  z-index: var(--z-floating);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2171,7 +2182,7 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9100;
+  z-index: var(--z-banner);
   background: #1e293b;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.45);
@@ -2398,6 +2409,21 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   cursor: not-allowed;
 }
 
+/* Password visibility toggles are injected by ui-feedback.js as plain
+   .btn.btn-outline-secondary inside an .input-group; give them a brand
+   focus ring so keyboard users can see where focus landed. */
+[data-password-toggle]:focus-visible {
+  outline: 2px solid var(--brand-amber);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+/* Legal-page section anchors. The sticky navbar would otherwise obscure
+   the heading when users click a TOC link. */
+.legal-copy h2[id] {
+  scroll-margin-top: 5rem;
+}
+
 /* ----- Mobile navbar polish --------------------------------------------- */
 /* The default Bootstrap toggler has no visible label and a faint focus ring.
    Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a
@@ -2468,3 +2494,129 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
     padding: 0.4rem 0.85rem;
   }
 }
+
+/* ── P1 a11y additions ─────────────────────────────────────────────────── */
+/* Reduced-motion: cover every animation declared in this file so vestibular-
+   sensitive users don't see infinite spinners or slide-ins. */
+@media (prefers-reduced-motion: reduce) {
+  .global-loading-overlay__spinner,
+  .pwa-install-cta__icon-spinner {
+    animation: none;
+    border-top-color: rgba(255, 255, 255, 0.6);
+  }
+  .navbar-collapse.show,
+  .navbar-collapse.collapsing {
+    animation: none;
+  }
+}
+
+/* Dark-mode form inputs: Bootstrap's default light input chrome is invisible
+   on our dark surfaces. Give inputs explicit borders, background, and text. */
+:root[data-bs-theme="dark"] .form-control,
+:root[data-bs-theme="dark"] .form-select,
+:root[data-bs-theme="dark"] .form-control[readonly] {
+  background-color: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #f1f5f9;
+}
+
+:root[data-bs-theme="dark"] .form-control::placeholder {
+  color: rgba(226, 232, 240, 0.55);
+}
+
+:root[data-bs-theme="dark"] .form-control:focus,
+:root[data-bs-theme="dark"] .form-select:focus {
+  background-color: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  border-color: var(--brand-amber);
+}
+
+:root[data-bs-theme="dark"] .form-check-input {
+  background-color: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+:root[data-bs-theme="dark"] .form-check-input:checked {
+  background-color: var(--brand-amber, #d97706);
+  border-color: var(--brand-amber, #d97706);
+}
+
+/* Forced-colors (Windows High Contrast): restore system colors and ensure
+   borders remain visible where we relied on custom colors for affordances. */
+@media (forced-colors: active) {
+  .btn,
+  .form-control,
+  .form-select,
+  .nav-link,
+  .skip-link,
+  .back-to-top-button,
+  .cookie-consent-btn--accept,
+  .cookie-consent-btn--decline {
+    border: 1px solid CanvasText;
+    forced-color-adjust: none;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  .btn:focus-visible,
+  .form-control:focus,
+  .form-select:focus,
+  .nav-link:focus-visible,
+  a:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  .global-loading-overlay__spinner {
+    border-color: CanvasText;
+    border-top-color: Highlight;
+  }
+}
+
+/* Print: strip site chrome, overlays, and floating widgets so the printed
+   page shows page content only. Restores readable black-on-white text. */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .navbar,
+  .site-footer,
+  .skip-link,
+  .back-to-top-button,
+  .cookie-consent-banner,
+  .pwa-install-cta,
+  .pwa-launch-overlay,
+  .page-render-overlay,
+  .global-loading-overlay,
+  .calculator-loading-overlay,
+  #feedStatusBanner,
+  #startupOverlay,
+  [data-print-hide],
+  .visually-hidden-print {
+    display: none !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+  .content-panel,
+  .card,
+  .feature-card,
+  .faq-card {
+    box-shadow: none !important;
+    border: 1px solid #d4d4d4 !important;
+    page-break-inside: avoid;
+  }
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+

@@ -258,7 +258,7 @@
 
         <section class="content-panel p-3 p-lg-4 mb-4" aria-labelledby="newsFiltersHeading">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 id="newsFiltersHeading" class="h6 mb-0">Filters</h2>
+            <h2 id="newsFiltersHeading" class="h5 mb-0">Filters</h2>
             <div class="d-flex flex-wrap align-items-center gap-3">
               <span class="small text-muted" id="newsLastUpdated" aria-live="polite">Last updated: …</span>
               <button id="newsRefreshButton" type="button" class="btn btn-outline-primary btn-sm">Refresh</button>
@@ -284,6 +284,13 @@
             </div>
           </div>
         </section>
+
+        <div id="feedStatusBanner" class="alert alert-warning d-none mb-4" role="status" aria-live="polite">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span id="feedStatusBannerMessage">Live RSS feeds could not be loaded. Showing placeholder content below.</span>
+            <button type="button" class="btn btn-sm btn-outline-dark" id="feedStatusRetryButton">Try again</button>
+          </div>
+        </div>
 
         <section class="mb-5">
           <div class="news-section-header d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
@@ -475,7 +482,7 @@
         const node = document.getElementById('newsLastUpdated');
         if (!node) return;
         const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
         node.textContent = `Last updated: ${time}`;
       }
 
@@ -495,16 +502,36 @@
           if (searchTimer) window.clearTimeout(searchTimer);
           searchTimer = window.setTimeout(() => renderFeeds(getFilteredFeeds()), 120);
         });
-        document.getElementById('newsRefreshButton')?.addEventListener('click', () => {
+        const refreshFeeds = () => {
           const featuredFeedNode = document.getElementById('featuredFeed');
           const feedGridNode = document.getElementById('feedGrid');
           featuredFeedNode?.setAttribute('aria-busy', 'true');
           feedGridNode?.setAttribute('aria-busy', 'true');
-          fetch('/api/public-feeds', { cache: 'no-store' })
+          return fetch('/api/public-feeds', { cache: 'no-store' })
             .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load feeds')))
-            .then((payload) => applyFeeds(payload.items?.length ? payload.items : fallbackFeeds))
-            .catch(() => applyFeeds(fallbackFeeds));
-        });
+            .then((payload) => {
+              applyFeeds(payload.items?.length ? payload.items : fallbackFeeds);
+              setFeedStatusBanner(null);
+            })
+            .catch(() => {
+              applyFeeds(fallbackFeeds);
+              setFeedStatusBanner('Live RSS feeds could not be loaded. Showing placeholder content below — try again in a moment.');
+            });
+        };
+        document.getElementById('newsRefreshButton')?.addEventListener('click', refreshFeeds);
+        document.getElementById('feedStatusRetryButton')?.addEventListener('click', refreshFeeds);
+      }
+
+      function setFeedStatusBanner(message) {
+        const banner = document.getElementById('feedStatusBanner');
+        if (!banner) return;
+        if (message) {
+          const msgNode = document.getElementById('feedStatusBannerMessage');
+          if (msgNode) msgNode.textContent = message;
+          banner.classList.remove('d-none');
+        } else {
+          banner.classList.add('d-none');
+        }
       }
 
       if (document.readyState === 'loading') {
@@ -549,8 +576,14 @@
 
       const renderFeedsPromise = fetch('/api/public-feeds')
         .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load feeds')))
-        .then((payload) => applyFeeds(payload.items?.length ? payload.items : fallbackFeeds))
-        .catch(() => applyFeeds(fallbackFeeds));
+        .then((payload) => {
+          applyFeeds(payload.items?.length ? payload.items : fallbackFeeds);
+          setFeedStatusBanner(null);
+        })
+        .catch(() => {
+          applyFeeds(fallbackFeeds);
+          setFeedStatusBanner('Live RSS feeds could not be loaded. Showing placeholder content below — try again in a moment.');
+        });
 
       Promise.allSettled([applyStaticContentPromise, renderFeedsPromise])
         .finally(() => {

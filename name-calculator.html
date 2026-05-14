@@ -313,6 +313,15 @@ const form = document.querySelector('#name-form');
           nameCalcErrorMessage.textContent = msg;
         }
         nameCalcError.hidden = false;
+        if (!nameCalcError.hasAttribute('tabindex')) {
+          nameCalcError.setAttribute('tabindex', '-1');
+        }
+        try {
+          nameCalcError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (_) {
+          nameCalcError.scrollIntoView();
+        }
+        nameCalcError.focus({ preventScroll: true });
       }
 
       function hideNameError() {
@@ -481,8 +490,8 @@ const form = document.querySelector('#name-form');
 
       function getDefaultMobileNote() {
         return isMobileDevice()
-          ? 'Mobile mode is active: results will appear below in a single column.'
-          : 'Desktop mode is active: results will appear below in three columns.';
+          ? 'On smaller screens, results appear below in a single column for easier scrolling.'
+          : 'Results appear below in a three-column grid.';
       }
 
       function focusNameFormFromHash() {

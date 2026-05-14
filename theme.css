@@ -90,6 +90,14 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
   --bs-btn-disabled-opacity: 0.75;
 }
 
+html {
+  scroll-padding-top: 72px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
 .navbar-brand { letter-spacing: 0.04em; }
 
 .navbar-nav {

@@ -290,6 +290,15 @@ const lookupForm = document.querySelector('#lookup-form');
           calculatorErrorMessage.textContent = msg;
         }
         calculatorError.hidden = false;
+        if (!calculatorError.hasAttribute('tabindex')) {
+          calculatorError.setAttribute('tabindex', '-1');
+        }
+        try {
+          calculatorError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (_) {
+          calculatorError.scrollIntoView();
+        }
+        calculatorError.focus({ preventScroll: true });
       }
 
       function hideCalculatorError() {

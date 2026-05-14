@@ -1035,7 +1035,7 @@ footer.site-footer a:focus-visible {
 #related-words-result .panel, #results-shell .result-card { margin-top: 1rem; }
 #related-words-result .matching-word, .meta-highlight { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: rgba(var(--bs-warning-rgb), .18); color: #7a4e00; font-weight: 600; }
 .meta-highlight a { color: inherit; font-weight: inherit; text-decoration: none; }
-.meta-highlight a:hover, .meta-highlight a:focus { text-decoration: underline; }
+.meta-highlight a:hover, .meta-highlight a:focus-visible { text-decoration: underline; }
 #related-words-result .word-link, #related-words-result .definition-link, #related-words-result .inline-button, #results-shell .inline-button, #results-shell .word-button, #word-list a { color: var(--bs-primary); }
 #related-words-result .related-word { word-spacing: 6px; }
 #related-words-result li { padding-bottom: 12px; }
@@ -2466,5 +2466,81 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
 
   .navbar-nav .nav-link.nav-search-link {
     padding: 0.4rem 0.85rem;
+  }
+}
+
+/* ── P1 a11y additions ─────────────────────────────────────────────────── */
+/* Reduced-motion: cover every animation declared in this file so vestibular-
+   sensitive users don't see infinite spinners or slide-ins. */
+@media (prefers-reduced-motion: reduce) {
+  .global-loading-overlay__spinner,
+  .pwa-install-cta__icon-spinner {
+    animation: none;
+    border-top-color: rgba(255, 255, 255, 0.6);
+  }
+  .navbar-collapse.show,
+  .navbar-collapse.collapsing {
+    animation: none;
+  }
+}
+
+/* Dark-mode form inputs: Bootstrap's default light input chrome is invisible
+   on our dark surfaces. Give inputs explicit borders, background, and text. */
+:root[data-bs-theme="dark"] .form-control,
+:root[data-bs-theme="dark"] .form-select,
+:root[data-bs-theme="dark"] .form-control[readonly] {
+  background-color: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #f1f5f9;
+}
+
+:root[data-bs-theme="dark"] .form-control::placeholder {
+  color: rgba(226, 232, 240, 0.55);
+}
+
+:root[data-bs-theme="dark"] .form-control:focus,
+:root[data-bs-theme="dark"] .form-select:focus {
+  background-color: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  border-color: var(--brand-amber);
+}
+
+:root[data-bs-theme="dark"] .form-check-input {
+  background-color: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+:root[data-bs-theme="dark"] .form-check-input:checked {
+  background-color: var(--brand-amber, #d97706);
+  border-color: var(--brand-amber, #d97706);
+}
+
+/* Forced-colors (Windows High Contrast): restore system colors and ensure
+   borders remain visible where we relied on custom colors for affordances. */
+@media (forced-colors: active) {
+  .btn,
+  .form-control,
+  .form-select,
+  .nav-link,
+  .skip-link,
+  .back-to-top-button,
+  .cookie-consent-btn--accept,
+  .cookie-consent-btn--decline {
+    border: 1px solid CanvasText;
+    forced-color-adjust: none;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  .btn:focus-visible,
+  .form-control:focus,
+  .form-select:focus,
+  .nav-link:focus-visible,
+  a:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  .global-loading-overlay__spinner {
+    border-color: CanvasText;
+    border-top-color: Highlight;
   }
 }

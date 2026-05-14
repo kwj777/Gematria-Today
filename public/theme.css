@@ -80,9 +80,21 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
   letter-spacing: var(--tracking-tight);
 }
 
-/* Canonical brand button. Use `.btn-warning` or `.btn-amber` for the primary
-   amber CTA across the site. Pill/shape variants (e.g. `.membership-upgrade-cta`)
-   must reuse these same brand-amber tokens so the button family stays unified. */
+/* Button hierarchy (site-wide rules).
+   Each view picks ONE primary CTA. Apply these tiers consistently:
+     1. Primary  → `.btn btn-warning` (or `.btn btn-amber`). The single most
+        important action per view (Join, Continue, Submit, Get my number).
+     2. Secondary → `.btn btn-outline-primary` on light surfaces,
+        `.btn btn-outline-primary` inside `.hero-panel` (already restyled for
+        dark backgrounds below), or `.btn btn-outline-secondary` for muted
+        alternates that share the same row as a stronger primary.
+     3. Tertiary / ghost → `.btn btn-ghost` for low-emphasis side actions
+        ("Back", "Cancel", supplementary links rendered as buttons).
+   Do not stack two filled brand buttons next to each other; if two CTAs sit
+   in the same group, the non-primary one must be outline or ghost so the
+   primary action is unambiguous. Pill/shape variants (e.g.
+   `.membership-upgrade-cta`) must reuse the same brand-amber tokens as
+   `.btn-warning` so the button family stays unified. */
 .btn-warning,
 .btn-amber {
   --bs-btn-color: #ffffff;
@@ -221,6 +233,43 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
   outline: 3px solid var(--brand-amber);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(var(--brand-amber-rgb), 0.35);
+}
+
+/* Tertiary ("ghost") button — see button-hierarchy comment near `.btn-warning`.
+   No border, brand-tinted text, subtle hover surface. Use for low-emphasis
+   side actions that share space with a stronger primary/outline CTA. */
+.btn-ghost {
+  --bs-btn-color: var(--bs-link-color, #0d6efd);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--bs-link-hover-color, #0a58ca);
+  --bs-btn-hover-bg: rgba(13, 110, 253, 0.08);
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-focus-shadow-rgb: 13, 110, 253;
+  --bs-btn-active-color: var(--bs-link-hover-color, #0a58ca);
+  --bs-btn-active-bg: rgba(13, 110, 253, 0.12);
+  --bs-btn-active-border-color: transparent;
+  --bs-btn-disabled-color: rgba(53, 65, 79, 0.5);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: transparent;
+  font-weight: 500;
+}
+
+.hero-panel .btn-ghost {
+  --bs-btn-color: #ffffff;
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-active-bg: rgba(255, 255, 255, 0.18);
+  --bs-btn-focus-shadow-rgb: 255, 255, 255;
+}
+
+:root[data-bs-theme="dark"] .btn-ghost {
+  --bs-btn-color: #9ec5fe;
+  --bs-btn-hover-color: #cfe2ff;
+  --bs-btn-hover-bg: rgba(158, 197, 254, 0.12);
+  --bs-btn-active-color: #cfe2ff;
+  --bs-btn-active-bg: rgba(158, 197, 254, 0.18);
 }
 
 .btn[aria-disabled="true"]:not(:disabled),

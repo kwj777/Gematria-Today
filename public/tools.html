@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (function () {
+        var TIERS = ['anon', 'free', 'premium', 'lifetime'];
+        function applyAuthState() {
+          var tier;
+          try {
+            var m = document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
+            tier = m ? decodeURIComponent(m[1]) : 'anon';
+            if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
+          } catch (_) {
+            tier = 'anon';
+          }
+          window.__endtimesAuthTier = tier;
+          var root = document.documentElement;
+          for (var i = 0; i < TIERS.length; i++) {
+            root.classList.remove('auth-' + TIERS[i]);
+          }
+          root.classList.add('auth-' + tier);
+        }
+        window.__endtimesSyncAuthState = applyAuthState;
+        applyAuthState();
+      })();
+    </script>
+
+<!-- Google tag (gtag.js) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  var gaMeasurementId = 'G-E611H84D6Y';
+  var consentModeRegions = ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','GB'];
+
+  function isGoogleAnalyticsEnabled() {
+    if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
+      return false;
+    }
+
+    try {
+      var stored = window.localStorage.getItem('endtimes.siteModules');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (parsed && parsed.google_analytics === false) {
+          return false;
+        }
+      }
+    } catch (e) {
+      // Ignore storage parse errors.
+    }
+
+    try {
+      var moduleParam = new URLSearchParams(window.location.search).get('modules');
+      if (moduleParam) {
+        var requested = moduleParam.split(',').map(function (entry) { return String(entry).trim().toLowerCase(); }).filter(Boolean);
+        return requested.indexOf('google_analytics') !== -1;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors.
+    }
+
+    return true;
+  }
+
+  var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
+  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+
+  if (!googleAnalyticsEnabled) {
+    window['ga-disable-' + gaMeasurementId] = true;
+  } else {
+    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+
+    gtag('consent', 'default', {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500,
+      region: consentModeRegions
+    });
+
+    function initializeGoogleAnalytics() {
+      if (window.__endTimesGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__endTimesGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+    initializeGoogleAnalytics();
+  }
+</script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var hasPromise = typeof window.Promise === 'function';
+        var hasFetch = typeof window.fetch === 'function';
+        var userAgent = ((window.navigator && window.navigator.userAgent) || '').toLowerCase();
+        var isBot = /bot|crawl|spider|slurp|bingpreview|google web preview|facebookexternalhit|whatsapp|telegrambot|linkedinbot|twitterbot/.test(userAgent);
+        if ((hasPromise && hasFetch) || isBot) {
+          return;
+        }
+
+        var pathname = (window.location && window.location.pathname) || '';
+        if (pathname === '/unsupported-browser.html') {
+          return;
+        }
+
+        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
+        window.location.replace(redirectUrl);
+      })();
+    </script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" /></noscript>
+
+        <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<title>Tools | EndTimes.Today</title>
+    <meta name="description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, or GemaBot for conversational analysis." />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://endtimes.today/tools.html" />
+    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Tools | EndTimes.Today" />
+    <meta property="og:description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, or GemaBot for conversational analysis." />
+    <meta property="og:url" content="https://endtimes.today/tools.html" />
+    <meta property="og:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tools | EndTimes.Today" />
+    <meta name="twitter:description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, or GemaBot for conversational analysis." />
+    <meta name="twitter:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
+    <link rel="preload" as="style" href="/api/public-theme-css" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script defer src="/cookie-consent.js"></script>
+    <script defer src="/ui-feedback.js"></script>
+      <script src="/pwa-register.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" id="toolsMenu" href="/tools.html" aria-current="page" aria-haspopup="true">Tools</a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="toolsMenu">
+                <li><a class="dropdown-item" href="/calculator.html">Calculator</a></li>
+                <li><a class="dropdown-item" href="/name-calculator.html">Name Calculator</a></li>
+                <li data-module="gemabot"><a class="dropdown-item" href="/ai-agent.html">GemaBot</a></li>
+              </ul>
+            </li>
+            <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
+            <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
+            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
+            <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
+            <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <section class="content-panel p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-2">Tools</p>
+          <h1 class="mb-3">Gematria Research Tools</h1>
+          <p class="mb-0">Three ways to explore the numerical patterns behind words, names, and phrases. Pick the one that fits how you want to work.</p>
+        </section>
+
+        <div class="row g-4">
+          <div class="col-12 col-lg-4 d-flex">
+            <section class="content-panel p-4 p-lg-5 w-100 d-flex flex-column">
+              <h2 class="h4 mb-2">Calculator</h2>
+              <p class="flex-grow-1">Run any word or phrase through multiple gematria ciphers at once and compare the results side by side.</p>
+              <p class="mb-0"><a class="btn btn-warning fw-semibold" href="/calculator.html">Open Calculator</a></p>
+            </section>
+          </div>
+          <div class="col-12 col-lg-4 d-flex">
+            <section class="content-panel p-4 p-lg-5 w-100 d-flex flex-column">
+              <h2 class="h4 mb-2">Name Calculator</h2>
+              <p class="flex-grow-1">Analyze personal names — first, last, and full — with cipher breakdowns tuned for name-based research.</p>
+              <p class="mb-0"><a class="btn btn-warning fw-semibold" href="/name-calculator.html">Open Name Calculator</a></p>
+            </section>
+          </div>
+          <div class="col-12 col-lg-4 d-flex" data-module="gemabot">
+            <section class="content-panel p-4 p-lg-5 w-100 d-flex flex-column">
+              <h2 class="h4 mb-2">GemaBot</h2>
+              <p class="flex-grow-1">Ask questions in plain language. GemaBot looks up matches across ciphers and explains its reasoning as it goes.</p>
+              <p class="mb-0"><a class="btn btn-warning fw-semibold" href="/ai-agent.html">Open GemaBot</a></p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer py-4 mt-5">
+      <div class="container d-flex flex-column gap-3 small text-muted">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
+          <span>EndTimes.Today — a research workspace.</span>
+        </div>
+        <div class="d-flex flex-wrap gap-3 site-legal-links">
+          <a href="/privacy.html">Privacy Policy</a>
+          <a href="/terms.html">Terms of Use</a>
+          <a href="/disclaimer.html">Disclaimer</a>
+          <a href="/accessibility.html">Accessibility</a>
+          <a href="/contact.html">Contact</a>
+        </div>
+        <div class="site-credit text-center text-lg-start mt-2">
+          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="https://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
+        </div>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>

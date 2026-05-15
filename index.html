@@ -13,14 +13,14 @@
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>

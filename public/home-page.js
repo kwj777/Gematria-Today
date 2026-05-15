@@ -447,14 +447,14 @@ const initializeHomePage = () => {
   setHomeReadMoreWorkingState();
 
   document.getElementById('homeJoinCta')?.addEventListener('click', () => {
-    window.endTimesTracking?.track('beginner_path_start_click', {
+    window.gematriaTracking?.track('beginner_path_start_click', {
       source: 'home_hero_primary_cta',
       destination: '/gematria-account-setup.html',
     });
   });
 
   document.getElementById('homeCalculatorCta')?.addEventListener('click', () => {
-    window.endTimesTracking?.track('beginner_path_try_calculator_click', {
+    window.gematriaTracking?.track('beginner_path_try_calculator_click', {
       source: 'home_hero_secondary_cta',
       destination: '/calculator.html',
     });
@@ -462,7 +462,7 @@ const initializeHomePage = () => {
 
   runAfterFirstPaint(() => {
     loadWordnikWordOfDayHero().finally(() => {
-      window.EndTimesModules?.applyModuleVisibility?.();
+      window.GematriaModules?.applyModuleVisibility?.();
       renderHomeHeroIndicators();
       applyHomeHeroImageOptimization();
     });

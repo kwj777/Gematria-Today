@@ -13,14 +13,14 @@
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>
@@ -39,7 +39,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -64,12 +64,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -88,11 +88,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -926,7 +926,7 @@
       const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
         ? new window.BroadcastChannel('member-dashboard-sync')
         : null;
-      const siteModules = window.EndTimesModules;
+      const siteModules = window.GematriaModules;
       const forumModuleEnabled = siteModules?.isEnabled('forum') !== false;
       const gemabotModuleEnabled = siteModules?.isEnabled('gemabot') !== false;
 
@@ -1015,7 +1015,7 @@
 
       function getTurnstileSiteKey() {
         return String(
-          window.ENDTIMES_TURNSTILE_SITE_KEY
+          window.GEMATRIA_TURNSTILE_SITE_KEY
             || document.querySelector('meta[name="turnstile-site-key"]')?.content
             || '',
         ).trim();
@@ -1620,7 +1620,7 @@
         if (!hasLearningPathStep1Intent()) return false;
         window.localStorage.removeItem('learningPathStep1Intent');
         clearServerLearningPathStep1Intent();
-        window.endTimesTracking?.track?.('cta_ladder_click', {
+        window.gematriaTracking?.track?.('cta_ladder_click', {
           step: 'learning_path_step_1',
           location: 'member_dashboard_auto_redirect',
           destination: '/gematria-basics.html',
@@ -1640,8 +1640,8 @@
             return;
           }
         }
-        if (typeof window.__endtimesSyncAuthState === 'function') {
-          window.__endtimesSyncAuthState();
+        if (typeof window.__gematriaSyncAuthState === 'function') {
+          window.__gematriaSyncAuthState();
         }
         syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
@@ -2178,7 +2178,7 @@
           syncPaymentButton(session.member);
           syncMembershipUpgradePanel(session.member);
           showAlert(`Payment received. Your ${payload.membership.label.toLowerCase()} is active.`, 'success');
-          window.endTimesTracking?.track('checkout_complete', {
+          window.gematriaTracking?.track('checkout_complete', {
             source: 'member_payment_confirm',
             membershipLevel: payload?.member?.membershipLevel || 'premium',
           });
@@ -2186,7 +2186,7 @@
           url.searchParams.delete('session_id');
           window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
         } catch (error) {
-          window.endTimesTracking?.track('checkout_error', {
+          window.gematriaTracking?.track('checkout_error', {
             source: 'member_payment_confirm',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -2912,7 +2912,7 @@
       }
 
       window.addEventListener('DOMContentLoaded', () => {
-        window.EndTimesRegisterForm.initRegisterForm({
+        window.GematriaRegisterForm.initRegisterForm({
           form: document.getElementById('registerForm'),
           fields: {
             username: document.getElementById('registerUsername'),
@@ -2954,7 +2954,7 @@
       });
 
       authTabRegister.addEventListener('click', () => {
-        window.endTimesTracking?.track('sign_up_start', { source: 'member_auth_tab' });
+        window.gematriaTracking?.track('sign_up_start', { source: 'member_auth_tab' });
         setAuthView('register', { updateUrl: true });
       });
 
@@ -3301,7 +3301,7 @@
         }
 
         try {
-          window.endTimesTracking?.track('checkout_start', {
+          window.gematriaTracking?.track('checkout_start', {
             source: 'member_upgrade_form',
             currentMembershipLevel: session?.member?.membershipLevel || 'free',
           });
@@ -3310,7 +3310,7 @@
           const payload = await request('/api/member-payment-checkout', { method: 'POST', body: '{}' });
           window.location.assign(payload.checkoutUrl);
         } catch (error) {
-          window.endTimesTracking?.track('checkout_error', {
+          window.gematriaTracking?.track('checkout_error', {
             source: 'member_upgrade_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -3438,7 +3438,7 @@
       });
 
       goToLearningPathStep1Button?.addEventListener('click', () => {
-        window.endTimesTracking?.track('cta_ladder_click', {
+        window.gematriaTracking?.track('cta_ladder_click', {
           step: 'learning_path_step_1',
           location: 'member_dashboard',
           destination: '/gematria-basics.html',

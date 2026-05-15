@@ -13,14 +13,14 @@
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>
@@ -39,7 +39,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -64,12 +64,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -88,11 +88,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -234,7 +234,7 @@
         <section class="hero-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Premium-Only</p>
           <h1 class="display-6 fw-bold mb-3">Advanced Wordnik + Gematria Research Console</h1>
-          <p class="lead mb-0">Run deeper antonym/synonym discovery, search the EndTimes database by exact gematria multiples of 6, and review premium-only dataset stats and trend spotlights.</p>
+          <p class="lead mb-0">Run deeper antonym/synonym discovery, search the Gematria.Today database by exact gematria multiples of 6, and review premium-only dataset stats and trend spotlights.</p>
         </section>
 
 
@@ -267,7 +267,7 @@
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
               <p class="section-kicker mb-1">Premium Data Intelligence</p>
-              <h2 class="h4 mb-0">EndTimes stats & spotlights</h2>
+              <h2 class="h4 mb-0">Gematria.Today stats & spotlights</h2>
             </div>
             <button id="refreshStatsButton" class="btn btn-outline-secondary btn-sm" type="button">Refresh stats</button>
           </div>
@@ -309,7 +309,7 @@
 
           <div class="col-xl-6">
             <article class="content-panel p-4 h-100">
-              <p class="section-kicker mb-2">EndTimes Database</p>
+              <p class="section-kicker mb-2">Gematria.Today Database</p>
               <h2 class="h4 mb-3">Exact gematria lookup (multiple of 6)</h2>
               <form id="gematriaForm" class="row g-3">
                 <div class="col-8">
@@ -506,7 +506,7 @@
       function renderStats(payload) {
         const totals = payload.totals || {};
         statsCards.innerHTML = [
-          toMetricCard('Total words', totals.totalWords || 0, 'Indexed in EndTimes database.'),
+          toMetricCard('Total words', totals.totalWords || 0, 'Indexed in Gematria.Today database.'),
           toMetricCard('Base-root words', totals.baseRootCount || 0, `${totals.baseRootPercentage || 0}% of all words.`),
           toMetricCard('Digital root 6', totals.digitalRootSixCount || 0, `${totals.digitalRootSixPercentage || 0}% of all words.`),
         ].join('');
@@ -537,7 +537,7 @@
       document.getElementById('gematriaForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAlert();
-        gematriaResults.textContent = 'Searching EndTimes database…';
+        gematriaResults.textContent = 'Searching Gematria.Today database…';
 
         try {
           const gematria = document.getElementById('gematriaValue').value;

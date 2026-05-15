@@ -13,14 +13,14 @@
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>
@@ -39,7 +39,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -64,12 +64,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -88,11 +88,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -572,7 +572,7 @@ View results: ${shareUrl}`.trim(),
             await navigator.share(sharePayload);
             return;
           } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -918,7 +918,7 @@ View results: ${shareUrl}`.trim(),
                   const gematria = await requestGematria(word);
                   return { word, gematria };
                 } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1070,7 +1070,7 @@ View results: ${shareUrl}`.trim(),
           };
           updateMemberSaveState();
         } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1485,7 +1485,7 @@ View results: ${shareUrl}`.trim(),
 
       document.querySelectorAll('[data-cta-ladder-step]').forEach((link) => {
         link.addEventListener('click', () => {
-          window.endTimesTracking?.track('cta_ladder_click', {
+          window.gematriaTracking?.track('cta_ladder_click', {
             step: link.dataset.ctaLadderStep,
             location: 'calculator_page',
             destination: link.getAttribute('href') || '',
@@ -1494,7 +1494,7 @@ View results: ${shareUrl}`.trim(),
       });
 
       document.getElementById('member-link')?.addEventListener('click', () => {
-        window.endTimesTracking?.track('sign_up_start', {
+        window.gematriaTracking?.track('sign_up_start', {
           source: 'calculator_member_history_banner',
         });
       });
@@ -1505,7 +1505,7 @@ View results: ${shareUrl}`.trim(),
         const term = lookupInput.value.trim();
         lastSearchTerm = term;
         hideCalculatorError();
-        window.endTimesTracking?.track('calculator_usage_start', {
+        window.gematriaTracking?.track('calculator_usage_start', {
           source: 'calculator_lookup_form',
           queryLength: term.length,
         });
@@ -1555,7 +1555,7 @@ View results: ${shareUrl}`.trim(),
 
         try {
           const searchGematria = await requestGematria(term);
-          window.endTimesTracking?.track('calculator_usage_complete', {
+          window.gematriaTracking?.track('calculator_usage_complete', {
             source: 'calculator_lookup_form',
             gematriaTotal: searchGematria?.gematria?.total ?? null,
             authenticated: Boolean(memberSession?.authenticated),
@@ -1594,7 +1594,7 @@ View results: ${shareUrl}`.trim(),
               };
               updateMemberSaveState();
             } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1616,7 +1616,7 @@ View results: ${shareUrl}`.trim(),
             }
           }
         } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1674,11 +1674,11 @@ View results: ${shareUrl}`.trim(),
       async function performSaveWithNote(noteText) {
         try {
           await saveCurrentSearch(noteText);
-          window.endTimesTracking?.track('calculator_save_history_complete', {
+          window.gematriaTracking?.track('calculator_save_history_complete', {
             source: 'calculator_page',
           });
         } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1691,7 +1691,7 @@ View results: ${shareUrl}`.trim(),
           event.preventDefault();
           showMembersOnlySaveMessage();
           saveHistoryPopover?.show();
-          window.endTimesTracking?.track('sign_up_start', { source: 'calculator_save_button' });
+          window.gematriaTracking?.track('sign_up_start', { source: 'calculator_save_button' });
           return;
         }
 

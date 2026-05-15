@@ -13,14 +13,14 @@
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>
@@ -39,7 +39,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -64,12 +64,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -88,11 +88,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -332,7 +332,7 @@
     <script>
       window.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('levelZeroRegisterForm');
-        if (!form || !window.EndTimesRegisterForm) return;
+        if (!form || !window.GematriaRegisterForm) return;
 
         const alertEl = document.getElementById('signUpAlert');
         const successPanel = document.getElementById('signUpSuccessPanel');
@@ -350,7 +350,7 @@
           },
         };
 
-        window.EndTimesRegisterForm.initRegisterForm({
+        window.GematriaRegisterForm.initRegisterForm({
           form,
           fields: {
             username: document.getElementById('lzRegUsername'),

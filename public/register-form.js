@@ -7,7 +7,7 @@
 
   function getTurnstileSiteKey() {
     return String(
-      window.ENDTIMES_TURNSTILE_SITE_KEY
+      window.GEMATRIA_TURNSTILE_SITE_KEY
         || document.querySelector('meta[name="turnstile-site-key"]')?.content
         || '',
     ).trim();
@@ -174,7 +174,7 @@
       submitButton.setAttribute('aria-busy', 'true');
       submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating account…';
       pageAlert.show?.('Creating your account—thanks for your patience. This can take a few seconds.', 'info');
-      window.endTimesTracking?.track?.('sign_up_start', { source });
+      window.gematriaTracking?.track?.('sign_up_start', { source });
 
       try {
         const response = await request(REGISTER_ENDPOINT, {
@@ -182,10 +182,10 @@
           body: JSON.stringify(payload),
         });
         pageAlert.clear?.();
-        window.endTimesTracking?.track?.('sign_up_complete', { source });
+        window.gematriaTracking?.track?.('sign_up_complete', { source });
         config.onSuccess?.(response, { payload, form });
       } catch (error) {
-        window.endTimesTracking?.track?.('sign_up_error', {
+        window.gematriaTracking?.track?.('sign_up_error', {
           source,
           errorMessage: (error && error.message) || 'unknown_error',
         });
@@ -208,7 +208,7 @@
     return { challenge, request };
   }
 
-  window.EndTimesRegisterForm = {
+  window.GematriaRegisterForm = {
     initRegisterForm,
     createTurnstileWidget,
     createCsrfRequestHelper,

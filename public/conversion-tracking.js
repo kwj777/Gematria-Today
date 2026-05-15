@@ -1,5 +1,5 @@
 (function installConversionTracking() {
-  if (typeof window === 'undefined' || window.__endTimesConversionTrackingInstalled) {
+  if (typeof window === 'undefined' || window.__gematriaConversionTrackingInstalled) {
     return;
   }
 
@@ -32,10 +32,10 @@
   }
 
   if (!hasTrackingConsent()) {
-    if (!window.__endTimesConversionTrackingPending) {
-      window.__endTimesConversionTrackingPending = true;
-      window.addEventListener('endtimes:cookie-consent', function onConsentEvent(e) {
-        window.__endTimesConversionTrackingPending = false;
+    if (!window.__gematriaConversionTrackingPending) {
+      window.__gematriaConversionTrackingPending = true;
+      window.addEventListener('gematria:cookie-consent', function onConsentEvent(e) {
+        window.__gematriaConversionTrackingPending = false;
         if (e.detail && e.detail.accepted) {
           installConversionTracking();
         }
@@ -44,7 +44,7 @@
     return;
   }
 
-  window.__endTimesConversionTrackingInstalled = true;
+  window.__gematriaConversionTrackingInstalled = true;
 
   function createSessionId() {
     if (window.crypto?.randomUUID) {
@@ -187,7 +187,7 @@
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push(payload);
 
-    window.dispatchEvent(new CustomEvent('endtimes:track', { detail: payload }));
+    window.dispatchEvent(new CustomEvent('gematria:track', { detail: payload }));
     reportButtonEvent(payload.event, payload);
     return payload;
   }
@@ -228,7 +228,7 @@
     });
   }, { capture: true });
 
-  window.endTimesTracking = {
+  window.gematriaTracking = {
     sessionId: trackingSessionId,
     track,
   };

@@ -1,14 +1,14 @@
 (function installCookieConsent() {
-  if (typeof window === 'undefined' || window.__endTimesCookieConsentInstalled) {
+  if (typeof window === 'undefined' || window.__gematriaCookieConsentInstalled) {
     return;
   }
 
-  window.__endTimesCookieConsentInstalled = true;
+  window.__gematriaCookieConsentInstalled = true;
 
   var CONSENT_KEY = 'gematria_cookie_consent';
   var LEGACY_CONSENT_KEY = 'endtimes_cookie_consent';
-  var CONSENT_MODE_REGIONS = Array.isArray(window.ENDTIMES_CONSENT_MODE_REGIONS)
-    ? window.ENDTIMES_CONSENT_MODE_REGIONS
+  var CONSENT_MODE_REGIONS = Array.isArray(window.GEMATRIA_CONSENT_MODE_REGIONS)
+    ? window.GEMATRIA_CONSENT_MODE_REGIONS
     : [
         'AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IS',
         'IT', 'LI', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK', 'GB',
@@ -80,7 +80,7 @@
   }
 
   function applyConsentMode(accepted) {
-    if (window.__endTimesGoogleAnalyticsEnabled !== true || typeof window.gtag !== 'function') {
+    if (window.__gematriaGoogleAnalyticsEnabled !== true || typeof window.gtag !== 'function') {
       return;
     }
 
@@ -97,7 +97,7 @@
   function fireConsentEvent(accepted) {
     try {
       window.dispatchEvent(
-        new CustomEvent('endtimes:cookie-consent', {
+        new CustomEvent('gematria:cookie-consent', {
           detail: { accepted: accepted },
           bubbles: false,
         })
@@ -163,7 +163,7 @@
   }
 
   // Expose a minimal read-only API for other scripts.
-  window.endTimesCookieConsent = Object.freeze({
+  window.gematriaCookieConsent = Object.freeze({
     getConsent: getConsent,
     CONSENT_KEY: CONSENT_KEY,
     consentModeRegions: CONSENT_MODE_REGIONS.slice(),

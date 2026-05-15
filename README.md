@@ -50,7 +50,7 @@ The site now includes a lightweight module toggle system in `public/site-modules
 - Page elements can be tied to modules using `data-module="forum"` (or comma-separated values).
 - The same script is mirrored at root as `site-modules.js` for compatibility.
 - Module selection is **locked for non-admin users**.
-- Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `endtimes.siteModules`, and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
+- Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `gematria.siteModules` — legacy `endtimes.siteModules` is read as a fallback and migrated forward — and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
 
 ### Super Admin policy
 

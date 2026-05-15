@@ -516,6 +516,11 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   .navbar .dropdown:focus-within > .dropdown-toggle {
     color: var(--bs-navbar-hover-color);
   }
+
+  .navbar .dropdown.dropdown--suppress-open:hover > .dropdown-menu,
+  .navbar .dropdown.dropdown--suppress-open:focus-within > .dropdown-menu {
+    display: none;
+  }
 }
 
 .navbar .dropdown-menu {

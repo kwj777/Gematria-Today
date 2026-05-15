@@ -94,7 +94,8 @@
       .navbar { background: #1a202c; }
     </style>
     <link rel="preload" href="/theme.css" as="style" />
-    <link rel="stylesheet" href="/api/public-theme-css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="image" href="/assets/endtimes-logo-navbar.svg" type="image/svg+xml" fetchpriority="high" />
     <link rel="preload" as="image" href="/assets/why-english-gematria-backdrop-compact-16x9.svg" type="image/svg+xml" fetchpriority="high" />

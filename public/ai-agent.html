@@ -1813,7 +1813,7 @@ View results: ${shareUrl}`.trim(),
                   ${allWordReports.length > 1 ? `
                     <p class="mb-2"><strong>Suggested next lookups for "${escapeHtml(entry.target)}"</strong></p>
                     <ul class="mb-2">
-                      <li><a href="/definition?word=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(entry.target)}"</a>${perWordDefinitionSummary ? ` — Preview: ${escapeHtml(perWordDefinitionSummary.slice(0, 180))}${perWordDefinitionSummary.length > 180 ? '…' : ''}` : ''}</li>
+                      ${perWordDefinitionSummary ? `<li><a href="/definition?word=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(entry.target)}"</a> — Preview: ${escapeHtml(perWordDefinitionSummary.slice(0, 180))}${perWordDefinitionSummary.length > 180 ? '…' : ''}</li>` : ''}
                       <li><a href="/calculator.html?query=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Calculator search for "${escapeHtml(entry.target)}"</a></li>
                       <li>
                         Related words lookup:
@@ -1877,7 +1877,7 @@ View results: ${shareUrl}`.trim(),
             <hr />
             <p class="mb-2"><strong>Suggested next lookups</strong></p>
             <ul class="mb-0">
-              <li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(topic)}"</a>${definitionSummary ? ` — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}` : ''}</li>
+              ${definitionSummary ? `<li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(topic)}"</a> — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}</li>` : ''}
               <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Calculator search for "${escapeHtml(topic)}"</a></li>
               <li>
                 Related words lookup:

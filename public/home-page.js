@@ -276,7 +276,10 @@ async function loadWordnikWordOfDayHero() {
     if (totalEl) totalEl.textContent = String(total);
     if (rootEl) rootEl.textContent = String(root);
     if (breakdownEl) breakdownEl.textContent = buildLetterBreakdown(word);
-    if (definitionCta) definitionCta.href = definitionHref;
+    if (definitionCta) {
+      definitionCta.href = definitionHref;
+      definitionCta.hidden = !definitionPreview;
+    }
     if (calculatorCta) calculatorCta.href = calculatorHref;
   } catch (_error) {
     const title = document.getElementById('homeWordnikWotdTitle');
@@ -295,6 +298,7 @@ async function loadWordnikWordOfDayHero() {
       definitionCta.href = window.location.pathname + window.location.search;
       definitionCta.removeAttribute('target');
       definitionCta.removeAttribute('rel');
+      definitionCta.hidden = false;
     }
   } finally {
     if (timeoutId !== null) {

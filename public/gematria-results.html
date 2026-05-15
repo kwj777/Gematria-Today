@@ -301,14 +301,42 @@ const titleNode = document.querySelector('#page-title');
         const item = document.createElement('li');
         item.className = 'word-item';
         const isDigitalRootSix = Number(entry.gematria?.digitalRoot) === 6;
+        const definitionHref = `/definition?${new URLSearchParams({ word: entry.word, returnTo: returnTo || `/calculator.html?query=${encodeURIComponent(wordParam)}` }).toString()}`;
         item.innerHTML = `
           <a class="word-link" href="/calculator.html?query=${encodeURIComponent(entry.word)}">${escapeHtml(entry.word)}</a>
           <div class="word-actions">
             <span class="${isDigitalRootSix ? 'meta-highlight' : ''}">Root ${escapeHtml(String(entry.gematria.digitalRoot))}</span>
-            <a class="definition-link" href="/definition?${new URLSearchParams({ word: entry.word, returnTo: returnTo || `/calculator.html?query=${encodeURIComponent(wordParam)}` }).toString()}">(definition)</a>
+            <a class="definition-link" href="${definitionHref}" hidden>(definition)</a>
           </div>
         `;
+        const definitionLinkNode = item.querySelector('.definition-link');
+        hasDefinition(entry.word).then((exists) => {
+          if (exists && definitionLinkNode) definitionLinkNode.hidden = false;
+        });
         return item;
+      }
+
+      async function hasDefinition(word) {
+        const normalizedWord = String(word || '').trim();
+        if (!normalizedWord) return false;
+        try {
+          const response = await fetch(
+            `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+            { headers: { accept: 'application/json' } }
+          );
+          if (!response.ok) return false;
+          const payload = await response.json();
+          const definitions = Array.isArray(payload?.definitions)
+            ? payload.definitions
+            : Array.isArray(payload)
+              ? payload
+              : [];
+          return definitions.some((definition) =>
+            String(definition?.text || definition?.definition || definition?.display || definition?.gloss || '').trim()
+          );
+        } catch {
+          return false;
+        }
       }
 
       function renderList(words) {

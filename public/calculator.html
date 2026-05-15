@@ -864,7 +864,9 @@ View results: ${shareUrl}`.trim(),
         return requestJson('/.netlify/functions/searchByGematria', searchParams);
       }
 
-      function createDefinitionLink(word) {
+      function createDefinitionLink(word, { trailingSeparator = '' } = {}) {
+        const wrapper = document.createElement('span');
+        wrapper.hidden = true;
         const definitionLink = document.createElement('a');
         definitionLink.className = 'definition-link';
         const returnTo = `${window.location.pathname}${window.location.search}`;
@@ -874,7 +876,35 @@ View results: ${shareUrl}`.trim(),
         definitionLink.rel = 'noopener noreferrer';
         definitionLink.textContent = '(definition)';
         definitionLink.setAttribute('aria-label', `Definition for ${word}`);
-        return definitionLink;
+        wrapper.appendChild(definitionLink);
+        if (trailingSeparator) wrapper.appendChild(document.createTextNode(trailingSeparator));
+        hasDefinition(word).then((exists) => {
+          if (exists) wrapper.hidden = false;
+        });
+        return wrapper;
+      }
+
+      async function hasDefinition(word) {
+        const normalizedWord = String(word || '').trim();
+        if (!normalizedWord) return false;
+        try {
+          const response = await fetch(
+            `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+            { headers: { accept: 'application/json' } }
+          );
+          if (!response.ok) return false;
+          const payload = await response.json();
+          const definitions = Array.isArray(payload?.definitions)
+            ? payload.definitions
+            : Array.isArray(payload)
+              ? payload
+              : [];
+          return definitions.some((definition) =>
+            String(definition?.text || definition?.definition || definition?.display || definition?.gloss || '').trim()
+          );
+        } catch {
+          return false;
+        }
       }
 
       async function enrichRelationshipWords(relationships, searchTotal) {
@@ -1295,8 +1325,7 @@ View results: ${shareUrl}`.trim(),
           ' (',
           createDigitalRootValueNode(searchGematria.gematria.digitalRoot, 'Digital Root: '),
           ') | ',
-          createDefinitionLink(searchGematria.word),
-          ' | ',
+          createDefinitionLink(searchGematria.word, { trailingSeparator: ' | ' }),
           createBaseRootLink(),
           ' ',
           createBaseRootValueNode(searchGematria.isBaseRoot),

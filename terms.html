@@ -7,7 +7,7 @@
         function applyAuthState() {
           var tier;
           try {
-            var m = document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
+            var m = document.cookie.match(/(?:^|; )gematria_member_tier=([^;]+)/) || document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
             tier = m ? decodeURIComponent(m[1]) : 'anon';
             if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
           } catch (_) {

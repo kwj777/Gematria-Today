@@ -141,7 +141,7 @@ function createDefinitionMeta(definition) {
 }
 
 
-const ALLOWED_RETURN_PATHS = new Set(['/', '/index.html', '/calculator.html']);
+const ALLOWED_RETURN_PATHS = new Set(['/', '/index.html', '/calculator.html', '/name-calculator.html']);
 
 function sanitizeReturnPath(value) {
   const fallbackPath = '/';

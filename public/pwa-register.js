@@ -30,7 +30,7 @@
 
     const logo = document.createElement('img');
     logo.className = 'pwa-launch-overlay__logo';
-    logo.src = '/assets/endtimes-logo-navbar.svg';
+    logo.src = '/assets/gematria-logo-navbar.svg';
     logo.alt = 'Gematria.Today';
     logo.width = 220;
     logo.height = 52;

@@ -230,7 +230,7 @@
           </div>
         </section>
         <section class="content-panel form-shell p-4 p-lg-5">
-          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase or Gematria Value</label><input id="lookup-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required /><p class="form-text mb-0">Enter a word/phrase to calculate its gematria, or enter a number (must be a multiple of 6) to list words in our database with that gematria value.</p></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-warning btn-lg fw-bold"><span class="spinner-border spinner-border-sm me-2 d-none" data-lookup-submit-spinner aria-hidden="true"></span><span data-lookup-submit-label>Calculate</span></button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear</button><button id="save-history-button" class="btn btn-outline-primary" type="button" disabled aria-describedby="save-history-hint">Save result</button></div><div class="col-12" id="save-history-hint-row"><p id="save-history-hint" class="form-text mb-0">Calculate a value first to enable saving.</p></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="gematria-result" class="alert alert-light border mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+          <div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join for free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join for free</a></div></div><div id="learning-path-return" class="mb-3" hidden><a id="learning-path-return-link" class="btn btn-warning btn-lg fw-bold w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3"><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase or Gematria Value</label><input id="lookup-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required /><p class="form-text mb-0">Enter a word/phrase to calculate its gematria, or enter a number (must be a multiple of 6) to list words in our database with that gematria value.</p></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-warning btn-lg fw-bold"><span class="spinner-border spinner-border-sm me-2 d-none" data-lookup-submit-spinner aria-hidden="true"></span><span data-lookup-submit-label>Calculate</span></button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear</button><button id="save-history-button" class="btn btn-outline-primary" type="button" disabled aria-describedby="save-history-hint">Save result</button></div><div class="col-12" id="save-history-hint-row"><p id="save-history-hint" class="form-text mb-0">Calculate a value first to enable saving.</p></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="gematria-result" class="gematria-result mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
         </section>
       </div>
       <script>
@@ -1094,7 +1094,7 @@ View results: ${shareUrl}`.trim(),
         if (wordResult.gematria) {
           const payload = wordResult.gematria;
           const matchPrefix = hasMatchingGematria ? 'Gematria match! ' : '';
-          const detailPrefix = document.createTextNode(`${matchPrefix}Gematria: `);
+          const detailPrefix = document.createTextNode(`${matchPrefix}Gematria `);
           const gematriaButton = document.createElement('button');
           gematriaButton.type = 'button';
           gematriaButton.className = 'inline-button';
@@ -1102,13 +1102,18 @@ View results: ${shareUrl}`.trim(),
           gematriaButton.addEventListener('click', () => {
             renderGematriaMatches(payload.gematria.total);
           });
-          const detailMiddlePrefix = document.createTextNode(' | ');
-          const detailMiddle = createDigitalRootValueNode(payload.gematria.digitalRoot, 'Digital Root: ');
-          const detailMiddleSuffix = document.createTextNode(' | ');
-          const baseRootValue = createBaseRootValueNode(payload.isBaseRoot);
-          const searchCountSuffix = document.createTextNode(` | Searches: ${payload.searchCount}`);
 
-          gematriaDetail.append(detailPrefix, gematriaButton, detailMiddlePrefix, detailMiddle, detailMiddleSuffix, createBaseRootLink(), document.createTextNode(' '), baseRootValue, searchCountSuffix, document.createElement('br'), createPerLetterValuesNode(wordResult.word));
+          const metaLine = document.createElement('div');
+          metaLine.className = 'gematria-detail-meta small text-muted';
+          metaLine.append(
+            createDigitalRootValueNode(payload.gematria.digitalRoot, 'Digital Root '),
+            ' · ',
+            createBaseRootStatusNode(payload.isBaseRoot),
+            ' · ',
+            formatSearchCount(payload.searchCount),
+          );
+
+          gematriaDetail.append(detailPrefix, gematriaButton, metaLine, createPerLetterDetails(wordResult.word));
         } else {
           gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
         }
@@ -1160,6 +1165,24 @@ View results: ${shareUrl}`.trim(),
         return link;
       }
 
+      function createBaseRootStatusNode(isBaseRoot) {
+        const link = document.createElement('a');
+        link.href = 'https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = isBaseRoot ? 'Base rooted' : 'Not base rooted';
+        if (!isBaseRoot) return link;
+        const wrapper = document.createElement('span');
+        wrapper.className = 'meta-highlight';
+        wrapper.appendChild(link);
+        return wrapper;
+      }
+
+      function formatSearchCount(count) {
+        const value = Number(count) || 0;
+        return `${value} ${value === 1 ? 'search' : 'searches'}`;
+      }
+
       function formatBaseRootLabel(isBaseRoot) {
         return isBaseRoot ? 'Yes' : 'No';
       }
@@ -1188,14 +1211,25 @@ View results: ${shareUrl}`.trim(),
           .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
       }
 
-      function createPerLetterValuesNode(input) {
+      function createPerLetterValuesNode(input, { includePrefix = true } = {}) {
         const letterValues = getPerLetterValues(input);
         const node = document.createElement('span');
         node.className = 'small text-muted';
+        const prefix = includePrefix ? 'Per-letter values: ' : '';
         node.textContent = letterValues.length
-          ? `Per-letter values: ${letterValues.map(({ letter, value }) => `${letter}=${value}`).join(', ')}`
-          : 'Per-letter values: n/a';
+          ? `${prefix}${letterValues.map(({ letter, value }) => `${letter}=${value}`).join(', ')}`
+          : `${prefix}n/a`;
         return node;
+      }
+
+      function createPerLetterDetails(input) {
+        const details = document.createElement('details');
+        details.className = 'per-letter-details';
+        const summary = document.createElement('summary');
+        summary.className = 'small text-muted';
+        summary.textContent = 'Per-letter values';
+        details.append(summary, createPerLetterValuesNode(input, { includePrefix: false }));
+        return details;
       }
 
       function getPerLetterValuesLabel(input) {
@@ -1319,27 +1353,38 @@ View results: ${shareUrl}`.trim(),
         });
 
         gematriaResult.textContent = '';
+
+        const promptLine = document.createElement('div');
+        promptLine.className = 'gematria-prompt small text-muted';
+        promptLine.append(
+          `Base-6 English Gematria for "${searchGematria.word}" `,
+          createDefinitionLink(searchGematria.word),
+        );
+
+        const totalLine = document.createElement('div');
+        totalLine.className = 'gematria-total';
+        totalLine.append(createGematriaSearchButton(searchGematria.gematria.total));
+
+        const metaLine = document.createElement('div');
+        metaLine.className = 'gematria-meta small text-muted';
+        metaLine.append(
+          createDigitalRootValueNode(searchGematria.gematria.digitalRoot, 'Digital Root '),
+          ' · ',
+          createBaseRootStatusNode(searchGematria.isBaseRoot),
+          ' · ',
+          formatSearchCount(searchGematria.searchCount),
+        );
+
+        const shareActions = document.createElement('div');
+        shareActions.className = 'd-flex flex-column flex-sm-row gap-2 mt-3';
+        shareActions.append(shareButton, downloadImageButton);
+
         gematriaResult.append(
-          `Base-6 English Gematria for "${searchGematria.word}": `,
-          createGematriaSearchButton(searchGematria.gematria.total),
-          ' (',
-          createDigitalRootValueNode(searchGematria.gematria.digitalRoot, 'Digital Root: '),
-          ') | ',
-          createDefinitionLink(searchGematria.word, { trailingSeparator: ' | ' }),
-          createBaseRootLink(),
-          ' ',
-          createBaseRootValueNode(searchGematria.isBaseRoot),
-          ` | Searches: ${searchGematria.searchCount}`,
-          document.createElement('br'),
-          createPerLetterValuesNode(searchGematria.word),
-          document.createElement('br'),
-          document.createElement('br'),
-          (() => {
-            const shareActions = document.createElement('div');
-            shareActions.className = 'd-flex flex-column flex-sm-row gap-2 mt-2';
-            shareActions.append(shareButton, downloadImageButton);
-            return shareActions;
-          })()
+          promptLine,
+          totalLine,
+          metaLine,
+          createPerLetterDetails(searchGematria.word),
+          shareActions,
         );
       }
 

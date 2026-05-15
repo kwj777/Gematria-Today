@@ -1291,6 +1291,14 @@ footer.site-footer a:focus-visible {
   color: var(--bs-link-hover-color, var(--bs-primary));
 }
 
+.gematria-result .gematria-prompt { margin-bottom: .15rem; }
+.gematria-result .gematria-total { font-size: 2.25rem; font-weight: 700; line-height: 1.1; margin-bottom: .25rem; }
+.gematria-result .gematria-total .inline-button { font-size: inherit; font-weight: inherit; padding: 0; }
+.gematria-result .gematria-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; }
+.gematria-result .gematria-meta .meta-highlight { padding: .1rem .5rem; }
+.per-letter-details { margin-top: .5rem; }
+.per-letter-details > summary { cursor: pointer; list-style: revert; }
+.per-letter-details[open] > summary { margin-bottom: .25rem; }
 #related-words-result .panel, #results-shell .result-card { margin-top: 1rem; }
 #related-words-result .matching-word, .meta-highlight { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: rgba(var(--bs-warning-rgb), .18); color: #7a4e00; font-weight: 600; }
 .meta-highlight a { color: inherit; font-weight: inherit; text-decoration: none; }

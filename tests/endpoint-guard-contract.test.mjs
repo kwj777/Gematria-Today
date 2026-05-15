@@ -10,6 +10,7 @@ import { handler as memberLoginHandler } from '../netlify/functions/member-login
 import { handler as memberRegisterHandler } from '../netlify/functions/member-register.mjs';
 import { handler as memberLearningPathConsumeHandler } from '../netlify/functions/member-learning-path-consume.mjs';
 import { handler as memberLearningPathCompleteHandler } from '../netlify/functions/member-learning-path-complete.mjs';
+import { handler as memberBadgesHandler } from '../netlify/functions/member-badges.mjs';
 import { handler as memberAccountRecoveryHandler } from '../netlify/functions/member-account-recovery.mjs';
 import { handler as memberPaymentCheckoutHandler } from '../netlify/functions/member-payment-checkout.mjs';
 import { handler as memberPaymentConfirmHandler } from '../netlify/functions/member-payment-confirm.mjs';
@@ -52,6 +53,7 @@ const methodGuardCases = [
   { name: 'member-register', handler: memberRegisterHandler, allowedMethod: 'POST' },
   { name: 'member-learning-path-consume', handler: memberLearningPathConsumeHandler, allowedMethod: 'POST' },
   { name: 'member-learning-path-complete', handler: memberLearningPathCompleteHandler, allowedMethod: 'POST' },
+  { name: 'member-badges', handler: memberBadgesHandler, allowedMethod: 'GET' },
   { name: 'member-account-recovery', handler: memberAccountRecoveryHandler, allowedMethod: 'POST' },
   { name: 'member-payment-checkout', handler: memberPaymentCheckoutHandler, allowedMethod: 'POST' },
   { name: 'member-payment-confirm', handler: memberPaymentConfirmHandler, allowedMethod: 'POST' },

@@ -1,5 +1,6 @@
 import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
+import { recordWordSearchActivity } from './_badges.mjs';
 
 export function englishGematria(input) {
   if (typeof input !== 'string') throw new TypeError('englishGematria expects a string input');
@@ -109,13 +110,23 @@ export default async function onRequest(request) {
       });
     }
     const cacheResult = await processWord(sql, word);
+    let badgeAward = null;
+    if (user?.id && !cacheResult.cached) {
+      badgeAward = await recordWordSearchActivity(sql, user.id, {
+        wasNewWord: cacheResult.payload?.source === 'calculated',
+        isBaseRoot: Boolean(cacheResult.payload?.isBaseRoot),
+      });
+    }
     await logRequestAudit(sql, request, {
       route: 'englishGematria',
       action: 'lookup',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
       metadata: { word: String(word || '').trim().toLowerCase() },
     });
-    return new Response(JSON.stringify(cacheResult.payload), {
+    const responsePayload = badgeAward?.newBadges?.length
+      ? { ...cacheResult.payload, newlyEarnedBadges: badgeAward.newBadges }
+      : cacheResult.payload;
+    return new Response(JSON.stringify(responsePayload), {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
@@ -148,13 +159,23 @@ export async function handler(event) {
       });
     }
     const cacheResult = await processWord(sql, word);
+    let badgeAward = null;
+    if (user?.id && !cacheResult.cached) {
+      badgeAward = await recordWordSearchActivity(sql, user.id, {
+        wasNewWord: cacheResult.payload?.source === 'calculated',
+        isBaseRoot: Boolean(cacheResult.payload?.isBaseRoot),
+      });
+    }
     await logRequestAudit(sql, event, {
       route: 'englishGematria',
       action: 'lookup',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
       metadata: { word: String(word || '').trim().toLowerCase() },
     });
-    return jsonResponse(200, cacheResult.payload, {
+    const responsePayload = badgeAward?.newBadges?.length
+      ? { ...cacheResult.payload, newlyEarnedBadges: badgeAward.newBadges }
+      : cacheResult.payload;
+    return jsonResponse(200, responsePayload, {
       'cache-control': 'private, max-age=120, stale-while-revalidate=60',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });

@@ -595,6 +595,37 @@
             </div>
           </div>
 
+          <section id="achievementsSection" class="content-panel p-4 mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+              <div>
+                <p class="section-kicker mb-2">Achievements</p>
+                <h3 id="achievementsSectionTitle" class="h4 mb-1">Your badges</h3>
+                <p id="achievementsSummary" class="text-muted mb-0">Search words and explore gematria values to earn badges.</p>
+              </div>
+              <button
+                id="achievementsToggleButton"
+                class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#achievementsContent"
+                aria-expanded="false"
+                aria-controls="achievementsContent"
+              >
+                <span id="achievementsToggleLabel">Expand</span>
+                <span id="achievementsToggleArrow" aria-hidden="true">▼</span>
+              </button>
+            </div>
+            <div id="achievementsContent" class="collapse" role="region" aria-labelledby="achievementsSectionTitle">
+              <div class="row g-3 mb-3" id="achievementsStatsRow"></div>
+              <h4 class="h6 mt-3 mb-2">Earned badges</h4>
+              <div id="achievementsEarnedList" class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted small">No badges earned yet.</span>
+              </div>
+              <h4 class="h6 mb-2">Progress toward next badges</h4>
+              <div id="achievementsProgressList" class="d-flex flex-column gap-2"></div>
+            </div>
+          </section>
+
           <section id="forumNotificationSection" class="content-panel p-4 mb-4" data-module="forum">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
               <div>
@@ -2724,6 +2755,91 @@
         syncBlogSubscriptionSection(member, profile);
       }
 
+      const METRIC_LABELS = {
+        searches_total: 'Word lookups',
+        words_contributed: 'New words added to database',
+        base_root_finds: 'Base-root discoveries',
+        gematria_searches_total: 'Gematria-value searches',
+      };
+
+      function renderAchievementsEmpty() {
+        const stats = document.getElementById('achievementsStatsRow');
+        const earned = document.getElementById('achievementsEarnedList');
+        const progress = document.getElementById('achievementsProgressList');
+        if (stats) stats.innerHTML = '';
+        if (earned) earned.innerHTML = '<span class="text-muted small">Sign in to view your badges.</span>';
+        if (progress) progress.innerHTML = '';
+      }
+
+      function renderAchievements(data) {
+        const statsContainer = document.getElementById('achievementsStatsRow');
+        const earnedContainer = document.getElementById('achievementsEarnedList');
+        const progressContainer = document.getElementById('achievementsProgressList');
+        const summary = document.getElementById('achievementsSummary');
+        if (!statsContainer || !earnedContainer || !progressContainer) return;
+
+        const stats = data?.stats || {};
+        const earned = Array.isArray(data?.earnedBadges) ? data.earnedBadges : [];
+        const progress = Array.isArray(data?.progress) ? data.progress : [];
+
+        const statTiles = [
+          { label: 'Searches', value: stats.searchesTotal || 0 },
+          { label: 'Words contributed', value: stats.wordsContributed || 0 },
+          { label: 'Base roots found', value: stats.baseRootFinds || 0 },
+          { label: 'Gematria searches', value: stats.gematriaSearchesTotal || 0 },
+        ];
+        statsContainer.innerHTML = statTiles.map((tile) => `
+          <div class="col-6 col-md-3">
+            <div class="stat-card p-3 h-100">
+              <div class="section-kicker mb-1">${escapeHtml(tile.label)}</div>
+              <div class="metric-value text-primary">${escapeHtml(String(tile.value))}</div>
+            </div>
+          </div>
+        `).join('');
+
+        if (summary) {
+          summary.textContent = earned.length
+            ? `You have earned ${earned.length} badge${earned.length === 1 ? '' : 's'}.`
+            : 'Search words and explore gematria values to earn badges.';
+        }
+
+        earnedContainer.innerHTML = earned.length
+          ? earned.map((badge) => `
+              <span class="badge rounded-pill text-bg-primary p-2" title="${escapeHtml(badge.description || '')}">
+                ${escapeHtml(badge.name)}
+              </span>
+            `).join('')
+          : '<span class="text-muted small">No badges earned yet.</span>';
+
+        const upcoming = progress.filter((item) => item.nextThreshold);
+        progressContainer.innerHTML = upcoming.length
+          ? upcoming.map((item) => {
+              const label = METRIC_LABELS[item.metric] || item.metric;
+              const pct = Math.min(100, Math.round((item.current / item.nextThreshold) * 100));
+              return `
+                <div>
+                  <div class="d-flex justify-content-between small mb-1">
+                    <span>${escapeHtml(item.nextBadgeName || 'Next badge')} <span class="text-muted">— ${escapeHtml(label)}</span></span>
+                    <span class="text-muted">${item.current} / ${item.nextThreshold}</span>
+                  </div>
+                  <div class="progress" role="progressbar" aria-label="${escapeHtml(item.nextBadgeName || 'Progress')}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" style="height: 0.5rem;">
+                    <div class="progress-bar" style="width: ${pct}%;"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')
+          : '<span class="text-muted small">You have reached every badge tier. New tiers may appear over time.</span>';
+      }
+
+      async function loadAchievements() {
+        try {
+          const payload = await request('/api/member-badges');
+          renderAchievements(payload);
+        } catch (error) {
+          renderAchievementsEmpty();
+        }
+      }
+
       async function loadHistory() {
         const payload = await request('/api/member-history');
         historyItems = Array.isArray(payload.history) ? payload.history : [];
@@ -2854,6 +2970,7 @@
           loadHistory().catch((error) => {
             showAlert(error.message || 'Unable to load saved calculations.');
           });
+          loadAchievements().catch(() => {});
           if (gemabotModuleEnabled) {
             loadChatSessions().catch((error) => {
               showAlert(error.message || 'Unable to load chat sessions.');
@@ -2877,6 +2994,7 @@
           flushPendingHistoryNoteSaves();
           membershipHeroReady = true;
           setLoggedIn(false);
+          renderAchievementsEmpty();
           historyItems = [];
           renderHistory();
           chatSessions = [];

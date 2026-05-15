@@ -132,6 +132,29 @@ CREATE INDEX IF NOT EXISTS member_email_verification_requests_user_idx
 CREATE INDEX IF NOT EXISTS member_email_verification_requests_expires_idx
   ON member_email_verification_requests (expires_at DESC);
 
+CREATE TABLE IF NOT EXISTS member_search_stats (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  searches_total INTEGER NOT NULL DEFAULT 0,
+  gematria_searches_total INTEGER NOT NULL DEFAULT 0,
+  words_contributed INTEGER NOT NULL DEFAULT 0,
+  base_root_finds INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS member_badges (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  badge_slug TEXT NOT NULL,
+  earned_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS member_badges_user_slug_idx
+  ON member_badges (user_id, badge_slug);
+
+CREATE INDEX IF NOT EXISTS member_badges_user_earned_idx
+  ON member_badges (user_id, earned_at DESC);
+
 DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles;
 DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history;
 DROP FUNCTION IF EXISTS set_updated_at_timestamp();

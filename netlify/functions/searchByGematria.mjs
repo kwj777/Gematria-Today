@@ -1,5 +1,6 @@
 import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
+import { recordGematriaNumberSearch } from './_badges.mjs';
 
 function extractGematriaValue(source) {
   if (!source || typeof source !== 'object') return null;
@@ -59,13 +60,21 @@ export default async function onRequest(request) {
         message: 'Too many gematria search requests.',
       });
     }
-    const cacheResult = await searchByGematria(sql, new URL(request.url).searchParams.get('gematria'));
+    const gematriaParam = new URL(request.url).searchParams.get('gematria');
+    const cacheResult = await searchByGematria(sql, gematriaParam);
+    let badgeAward = null;
+    if (user?.id && !cacheResult.cached) {
+      badgeAward = await recordGematriaNumberSearch(sql, user.id);
+    }
     await logRequestAudit(sql, request, {
       route: 'searchByGematria',
       action: 'read',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
     });
-    return new Response(JSON.stringify(cacheResult.payload), {
+    const responsePayload = badgeAward?.newBadges?.length
+      ? { ...cacheResult.payload, newlyEarnedBadges: badgeAward.newBadges }
+      : cacheResult.payload;
+    return new Response(JSON.stringify(responsePayload), {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
@@ -97,13 +106,21 @@ export async function handler(event) {
         message: 'Too many gematria search requests.',
       });
     }
-    const cacheResult = await searchByGematria(sql, extractGematriaValue(event));
+    const gematriaParam = extractGematriaValue(event);
+    const cacheResult = await searchByGematria(sql, gematriaParam);
+    let badgeAward = null;
+    if (user?.id && !cacheResult.cached) {
+      badgeAward = await recordGematriaNumberSearch(sql, user.id);
+    }
     await logRequestAudit(sql, event, {
       route: 'searchByGematria',
       action: 'read',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
     });
-    return jsonResponse(200, cacheResult.payload, {
+    const responsePayload = badgeAward?.newBadges?.length
+      ? { ...cacheResult.payload, newlyEarnedBadges: badgeAward.newBadges }
+      : cacheResult.payload;
+    return jsonResponse(200, responsePayload, {
       'cache-control': 'public, max-age=300, stale-while-revalidate=120',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });

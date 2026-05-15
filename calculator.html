@@ -1048,11 +1048,12 @@ View results: ${shareUrl}`.trim(),
             emptyState.textContent = 'No words in the database currently match this gematria value.';
             wrapper.appendChild(emptyState);
           } else {
-            const list = document.createElement('ul');
+            const grid = document.createElement('div');
+            grid.className = 'results-grid related-words-grid';
             payload.words.forEach((wordResult) => {
-              list.appendChild(createWordListItem({ word: wordResult.word, gematria: wordResult }, payload.gematria));
+              grid.appendChild(createWordCard({ word: wordResult.word, gematria: wordResult }, payload.gematria));
             });
-            wrapper.appendChild(list);
+            wrapper.appendChild(grid);
           }
 
           relatedWordsResult.appendChild(wrapper);
@@ -1079,10 +1080,12 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
-      function createWordListItem(wordResult, searchTotal) {
-        const item = document.createElement('li');
-        const wordActions = document.createElement('div');
-        wordActions.className = 'word-actions';
+      function createWordCard(wordResult, searchTotal) {
+        const card = document.createElement('article');
+        card.className = 'related-word-card';
+
+        const header = document.createElement('div');
+        header.className = 'related-word-card-header';
 
         const wordLabel = document.createElement('button');
         const hasMatchingGematria = Boolean(wordResult.gematria) && wordResult.gematria.gematria.total === searchTotal;
@@ -1093,14 +1096,13 @@ View results: ${shareUrl}`.trim(),
           runSearch(wordResult.word, { refreshPage: true });
         });
 
-        wordActions.append(wordLabel, createDefinitionLink(wordResult.word));
-        item.appendChild(wordActions);
-
-        const gematriaDetail = document.createElement('div');
-        gematriaDetail.className = 'gematria-detail';
+        header.append(wordLabel, createDefinitionLink(wordResult.word));
+        card.appendChild(header);
 
         if (wordResult.gematria) {
           const payload = wordResult.gematria;
+          const gematriaRow = document.createElement('div');
+          gematriaRow.className = 'related-word-card-gematria';
           const matchPrefix = hasMatchingGematria ? 'Gematria match! ' : '';
           const detailPrefix = document.createTextNode(`${matchPrefix}Gematria `);
           const gematriaButton = document.createElement('button');
@@ -1110,9 +1112,11 @@ View results: ${shareUrl}`.trim(),
           gematriaButton.addEventListener('click', () => {
             renderGematriaMatches(payload.gematria.total);
           });
+          gematriaRow.append(detailPrefix, gematriaButton);
+          card.appendChild(gematriaRow);
 
           const metaLine = document.createElement('div');
-          metaLine.className = 'gematria-detail-meta small text-muted';
+          metaLine.className = 'related-word-card-meta small text-muted';
           metaLine.append(
             createDigitalRootValueNode(payload.gematria.digitalRoot, 'Digital Root '),
             ' · ',
@@ -1120,14 +1124,17 @@ View results: ${shareUrl}`.trim(),
             ' · ',
             formatSearchCount(payload.searchCount),
           );
+          card.appendChild(metaLine);
 
-          gematriaDetail.append(detailPrefix, gematriaButton, metaLine, createPerLetterDetails(wordResult.word));
+          card.appendChild(createPerLetterDetails(wordResult.word));
         } else {
-          gematriaDetail.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
+          const errorRow = document.createElement('div');
+          errorRow.className = 'related-word-card-gematria text-muted';
+          errorRow.textContent = wordResult.gematriaError || 'Unable to calculate gematria.';
+          card.appendChild(errorRow);
         }
 
-        item.appendChild(gematriaDetail);
-        return item;
+        return card;
       }
 
       function dedupeRelatedWords(relationships, searchTerm) {
@@ -1464,11 +1471,12 @@ View results: ${shareUrl}`.trim(),
             emptyWords.textContent = 'No words returned for this relationship.';
             section.appendChild(emptyWords);
           } else {
-            const list = document.createElement('ul');
+            const grid = document.createElement('div');
+            grid.className = 'results-grid related-words-grid';
             relationship.words.forEach((wordResult) => {
-              list.appendChild(createWordListItem(wordResult, searchGematria.gematria.total));
+              grid.appendChild(createWordCard(wordResult, searchGematria.gematria.total));
             });
-            section.appendChild(list);
+            section.appendChild(grid);
           }
 
           relatedWordsResult.appendChild(section);

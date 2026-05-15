@@ -1311,6 +1311,52 @@ footer.site-footer a:focus-visible {
 #related-words-result .gematria-detail { margin-top: .25rem; }
 #related-words-result .gematria-detail .inline-button { margin: 0 .15rem; }
 #related-words-result .gematria-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .2rem .5rem; margin-top: .15rem; }
+#related-words-result .related-words-grid { margin-top: .5rem; margin-bottom: 1rem; }
+#related-words-result .related-word-card {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(53,65,79,.12);
+  border-radius: var(--radius-xl, 12px);
+  background: var(--color-surface, rgba(255,255,255,.96));
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.06));
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+#related-words-result .related-word-card:hover,
+#related-words-result .related-word-card:focus-within {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15,23,42,.10);
+  border-color: rgba(var(--bs-primary-rgb), .35);
+}
+#related-words-result .related-word-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem .65rem;
+}
+#related-words-result .related-word-card-header .related-word {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+#related-words-result .related-word-card-gematria { font-size: .95rem; }
+#related-words-result .related-word-card-gematria .inline-button {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 .15rem;
+}
+#related-words-result .related-word-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem .5rem;
+}
+#related-words-result .related-word-card .per-letter-details { margin-top: .25rem; }
+:root[data-bs-theme="dark"] #related-words-result .related-word-card {
+  background: var(--color-surface-dark, rgba(17,24,34,.94));
+  border-color: var(--color-border-dark, rgba(255,255,255,.08));
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
+}
 #results-shell .result-card { border: 1px solid rgba(53,65,79,.08); border-radius: var(--radius-xl); background: rgba(255,255,255,.92); box-shadow: var(--shadow-card); padding: 1rem; }
 #word-list .word-item { list-style: none; }
 

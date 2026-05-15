@@ -2824,14 +2824,15 @@
           }
         }
 
-        try {
-          const { csrfToken: preAuthCsrfToken } = await request('/api/member-csrf', { method: 'GET' });
-          if (preAuthCsrfToken) {
-            csrfToken = preAuthCsrfToken;
-          }
-        } catch {
-          // Non-fatal: proceed without pre-auth CSRF token
-        }
+        const csrfReady = request('/api/member-csrf', { method: 'GET' })
+          .then(({ csrfToken: preAuthCsrfToken }) => {
+            if (preAuthCsrfToken && !csrfToken) {
+              csrfToken = preAuthCsrfToken;
+            }
+          })
+          .catch(() => {
+            // Non-fatal: proceed without pre-auth CSRF token
+          });
 
         try {
           session = await request('/api/member-session', { method: 'GET' });
@@ -2856,10 +2857,11 @@
             chatSessions = [];
             renderChatSessions();
           }
-          await loadMemberProposals();
-          await loadMemberChatbotFeedback();
+          loadMemberProposals().catch(() => {});
+          loadMemberChatbotFeedback().catch(() => {});
 
           if (paymentState === 'success' && stripeSessionId) {
+            await csrfReady;
             await confirmStripePayment(stripeSessionId);
           } else if (paymentState === 'cancelled') {
             showAlert('Stripe checkout was cancelled. Your membership remains unchanged.', 'warning');
@@ -2874,9 +2876,8 @@
           renderHistory();
           chatSessions = [];
           renderChatSessions();
-          hideWorkingOverlay();
-          await loadMemberProposals();
-          await loadMemberChatbotFeedback();
+          loadMemberProposals().catch(() => {});
+          loadMemberChatbotFeedback().catch(() => {});
           if (paymentState === 'success') {
             showAlert('Sign in to finish activating your Stripe payment.', 'warning');
           }

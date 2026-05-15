@@ -15,7 +15,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -40,12 +40,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -64,11 +64,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -118,22 +118,22 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<title>Admin Dashboard | EndTimes.Today</title>
-    <meta name="description" content="Admin portal for EndTimes.Today content operations and site management." />
+<title>Admin Dashboard | Gematria.Today</title>
+    <meta name="description" content="Admin portal for Gematria.Today content operations and site management." />
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="canonical" href="https://endtimes.today/admin.html" />
-    <meta property="og:site_name" content="EndTimes.Today" />
+    <link rel="canonical" href="https://gematria.today/admin.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Admin Dashboard | EndTimes.Today" />
-    <meta property="og:description" content="Admin portal for EndTimes.Today content operations and site management." />
-    <meta property="og:url" content="https://endtimes.today/admin.html" />
-    <meta property="og:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <meta property="og:title" content="Admin Dashboard | Gematria.Today" />
+    <meta property="og:description" content="Admin portal for Gematria.Today content operations and site management." />
+    <meta property="og:url" content="https://gematria.today/admin.html" />
+    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Admin Dashboard | EndTimes.Today" />
-    <meta name="twitter:description" content="Admin portal for EndTimes.Today content operations and site management." />
-    <meta name="twitter:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
+    <meta name="twitter:title" content="Admin Dashboard | Gematria.Today" />
+    <meta name="twitter:description" content="Admin portal for Gematria.Today content operations and site management." />
+    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
     <link
       id="bootstrapThemeStylesheet"
       rel="stylesheet"
@@ -164,7 +164,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -516,7 +516,7 @@
                 <p class="text-muted small">Configure SendGrid delivery for admin/member account recovery emails. Leave the API key unchanged unless you are rotating credentials.</p>
                 <form id="emailSettingsForm" class="row g-3">
                   <div class="col-12"><label class="form-label" for="sendgridFromEmail">From email</label><input id="sendgridFromEmail" class="form-control" type="email" placeholder="support@example.com" /></div>
-                  <div class="col-12"><label class="form-label" for="sendgridFromName">From name</label><input id="sendgridFromName" class="form-control" placeholder="EndTimes.Today" /></div>
+                  <div class="col-12"><label class="form-label" for="sendgridFromName">From name</label><input id="sendgridFromName" class="form-control" placeholder="Gematria.Today" /></div>
                   <div class="col-12"><label class="form-label" for="sendgridReplyToEmail">Reply-to email</label><input id="sendgridReplyToEmail" class="form-control" type="email" placeholder="help@example.com" /></div>
                   <div class="col-12"><label class="form-label" for="publicSiteUrl">Public site URL</label><input id="publicSiteUrl" class="form-control" type="url" aria-describedby="publicSiteUrlHelp" /><div id="publicSiteUrlHelp" class="form-text">Example: https://example.com</div></div>
                   <div class="col-12">
@@ -609,7 +609,7 @@
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
-          <span>EndTimes.Today — a research workspace.</span>
+          <span>Gematria.Today — a research workspace.</span>
         </div>
         <div class="d-flex flex-wrap gap-3 site-legal-links">
           <a href="/privacy.html">Privacy Policy</a>
@@ -957,7 +957,7 @@
         const end = palette[(hash + 3) % palette.length];
         const safeTitle = escapeHtml(baseTitle.slice(0, 72));
         const safeTag = escapeHtml(baseTag.slice(0, 56));
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="${safeTitle}"><defs><linearGradient id="post-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${start}"/><stop offset="100%" stop-color="${end}"/></linearGradient></defs><rect width="1600" height="900" fill="url(#post-bg)"/><rect x="90" y="120" width="1420" height="660" rx="32" fill="rgba(255,255,255,0.08)"/><text x="140" y="360" fill="#ffffff" font-size="68" font-family="Inter, Arial, sans-serif" font-weight="700">${safeTitle}</text><text x="140" y="450" fill="#e5e7eb" font-size="34" font-family="Inter, Arial, sans-serif">${safeTag}</text><text x="140" y="760" fill="#dbeafe" font-size="28" font-family="Inter, Arial, sans-serif">EndTimes.Today</text></svg>`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="${safeTitle}"><defs><linearGradient id="post-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${start}"/><stop offset="100%" stop-color="${end}"/></linearGradient></defs><rect width="1600" height="900" fill="url(#post-bg)"/><rect x="90" y="120" width="1420" height="660" rx="32" fill="rgba(255,255,255,0.08)"/><text x="140" y="360" fill="#ffffff" font-size="68" font-family="Inter, Arial, sans-serif" font-weight="700">${safeTitle}</text><text x="140" y="450" fill="#e5e7eb" font-size="34" font-family="Inter, Arial, sans-serif">${safeTag}</text><text x="140" y="760" fill="#dbeafe" font-size="28" font-family="Inter, Arial, sans-serif">Gematria.Today</text></svg>`;
         return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
       }
 
@@ -1304,7 +1304,7 @@
 
       function getTurnstileSiteKey() {
         return String(
-          window.ENDTIMES_TURNSTILE_SITE_KEY
+          window.GEMATRIA_TURNSTILE_SITE_KEY
             || state.turnstileSettings?.turnstileSiteKey
             || document.querySelector('meta[name="turnstile-site-key"]')?.content
             || ''

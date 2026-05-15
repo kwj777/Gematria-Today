@@ -102,17 +102,46 @@ export async function consumeAccountRecoveryRequest(sql, {
 }
 
 export const AUTH_COOKIES = {
+  admin: 'gematria_admin_session',
+  member: 'gematria_member_session',
+  memberTier: 'gematria_member_tier',
+  visitor: 'gematria_visitor_session',
+};
+
+// Legacy cookie names retained for read-fallback during the rebrand window.
+// New writes always use AUTH_COOKIES; reads try the current name first and
+// fall back to the legacy name so existing sessions survive the rename.
+// Clears emit Set-Cookie for both names so logout retires the legacy cookie.
+export const LEGACY_AUTH_COOKIES = {
   admin: 'endtimes_admin_session',
   member: 'endtimes_member_session',
   memberTier: 'endtimes_member_tier',
   visitor: 'endtimes_visitor_session',
 };
 
+const LEGACY_COOKIE_NAME_BY_CURRENT = Object.freeze({
+  [AUTH_COOKIES.admin]: LEGACY_AUTH_COOKIES.admin,
+  [AUTH_COOKIES.member]: LEGACY_AUTH_COOKIES.member,
+  [AUTH_COOKIES.memberTier]: LEGACY_AUTH_COOKIES.memberTier,
+  [AUTH_COOKIES.visitor]: LEGACY_AUTH_COOKIES.visitor,
+});
+
+export function getLegacyCookieName(cookieName) {
+  return LEGACY_COOKIE_NAME_BY_CURRENT[cookieName] || null;
+}
+
+function readCookieWithLegacy(cookies, cookieName) {
+  const current = cookies[cookieName];
+  if (current) return current;
+  const legacy = LEGACY_COOKIE_NAME_BY_CURRENT[cookieName];
+  return legacy ? (cookies[legacy] || null) : null;
+}
+
 const VISITOR_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 export function getVisitorSessionToken(event) {
   const cookies = parseCookies(event);
-  return cookies[AUTH_COOKIES.visitor] || null;
+  return readCookieWithLegacy(cookies, AUTH_COOKIES.visitor);
 }
 
 export function createVisitorSessionToken() {
@@ -194,7 +223,7 @@ export function hashToken(token) {
 
 async function findAuthenticatedSession(event, sql, cookieName) {
   const cookies = parseCookies(event);
-  const sessionToken = cookies[cookieName];
+  const sessionToken = readCookieWithLegacy(cookies, cookieName);
 
   if (!sessionToken) {
     return null;
@@ -235,13 +264,24 @@ export function createSessionCookie(token, expiresAt, cookieName = AUTH_COOKIES.
   return `${cookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
 
-export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
+function buildSessionClearHeader(cookieName, { httpOnly = true } = {}) {
   const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
   const shouldUseSecureCookie = explicitSecureSetting
     ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
     : process.env.CONTEXT !== 'dev';
   const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
-  return `${cookieName}=; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  const httpOnlyDirective = httpOnly ? '; HttpOnly' : '';
+  return `${cookieName}=; Path=/${httpOnlyDirective}${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}
+
+// Returns Set-Cookie strings to clear both the current and legacy cookie
+// names, so users with sessions issued under the legacy name are logged out
+// in the same response.
+export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
+  const clears = [buildSessionClearHeader(cookieName)];
+  const legacyName = LEGACY_COOKIE_NAME_BY_CURRENT[cookieName];
+  if (legacyName) clears.push(buildSessionClearHeader(legacyName));
+  return clears;
 }
 
 const ALLOWED_MEMBER_TIERS = new Set(['free', 'premium', 'lifetime']);
@@ -257,12 +297,10 @@ export function createMemberTierCookie(level, expiresAt) {
 }
 
 export function clearMemberTierCookie() {
-  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
-  const shouldUseSecureCookie = explicitSecureSetting
-    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
-    : process.env.CONTEXT !== 'dev';
-  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
-  return `${AUTH_COOKIES.memberTier}=; Path=/${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  return [
+    buildSessionClearHeader(AUTH_COOKIES.memberTier, { httpOnly: false }),
+    buildSessionClearHeader(LEGACY_AUTH_COOKIES.memberTier, { httpOnly: false }),
+  ];
 }
 
 export async function createSession(sql, userId) {
@@ -453,7 +491,7 @@ export async function getAuthenticatedUser(event, {
 } = {}) {
   const effectiveSql = sql || getSqlClient();
   const cookies = parseCookies(event);
-  const sessionToken = cookies[cookieName];
+  const sessionToken = readCookieWithLegacy(cookies, cookieName);
 
   if (!sessionToken) {
     if (requireAuth) {

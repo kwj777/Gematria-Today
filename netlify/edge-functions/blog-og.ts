@@ -1,12 +1,12 @@
 import type { Config, Context } from '@netlify/edge-functions';
 
-const SITE_ORIGIN = 'https://endtimes.today';
+const SITE_ORIGIN = 'https://gematria.today';
 const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/beast-identity-rev13-hero-16x9.svg`;
 const OGP_IMAGE_WIDTH = 1200;
 const OGP_IMAGE_FORMAT = 'jpg';
-const DEFAULT_TITLE = 'EndTimes.Today Blog';
+const DEFAULT_TITLE = 'Gematria.Today Blog';
 const DEFAULT_DESCRIPTION =
-  'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.';
+  'Explore gematria research workflows, trusted methodology notes, and interconnected tools from Gematria.Today.';
 const HERO_IMAGE_OVERRIDES: Record<string, string> = Object.freeze({
   'amillennialism-what-it-is-and-isn-t': '/assets/amillennialism-post-01-graphic.svg',
 });

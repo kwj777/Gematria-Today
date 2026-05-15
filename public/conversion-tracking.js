@@ -1,12 +1,14 @@
 (function installConversionTracking() {
-  if (typeof window === 'undefined' || window.__endTimesConversionTrackingInstalled) {
+  if (typeof window === 'undefined' || window.__gematriaConversionTrackingInstalled) {
     return;
   }
 
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
-        return c.trim().startsWith('endtimes_admin_session=');
+        var trimmed = c.trim();
+        return trimmed.startsWith('gematria_admin_session=')
+          || trimmed.startsWith('endtimes_admin_session=');
       });
     } catch {
       return false;
@@ -19,6 +21,10 @@
 
   function hasTrackingConsent() {
     try {
+      var current = window.localStorage.getItem('gematria_cookie_consent');
+      if (current !== null) {
+        return current === 'accepted';
+      }
       return window.localStorage.getItem('endtimes_cookie_consent') === 'accepted';
     } catch {
       return false;
@@ -26,10 +32,10 @@
   }
 
   if (!hasTrackingConsent()) {
-    if (!window.__endTimesConversionTrackingPending) {
-      window.__endTimesConversionTrackingPending = true;
-      window.addEventListener('endtimes:cookie-consent', function onConsentEvent(e) {
-        window.__endTimesConversionTrackingPending = false;
+    if (!window.__gematriaConversionTrackingPending) {
+      window.__gematriaConversionTrackingPending = true;
+      window.addEventListener('gematria:cookie-consent', function onConsentEvent(e) {
+        window.__gematriaConversionTrackingPending = false;
         if (e.detail && e.detail.accepted) {
           installConversionTracking();
         }
@@ -38,7 +44,7 @@
     return;
   }
 
-  window.__endTimesConversionTrackingInstalled = true;
+  window.__gematriaConversionTrackingInstalled = true;
 
   function createSessionId() {
     if (window.crypto?.randomUUID) {
@@ -47,11 +53,26 @@
     return `sess-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
-  const TRACKING_SESSION_KEY = 'endtimes_tracking_session_id';
+  const TRACKING_SESSION_KEY = 'gematria_tracking_session_id';
+  const LEGACY_TRACKING_SESSION_KEY = 'endtimes_tracking_session_id';
 
   function getStoredSessionId() {
     try {
-      return window.sessionStorage.getItem(TRACKING_SESSION_KEY);
+      const current = window.sessionStorage.getItem(TRACKING_SESSION_KEY);
+      if (current !== null) {
+        return current;
+      }
+      const legacy = window.sessionStorage.getItem(LEGACY_TRACKING_SESSION_KEY);
+      if (legacy !== null) {
+        try {
+          window.sessionStorage.setItem(TRACKING_SESSION_KEY, legacy);
+          window.sessionStorage.removeItem(LEGACY_TRACKING_SESSION_KEY);
+        } catch {
+          // Ignore migration write failures.
+        }
+        return legacy;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -166,7 +187,7 @@
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push(payload);
 
-    window.dispatchEvent(new CustomEvent('endtimes:track', { detail: payload }));
+    window.dispatchEvent(new CustomEvent('gematria:track', { detail: payload }));
     reportButtonEvent(payload.event, payload);
     return payload;
   }
@@ -207,7 +228,7 @@
     });
   }, { capture: true });
 
-  window.endTimesTracking = {
+  window.gematriaTracking = {
     sessionId: trackingSessionId,
     track,
   };

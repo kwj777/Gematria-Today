@@ -132,7 +132,7 @@ export default async (request) => {
   <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bgGlowLeft)" />
   <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bgGlowRight)" />
   <rect x="640" y="365" width="440" height="64" rx="16" ry="16" fill="rgba(11, 23, 40, 0.72)" stroke="rgba(159, 193, 232, 0.8)" />
-  <text x="860" y="397" fill="#f4d77a" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle" dominant-baseline="middle">endtimes.today</text>
+  <text x="860" y="397" fill="#f4d77a" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700" text-anchor="middle" dominant-baseline="middle">gematria.today</text>
   ${content}
 </svg>`;
 

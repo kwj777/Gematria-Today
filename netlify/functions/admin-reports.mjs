@@ -86,7 +86,7 @@ export async function handler(event) {
   if (methodError) return methodError;
 
   try {
-    const url = new URL(event.rawUrl || `https://endtimes.today${event.path}${event.rawQuery ? `?${event.rawQuery}` : ''}`);
+    const url = new URL(event.rawUrl || `https://gematria.today${event.path}${event.rawQuery ? `?${event.rawQuery}` : ''}`);
     const hours = normalizeHours(url.searchParams.get('hours'));
     const days = hours ? null : normalizeDays(url.searchParams.get('days'));
     const windowInterval = hours ? `${hours} hours` : `${days} days`;

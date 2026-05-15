@@ -5,7 +5,7 @@ import process from 'node:process';
 
 function parseArgs(argv) {
   const args = {
-    sitemap: process.env.SITEMAP_URL || 'https://endtimes.today/sitemap.xml',
+    sitemap: process.env.SITEMAP_URL || 'https://gematria.today/sitemap.xml',
     timeoutMs: 15000,
   };
 

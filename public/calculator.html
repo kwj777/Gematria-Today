@@ -7,20 +7,20 @@
         function applyAuthState() {
           var tier;
           try {
-            var m = document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
+            var m = document.cookie.match(/(?:^|; )gematria_member_tier=([^;]+)/) || document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
             tier = m ? decodeURIComponent(m[1]) : 'anon';
             if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>
@@ -39,7 +39,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -64,12 +64,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -88,11 +88,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -141,23 +141,23 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
     <meta name="theme-color" content="#2d547c" />
 <title>English Gematria Calculator</title>
     <meta name="description" content="Calculate English gematria values for words and phrases, then explore related matches and shared number patterns." />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <link rel="canonical" href="https://endtimes.today/calculator.html" />
-    <meta property="og:site_name" content="EndTimes.Today" />
+    <link rel="canonical" href="https://gematria.today/calculator.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="English Gematria Calculator | EndTimes.Today" />
+    <meta property="og:title" content="English Gematria Calculator | Gematria.Today" />
     <meta property="og:description" content="Calculate English gematria values for words and phrases, then explore related matches and shared number patterns." />
-    <meta property="og:url" content="https://endtimes.today/calculator.html" />
-    <meta property="og:image" content="https://endtimes.today/assets/calculator-hero-constellation.svg" />
+    <meta property="og:url" content="https://gematria.today/calculator.html" />
+    <meta property="og:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
     <meta property="og:image:alt" content="Constellation artwork representing linked words and numbers." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="English Gematria Calculator | EndTimes.Today" />
+    <meta name="twitter:title" content="English Gematria Calculator | Gematria.Today" />
     <meta name="twitter:description" content="Calculate English gematria values for words and phrases, then explore related matches and shared number patterns." />
-    <meta name="twitter:image" content="https://endtimes.today/assets/calculator-hero-constellation.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
     <meta name="twitter:image:alt" content="Constellation artwork representing linked words and numbers." />
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
@@ -175,7 +175,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -194,7 +194,7 @@
             <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://gematria.today/member#authSection">Join Free/Login</a></li>
             <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
@@ -376,7 +376,7 @@ const lookupForm = document.querySelector('#lookup-form');
       }
 
       function formatCalculationSharePreview(word, result) {
-        return `Look at what I found on EndTimes.Today :) Searched: "${word}" | Result: ${result}`;
+        return `Look at what I found on Gematria.Today :) Searched: "${word}" | Result: ${result}`;
       }
 
       function getCanonicalShareOrigin() {
@@ -572,7 +572,7 @@ View results: ${shareUrl}`.trim(),
             await navigator.share(sharePayload);
             return;
           } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -918,7 +918,7 @@ View results: ${shareUrl}`.trim(),
                   const gematria = await requestGematria(word);
                   return { word, gematria };
                 } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1008,7 +1008,7 @@ View results: ${shareUrl}`.trim(),
           const shareUrl = createReverseLookupShareUrl(payload.gematria);
           await sharePage({
             title: `Words with gematria ${payload.gematria}`,
-            text: `Look at what I found on EndTimes.Today :) ${payload.count} word${payload.count === 1 ? '' : 's'} in our database with gematria value ${payload.gematria}.`,
+            text: `Look at what I found on Gematria.Today :) ${payload.count} word${payload.count === 1 ? '' : 's'} in our database with gematria value ${payload.gematria}.`,
             url: shareUrl,
           });
         });
@@ -1070,7 +1070,7 @@ View results: ${shareUrl}`.trim(),
           };
           updateMemberSaveState();
         } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1173,7 +1173,7 @@ View results: ${shareUrl}`.trim(),
 
       function createBaseRootLink() {
         const link = document.createElement('a');
-        link.href = 'https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words';
+        link.href = 'https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = 'Base Rooted:';
@@ -1182,7 +1182,7 @@ View results: ${shareUrl}`.trim(),
 
       function createBaseRootStatusNode(isBaseRoot) {
         const link = document.createElement('a');
-        link.href = 'https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words';
+        link.href = 'https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = isBaseRoot ? 'Base rooted' : 'Not base rooted';
@@ -1208,7 +1208,7 @@ View results: ${shareUrl}`.trim(),
 
       function createDigitalRootValueNode(value, prefix = '') {
         const link = document.createElement('a');
-        link.href = 'https://endtimes.today/blog/digital-roots-in-gematria?post=digital-roots-in-gematria';
+        link.href = 'https://gematria.today/blog/digital-roots-in-gematria?post=digital-roots-in-gematria';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = `${prefix}${value}`;
@@ -1485,7 +1485,7 @@ View results: ${shareUrl}`.trim(),
 
       document.querySelectorAll('[data-cta-ladder-step]').forEach((link) => {
         link.addEventListener('click', () => {
-          window.endTimesTracking?.track('cta_ladder_click', {
+          window.gematriaTracking?.track('cta_ladder_click', {
             step: link.dataset.ctaLadderStep,
             location: 'calculator_page',
             destination: link.getAttribute('href') || '',
@@ -1494,7 +1494,7 @@ View results: ${shareUrl}`.trim(),
       });
 
       document.getElementById('member-link')?.addEventListener('click', () => {
-        window.endTimesTracking?.track('sign_up_start', {
+        window.gematriaTracking?.track('sign_up_start', {
           source: 'calculator_member_history_banner',
         });
       });
@@ -1505,7 +1505,7 @@ View results: ${shareUrl}`.trim(),
         const term = lookupInput.value.trim();
         lastSearchTerm = term;
         hideCalculatorError();
-        window.endTimesTracking?.track('calculator_usage_start', {
+        window.gematriaTracking?.track('calculator_usage_start', {
           source: 'calculator_lookup_form',
           queryLength: term.length,
         });
@@ -1555,7 +1555,7 @@ View results: ${shareUrl}`.trim(),
 
         try {
           const searchGematria = await requestGematria(term);
-          window.endTimesTracking?.track('calculator_usage_complete', {
+          window.gematriaTracking?.track('calculator_usage_complete', {
             source: 'calculator_lookup_form',
             gematriaTotal: searchGematria?.gematria?.total ?? null,
             authenticated: Boolean(memberSession?.authenticated),
@@ -1594,7 +1594,7 @@ View results: ${shareUrl}`.trim(),
               };
               updateMemberSaveState();
             } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1616,7 +1616,7 @@ View results: ${shareUrl}`.trim(),
             }
           }
         } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1674,11 +1674,11 @@ View results: ${shareUrl}`.trim(),
       async function performSaveWithNote(noteText) {
         try {
           await saveCurrentSearch(noteText);
-          window.endTimesTracking?.track('calculator_save_history_complete', {
+          window.gematriaTracking?.track('calculator_save_history_complete', {
             source: 'calculator_page',
           });
         } catch (error) {
-          window.endTimesTracking?.track('calculator_usage_error', {
+          window.gematriaTracking?.track('calculator_usage_error', {
             source: 'calculator_lookup_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -1691,7 +1691,7 @@ View results: ${shareUrl}`.trim(),
           event.preventDefault();
           showMembersOnlySaveMessage();
           saveHistoryPopover?.show();
-          window.endTimesTracking?.track('sign_up_start', { source: 'calculator_save_button' });
+          window.gematriaTracking?.track('sign_up_start', { source: 'calculator_save_button' });
           return;
         }
 
@@ -1763,7 +1763,7 @@ View results: ${shareUrl}`.trim(),
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
-          <span>EndTimes.Today — a research workspace.</span>
+          <span>Gematria.Today — a research workspace.</span>
         </div>
         <div class="d-flex flex-wrap gap-3 site-legal-links">
           <a href="/privacy.html">Privacy Policy</a>

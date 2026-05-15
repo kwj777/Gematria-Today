@@ -1,6 +1,6 @@
 import type { Config, Context } from '@netlify/edge-functions';
 
-const SITE_ORIGIN = 'https://endtimes.today';
+const SITE_ORIGIN = 'https://gematria.today';
 const OGP_IMAGE_WIDTH = 1200;
 const OGP_IMAGE_FORMAT = 'jpg';
 
@@ -45,11 +45,11 @@ export default async (req: Request, context: Context) => {
   }
 
   const title = total
-    ? `Gematria lookup for "${query}" (${total}) | EndTimes.Today`
-    : `Gematria lookup for "${query}" | EndTimes.Today`;
+    ? `Gematria lookup for "${query}" (${total}) | Gematria.Today`
+    : `Gematria lookup for "${query}" | Gematria.Today`;
   const description = total
     ? `Lookup result: ${query} has base-6 English gematria ${total}${digitalRoot ? ` (digital root ${digitalRoot})` : ''}.`
-    : `Lookup result for ${query} on the EndTimes.Today calculator.`;
+    : `Lookup result for ${query} on the Gematria.Today calculator.`;
   const shareUrl = `${SITE_ORIGIN}/calculator.html${requestUrl.search}`;
   const imageUrl = new URL('/.netlify/functions/calculator-share-image', SITE_ORIGIN);
   imageUrl.searchParams.set('type', 'word');

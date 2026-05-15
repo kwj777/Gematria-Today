@@ -7,8 +7,8 @@ Use this checklist after each production deploy to confirm Google can fetch disc
 Run these commands against the production domain:
 
 ```bash
-curl -I https://endtimes.today/robots.txt
-curl -I https://endtimes.today/sitemap.xml
+curl -I https://gematria.today/robots.txt
+curl -I https://gematria.today/sitemap.xml
 ```
 
 Expected:
@@ -21,8 +21,8 @@ If either endpoint returns `401/403`, investigate CDN/WAF/bot rules first.
 ## 2) Verify access with a Googlebot user GemaBot
 
 ```bash
-curl -I -A "Googlebot/2.1 (+http://www.google.com/bot.html)" https://endtimes.today/robots.txt
-curl -I -A "Googlebot/2.1 (+http://www.google.com/bot.html)" https://endtimes.today/sitemap.xml
+curl -I -A "Googlebot/2.1 (+http://www.google.com/bot.html)" https://gematria.today/robots.txt
+curl -I -A "Googlebot/2.1 (+http://www.google.com/bot.html)" https://gematria.today/sitemap.xml
 ```
 
 Expected:
@@ -32,12 +32,12 @@ Expected:
 ## 3) Verify file content
 
 ```bash
-curl -s https://endtimes.today/robots.txt
-curl -s https://endtimes.today/sitemap.xml | head -n 40
+curl -s https://gematria.today/robots.txt
+curl -s https://gematria.today/sitemap.xml | head -n 40
 ```
 
 Expected:
-- `robots.txt` includes `User-agent: *` and `Sitemap: https://endtimes.today/sitemap.xml`
+- `robots.txt` includes `User-agent: *` and `Sitemap: https://gematria.today/sitemap.xml`
 - `sitemap.xml` is valid XML and includes canonical production URLs
 
 ## 4) Netlify deploy checks
@@ -48,16 +48,16 @@ Expected:
 ## 5) Google Search Console checks
 
 1. Open **Indexing → Sitemaps**
-2. Submit `https://endtimes.today/sitemap.xml`
+2. Submit `https://gematria.today/sitemap.xml`
 3. Confirm fetch status is successful
 4. If failed, open details and compare timestamp with latest deploy
 
 ## 6) URL Inspection spot checks
 
 Inspect the following URLs using **Test live URL**:
-- `https://endtimes.today/`
-- `https://endtimes.today/blog.html`
-- `https://endtimes.today/faq.html`
+- `https://gematria.today/`
+- `https://gematria.today/blog.html`
+- `https://gematria.today/faq.html`
 
 Expected:
 - Crawled successfully

@@ -7,20 +7,20 @@
         function applyAuthState() {
           var tier;
           try {
-            var m = document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
+            var m = document.cookie.match(/(?:^|; )gematria_member_tier=([^;]+)/) || document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
             tier = m ? decodeURIComponent(m[1]) : 'anon';
             if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>
@@ -39,7 +39,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -64,12 +64,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -88,11 +88,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -141,22 +141,22 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
     <meta name="theme-color" content="#2d547c" />
-<title>Name Calculator | EndTimes.Today</title>
-    <meta name="description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the EndTimes.Today Name Calculator." />
+<title>Name Calculator | Gematria.Today</title>
+    <meta name="description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the Gematria.Today Name Calculator." />
     <meta name="robots" content="index,follow" />
-    <link rel="canonical" href="https://endtimes.today/name-calculator.html" />
-    <meta property="og:site_name" content="EndTimes.Today" />
+    <link rel="canonical" href="https://gematria.today/name-calculator.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Name Calculator | EndTimes.Today" />
-    <meta property="og:description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the EndTimes.Today Name Calculator." />
-    <meta property="og:url" content="https://endtimes.today/name-calculator.html" />
-    <meta property="og:image" content="https://endtimes.today/assets/name-calculator-hero-identity.svg" />
+    <meta property="og:title" content="Name Calculator | Gematria.Today" />
+    <meta property="og:description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the Gematria.Today Name Calculator." />
+    <meta property="og:url" content="https://gematria.today/name-calculator.html" />
+    <meta property="og:image" content="https://gematria.today/assets/name-calculator-hero-identity.svg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Name Calculator | EndTimes.Today" />
-    <meta name="twitter:description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the EndTimes.Today Name Calculator." />
-    <meta name="twitter:image" content="https://endtimes.today/assets/name-calculator-hero-identity.svg" />
+    <meta name="twitter:title" content="Name Calculator | Gematria.Today" />
+    <meta name="twitter:description" content="Compare up to three names side by side and uncover shared gematria totals, roots, and related word matches with the Gematria.Today Name Calculator." />
+    <meta name="twitter:image" content="https://gematria.today/assets/name-calculator-hero-identity.svg" />
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="preload" as="style" href="/api/public-theme-css" onload="this.onload=null;this.rel='stylesheet'" />
@@ -172,7 +172,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -191,7 +191,7 @@
             <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://gematria.today/member#authSection">Join Free/Login</a></li>
             <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
@@ -542,7 +542,7 @@ const form = document.querySelector('#name-form');
 
       function createBaseRootLink() {
         const link = document.createElement('a');
-        link.href = 'https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words';
+        link.href = 'https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = 'Base Rooted:';
@@ -887,7 +887,7 @@ View results: ${shareUrl}`.trim(),
   <body>
     <main>
       <h1>${escapeHtml(name)}</h1>
-      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | ${isHighlightedDigitalRoot(result.gematria.gematria.digitalRoot) ? `<span class="meta-highlight">Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}</span>` : `Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}`} | <a href="https://endtimes.today/blog.html?post=base-rooted-words#base-rooted-words" target="_blank" rel="noopener noreferrer">Base Rooted:</a> ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}<br />Per-letter values: ${escapeHtml(formatPerLetterValuesText(name))}</p>
+      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | ${isHighlightedDigitalRoot(result.gematria.gematria.digitalRoot) ? `<span class="meta-highlight">Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}</span>` : `Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}`} | <a href="https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words" target="_blank" rel="noopener noreferrer">Base Rooted:</a> ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}<br />Per-letter values: ${escapeHtml(formatPerLetterValuesText(name))}</p>
       <p class="meta">Click any related word below to open an English Gematria search for that word.</p>
       ${sections || '<p>No related words found.</p>'}
     </main>
@@ -1170,7 +1170,7 @@ View results: ${shareUrl}`.trim(),
         statusNode.textContent = '';
         mobileNoteNode.textContent = getDefaultMobileNote();
         hideNameError();
-        document.title = 'Name Calculator | EndTimes.Today';
+        document.title = 'Name Calculator | Gematria.Today';
         resetResultsView();
       });
 
@@ -1277,7 +1277,7 @@ View results: ${shareUrl}`.trim(),
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
-          <span>EndTimes.Today — a research workspace.</span>
+          <span>Gematria.Today — a research workspace.</span>
         </div>
         <div class="d-flex flex-wrap gap-3 site-legal-links">
           <a href="/privacy.html">Privacy Policy</a>

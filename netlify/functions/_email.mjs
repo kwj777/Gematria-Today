@@ -36,7 +36,7 @@ async function getStoredEmailSetting(sql, key) {
 export async function getEmailDeliveryConfig(sql = null) {
   const apiKey = (await getStoredEmailSetting(sql, 'sendgrid_api_key')) || String(process.env.SENDGRID_API_KEY || '').trim();
   const fromEmail = normalizeEmail((await getStoredEmailSetting(sql, 'sendgrid_from_email')) || process.env.SENDGRID_FROM_EMAIL);
-  const fromName = String((await getStoredEmailSetting(sql, 'sendgrid_from_name')) || process.env.SENDGRID_FROM_NAME || 'EndTimes.Today').trim();
+  const fromName = String((await getStoredEmailSetting(sql, 'sendgrid_from_name')) || process.env.SENDGRID_FROM_NAME || 'Gematria.Today').trim();
   const replyTo = normalizeEmail((await getStoredEmailSetting(sql, 'sendgrid_reply_to_email')) || process.env.SENDGRID_REPLY_TO_EMAIL);
   const appBaseUrl = String((await getStoredEmailSetting(sql, 'public_site_url')) || process.env.PUBLIC_SITE_URL || process.env.URL || '').trim().replace(/\/$/, '');
 
@@ -69,7 +69,7 @@ export async function sendTransactionalEmail({ toEmail, subject, text, html, sql
     personalizations: [
       {
         to: [{ email: normalizedToEmail }],
-        subject: String(subject || '').trim() || 'Notification from EndTimes.Today',
+        subject: String(subject || '').trim() || 'Notification from Gematria.Today',
       },
     ],
     content: [
@@ -128,19 +128,19 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
     : null;
 
   const subject = recoveryType === 'forgot-userid'
-    ? `Your ${accountLabel} username for EndTimes.Today`
-    : `Your ${accountLabel} password reset code for EndTimes.Today`;
+    ? `Your ${accountLabel} username for Gematria.Today`
+    : `Your ${accountLabel} password reset code for Gematria.Today`;
 
   const text = recoveryType === 'forgot-userid'
     ? [
-      'You requested a username reminder for your EndTimes.Today account.',
+      'You requested a username reminder for your Gematria.Today account.',
       `Username: ${username}`,
       `Recovery code: ${recoveryCode}`,
       `Expires: ${expiresText}`,
       recoveryUrl ? `Sign in: ${recoveryUrl}` : null,
     ].filter(Boolean).join('\n')
     : [
-      'You requested a password reset code for your EndTimes.Today account.',
+      'You requested a password reset code for your Gematria.Today account.',
       `Username: ${username}`,
       `Recovery code: ${recoveryCode}`,
       `Expires: ${expiresText}`,
@@ -164,14 +164,14 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
 
   const html = recoveryType === 'forgot-userid'
     ? `
-      <p>You requested a username reminder for your EndTimes.Today account.</p>
+      <p>You requested a username reminder for your Gematria.Today account.</p>
       <p><strong>Username:</strong> ${safeUsername}</p>
       <p><strong>Recovery code:</strong> ${recoveryCodeHtml}</p>
       <p><strong>Expires:</strong> ${escapeHtml(expiresText)}</p>
       ${recoveryUrl ? `<p><a href="${escapeHtml(recoveryUrl)}">Open the sign-in page</a></p>` : ''}
     `
     : `
-      <p>You requested a password reset code for your EndTimes.Today account.</p>
+      <p>You requested a password reset code for your Gematria.Today account.</p>
       <p><strong>Username:</strong> ${safeUsername}</p>
       <p><strong>Recovery code:</strong> ${recoveryCodeHtml}</p>
       <p><strong>Expires:</strong> ${escapeHtml(expiresText)}</p>
@@ -205,14 +205,14 @@ export async function sendMemberVerificationEmail({ toEmail, username, verificat
     : null;
 
   const text = [
-    'Welcome to EndTimes.Today.',
+    'Welcome to Gematria.Today.',
     `Hello ${username}, please verify your email to activate your membership account.`,
     `Verification expires: ${expiresText}`,
     verificationUrl ? `Verify email: ${verificationUrl}` : `Verification token: ${verificationToken}`,
   ].join('\n');
 
   const html = `
-    <p>Welcome to EndTimes.Today.</p>
+    <p>Welcome to Gematria.Today.</p>
     <p>Hello <strong>${safeUsername}</strong>, please verify your email to activate your membership account.</p>
     <p><strong>Verification expires:</strong> ${escapeHtml(expiresText)}</p>
     ${verificationUrl
@@ -222,7 +222,7 @@ export async function sendMemberVerificationEmail({ toEmail, username, verificat
 
   const delivery = await sendTransactionalEmail({
     toEmail: normalizedToEmail,
-    subject: 'Verify your EndTimes.Today membership email',
+    subject: 'Verify your Gematria.Today membership email',
     text,
     html,
     sql,

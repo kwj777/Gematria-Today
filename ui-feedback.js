@@ -10,7 +10,7 @@
   }
 
   function reportSitewideElementClick(event) {
-    if (window.endTimesTracking?.track) {
+    if (window.gematriaTracking?.track) {
       return;
     }
 

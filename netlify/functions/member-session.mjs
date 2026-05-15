@@ -23,7 +23,7 @@ export async function handler(event) {
     });
   } catch (error) {
     return jsonResponse(200, { authenticated: false }, {
-      'set-cookie': [clearSessionCookie(AUTH_COOKIES.member), clearMemberTierCookie()],
+      'set-cookie': [...clearSessionCookie(AUTH_COOKIES.member), ...clearMemberTierCookie()],
     });
   }
 }

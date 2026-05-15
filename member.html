@@ -7,20 +7,20 @@
         function applyAuthState() {
           var tier;
           try {
-            var m = document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
+            var m = document.cookie.match(/(?:^|; )gematria_member_tier=([^;]+)/) || document.cookie.match(/(?:^|; )endtimes_member_tier=([^;]+)/);
             tier = m ? decodeURIComponent(m[1]) : 'anon';
             if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
           } catch (_) {
             tier = 'anon';
           }
-          window.__endtimesAuthTier = tier;
+          window.__gematriaAuthTier = tier;
           var root = document.documentElement;
           for (var i = 0; i < TIERS.length; i++) {
             root.classList.remove('auth-' + TIERS[i]);
           }
           root.classList.add('auth-' + tier);
         }
-        window.__endtimesSyncAuthState = applyAuthState;
+        window.__gematriaSyncAuthState = applyAuthState;
         applyAuthState();
       })();
     </script>
@@ -39,7 +39,7 @@
     }
 
     try {
-      var stored = window.localStorage.getItem('endtimes.siteModules');
+      var stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         var parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -64,12 +64,12 @@
   }
 
   var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window['ga-disable-' + gaMeasurementId] = true;
   } else {
-    window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
     gtag('consent', 'default', {
       analytics_storage: 'granted',
@@ -88,11 +88,11 @@
     });
 
     function initializeGoogleAnalytics() {
-      if (window.__endTimesGoogleAnalyticsInitialized) {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
         return;
       }
 
-      window.__endTimesGoogleAnalyticsInitialized = true;
+      window.__gematriaGoogleAnalyticsInitialized = true;
 
       var gaScript = document.createElement('script');
       gaScript.async = true;
@@ -141,24 +141,24 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="EndTimes.Today" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
     <meta name="theme-color" content="#2d547c" />
 <title>Membership Dashboard</title>
-    <meta name="description" content="Create a free EndTimes.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
+    <meta name="description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <link rel="canonical" href="https://endtimes.today/member.html" />
-    <meta property="og:site_name" content="EndTimes.Today" />
+    <link rel="canonical" href="https://gematria.today/member.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Membership Dashboard | EndTimes.Today" />
-    <meta property="og:description" content="Create a free EndTimes.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
-    <meta property="og:url" content="https://endtimes.today/member.html" />
-    <meta property="og:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
-    <meta property="og:image:alt" content="EndTimes.Today platform overview illustration." />
+    <meta property="og:title" content="Membership Dashboard | Gematria.Today" />
+    <meta property="og:description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
+    <meta property="og:url" content="https://gematria.today/member.html" />
+    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Membership Dashboard | EndTimes.Today" />
-    <meta name="twitter:description" content="Create a free EndTimes.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
-    <meta name="twitter:image" content="https://endtimes.today/assets/endtimes-selling-points.svg" />
-    <meta name="twitter:image:alt" content="EndTimes.Today platform overview illustration." />
+    <meta name="twitter:title" content="Membership Dashboard | Gematria.Today" />
+    <meta name="twitter:description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
+    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="preload" as="style" href="/api/public-theme-css" onload="this.onload=null;this.rel='stylesheet'" />
@@ -184,20 +184,20 @@
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Home",
-                "item": "https://endtimes.today/"
+                "item": "https://gematria.today/"
               },
               {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "Dashboard",
-                "item": "https://endtimes.today/member.html"
+                "item": "https://gematria.today/member.html"
               }
             ]
           },
           {
             "@type": "WebApplication",
-            "name": "EndTimes.Today Membership Dashboard",
-            "url": "https://endtimes.today/member.html",
+            "name": "Gematria.Today Membership Dashboard",
+            "url": "https://gematria.today/member.html",
             "applicationCategory": "LifestyleApplication",
             "operatingSystem": "Web browser"
           }
@@ -209,7 +209,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/endtimes-logo-navbar.svg" alt="EndTimes.Today" class="site-logo" width="220" height="52" /></a>
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -228,7 +228,7 @@
             <li class="nav-item" data-module="news"><a class="nav-link" href="/news.html">News</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link active" href="/member.html" aria-current="page">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://endtimes.today/member#authSection">Join Free/Login</a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2 mt-2 mt-lg-0" href="https://gematria.today/member#authSection">Join Free/Login</a></li>
             <li class="nav-item nav-search" data-module="knowbot"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
@@ -827,7 +827,7 @@
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
-          <span>EndTimes.Today — a research workspace.</span>
+          <span>Gematria.Today — a research workspace.</span>
         </div>
         <div class="d-flex flex-wrap gap-3 site-legal-links">
           <a href="/privacy.html">Privacy Policy</a>
@@ -957,7 +957,7 @@
       const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
         ? new window.BroadcastChannel('member-dashboard-sync')
         : null;
-      const siteModules = window.EndTimesModules;
+      const siteModules = window.GematriaModules;
       const forumModuleEnabled = siteModules?.isEnabled('forum') !== false;
       const gemabotModuleEnabled = siteModules?.isEnabled('gemabot') !== false;
 
@@ -1046,7 +1046,7 @@
 
       function getTurnstileSiteKey() {
         return String(
-          window.ENDTIMES_TURNSTILE_SITE_KEY
+          window.GEMATRIA_TURNSTILE_SITE_KEY
             || document.querySelector('meta[name="turnstile-site-key"]')?.content
             || '',
         ).trim();
@@ -1651,7 +1651,7 @@
         if (!hasLearningPathStep1Intent()) return false;
         window.localStorage.removeItem('learningPathStep1Intent');
         clearServerLearningPathStep1Intent();
-        window.endTimesTracking?.track?.('cta_ladder_click', {
+        window.gematriaTracking?.track?.('cta_ladder_click', {
           step: 'learning_path_step_1',
           location: 'member_dashboard_auto_redirect',
           destination: '/gematria-basics.html',
@@ -1671,8 +1671,8 @@
             return;
           }
         }
-        if (typeof window.__endtimesSyncAuthState === 'function') {
-          window.__endtimesSyncAuthState();
+        if (typeof window.__gematriaSyncAuthState === 'function') {
+          window.__gematriaSyncAuthState();
         }
         syncMembershipHero(isLoggedIn ? session?.member : null, isLoggedIn);
         syncComparisonCurrentLevel(isLoggedIn ? session?.member : null);
@@ -2209,7 +2209,7 @@
           syncPaymentButton(session.member);
           syncMembershipUpgradePanel(session.member);
           showAlert(`Payment received. Your ${payload.membership.label.toLowerCase()} is active.`, 'success');
-          window.endTimesTracking?.track('checkout_complete', {
+          window.gematriaTracking?.track('checkout_complete', {
             source: 'member_payment_confirm',
             membershipLevel: payload?.member?.membershipLevel || 'premium',
           });
@@ -2217,7 +2217,7 @@
           url.searchParams.delete('session_id');
           window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
         } catch (error) {
-          window.endTimesTracking?.track('checkout_error', {
+          window.gematriaTracking?.track('checkout_error', {
             source: 'member_payment_confirm',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -2348,7 +2348,7 @@
       async function shareHistoryItem(item) {
         const shareUrl = toCanonicalShareUrl(await buildHistoryShareUrl(item));
         const sharePayload = {
-          title: 'EndTimes.Today saved search',
+          title: 'Gematria.Today saved search',
           text: `Saved search: ${item.queryText || 'Gematria lookup'}\nView results: ${shareUrl}`,
           url: shareUrl,
         };
@@ -3030,7 +3030,7 @@
       }
 
       window.addEventListener('DOMContentLoaded', () => {
-        window.EndTimesRegisterForm.initRegisterForm({
+        window.GematriaRegisterForm.initRegisterForm({
           form: document.getElementById('registerForm'),
           fields: {
             username: document.getElementById('registerUsername'),
@@ -3072,7 +3072,7 @@
       });
 
       authTabRegister.addEventListener('click', () => {
-        window.endTimesTracking?.track('sign_up_start', { source: 'member_auth_tab' });
+        window.gematriaTracking?.track('sign_up_start', { source: 'member_auth_tab' });
         setAuthView('register', { updateUrl: true });
       });
 
@@ -3419,7 +3419,7 @@
         }
 
         try {
-          window.endTimesTracking?.track('checkout_start', {
+          window.gematriaTracking?.track('checkout_start', {
             source: 'member_upgrade_form',
             currentMembershipLevel: session?.member?.membershipLevel || 'free',
           });
@@ -3428,7 +3428,7 @@
           const payload = await request('/api/member-payment-checkout', { method: 'POST', body: '{}' });
           window.location.assign(payload.checkoutUrl);
         } catch (error) {
-          window.endTimesTracking?.track('checkout_error', {
+          window.gematriaTracking?.track('checkout_error', {
             source: 'member_upgrade_form',
             errorMessage: error?.message || 'unknown_error',
           });
@@ -3556,7 +3556,7 @@
       });
 
       goToLearningPathStep1Button?.addEventListener('click', () => {
-        window.endTimesTracking?.track('cta_ladder_click', {
+        window.gematriaTracking?.track('cta_ladder_click', {
           step: 'learning_path_step_1',
           location: 'member_dashboard',
           destination: '/gematria-basics.html',

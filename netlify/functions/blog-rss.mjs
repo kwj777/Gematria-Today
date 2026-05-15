@@ -1,10 +1,10 @@
 import { ensureAdminSchema, formatPost, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
 
-const SITE_ORIGIN = 'https://endtimes.today';
+const SITE_ORIGIN = 'https://gematria.today';
 const FEED_PATH = '/blog.xml';
 const BLOG_PATH = '/blog.html';
-const FEED_TITLE = 'EndTimes.Today Blog';
-const FEED_DESCRIPTION = 'Latest articles from EndTimes.Today blog.';
+const FEED_TITLE = 'Gematria.Today Blog';
+const FEED_DESCRIPTION = 'Latest articles from Gematria.Today blog.';
 const MAX_ITEMS = 50;
 
 function escapeXml(value = '') {
@@ -43,7 +43,7 @@ function extractDescription(post) {
   const summary = stripHtml(post.summary || '');
   if (summary) return summary;
   const body = stripHtml(post.body || '');
-  if (!body) return 'Read the latest gematria research article on EndTimes.Today.';
+  if (!body) return 'Read the latest gematria research article on Gematria.Today.';
   return body.length > 220 ? `${body.slice(0, 220).trimEnd()}…` : body;
 }
 

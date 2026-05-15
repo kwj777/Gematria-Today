@@ -26,7 +26,7 @@
     }
 
     try {
-      const stored = window.localStorage.getItem('endtimes.siteModules');
+      const stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {
@@ -51,14 +51,14 @@
   }
 
   const googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__endTimesGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
 
   if (!googleAnalyticsEnabled) {
     window[`ga-disable-${gaMeasurementId}`] = true;
     return;
   }
 
-  window.ENDTIMES_CONSENT_MODE_REGIONS = consentModeRegions;
+  window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
   gtag('consent', 'default', {
     analytics_storage: 'granted',
@@ -77,11 +77,11 @@
   });
 
   function initializeGoogleAnalytics() {
-    if (window.__endTimesGoogleAnalyticsInitialized) {
+    if (window.__gematriaGoogleAnalyticsInitialized) {
       return;
     }
 
-    window.__endTimesGoogleAnalyticsInitialized = true;
+    window.__gematriaGoogleAnalyticsInitialized = true;
 
     const gaScript = document.createElement('script');
     gaScript.async = true;

@@ -67,7 +67,7 @@ export async function handler(event) {
       });
 
       return jsonResponse(401, { error: 'Invalid username/email or password' }, {
-        'set-cookie': [clearSessionCookie(AUTH_COOKIES.member), clearMemberTierCookie()],
+        'set-cookie': [...clearSessionCookie(AUTH_COOKIES.member), ...clearMemberTierCookie()],
       });
     }
 

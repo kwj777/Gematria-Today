@@ -11,7 +11,7 @@ const PRECACHE_URLS = [
   '/pwa-register.js',
   '/manifest.webmanifest',
   '/offline.html',
-  '/assets/endtimes-logo-navbar.svg',
+  '/assets/gematria-logo-navbar.svg',
   '/assets/icons/icon-192.svg',
   '/assets/icons/icon-512.svg'
 ];

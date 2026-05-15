@@ -50,7 +50,7 @@ The site now includes a lightweight module toggle system in `public/site-modules
 - Page elements can be tied to modules using `data-module="forum"` (or comma-separated values).
 - The same script is mirrored at root as `site-modules.js` for compatibility.
 - Module selection is **locked for non-admin users**.
-- Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `endtimes.siteModules`, and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
+- Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `gematria.siteModules` — legacy `endtimes.siteModules` is read as a fallback and migrated forward — and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
 
 ### Super Admin policy
 
@@ -214,7 +214,7 @@ Set these in Netlify to tune protection behavior:
 - `TURNSTILE_EXPECTED_HOSTNAME=...` to pin Turnstile verification to a specific hostname instead of deriving it from the incoming request host header
 - `SENDGRID_API_KEY=...` to enable transactional email delivery for admin/member account recovery
 - `SENDGRID_FROM_EMAIL=...` verified sender address used for recovery emails
-- `SENDGRID_FROM_NAME="EndTimes.Today"` optional sender display name shown in recovery emails
+- `SENDGRID_FROM_NAME="Gematria.Today"` optional sender display name shown in recovery emails
 - `SENDGRID_REPLY_TO_EMAIL=...` optional reply-to address for recovery emails
 - `PUBLIC_SITE_URL=https://example.com` optional canonical site URL used in recovery email links
 ### Dashboards, alerts, and high alert operations

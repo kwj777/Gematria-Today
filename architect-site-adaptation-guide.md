@@ -13,7 +13,7 @@ Primary file to start with:
 - `public/index.html`
 
 Key changes:
-- Replace "EndTimes.Today" and gematria-related copy with your architecture studio identity.
+- Replace "Gematria.Today" and gematria-related copy with your architecture studio identity.
 - Update canonical URL and social preview image to your own domain and project image.
 - Replace homepage hero headline/subheadline and CTA buttons with architecture-focused actions (e.g., "View Projects", "Book a Consultation").
 

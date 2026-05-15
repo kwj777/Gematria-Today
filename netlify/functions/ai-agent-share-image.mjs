@@ -91,7 +91,7 @@ function buildSvg({ topic, total, root, summaryLines }) {
   <text x="120" y="360" fill="#f3f6fb" font-size="46" font-family="Arial, Helvetica, sans-serif" font-weight="700">Gematria: ${escapeXml(total)}</text>
   <text x="120" y="425" fill="#c7d9ee" font-size="36" font-family="Arial, Helvetica, sans-serif">Digital Root: ${escapeXml(root)}</text>
   ${summaryBlock}
-  <text x="80" y="590" fill="#9fc1e8" font-size="28" font-family="Arial, Helvetica, sans-serif">endtimes.today</text>
+  <text x="80" y="590" fill="#9fc1e8" font-size="28" font-family="Arial, Helvetica, sans-serif">gematria.today</text>
 </svg>`;
 }
 

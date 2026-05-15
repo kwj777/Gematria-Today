@@ -155,10 +155,10 @@ function sanitizeReturnPath(value) {
   }
 
   try {
-    const parsed = new URL(String(value), 'https://endtimes.today');
+    const parsed = new URL(String(value), 'https://gematria.today');
     const normalizedPathname = parsed.pathname === '/calculator' ? '/calculator.html' : parsed.pathname;
 
-    if (parsed.origin !== 'https://endtimes.today' || !ALLOWED_RETURN_PATHS.has(normalizedPathname)) {
+    if (parsed.origin !== 'https://gematria.today' || !ALLOWED_RETURN_PATHS.has(normalizedPathname)) {
       return fallbackPath;
     }
 

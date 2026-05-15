@@ -94,7 +94,7 @@ async function fetchLatestArticle(url) {
   try {
     const response = await fetchWithTimeout(url, {
       headers: {
-        'user-agent': 'EndTimes.Today RSS Preview/1.0',
+        'user-agent': 'Gematria.Today RSS Preview/1.0',
         accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
       },
     }, getProtectionConfig().wordnikTimeoutMs);

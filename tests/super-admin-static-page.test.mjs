@@ -20,7 +20,7 @@ test('resolveRequestedGuideFile accepts valid guide file names', () => {
 
   assert.equal(
     __testUtils.resolveRequestedGuideFile({
-      rawUrl: 'https://endtimes.today/architect-site-adaptation-guide.html?adminNextAttempted=1',
+      rawUrl: 'https://gematria.today/architect-site-adaptation-guide.html?adminNextAttempted=1',
     }),
     'architect-site-adaptation-guide.html',
   );
@@ -133,7 +133,7 @@ test('hasNextRedirectAttemptMarker reads both adminNextAttempted and nextAttempt
   }), true);
 
   assert.equal(__testUtils.hasNextRedirectAttemptMarker({
-    rawUrl: 'https://endtimes.today/architect-site-adaptation-guide.html?nextAttempted=1',
+    rawUrl: 'https://gematria.today/architect-site-adaptation-guide.html?nextAttempted=1',
   }), true);
 });
 

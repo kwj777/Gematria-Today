@@ -1,7 +1,7 @@
 import { ensureAdminSchema, formatPost, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 
-const SITE_ORIGIN = 'https://endtimes.today';
+const SITE_ORIGIN = 'https://gematria.today';
 const FALLBACK_IMAGE = '/assets/blog-hero-insights-16x9.svg';
 const OGP_IMAGE_WIDTH = 1200;
 const OGP_IMAGE_FORMAT = 'jpg';
@@ -70,12 +70,12 @@ function getShareDescription(post) {
   if (body) {
     return body.length > 220 ? `${body.slice(0, 220).trimEnd()}…` : body;
   }
-  return 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from EndTimes.Today.';
+  return 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from Gematria.Today.';
 }
 
 function buildShareHtml(post) {
   const slug = String(post?.slug || '').trim();
-  const title = String(post?.title || 'EndTimes.Today Blog').trim();
+  const title = String(post?.title || 'Gematria.Today Blog').trim();
   const description = getShareDescription(post);
   const canonicalUrl = `${SITE_ORIGIN}/blog/${encodeURIComponent(slug)}`;
   const appUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
@@ -87,12 +87,12 @@ function buildShareHtml(post) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(title)} | EndTimes.Today Blog</title>
+    <title>${escapeHtml(title)} | Gematria.Today Blog</title>
     <meta name="description" content="${escapeHtml(description)}" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
 
-    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${escapeHtml(title)}" />
     <meta property="og:description" content="${escapeHtml(description)}" />

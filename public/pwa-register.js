@@ -31,7 +31,7 @@
     const logo = document.createElement('img');
     logo.className = 'pwa-launch-overlay__logo';
     logo.src = '/assets/endtimes-logo-navbar.svg';
-    logo.alt = 'EndTimes.Today';
+    logo.alt = 'Gematria.Today';
     logo.width = 220;
     logo.height = 52;
     logo.decoding = 'async';
@@ -110,7 +110,7 @@
 
     const title = document.createElement('p');
     title.className = 'pwa-ios-popup__title';
-    title.textContent = 'Add EndTimes.Today to your Home Screen';
+    title.textContent = 'Add Gematria.Today to your Home Screen';
 
     const instructions = document.createElement('p');
     instructions.className = 'pwa-ios-popup__instructions';

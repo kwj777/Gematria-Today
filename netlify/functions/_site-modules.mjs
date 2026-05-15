@@ -11,7 +11,7 @@ export const DEFAULT_SITE_MODULES = Object.freeze({
   google_analytics: false,
 });
 
-export const DEFAULT_SITE_ORIGIN = 'https://endtimes.today';
+export const DEFAULT_SITE_ORIGIN = 'https://gematria.today';
 
 export function normalizeSiteModules(rawValue = null) {
   if (!rawValue || typeof rawValue !== 'object') {

@@ -9,4 +9,4 @@ Disallow: /premium-research.html
 Disallow: /api/
 Disallow: /.netlify/functions/
 
-Sitemap: https://endtimes.today/sitemap.xml
+Sitemap: https://gematria.today/sitemap.xml

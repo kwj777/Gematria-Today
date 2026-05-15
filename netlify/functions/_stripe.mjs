@@ -105,7 +105,7 @@ export async function createMembershipCheckoutSession(event, member, sql = null)
     cancel_url: `${siteUrl}/member.html?payment=cancelled`,
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][product_data][name]': membership.label,
-    'line_items[0][price_data][product_data][description]': 'Unlock one year of premium EndTimes.Today membership access at the limited-time introductory special of $5.55 (regularly $7.77/year).',
+    'line_items[0][price_data][product_data][description]': 'Unlock one year of premium Gematria.Today membership access at the limited-time introductory special of $5.55 (regularly $7.77/year).',
     'line_items[0][price_data][recurring][interval]': priceConfig.recurringInterval,
     'line_items[0][price_data][recurring][interval_count]': String(priceConfig.recurringIntervalCount),
     'line_items[0][price_data][unit_amount]': String(membership.amountCents),

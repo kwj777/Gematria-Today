@@ -1,6 +1,6 @@
 import type { Config, Context } from '@netlify/edge-functions';
 
-const SITE_ORIGIN = 'https://endtimes.today';
+const SITE_ORIGIN = 'https://gematria.today';
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -30,10 +30,10 @@ export default async (req: Request, context: Context) => {
     return new Response(html, { headers: response.headers });
   }
 
-  const title = `Name calculator: ${names.join(', ')} | EndTimes.Today`;
+  const title = `Name calculator: ${names.join(', ')} | Gematria.Today`;
   const description = totals
     ? `Compare gematria totals (${totals}) for ${names.join(', ')}.`
-    : `Compare gematria results for ${names.join(', ')} on EndTimes.Today.`;
+    : `Compare gematria results for ${names.join(', ')} on Gematria.Today.`;
   const shareUrl = `${SITE_ORIGIN}/name-calculator.html${requestUrl.search}`;
   const imageUrl = new URL('/.netlify/functions/calculator-share-image', SITE_ORIGIN);
   imageUrl.searchParams.set('type', 'name');

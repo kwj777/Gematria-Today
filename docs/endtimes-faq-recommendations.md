@@ -1,4 +1,4 @@
-# Combined FAQ Recommendations for EndTimes.Today (Deduplicated)
+# Combined FAQ Recommendations for Gematria.Today (Deduplicated)
 
 This draft merges:
 - current FAQ-page JSON-LD questions, and
@@ -8,8 +8,8 @@ with duplicate topics removed.
 
 ## Core onboarding
 
-1. **What is EndTimes.Today?**
-   EndTimes.Today is a research workspace for English gematria, biblical symbolism, and current-events pattern study. It provides calculators, explainers, and editorial resources so readers can test claims methodically.
+1. **What is Gematria.Today?**
+   Gematria.Today is a research workspace for English gematria, biblical symbolism, and current-events pattern study. It provides calculators, explainers, and editorial resources so readers can test claims methodically.
 
 2. **Who is this platform for?**
    The site is for curious beginners, independent researchers, and returning readers who want reproducible steps instead of isolated claims.
@@ -29,7 +29,7 @@ with duplicate topics removed.
    Use the Name Calculator and then cross-check related matches in gematria results and blog methodology posts.
 
 7. **What is English gematria in plain language?**
-   English gematria maps letters to numbers to examine numerical patterns in words and phrases. EndTimes.Today emphasizes consistent rules, transparent steps, and cross-checking before conclusions.
+   English gematria maps letters to numbers to examine numerical patterns in words and phrases. Gematria.Today emphasizes consistent rules, transparent steps, and cross-checking before conclusions.
 
 8. **How do I avoid cherry-picking results?**
    Define the hypothesis first, keep spelling and formatting rules fixed, test counterexamples, and document both matching and non-matching results.
@@ -42,7 +42,7 @@ with duplicate topics removed.
 
 ## Content trust and editorial standards
 
-11. **How does EndTimes.Today verify published claims?**
+11. **How does Gematria.Today verify published claims?**
     Editorial posts should cite source material, show calculation steps, and separate observable data from interpretation.
 
 12. **What is your editorial policy?**
@@ -70,7 +70,7 @@ with duplicate topics removed.
 18. **What’s the best workflow for a fresh research question?**
     Frame one question, run baseline calculations, log assumptions, compare against alternative wordings, and only then draft interpretation.
 
-19. **How should I cite EndTimes.Today in my own work?**
+19. **How should I cite Gematria.Today in my own work?**
     Cite the specific page URL, title, and access date, and include enough methodological detail for someone else to reproduce the calculation.
 
 20. **Do you offer financial, legal, or medical advice?**

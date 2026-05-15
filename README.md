@@ -214,7 +214,7 @@ Set these in Netlify to tune protection behavior:
 - `TURNSTILE_EXPECTED_HOSTNAME=...` to pin Turnstile verification to a specific hostname instead of deriving it from the incoming request host header
 - `SENDGRID_API_KEY=...` to enable transactional email delivery for admin/member account recovery
 - `SENDGRID_FROM_EMAIL=...` verified sender address used for recovery emails
-- `SENDGRID_FROM_NAME="EndTimes.Today"` optional sender display name shown in recovery emails
+- `SENDGRID_FROM_NAME="Gematria.Today"` optional sender display name shown in recovery emails
 - `SENDGRID_REPLY_TO_EMAIL=...` optional reply-to address for recovery emails
 - `PUBLIC_SITE_URL=https://example.com` optional canonical site URL used in recovery email links
 ### Dashboards, alerts, and high alert operations

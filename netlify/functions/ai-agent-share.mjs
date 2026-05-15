@@ -1,4 +1,4 @@
-const SITE_ORIGIN = 'https://endtimes.today';
+const SITE_ORIGIN = 'https://gematria.today';
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 
@@ -51,7 +51,7 @@ function buildShareHtml(params) {
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href="${escapeHtml(appUrl.toString())}" />
 
-    <meta property="og:site_name" content="EndTimes.Today" />
+    <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${escapeHtml(title)}" />
     <meta property="og:description" content="${escapeHtml(description)}" />

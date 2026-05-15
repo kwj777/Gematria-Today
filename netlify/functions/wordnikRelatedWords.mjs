@@ -85,7 +85,8 @@ function getErrorStatusCode(error) {
   if (error.message?.startsWith('Query parameter "limit"')) return 400;
   if (error.message?.startsWith('Query parameter "relationshipType"')) return 400;
   if (error.message?.startsWith('Wordnik request failed')) return 502;
-  return error.statusCode || 500;
+  if (error.statusCode) return error.statusCode;
+  return 500;
 }
 
 async function fetchRelatedWords(sql, source, term, limit, relationshipType, { membershipLevel } = {}) {
@@ -112,7 +113,16 @@ async function fetchRelatedWords(sql, source, term, limit, relationshipType, { m
         if (response.status === 404) {
           throw Object.assign(new Error("Wordnik's search came up empty."), { statusCode: 404 });
         }
-        throw new Error(`Wordnik request failed with ${response.status}: ${errorText || response.statusText}`);
+        if (response.status === 429) {
+          throw Object.assign(
+            new Error("Wordnik is busy right now. Please try again in a few minutes."),
+            { statusCode: 429, upstreamStatus: 429, upstreamBody: errorText || response.statusText },
+          );
+        }
+        throw Object.assign(
+          new Error("We couldn't reach Wordnik just now. Please try again in a little while."),
+          { statusCode: 502, upstreamStatus: response.status, upstreamBody: errorText || response.statusText },
+        );
       }
       const data = await response.json();
       return { query: trimmedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit, url: url.toString(), data };

@@ -60,6 +60,10 @@ function getStatusCode(error) {
     return 502;
   }
 
+  if (error.statusCode) {
+    return error.statusCode;
+  }
+
   return 500;
 }
 
@@ -387,7 +391,16 @@ async function fetchDefinition(sql, source, word) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Wordnik request failed with ${response.status}: ${errorText || response.statusText}`);
+    if (response.status === 429) {
+      throw Object.assign(
+        new Error("Wordnik is busy right now. Please try again in a few minutes."),
+        { statusCode: 429, upstreamStatus: 429, upstreamBody: errorText || response.statusText },
+      );
+    }
+    throw Object.assign(
+      new Error("We couldn't reach Wordnik just now. Please try again in a little while."),
+      { statusCode: 502, upstreamStatus: response.status, upstreamBody: errorText || response.statusText },
+    );
   }
 
   const payload = {

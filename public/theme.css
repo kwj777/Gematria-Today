@@ -1307,6 +1307,10 @@ footer.site-footer a:focus-visible {
 #related-words-result .related-word { word-spacing: 6px; }
 #related-words-result li { padding-bottom: 12px; }
 #related-words-result ul, #results-shell .word-list { padding-left: 1.2rem; }
+#related-words-result .word-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .55rem; }
+#related-words-result .gematria-detail { margin-top: .25rem; }
+#related-words-result .gematria-detail .inline-button { margin: 0 .15rem; }
+#related-words-result .gematria-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .2rem .5rem; margin-top: .15rem; }
 #results-shell .result-card { border: 1px solid rgba(53,65,79,.08); border-radius: var(--radius-xl); background: rgba(255,255,255,.92); box-shadow: var(--shadow-card); padding: 1rem; }
 #word-list .word-item { list-style: none; }
 

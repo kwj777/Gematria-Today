@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
+import { getEarnedBadgeNamesForUserIds } from './_badges.mjs';
 
 const DEFAULT_CATEGORIES = [
   { slug: 'member-lounge', name: 'Member Lounge', description: 'General discussion area for all signed-in members.', sortOrder: 1, accessTier: 'free' },
@@ -283,7 +284,7 @@ async function assertPostingCooldown(sql, userId) {
   }
 }
 
-function mapThreadRow(row) {
+function mapThreadRow(row, earnedBadgeMap) {
   const authorReputation = Number(row.author_reputation || 0);
   return {
     id: row.id,
@@ -306,6 +307,7 @@ function mapThreadRow(row) {
       replyCount: Number(row.author_reply_count || 0),
       isAdmin: row.author_role === 'admin',
       isPremium: row.author_membership_level === 'premium' || row.author_membership_level === 'lifetime',
+      earnedBadgeNames: earnedBadgeMap?.get(row.author_user_id) || [],
     }),
     title: row.title,
     body: row.body,
@@ -321,7 +323,7 @@ function mapThreadRow(row) {
   };
 }
 
-function mapReplyRow(row) {
+function mapReplyRow(row, earnedBadgeMap) {
   const authorReputation = Number(row.author_reputation || 0);
   return {
     id: row.id,
@@ -339,6 +341,7 @@ function mapReplyRow(row) {
       replyCount: Number(row.author_reply_count || 0),
       isAdmin: row.author_role === 'admin',
       isPremium: row.author_membership_level === 'premium' || row.author_membership_level === 'lifetime',
+      earnedBadgeNames: earnedBadgeMap?.get(row.author_user_id) || [],
     }),
     body: row.body,
     deletedAt: row.deleted_at,
@@ -346,13 +349,16 @@ function mapReplyRow(row) {
   };
 }
 
-function deriveBadges(points, { threadCount, replyCount, isAdmin, isPremium }) {
+function deriveBadges(points, { threadCount, replyCount, isAdmin, isPremium, earnedBadgeNames = [] }) {
   const badges = [];
   if (isAdmin) badges.push('Moderator');
   if (isPremium) badges.push('Premium');
   if (threadCount >= 1 && replyCount >= 1) badges.push('Contributor');
   if (points >= 50) badges.push('Trusted');
   if (points >= 200) badges.push('Sage');
+  for (const name of earnedBadgeNames) {
+    if (!badges.includes(name)) badges.push(name);
+  }
   return badges;
 }
 
@@ -453,6 +459,8 @@ async function listThreads(sql, member, user, event) {
     `;
   }
 
+  const earnedBadgeMap = await getEarnedBadgeNamesForUserIds(sql, threadRows.map((row) => row.author_user_id));
+
   return {
     categories: categories.map((row) => ({
       id: row.id,
@@ -468,7 +476,7 @@ async function listThreads(sql, member, user, event) {
     sort,
     category: category || null,
     searchQuery: searchQuery || null,
-    threads: threadRows.map(mapThreadRow),
+    threads: threadRows.map((row) => mapThreadRow(row, earnedBadgeMap)),
   };
 }
 
@@ -523,12 +531,15 @@ async function getThread(sql, member, user, event) {
     LIMIT 300
   `;
 
-  const thread = mapThreadRow(threadRows[0]);
+  const authorIdsForBadges = [threadRows[0].author_user_id, ...replyRows.map((row) => row.author_user_id)];
+  const earnedBadgeMap = await getEarnedBadgeNamesForUserIds(sql, authorIdsForBadges);
+
+  const thread = mapThreadRow(threadRows[0], earnedBadgeMap);
   thread.viewCount = thread.viewCount + 1;
 
   return {
     thread,
-    replies: replyRows.map(mapReplyRow),
+    replies: replyRows.map((row) => mapReplyRow(row, earnedBadgeMap)),
   };
 }
 
@@ -566,6 +577,7 @@ async function createThread(sql, member, user, event) {
   `;
   await awardReputation(sql, member.id, { points: REPUTATION_POINTS.thread, threadCount: 1 });
 
+  const earnedBadgeMap = await getEarnedBadgeNamesForUserIds(sql, [member.id]);
   return {
     thread: mapThreadRow({
       ...rows[0],
@@ -574,7 +586,7 @@ async function createThread(sql, member, user, event) {
       category_access_tier: categories[0].access_tier,
       author_username: member.username,
       popularity_score: 0,
-    }),
+    }, earnedBadgeMap),
   };
 }
 
@@ -619,7 +631,8 @@ async function createReply(sql, member, user, event) {
     WHERE id = ${threadId}
   `;
 
-  return { reply: mapReplyRow({ ...rows[0], author_username: member.username }) };
+  const earnedBadgeMap = await getEarnedBadgeNamesForUserIds(sql, [member.id]);
+  return { reply: mapReplyRow({ ...rows[0], author_username: member.username }, earnedBadgeMap) };
 }
 
 async function reportContent(sql, member, user, event) {

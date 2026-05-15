@@ -17,6 +17,7 @@ const STATIC_PATHS = Object.freeze([
   '/name-calculator.html',
   '/privacy.html',
   '/terms.html',
+  '/tools.html',
   '/why-english-gematria.html',
 ]);
 

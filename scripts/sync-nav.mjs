@@ -26,11 +26,12 @@ const ACTIVE_LINK_BY_FILE = {
   'searchbot.html': '/searchbot.html',
   'name-calculator.html': '/name-calculator.html',
   'ai-agent.html': '/ai-agent.html',
+  'tools.html': '/tools.html',
   'member.html': '/member.html',
 };
 
 // hrefs that live inside the Tools dropdown — when one is active, the
-// dropdown-toggle button is also marked active so the menu reads as current.
+// dropdown-toggle link is also marked active so the menu reads as current.
 const TOOLS_DROPDOWN_HREFS = new Set([
   '/calculator.html',
   '/name-calculator.html',
@@ -52,7 +53,8 @@ function applyActiveState(nav, activeHref) {
   let result = nav;
 
   // Mark the matching <a> as active.
-  const linkRegex = new RegExp(`(<a class="(?:nav-link|dropdown-item)(?!\\s+active)[^"]*)("\\s+href="${activeHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}")`);
+  const escapedHref = activeHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const linkRegex = new RegExp(`(<a class="(?:nav-link|dropdown-item)(?!\\s+active)[^"]*)("(?:[^>]*?\\s)?href="${escapedHref}")`);
   const matched = result.replace(linkRegex, (_, classOpen, hrefPart) => `${classOpen} active${hrefPart} aria-current="page"`);
   if (matched === result) {
     throw new Error(`Could not find link with href="${activeHref}" to mark active`);
@@ -62,8 +64,8 @@ function applyActiveState(nav, activeHref) {
   // If the active link lives inside the Tools dropdown, mark the toggle too.
   if (TOOLS_DROPDOWN_HREFS.has(activeHref)) {
     result = result.replace(
-      '<button class="nav-link dropdown-toggle"',
-      '<button class="nav-link dropdown-toggle active"',
+      '<a class="nav-link dropdown-toggle" id="toolsMenu"',
+      '<a class="nav-link dropdown-toggle active" id="toolsMenu"',
     );
   }
 

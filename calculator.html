@@ -927,13 +927,21 @@ View results: ${shareUrl}`.trim(),
               })
             );
 
+            const tierOf = (entry) => {
+              if (!entry.gematria) return 3;
+              const isRoot6 = Number(entry.gematria.gematria.digitalRoot) === 6;
+              if (!isRoot6) return 3;
+              return entry.gematria.isBaseRoot ? 1 : 2;
+            };
+
             const sortedWords = [...wordsWithGematria].sort((left, right) => {
+              const leftTier = tierOf(left);
+              const rightTier = tierOf(right);
+              if (leftTier !== rightTier) return leftTier - rightTier;
+
               const leftMatches = Boolean(left.gematria) && left.gematria.gematria.total === searchTotal;
               const rightMatches = Boolean(right.gematria) && right.gematria.gematria.total === searchTotal;
-
-              if (leftMatches !== rightMatches) {
-                return leftMatches ? -1 : 1;
-              }
+              if (leftMatches !== rightMatches) return leftMatches ? -1 : 1;
 
               return left.word.localeCompare(right.word);
             });

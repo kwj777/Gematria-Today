@@ -566,6 +566,43 @@ const form = document.querySelector('#name-form');
         return createTextNode(`Per-letter values: ${formatPerLetterValuesText(input)}`);
       }
 
+      function createDefinitionLink(word) {
+        const link = document.createElement('a');
+        link.className = 'definition-link ms-2';
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        const params = new URLSearchParams({ word, returnTo });
+        link.href = `/definition?${params.toString()}`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = '(definition)';
+        link.setAttribute('aria-label', `Definition for ${word}`);
+        link.hidden = true;
+        return link;
+      }
+
+      async function hasDefinition(word) {
+        const normalizedWord = String(word || '').trim();
+        if (!normalizedWord) return false;
+        try {
+          const response = await fetch(
+            `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+            { headers: { accept: 'application/json' } }
+          );
+          if (!response.ok) return false;
+          const payload = await response.json();
+          const definitions = Array.isArray(payload?.definitions)
+            ? payload.definitions
+            : Array.isArray(payload)
+              ? payload
+              : [];
+          return definitions.some((definition) =>
+            String(definition?.text || definition?.definition || definition?.display || definition?.gloss || '').trim()
+          );
+        } catch {
+          return false;
+        }
+      }
+
       function createRelatedWordButton(word) {
         const link = document.createElement('a');
         link.className = 'word-button';
@@ -868,7 +905,14 @@ View results: ${shareUrl}`.trim(),
 
         const title = document.createElement('h3');
         title.textContent = name;
+        const definitionLink = createDefinitionLink(name);
+        title.appendChild(document.createTextNode(' '));
+        title.appendChild(definitionLink);
         article.appendChild(title);
+
+        hasDefinition(name).then((exists) => {
+          if (exists) definitionLink.hidden = false;
+        });
 
         if (result.error) {
           const error = document.createElement('p');

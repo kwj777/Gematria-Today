@@ -109,7 +109,7 @@ function createCalculatorSearchLink(word) {
   }
 
   const searchPath = `/calculator.html?query=${encodeURIComponent(trimmedWord)}`;
-  return `<a class="calculator-word-link" href="${searchPath}" target="_blank" rel="noopener noreferrer">${escapeHtml(trimmedWord)}</a>`;
+  return `<a class="calculator-word-link" href="${searchPath}">${escapeHtml(trimmedWord)}</a>`;
 }
 
 function linkifySearchWords(html) {

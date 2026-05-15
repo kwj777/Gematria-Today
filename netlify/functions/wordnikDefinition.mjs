@@ -141,8 +141,10 @@ function createDefinitionMeta(definition) {
 }
 
 
-function sanitizeCalculatorPath(value) {
-  const fallbackPath = '/calculator.html';
+const ALLOWED_RETURN_PATHS = new Set(['/', '/index.html', '/calculator.html']);
+
+function sanitizeReturnPath(value) {
+  const fallbackPath = '/';
 
   if (!value) {
     return fallbackPath;
@@ -152,7 +154,7 @@ function sanitizeCalculatorPath(value) {
     const parsed = new URL(String(value), 'https://endtimes.today');
     const normalizedPathname = parsed.pathname === '/calculator' ? '/calculator.html' : parsed.pathname;
 
-    if (parsed.origin !== 'https://endtimes.today' || normalizedPathname !== '/calculator.html') {
+    if (parsed.origin !== 'https://endtimes.today' || !ALLOWED_RETURN_PATHS.has(normalizedPathname)) {
       return fallbackPath;
     }
 
@@ -183,7 +185,7 @@ function createExamples(definition) {
   return `<div class="examples"><h3>Examples</h3><ul>${items}</ul></div>`;
 }
 
-function renderDefinitionPage(payload, { calculatorPath = '/calculator.html' } = {}) {
+function renderDefinitionPage(payload, { returnPath = '/' } = {}) {
   const definitions = Array.isArray(payload.definitions) ? payload.definitions : [];
   const visibleDefinitions = definitions
     .map((definition) => ({
@@ -363,7 +365,7 @@ function renderDefinitionPage(payload, { calculatorPath = '/calculator.html' } =
           window.close();
           setTimeout(() => {
             if (!window.closed) {
-              window.location.assign(${JSON.stringify(calculatorPath)});
+              window.location.assign(${JSON.stringify(returnPath)});
             }
           }, 100);
         });
@@ -406,7 +408,7 @@ async function fetchDefinition(sql, source, word) {
 export default async function onRequest(request) {
   const requestUrl = new URL(request.url);
   const word = requestUrl.searchParams.get('word');
-  const calculatorPath = sanitizeCalculatorPath(requestUrl.searchParams.get('returnTo'));
+  const returnPath = sanitizeReturnPath(requestUrl.searchParams.get('returnTo'));
 
   if (!word?.trim()) {
     const payload = { error: 'Missing required query parameter: word' };
@@ -437,7 +439,7 @@ export default async function onRequest(request) {
     });
     const payload = cacheResult.payload;
     return isHtmlRequest(request)
-      ? toResponse(200, renderDefinitionPage(payload, { calculatorPath }), 'text/html; charset=utf-8')
+      ? toResponse(200, renderDefinitionPage(payload, { returnPath }), 'text/html; charset=utf-8')
       : toResponse(200, payload, 'application/json; charset=utf-8');
   } catch (error) {
     const statusCode = getStatusCode(error);

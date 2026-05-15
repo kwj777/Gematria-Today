@@ -260,7 +260,7 @@ async function loadWordnikWordOfDayHero() {
     const total = Number(payload?.total) || englishGematria(word);
     const root = Number(payload?.digitalRoot) || digitalRoot(total);
     const definitionPreview = String(payload?.definitionPreview || '').trim();
-    const definitionHref = `/definition?word=${encodeURIComponent(word)}`;
+    const definitionHref = `/definition?word=${encodeURIComponent(word)}&returnTo=${encodeURIComponent('/')}`;
     const calculatorHref = `/calculator.html?query=${encodeURIComponent(word)}`;
 
     const title = document.getElementById('homeWordnikWotdTitle');

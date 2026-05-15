@@ -1192,10 +1192,16 @@ View results: ${shareUrl}`.trim(),
       }
 
       function createDigitalRootValueNode(value, prefix = '') {
-        return Object.assign(document.createElement('span'), {
-          className: isHighlightedDigitalRoot(value) ? 'meta-highlight' : '',
-          textContent: `${prefix}${value}`,
-        });
+        const link = document.createElement('a');
+        link.href = 'https://endtimes.today/blog/digital-roots-in-gematria?post=digital-roots-in-gematria';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = `${prefix}${value}`;
+        if (!isHighlightedDigitalRoot(value)) return link;
+        const wrapper = document.createElement('span');
+        wrapper.className = 'meta-highlight';
+        wrapper.appendChild(link);
+        return wrapper;
       }
 
       function createBaseRootValueNode(isBaseRoot) {

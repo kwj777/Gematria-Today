@@ -304,22 +304,6 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
   border-color: var(--nav-on-dark-border-hover);
 }
 
-@media (min-width: 992px) {
-  .navbar .dropdown-menu[data-bs-popper] {
-    top: 100% !important;
-    inset: auto auto auto 0 !important;
-    margin-top: 0;
-    padding-top: 0.35rem;
-    transform: none !important;
-  }
-
-  .navbar .dropdown-menu-end[data-bs-popper] {
-    right: 0;
-    left: auto;
-  }
-}
-
-
 .skip-link {
   position: absolute;
   top: 0.5rem;
@@ -500,40 +484,6 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   box-shadow: 0 0.55rem 1.1rem rgba(255, 124, 53, 0.35);
 }
 
-
-@media (min-width: 992px) {
-  .navbar .dropdown:hover > .dropdown-menu,
-  .navbar .dropdown:focus-within > .dropdown-menu {
-    display: block;
-    top: 100%;
-    margin-top: 0;
-    padding-top: 0.35rem;
-  }
-
-  .navbar .dropdown:hover > .dropdown-toggle,
-  .navbar .dropdown:focus-within > .dropdown-toggle {
-    color: var(--bs-navbar-hover-color);
-  }
-
-  .navbar .dropdown.dropdown--suppress-open:hover > .dropdown-menu,
-  .navbar .dropdown.dropdown--suppress-open:focus-within > .dropdown-menu {
-    display: none;
-  }
-}
-
-.navbar .dropdown-menu {
-  --bs-dropdown-link-hover-bg: rgba(var(--bs-primary-rgb), 0.14);
-  --bs-dropdown-link-hover-color: #0b3d6e;
-}
-
-.navbar .dropdown-item {
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-:root[data-bs-theme="dark"] .navbar .dropdown-menu {
-  --bs-dropdown-link-hover-bg: rgba(var(--bs-primary-rgb), 0.3);
-  --bs-dropdown-link-hover-color: #93c5fd;
-}
 
 .hero-panel,
 .content-panel,
@@ -2697,8 +2647,8 @@ a.badge,
 /* The default Bootstrap toggler has no visible label and a faint focus ring.
    Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a
    ::after pseudo-element so the affordance is obvious without editing 29
-   pages of markup, (2) give it a real focus ring, (3) animate the collapse,
-   and (4) inline-expand dropdowns so users can drill into Tools on mobile. */
+   pages of markup, (2) give it a real focus ring, and (3) animate the
+   collapse. */
 @media (max-width: 991.98px) {
   .navbar-toggler {
     padding: 0.5rem 0.75rem;
@@ -2734,32 +2684,6 @@ a.badge,
 
   .navbar-nav .nav-link {
     padding: 0.75rem 1rem;
-  }
-
-  .navbar-nav .dropdown-menu {
-    position: static;
-    display: block;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.12);
-    padding: 0.25rem 0;
-    margin: 0.25rem 0 0.5rem;
-    box-shadow: none;
-  }
-
-  .navbar-nav .dropdown-toggle::after {
-    display: none;
-  }
-
-  .navbar-nav .dropdown-item {
-    color: #ffffff;
-    padding-left: 1.75rem;
-  }
-
-  .navbar-nav .dropdown-item:hover,
-  .navbar-nav .dropdown-item:focus,
-  .navbar-nav .dropdown-item:focus-visible {
-    color: #ffffff;
-    background: rgba(var(--brand-amber-rgb), 0.25);
   }
 
   /* In the collapsed mobile menu the CTA button only carries a top margin,

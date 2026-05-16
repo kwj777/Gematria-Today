@@ -323,57 +323,6 @@
   }
 })();
 
-(function closeDesktopNavDropdownOnToggleClick() {
-  // The desktop nav opens dropdowns on hover/focus-within via CSS, so
-  // Bootstrap toggling aria-expanded back to false on a second click is
-  // not enough to hide the menu — the toggle still has focus. Blur the
-  // toggle and suppress hover-reopen until the pointer leaves so a click
-  // on Tools reliably closes the menu.
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return;
-  }
-
-  const LG_BREAKPOINT = 992;
-  const SUPPRESS_CLASS = 'dropdown--suppress-open';
-
-  function wire() {
-    document.querySelectorAll('.navbar .dropdown').forEach((dropdown) => {
-      const toggle = dropdown.querySelector(':scope > .dropdown-toggle');
-      if (!toggle) {
-        return;
-      }
-
-      toggle.addEventListener('click', () => {
-        if (window.innerWidth < LG_BREAKPOINT) {
-          return;
-        }
-        requestAnimationFrame(() => {
-          if (toggle.getAttribute('aria-expanded') === 'false') {
-            toggle.blur();
-            dropdown.classList.add(SUPPRESS_CLASS);
-          }
-        });
-      });
-
-      dropdown.addEventListener('mouseleave', () => {
-        dropdown.classList.remove(SUPPRESS_CLASS);
-      });
-
-      dropdown.addEventListener('focusout', (event) => {
-        if (!dropdown.contains(event.relatedTarget)) {
-          dropdown.classList.remove(SUPPRESS_CLASS);
-        }
-      });
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wire, { once: true });
-  } else {
-    wire();
-  }
-})();
-
 (function installToastPrimitive() {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return;

@@ -420,7 +420,6 @@ export async function syncBootstrapAdminUser(sql) {
         read_time = EXCLUDED.read_time,
         image_url = EXCLUDED.image_url,
         slider_image_url = EXCLUDED.slider_image_url,
-        show_on_homepage = EXCLUDED.show_on_homepage,
         status = EXCLUDED.status,
         published_at = EXCLUDED.published_at,
         updated_at = NOW()

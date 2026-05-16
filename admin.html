@@ -157,7 +157,6 @@
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/site-modules.js"></script>
-    <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
     <script src="/pwa-register.js" defer></script>
   </head>
   <body class="admin-render-pending">
@@ -204,10 +203,6 @@
                 <div class="col-12">
                   <label class="form-label" for="password">Password</label>
                   <input class="form-control form-control-lg" id="password" name="password" type="password" autocomplete="current-password" required />
-                </div>
-                <div class="col-12">
-                  <label class="form-label mb-2" for="adminLoginTurnstileContainer">Anti-robot check</label>
-                  <div id="adminLoginTurnstileContainer"></div>
                 </div>
                 <div class="col-12 d-grid">
                   <button class="btn btn-primary btn-lg" type="submit">Unlock admin dashboard</button>
@@ -479,29 +474,6 @@
 
             <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
-                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#turnstileSectionBody" aria-expanded="false" aria-controls="turnstileSectionBody">
-                  <span>
-                    <span class="section-kicker d-block mb-2">Security</span>
-                    <span class="h4 mb-0 d-block">Cloudflare Turnstile</span>
-                  </span>
-                  <span class="d-inline-flex align-items-center gap-3">
-                    <span class="badge text-bg-dark">Turnstile</span>
-                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
-                  </span>
-                </button>
-                <div id="turnstileSectionBody" class="collapse admin-section-body mt-4">
-                <p class="text-muted small">Set the public Turnstile site key used by member sign up and login anti-robot checks.</p>
-                <form id="turnstileSettingsForm" class="row g-3">
-                  <div class="col-12"><label class="form-label" for="turnstileSiteKey">Turnstile site key</label><input id="turnstileSiteKey" class="form-control" placeholder="0x4AAAA..." /></div>
-                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save Turnstile settings</button></div>
-                </form>
-                <div id="turnstileSettingsMeta" class="small text-muted mt-3">Turnstile settings have not been loaded yet.</div>
-                </div>
-              </section>
-            </div>
-
-            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="revenue">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#emailSectionBody" aria-expanded="false" aria-controls="emailSectionBody">
                   <span>
                     <span class="section-kicker d-block mb-2">Account Recovery</span>
@@ -702,13 +674,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, turnstileSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
-      const loginTurnstileState = {
-        widgetId: null,
-        token: '',
-        containerId: 'adminLoginTurnstileContainer',
-      };
-      let loginTurnstileRenderRetryCount = 0;
+      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -1294,76 +1260,6 @@
             : 'No recovery email delivery settings saved yet.';
       }
 
-      function renderTurnstileSettings() {
-        const settings = state.turnstileSettings || {};
-        document.getElementById('turnstileSiteKey').value = settings.turnstileSiteKey || '';
-        document.getElementById('turnstileSettingsMeta').textContent = settings.turnstileSiteKey
-          ? 'Turnstile site key configured for member authentication.'
-          : 'No Turnstile site key saved yet.';
-      }
-
-      function getTurnstileSiteKey() {
-        return String(
-          window.GEMATRIA_TURNSTILE_SITE_KEY
-            || state.turnstileSettings?.turnstileSiteKey
-            || document.querySelector('meta[name="turnstile-site-key"]')?.content
-            || ''
-        ).trim();
-      }
-
-      function isTurnstileRequired() {
-        return Boolean(getTurnstileSiteKey());
-      }
-
-      function getLoginTurnstileToken() {
-        return String(loginTurnstileState.token || '').trim();
-      }
-
-      function resetLoginTurnstileWidget() {
-        loginTurnstileState.token = '';
-        if (typeof window.turnstile?.reset === 'function' && loginTurnstileState.widgetId !== null) {
-          window.turnstile.reset(loginTurnstileState.widgetId);
-        }
-      }
-
-      function renderLoginTurnstileWidget() {
-        const siteKey = getTurnstileSiteKey();
-        if (!siteKey) {
-          if (loginTurnstileRenderRetryCount < 80) {
-            loginTurnstileRenderRetryCount += 1;
-            window.setTimeout(renderLoginTurnstileWidget, 250);
-          }
-          return;
-        }
-        if (typeof window.turnstile?.render !== 'function') {
-          if (loginTurnstileRenderRetryCount < 80) {
-            loginTurnstileRenderRetryCount += 1;
-            window.setTimeout(renderLoginTurnstileWidget, 250);
-          }
-          return;
-        }
-        if (loginTurnstileState.widgetId !== null) {
-          return;
-        }
-        const container = document.getElementById(loginTurnstileState.containerId);
-        if (!container) {
-          return;
-        }
-
-        loginTurnstileState.widgetId = window.turnstile.render(container, {
-          sitekey: siteKey,
-          callback: (token) => {
-            loginTurnstileState.token = String(token || '').trim();
-          },
-          'expired-callback': () => {
-            loginTurnstileState.token = '';
-          },
-          'error-callback': () => {
-            loginTurnstileState.token = '';
-          },
-        });
-      }
-
       function renderEmailTemplates() {
         const templates = Array.isArray(state.emailTemplates) ? state.emailTemplates : [];
         const list = document.getElementById('emailTemplateList');
@@ -1532,13 +1428,11 @@
             const settings = settingsResult.value || {};
             state.stripeSettings = settings.settings || null;
             state.emailSettings = settings.settings || null;
-            state.turnstileSettings = settings.settings || null;
             state.emailTemplates = settings.emailTemplates || [];
             state.siteModules = { ...DEFAULT_SITE_MODULES, ...((settings.settings && settings.settings.siteModules) || {}) };
             state.themeCatalog = normalizeThemeCatalog(settings.settings?.themeCatalog || {});
             renderStripeSettings();
             renderEmailSettings();
-            renderTurnstileSettings();
             renderEmailTemplates();
             renderSiteModules();
             renderGlobalThemeSettings();
@@ -1626,24 +1520,17 @@
         clearMessage(authMessage);
         clearMessage(errorMessage);
         try {
-          const challengeToken = getLoginTurnstileToken();
-          if (isTurnstileRequired() && !challengeToken) {
-            throw new Error('Please complete the anti-robot check before continuing.');
-          }
           await request('/api/admin-login', {
             method: 'POST',
             body: JSON.stringify({
               username: document.getElementById('username').value,
               password: document.getElementById('password').value,
-              challengeToken,
             })
           });
           event.target.reset();
-          resetLoginTurnstileWidget();
           showMessage(saveMessage, 'Admin dashboard unlocked.');
           await loadSession();
         } catch (error) {
-          resetLoginTurnstileWidget();
           showMessage(authMessage, error.message);
         }
       });
@@ -1865,7 +1752,6 @@
               sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
               sendgridFromName: state.emailSettings?.sendgridFromName || '',
               sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
-              turnstileSiteKey: state.turnstileSettings?.turnstileSiteKey || '',
               publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
               replaceStripeSecretKey: false,
               replaceStripeWebhookSigningSecret: false,
@@ -1874,8 +1760,6 @@
             })
           });
           state.siteModules = { ...DEFAULT_SITE_MODULES, ...((payload.settings && payload.settings.siteModules) || {}) };
-          state.turnstileSettings = payload.settings || state.turnstileSettings;
-          renderTurnstileSettings();
           renderSiteModules();
           showMessage(saveMessage, 'Site module switches saved.', { timeoutMs: 10000 });
           window.showToast?.('Site module switches saved. Please allow up to 10 minutes for changes to take effect.', 'info');
@@ -1901,7 +1785,6 @@
               sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
               sendgridFromName: state.emailSettings?.sendgridFromName || '',
               sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
-              turnstileSiteKey: state.turnstileSettings?.turnstileSiteKey || '',
               publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
               replaceStripeSecretKey: false,
               replaceStripeWebhookSigningSecret: false,
@@ -1910,8 +1793,6 @@
             }),
           });
           state.themeCatalog = normalizeThemeCatalog(payload.settings?.themeCatalog || {});
-          state.turnstileSettings = payload.settings || state.turnstileSettings;
-          renderTurnstileSettings();
           renderGlobalThemeSettings();
           showMessage(saveMessage, selectedTheme === 'bootstrap'
             ? 'Global theme reset to Bootstrap default.'
@@ -1997,43 +1878,11 @@
           });
           state.emailSettings = payload.settings || null;
           state.stripeSettings = payload.settings || null;
-          state.turnstileSettings = payload.settings || null;
           renderEmailSettings();
-          renderTurnstileSettings();
           state.emailTemplates = payload.emailTemplates || state.emailTemplates;
           renderEmailTemplates();
           showMessage(saveMessage, 'Recovery email delivery settings saved.');
           collapseAdminSection('emailSectionBody');
-        } catch (error) {
-          showMessage(errorMessage, error.message);
-        }
-      });
-
-      document.getElementById('turnstileSettingsForm').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearMessage(errorMessage);
-        try {
-          const payload = await request('/api/admin-settings', {
-            method: 'PUT',
-            body: JSON.stringify({
-              stripeAccountId: state.stripeSettings?.stripeAccountId || '',
-              stripePublishableKey: state.stripeSettings?.stripePublishableKey || '',
-              sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
-              sendgridFromName: state.emailSettings?.sendgridFromName || '',
-              sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
-              turnstileSiteKey: document.getElementById('turnstileSiteKey').value,
-              publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
-              replaceStripeSecretKey: false,
-              replaceStripeWebhookSigningSecret: false,
-              replaceSendgridApiKey: false,
-            }),
-          });
-          state.turnstileSettings = payload.settings || null;
-          state.emailSettings = payload.settings || state.emailSettings;
-          state.stripeSettings = payload.settings || state.stripeSettings;
-          renderTurnstileSettings();
-          showMessage(saveMessage, 'Turnstile settings saved.');
-          collapseAdminSection('turnstileSectionBody');
         } catch (error) {
           showMessage(errorMessage, error.message);
         }
@@ -2056,9 +1905,7 @@
           });
           state.stripeSettings = payload.settings || null;
           state.emailSettings = payload.settings || null;
-          state.turnstileSettings = payload.settings || null;
           renderStripeSettings();
-          renderTurnstileSettings();
           showMessage(saveMessage, 'Stripe account details saved.');
           collapseAdminSection('stripeSectionBody');
         } catch (error) {
@@ -2086,10 +1933,8 @@
           });
           state.emailTemplates = payload.emailTemplates || state.emailTemplates;
           state.emailSettings = payload.settings || state.emailSettings;
-          state.turnstileSettings = payload.settings || state.turnstileSettings;
           renderEmailTemplates();
           renderEmailSettings();
-          renderTurnstileSettings();
           startEmailTemplateEdit(templateId);
           showMessage(saveMessage, 'Email template saved.');
           collapseAdminSection('emailTemplatesSectionBody');
@@ -2293,7 +2138,6 @@
       renderMembershipGrantMeta();
       renderGlobalThemeSettings();
       resetEmailTemplateForm();
-      renderLoginTurnstileWidget();
       loadSession();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

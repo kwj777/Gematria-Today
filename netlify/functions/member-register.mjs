@@ -8,7 +8,6 @@ import {
   jsonResponse,
   parseBody,
   registerMember,
-  verifyTurnstileToken,
 } from './_member.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
@@ -36,8 +35,6 @@ export async function handler(event) {
         auditMetadata: { username: normalizedUsername, email: normalizedEmail },
       });
     }
-
-    await verifyTurnstileToken(event, body.challengeToken);
 
     const registration = await registerMember(sql, body);
     const verification = await createMemberEmailVerificationRequest(sql, registration.member.id);

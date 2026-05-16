@@ -164,12 +164,10 @@
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/theme-deferred.css" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
-    <meta name="turnstile-site-key" content="" />
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/site-modules.js"></script>
     <script defer src="/register-form.js"></script>
-    <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
     <script src="/pwa-register.js" defer></script>
   </head>
   <body>
@@ -285,11 +283,6 @@
               </div>
               <div id="lzRegConfirmPasswordMismatch" class="form-text text-danger d-none">Passwords don't match yet.</div>
             </div>
-            <div class="col-12">
-              <label class="form-label mb-2" for="lzRegTurnstileContainer">Anti-robot check</label>
-              <div id="lzRegTurnstileContainer"></div>
-              <div class="form-text">Complete this check before creating your account.</div>
-            </div>
             <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
               <button id="lzRegSubmit" class="btn btn-warning fw-semibold" type="submit">Create Free Account</button>
               <a class="btn btn-outline-primary" href="/gematria-basics.html">Skip and continue to Level 1</a>
@@ -362,7 +355,6 @@
           submitButton: document.getElementById('lzRegSubmit'),
           passwordMismatchAlert: document.getElementById('lzRegPasswordMismatchAlert'),
           confirmMismatchHint: document.getElementById('lzRegConfirmPasswordMismatch'),
-          turnstileContainer: document.getElementById('lzRegTurnstileContainer'),
           alert: pageAlert,
           source: 'level_zero_register_form',
           extraFields: { signupSource: 'learning_path_level_0' },

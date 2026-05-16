@@ -11,7 +11,6 @@ import {
   getSqlClient,
   jsonResponse,
   parseBody,
-  verifyTurnstileToken,
 } from './_member.mjs';
 import { generateCsrfToken } from './_auth.mjs';
 import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
@@ -25,7 +24,7 @@ export async function handler(event) {
   try {
     const sql = getSqlClient();
     await syncBootstrapAdminUser(sql);
-    const { identifier = '', password = '', challengeToken = '' } = parseBody(event);
+    const { identifier = '', password = '' } = parseBody(event);
     const normalizedIdentifier = String(identifier).trim().toLowerCase();
     const clientIp = getClientIp(event);
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
@@ -52,8 +51,6 @@ export async function handler(event) {
         });
       }
     }
-
-    await verifyTurnstileToken(event, challengeToken);
 
     const member = await authenticateMemberCredentials(sql, identifier, password);
     const admin = member ? null : await authenticateCredentials(sql, identifier, password);

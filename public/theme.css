@@ -716,10 +716,6 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   -webkit-box-orient: vertical;
 }
 
-.hero-why-gematria-readmore {
-  width: fit-content;
-}
-
 .word-of-day-spotlight {
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: var(--radius-2xl);

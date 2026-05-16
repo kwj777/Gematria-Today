@@ -328,9 +328,6 @@ const resetHomeReadMoreButtons = () => {
       readMoreTextNode.textContent = 'Read more';
     }
   });
-  document.querySelectorAll('.hero-why-gematria-readmore').forEach((badge) => {
-    badge.textContent = 'Read more';
-  });
 };
 
 const setHomeReadMoreWorkingState = () => {
@@ -339,17 +336,6 @@ const setHomeReadMoreWorkingState = () => {
     if (featuredReadMoreButton) {
       featuredReadMoreButton.textContent = 'Working...';
       featuredReadMoreButton.setAttribute('aria-label', 'Working...');
-      return;
-    }
-
-    const homeHeroReadMoreLink = event.target.closest('#homeHeroCarousel a');
-    if (!homeHeroReadMoreLink) {
-      return;
-    }
-
-    const heroReadMoreBadge = homeHeroReadMoreLink.querySelector('.hero-why-gematria-readmore');
-    if (heroReadMoreBadge) {
-      heroReadMoreBadge.textContent = 'Working...';
     }
   });
 

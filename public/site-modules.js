@@ -16,7 +16,6 @@
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
   let activeModules = { ...DEFAULT_MODULES };
   let superAdminCanOverrideModules = false;
-  let turnstileSiteKey = '';
 
   const parseModuleOverrides = (rawValue) => {
     if (!rawValue || typeof rawValue !== 'object') {
@@ -264,10 +263,9 @@
       const payload = await response.json();
       return {
         modules: parseModuleOverrides(payload?.modules),
-        turnstileSiteKey: String(payload?.turnstileSiteKey || '').trim(),
       };
     } catch {
-      return { modules: {}, turnstileSiteKey: '' };
+      return { modules: {} };
     }
   };
 
@@ -294,8 +292,6 @@
       isSuperAdminSession(),
     ]);
     superAdminCanOverrideModules = canOverride;
-    turnstileSiteKey = String(globalSettings.turnstileSiteKey || '').trim();
-    window.GEMATRIA_TURNSTILE_SITE_KEY = turnstileSiteKey;
 
     activeModules = {
       ...DEFAULT_MODULES,

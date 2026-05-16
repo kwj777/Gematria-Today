@@ -6,7 +6,6 @@ import {
   getOptionalAuthenticatedSession,
   jsonResponse,
   parseBody,
-  verifyTurnstileToken,
 } from './_auth.mjs';
 import { authenticateCredentials, getSqlClient, requireHttpMethod } from './_admin.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
@@ -17,7 +16,7 @@ export async function handler(event) {
 
   try {
     const sql = getSqlClient();
-    const { username = '', password = '', challengeToken = '' } = parseBody(event);
+    const { username = '', password = '' } = parseBody(event);
     const normalizedUsername = String(username).trim().toLowerCase();
     const { user: authenticatedUser } = await getOptionalAuthenticatedSession(event, { sql });
 
@@ -43,8 +42,6 @@ export async function handler(event) {
         });
       }
     }
-
-    await verifyTurnstileToken(event, challengeToken);
 
     const user = await authenticateCredentials(sql, username.trim(), password);
 

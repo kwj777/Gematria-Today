@@ -10,7 +10,6 @@ import {
   hashPassword,
   jsonResponse,
   parseBody,
-  verifyTurnstileToken,
 } from './_auth.mjs';
 import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
 import { ensureMemberProfile, ensureMemberSchema, formatMemberUser } from './_member.mjs';
@@ -49,8 +48,6 @@ export async function handler(event) {
       message: 'Too many member account recovery attempts from this IP address.',
       auditMetadata: { action },
     });
-
-    await verifyTurnstileToken(event, body.challengeToken);
 
     if (action === 'forgot-userid' || action === 'forgot-both') {
       const email = normalizeEmail(body.email);

@@ -166,13 +166,11 @@
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/theme-deferred.css" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
-    <meta name="turnstile-site-key" content="" />
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/conversion-tracking.js"></script>
     <script defer src="/site-modules.js"></script>
     <script defer src="/register-form.js"></script>
-    <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -377,11 +375,6 @@
                   <label class="form-check-label" for="registerBlogSubscribe">Subscribe to blog updates (opens follow.it in a new tab)</label>
                 </div>
               </div>
-              <div class="col-12">
-                <label class="form-label mb-2" for="registerTurnstileContainer">Anti-robot check</label>
-                <div id="registerTurnstileContainer"></div>
-                <div class="form-text">Complete this check before creating your account.</div>
-              </div>
               <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create membership</button></div>
             </form>
           </div>
@@ -390,11 +383,6 @@
             <form id="loginForm" class="row g-3">
               <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" autocomplete="username" required /></div>
               <div class="col-12"><label class="form-label" for="loginPassword">Password</label><div class="input-group"><input id="loginPassword" class="form-control" type="password" autocomplete="current-password" required /><button class="btn btn-outline-secondary" type="button" data-password-toggle="loginPassword" aria-label="Show password" aria-pressed="false">Show</button></div></div>
-              <div class="col-12">
-                <label class="form-label mb-2" for="loginTurnstileContainer">Anti-robot check</label>
-                <div id="loginTurnstileContainer"></div>
-                <div class="form-text">Complete this check before signing in.</div>
-              </div>
               <div class="col-12 d-grid"><button id="loginSubmitButton" class="btn btn-outline-primary" type="submit">Sign in</button></div>
               <div class="col-12 text-center">
                 <a class="link-primary text-decoration-none" href="/account-recovery.html">Forgot username/password</a>
@@ -861,11 +849,6 @@
       const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/Ym1Odk1lU2ZFdm44TjZZVzkrZFdqbHdTOWwrS3ZZeDRKR05yM0VQZEMyWHE4Q0hPdnE0OTlucmpYYytSVUowKzNjS0Y2VzQ4ZUN4anRLdUhod1p5aGhHd0pLcXZBS0J2dzdsVDkxU3RXTC9DN0RmeWNZZ2hsbk9rdVh3UDJVa3p8ZTVCSFloWEN2VUNwT0xadjBsMVBsUFM1OFBMZzZHODJNR1NHcnhxWkg4az0=/8';
       const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
-      const turnstileState = {
-        register: { widgetId: null, token: '' },
-        login: { widgetId: null, token: '' },
-      };
-      let turnstileRenderRetryCount = 0;
       const messageInboxCard = document.getElementById('messageInboxCard');
       const messageInboxOpenButton = document.getElementById('messageInboxOpenButton');
       const messageInboxCount = document.getElementById('messageInboxCount');
@@ -1038,83 +1021,6 @@
           window.clearTimeout(memberAlertDismissTimer);
           memberAlertDismissTimer = null;
         }
-      }
-
-      function isTurnstileRequired() {
-        return Boolean(getTurnstileSiteKey());
-      }
-
-      function getTurnstileSiteKey() {
-        return String(
-          window.GEMATRIA_TURNSTILE_SITE_KEY
-            || document.querySelector('meta[name="turnstile-site-key"]')?.content
-            || '',
-        ).trim();
-      }
-
-      function getTurnstileToken(formKey) {
-        return String(turnstileState[formKey]?.token || '').trim();
-      }
-
-      function resetTurnstileWidget(formKey) {
-        const state = turnstileState[formKey];
-        if (!state) {
-          return;
-        }
-        state.token = '';
-        if (typeof window.turnstile?.reset === 'function' && state.widgetId !== null) {
-          window.turnstile.reset(state.widgetId);
-        }
-      }
-
-      function renderTurnstileWidgets() {
-        const siteKey = getTurnstileSiteKey();
-        if (!siteKey) {
-          if (turnstileRenderRetryCount < 80) {
-            turnstileRenderRetryCount += 1;
-            window.setTimeout(renderTurnstileWidgets, 250);
-          }
-          return;
-        }
-        if (typeof window.turnstile?.render !== 'function') {
-          window.setTimeout(renderTurnstileWidgets, 150);
-          return;
-        }
-
-        const widgetConfigs = [
-          {
-            key: 'register',
-            containerId: 'registerTurnstileContainer',
-            action: 'member_register',
-          },
-          {
-            key: 'login',
-            containerId: 'loginTurnstileContainer',
-            action: 'member_login',
-          },
-        ];
-
-        widgetConfigs.forEach((config) => {
-          const state = turnstileState[config.key];
-          const container = document.getElementById(config.containerId);
-          if (!state || !container || state.widgetId !== null) {
-            return;
-          }
-
-          state.widgetId = window.turnstile.render(container, {
-            sitekey: siteKey,
-            action: config.action,
-            callback: (token) => {
-              state.token = String(token || '').trim();
-            },
-            'expired-callback': () => {
-              state.token = '';
-            },
-            'error-callback': () => {
-              state.token = '';
-            },
-          });
-        });
       }
 
       function escapeHtml(value) {
@@ -3045,10 +2951,6 @@
           alert: { show: showAlert, clear: clearAlert },
           source: 'member_register_form',
           request,
-          challenge: {
-            getToken: () => getTurnstileToken('register'),
-            reset: () => resetTurnstileWidget('register'),
-          },
           onSuccess: (_response, ctx) => {
             const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
             const registerEmail = document.getElementById('registerEmail').value.trim();
@@ -3094,11 +2996,6 @@
       loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAlert();
-        const challengeToken = getTurnstileToken('login');
-        if (isTurnstileRequired() && !challengeToken) {
-          showAlert('Please complete the anti-robot check before signing in.', 'warning');
-          return;
-        }
         setLoginSubmittingState(true);
         showAlert('Signing in and loading your dashboard. This can take a few seconds…', 'info');
         try {
@@ -3107,7 +3004,6 @@
             body: JSON.stringify({
               identifier: document.getElementById('loginIdentifier').value.trim(),
               password: document.getElementById('loginPassword').value,
-              challengeToken,
             }),
           });
           if (session?.csrfToken) {
@@ -3141,11 +3037,8 @@
           showAlert(error.message || 'Unable to sign in.');
         } finally {
           setLoginSubmittingState(false);
-          resetTurnstileWidget('login');
         }
       });
-
-      renderTurnstileWidgets();
 
       let isProfileSaving = false;
 

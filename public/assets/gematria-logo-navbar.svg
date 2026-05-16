@@ -75,8 +75,8 @@
   </g>
 
   <!-- Wordmark -->
-  <text x="86" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="0" fill="#f8fafc" text-rendering="geometricPrecision">Gematria</text>
-  <text x="222" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="0" fill="url(#todayGrad)" text-rendering="geometricPrecision">.Today</text>
+  <text x="86" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="0" dominant-baseline="alphabetic" fill="#f8fafc" text-rendering="geometricPrecision">Gematria</text>
+  <text x="222" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="0" dominant-baseline="alphabetic" fill="#fbbf24" text-rendering="geometricPrecision">.Today</text>
 
   <!-- Gilt separator -->
   <line x1="86" y1="51" x2="320" y2="51" stroke="url(#ruleGrad)" stroke-width="0.75"/>

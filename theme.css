@@ -2719,21 +2719,28 @@ a.badge,
   .navbar-nav > .nav-item.nav-cta,
   .navbar-nav > .nav-item.nav-search {
     flex: 0 0 auto;
+    align-self: center;
   }
 
-  .navbar-nav .nav-cta .btn {
+  /* Force identical box geometry on both pills so they share a baseline.
+     Without this the .btn inherits Bootstrap's line-height:1.5 while the
+     search pill runs at line-height:1 -- the heights end up matching
+     (min-height:44px) but the internal content sits at different y, so
+     they read as offset. */
+  .navbar-nav .nav-cta .btn,
+  .navbar-nav .nav-link.nav-search-link {
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
-    width: auto;
-    margin: 0;
-    border-radius: 999px;
-    padding: 0.55rem 1.15rem;
+    justify-content: center;
+    height: 44px;
     min-height: 44px;
-    font-size: 0.95rem;
-  }
-
-  .navbar-nav .nav-link.nav-search-link {
-    padding: 0.55rem 1rem;
+    padding: 0 1rem;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1;
+    border-radius: 999px;
+    width: auto;
   }
 }
 

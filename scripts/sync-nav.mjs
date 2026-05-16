@@ -17,25 +17,19 @@ const EXCLUDED_PREFIXES = ['admin'];
 
 // Maps a public HTML filename to the href that should be marked active.
 // Pages not listed get no active link (e.g. policy pages, account-recovery).
+// The Calculator / Name Calculator / GemaBot pages don't appear directly in
+// the nav, so we mark the Tools link active when the user is on one of them.
 const ACTIVE_LINK_BY_FILE = {
   'index.html': '/index.html',
   'blog.html': '/blog.html',
-  'calculator.html': '/calculator.html',
   'faq.html': '/faq.html',
   'searchbot.html': '/searchbot.html',
-  'name-calculator.html': '/name-calculator.html',
-  'ai-agent.html': '/ai-agent.html',
   'tools.html': '/tools.html',
+  'calculator.html': '/tools.html',
+  'name-calculator.html': '/tools.html',
+  'ai-agent.html': '/tools.html',
   'member.html': '/member.html',
 };
-
-// hrefs that live inside the Tools dropdown — when one is active, the
-// dropdown-toggle link is also marked active so the menu reads as current.
-const TOOLS_DROPDOWN_HREFS = new Set([
-  '/calculator.html',
-  '/name-calculator.html',
-  '/ai-agent.html',
-]);
 
 const NAV_BLOCK_RE = /(^[ \t]*)<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">[\s\S]*?<\/nav>\n/m;
 
@@ -53,22 +47,12 @@ function applyActiveState(nav, activeHref) {
 
   // Mark the matching <a> as active.
   const escapedHref = activeHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const linkRegex = new RegExp(`(<a class="(?:nav-link|dropdown-item)(?!\\s+active)[^"]*)("(?:[^>]*?\\s)?href="${escapedHref}")`);
+  const linkRegex = new RegExp(`(<a class="nav-link(?!\\s+active)[^"]*)("(?:[^>]*?\\s)?href="${escapedHref}")`);
   const matched = result.replace(linkRegex, (_, classOpen, hrefPart) => `${classOpen} active${hrefPart} aria-current="page"`);
   if (matched === result) {
     throw new Error(`Could not find link with href="${activeHref}" to mark active`);
   }
-  result = matched;
-
-  // If the active link lives inside the Tools dropdown, mark the toggle too.
-  if (TOOLS_DROPDOWN_HREFS.has(activeHref)) {
-    result = result.replace(
-      '<a class="nav-link dropdown-toggle" id="toolsMenu"',
-      '<a class="nav-link dropdown-toggle active" id="toolsMenu"',
-    );
-  }
-
-  return result;
+  return matched;
 }
 
 async function loadPartial() {

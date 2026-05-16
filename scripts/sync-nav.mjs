@@ -19,7 +19,6 @@ const EXCLUDED_PREFIXES = ['admin'];
 // Pages not listed get no active link (e.g. policy pages, account-recovery).
 const ACTIVE_LINK_BY_FILE = {
   'index.html': '/index.html',
-  'news.html': '/news.html',
   'blog.html': '/blog.html',
   'calculator.html': '/calculator.html',
   'faq.html': '/faq.html',

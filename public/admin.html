@@ -1528,8 +1528,14 @@
             })
           });
           event.target.reset();
-          showMessage(saveMessage, 'Admin dashboard unlocked.');
-          await loadSession();
+          const nextParam = consumeSafeNextRedirect();
+          if (nextParam) {
+            const redirectTarget = new URL(nextParam, window.location.origin);
+            redirectTarget.searchParams.set('adminNextAttempted', '1');
+            window.location.href = redirectTarget.pathname + redirectTarget.search + redirectTarget.hash;
+            return;
+          }
+          window.location.href = '/member.html';
         } catch (error) {
           showMessage(authMessage, error.message);
         }

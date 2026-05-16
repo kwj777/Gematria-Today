@@ -75,12 +75,12 @@
   </g>
 
   <!-- Wordmark -->
-  <text x="86" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="-0.5" fill="url(#wordGrad)">Gematria</text>
-  <text x="220" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="-0.5" fill="url(#todayGrad)">.Today</text>
+  <text x="86" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="0" fill="#f8fafc" text-rendering="geometricPrecision">Gematria</text>
+  <text x="222" y="40" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="0" fill="url(#todayGrad)" text-rendering="geometricPrecision">.Today</text>
 
   <!-- Gilt separator -->
-  <line x1="86" y1="51" x2="316" y2="51" stroke="url(#ruleGrad)" stroke-width="0.75"/>
+  <line x1="86" y1="51" x2="320" y2="51" stroke="url(#ruleGrad)" stroke-width="0.75"/>
 
   <!-- Tagline -->
-  <text x="86" y="65" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="9" font-weight="600" letter-spacing="2.5" fill="#94a3b8">RESEARCH &#183; CALCULATE &#183; DISCOVER</text>
+  <text x="86" y="65" font-family="'Inter','Segoe UI',Roboto,Arial,sans-serif" font-size="9" font-weight="600" letter-spacing="2.5" fill="#94a3b8" text-rendering="geometricPrecision">RESEARCH &#183; CALCULATE &#183; DISCOVER</text>
 </svg>

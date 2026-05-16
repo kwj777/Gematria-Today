@@ -272,6 +272,20 @@ html.auth-lifetime .navbar-nav .nav-item.nav-auth--member { display: flex; }
 
 @media (min-width: 992px) {
   .navbar-nav .nav-item.nav-search { margin-left: 0.5rem; }
+
+  /* Match the CTA button's box geometry to the Search pill so the two
+     trailing actions share a shape. The yellow btn-warning fill is kept
+     so the CTA still reads as the primary action. */
+  .navbar-nav .nav-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    border-radius: 999px;
+  }
 }
 
 .nav-search-link {

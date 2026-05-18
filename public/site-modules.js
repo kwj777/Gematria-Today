@@ -12,7 +12,6 @@
   });
 
   const STORAGE_KEY = 'gematria.siteModules';
-  const LEGACY_STORAGE_KEY = 'endtimes.siteModules';
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
   let activeModules = { ...DEFAULT_MODULES };
   let superAdminCanOverrideModules = false;
@@ -56,19 +55,7 @@
 
   const parseStoredModules = () => {
     try {
-      let raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
-        if (legacy) {
-          try {
-            window.localStorage.setItem(STORAGE_KEY, legacy);
-            window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-          } catch {
-            // Ignore migration write failures.
-          }
-          raw = legacy;
-        }
-      }
+      const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         return {};
       }

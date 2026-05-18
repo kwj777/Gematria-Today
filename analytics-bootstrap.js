@@ -26,7 +26,7 @@
     }
 
     try {
-      const stored = window.localStorage.getItem('gematria.siteModules') || window.localStorage.getItem('endtimes.siteModules');
+      const stored = window.localStorage.getItem('gematria.siteModules');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && parsed.google_analytics === false) {

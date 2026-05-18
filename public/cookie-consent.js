@@ -6,7 +6,6 @@
   window.__gematriaCookieConsentInstalled = true;
 
   var CONSENT_KEY = 'gematria_cookie_consent';
-  var LEGACY_CONSENT_KEY = 'endtimes_cookie_consent';
   var CONSENT_MODE_REGIONS = Array.isArray(window.GEMATRIA_CONSENT_MODE_REGIONS)
     ? window.GEMATRIA_CONSENT_MODE_REGIONS
     : [
@@ -16,22 +15,7 @@
 
   function getConsent() {
     try {
-      var current = window.localStorage.getItem(CONSENT_KEY);
-      if (current !== null) {
-        return current;
-      }
-      var legacy = window.localStorage.getItem(LEGACY_CONSENT_KEY);
-      if (legacy !== null) {
-        // Migrate legacy value forward, best-effort.
-        try {
-          window.localStorage.setItem(CONSENT_KEY, legacy);
-          window.localStorage.removeItem(LEGACY_CONSENT_KEY);
-        } catch (e) {
-          // Ignore migration write failures.
-        }
-        return legacy;
-      }
-      return null;
+      return window.localStorage.getItem(CONSENT_KEY);
     } catch (e) {
       return null;
     }
@@ -42,11 +26,6 @@
       window.localStorage.setItem(CONSENT_KEY, value);
     } catch (e) {
       // Ignore storage failures (private mode, quota, etc).
-    }
-    try {
-      window.localStorage.removeItem(LEGACY_CONSENT_KEY);
-    } catch (e) {
-      // Ignore failures clearing the legacy key.
     }
   }
 
@@ -70,9 +49,7 @@
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
-        var trimmed = c.trim();
-        return trimmed.startsWith('gematria_admin_session=')
-          || trimmed.startsWith('endtimes_admin_session=');
+        return c.trim().startsWith('gematria_admin_session=');
       });
     } catch (e) {
       return false;

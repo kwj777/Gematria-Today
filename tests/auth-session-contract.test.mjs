@@ -7,7 +7,6 @@ import { handler as adminSessionHandler } from '../netlify/functions/admin-sessi
 import { handler as memberSessionHandler } from '../netlify/functions/member-session.mjs';
 import {
   AUTH_COOKIES,
-  LEGACY_AUTH_COOKIES,
   createVisitorSessionCookie,
   createVisitorSessionToken,
   getOrCreateVisitorSession,
@@ -37,10 +36,6 @@ test('member logout is idempotent and returns 200 with authenticated false', asy
   const cookies = collectSetCookies(response);
   assert.match(cookies, /gematria_member_session=/);
   assert.match(cookies, /gematria_member_tier=/);
-  // Legacy cookie names are cleared in the same response so sessions
-  // issued under the previous brand are retired alongside the new ones.
-  assert.match(cookies, /endtimes_member_session=/);
-  assert.match(cookies, /endtimes_member_tier=/);
 });
 
 test('admin logout is idempotent and returns 200 with authenticated false', async () => {
@@ -49,7 +44,6 @@ test('admin logout is idempotent and returns 200 with authenticated false', asyn
   assert.deepEqual(parseBody(response), { authenticated: false });
   const cookies = collectSetCookies(response);
   assert.match(cookies, /gematria_admin_session=/);
-  assert.match(cookies, /endtimes_admin_session=/);
 });
 
 test('logout endpoints reject non-POST methods with standard error payload', async () => {
@@ -123,25 +117,6 @@ test('getVisitorSessionToken reads existing visitor cookie', () => {
     headers: { cookie: `${AUTH_COOKIES.visitor}=${token}` },
   };
   assert.equal(getVisitorSessionToken(event), token);
-});
-
-test('getVisitorSessionToken falls back to legacy cookie name during rebrand window', () => {
-  const token = createVisitorSessionToken();
-  const event = {
-    headers: { cookie: `${LEGACY_AUTH_COOKIES.visitor}=${token}` },
-  };
-  assert.equal(getVisitorSessionToken(event), token);
-});
-
-test('getVisitorSessionToken prefers current cookie when both names are present', () => {
-  const currentToken = createVisitorSessionToken();
-  const legacyToken = createVisitorSessionToken();
-  const event = {
-    headers: {
-      cookie: `${LEGACY_AUTH_COOKIES.visitor}=${legacyToken}; ${AUTH_COOKIES.visitor}=${currentToken}`,
-    },
-  };
-  assert.equal(getVisitorSessionToken(event), currentToken);
 });
 
 test('getOrCreateVisitorSession creates a new session when no cookie exists', () => {

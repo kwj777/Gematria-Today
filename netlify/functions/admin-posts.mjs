@@ -29,6 +29,14 @@ function normalizePostTags(tagInput, tagsInput) {
   return tagTokens.length ? tagTokens.join(', ') : null;
 }
 
+function normalizePostStatus(value) {
+  const raw = String(value ?? '').trim().toLowerCase();
+  if (raw === 'draft' || raw === 'archived') {
+    return raw;
+  }
+  return 'published';
+}
+
 function normalizeScheduledPublishAt(value) {
   const raw = String(value ?? '').trim();
   if (!raw) {
@@ -71,7 +79,7 @@ export async function handler(event) {
           return jsonResponse(400, { error: 'Title is required' });
         }
         const slug = slugify(body.slug || title);
-        const status = body.status === 'draft' ? 'draft' : 'published';
+        const status = normalizePostStatus(body.status);
         const scheduledPublishAt = normalizeScheduledPublishAt(body.scheduledPublishAt);
         const showOnHomepage = Boolean(body.showOnHomepage);
         const hideFromBlog = Boolean(body.hideFromBlog);
@@ -117,7 +125,7 @@ export async function handler(event) {
           return jsonResponse(400, { error: 'Title is required' });
         }
         const slug = slugify(body.slug || title);
-        const status = body.status === 'draft' ? 'draft' : 'published';
+        const status = normalizePostStatus(body.status);
         const scheduledPublishAt = normalizeScheduledPublishAt(body.scheduledPublishAt);
         const showOnHomepage = Boolean(body.showOnHomepage);
         const hideFromBlog = Boolean(body.hideFromBlog);
@@ -154,6 +162,7 @@ export async function handler(event) {
             status = ${status},
             published_at = CASE
               WHEN ${status} = 'published' THEN COALESCE(published_at, ${scheduledPublishAt}::timestamptz, NOW())
+              WHEN ${status} = 'archived' THEN published_at
               ELSE NULL
             END,
             scheduled_publish_at = CASE

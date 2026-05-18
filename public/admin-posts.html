@@ -226,7 +226,7 @@
             <div class="col-12"><label class="form-label" for="createPostImageUrl">Hero image URL</label><input id="createPostImageUrl" class="form-control" /></div>
             <div class="col-12"><label class="form-label" for="createPostSliderImageUrl">Homepage slider image URL</label><input id="createPostSliderImageUrl" class="form-control" /></div>
             <div class="col-12"><label class="form-label" for="createPostBackgroundImageUrl">Background image URL</label><input id="createPostBackgroundImageUrl" class="form-control" /></div>
-            <div class="col-md-6"><label class="form-label" for="createPostStatus">Publish status</label><select id="createPostStatus" class="form-select"><option value="published">Publish now</option><option value="scheduled">Publish later</option><option value="draft">Save as draft</option></select></div>
+            <div class="col-md-6"><label class="form-label" for="createPostStatus">Publish status</label><select id="createPostStatus" class="form-select"><option value="published">Publish now</option><option value="scheduled">Publish later</option><option value="draft">Save as draft</option><option value="archived">Archive (hide from blog, keep for later)</option></select></div>
             <div class="col-md-6"><label class="form-label" for="createPostScheduledPublishAt">Schedule publish date/time (optional)</label><input id="createPostScheduledPublishAt" class="form-control" type="datetime-local" /></div>
             <div class="col-12 d-flex gap-2">
               <button class="btn btn-primary" type="submit">Create post</button>
@@ -268,6 +268,7 @@
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
                 <option value="scheduled">Scheduled</option>
+                <option value="archived">Archived</option>
               </select>
             </div>
             <div class="col-md-3">
@@ -531,6 +532,7 @@
         const normalizedStatus = String(status || '').toLowerCase();
         if (normalizedStatus === 'scheduled') return 'Scheduled';
         if (normalizedStatus === 'draft') return 'Draft';
+        if (normalizedStatus === 'archived') return 'Archived';
         return 'Published';
       }
 
@@ -691,7 +693,7 @@
         const previewBody = document.getElementById('previewCreatePostBody');
         const metadata = [tag ? `Tags: ${tag}` : '', readTime ? `Read time: ${readTime}` : ''].filter(Boolean).join(' • ');
 
-        previewStatus.className = `badge ${status === 'draft' || status === 'scheduled' ? 'text-bg-secondary' : 'text-bg-success'}`;
+        previewStatus.className = `badge ${status === 'archived' ? 'text-bg-warning' : status === 'draft' || status === 'scheduled' ? 'text-bg-secondary' : 'text-bg-success'}`;
         previewStatus.textContent = formatPostStatusLabel(status);
         previewCreatedOn.textContent = scheduledPublishAt ? formatScheduledLabel(scheduledPublishAt) : 'Created on: now';
         previewTitle.textContent = title;
@@ -735,6 +737,7 @@
       function getComputedPostStatus(post) {
         const normalized = String(post?.status || '').toLowerCase();
         if (normalized === 'scheduled') return 'scheduled';
+        if (normalized === 'archived') return 'archived';
         if (normalized === 'draft' && String(post?.scheduledPublishAt || '').trim()) return 'scheduled';
         return normalized || 'published';
       }
@@ -808,7 +811,11 @@
         postList.innerHTML = filteredPosts.length ? filteredPosts.map((post) => {
           const isEditing = state.editingPostId === post.id;
           const computedStatus = getComputedPostStatus(post);
-          const statusBadgeClass = computedStatus === 'published' ? 'text-bg-success' : 'text-bg-secondary';
+          const statusBadgeClass = computedStatus === 'published'
+            ? 'text-bg-success'
+            : computedStatus === 'archived'
+              ? 'text-bg-warning'
+              : 'text-bg-secondary';
           return `
             <details class="admin-post-details admin-item-card p-3" ${isEditing ? 'open' : ''}>
               <summary class="admin-post-summary">
@@ -833,7 +840,7 @@
                   <div class="col-12"><label class="form-label" for="editSlug-${post.id}">Slug</label><input id="editSlug-${post.id}" class="form-control" value="${escapeHtml(post.slug || '')}" placeholder="auto-generated from title if left blank" /></div>
                   <div class="col-12"><label class="form-label" for="editTag-${post.id}">Tags</label><input id="editTag-${post.id}" class="form-control" value="${escapeHtml(post.tag || '')}" /></div>
                   <div class="col-12"><label class="form-label" for="editReadTime-${post.id}">Read time</label><input id="editReadTime-${post.id}" class="form-control" value="${escapeHtml(post.readTime || '')}" /></div>
-                  <div class="col-md-6"><label class="form-label" for="editStatus-${post.id}">Publish status</label><select id="editStatus-${post.id}" class="form-select"><option value="published" ${String(post.status || '').toLowerCase() === 'published' ? 'selected' : ''}>Publish now</option><option value="draft" ${String(post.status || '').toLowerCase() === 'draft' ? 'selected' : ''}>Save as draft</option></select></div>
+                  <div class="col-md-6"><label class="form-label" for="editStatus-${post.id}">Publish status</label><select id="editStatus-${post.id}" class="form-select"><option value="published" ${String(post.status || '').toLowerCase() === 'published' ? 'selected' : ''}>Publish now</option><option value="draft" ${String(post.status || '').toLowerCase() === 'draft' ? 'selected' : ''}>Save as draft</option><option value="archived" ${String(post.status || '').toLowerCase() === 'archived' ? 'selected' : ''}>Archive (hide from blog)</option></select></div>
                   <div class="col-md-6"><label class="form-label" for="editScheduledPublishAt-${post.id}">Schedule publish date/time (optional)</label><input id="editScheduledPublishAt-${post.id}" class="form-control" type="datetime-local" value="${escapeHtml(isoToLocalDateTimeInput(post.scheduledPublishAt || ''))}" /></div>
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
                   <div class="col-12">

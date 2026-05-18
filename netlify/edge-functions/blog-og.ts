@@ -103,7 +103,14 @@ export default async (req: Request, context: Context) => {
   }
 
   if (!post) {
-    return new Response(html, { headers: response.headers });
+    const noindexedHtml = replaceMetaContent(
+      html,
+      'meta[name="robots"]',
+      'noindex, follow, max-image-preview:large'
+    );
+    const headers = new Headers(response.headers);
+    headers.set('x-robots-tag', 'noindex, follow');
+    return new Response(noindexedHtml, { headers });
   }
 
   const title = String(post.title || DEFAULT_TITLE).trim();

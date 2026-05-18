@@ -118,6 +118,25 @@ function buildShareHtml(post) {
 </html>`;
 }
 
+function buildGoneHtml(post) {
+  const title = String(post?.title || 'Post no longer available').trim();
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Post no longer available | Gematria.Today Blog</title>
+    <meta name="robots" content="noindex, nofollow" />
+  </head>
+  <body>
+    <main>
+      <h1>${escapeHtml(title)}</h1>
+      <p>This post is no longer available. <a href="/blog.html">Return to the Gematria.Today blog</a>.</p>
+    </main>
+  </body>
+</html>`;
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'GET') {
     return {
@@ -153,15 +172,31 @@ export async function handler(event) {
 
     const rows = await sql`
       SELECT * FROM posts
-      WHERE
-        COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published'
-        AND LOWER(COALESCE(slug, '')) = ${slug}
+      WHERE LOWER(COALESCE(slug, '')) = ${slug}
       ORDER BY COALESCE(published_at, created_at) DESC
       LIMIT 1
     `;
 
     const post = rows[0] ? formatPost(rows[0]) : null;
-    if (!post) {
+    const postStatus = String(post?.status || '').trim().toLowerCase();
+    if (post && postStatus === 'archived') {
+      await logRequestAudit(sql, event, {
+        route: 'blog-post-share',
+        action: 'read',
+        outcome: 'archived_gone',
+        metadata: { slug },
+      });
+      return {
+        statusCode: 410,
+        headers: {
+          'content-type': 'text/html; charset=UTF-8',
+          'x-robots-tag': 'noindex, nofollow',
+          'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+        },
+        body: buildGoneHtml(post),
+      };
+    }
+    if (!post || postStatus !== 'published') {
       return {
         statusCode: 302,
         headers: { location: '/blog.html' },

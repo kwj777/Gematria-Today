@@ -426,6 +426,52 @@ const applyStaticContentPromise = () => Promise.race([
   })
   .catch(() => {});
 
+const computeEnglishGematria = (input) => {
+  let total = 0;
+  const upper = String(input || '').toUpperCase();
+  for (let i = 0; i < upper.length; i++) {
+    const code = upper.charCodeAt(i);
+    if (code >= 65 && code <= 90) total += (code - 64) * 6;
+  }
+  return total;
+};
+
+const initializeHeroQuickCalc = () => {
+  const input = document.getElementById('heroQuickCalcInput');
+  const valueNode = document.getElementById('heroQuickCalcValue');
+  const deepLink = document.getElementById('heroQuickCalcDeepLink');
+  if (!input || !valueNode || !deepLink) return;
+
+  let trackedThisSession = false;
+  const update = () => {
+    const raw = input.value.trim();
+    if (!raw) {
+      valueNode.textContent = '—';
+      deepLink.setAttribute('href', '/calculator.html');
+      deepLink.setAttribute('aria-disabled', 'true');
+      deepLink.removeAttribute('data-active');
+      return;
+    }
+    const total = computeEnglishGematria(raw);
+    valueNode.textContent = total.toLocaleString();
+    deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
+    deepLink.setAttribute('aria-disabled', 'false');
+    deepLink.setAttribute('data-active', 'true');
+    if (!trackedThisSession) {
+      trackedThisSession = true;
+      window.gematriaTracking?.track('home_hero_quick_calc_used', { source: 'home_hero_quick_calc' });
+    }
+  };
+
+  input.addEventListener('input', update);
+  deepLink.addEventListener('click', () => {
+    window.gematriaTracking?.track('home_hero_quick_calc_deep_link_click', {
+      source: 'home_hero_quick_calc',
+      destination: '/calculator.html',
+    });
+  });
+};
+
 const initializeHomePage = () => {
   renderHomeHeroIndicators();
   applyHomeHeroImageOptimization();
@@ -445,6 +491,8 @@ const initializeHomePage = () => {
       destination: '/calculator.html',
     });
   });
+
+  initializeHeroQuickCalc();
 
   runAfterFirstPaint(() => {
     loadWordnikWordOfDayHero().finally(() => {

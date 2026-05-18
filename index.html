@@ -92,6 +92,18 @@
       .hero-panel--compact { padding: 1.5rem; border-radius: var(--radius-2xl); }
       @media (min-width: 992px) { .hero-panel--compact { padding: 2.25rem; } }
       .hero-panel h1 { font-family: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif; line-height: 1.1; color: #fff; }
+      .hero-quick-calc { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: var(--radius-2xl, 1rem); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
+      @media (min-width: 992px) { .hero-quick-calc { padding: 1.5rem; } }
+      .hero-quick-calc__label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.78); margin: 0; }
+      .hero-quick-calc__input { width: 100%; padding: 0.7rem 0.95rem; font-size: 1.125rem; font-family: inherit; border-radius: 0.65rem; border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.96); color: #0d1a30; }
+      .hero-quick-calc__input::placeholder { color: #6b7280; }
+      .hero-quick-calc__input:focus { outline: none; box-shadow: 0 0 0 3px rgba(217,119,6,0.5); border-color: #d97706; }
+      .hero-quick-calc__result { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
+      .hero-quick-calc__value { font-family: "Fraunces","Source Serif Pro",Georgia,"Times New Roman",serif; font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1; }
+      .hero-quick-calc__caption { font-size: 0.78rem; color: rgba(255,255,255,0.72); margin-top: 0.4rem; letter-spacing: 0.04em; }
+      .hero-quick-calc__deep-link { display: inline-flex; align-items: center; font-weight: 600; color: #fbbf24; text-decoration: none; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease; }
+      .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; }
+      .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: underline; }
       .navbar { background: #1a202c; }
     </style>
     <link rel="preload" href="/theme.css" as="style" />
@@ -158,26 +170,44 @@
               <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number. What's yours hiding?</h1>
               <p id="homeHeroLead" class="lead mb-4">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
               <div class="d-flex flex-column flex-sm-row flex-wrap gap-2">
-                <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Get my number — free</a>
-                <a class="btn btn-outline-primary btn-lg touch-target-lg" href="/calculator.html">Try the calculator</a>
+                <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Dig Deeper — Free</a>
+                <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html">Open the full calculator</a>
               </div>
             </div>
             <div class="col-lg-5">
-              <a class="content-panel hero-selling-points-panel hero-why-gematria-link p-0 overflow-hidden h-100 text-decoration-none" href="/why-english-gematria.html" aria-label="Read Why English Gematria?">
-                <img
-                  class="hero-selling-points-image"
-                  src="/assets/why-english-gematria-backdrop-compact-16x9.svg"
-                  alt="Abstract geometric backdrop used behind the Why English Gematria card without wording."
-                  width="1200"
-                  height="675"
-                  loading="eager"
-                  decoding="async"
+              <div class="hero-quick-calc" role="group" aria-labelledby="heroQuickCalcLabel">
+                <label class="hero-quick-calc__label" id="heroQuickCalcLabel" for="heroQuickCalcInput">Try it — type a word or name</label>
+                <input
+                  id="heroQuickCalcInput"
+                  class="hero-quick-calc__input"
+                  type="text"
+                  inputmode="text"
+                  autocomplete="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  maxlength="60"
+                  placeholder="e.g. light"
+                  aria-describedby="heroQuickCalcCaption"
                 />
-                <span class="hero-why-gematria-overlay">
-                  <span class="hero-why-gematria-title">Why English Gematria?</span>
-                  <span class="hero-why-gematria-excerpt">In this project, English gematria is used as a pattern-analysis tool to create a structured comparison system that can be checked, repeated, and challenged.</span>
-                </span>
-              </a>
+                <div class="hero-quick-calc__result">
+                  <span class="hero-quick-calc__value" id="heroQuickCalcValue" aria-live="polite" aria-atomic="true">—</span>
+                  <span class="hero-quick-calc__caption" id="heroQuickCalcCaption">English gematria value</span>
+                </div>
+                <a class="hero-quick-calc__deep-link" id="heroQuickCalcDeepLink" href="/gematria-account-setup.html" aria-disabled="true">Unlock related words — free →</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-panel p-4 p-lg-4 mb-5" aria-label="Why English Gematria">
+          <div class="row align-items-center g-3">
+            <div class="col-md-4">
+              <p class="section-kicker mb-2">Methodology</p>
+              <h2 class="h4 mb-0">Why English Gematria?</h2>
+            </div>
+            <div class="col-md-8">
+              <p class="mb-3 mb-md-0 d-inline">In this project, English gematria is used as a pattern-analysis tool to create a structured comparison system that can be checked, repeated, and challenged.</p>
+              <a class="btn btn-link p-0 align-baseline fw-semibold" href="/why-english-gematria.html">Read the explainer →</a>
             </div>
           </div>
         </section>

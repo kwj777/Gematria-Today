@@ -61,15 +61,15 @@
   </g>
 
   <g font-family="'JetBrains Mono', 'Consolas', monospace" text-anchor="middle">
-    <text x="515" y="380" font-size="66" font-weight="700" fill="#DDF6FF">444</text>
-    <text x="515" y="470" font-size="66" font-weight="700" fill="#DDF6FF">216</text>
-    <text x="515" y="560" font-size="66" font-weight="700" fill="#DDF6FF">153</text>
-    <text x="515" y="650" font-size="66" font-weight="700" fill="#DDF6FF">333</text>
+    <text x="515" y="380" font-size="66" font-weight="700" fill="#DDF6FF">144</text>
+    <text x="515" y="470" font-size="66" font-weight="700" fill="#DDF6FF">444</text>
+    <text x="515" y="560" font-size="66" font-weight="700" fill="#DDF6FF">216</text>
+    <text x="515" y="650" font-size="66" font-weight="700" fill="#DDF6FF">666</text>
   </g>
 
   <g font-family="'JetBrains Mono', 'Consolas', monospace" text-anchor="middle">
-    <text x="1085" y="380" font-size="66" font-weight="700" fill="#E9D9FF">3</text>
-    <text x="1085" y="470" font-size="66" font-weight="700" fill="#8EF0FF">9</text>
+    <text x="1085" y="380" font-size="66" font-weight="700" fill="#8EF0FF">9</text>
+    <text x="1085" y="470" font-size="66" font-weight="700" fill="#E9D9FF">3</text>
     <text x="1085" y="560" font-size="66" font-weight="700" fill="#8EF0FF">9</text>
     <text x="1085" y="650" font-size="66" font-weight="700" fill="#8EF0FF">9</text>
   </g>

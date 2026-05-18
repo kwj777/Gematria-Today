@@ -1,0 +1,87 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Digital Roots vs. Full Totals hero image</title>
+  <desc id="desc">A split panel illustration showing exact gematria totals on the left and reduced single-digit roots on the right, divided by a glowing comparison axis.</desc>
+  <defs>
+    <linearGradient id="bg" x1="190" y1="20" x2="1450" y2="880" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1027"/>
+      <stop offset="0.55" stop-color="#141B42"/>
+      <stop offset="1" stop-color="#22154F"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(800 450) rotate(90) scale(360)">
+      <stop stop-color="#8EE7FF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#8EE7FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panelLeft" x1="280" y1="160" x2="780" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D2A61" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#101736" stop-opacity="0.94"/>
+    </linearGradient>
+    <linearGradient id="panelRight" x1="820" y1="160" x2="1320" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#241A55" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#13103A" stop-opacity="0.94"/>
+    </linearGradient>
+    <linearGradient id="divider" x1="800" y1="135" x2="800" y2="765" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8EE7FF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#8EE7FF" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#8EE7FF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="800" cy="450" r="370" fill="url(#halo)"/>
+
+  <g opacity="0.18" stroke="#9CC8FF">
+    <path d="M0 150H1600"/>
+    <path d="M0 300H1600"/>
+    <path d="M0 450H1600"/>
+    <path d="M0 600H1600"/>
+    <path d="M0 750H1600"/>
+    <path d="M200 0V900"/>
+    <path d="M400 0V900"/>
+    <path d="M600 0V900"/>
+    <path d="M800 0V900"/>
+    <path d="M1000 0V900"/>
+    <path d="M1200 0V900"/>
+    <path d="M1400 0V900"/>
+  </g>
+
+  <rect x="260" y="135" width="510" height="630" rx="28" fill="url(#panelLeft)" stroke="#6FA9FF" stroke-opacity="0.55"/>
+  <rect x="830" y="135" width="510" height="630" rx="28" fill="url(#panelRight)" stroke="#B79CFF" stroke-opacity="0.55"/>
+
+  <rect x="797" y="135" width="6" height="630" fill="url(#divider)"/>
+  <g fill="#0B1027" stroke="#8EE7FF" stroke-width="2">
+    <circle cx="800" cy="450" r="40"/>
+  </g>
+  <text x="800" y="464" fill="#C8ECFF" font-family="'Inter', 'Segoe UI', sans-serif" font-size="28" font-weight="700" text-anchor="middle">vs</text>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="515" y="230" font-size="46" font-weight="700" fill="#C8ECFF">Full Totals</text>
+    <text x="515" y="270" font-size="22" font-weight="500" fill="#9FD5FF">Exact value, no reduction</text>
+    <text x="1085" y="230" font-size="46" font-weight="700" fill="#E0CCFF">Digital Roots</text>
+    <text x="1085" y="270" font-size="22" font-weight="500" fill="#BFA9FF">Compressed signature</text>
+  </g>
+
+  <g font-family="'JetBrains Mono', 'Consolas', monospace" text-anchor="middle">
+    <text x="515" y="380" font-size="66" font-weight="700" fill="#DDF6FF">444</text>
+    <text x="515" y="470" font-size="66" font-weight="700" fill="#DDF6FF">216</text>
+    <text x="515" y="560" font-size="66" font-weight="700" fill="#DDF6FF">153</text>
+    <text x="515" y="650" font-size="66" font-weight="700" fill="#DDF6FF">333</text>
+  </g>
+
+  <g font-family="'JetBrains Mono', 'Consolas', monospace" text-anchor="middle">
+    <text x="1085" y="380" font-size="66" font-weight="700" fill="#E9D9FF">3</text>
+    <text x="1085" y="470" font-size="66" font-weight="700" fill="#8EF0FF">9</text>
+    <text x="1085" y="560" font-size="66" font-weight="700" fill="#8EF0FF">9</text>
+    <text x="1085" y="650" font-size="66" font-weight="700" fill="#8EF0FF">9</text>
+  </g>
+
+  <g stroke="#8EE7FF" stroke-opacity="0.45" stroke-width="2" stroke-dasharray="6 8">
+    <path d="M610 362 H990"/>
+    <path d="M610 452 H990"/>
+    <path d="M610 542 H990"/>
+    <path d="M610 632 H990"/>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" fill="#9FD5FF" text-anchor="middle" opacity="0.9">
+    <text x="800" y="722">precision  ·  grouping  ·  pattern confirmation</text>
+  </g>
+</svg>

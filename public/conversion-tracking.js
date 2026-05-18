@@ -6,9 +6,7 @@
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
-        var trimmed = c.trim();
-        return trimmed.startsWith('gematria_admin_session=')
-          || trimmed.startsWith('endtimes_admin_session=');
+        return c.trim().startsWith('gematria_admin_session=');
       });
     } catch {
       return false;
@@ -21,11 +19,7 @@
 
   function hasTrackingConsent() {
     try {
-      var current = window.localStorage.getItem('gematria_cookie_consent');
-      if (current !== null) {
-        return current === 'accepted';
-      }
-      return window.localStorage.getItem('endtimes_cookie_consent') === 'accepted';
+      return window.localStorage.getItem('gematria_cookie_consent') === 'accepted';
     } catch {
       return false;
     }
@@ -54,25 +48,10 @@
   }
 
   const TRACKING_SESSION_KEY = 'gematria_tracking_session_id';
-  const LEGACY_TRACKING_SESSION_KEY = 'endtimes_tracking_session_id';
 
   function getStoredSessionId() {
     try {
-      const current = window.sessionStorage.getItem(TRACKING_SESSION_KEY);
-      if (current !== null) {
-        return current;
-      }
-      const legacy = window.sessionStorage.getItem(LEGACY_TRACKING_SESSION_KEY);
-      if (legacy !== null) {
-        try {
-          window.sessionStorage.setItem(TRACKING_SESSION_KEY, legacy);
-          window.sessionStorage.removeItem(LEGACY_TRACKING_SESSION_KEY);
-        } catch {
-          // Ignore migration write failures.
-        }
-        return legacy;
-      }
-      return null;
+      return window.sessionStorage.getItem(TRACKING_SESSION_KEY);
     } catch {
       return null;
     }

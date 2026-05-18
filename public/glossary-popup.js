@@ -187,8 +187,24 @@
     return null;
   }
 
+  function isInsideGlossaryNode(el) {
+    if (!el || el.nodeType !== 1) return false;
+    if (typeof el.closest === 'function') {
+      return !!el.closest('.defn-term, .defn-popup');
+    }
+    var p = el;
+    while (p && p.nodeType === 1) {
+      if (p.classList && (p.classList.contains('defn-term') || p.classList.contains('defn-popup'))) return true;
+      p = p.parentNode;
+    }
+    return false;
+  }
+
   function processRoot(root, index) {
     if (!root || !index.re) return;
+    if (root.nodeType !== 1) return;
+    if (isInsideGlossaryNode(root)) return;
+    if (SKIP_TAGS[root.tagName]) return;
     if (root[PROCESSED_FLAG]) return;
     root[PROCESSED_FLAG] = true;
 
@@ -237,7 +253,12 @@
       }
       if (!replaced) return;
       frag.appendChild(document.createTextNode(text.slice(lastIdx)));
-      textNode.parentNode.replaceChild(frag, textNode);
+      suppressObserver = true;
+      try {
+        textNode.parentNode.replaceChild(frag, textNode);
+      } finally {
+        suppressObserver = false;
+      }
     });
   }
 
@@ -246,6 +267,7 @@
   var activeBtn = null;
   var hideTimer = null;
   var indexRef = null;
+  var suppressObserver = false;
 
   function ensurePopup() {
     if (popup) return popup;
@@ -397,9 +419,11 @@
     var pending = false;
     var queued = [];
     var obs = new MutationObserver(function (mutations) {
+      if (suppressObserver) return;
       mutations.forEach(function (m) {
         m.addedNodes && m.addedNodes.forEach(function (node) {
           if (node.nodeType !== 1) return;
+          if (isInsideGlossaryNode(node)) return;
           queued.push(node);
         });
       });

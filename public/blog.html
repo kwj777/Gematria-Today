@@ -918,7 +918,13 @@
         const normalized = String(value || '').trim().toLowerCase();
         return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on';
       };
-      const isHiddenFromMainBlog = (post) => isTruthyFlag(post?.hideFromBlog);
+      const FORCE_HIDDEN_POST_SLUGS = new Set(['repeating-number-themes', 'matching-name-values']);
+      const isHiddenFromMainBlog = (post) => {
+        if (FORCE_HIDDEN_POST_SLUGS.has(String(post?.slug || '').trim().toLowerCase())) {
+          return true;
+        }
+        return isTruthyFlag(post?.hideFromBlog);
+      };
       const isDraftPost = (post) => String(post?.status || '').toLowerCase() === 'draft';
       const focusLinkedPost = (slug, { syncLocation = true } = {}) => {
         if (!slug) {

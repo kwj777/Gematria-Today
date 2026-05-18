@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (function () {
+        var TIERS = ['anon', 'free', 'premium', 'lifetime'];
+        function applyAuthState() {
+          var tier;
+          try {
+            var m = document.cookie.match(/(?:^|; )gematria_member_tier=([^;]+)/);
+            tier = m ? decodeURIComponent(m[1]) : 'anon';
+            if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
+          } catch (_) {
+            tier = 'anon';
+          }
+          window.__gematriaAuthTier = tier;
+          var root = document.documentElement;
+          for (var i = 0; i < TIERS.length; i++) {
+            root.classList.remove('auth-' + TIERS[i]);
+          }
+          root.classList.add('auth-' + tier);
+        }
+        window.__gematriaSyncAuthState = applyAuthState;
+        applyAuthState();
+      })();
+    </script>
+
+<!-- Google tag (gtag.js) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  var gaMeasurementId = 'G-E611H84D6Y';
+  var consentModeRegions = ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','GB'];
+
+  function isGoogleAnalyticsEnabled() {
+    if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
+      return false;
+    }
+
+    try {
+      var stored = window.localStorage.getItem('gematria.siteModules');
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (parsed && parsed.google_analytics === false) {
+          return false;
+        }
+      }
+    } catch (e) {
+      // Ignore storage parse errors.
+    }
+
+    try {
+      var moduleParam = new URLSearchParams(window.location.search).get('modules');
+      if (moduleParam) {
+        var requested = moduleParam.split(',').map(function (entry) { return String(entry).trim().toLowerCase(); }).filter(Boolean);
+        return requested.indexOf('google_analytics') !== -1;
+      }
+    } catch (e) {
+      // Ignore URL parsing errors.
+    }
+
+    return true;
+  }
+
+  var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
+  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
+
+  if (!googleAnalyticsEnabled) {
+    window['ga-disable-' + gaMeasurementId] = true;
+  } else {
+    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
+
+    gtag('consent', 'default', {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500,
+      region: consentModeRegions
+    });
+
+    function initializeGoogleAnalytics() {
+      if (window.__gematriaGoogleAnalyticsInitialized) {
+        return;
+      }
+
+      window.__gematriaGoogleAnalyticsInitialized = true;
+
+      var gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
+      gaScript.setAttribute('fetchpriority', 'low');
+      document.head.appendChild(gaScript);
+
+      gtag('js', new Date());
+      gtag('config', gaMeasurementId);
+    }
+    initializeGoogleAnalytics();
+  }
+</script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var hasPromise = typeof window.Promise === 'function';
+        var hasFetch = typeof window.fetch === 'function';
+        var userAgent = ((window.navigator && window.navigator.userAgent) || '').toLowerCase();
+        var isBot = /bot|crawl|spider|slurp|bingpreview|google web preview|facebookexternalhit|whatsapp|telegrambot|linkedinbot|twitterbot/.test(userAgent);
+        if ((hasPromise && hasFetch) || isBot) {
+          return;
+        }
+
+        var pathname = (window.location && window.location.pathname) || '';
+        if (pathname === '/unsupported-browser.html') {
+          return;
+        }
+
+        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
+        window.location.replace(redirectUrl);
+      })();
+    </script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" /></noscript>
+
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <title>Gematria Definitions: Glossary of Terms for New Users | Gematria.Today</title>
+    <meta name="description" content="Plain-language glossary of gematria terms — ciphers, ordinal values, reductions, clusters, matches, and research vocabulary used across Gematria.Today." />
+    <link rel="canonical" href="https://gematria.today/definitions.html" />
+    <meta name="robots" content="index,follow" />
+    <meta name="last-updated" content="2026-05-18" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Gematria Definitions: Glossary of Terms for New Users" />
+    <meta property="og:description" content="A beginner-friendly glossary explaining the gematria vocabulary used across this site." />
+    <meta property="og:url" content="https://gematria.today/definitions.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gematria Definitions: Glossary of Terms for New Users" />
+    <meta name="twitter:description" content="A beginner-friendly glossary explaining the gematria vocabulary used across this site." />
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
+    <link rel="preload" as="style" href="/api/public-theme-css" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script defer src="/cookie-consent.js"></script>
+    <script defer src="/ui-feedback.js"></script>
+    <script src="/pwa-register.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "DefinedTermSet",
+        "name": "Gematria.Today Glossary",
+        "description": "Definitions of gematria-related terms used across Gematria.Today, written for new users.",
+        "url": "https://gematria.today/definitions.html"
+      }
+    </script>
+    <style>
+      .defn-term {
+        background: none;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: help;
+        border-bottom: 1px dotted currentColor;
+        text-decoration: none;
+        line-height: inherit;
+      }
+      .defn-term:hover,
+      .defn-term:focus-visible {
+        outline: none;
+        border-bottom-style: solid;
+        color: #0d6efd;
+      }
+      .defn-popup {
+        position: absolute;
+        z-index: 1080;
+        max-width: 320px;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35);
+        font-size: 0.875rem;
+        line-height: 1.45;
+      }
+      .defn-popup[hidden] { display: none; }
+      .defn-popup__title { font-weight: 600; margin-bottom: 0.25rem; }
+      .defn-popup__body { margin: 0 0 0.5rem; color: #e2e8f0; }
+      .defn-popup__link { color: #93c5fd; font-size: 0.8125rem; text-decoration: underline; }
+      .defn-popup__link:hover,
+      .defn-popup__link:focus-visible { color: #bfdbfe; }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg?v=2" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="siteNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="/tools.html">Tools</a></li>
+            <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
+            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
+            <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
+            <li class="nav-actions-divider d-lg-none" role="presentation" aria-hidden="true"></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2" href="https://gematria.today/member#authSection">Join Free/Login</a></li>
+            <li class="nav-item nav-search"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <nav aria-label="Breadcrumb" class="mb-3">
+          <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="/index.html">Home</a></li>
+            <li class="breadcrumb-item"><a href="/gematria-guide.html">Learning Path</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Definitions</li>
+          </ol>
+        </nav>
+
+        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
+          <p class="section-kicker mb-3">Reference · Glossary</p>
+          <h1 class="display-5 fw-bold mb-3">Gematria definitions for new users</h1>
+          <p class="lead mb-0">A plain-language glossary of the vocabulary used across Gematria.Today — what each term means, why it matters, and where you'll see it on the site.</p>
+        </section>
+
+        <section class="content-panel p-4 mb-5" aria-label="How to use this page">
+          <h2 class="h5 mb-2">How to use this page</h2>
+          <p class="mb-2">Terms are grouped by topic and ordered for new learners. Jump straight to a section, or skim top-to-bottom for a guided overview.</p>
+          <ul class="list-inline small mb-0">
+            <li class="list-inline-item"><a href="#core-concepts">Core concepts</a></li>
+            <li class="list-inline-item">&middot;</li>
+            <li class="list-inline-item"><a href="#ciphers-and-methods">Ciphers &amp; methods</a></li>
+            <li class="list-inline-item">&middot;</li>
+            <li class="list-inline-item"><a href="#calculator-terms">Calculator terms</a></li>
+            <li class="list-inline-item">&middot;</li>
+            <li class="list-inline-item"><a href="#results-and-patterns">Results &amp; patterns</a></li>
+            <li class="list-inline-item">&middot;</li>
+            <li class="list-inline-item"><a href="#research-vocabulary">Research vocabulary</a></li>
+          </ul>
+        </section>
+
+        <section id="core-concepts" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Core concepts</h2>
+          <dl class="mb-0">
+            <dt>Gematria</dt>
+            <dd class="mb-3">A practice that assigns a number to every letter, so any word or phrase can be added up to a single value. It is most often discussed alongside Hebrew scripture, but the same idea works for English, Greek, and other alphabets.</dd>
+
+            <dt>Letter value</dt>
+            <dd class="mb-3">The number assigned to one letter under a particular cipher. For example, in the simplest English cipher A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2, and so on to Z&nbsp;=&nbsp;26.</dd>
+
+            <dt>Word value (gematria value)</dt>
+            <dd class="mb-3">The total you get by adding up the letter values for every letter in a word or phrase. Two different phrases that share the same total are sometimes called a match.</dd>
+
+            <dt>Phrase</dt>
+            <dd class="mb-3">Any string of one or more words entered into the calculator. Spelling, spacing, and punctuation must be kept consistent so totals stay repeatable.</dd>
+
+            <dt>Cipher</dt>
+            <dd class="mb-0">A specific rule set for converting letters into numbers. Different ciphers can give the same word different totals, so it matters which one you used.</dd>
+          </dl>
+        </section>
+
+        <section id="ciphers-and-methods" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Ciphers and methods</h2>
+          <dl class="mb-0">
+            <dt>English Ordinal (Simple English Gematria)</dt>
+            <dd class="mb-3">The most common starting point: A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2 ... Z&nbsp;=&nbsp;26. Letters count in their natural alphabet order.</dd>
+
+            <dt>Reverse Ordinal</dt>
+            <dd class="mb-3">The same idea, counted backwards: A&nbsp;=&nbsp;26, B&nbsp;=&nbsp;25 ... Z&nbsp;=&nbsp;1.</dd>
+
+            <dt>Reduction (Pythagorean)</dt>
+            <dd class="mb-3">Letters are reduced to single digits so the alphabet only uses 1 through 9 (A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2 ... I&nbsp;=&nbsp;9, then J&nbsp;=&nbsp;1 again). Often called Pythagorean gematria.</dd>
+
+            <dt>Reverse Reduction</dt>
+            <dd class="mb-3">Reduction applied to the reversed alphabet, so A&nbsp;=&nbsp;8 (because Z would be 1 in reverse, Y would be 2, and so on, reduced to single digits).</dd>
+
+            <dt>English Gematria (multiples of six)</dt>
+            <dd class="mb-3">A variant where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 ... Z&nbsp;=&nbsp;156. It is the English Ordinal value multiplied by six.</dd>
+
+            <dt>Hebrew Gematria</dt>
+            <dd class="mb-3">The original Hebrew system, where each letter of the Hebrew alphabet has a traditional value (Aleph&nbsp;=&nbsp;1, Bet&nbsp;=&nbsp;2, Yod&nbsp;=&nbsp;10, and so on).</dd>
+
+            <dt>Isopsephy (Greek gematria)</dt>
+            <dd class="mb-0">The Greek equivalent of gematria, using values assigned to Greek letters. It is the system referenced by the number 666 in Revelation 13:18.</dd>
+          </dl>
+        </section>
+
+        <section id="calculator-terms" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Calculator terms</h2>
+          <dl class="mb-0">
+            <dt>Calculator</dt>
+            <dd class="mb-3">The input tool on the <a href="/calculator.html">word/phrase</a> and <a href="/name-calculator.html">name</a> pages where you type text and receive a gematria value back.</dd>
+
+            <dt>Query</dt>
+            <dd class="mb-3">The exact text you entered into the calculator. The same query should always return the same value under the same cipher.</dd>
+
+            <dt>Lookup</dt>
+            <dd class="mb-3">A single calculator run for one query. Looking up several related terms and comparing them is more useful than relying on one lookup alone.</dd>
+
+            <dt>Baseline</dt>
+            <dd class="mb-3">The first value you record for a term. You compare later results against this baseline to check consistency and to anchor your interpretations.</dd>
+
+            <dt>Digit sum / Root reduction</dt>
+            <dd class="mb-3">Adding the digits of a number until you get a single digit (for example 276 → 2&nbsp;+&nbsp;7&nbsp;+&nbsp;6 = 15 → 1&nbsp;+&nbsp;5 = 6). Some research methods compare these reduced "roots."</dd>
+
+            <dt>Database match list</dt>
+            <dd class="mb-0">After a lookup, the results page lists other words and phrases from our database that share the same value. Coverage is limited to words currently stored — your own custom phrases may not appear yet.</dd>
+          </dl>
+        </section>
+
+        <section id="results-and-patterns" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Results and patterns</h2>
+          <dl class="mb-0">
+            <dt id="match">Match</dt>
+            <dd class="mb-3">Two or more words/phrases that produce the same gematria value under the same cipher. A single match by itself is not evidence — it becomes interesting only when several related terms line up.</dd>
+
+            <dt>Cluster</dt>
+            <dd class="mb-3">A group of thematically related terms that all share the same value (or a small set of values). Clusters are stronger signals than isolated matches because they show repeating structure.</dd>
+
+            <dt>Pattern grouping</dt>
+            <dd class="mb-3">The practice of sorting your matches into themed buckets so the cluster behavior is visible. See the <a href="/gematria-pattern-grouping.html">Level&nbsp;2 lesson</a>.</dd>
+
+            <dt>Non-match</dt>
+            <dd class="mb-3">A related term you expected to share a value but that did not. Including non-matches keeps interpretation honest and prevents cherry-picking.</dd>
+
+            <dt>Overfitting</dt>
+            <dd class="mb-3">Choosing words after the fact so they fit a desired total. An overfit cluster looks convincing but only because the misses were hidden.</dd>
+
+            <dt>Coincidence floor</dt>
+            <dd class="mb-0">The reminder that some matches will always occur by chance. The goal of clustering and non-matches is to rise above this floor — not to pretend it isn't there.</dd>
+          </dl>
+        </section>
+
+        <section id="research-vocabulary" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Research vocabulary</h2>
+          <dl class="mb-0">
+            <dt>Cherry-picking</dt>
+            <dd class="mb-3">Selecting only the terms that support a conclusion while ignoring those that don't. The site's checklist actively pushes against this.</dd>
+
+            <dt>Cross-validation</dt>
+            <dd class="mb-3">Testing a pattern against new words, new ciphers, or unrelated phrase sets to confirm it isn't an artifact of one chosen list.</dd>
+
+            <dt>Sample size</dt>
+            <dd class="mb-3">How many independently related terms you compared. Larger, more diverse samples make a cluster more credible.</dd>
+
+            <dt>Confidence level</dt>
+            <dd class="mb-3">A plain-language note (low / medium / high) about how strongly your data supports your interpretation. Always state this before publishing.</dd>
+
+            <dt>Editorial policy</dt>
+            <dd class="mb-3">The standards Gematria.Today applies to interpretive content. See the <a href="/disclaimer.html">disclaimer page</a> for the full text.</dd>
+
+            <dt>Learning path</dt>
+            <dd class="mb-0">The numbered lesson sequence (Levels 0&ndash;4) under the <a href="/gematria-guide.html">main guide</a>. Each level introduces a new layer of vocabulary used here.</dd>
+          </dl>
+        </section>
+
+        <section class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Keep learning</h2>
+          <p class="mb-3">Definitions are easier to remember once you've used them in the calculator. Start at Level&nbsp;1 if you're new, or jump to the FAQ for common follow-up questions.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-primary" href="/gematria-basics.html">Start Level 1: Gematria basics</a>
+            <a class="btn btn-outline-primary" href="/calculator.html">Open the calculator</a>
+            <a class="btn btn-outline-secondary" href="/faq.html">Read the FAQ</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer py-4 mt-5">
+      <div class="container d-flex flex-column gap-3 small text-muted">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
+          <span>Gematria.Today — a research workspace.</span>
+        </div>
+        <div class="d-flex flex-wrap gap-3 site-legal-links">
+          <a href="/privacy.html">Privacy Policy</a>
+          <a href="/terms.html">Terms of Use</a>
+          <a href="/disclaimer.html">Disclaimer</a>
+          <a href="/accessibility.html">Accessibility</a>
+          <a href="/contact.html">Contact</a>
+        </div>
+        <div class="site-credit text-center text-lg-start mt-2">
+          &copy; 2026 Lunar Web Studio LLC. All rights reserved. Designed by <a href="https://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+      (function () {
+        var main = document.getElementById('mainContent');
+        if (!main) return;
+
+        var terms = [];
+        var aliasIndex = [];
+
+        function slugify(s) {
+          return s.toLowerCase()
+            .replace(/[()\/&]/g, ' ')
+            .replace(/[^a-z0-9 ]+/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+        }
+
+        function escapeRegex(s) {
+          return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function shortDef(dd) {
+          var clone = dd.cloneNode(true);
+          clone.querySelectorAll('button.defn-term').forEach(function (b) {
+            b.replaceWith(document.createTextNode(b.textContent));
+          });
+          var txt = clone.textContent.replace(/\s+/g, ' ').trim();
+          if (txt.length > 260) txt = txt.slice(0, 257).replace(/\s+\S*$/, '') + '…';
+          return txt;
+        }
+
+        main.querySelectorAll('dl').forEach(function (dl) {
+          var kids = Array.from(dl.children);
+          for (var i = 0; i < kids.length; i++) {
+            if (kids[i].tagName !== 'DT') continue;
+            var dt = kids[i];
+            var dd = kids[i + 1];
+            if (!dd || dd.tagName !== 'DD') continue;
+            var label = dt.textContent.trim();
+            var slug = slugify(label);
+            if (!dt.id) dt.id = 'defn-' + slug;
+
+            var primaries = [];
+            var paren = label.match(/^(.+?)\s*\((.+)\)\s*$/);
+            if (paren) {
+              primaries.push(paren[1].trim());
+              primaries.push(paren[2].trim());
+              primaries.push(label);
+            } else {
+              primaries.push(label);
+            }
+            primaries = primaries.reduce(function (acc, p) {
+              if (p.indexOf('/') !== -1) {
+                p.split('/').forEach(function (part) {
+                  var trimmed = part.trim();
+                  if (trimmed) acc.push(trimmed);
+                });
+              }
+              acc.push(p);
+              return acc;
+            }, []);
+
+            var aliases = [];
+            primaries.forEach(function (p) {
+              aliases.push(p);
+              if (/[a-z]$/i.test(p) && !/s$/i.test(p)) aliases.push(p + 's');
+              if (/y$/i.test(p)) aliases.push(p.slice(0, -1) + 'ies');
+              if (/-/.test(p)) aliases.push(p.replace(/-/g, ' '));
+            });
+            aliases = aliases.filter(function (a, idx) { return aliases.indexOf(a) === idx; });
+
+            terms.push({ slug: slug, label: label, dtId: dt.id, dd: dd, aliases: aliases });
+          }
+        });
+
+        var termsBySlug = {};
+        terms.forEach(function (t) {
+          termsBySlug[t.slug] = t;
+          t.aliasSet = new Set(t.aliases.map(function (a) { return a.toLowerCase(); }));
+          t.aliases.forEach(function (a) {
+            aliasIndex.push({ alias: a, lower: a.toLowerCase(), term: t });
+          });
+        });
+        aliasIndex.sort(function (a, b) { return b.alias.length - a.alias.length; });
+
+        if (!aliasIndex.length) return;
+
+        var union = aliasIndex.map(function (a) { return escapeRegex(a.alias); }).join('|');
+        var re = new RegExp('\\b(' + union + ')\\b', 'gi');
+
+        function findTermFor(matchText) {
+          var lower = matchText.toLowerCase();
+          for (var i = 0; i < aliasIndex.length; i++) {
+            if (aliasIndex[i].lower === lower) return aliasIndex[i].term;
+          }
+          var singular = lower.replace(/ies$/, 'y').replace(/s$/, '');
+          for (var j = 0; j < aliasIndex.length; j++) {
+            if (aliasIndex[j].lower === singular) return aliasIndex[j].term;
+          }
+          return null;
+        }
+
+        function shouldSkipParent(node, root) {
+          var p = node.parentNode;
+          while (p && p !== root) {
+            var tag = p.tagName;
+            if (tag === 'A' || tag === 'BUTTON' || tag === 'CODE') return true;
+            if (p.classList && p.classList.contains('defn-term')) return true;
+            p = p.parentNode;
+          }
+          return false;
+        }
+
+        terms.forEach(function (term) {
+          var walker = document.createTreeWalker(term.dd, NodeFilter.SHOW_TEXT, null);
+          var nodes = [];
+          var n;
+          while ((n = walker.nextNode())) {
+            if (!shouldSkipParent(n, term.dd)) nodes.push(n);
+          }
+          nodes.forEach(function (textNode) {
+            var text = textNode.nodeValue;
+            re.lastIndex = 0;
+            if (!re.test(text)) return;
+            re.lastIndex = 0;
+            var frag = document.createDocumentFragment();
+            var lastIdx = 0;
+            var m;
+            var replaced = false;
+            while ((m = re.exec(text))) {
+              var matched = m[0];
+              var lookup = findTermFor(matched);
+              if (!lookup) continue;
+              if (lookup === term) continue;
+              if (term.aliasSet.has(matched.toLowerCase())) continue;
+              frag.appendChild(document.createTextNode(text.slice(lastIdx, m.index)));
+              var btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'defn-term';
+              btn.setAttribute('data-defn-slug', lookup.slug);
+              btn.setAttribute('aria-describedby', 'defn-popup');
+              btn.textContent = matched;
+              frag.appendChild(btn);
+              lastIdx = m.index + matched.length;
+              replaced = true;
+            }
+            if (!replaced) return;
+            frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+            textNode.parentNode.replaceChild(frag, textNode);
+          });
+        });
+
+        var popup = document.createElement('div');
+        popup.id = 'defn-popup';
+        popup.className = 'defn-popup';
+        popup.setAttribute('role', 'tooltip');
+        popup.hidden = true;
+        document.body.appendChild(popup);
+
+        var activeBtn = null;
+        var hideTimer = null;
+
+        function buildPopup(term) {
+          popup.innerHTML = '';
+          var title = document.createElement('div');
+          title.className = 'defn-popup__title';
+          title.textContent = term.label;
+          var body = document.createElement('p');
+          body.className = 'defn-popup__body';
+          body.textContent = shortDef(term.dd);
+          var link = document.createElement('a');
+          link.className = 'defn-popup__link';
+          link.href = '#' + term.dtId;
+          link.textContent = 'Jump to full definition →';
+          popup.appendChild(title);
+          popup.appendChild(body);
+          popup.appendChild(link);
+        }
+
+        function positionPopup(btn) {
+          popup.style.left = '0px';
+          popup.style.top = '0px';
+          var r = btn.getBoundingClientRect();
+          var pr = popup.getBoundingClientRect();
+          var docW = document.documentElement.clientWidth;
+          var top = window.scrollY + r.bottom + 8;
+          var left = window.scrollX + r.left + (r.width / 2) - (pr.width / 2);
+          var minLeft = window.scrollX + 8;
+          var maxLeft = window.scrollX + docW - pr.width - 8;
+          if (left < minLeft) left = minLeft;
+          if (left > maxLeft) left = maxLeft;
+          if (r.bottom + pr.height + 16 > document.documentElement.clientHeight && r.top > pr.height + 16) {
+            top = window.scrollY + r.top - pr.height - 8;
+          }
+          popup.style.top = top + 'px';
+          popup.style.left = left + 'px';
+        }
+
+        function showFor(btn) {
+          clearTimeout(hideTimer);
+          var slug = btn.getAttribute('data-defn-slug');
+          var term = termsBySlug[slug];
+          if (!term) return;
+          activeBtn = btn;
+          buildPopup(term);
+          popup.hidden = false;
+          positionPopup(btn);
+        }
+
+        function scheduleHide() {
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(function () {
+            if (popup.matches(':hover')) return;
+            if (activeBtn && (activeBtn.matches(':hover') || document.activeElement === activeBtn)) return;
+            popup.hidden = true;
+            activeBtn = null;
+          }, 150);
+        }
+
+        document.addEventListener('mouseover', function (e) {
+          var btn = e.target.closest('.defn-term');
+          if (btn) showFor(btn);
+        });
+        document.addEventListener('mouseout', function (e) {
+          if (e.target.closest('.defn-term')) scheduleHide();
+        });
+        popup.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
+        popup.addEventListener('mouseleave', scheduleHide);
+        document.addEventListener('focusin', function (e) {
+          var btn = e.target.closest('.defn-term');
+          if (btn) showFor(btn);
+          else if (!e.target.closest('#defn-popup')) scheduleHide();
+        });
+        document.addEventListener('click', function (e) {
+          var btn = e.target.closest('.defn-term');
+          if (btn) {
+            e.preventDefault();
+            if (activeBtn === btn && !popup.hidden) {
+              popup.hidden = true;
+              activeBtn = null;
+            } else {
+              showFor(btn);
+            }
+            return;
+          }
+          if (!e.target.closest('#defn-popup')) {
+            popup.hidden = true;
+            activeBtn = null;
+          }
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !popup.hidden) {
+            popup.hidden = true;
+            if (activeBtn) activeBtn.focus();
+            activeBtn = null;
+          }
+        });
+        window.addEventListener('resize', function () {
+          if (!popup.hidden && activeBtn) positionPopup(activeBtn);
+        });
+        window.addEventListener('scroll', function () {
+          if (!popup.hidden && activeBtn) positionPopup(activeBtn);
+        }, { passive: true });
+      })();
+    </script>
+  </body>
+</html>

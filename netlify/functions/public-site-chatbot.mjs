@@ -8,7 +8,6 @@ import {
 import { getOptionalAuthenticatedSession, getOrCreateVisitorSession } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 
-const STATIC_CONTENT_SETTINGS_KEY = 'static_content_workspace';
 const MAX_QUERY_LENGTH = 400;
 const MAX_RESULTS = 5;
 const CONVERSATIONAL_PREFIXES = [
@@ -25,26 +24,6 @@ const SEARCH_STOP_WORDS = new Set([
   'where', 'who', 'with', 'you', 'your',
 ]);
 const LOW_SIGNAL_TERMS = new Set(['article', 'articles', 'info', 'information', 'page', 'pages', 'post', 'posts']);
-
-const STATIC_PAGE_PATHS = {
-  home: '/index.html',
-  about: '/why-english-gematria.html',
-  news: '/news.html',
-  blog: '/blog.html',
-  faq: '/faq.html',
-  contact: '/contact.html',
-  privacy: '/privacy.html',
-  terms: '/terms.html',
-};
-
-function safeJsonParse(raw, fallback = {}) {
-  if (!raw || typeof raw !== 'string') return fallback;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
 
 function stripHtml(raw = '') {
   return String(raw || '')
@@ -171,10 +150,9 @@ function buildAnswer(query, matches) {
 }
 
 async function loadCorpus(sql) {
-  const [faqRows, postRows, staticRows] = await Promise.all([
+  const [faqRows, postRows] = await Promise.all([
     sql`SELECT id, question, answer FROM faqs WHERE is_published = TRUE ORDER BY sort_order ASC, created_at ASC LIMIT 1000`,
     sql`SELECT id, slug, title, summary, body FROM posts WHERE COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'published' ORDER BY COALESCE(published_at, created_at) DESC LIMIT 200`,
-    sql`SELECT setting_value FROM admin_settings WHERE setting_key = ${STATIC_CONTENT_SETTINGS_KEY} LIMIT 1`,
   ]);
 
   const corpus = [];
@@ -200,28 +178,6 @@ async function loadCorpus(sql) {
       text,
       url: safeSlug ? `/blog.html?post=${encodeURIComponent(safeSlug)}#${encodeURIComponent(safeSlug)}` : '/blog.html',
     });
-  }
-
-  const workspace = safeJsonParse(staticRows?.[0]?.setting_value, {});
-  const pages = workspace?.pages && typeof workspace.pages === 'object' ? workspace.pages : {};
-
-  for (const [pageId, content] of Object.entries(pages)) {
-    if (!content || typeof content !== 'object') continue;
-    const title = stripHtml(content.seoTitle || content.heroHeadline || pageId);
-    const text = stripHtml([
-      content.metaDescription,
-      content.heroHeadline,
-      content.heroBody,
-      content.heroHeadlineSecondary,
-      content.heroBodySecondary,
-      content.staticHeadings,
-      content.staticParagraphs,
-      content.staticListItems,
-      content.allStaticContent,
-    ].filter(Boolean).join(' '));
-
-    if (!title && !text) continue;
-    corpus.push({ id: `static:${pageId}`, type: 'page', title: title || pageId, text, url: STATIC_PAGE_PATHS[pageId] || `/${pageId}.html` });
   }
 
   return corpus;

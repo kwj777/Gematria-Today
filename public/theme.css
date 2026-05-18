@@ -2425,6 +2425,17 @@ a.badge,
   .btn-group-sm > .btn {
     min-height: 44px;
   }
+
+  /* When min-height pushes a btn-sm taller than its natural line-box,
+     <button> centers text via user-agent middle alignment while
+     <a class="btn"> aligns to the top — making the two elements look
+     like different sizes when sat side-by-side. Force flex centering so
+     mixed button/anchor rows in stat cards render at the same height. */
+  .btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .nav-search-link svg {

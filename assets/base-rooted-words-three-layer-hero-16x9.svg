@@ -1,0 +1,104 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Full Totals, Digital Roots, and Base-Rooted Words hero image</title>
+  <desc id="desc">A three-panel illustration showing exact gematria totals on the left, reduced single-digit roots in the middle, and base-rooted words on the right, separated by glowing dividers.</desc>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="20" x2="1480" y2="880" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1027"/>
+      <stop offset="0.55" stop-color="#141B42"/>
+      <stop offset="1" stop-color="#22154F"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(800 450) rotate(90) scale(380)">
+      <stop stop-color="#8EE7FF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#8EE7FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panelA" x1="80" y1="160" x2="500" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D2A61" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#101736" stop-opacity="0.94"/>
+    </linearGradient>
+    <linearGradient id="panelB" x1="540" y1="160" x2="1060" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#241A55" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#13103A" stop-opacity="0.94"/>
+    </linearGradient>
+    <linearGradient id="panelC" x1="1100" y1="160" x2="1520" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F3E3A" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#0A1F26" stop-opacity="0.94"/>
+    </linearGradient>
+    <linearGradient id="divider" x1="0" y1="135" x2="0" y2="765" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8EE7FF" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#8EE7FF" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#8EE7FF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="800" cy="450" r="380" fill="url(#halo)"/>
+
+  <g opacity="0.18" stroke="#9CC8FF">
+    <path d="M0 150H1600"/>
+    <path d="M0 300H1600"/>
+    <path d="M0 450H1600"/>
+    <path d="M0 600H1600"/>
+    <path d="M0 750H1600"/>
+    <path d="M200 0V900"/>
+    <path d="M400 0V900"/>
+    <path d="M600 0V900"/>
+    <path d="M800 0V900"/>
+    <path d="M1000 0V900"/>
+    <path d="M1200 0V900"/>
+    <path d="M1400 0V900"/>
+  </g>
+
+  <rect x="80" y="135" width="440" height="630" rx="28" fill="url(#panelA)" stroke="#6FA9FF" stroke-opacity="0.55"/>
+  <rect x="580" y="135" width="440" height="630" rx="28" fill="url(#panelB)" stroke="#B79CFF" stroke-opacity="0.55"/>
+  <rect x="1080" y="135" width="440" height="630" rx="28" fill="url(#panelC)" stroke="#7FE6CF" stroke-opacity="0.55"/>
+
+  <rect x="547" y="135" width="6" height="630" fill="url(#divider)"/>
+  <rect x="1047" y="135" width="6" height="630" fill="url(#divider)"/>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="300" y="230" font-size="40" font-weight="700" fill="#C8ECFF">Full Totals</text>
+    <text x="300" y="268" font-size="20" font-weight="500" fill="#9FD5FF">Exact value</text>
+    <text x="800" y="230" font-size="40" font-weight="700" fill="#E0CCFF">Digital Roots</text>
+    <text x="800" y="268" font-size="20" font-weight="500" fill="#BFA9FF">Compressed signature</text>
+    <text x="1300" y="230" font-size="40" font-weight="700" fill="#C8FFEB">Base-Rooted</text>
+    <text x="1300" y="268" font-size="20" font-weight="500" fill="#9FE6CC">Semantic clusters</text>
+  </g>
+
+  <g font-family="'JetBrains Mono', 'Consolas', monospace" text-anchor="middle">
+    <text x="300" y="390" font-size="58" font-weight="700" fill="#DDF6FF">144</text>
+    <text x="300" y="478" font-size="58" font-weight="700" fill="#DDF6FF">222</text>
+    <text x="300" y="566" font-size="58" font-weight="700" fill="#DDF6FF">276</text>
+    <text x="300" y="654" font-size="58" font-weight="700" fill="#DDF6FF">666</text>
+  </g>
+
+  <g font-family="'JetBrains Mono', 'Consolas', monospace" text-anchor="middle">
+    <text x="800" y="390" font-size="58" font-weight="700" fill="#E9D9FF">9</text>
+    <text x="800" y="478" font-size="58" font-weight="700" fill="#E9D9FF">6</text>
+    <text x="800" y="566" font-size="58" font-weight="700" fill="#E9D9FF">6</text>
+    <text x="800" y="654" font-size="58" font-weight="700" fill="#E9D9FF">9</text>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle" fill="#DAFBEC">
+    <text x="1300" y="390" font-size="34" font-weight="700">rule</text>
+    <text x="1300" y="468" font-size="34" font-weight="700">ruler</text>
+    <text x="1300" y="546" font-size="34" font-weight="700">reign</text>
+    <text x="1300" y="624" font-size="34" font-weight="700">dominion</text>
+  </g>
+
+  <g stroke="#8EE7FF" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="6 8">
+    <path d="M380 376 H720"/>
+    <path d="M380 464 H720"/>
+    <path d="M380 552 H720"/>
+    <path d="M380 640 H720"/>
+  </g>
+  <g stroke="#7FE6CF" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="6 8">
+    <path d="M880 376 H1220"/>
+    <path d="M880 464 H1220"/>
+    <path d="M880 552 H1220"/>
+    <path d="M880 640 H1220"/>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" fill="#9FD5FF" text-anchor="middle" opacity="0.9">
+    <text x="800" y="725">precision  ·  grouping  ·  semantic confirmation</text>
+  </g>
+</svg>

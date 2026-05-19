@@ -1,61 +1,21 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script>
-      (function () {
-        var TIERS = ['anon', 'free', 'premium', 'lifetime'];
-        function applyAuthState() {
-          var tier;
-          try {
-            var m = document.cookie.match(/(?:^|; )gematria_member_tier=([^;]+)/);
-            tier = m ? decodeURIComponent(m[1]) : 'anon';
-            if (!/^(free|premium|lifetime)$/.test(tier)) tier = 'anon';
-          } catch (_) {
-            tier = 'anon';
-          }
-          window.__gematriaAuthTier = tier;
-          var root = document.documentElement;
-          for (var i = 0; i < TIERS.length; i++) {
-            root.classList.remove('auth-' + TIERS[i]);
-          }
-          root.classList.add('auth-' + tier);
-        }
-        window.__gematriaSyncAuthState = applyAuthState;
-        applyAuthState();
-      })();
-    </script>
+    <script src="/auth-state-bootstrap.js"></script>
 
 <!-- Google Analytics bootstrap moved to deferred module -->
 <script defer src="/analytics-bootstrap.js"></script>
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      (function () {
-        var hasPromise = typeof window.Promise === 'function';
-        var hasFetch = typeof window.fetch === 'function';
-        var userAgent = ((window.navigator && window.navigator.userAgent) || '').toLowerCase();
-        var isBot = /bot|crawl|spider|slurp|bingpreview|google web preview|facebookexternalhit|whatsapp|telegrambot|linkedinbot|twitterbot/.test(userAgent);
-        if ((hasPromise && hasFetch) || isBot) {
-          return;
-        }
-
-        var pathname = (window.location && window.location.pathname) || '';
-        if (pathname === '/unsupported-browser.html') {
-          return;
-        }
-
-        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
-        window.location.replace(redirectUrl);
-      })();
-    </script>
+    <script src="/unsupported-browser-redirect.js"></script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" /></noscript>
 
         <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
@@ -86,12 +46,12 @@
     <meta name="editorial-policy" content="https://gematria.today/disclaimer.html" />
     <link rel="author" href="/contact.html" />
     <link rel="help" href="/disclaimer.html" />
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" data-promote-stylesheet>
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
-    <link rel="preload" as="style" href="/api/public-theme-css" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
     <link rel="stylesheet" href="/theme.css" />
-    <link rel="preload" as="style" href="/theme-deferred.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <link rel="preload" as="image" href="/assets/gematria-logo-navbar.svg?v=2" type="image/svg+xml" fetchpriority="high" />
     <link rel="preload" as="image" href="/assets/news-hero-world.svg" type="image/svg+xml" fetchpriority="high" />
@@ -112,6 +72,7 @@
         "isPartOf": "https://gematria.today/gematria-guide.html"
       }
     </script>
+      <script src="/preload-stylesheet.js"></script>
   </head>
   <body class="page-render-pending">
     <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -295,228 +256,7 @@
       </div>
     </footer>
 
-    <script>
-      const fallbackFeeds = [
-        {
-          name: 'Primary Feed',
-          url: 'https://example.com/main-feed.xml',
-          category: 'Featured',
-          notes: 'Use this slot for your highest-priority RSS source while the admin feed list is still empty.',
-          latestArticle: {
-            title: 'Latest featured article preview',
-            excerpt: 'When live feed parsing is unavailable, this fallback shows the expected latest-article layout with an excerpt and a direct article link.',
-            link: 'https://example.com/main-article',
-            publishedAtLabel: 'Awaiting live feed data'
-          }
-        },
-        {
-          name: 'Feed A',
-          url: 'https://example.com/feed-a.xml',
-          category: 'World',
-          notes: 'Example editorial note for a secondary source.',
-          latestArticle: {
-            title: 'Secondary feed article preview',
-            excerpt: 'Each feed card should surface the newest article title, a short excerpt, and a link out to the full story.',
-            link: 'https://example.com/article-1',
-            publishedAtLabel: 'Sample article'
-          }
-        },
-        {
-          name: 'Feed B',
-          url: 'https://example.com/feed-b.xml',
-          category: 'Alerts',
-          notes: 'Use for urgent updates or time-sensitive stories.',
-          latestArticle: {
-            title: 'Alert feed article preview',
-            excerpt: 'Feed cards stay readable even before real RSS data loads from the configured endpoint.',
-            link: 'https://example.com/article-2',
-            publishedAtLabel: 'Sample article'
-          }
-        }
-      ];
-      const escapeHtml = (value = '') => String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-
-      let allFeeds = [];
-
-      function renderFeaturedEmpty(featuredFeedNode) {
-        featuredFeedNode.innerHTML = `<div class="text-center text-muted"><h3 class="h5 mb-2">No feeds match your filters</h3><p class="mb-0 small">Try clearing the search box or selecting "All categories".</p></div>`;
-      }
-
-      function renderFeeds(feeds) {
-        const featuredFeedNode = document.getElementById('featuredFeed');
-        const feedGridNode = document.getElementById('feedGrid');
-        featuredFeedNode.setAttribute('aria-busy', 'false');
-        feedGridNode.setAttribute('aria-busy', 'false');
-
-        if (!feeds.length) {
-          renderFeaturedEmpty(featuredFeedNode);
-          feedGridNode.innerHTML = '';
-          return;
-        }
-
-        const featured = feeds[0];
-        const featuredArticle = featured.latestArticle || {};
-        featuredFeedNode.innerHTML = `<div><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-warning">Featured</span><span class="badge news-source-badge">${escapeHtml(featured.category || 'RSS Feed')}</span><span class="text-muted small align-self-center">${escapeHtml(featuredArticle.publishedAtLabel || 'Latest article')}</span></div><h3 class="display-6 fw-semibold mb-3">${escapeHtml(featuredArticle.title || featured.name)}</h3><p class="mb-3">${escapeHtml(featuredArticle.excerpt || featured.notes || 'Use the admin page to add notes for this source.')}</p>${featured.notes ? `<p class="text-muted small mb-4">Feed notes: ${escapeHtml(featured.notes)}</p>` : '<div class="mb-4"></div>'}<div class="d-flex flex-wrap gap-3 align-items-center"><a class="btn btn-primary" href="${escapeHtml(featuredArticle.link || featured.url)}" target="_blank" rel="noopener noreferrer">Read full article</a></div>${featured.latestArticleError ? `<p class="text-muted small mt-3 mb-0">Latest article unavailable: ${escapeHtml(featured.latestArticleError)}</p>` : '<p class="text-muted small mt-3 mb-0">Opens in a new window.</p>'}</div>`;
-        feedGridNode.innerHTML = feeds.map((feed) => {
-          const article = feed.latestArticle || {};
-          return `<div class="col-md-6 col-xl-4"><article class="news-preview-card h-100 p-4 d-flex flex-column"><div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-info">${escapeHtml(feed.category || 'RSS Feed')}</span></div><p class="text-muted small mb-2">${escapeHtml(feed.name)}</p><h3 class="h5 mb-3">${escapeHtml(article.title || `${feed.name} latest article unavailable`)}</h3><p class="text-muted mb-3">${escapeHtml(article.excerpt || feed.notes || 'No article excerpt was available from this feed.')}</p>${feed.notes ? `<p class="small text-muted mb-4">Feed notes: ${escapeHtml(feed.notes)}</p>` : '<div class="mb-4"></div>'}<div class="mt-auto d-flex justify-content-between align-items-center gap-3"><span class="small text-muted">${escapeHtml(article.publishedAtLabel || 'Latest article')}</span><a class="news-inline-link" href="${escapeHtml(article.link || feed.url)}" target="_blank" rel="noopener noreferrer">Open article</a></div>${feed.latestArticleError ? `<p class="text-muted small mt-3 mb-0">${escapeHtml(feed.latestArticleError)}</p>` : ''}</article></div>`;
-        }).join('');
-      }
-
-      function getFilteredFeeds() {
-        const categoryValue = document.getElementById('newsCategoryFilter')?.value || '';
-        const sortValue = document.getElementById('newsSort')?.value || 'default';
-        const searchValue = (document.getElementById('newsSearch')?.value || '').trim().toLowerCase();
-
-        let result = allFeeds.slice();
-        if (categoryValue) {
-          result = result.filter((feed) => (feed.category || '') === categoryValue);
-        }
-        if (searchValue) {
-          result = result.filter((feed) => {
-            const article = feed.latestArticle || {};
-            const haystack = [feed.name, feed.category, feed.notes, article.title, article.excerpt]
-              .filter(Boolean)
-              .join(' ')
-              .toLowerCase();
-            return haystack.includes(searchValue);
-          });
-        }
-        if (sortValue === 'source') {
-          result.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-        }
-        return result;
-      }
-
-      function populateCategoryFilter() {
-        const select = document.getElementById('newsCategoryFilter');
-        if (!select) return;
-        const previous = select.value;
-        const categories = Array.from(new Set(allFeeds.map((feed) => feed.category).filter(Boolean))).sort();
-        select.innerHTML = '<option value="">All categories</option>' +
-          categories.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-        if (categories.includes(previous)) {
-          select.value = previous;
-        }
-      }
-
-      function updateLastUpdatedLabel() {
-        const node = document.getElementById('newsLastUpdated');
-        if (!node) return;
-        const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-        node.textContent = `Last updated: ${time}`;
-      }
-
-      function applyFeeds(feeds) {
-        allFeeds = Array.isArray(feeds) ? feeds : [];
-        populateCategoryFilter();
-        renderFeeds(getFilteredFeeds());
-        updateLastUpdatedLabel();
-      }
-
-      function wireNewsFilters() {
-        document.getElementById('newsCategoryFilter')?.addEventListener('change', () => renderFeeds(getFilteredFeeds()));
-        document.getElementById('newsSort')?.addEventListener('change', () => renderFeeds(getFilteredFeeds()));
-        const searchInput = document.getElementById('newsSearch');
-        let searchTimer = null;
-        searchInput?.addEventListener('input', () => {
-          if (searchTimer) window.clearTimeout(searchTimer);
-          searchTimer = window.setTimeout(() => renderFeeds(getFilteredFeeds()), 120);
-        });
-        const refreshFeeds = () => {
-          const featuredFeedNode = document.getElementById('featuredFeed');
-          const feedGridNode = document.getElementById('feedGrid');
-          featuredFeedNode?.setAttribute('aria-busy', 'true');
-          feedGridNode?.setAttribute('aria-busy', 'true');
-          return fetch('/api/public-feeds', { cache: 'no-store' })
-            .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load feeds')))
-            .then((payload) => {
-              applyFeeds(payload.items?.length ? payload.items : fallbackFeeds);
-              setFeedStatusBanner(null);
-            })
-            .catch(() => {
-              applyFeeds(fallbackFeeds);
-              setFeedStatusBanner('Live RSS feeds could not be loaded. Showing placeholder content below — try again in a moment.');
-            });
-        };
-        document.getElementById('newsRefreshButton')?.addEventListener('click', refreshFeeds);
-        document.getElementById('feedStatusRetryButton')?.addEventListener('click', refreshFeeds);
-      }
-
-      function setFeedStatusBanner(message) {
-        const banner = document.getElementById('feedStatusBanner');
-        if (!banner) return;
-        if (message) {
-          const msgNode = document.getElementById('feedStatusBannerMessage');
-          if (msgNode) msgNode.textContent = message;
-          banner.classList.remove('d-none');
-        } else {
-          banner.classList.add('d-none');
-        }
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', wireNewsFilters, { once: true });
-      } else {
-        wireNewsFilters();
-      }
-
-      const completeNewsPageRender = () => {
-        document.body.classList.remove('page-render-pending');
-        document.getElementById('pageRenderOverlay')?.remove();
-      };
-
-      const applyStaticContentPromise = fetch('/api/public-static-content?page=news')
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load static content')))
-        .then((payload) => {
-          const content = payload?.content || {};
-          if (content.seoTitle) {
-            document.title = content.seoTitle;
-            const seoTitleNode = document.getElementById('pageSeoTitle');
-            if (seoTitleNode) seoTitleNode.textContent = content.seoTitle;
-          }
-          if (content.metaDescription) {
-            const metaNode = document.getElementById('pageMetaDescription');
-            if (metaNode) metaNode.setAttribute('content', content.metaDescription);
-          }
-          if (content.heroHeadline) {
-            const heroHeadlineNode = document.getElementById('heroHeadlinePrimary');
-            if (heroHeadlineNode) heroHeadlineNode.textContent = content.heroHeadline;
-          }
-          if (content.heroBody) {
-            const heroBodyNode = document.getElementById('heroBodyPrimary');
-            if (heroBodyNode) heroBodyNode.textContent = content.heroBody;
-          }
-          const heroHeadlineSecondaryNode = document.getElementById('heroHeadlineSecondary');
-          if (heroHeadlineSecondaryNode && content.heroHeadlineSecondary) {
-            heroHeadlineSecondaryNode.textContent = content.heroHeadlineSecondary;
-            heroHeadlineSecondaryNode.classList.remove('d-none');
-          }
-        })
-        .catch(() => {});
-
-      const renderFeedsPromise = fetch('/api/public-feeds')
-        .then((response) => response.ok ? response.json() : Promise.reject(new Error('Failed to load feeds')))
-        .then((payload) => {
-          applyFeeds(payload.items?.length ? payload.items : fallbackFeeds);
-          setFeedStatusBanner(null);
-        })
-        .catch(() => {
-          applyFeeds(fallbackFeeds);
-          setFeedStatusBanner('Live RSS feeds could not be loaded. Showing placeholder content below — try again in a moment.');
-        });
-
-      Promise.allSettled([applyStaticContentPromise, renderFeedsPromise])
-        .finally(() => {
-          window.requestAnimationFrame(() => completeNewsPageRender());
-        });
-    </script>
+    <script src="/page-scripts/news-1.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script defer src="/glossary-popup.js"></script>
   </body>

@@ -81,26 +81,7 @@ function buildHtml(markdown, titleText) {
       <article class="guide-content" id="guideContent" aria-live="polite"></article>
       <script type="text/plain" id="markdownSource">${escapedMarkdown}</script>
     </main>
-    <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        const markdownSource = document.getElementById('markdownSource');
-        const guideContent = document.getElementById('guideContent');
-        const markdown = markdownSource ? markdownSource.textContent : '';
-
-        if (!window.marked) {
-          guideContent.textContent = markdown;
-          return;
-        }
-
-        marked.setOptions({
-          gfm: true,
-          breaks: false,
-          headerIds: true,
-          mangle: false,
-        });
-        guideContent.innerHTML = marked.parse(markdown);
-      });
-    </script>
+    <script src="/site-adaptation-guide-renderer.js" defer></script>
   </body>
 </html>
 `;

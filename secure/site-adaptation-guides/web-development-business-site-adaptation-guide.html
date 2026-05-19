@@ -258,25 +258,6 @@ Example service pricing bands you can present on-site:
 Use clear tiers and scope boundaries so prospects can quickly choose the right engagement level.
 </script>
     </main>
-    <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        const markdownSource = document.getElementById('markdownSource');
-        const guideContent = document.getElementById('guideContent');
-        const markdown = markdownSource ? markdownSource.textContent : '';
-
-        if (!window.marked) {
-          guideContent.textContent = markdown;
-          return;
-        }
-
-        marked.setOptions({
-          gfm: true,
-          breaks: false,
-          headerIds: true,
-          mangle: false,
-        });
-        guideContent.innerHTML = marked.parse(markdown);
-      });
-    </script>
+    <script src="/site-adaptation-guide-renderer.js" defer></script>
   </body>
 </html>

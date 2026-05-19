@@ -66,14 +66,12 @@
       .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: underline; }
       .navbar { background: #1a202c; }
     </style>
-    <link rel="preload" href="/theme.css" as="style" />
-    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
-    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
     <link rel="stylesheet" href="/theme.css" />
-    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet fetchpriority="low" />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet fetchpriority="low" />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <link rel="preload" as="image" href="/assets/gematria-logo-navbar.svg?v=2" type="image/svg+xml" fetchpriority="high" />
-    <link rel="preload" as="image" href="/assets/why-english-gematria-backdrop-compact-16x9.svg" type="image/svg+xml" fetchpriority="high" />
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
     <script defer src="/conversion-tracking.js"></script>
@@ -92,7 +90,7 @@
       }
     </script>
       <script src="/pwa-register.js" defer></script>
-      <script src="/preload-stylesheet.js"></script>
+      <script defer src="/preload-stylesheet.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>

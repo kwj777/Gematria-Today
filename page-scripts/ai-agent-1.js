@@ -407,6 +407,73 @@
         `;
       }
 
+      function buildGematriaRangeValues(minRaw, maxRaw) {
+        const a = Number(minRaw);
+        const b = Number(maxRaw);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+        const lo = Math.max(6, Math.min(a, b));
+        const hi = Math.max(a, b);
+        const firstMultiple = Math.ceil(lo / 6) * 6;
+        const lastMultiple = Math.floor(hi / 6) * 6;
+        if (lastMultiple < firstMultiple) return null;
+        const MAX_VALUES = 20;
+        const values = [];
+        for (let value = firstMultiple; value <= lastMultiple && values.length < MAX_VALUES; value += 6) {
+          values.push(value);
+        }
+        const fullCount = (lastMultiple - firstMultiple) / 6 + 1;
+        return {
+          values,
+          min: firstMultiple,
+          max: values[values.length - 1],
+          requestedMin: Math.min(a, b),
+          requestedMax: Math.max(a, b),
+          truncated: fullCount > MAX_VALUES
+        };
+      }
+
+      function extractRangeReverseLookup(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return null;
+
+        const reverseKeyword = /\breverse(?:\s+(?:gematria|lookup|search))?\b/i.test(normalized);
+        const wordListIntent = /\b(?:show|list|find|get|give|which|what|any|search|look(?:\s*up)?)\b[\s\S]*\b(?:words?|matches?|results?|hits?|entries?|terms?)\b/i.test(normalized);
+        const gematriaContext = /\b(?:gematria|equal|equals|matching|matches|match|total|totals|sum|sums|value|values|number|numbers)\b/i.test(normalized);
+        const triggered = reverseKeyword || wordListIntent || gematriaContext;
+
+        const betweenMatch = normalized.match(/\b(?:between|from)\s+(\d{1,6})\s+(?:to|and|-|–|—)\s+(\d{1,6})\b/i);
+        if (betweenMatch && triggered) {
+          return buildGematriaRangeValues(betweenMatch[1], betweenMatch[2]);
+        }
+
+        const plusMinusMatch = normalized.match(/\b(\d{1,6})\s*(?:±|\+\/?-|plus\s+or\s+minus)\s*(\d{1,4})\b/i);
+        if (plusMinusMatch && triggered) {
+          const center = Number(plusMinusMatch[1]);
+          const span = Number(plusMinusMatch[2]);
+          return buildGematriaRangeValues(center - span, center + span);
+        }
+
+        const nearMatch = normalized.match(/\b(?:near|around|close\s+to|approximately|approx\.?|about|circa|~)\s*(\d{1,6})\b/i);
+        if (nearMatch && triggered) {
+          const center = Number(nearMatch[1]);
+          const defaultSpan = 18;
+          return buildGematriaRangeValues(center - defaultSpan, center + defaultSpan);
+        }
+
+        return null;
+      }
+
+      async function fetchWordsForGematriaValues(values) {
+        const buckets = await Promise.all(values.map(async (value) => {
+          const words = await fetchWordsByGematriaValue(value);
+          return {
+            value,
+            words: words.map((entry) => String(entry?.word || '').trim()).filter(Boolean)
+          };
+        }));
+        return buckets;
+      }
+
       function extractReverseGematriaValue(prompt) {
         const normalized = normalizeCandidate(prompt);
         if (!normalized) return null;
@@ -478,6 +545,14 @@
       function buildFollowupReply(context) {
         if (!context) {
           return '<p class="mb-0">No previous calculation to interpret yet. Try calculating a word first (example: <code>calculate jerusalem</code>) or run a reverse lookup (<code>reverse gematria 144</code>).</p>';
+        }
+
+        if (context.kind === 'reverseRange') {
+          return `
+            <p class="mb-2"><strong>About the range scan ${context.min}–${context.max}:</strong></p>
+            <p class="mb-2">Swept <strong>${context.valueCount}</strong> valid gematria total${context.valueCount === 1 ? '' : 's'} (multiples of 6) and surfaced <strong>${context.totalMatches}</strong> archived match${context.totalMatches === 1 ? '' : 'es'} across <strong>${context.bucketCount}</strong> bucket${context.bucketCount === 1 ? '' : 's'}. Range scans are useful when a word's exact total feels off-by-a-letter, or when sweeping a thematic neighborhood.</p>
+            <p class="mb-0">Drill into a single total with <code>reverse gematria N</code> for the focused view.</p>
+          `;
         }
 
         if (context.kind === 'reverse') {
@@ -1437,7 +1512,8 @@ View results: ${shareUrl}`.trim(),
 
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
-        const reverseGematriaValue = extractReverseGematriaValue(normalizedPrompt);
+        const reverseRange = extractRangeReverseLookup(normalizedPrompt);
+        const reverseGematriaValue = reverseRange ? null : extractReverseGematriaValue(normalizedPrompt);
         const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
         const explicitRelatedWordsTarget = extractRelatedWordsCalculationTarget(normalizedPrompt);
         const affirmativeFollowup = isAffirmativePrompt(normalizedPrompt);
@@ -1461,6 +1537,41 @@ View results: ${shareUrl}`.trim(),
             return `<p class="mb-0">The current database has <strong>${totalWords.toLocaleString()}</strong> tracked word${totalWords === 1 ? '' : 's'}.</p>`;
           }
           return '<p class="mb-0">I could not load the live word count right now. Please try again in a moment.</p>';
+        }
+
+        if (reverseRange && reverseRange.values.length) {
+          const buckets = await fetchWordsForGematriaValues(reverseRange.values);
+          const populated = buckets.filter((bucket) => bucket.words.length > 0);
+          const totalMatches = populated.reduce((sum, bucket) => sum + bucket.words.length, 0);
+
+          lastCalculationContext = {
+            kind: 'reverseRange',
+            min: reverseRange.min,
+            max: reverseRange.max,
+            valueCount: reverseRange.values.length,
+            bucketCount: populated.length,
+            totalMatches
+          };
+
+          const headerNote = reverseRange.truncated
+            ? ` (capped at the first ${reverseRange.values.length} multiples; requested span ${reverseRange.requestedMin}–${reverseRange.requestedMax} was wider)`
+            : '';
+          const bucketsHtml = populated.length
+            ? populated.map((bucket) => `
+                <section class="border rounded-3 p-2 mb-2">
+                  <p class="mb-1"><strong>${bucket.value}</strong> — ${bucket.words.length} match${bucket.words.length === 1 ? '' : 'es'}</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    ${bucket.words.map((word) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(word)}">${escapeHtml(word)}</button>`).join('')}
+                  </div>
+                </section>
+              `).join('')
+            : '<p class="mb-0">No archived words landed on any total in this range.</p>';
+
+          return `
+            <p class="mb-2"><strong>Reverse gematria range ${reverseRange.min} → ${reverseRange.max}</strong>${headerNote}</p>
+            <p class="mb-2">Scanned <strong>${reverseRange.values.length}</strong> valid total${reverseRange.values.length === 1 ? '' : 's'} (multiples of 6). Found <strong>${totalMatches}</strong> archived match${totalMatches === 1 ? '' : 'es'} across <strong>${populated.length}</strong> bucket${populated.length === 1 ? '' : 's'}.</p>
+            ${bucketsHtml}
+          `;
         }
 
         if (Number.isFinite(reverseGematriaValue)) {

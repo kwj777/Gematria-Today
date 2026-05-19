@@ -1,0 +1,148 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  BADGE_DEFINITIONS,
+  getBadgeDefinition,
+  recordGematriaNumberSearch,
+  recordWordSearchActivity,
+} from '../netlify/functions/_badges.mjs';
+
+const VALID_METRICS = new Set([
+  'searches_total',
+  'gematria_searches_total',
+  'words_contributed',
+  'base_root_finds',
+]);
+
+const VALID_CATEGORIES = new Set(['searches', 'gematria', 'contributions', 'discoveries']);
+
+// ---------- BADGE_DEFINITIONS structural integrity ----------
+
+test('every BADGE_DEFINITIONS entry has the required keys with the right types', () => {
+  for (const badge of BADGE_DEFINITIONS) {
+    assert.equal(typeof badge.slug, 'string');
+    assert.ok(badge.slug.length > 0, 'slug must be non-empty');
+    assert.equal(typeof badge.name, 'string');
+    assert.ok(badge.name.length > 0, 'name must be non-empty');
+    assert.equal(typeof badge.description, 'string');
+    assert.equal(typeof badge.category, 'string');
+    assert.equal(typeof badge.metric, 'string');
+    assert.equal(typeof badge.threshold, 'number');
+    assert.ok(Number.isInteger(badge.threshold) && badge.threshold > 0);
+    assert.equal(typeof badge.tier, 'number');
+    assert.ok(Number.isInteger(badge.tier) && badge.tier > 0);
+  }
+});
+
+test('badge slugs are globally unique', () => {
+  const slugs = BADGE_DEFINITIONS.map((b) => b.slug);
+  assert.equal(new Set(slugs).size, slugs.length);
+});
+
+test('badge metric values reference a real member_search_stats column', () => {
+  for (const badge of BADGE_DEFINITIONS) {
+    assert.ok(
+      VALID_METRICS.has(badge.metric),
+      `badge ${badge.slug} references unknown metric ${badge.metric}`,
+    );
+  }
+});
+
+test('badge category values are from the known set', () => {
+  for (const badge of BADGE_DEFINITIONS) {
+    assert.ok(
+      VALID_CATEGORIES.has(badge.category),
+      `badge ${badge.slug} references unknown category ${badge.category}`,
+    );
+  }
+});
+
+test('thresholds within a metric increase monotonically by tier', () => {
+  // Group badges by metric, sort by tier, and check thresholds are strictly increasing.
+  const byMetric = new Map();
+  for (const badge of BADGE_DEFINITIONS) {
+    if (!byMetric.has(badge.metric)) byMetric.set(badge.metric, []);
+    byMetric.get(badge.metric).push(badge);
+  }
+  for (const [metric, badges] of byMetric) {
+    badges.sort((a, b) => a.tier - b.tier);
+    for (let i = 1; i < badges.length; i += 1) {
+      assert.ok(
+        badges[i].threshold > badges[i - 1].threshold,
+        `${metric}: tier ${badges[i].tier} threshold (${badges[i].threshold}) must exceed tier ${badges[i - 1].tier} (${badges[i - 1].threshold})`,
+      );
+    }
+  }
+});
+
+test('tier numbers within a metric form a contiguous 1..N sequence', () => {
+  const byMetric = new Map();
+  for (const badge of BADGE_DEFINITIONS) {
+    if (!byMetric.has(badge.metric)) byMetric.set(badge.metric, []);
+    byMetric.get(badge.metric).push(badge);
+  }
+  for (const [metric, badges] of byMetric) {
+    const tiers = badges.map((b) => b.tier).sort((a, b) => a - b);
+    for (let i = 0; i < tiers.length; i += 1) {
+      assert.equal(
+        tiers[i],
+        i + 1,
+        `${metric}: tier sequence has a gap at index ${i} (got ${tiers[i]})`,
+      );
+    }
+  }
+});
+
+// ---------- getBadgeDefinition ----------
+
+test('getBadgeDefinition returns the matching definition for a known slug', () => {
+  const def = getBadgeDefinition('seeker-1');
+  assert.ok(def);
+  assert.equal(def.slug, 'seeker-1');
+  assert.equal(def.metric, 'searches_total');
+});
+
+test('getBadgeDefinition returns null for an unknown slug', () => {
+  assert.equal(getBadgeDefinition('nope'), null);
+  assert.equal(getBadgeDefinition(''), null);
+  assert.equal(getBadgeDefinition(undefined), null);
+});
+
+// ---------- recordWordSearchActivity / recordGematriaNumberSearch ----------
+
+test('recordWordSearchActivity returns the empty envelope without calling SQL when userId is missing', async () => {
+  let sqlCalled = false;
+  const sql = () => { sqlCalled = true; return Promise.resolve([]); };
+  const result = await recordWordSearchActivity(sql, null, { wasNewWord: true });
+  assert.deepEqual(result.newBadges, []);
+  assert.equal(result.stats.searches_total, 0);
+  assert.equal(sqlCalled, false);
+});
+
+test('recordGematriaNumberSearch returns the empty envelope without calling SQL when userId is missing', async () => {
+  let sqlCalled = false;
+  const sql = () => { sqlCalled = true; return Promise.resolve([]); };
+  const result = await recordGematriaNumberSearch(sql, '');
+  assert.deepEqual(result.newBadges, []);
+  assert.equal(result.stats.searches_total, 0);
+  assert.equal(sqlCalled, false);
+});
+
+test('recordWordSearchActivity swallows SQL errors and returns the empty envelope', async () => {
+  // Use a unique userId so the badge-schema cache key is irrelevant.
+  // The SQL mock throws on the very first call.
+  const failingSql = () => Promise.reject(new Error('connection refused'));
+  const result = await recordWordSearchActivity(failingSql, 'user-1', { wasNewWord: false });
+  // Despite the SQL failure, the helper must NOT propagate the error — the
+  // calculator response must still succeed even if the badge ledger is down.
+  assert.deepEqual(result.newBadges, []);
+  assert.equal(result.stats.searches_total, 0);
+});
+
+test('recordGematriaNumberSearch swallows SQL errors and returns the empty envelope', async () => {
+  const failingSql = () => Promise.reject(new Error('connection refused'));
+  const result = await recordGematriaNumberSearch(failingSql, 'user-2');
+  assert.deepEqual(result.newBadges, []);
+  assert.equal(result.stats.gematria_searches_total, 0);
+});

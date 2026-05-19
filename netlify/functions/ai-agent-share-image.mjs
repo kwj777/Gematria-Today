@@ -3,7 +3,7 @@ import { Resvg } from '@resvg/resvg-js';
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-function escapeXml(value = '') {
+export function escapeXml(value = '') {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -12,13 +12,13 @@ function escapeXml(value = '') {
     .replaceAll("'", '&apos;');
 }
 
-function truncate(value, max = 70) {
+export function truncate(value, max = 70) {
   const text = String(value || '').trim();
   if (text.length <= max) return text;
   return `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
-function normalizeSummaryLines(value = '', maxLines = 3, maxLineLength = 60) {
+export function normalizeSummaryLines(value = '', maxLines = 3, maxLineLength = 60) {
   const compact = String(value || '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -53,7 +53,7 @@ function normalizeSummaryLines(value = '', maxLines = 3, maxLineLength = 60) {
   return lines.map((line) => escapeXml(line));
 }
 
-function buildSvg({ topic, total, root, summaryLines }) {
+export function buildSvg({ topic, total, root, summaryLines }) {
   const summaryBlock = summaryLines.length
     ? summaryLines
       .map((line, index) => `<text x="120" y="${485 + (index * 34)}" fill="#c7d9ee" font-size="30" font-family="Arial, Helvetica, sans-serif">${line}</text>`)

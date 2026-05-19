@@ -1,7 +1,7 @@
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 
-function escapeXml(value = '') {
+export function escapeXml(value = '') {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -10,7 +10,7 @@ function escapeXml(value = '') {
     .replaceAll("'", '&apos;');
 }
 
-function wrapSvgText(value, maxCharsPerLine = 60, maxLines = 3) {
+export function wrapSvgText(value, maxCharsPerLine = 60, maxLines = 3) {
   const words = String(value || '').trim().split(/\s+/).filter(Boolean);
   if (!words.length) {
     return [];
@@ -51,7 +51,7 @@ function wrapSvgText(value, maxCharsPerLine = 60, maxLines = 3) {
   return lines;
 }
 
-function drawWordImage(searchParams) {
+export function drawWordImage(searchParams) {
   const query = escapeXml(searchParams.get('query') || 'Lookup');
   const total = escapeXml(searchParams.get('total') || '?');
   const digitalRoot = escapeXml(searchParams.get('digitalRoot') || '?');
@@ -79,7 +79,7 @@ function drawWordImage(searchParams) {
   `;
 }
 
-function drawNameImage(searchParams) {
+export function drawNameImage(searchParams) {
   const names = ['name1', 'name2', 'name3']
     .map((key) => String(searchParams.get(key) || '').trim())
     .filter(Boolean)

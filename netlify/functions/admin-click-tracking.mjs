@@ -16,7 +16,7 @@ try {
 }
 const EXCLUDED_REPORT_ROUTES = new Set(['/admin-click-tracking.html', '/unsupported-browser.html', '/offline.html']);
 
-function normalizePathname(value) {
+export function normalizePathname(value) {
   const raw = String(value || '').trim();
   if (!raw) return '/';
   try {
@@ -31,24 +31,24 @@ function normalizePathname(value) {
   }
 }
 
-function normalizeLinkDestination(value) {
+export function normalizeLinkDestination(value) {
   const raw = String(value || '').trim();
   if (!raw || raw.startsWith('#') || raw.startsWith('javascript:')) return '';
   const pathname = normalizePathname(raw);
   return pathname.replace(/\/index\.html$/i, '/').replace(/\.html$/i, '');
 }
 
-function normalizeButtonIdentity(value) {
+export function normalizeButtonIdentity(value) {
   return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 180);
 }
 
-function extractAttribute(tag, attributeName) {
+export function extractAttribute(tag, attributeName) {
   const pattern = new RegExp(`${attributeName}\\s*=\\s*(['"])(.*?)\\1`, 'i');
   const match = tag.match(pattern);
   return match ? match[2].trim() : '';
 }
 
-function stripHtml(rawText) {
+export function stripHtml(rawText) {
   return String(rawText || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -125,7 +125,7 @@ async function collectTrackableElements() {
   return elements;
 }
 
-function buildNeverClickedElementsReport(clickRows, trackableElements) {
+export function buildNeverClickedElementsReport(clickRows, trackableElements) {
   const clickedLinks = new Set();
   const clickedButtons = new Set();
 
@@ -152,7 +152,7 @@ function buildNeverClickedElementsReport(clickRows, trackableElements) {
   });
 }
 
-function normalizeDays(value) {
+export function normalizeDays(value) {
   const parsed = Number.parseInt(String(value ?? '30'), 10);
   if (!Number.isFinite(parsed) || !ALLOWED_DAY_WINDOWS.has(parsed)) {
     return 30;
@@ -160,7 +160,7 @@ function normalizeDays(value) {
   return parsed;
 }
 
-function normalizeHours(value) {
+export function normalizeHours(value) {
   const parsed = Number.parseInt(String(value ?? ''), 10);
   if (!Number.isFinite(parsed) || !ALLOWED_HOUR_WINDOWS.has(parsed)) {
     return null;
@@ -168,7 +168,7 @@ function normalizeHours(value) {
   return parsed;
 }
 
-function toIsoDate(value) {
+export function toIsoDate(value) {
   if (!value) return null;
   try {
     return new Date(value).toISOString();
@@ -177,7 +177,7 @@ function toIsoDate(value) {
   }
 }
 
-function formatWindowLabel({ days, hours }) {
+export function formatWindowLabel({ days, hours }) {
   if (hours === 1) return 'Last 1 hour';
   if (hours === 6) return 'Last 6 hours';
   if (hours === 12) return 'Last 12 hours';

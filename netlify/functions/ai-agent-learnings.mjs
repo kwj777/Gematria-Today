@@ -6,17 +6,17 @@ const MAX_ENTRIES = 200;
 const MAX_PROMPT_LENGTH = 240;
 const MAX_EXPLANATION_LENGTH = 600;
 
-function normalizeText(value, maxLength) {
+export function normalizeText(value, maxLength) {
   return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
 }
 
-function normalizeEntry(entry = {}) {
+export function normalizeEntry(entry = {}) {
   const prompt = normalizeText(entry.prompt, MAX_PROMPT_LENGTH).toLowerCase();
   const explanation = normalizeText(entry.explanation, MAX_EXPLANATION_LENGTH);
   return { prompt, explanation };
 }
 
-function normalizeEntries(entries = []) {
+export function normalizeEntries(entries = []) {
   const deduped = new Map();
   entries.forEach((entry) => {
     const normalized = normalizeEntry(entry);

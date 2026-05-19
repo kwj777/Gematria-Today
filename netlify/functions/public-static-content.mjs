@@ -1,6 +1,6 @@
 import { jsonResponse } from './_admin.mjs';
 
-function normalizePageId(rawValue = '') {
+export function normalizePageId(rawValue = '') {
   const value = String(rawValue || '').trim().toLowerCase();
   if (!value) {
     return '';
@@ -35,7 +35,7 @@ function normalizePageId(rawValue = '') {
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
-function parsePagination(query = {}) {
+export function parsePagination(query = {}) {
   const offsetRaw = Number.parseInt(String(query.offset ?? '0'), 10);
   const limitRaw = Number.parseInt(String(query.limit ?? DEFAULT_LIMIT), 10);
   const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;

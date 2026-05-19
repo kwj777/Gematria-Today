@@ -11,7 +11,7 @@ const HERO_IMAGE_OVERRIDES = Object.freeze({
 });
 
 
-function escapeHtml(value = '') {
+export function escapeHtml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -20,7 +20,7 @@ function escapeHtml(value = '') {
     .replace(/'/g, '&#39;');
 }
 
-function stripHtml(value = '') {
+export function stripHtml(value = '') {
   return String(value)
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
@@ -29,7 +29,7 @@ function stripHtml(value = '') {
     .trim();
 }
 
-function toAbsoluteUrl(value = '') {
+export function toAbsoluteUrl(value = '') {
   const raw = String(value || '').trim();
   if (!raw) return '';
   if (/^https?:\/\//i.test(raw)) return raw;
@@ -38,7 +38,7 @@ function toAbsoluteUrl(value = '') {
 }
 
 
-function toShareImageUrl(value = '') {
+export function toShareImageUrl(value = '') {
   const absoluteUrl = toAbsoluteUrl(value);
   if (!absoluteUrl) return '';
   if (/\.svg(?:$|[?#])/i.test(absoluteUrl)) {
@@ -49,7 +49,7 @@ function toShareImageUrl(value = '') {
 }
 
 
-function getPostHeroImage(post) {
+export function getPostHeroImage(post) {
   const slug = String(post?.slug || '').trim().toLowerCase();
   return (
     post?.heroImageUrl ||
@@ -61,7 +61,7 @@ function getPostHeroImage(post) {
   );
 }
 
-function getShareDescription(post) {
+export function getShareDescription(post) {
   const summary = stripHtml(post?.summary || '');
   if (summary) {
     return summary.length > 220 ? `${summary.slice(0, 220).trimEnd()}…` : summary;
@@ -73,7 +73,7 @@ function getShareDescription(post) {
   return 'Explore gematria research workflows, trusted methodology notes, and interconnected tools from Gematria.Today.';
 }
 
-function buildShareHtml(post) {
+export function buildShareHtml(post) {
   const slug = String(post?.slug || '').trim();
   const title = String(post?.title || 'Gematria.Today Blog').trim();
   const description = getShareDescription(post);
@@ -118,7 +118,7 @@ function buildShareHtml(post) {
 </html>`;
 }
 
-function buildGoneHtml(post) {
+export function buildGoneHtml(post) {
   const title = String(post?.title || 'Post no longer available').trim();
   return `<!doctype html>
 <html lang="en">

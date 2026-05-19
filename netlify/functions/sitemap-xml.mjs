@@ -2,7 +2,7 @@ import { ensureAdminSchema, getSqlClient, syncBootstrapAdminUser } from './_admi
 import { buildCacheKey, withCachedJson } from './_security.mjs';
 import { buildModulePublicPaths, loadPublicSiteSettings } from './_site-modules.mjs';
 
-const STATIC_PATHS = Object.freeze([
+export const STATIC_PATHS = Object.freeze([
   '/',
   '/accessibility.html',
   '/calculator.html',
@@ -21,7 +21,7 @@ const STATIC_PATHS = Object.freeze([
   '/why-english-gematria.html',
 ]);
 
-function escapeXml(value = '') {
+export function escapeXml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -35,7 +35,7 @@ function toUrlEntry(origin, pathname) {
   return `  <url>\n    <loc>${escapeXml(`${origin}${normalizedPath === '/' ? '/' : normalizedPath}`)}</loc>\n  </url>`;
 }
 
-function buildSitemapXml({ siteOrigin, modules }) {
+export function buildSitemapXml({ siteOrigin, modules }) {
   const modulePaths = buildModulePublicPaths(modules);
   const allPaths = Array.from(new Set([...STATIC_PATHS, ...modulePaths]));
 

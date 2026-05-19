@@ -2,7 +2,7 @@ const SITE_ORIGIN = 'https://gematria.today';
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 
-function escapeHtml(value = '') {
+export function escapeHtml(value = '') {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -11,7 +11,7 @@ function escapeHtml(value = '') {
     .replaceAll("'", '&#39;');
 }
 
-function trimValue(value, maxLength) {
+export function trimValue(value, maxLength) {
   const text = String(value || '').trim();
   if (!text) return '';
   if (text.length <= maxLength) return text;
@@ -19,7 +19,7 @@ function trimValue(value, maxLength) {
 }
 
 
-function toImageUrl(topic, total, root) {
+export function toImageUrl(topic, total, root) {
   const imageUrl = new URL('/api/ai-agent-share-image', SITE_ORIGIN);
   imageUrl.searchParams.set('topic', topic);
   imageUrl.searchParams.set('total', total);
@@ -27,7 +27,7 @@ function toImageUrl(topic, total, root) {
   return imageUrl.toString();
 }
 
-function buildShareHtml(params) {
+export function buildShareHtml(params) {
   const topic = trimValue(params.get('topic') || 'Gematria Agent Result', 90);
   const total = trimValue(params.get('total') || '?', 24);
   const root = trimValue(params.get('root') || '?', 24);

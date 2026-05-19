@@ -12,7 +12,7 @@ function toNetlifyResponse(statusCode, payload, extraHeaders = {}) {
   return secureJsonResponse(statusCode, payload, extraHeaders);
 }
 
-function extractWordFromEvent(event) {
+export function extractWordFromEvent(event) {
   if (!event || typeof event !== 'object') {
     return null;
   }
@@ -28,7 +28,7 @@ function extractWordFromEvent(event) {
   return null;
 }
 
-function buildWordnikDefinitionUrl(word) {
+export function buildWordnikDefinitionUrl(word) {
   const baseUrl = process.env.WORDNIK_BASE_URL ?? process.env.WORDNIK_URL_BASE;
   const apiKey = process.env.WORDNIK_API_KEY;
 
@@ -47,7 +47,7 @@ function buildWordnikDefinitionUrl(word) {
   return url;
 }
 
-function getStatusCode(error) {
+export function getStatusCode(error) {
   if (error.message?.startsWith('Missing required query parameter: word')) {
     return 400;
   }

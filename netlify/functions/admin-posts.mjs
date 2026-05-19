@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { formatPost, getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMethod, slugify } from './_admin.mjs';
 import { clearCachedJson } from './_security.mjs';
 
-function normalizePostTags(tagInput, tagsInput) {
+export function normalizePostTags(tagInput, tagsInput) {
   const tagSeparatorPattern = /[;,]/;
   const tagTokens = [];
   const addTag = (tagValue) => {
@@ -29,7 +29,7 @@ function normalizePostTags(tagInput, tagsInput) {
   return tagTokens.length ? tagTokens.join(', ') : null;
 }
 
-function normalizePostStatus(value) {
+export function normalizePostStatus(value) {
   const raw = String(value ?? '').trim().toLowerCase();
   if (raw === 'draft' || raw === 'archived') {
     return raw;
@@ -37,7 +37,7 @@ function normalizePostStatus(value) {
   return 'published';
 }
 
-function normalizeScheduledPublishAt(value) {
+export function normalizeScheduledPublishAt(value) {
   const raw = String(value ?? '').trim();
   if (!raw) {
     return null;

@@ -22,11 +22,11 @@ function parseEventBody(event) {
   return String(event.body);
 }
 
-function toDateFromStripeEpoch(value) {
+export function toDateFromStripeEpoch(value) {
   return Number.isFinite(Number(value)) ? new Date(Number(value) * 1000) : null;
 }
 
-function mapSubscriptionPayload(payload = {}) {
+export function mapSubscriptionPayload(payload = {}) {
   const item = payload.items?.data?.[0] || {};
   const memberId = payload.metadata?.user_id || null;
   return {

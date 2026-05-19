@@ -26,7 +26,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`Usage:\n  node scripts/audit-sitemap-redirects.mjs [--sitemap <url-or-file>] [--timeout-ms <number>]\n\nExamples:\n  node scripts/audit-sitemap-redirects.mjs\n  node scripts/audit-sitemap-redirects.mjs --sitemap https://example.com/sitemap.xml\n  node scripts/audit-sitemap-redirects.mjs --sitemap public/sitemap.xml`);
+  console.log(`Usage:\n  node scripts/audit-sitemap-redirects.mjs [--sitemap <url-or-file>] [--timeout-ms <number>]\n\nExamples:\n  node scripts/audit-sitemap-redirects.mjs\n  node scripts/audit-sitemap-redirects.mjs --sitemap https://example.com/sitemap.xml\n  node scripts/audit-sitemap-redirects.mjs --sitemap sitemap.xml`);
 }
 
 function extractUrlsFromSitemap(xmlText) {

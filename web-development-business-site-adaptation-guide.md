@@ -11,8 +11,8 @@ Start by reframing the homepage and metadata around business value:
 - Ongoing optimization and support
 
 Update in:
-- `public/index.html`
-- Other high-traffic pages in `public/*.html`
+- `index.html`
+- Other high-traffic pages in `*.html` at the repo root
 
 Replace brand-level elements:
 - Site name/tagline
@@ -33,11 +33,11 @@ Replace niche navigation with an agency-oriented sitemap:
 - Contact
 
 Recommended page additions:
-- `public/services.html`
-- `public/portfolio.html`
-- `public/case-study.html`
-- `public/process.html`
-- `public/pricing.html`
+- `services.html`
+- `portfolio.html`
+- `case-study.html`
+- `process.html`
+- `pricing.html`
 
 ## 3) Rebuild homepage sections for lead conversion
 
@@ -73,7 +73,7 @@ For each offer, include:
 ## 5) Update module toggles for an agency-style build
 
 This codebase uses feature toggles in:
-- `public/site-modules.js`
+- `site-modules.js`
 
 For most web development businesses, disable modules that distract from sales flow unless intentionally used:
 - `forum`
@@ -86,7 +86,7 @@ Keep only what supports lead gen, content marketing, and project delivery visibi
 ## 6) Modernize visual system for credibility
 
 Apply visual updates in:
-- `public/theme.css`
+- `theme.css`
 - Remaining inline style blocks in page files
 
 Suggested direction:
@@ -106,7 +106,7 @@ If keeping content, repurpose blog/news pages into practical growth assets:
 - Client case breakdowns
 
 Likely touchpoints:
-- `public/blog.html`
+- `blog.html`
 - Existing post templates/content workflows if still used
 
 ## 8) Upgrade forms to qualify leads better
@@ -120,7 +120,7 @@ Update contact and project inquiry forms to collect key scoping data:
 - Decision-maker readiness
 
 Files to review:
-- `public/contact.html`
+- `contact.html`
 - Any related serverless functions in `netlify/functions/`
 
 Make sure form confirmations set expectations on response time and next steps.
@@ -147,7 +147,7 @@ Before launch, verify:
 - LocalBusiness/Organization schema where appropriate
 - Analytics and conversion tracking events on CTA/form milestones
 
-## 11) Sync guide artifacts and mirrored pages
+## 11) Sync guide artifacts
 
 When adding/updating adaptation guides:
 
@@ -156,12 +156,7 @@ npm run sync:site-adaptation-guides
 npm run check:site-adaptation-guides
 ```
 
-If deployable pages/scripts changed, sync root mirrors:
-
-```bash
-npm run sync-root-pages
-npm run check-root-pages
-```
+Deployable HTML/CSS/JS live at the repository root — edit them in place; no mirror sync step is needed.
 
 ## 12) Delivery checklist for a web-dev business launch
 
@@ -171,7 +166,7 @@ npm run check-root-pages
 - [ ] Inquiry forms capture qualification details
 - [ ] Module toggles stripped to essentials
 - [ ] SEO/legal/accessibility baseline complete
-- [ ] Guide sync and root sync checks pass
+- [ ] Adaptation-guide sync check passes
 - [ ] Mobile + desktop smoke test complete
 
 ---

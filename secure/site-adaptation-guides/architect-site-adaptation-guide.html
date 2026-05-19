@@ -63,7 +63,7 @@ Update global identity values on homepage and shared pages:
 - Favicon and logo assets
 
 Primary file to start with:
-- `public/index.html`
+- `index.html`
 
 Key changes:
 - Replace "Gematria.Today" and gematria-related copy with your architecture studio identity.
@@ -82,16 +82,16 @@ Current nav includes News/Blog/Gematria/FAQ/member features. For an architect si
 - Contact
 
 Files to edit:
-- `public/index.html` (header/nav + homepage sections)
-- Other page files in `public/` to match your chosen nav structure
+- `index.html` (header/nav + homepage sections)
+- Other page files at the repo root to match your chosen nav structure
 
 Recommended new pages:
-- `public/projects.html`
-- `public/project-detail.html`
-- `public/services.html`
-- `public/about.html`
-- `public/process.html`
-- `public/testimonials.html`
+- `projects.html`
+- `project-detail.html`
+- `services.html`
+- `about.html`
+- `process.html`
+- `testimonials.html`
 
 ## 3) Rework homepage sections for architecture goals
 
@@ -108,8 +108,8 @@ Use image-heavy layouts with short copy and clear calls to action.
 ## 4) Visual system updates (high impact)
 
 Adapt style tokens and component appearance in:
-- `public/theme.css`
-- Any inline styles in `public/index.html`
+- `theme.css`
+- Any inline styles in `index.html`
 
 Suggested design adjustments:
 - Lighter neutral palette (off-white, charcoal, stone tones)
@@ -120,12 +120,12 @@ Suggested design adjustments:
 
 ## 5) Disable irrelevant modules/features
 
-This repo supports module toggles through `public/site-modules.js`.
+This repo supports module toggles through `site-modules.js`.
 
 For an architecture site, you likely want to disable forum/chatbot/membership style modules unless you explicitly need them.
 
 File:
-- `public/site-modules.js`
+- `site-modules.js`
 
 Action:
 - Set only the modules you still need in `DEFAULT_MODULES`.
@@ -142,7 +142,7 @@ If you still want content marketing:
   - Outcome/results
 
 Likely touchpoints:
-- `public/blog.html`
+- `blog.html`
 - Admin/content endpoints only if you keep dynamic publishing
 
 ## 7) Replace lead capture and contact workflow
@@ -157,7 +157,7 @@ Update contact forms to capture:
 - Scope summary
 
 Files to review:
-- `public/contact.html`
+- `contact.html`
 - Any related Netlify function handling submissions in `netlify/functions/`
 
 ## 8) Portfolio data model (if you want dynamic project pages)
@@ -195,8 +195,6 @@ Also ensure every project image has descriptive alt text.
 - Run module toggle defaults for the final architecture build.
 - Check mobile typography and image cropping.
 - Validate forms and conversion flow.
-- Run root-page sync if you changed deployable pages:
-  - `npm run sync-root-pages`
 
 ---
 
@@ -281,10 +279,10 @@ If they request frequent new pages, rapid edits, or ongoing content ops, use a m
 ## Practical minimum viable conversion (fast path)
 
 If you want the quickest high-quality transformation:
-1. Rebrand `public/index.html` + `public/theme.css`
+1. Rebrand `index.html` + `theme.css`
 2. Create `projects.html`, `services.html`, `about.html`, `contact.html`
-3. Disable unneeded modules in `public/site-modules.js`
-4. Replace all hero/OG assets in `public/assets/`
+3. Disable unneeded modules in `site-modules.js`
+4. Replace all hero/OG assets in `assets/`
 5. Keep only one content stream (Journal) or remove it entirely
 
 This gets you to a clean architecture website quickly, and you can add dynamic project management later.

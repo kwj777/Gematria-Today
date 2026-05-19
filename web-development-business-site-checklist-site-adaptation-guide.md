@@ -16,9 +16,9 @@ Use this checklist to adapt this codebase into a **web development agency or fre
 - [ ] Update `<title>`, meta descriptions, canonical URLs, and social share metadata.
 - [ ] Replace logo and favicon assets.
 - [ ] Update footer/company/legal contact language.
-- [ ] Update `public/index.html`.
-- [ ] Update shared pages in `public/*.html`.
-- [ ] Update brand assets in `public/assets/`.
+- [ ] Update `index.html`.
+- [ ] Update shared pages in `*.html` at the repo root.
+- [ ] Update brand assets in `assets/`.
 
 ## 3) Replace navigation with agency-oriented IA
 
@@ -29,11 +29,11 @@ Use this checklist to adapt this codebase into a **web development agency or fre
 
 ## 4) Build essential conversion pages
 
-- [ ] Create or repurpose `public/services.html`.
-- [ ] Create or repurpose `public/portfolio.html`.
-- [ ] Create or repurpose `public/case-study.html`.
-- [ ] Create or repurpose `public/process.html`.
-- [ ] Create or repurpose `public/pricing.html`.
+- [ ] Create or repurpose `services.html`.
+- [ ] Create or repurpose `portfolio.html`.
+- [ ] Create or repurpose `case-study.html`.
+- [ ] Create or repurpose `process.html`.
+- [ ] Create or repurpose `pricing.html`.
 - [ ] Validate visitor flow: Home → Service detail → Contact/Book call.
 
 ## 5) Rework homepage for pipeline generation
@@ -56,7 +56,7 @@ Use this checklist to adapt this codebase into a **web development agency or fre
 
 ## 7) Configure modules for a clean agency build
 
-- [ ] Review toggles in `public/site-modules.js`.
+- [ ] Review toggles in `site-modules.js`.
 - [ ] Disable `forum` unless community is intentional.
 - [ ] Disable `knowbot` unless it directly supports lead qualification.
 - [ ] Disable `gemabot` unless required for scope.
@@ -65,7 +65,7 @@ Use this checklist to adapt this codebase into a **web development agency or fre
 
 ## 8) Modernize visual system and UX consistency
 
-- [ ] Update design tokens and component styles in `public/theme.css`.
+- [ ] Update design tokens and component styles in `theme.css`.
 - [ ] Standardize button hierarchy and form styles.
 - [ ] Improve spacing rhythm and section scannability.
 - [ ] Ensure WCAG-friendly contrast and keyboard focus visibility.
@@ -73,7 +73,7 @@ Use this checklist to adapt this codebase into a **web development agency or fre
 
 ## 9) Upgrade lead capture and qualification flow
 
-- [ ] Update `public/contact.html` for project qualification fields.
+- [ ] Update `contact.html` for project qualification fields.
 - [ ] Capture project type, budget range, timeline, and required integrations.
 - [ ] Include website URL/company context fields.
 - [ ] Set confirmation messaging with SLA and next steps.
@@ -93,13 +93,11 @@ Use this checklist to adapt this codebase into a **web development agency or fre
 - [ ] Verify canonical URL correctness and social image mapping.
 - [ ] Validate semantic heading order and image alt text.
 - [ ] Add/update analytics events for CTA clicks and form submissions.
-- [ ] Update `public/privacy.html`, `public/terms.html`, `public/disclaimer.html`, and `public/accessibility.html`.
+- [ ] Update `privacy.html`, `terms.html`, `disclaimer.html`, and `accessibility.html`.
 
 ## 12) Sync artifacts and launch checks
 
 - [ ] Run `npm run sync:site-adaptation-guides`.
 - [ ] Run `npm run check:site-adaptation-guides`.
-- [ ] Run `npm run sync-root-pages` if deployable pages/scripts changed.
-- [ ] Run `npm run check-root-pages` if root/public mirror integrity is required.
 - [ ] Run `npm run test` and `npm run lint` before deployment.
 - [ ] Smoke test critical flows on desktop and mobile.

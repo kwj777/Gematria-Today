@@ -12,7 +12,7 @@ Start by replacing global identity elements:
 - Footer business identity details
 
 Primary file to begin with:
-- `public/index.html`
+- `index.html`
 
 Key updates:
 - Replace niche-specific copy with your store promise and strongest product categories.
@@ -38,16 +38,16 @@ Useful utility links/actions:
 - Order Tracking
 
 Files to update:
-- `public/index.html` and related pages in `public/`
+- `index.html` and related pages at the repo root
 
 Recommended new pages:
-- `public/shop.html`
-- `public/category.html`
-- `public/product-detail.html`
-- `public/cart.html`
-- `public/checkout.html`
-- `public/store-locator.html`
-- `public/shipping-returns.html`
+- `shop.html`
+- `category.html`
+- `product-detail.html`
+- `cart.html`
+- `checkout.html`
+- `store-locator.html`
+- `shipping-returns.html`
 
 ## 3) Rework homepage for in-store and online conversion
 
@@ -99,7 +99,7 @@ Prioritize these flows:
 - Real-time “in stock at this store” indicators
 
 Files to review for implementation routing:
-- `public/contact.html` (if reused for support)
+- `contact.html` (if reused for support)
 - `netlify/functions/` endpoints for server-side validation and data handling
 
 ## 6) Convert content engine into retail merchandising content
@@ -111,13 +111,13 @@ Repurpose blog/news features into:
 - Event landing pages (in-store demos, workshops, launches)
 
 Likely touchpoints:
-- `public/blog.html`
+- `blog.html`
 - Related `netlify/functions/` content endpoints if dynamic publishing remains enabled
 
 ## 7) Update visual system for product-first scanning
 
 Primary style layers:
-- `public/theme.css`
+- `theme.css`
 - Inline page styles where used
 
 High-impact changes:
@@ -132,7 +132,7 @@ Keep typography and spacing optimized for quick scanning on mobile.
 ## 8) Configure modules and disable non-retail features
 
 This project supports feature toggles via:
-- `public/site-modules.js`
+- `site-modules.js`
 
 Action:
 - Keep only launch-critical modules.
@@ -149,8 +149,8 @@ Essential support pages/workflows:
 - FAQ for delivery windows, pickup timing, and refund status
 
 Files to review:
-- `public/contact.html`
-- `public/faq.html`
+- `contact.html`
+- `faq.html`
 - Any related support handlers in `netlify/functions/`
 
 ## 10) Local SEO + ecommerce SEO essentials
@@ -187,8 +187,6 @@ Review:
 - Verify store locator details (address, hours, map, phone)
 - Test support forms, order status, and returns flows
 - Run static checks and audits
-- Sync deployable root pages if needed:
-  - `npm run sync-root-pages`
 
 ---
 

@@ -11,7 +11,7 @@ Start with core identity updates across the site:
 - EIN/tax status references where appropriate
 
 Primary file to start with:
-- `public/index.html`
+- `index.html`
 
 Key changes:
 - Replace niche-specific copy with your nonprofit mission and beneficiary outcomes.
@@ -32,17 +32,17 @@ Recommended navigation for most nonprofits:
 - Contact
 
 Files to update:
-- `public/index.html` (header and homepage sections)
-- Other templates in `public/` to match the final navigation
+- `index.html` (header and homepage sections)
+- Other templates at the repo root to match the final navigation
 
 Recommended new pages:
-- `public/programs.html`
-- `public/get-involved.html`
-- `public/volunteer.html`
-- `public/donate.html`
-- `public/impact.html`
-- `public/events.html`
-- `public/partners.html`
+- `programs.html`
+- `get-involved.html`
+- `volunteer.html`
+- `donate.html`
+- `impact.html`
+- `events.html`
+- `partners.html`
 
 ## 3) Rework homepage for nonprofit conversion goals
 
@@ -66,7 +66,7 @@ Donation conversion often determines nonprofit sustainability. Prioritize:
 - Mobile-friendly donation form with minimal steps
 
 Files to review:
-- `public/contact.html` (if reused for supporter forms)
+- `contact.html` (if reused for supporter forms)
 - `netlify/functions/member-payment-checkout.mjs`
 - `netlify/functions/member-payment-confirm.mjs`
 - `netlify/functions/_stripe.mjs`
@@ -90,7 +90,7 @@ Recommended partner/sponsor intake fields:
 - Preferred contact and timeline
 
 Likely files:
-- `public/contact.html`
+- `contact.html`
 - Relevant intake handlers in `netlify/functions/`
 
 ## 6) Convert blog/news into mission communications
@@ -102,7 +102,7 @@ Repurpose content features into:
 - Resource guides and advocacy updates
 
 Likely touchpoints:
-- `public/blog.html`
+- `blog.html`
 - Related content endpoints in `netlify/functions/`
 
 ## 7) Define data models for programs, outcomes, and events
@@ -137,8 +137,8 @@ Suggested **event** fields:
 ## 8) Adjust visual system for empathy and clarity
 
 Primary style touchpoints:
-- `public/theme.css`
-- Inline styles in `public/index.html`
+- `theme.css`
+- Inline styles in `index.html`
 
 Design recommendations:
 - Warm, accessible color palette with strong contrast
@@ -151,7 +151,7 @@ Use alt text that explains context, not just objects in images.
 ## 9) Configure modules and disable irrelevant features
 
 This repository uses feature toggles in:
-- `public/site-modules.js`
+- `site-modules.js`
 
 Action:
 - Keep only mission-critical modules for launch.
@@ -204,8 +204,6 @@ Track conversions for:
 - Test volunteer, contact, and event registration forms
 - Confirm legal pages: privacy, terms, donation policy
 - Run accessibility and core QA checks
-- Sync root pages if needed:
-  - `npm run sync-root-pages`
 
 ---
 

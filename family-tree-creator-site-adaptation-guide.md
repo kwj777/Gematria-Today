@@ -21,9 +21,9 @@ Update all brand surfaces:
 - Trust language emphasizing data ownership and privacy
 
 Start with:
-- `public/index.html`
-- Shared static pages in `public/*.html`
-- Brand assets in `public/assets/`
+- `index.html`
+- Shared static pages at the repo root (`*.html`)
+- Brand assets in `assets/`
 
 ## 3) Replace navigation with creator-first information architecture
 
@@ -51,13 +51,13 @@ Keep global navigation focused on activation (start tree) and trust (privacy + s
 ## 4) Build core page set for acquisition + activation
 
 Create or repurpose pages:
-- `public/features.html`
-- `public/how-it-works.html`
-- `public/pricing.html`
-- `public/templates.html`
-- `public/help-center.html`
-- `public/tree-builder.html` (app shell)
-- `public/tree-share.html` (invite/collaboration landing)
+- `features.html`
+- `how-it-works.html`
+- `pricing.html`
+- `templates.html`
+- `help-center.html`
+- `tree-builder.html` (app shell)
+- `tree-share.html` (invite/collaboration landing)
 
 Goal: smooth journey from visitor → signup → first tree created in under 10 minutes.
 
@@ -123,13 +123,13 @@ Prioritize:
 - Conflict prompts for duplicate or contradictory records
 
 Style touchpoints:
-- `public/theme.css`
-- Page-level styles in `public/*.html`
+- `theme.css`
+- Page-level styles at the repo root (`*.html`)
 
 ## 8) Configure modules for collaboration and support
 
 Feature gating lives in:
-- `public/site-modules.js`
+- `site-modules.js`
 
 For a family tree product:
 - Keep account/auth modules enabled
@@ -160,9 +160,9 @@ Because family data may include living people, include:
 - Data export and deletion controls
 
 Update legal pages accordingly:
-- `public/privacy.html`
-- `public/terms.html`
-- `public/disclaimer.html`
+- `privacy.html`
+- `terms.html`
+- `disclaimer.html`
 
 ## 11) SEO and discoverability plan for genealogy intent
 
@@ -187,7 +187,6 @@ SEO checks:
 - [ ] Export/deletion flows validated
 - [ ] `npm run sync:site-adaptation-guides` completed
 - [ ] `npm run check:site-adaptation-guides` passes
-- [ ] `npm run check-root-pages` passes if any root/public mirrors changed
 
 ---
 

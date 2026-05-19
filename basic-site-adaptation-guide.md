@@ -2,20 +2,9 @@
 
 This guide is the shared playbook for adapting this codebase into any niche website (services, ecommerce, nonprofit, church, portfolio, media, etc.).
 
-## 1) Start with the canonical source of truth
+## 1) Know where pages live
 
-Always make page/content changes in `public/` first.
-
-- Deployable pages and scripts live in `public/`.
-- Root-level page files are mirrors for compatibility and should not be manually edited.
-- After updates, run root sync so mirrors stay current.
-
-Core commands:
-
-```bash
-npm run sync-root-pages
-npm run check-root-pages
-```
+Deployable HTML/CSS/JS pages live at the **repository root** (no `public/` directory). Netlify's `publish` directory is `.` (see `netlify.toml`). Edit the root files in place.
 
 ## 2) Define adaptation scope before editing
 
@@ -42,9 +31,9 @@ Update global brand elements everywhere they appear:
 
 Primary files:
 
-- `public/index.html`
-- Shared static pages in `public/*.html`
-- `public/assets/` for branding graphics
+- `index.html`
+- Shared static pages at the repo root (`*.html`)
+- `assets/` for branding graphics
 
 ## 4) Restructure information architecture (IA)
 
@@ -65,7 +54,7 @@ Ensure header and footer links are consistent across all pages.
 
 This repository supports modular feature gating through:
 
-- `public/site-modules.js`
+- `site-modules.js`
 
 Action:
 
@@ -83,7 +72,7 @@ Examples of modules often disabled in simple brochure builds:
 
 Apply a cohesive visual system update in:
 
-- `public/theme.css`
+- `theme.css`
 - Any page-level inline styles that remain
 
 Recommended adaptation pass:
@@ -131,22 +120,15 @@ Before launch, verify:
 - Semantic headings (`h1` → `h2` structure)
 - Meaningful alt text for images
 - Keyboard-focus visibility and form labels
-- Updated `public/privacy.html`, `public/terms.html`, and relevant legal language
+- Updated `privacy.html`, `terms.html`, and relevant legal language
 
-## 10) Sync adaptation guides and root mirrors
+## 10) Sync adaptation guides
 
-When adding/updating adaptation guides (`*-site-adaptation-guide.md`), keep generated HTML in sync:
+When adding/updating adaptation guides (`*-site-adaptation-guide.md`), keep the generated HTML in sync:
 
 ```bash
 npm run sync:site-adaptation-guides
 npm run check:site-adaptation-guides
-```
-
-Also sync root mirrors after page/script changes:
-
-```bash
-npm run sync-root-pages
-npm run check-root-pages
 ```
 
 ## 11) Quality checks before deploy
@@ -155,7 +137,6 @@ Minimum checks:
 
 ```bash
 npm run check:site-adaptation-guides
-npm run check-root-pages
 npm run test
 npm run lint
 ```
@@ -170,7 +151,7 @@ If a check fails, fix the issue before release.
 - [ ] Forms submit successfully and endpoints respond as expected
 - [ ] SEO metadata and social previews updated
 - [ ] Legal/compliance pages updated
-- [ ] Root mirror and guide sync checks pass
+- [ ] Adaptation-guide sync check passes
 - [ ] Smoke test complete on mobile + desktop
 
 ---

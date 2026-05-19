@@ -11,7 +11,7 @@ Update global brand surfaces before touching page-level features:
 - Primary conversion promise (fast shipping, curated catalog, easy returns)
 
 Start with:
-- `public/index.html`
+- `index.html`
 
 ## 2) Replace navigation with ecommerce-first information architecture
 
@@ -32,19 +32,19 @@ Recommended utility actions:
 - Order Tracking
 
 Files to edit:
-- `public/index.html`
-- Related pages in `public/` that share header/footer markup
+- `index.html`
+- Related pages at the repo root that share header/footer markup
 
 ## 3) Add core ecommerce page set
 
 Create or repurpose these pages:
-- `public/shop.html` (product listing)
-- `public/category.html` (category listing)
-- `public/product-detail.html` (PDP)
-- `public/cart.html`
-- `public/checkout.html`
-- `public/order-tracking.html`
-- `public/shipping-returns.html`
+- `shop.html` (product listing)
+- `category.html` (category listing)
+- `product-detail.html` (PDP)
+- `cart.html`
+- `checkout.html`
+- `order-tracking.html`
+- `shipping-returns.html`
 
 Goal: a complete browse → cart → checkout → post-purchase support journey.
 
@@ -98,8 +98,8 @@ Prioritize:
 - Cart upsell/cross-sell slots
 
 Style layers to edit:
-- `public/theme.css`
-- Any inline page styles in `public/*.html`
+- `theme.css`
+- Any inline page styles in `*.html` at the repo root
 
 ## 7) Repurpose existing content engine into retail content marketing
 
@@ -111,13 +111,13 @@ Convert blog/news sections into:
 - FAQ-based support articles
 
 Touchpoints:
-- `public/blog.html`
+- `blog.html`
 - Related content functions in `netlify/functions/` if dynamic publishing remains enabled
 
 ## 8) Configure modules for retail-only launch scope
 
 This project supports module toggles in:
-- `public/site-modules.js`
+- `site-modules.js`
 
 For online retail launch:
 - Keep only modules that support merchandising, checkout, and customer support
@@ -134,10 +134,10 @@ Include essential support and compliance pages:
 - FAQ for fulfillment and returns
 
 Likely files:
-- `public/contact.html`
-- `public/faq.html`
-- `public/terms.html`
-- `public/privacy.html`
+- `contact.html`
+- `faq.html`
+- `terms.html`
+- `privacy.html`
 
 ## 10) Ecommerce SEO checklist
 
@@ -171,8 +171,6 @@ Review:
 - Verify tax/shipping/discount logic if configured
 - Confirm transactional email and order tracking links
 - Run static checks and site sync scripts as needed
-- Sync deployable root pages:
-  - `npm run sync-root-pages`
 
 ---
 

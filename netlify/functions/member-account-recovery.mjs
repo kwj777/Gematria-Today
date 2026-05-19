@@ -8,6 +8,7 @@ import {
   ensureAccountRecoverySchema,
   getSqlClient,
   hashPassword,
+  hashToken,
   jsonResponse,
   parseBody,
 } from './_auth.mjs';
@@ -54,6 +55,16 @@ export async function handler(event) {
       if (!email) {
         return jsonResponse(400, { error: 'Email is required' });
       }
+
+      await applyRateLimit(sql, event, {
+        scope: 'member-recovery-email',
+        key: email,
+        limit: 5,
+        windowMs: 60 * 60_000,
+        blockMs: 60 * 60_000,
+        message: 'Too many recovery requests for this email address.',
+        auditMetadata: { action },
+      });
 
       const rows = await sql`
         SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, role, COALESCE(is_admin, FALSE) AS is_admin, created_at, updated_at
@@ -122,6 +133,16 @@ export async function handler(event) {
         return jsonResponse(400, { error: 'Username or email is required' });
       }
 
+      await applyRateLimit(sql, event, {
+        scope: 'member-recovery-identifier',
+        key: identifier.toLowerCase(),
+        limit: 5,
+        windowMs: 60 * 60_000,
+        blockMs: 60 * 60_000,
+        message: 'Too many password reset requests for this account.',
+        auditMetadata: { action },
+      });
+
       const email = normalizeEmail(identifier);
       const rows = await sql`
         SELECT id, username, email, role, COALESCE(is_admin, FALSE) AS is_admin
@@ -173,6 +194,16 @@ export async function handler(event) {
       if (newPassword.length < 8) {
         return jsonResponse(400, { error: 'New password must be at least 8 characters long' });
       }
+
+      await applyRateLimit(sql, event, {
+        scope: 'member-recovery-reset-token',
+        key: hashToken(recoveryCode),
+        limit: 5,
+        windowMs: 15 * 60_000,
+        blockMs: 60 * 60_000,
+        message: 'Too many attempts for this recovery code.',
+        auditMetadata: { action },
+      });
 
       const recovery = await consumeAccountRecoveryRequest(sql, {
         role: 'member',

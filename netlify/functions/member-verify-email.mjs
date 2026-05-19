@@ -5,7 +5,8 @@ import {
   jsonResponse,
   parseBody,
 } from './_member.mjs';
-import { AUTH_COOKIES } from './_auth.mjs';
+import { AUTH_COOKIES, hashToken } from './_auth.mjs';
+import { applyRateLimit, getClientIp } from './_security.mjs';
 
 function readToken(event) {
   if (event.httpMethod === 'GET') {
@@ -28,6 +29,24 @@ export async function handler(event) {
     if (!token) {
       return jsonResponse(400, { error: 'Verification token is required' }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
     }
+
+    await applyRateLimit(sql, event, {
+      scope: 'member-verify-email-ip',
+      key: getClientIp(event),
+      limit: 20,
+      windowMs: 15 * 60_000,
+      blockMs: 30 * 60_000,
+      message: 'Too many email verification attempts from this IP address.',
+    });
+
+    await applyRateLimit(sql, event, {
+      scope: 'member-verify-email-token',
+      key: hashToken(token),
+      limit: 5,
+      windowMs: 15 * 60_000,
+      blockMs: 60 * 60_000,
+      message: 'Too many attempts for this verification token.',
+    });
 
     const member = await finalizeMemberEmailVerification(sql, token);
     if (!member) {

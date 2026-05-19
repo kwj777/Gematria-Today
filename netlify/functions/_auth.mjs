@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { promisify } from 'node:util';
 import { neon } from '@neondatabase/serverless';
 import {
+  applyRateLimit,
   jsonResponse as secureJsonResponse,
 } from './_security.mjs';
 
@@ -42,6 +43,16 @@ export async function createAccountRecoveryRequest(sql, {
   }
 
   await ensureAccountRecoverySchema(sql);
+
+  await applyRateLimit(sql, null, {
+    scope: 'account-recovery-issue',
+    key: `${role}:${recoveryType}:${userId}`,
+    limit: 5,
+    windowMs: 60 * 60_000,
+    blockMs: 60 * 60_000,
+    message: 'Too many recovery requests for this account. Please try again later.',
+  });
+
   const token = crypto.randomBytes(24).toString('hex');
   const expiresAt = new Date(Date.now() + ttlMs);
 
@@ -248,6 +259,9 @@ export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
 
 const ALLOWED_MEMBER_TIERS = new Set(['free', 'premium', 'lifetime']);
 
+// UI-only hint cookie (not HttpOnly so static pages can read it for nav/upsell rendering).
+// Never trust this for authorization — always read membership_level from the users row via
+// getAuthenticatedMember / formatMemberUser.
 export function createMemberTierCookie(level, expiresAt) {
   const normalized = ALLOWED_MEMBER_TIERS.has(level) ? level : 'free';
   const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();

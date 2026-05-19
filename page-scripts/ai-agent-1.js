@@ -754,6 +754,65 @@
         return '';
       }
 
+      function isCancellationPrompt(prompt) {
+        const stripped = normalizeCandidate(prompt).toLowerCase().replace(/[?.!]+$/g, '').trim();
+        if (!stripped) return false;
+        return /^(?:never\s*mind|nvm|cancel(?:\s+that)?|stop(?:\s+it)?|forget\s+(?:it|that|this)|skip\s+(?:it|that)|drop\s+it)$/.test(stripped);
+      }
+
+      function resolvePronouns(prompt, context) {
+        if (!context || context.kind !== 'calculation' || !context.topic) return prompt;
+        const topic = context.topic;
+        return String(prompt || '')
+          .replace(/\bit's\b/gi, `${topic} is`)
+          .replace(/\bits\b/gi, `${topic}'s`)
+          .replace(/\bit\b/gi, topic)
+          .replace(/\bthat\s+(?:one|word|name|topic|target|result|total)\b/gi, topic)
+          .replace(/\bthe\s+(?:result|previous|last|same|prior)(?:\s+(?:one|word|topic|target|result|total|calculation))?\b/gi, topic);
+      }
+
+      const NUMBER_WORD_VALUES = {
+        zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+        ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
+        seventeen: 17, eighteen: 18, nineteen: 19,
+        twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+        hundred: 100, thousand: 1000
+      };
+      const NUMBER_WORD_PATTERN = /\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)(?:[\s-]+(?:and[\s-]+)?(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand))+\b/gi;
+
+      function parseSpelledNumber(text) {
+        const tokens = String(text || '').toLowerCase().split(/[\s-]+/).filter((token) => token && token !== 'and');
+        if (!tokens.length) return null;
+        let total = 0;
+        let current = 0;
+        for (const token of tokens) {
+          if (!(token in NUMBER_WORD_VALUES)) return null;
+          const value = NUMBER_WORD_VALUES[token];
+          if (value === 100) {
+            current = (current || 1) * 100;
+          } else if (value === 1000) {
+            current = (current || 1) * 1000;
+            total += current;
+            current = 0;
+          } else {
+            current += value;
+          }
+        }
+        return total + current;
+      }
+
+      function normalizeNumericInput(prompt) {
+        let result = String(prompt || '').replace(/\b(\d{1,3}(?:,\d{3})+)\b/g, (match) => match.replaceAll(',', ''));
+        const reverseContext = /\b(?:reverse|gematria|equals?|matching|matches|sum|sums|total|totals|value|number)\b/i.test(result);
+        if (reverseContext) {
+          result = result.replace(NUMBER_WORD_PATTERN, (match) => {
+            const parsed = parseSpelledNumber(match);
+            return parsed === null ? match : String(parsed);
+          });
+        }
+        return result;
+      }
+
       function isFollowupQuestion(prompt) {
         const stripped = normalizeCandidate(prompt).toLowerCase().replace(/[?.!]+$/g, '').trim();
         if (!stripped || stripped.length > 60) return false;
@@ -1752,11 +1811,19 @@ View results: ${shareUrl}`.trim(),
       }
 
       async function buildAgentReply(prompt) {
-        const normalizedPrompt = normalizeCandidate(prompt);
+        const rawNormalized = normalizeCandidate(prompt);
 
-        if (isFollowupQuestion(normalizedPrompt)) {
+        if (isCancellationPrompt(rawNormalized)) {
+          pendingRelatedWordsSuggestionTopic = '';
+          renderRelatedWordsFollowupSuggestion();
+          return '<p class="mb-0">Cleared. What would you like to calculate next?</p>';
+        }
+
+        if (isFollowupQuestion(rawNormalized)) {
           return buildFollowupReply(lastCalculationContext);
         }
+
+        const normalizedPrompt = normalizeNumericInput(resolvePronouns(rawNormalized, lastCalculationContext));
 
         const recallTarget = extractRecallTarget(normalizedPrompt);
         if (recallTarget) {
@@ -1891,14 +1958,19 @@ View results: ${shareUrl}`.trim(),
           `;
         }
 
-        const calculationTargets = extractCalculationTargets(normalizedPrompt);
-        if (!calculationTargets.length) {
+        const rawCalculationTargets = extractCalculationTargets(normalizedPrompt);
+        if (!rawCalculationTargets.length) {
           const strayNumberMatch = normalizedPrompt.match(/\b(\d{1,6})\b/);
           if (strayNumberMatch) {
             const strayValue = Number(strayNumberMatch[1]);
             return `<p class="mb-0">Did not see a word or phrase to calculate. To run a reverse gematria lookup for <strong>${strayValue}</strong>, try <code>reverse gematria ${strayValue}</code> or <code>what words equal ${strayValue}</code>.</p>`;
           }
           return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try the KnowBot? (on top menu)</p>';
+        }
+
+        const calculationTargets = rawCalculationTargets.filter((target) => gematriaLetterBreakdown(target).length > 0);
+        if (!calculationTargets.length) {
+          return `<p class="mb-0">I couldn't find any A–Z letters in ${escapeHtml(rawCalculationTargets.join(', '))}. English gematria covers A=6 through Z=156 only — other systems (Hebrew, Greek) aren't supported here yet.</p>`;
         }
 
         const topic = calculationTargets[0] || '';

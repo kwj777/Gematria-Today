@@ -24,6 +24,25 @@
         applyAuthState();
       })();
     </script>
+    <script>
+      (function () {
+        function isBlogDetailView() {
+          if (/^\/blog\/[^/?#]+/i.test(window.location.pathname)) return true;
+          try {
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('post')) return true;
+            if (params.get('postId')) return true;
+          } catch (e) {}
+          return false;
+        }
+        if (isBlogDetailView()) {
+          document.documentElement.classList.add('blog-detail-view');
+        }
+      })();
+    </script>
+    <style>
+      html.blog-detail-view #blogLandingHero { display: none; }
+    </style>
 
 <!-- Google tag (gtag.js) -->
 <script>
@@ -229,7 +248,7 @@
     </nav>
     <main id="mainContent" class="py-5">
       <div class="container">
-        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
+        <section id="blogLandingHero" class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
           <p class="section-kicker mb-3">Blog</p>
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
@@ -1311,6 +1330,23 @@
       };
       const mergeUniquePosts = (items = []) => mergeWithFallbackPosts(items, { includeFallback: false });
 
+      // When the URL targets a specific post and that post exists in the fallback set,
+      // render it immediately so the reader sees content instead of the loading skeleton
+      // while the API request is still in flight. The Promise.all below will re-render
+      // once the API response arrives.
+      (() => {
+        const initialRequestedSlug = String(getRequestedPostSlug() || '').trim().toLowerCase();
+        if (!initialRequestedSlug) {
+          return;
+        }
+        const fallbackMatch = fallbackPosts.find((post, index) =>
+          createPostSlug(post, index).toLowerCase() === initialRequestedSlug
+        );
+        if (fallbackMatch) {
+          renderPosts([fallbackMatch]);
+        }
+      })();
+
       const renderPostsPromise = Promise.all([
         checkAdminSession(),
         fetchPublishedPosts({ offset: 0 })
@@ -1326,9 +1362,7 @@
             previewNotice.classList.toggle('d-none', !previewModeActive);
           }
           const hasRequestedPost = Boolean(getRequestedPostSlug() || getRequestedPostId());
-          const mergedPosts = hasRequestedPost
-            ? mergeUniquePosts(loadedPublishedPosts)
-            : mergeWithFallbackPosts(loadedPublishedPosts);
+          const mergedPosts = mergeWithFallbackPosts(loadedPublishedPosts);
           selectedTag = getRequestedTag();
           const fallbackSet = previewModeActive || hasRequestedPost ? [] : fallbackPosts;
           renderPosts(mergedPosts.length ? mergedPosts : fallbackSet);

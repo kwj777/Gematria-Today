@@ -226,17 +226,22 @@ summary:focus-visible,
 }
 
 main > .container > nav[aria-label="Breadcrumb"] .breadcrumb {
-  --bs-breadcrumb-divider-color: rgba(226, 232, 240, 0.5);
+  --bs-breadcrumb-divider-color: rgba(53, 65, 79, 0.55);
 }
 main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item.active {
-  color: rgba(226, 232, 240, 0.78);
+  color: #1f2937;
+  font-weight: 600;
 }
 main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a {
-  color: #93c5fd;
+  color: var(--bs-primary, #0d6efd);
+  text-decoration: underline;
+  text-decoration-color: rgba(13, 110, 253, 0.35);
+  text-underline-offset: 0.15em;
 }
 main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:hover,
 main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visible {
-  color: #bfdbfe;
+  color: var(--bs-link-hover-color, #0a58ca);
+  text-decoration-color: currentColor;
 }
 
 @media (prefers-reduced-motion: no-preference) {

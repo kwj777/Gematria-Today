@@ -7,7 +7,7 @@ const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/theme.css',
-  '/ui-feedback.js',
+  '/site-bundle.js',
   '/pwa-register.js',
   '/manifest.webmanifest',
   '/offline.html',

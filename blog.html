@@ -44,87 +44,8 @@
       html.blog-detail-view #blogLandingHero { display: none; }
     </style>
 
-<!-- Google tag (gtag.js) -->
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-
-  var gaMeasurementId = 'G-E611H84D6Y';
-  var consentModeRegions = ['AT','BE','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','GB'];
-
-  function isGoogleAnalyticsEnabled() {
-    if (window.SITE_MODULE_OVERRIDES && window.SITE_MODULE_OVERRIDES.google_analytics === false) {
-      return false;
-    }
-
-    try {
-      var stored = window.localStorage.getItem('gematria.siteModules');
-      if (stored) {
-        var parsed = JSON.parse(stored);
-        if (parsed && parsed.google_analytics === false) {
-          return false;
-        }
-      }
-    } catch (e) {
-      // Ignore storage parse errors.
-    }
-
-    try {
-      var moduleParam = new URLSearchParams(window.location.search).get('modules');
-      if (moduleParam) {
-        var requested = moduleParam.split(',').map(function (entry) { return String(entry).trim().toLowerCase(); }).filter(Boolean);
-        return requested.indexOf('google_analytics') !== -1;
-      }
-    } catch (e) {
-      // Ignore URL parsing errors.
-    }
-
-    return true;
-  }
-
-  var googleAnalyticsEnabled = isGoogleAnalyticsEnabled();
-  window.__gematriaGoogleAnalyticsEnabled = googleAnalyticsEnabled;
-
-  if (!googleAnalyticsEnabled) {
-    window['ga-disable-' + gaMeasurementId] = true;
-  } else {
-    window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
-
-    gtag('consent', 'default', {
-      analytics_storage: 'granted',
-      ad_storage: 'granted',
-      ad_user_data: 'granted',
-      ad_personalization: 'granted'
-    });
-
-    gtag('consent', 'default', {
-      analytics_storage: 'denied',
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      wait_for_update: 500,
-      region: consentModeRegions
-    });
-
-    function initializeGoogleAnalytics() {
-      if (window.__gematriaGoogleAnalyticsInitialized) {
-        return;
-      }
-
-      window.__gematriaGoogleAnalyticsInitialized = true;
-
-      var gaScript = document.createElement('script');
-      gaScript.async = true;
-      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaMeasurementId);
-      gaScript.setAttribute('fetchpriority', 'low');
-      document.head.appendChild(gaScript);
-
-      gtag('js', new Date());
-      gtag('config', gaMeasurementId);
-    }
-    initializeGoogleAnalytics();
-  }
-</script>
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/analytics-bootstrap.js"></script>
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

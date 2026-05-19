@@ -1311,6 +1311,23 @@
       };
       const mergeUniquePosts = (items = []) => mergeWithFallbackPosts(items, { includeFallback: false });
 
+      // When the URL targets a specific post and that post exists in the fallback set,
+      // render it immediately so the reader sees content instead of the loading skeleton
+      // while the API request is still in flight. The Promise.all below will re-render
+      // once the API response arrives.
+      (() => {
+        const initialRequestedSlug = String(getRequestedPostSlug() || '').trim().toLowerCase();
+        if (!initialRequestedSlug) {
+          return;
+        }
+        const fallbackMatch = fallbackPosts.find((post, index) =>
+          createPostSlug(post, index).toLowerCase() === initialRequestedSlug
+        );
+        if (fallbackMatch) {
+          renderPosts([fallbackMatch]);
+        }
+      })();
+
       const renderPostsPromise = Promise.all([
         checkAdminSession(),
         fetchPublishedPosts({ offset: 0 })
@@ -1326,9 +1343,7 @@
             previewNotice.classList.toggle('d-none', !previewModeActive);
           }
           const hasRequestedPost = Boolean(getRequestedPostSlug() || getRequestedPostId());
-          const mergedPosts = hasRequestedPost
-            ? mergeUniquePosts(loadedPublishedPosts)
-            : mergeWithFallbackPosts(loadedPublishedPosts);
+          const mergedPosts = mergeWithFallbackPosts(loadedPublishedPosts);
           selectedTag = getRequestedTag();
           const fallbackSet = previewModeActive || hasRequestedPost ? [] : fallbackPosts;
           renderPosts(mergedPosts.length ? mergedPosts : fallbackSet);

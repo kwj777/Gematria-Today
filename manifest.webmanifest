@@ -1,7 +1,8 @@
 {
-  "name": "EndTimes.Today",
-  "short_name": "EndTimes",
-  "description": "Gematria calculators, curated news, and research tools from EndTimes.Today.",
+  "name": "Gematria.Today",
+  "short_name": "Gematria",
+  "description": "Gematria calculators, curated news, and research tools from Gematria.Today.",
+  "lang": "en",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

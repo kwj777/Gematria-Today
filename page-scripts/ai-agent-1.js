@@ -333,6 +333,32 @@
         return [...new Set(splitTargets)].slice(0, 6);
       }
 
+      function extractReverseGematriaValue(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return null;
+
+        const bareNumeric = normalized.match(/^\s*(\d{1,6})\s*[?.!]*\s*$/);
+        if (bareNumeric) return Number(bareNumeric[1]);
+
+        const reverseKeyword = /\breverse(?:\s+(?:gematria|lookup|search))?\b/i.test(normalized);
+        const wordListIntent = /\b(?:show|list|find|get|give|which|what|any|search|look(?:\s*up)?)\b[\s\S]*\b(?:words?|matches?|results?|hits?|entries?|terms?)\b/i.test(normalized);
+        const gematriaContext = /\b(?:gematria|equal|equals|matching|matches|match|total|totals|totaling|sum|sums|summing|value|values|number|numbers|calculation)\b/i.test(normalized);
+
+        const labeledNumberMatch = normalized.match(
+          /\b(?:gematria(?:\s+value)?|value|number|calculation|total|sum|equals?|matches?|matching|reverse)\s*(?:of|for|is|to|at|=)?\s*(\d{1,6})\b/i
+        );
+        const trailingLabeledMatch = normalized.match(
+          /\b(\d{1,6})\s*(?:gematria|value|total|sum|matches?)\b/i
+        );
+        const numberMatch = labeledNumberMatch || trailingLabeledMatch || normalized.match(/\b(\d{1,6})\b/);
+
+        if (numberMatch && (reverseKeyword || (wordListIntent && gematriaContext))) {
+          return Number(numberMatch[1]);
+        }
+
+        return null;
+      }
+
       function extractWordnikLookupWord(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt);
         if (!normalizedPrompt) return '';
@@ -1257,14 +1283,7 @@ View results: ${shareUrl}`.trim(),
         const normalizedPrompt = normalizeCandidate(prompt);
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
-        const gematriaValueLookupMatch = normalizedPrompt.match(
-          /\b(?:gematria(?:\s+value)?|value|number|calculation)\s*(?:of|for|=|is|to|at)?\s*(\d+)\b/i
-        ) || normalizedPrompt.match(/\b(\d+)\b/);
-        const requestingWordListByGematria = /\b(?:show|list|find|get|give|which|what)\b[\s\S]*\bwords?\b/i.test(normalizedPrompt)
-          && (
-            /\bgematria\b/i.test(normalizedPrompt)
-            || /\b(?:equal|equals|matching|match|total|totals|value|number|calculation)\b/i.test(normalizedPrompt)
-          );
+        const reverseGematriaValue = extractReverseGematriaValue(normalizedPrompt);
         const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
         const explicitRelatedWordsTarget = extractRelatedWordsCalculationTarget(normalizedPrompt);
         const affirmativeFollowup = isAffirmativePrompt(normalizedPrompt);
@@ -1290,19 +1309,37 @@ View results: ${shareUrl}`.trim(),
           return '<p class="mb-0">I could not load the live word count right now. Please try again in a moment.</p>';
         }
 
-        if (requestingWordListByGematria && gematriaValueLookupMatch) {
-          const gematriaValue = Number(gematriaValueLookupMatch[1]);
-          if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) {
+        if (Number.isFinite(reverseGematriaValue)) {
+          const gematriaValue = reverseGematriaValue;
+          if (gematriaValue <= 0) {
             return '<p class="mb-0">Please provide a positive gematria number so I can search the word database.</p>';
           }
 
           if (gematriaValue % 6 !== 0) {
-            return '<p class="mb-0">The gematria value must be a Base-6 Gematria value (multiple of 6).</p>';
+            const lower = Math.floor(gematriaValue / 6) * 6;
+            const upper = lower + 6;
+            const suggestions = [lower, upper].filter((value) => value > 0);
+            const suggestionButtons = suggestions
+              .map((value) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-reverse-lookup-button" data-gematria-value="${value}">${value}</button>`)
+              .join(' ');
+            return `
+              <p class="mb-2">English gematria values are multiples of 6 (A=6, B=12 ... Z=156), so <strong>${gematriaValue}</strong> is not a valid base-6 total.</p>
+              <p class="mb-0">Try the nearest valid totals: ${suggestionButtons}</p>
+            `;
           }
 
           const words = await fetchWordsByGematriaValue(gematriaValue);
           if (!words.length) {
-            return `<p class="mb-0">I found no words in the current database for gematria value <strong>${gematriaValue}</strong>.</p>`;
+            const lower = gematriaValue - 6;
+            const upper = gematriaValue + 6;
+            const neighborButtons = [lower, upper]
+              .filter((value) => value > 0)
+              .map((value) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-reverse-lookup-button" data-gematria-value="${value}">${value}</button>`)
+              .join(' ');
+            return `
+              <p class="mb-2">No archived words match gematria value <strong>${gematriaValue}</strong> yet.</p>
+              <p class="mb-0">Try the neighbors: ${neighborButtons}</p>
+            `;
           }
 
           const wordsList = words
@@ -1310,8 +1347,8 @@ View results: ${shareUrl}`.trim(),
             .filter(Boolean);
 
           return `
-            <p class="mb-2"><strong>Database words with gematria value ${gematriaValue}</strong></p>
-            <p class="mb-2">Found ${wordsList.length} match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full GemaBot lookup for it.</p>
+            <p class="mb-2"><strong>Reverse gematria lookup for ${gematriaValue}</strong></p>
+            <p class="mb-2">Found ${wordsList.length} archived match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full GemaBot lookup for it.</p>
             <ul class="mb-0 ${wordsList.length > 30 ? 'agent-multi-column-list' : ''}">
               ${wordsList.map((word) => `
                 <li>
@@ -1328,6 +1365,11 @@ View results: ${shareUrl}`.trim(),
 
         const calculationTargets = extractCalculationTargets(normalizedPrompt);
         if (!calculationTargets.length) {
+          const strayNumberMatch = normalizedPrompt.match(/\b(\d{1,6})\b/);
+          if (strayNumberMatch) {
+            const strayValue = Number(strayNumberMatch[1]);
+            return `<p class="mb-0">Did not see a word or phrase to calculate. To run a reverse gematria lookup for <strong>${strayValue}</strong>, try <code>reverse gematria ${strayValue}</code> or <code>what words equal ${strayValue}</code>.</p>`;
+          }
           return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try the KnowBot? (on top menu)</p>';
         }
 
@@ -1630,6 +1672,25 @@ View results: ${shareUrl}`.trim(),
           window.hideWorkingOverlay?.();
           const assistantMessage = addMessage('assistant', replyHtml);
           attachResultFeedbackUi(assistantMessage, href, replyHtml);
+          return;
+        }
+
+        const reverseLookupButton = event.target.closest('.agent-reverse-lookup-button');
+        if (reverseLookupButton) {
+          const gematriaValue = Number(reverseLookupButton.dataset.gematriaValue);
+          if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) return;
+          const promptText = `reverse gematria ${gematriaValue}`;
+          addMessage('user', `<p class="mb-0">${escapeHtml(promptText)}</p>`, { pinToTop: true });
+          setComposerWaitingState(true);
+          window.showWorkingOverlay?.();
+          try {
+            const replyHtml = await buildAgentReply(promptText);
+            const assistantMessage = addMessage('assistant', replyHtml);
+            attachResultFeedbackUi(assistantMessage, promptText, replyHtml);
+          } finally {
+            window.hideWorkingOverlay?.();
+            setComposerWaitingState(false);
+          }
           return;
         }
 

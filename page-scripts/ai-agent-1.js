@@ -22,6 +22,7 @@
         membershipLevel: ''
       };
       let pendingRelatedWordsSuggestionTopic = '';
+      let lastCalculationContext = null;
       const AGENT_LEARNING_KEY = 'gematriaAgentLearnedResponses.v1';
       const DEFAULT_LEARNINGS = {
         entries: []
@@ -466,6 +467,81 @@
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         if (!normalizedPrompt) return false;
         return /^(?:yes|yep|yeah|sure|ok|okay|please do|go ahead|do it|sounds good|that works|absolutely|affirmative)\b/.test(normalizedPrompt);
+      }
+
+      function isFollowupQuestion(prompt) {
+        const stripped = normalizeCandidate(prompt).toLowerCase().replace(/[?.!]+$/g, '').trim();
+        if (!stripped || stripped.length > 60) return false;
+        return /^(?:why|how come|huh|wait|so what|context|meaning|interpret(?:\s+(?:that|this|it))?|explain(?:\s+(?:that|this|it|more))?|elaborate|tell\s+me\s+more|more(?:\s+details?)?|details?|what(?:'s|\s+is|\s+does)?\s*(?:that|this|it)?\s*(?:mean|meaning|matter|signify|imply)?)$/.test(stripped);
+      }
+
+      function buildFollowupReply(context) {
+        if (!context) {
+          return '<p class="mb-0">No previous calculation to interpret yet. Try calculating a word first (example: <code>calculate jerusalem</code>) or run a reverse lookup (<code>reverse gematria 144</code>).</p>';
+        }
+
+        if (context.kind === 'reverse') {
+          const baseRootNote = isBaseRootTotal(context.value)
+            ? ' It also lands on a <strong>base-root</strong> pattern (the total minus 6 divides evenly by 54), which often signals a resonant series worth tracking.'
+            : '';
+          const archiveNote = context.archivedCount === 0
+            ? 'No archived words landed on that total in this run.'
+            : `${context.archivedCount} archived word${context.archivedCount === 1 ? '' : 's'} share that total — each spells (A=6 … Z=156) to exactly ${context.value}.`;
+          return `
+            <p class="mb-2"><strong>About reverse lookup ${context.value}:</strong></p>
+            <p class="mb-2">${archiveNote} Its digital root is <strong>${digitalRoot(context.value)}</strong>.${baseRootNote}</p>
+            <p class="mb-0">For a deeper read, calculate any of the listed words to see letter breakdowns and related terms.</p>
+          `;
+        }
+
+        if (context.kind === 'comparison') {
+          const reports = Array.isArray(context.reports) ? context.reports : [];
+          const totals = reports.map((entry) => entry.total);
+          const allEqual = totals.length > 0 && totals.every((value) => value === totals[0]);
+          const sharedRoot = reports.length > 0 && reports.every((entry) => entry.root === reports[0].root);
+          const baseRootCount = reports.filter((entry) => entry.isBaseRoot).length;
+          const lines = [];
+          lines.push(`You compared ${reports.length} target${reports.length === 1 ? '' : 's'}: ${reports.map((entry) => `<strong>${escapeHtml(entry.target)}</strong> (${entry.total})`).join(', ')}.`);
+          if (allEqual) {
+            lines.push(`The totals all match at <strong>${totals[0]}</strong> — an exact gematria alignment, which in this system is the strongest numeric link.`);
+          } else if (sharedRoot) {
+            lines.push(`The totals differ but reduce to the same digital root <strong>${reports[0].root}</strong>, a softer alignment worth weighing alongside thematic context.`);
+          } else {
+            const span = Math.max(...totals) - Math.min(...totals);
+            lines.push(`Totals span <strong>${span}</strong>, with no shared digital root — numerically these read as independent rather than linked.`);
+          }
+          if (baseRootCount === reports.length) {
+            lines.push('Every target lands on a base-root pattern, which strengthens the case for a structural relationship.');
+          } else if (baseRootCount > 0) {
+            lines.push(`${baseRootCount} of ${reports.length} land on a base-root pattern — partial alignment only.`);
+          }
+          return `
+            <p class="mb-2"><strong>What that comparison means:</strong></p>
+            <ul class="mb-0">${lines.map((line) => `<li>${line}</li>`).join('')}</ul>
+          `;
+        }
+
+        const { topic, total, root, isBaseRoot, matchCount } = context;
+        const baseRootLine = isBaseRoot
+          ? `It lands on a <strong>base-root</strong> pattern — <code>(${total} − 6) ÷ 54</code> is a whole number, placing it in the resonant series 6, 60, 114, 168, 222, 276 …`
+          : `It does <em>not</em> land on a base-root pattern; the total minus 6 is not divisible by 54.`;
+        const matchLine = !Number.isFinite(matchCount)
+          ? 'Archived match count was unavailable for this run.'
+          : matchCount === 0
+            ? 'No other archived words share this total yet — it may be a fresh lead worth saving.'
+            : matchCount === 1
+              ? 'One other archived word shares this total — limited overlap, so context still drives interpretation.'
+              : `${matchCount} archived words share this total — broader thematic overlap is plausible; inspect the archived list for context.`;
+        return `
+          <p class="mb-2"><strong>Why this matters for "${escapeHtml(topic)}":</strong></p>
+          <ul class="mb-2">
+            <li>Total <strong>${total}</strong> = sum of letter values (A=6, B=12 … Z=156).</li>
+            <li>Digital root <strong>${root}</strong> = repeatedly summing the digits of ${total}.</li>
+            <li>${baseRootLine}</li>
+            <li>${matchLine}</li>
+          </ul>
+          <p class="mb-0">Next steps: <code>reverse gematria ${total}</code> to see who else lands there, or <code>compare ${escapeHtml(topic)} and …</code> against a related concept.</p>
+        `;
       }
 
       function extractRelatedWordsCalculationTarget(prompt) {
@@ -1354,6 +1430,11 @@ View results: ${shareUrl}`.trim(),
 
       async function buildAgentReply(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt);
+
+        if (isFollowupQuestion(normalizedPrompt)) {
+          return buildFollowupReply(lastCalculationContext);
+        }
+
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
         const reverseGematriaValue = extractReverseGematriaValue(normalizedPrompt);
@@ -1418,6 +1499,8 @@ View results: ${shareUrl}`.trim(),
           const wordsList = words
             .map((entry) => String(entry?.word || '').trim())
             .filter(Boolean);
+
+          lastCalculationContext = { kind: 'reverse', value: gematriaValue, archivedCount: wordsList.length };
 
           return `
             <p class="mb-2"><strong>Reverse gematria lookup for ${gematriaValue}</strong></p>
@@ -1547,6 +1630,18 @@ View results: ${shareUrl}`.trim(),
 
         const comparisonRequested = isComparisonRequest(normalizedPrompt) && allWordReports.length >= 2;
         const comparisonSummary = comparisonRequested ? buildComparisonSummary(allWordReports) : '';
+
+        lastCalculationContext = comparisonRequested
+          ? {
+              kind: 'comparison',
+              reports: allWordReports.map((entry) => ({
+                target: entry.target,
+                total: entry.total,
+                root: entry.root,
+                isBaseRoot: entry.isBaseRoot
+              }))
+            }
+          : { kind: 'calculation', topic, total, root, isBaseRoot, matchCount };
 
         return `
           ${learnedResponse ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
@@ -1716,6 +1811,7 @@ View results: ${shareUrl}`.trim(),
       clearConversationButton.addEventListener('click', () => {
         chatLog.innerHTML = '';
         pendingRelatedWordsSuggestionTopic = '';
+        lastCalculationContext = null;
         renderRelatedWordsFollowupSuggestion();
         promptInput.focus();
       });

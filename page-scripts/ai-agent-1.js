@@ -245,11 +245,63 @@
         }
       }
 
+      const LEARNING_STOP_WORDS = new Set([
+        'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'of', 'for', 'to', 'in', 'on', 'at', 'and', 'or', 'but', 'with', 'by',
+        'as', 'it', 'this', 'that', 'these', 'those', 'i', 'you', 'we', 'me',
+        'my', 'your', 'our', 'their', 'do', 'does', 'did', 'done', 'have',
+        'has', 'had', 'can', 'could', 'should', 'would', 'will', 'shall', 'may',
+        'might', 'must', 'if', 'so', 'then', 'than', 'about', 'from', 'into',
+        'over', 'just', 'also', 'too', 'very', 'really', 'please', 'thanks'
+      ]);
+
+      function tokenizeForLearning(text) {
+        return [...new Set(
+          String(text || '')
+            .toLowerCase()
+            .split(/[^a-z0-9-]+/)
+            .filter((token) => token && token.length > 1 && !LEARNING_STOP_WORDS.has(token))
+        )];
+      }
+
+      function scoreLearningOverlap(promptTokens, entryTokens) {
+        if (!promptTokens.length || !entryTokens.length) return 0;
+        const entrySet = new Set(entryTokens);
+        let intersection = 0;
+        for (const token of promptTokens) {
+          if (entrySet.has(token)) intersection += 1;
+        }
+        if (intersection < 2) return 0;
+        const unionSize = new Set([...promptTokens, ...entryTokens]).size;
+        return intersection / unionSize;
+      }
+
       function findLearnedResponse(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         if (!normalizedPrompt) return null;
         const learnings = readCombinedLearnings();
-        return learnings.entries.find((entry) => normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)) || null;
+        if (!learnings.entries.length) return null;
+
+        const substringHit = learnings.entries.find((entry) =>
+          normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)
+        );
+        if (substringHit) return substringHit;
+
+        const promptTokens = tokenizeForLearning(normalizedPrompt);
+        if (promptTokens.length < 2) return null;
+
+        let best = null;
+        let bestScore = 0;
+        for (const entry of learnings.entries) {
+          const entryTokens = tokenizeForLearning(entry.prompt);
+          if (entryTokens.length < 2) continue;
+          const score = scoreLearningOverlap(promptTokens, entryTokens);
+          if (score >= 0.4 && score > bestScore) {
+            best = entry;
+            bestScore = score;
+          }
+        }
+        return best;
       }
 
       async function submitChatbotFeedback(query, answerText, wasExpected, feedbackText) {

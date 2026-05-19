@@ -349,7 +349,12 @@ export const CSRF_TOKEN_HEADER = 'x-csrf-token';
 function getCsrfSecret() {
   const secret = String(process.env.CSRF_SECRET || '').trim();
   if (!secret) {
-    throw new Error('Missing CSRF_SECRET environment variable');
+    console.error('[config] CSRF_SECRET environment variable is not set; CSRF token generation/validation will fail until it is configured in the Netlify environment.');
+    throw Object.assign(new Error('Service temporarily unavailable. Please try again shortly.'), {
+      statusCode: 503,
+      expose: true,
+      code: 'CSRF_SECRET_MISSING',
+    });
   }
   return secret;
 }

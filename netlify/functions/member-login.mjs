@@ -127,6 +127,12 @@ export async function handler(event) {
       ],
     });
   } catch (error) {
-    return jsonResponse(error.statusCode || 500, { error: error.message || 'Failed to sign in' }, error.headers || {});
+    const statusCode = error.statusCode || 500;
+    const safeToExpose = error.expose === true || (error.statusCode && error.statusCode < 500);
+    if (!safeToExpose) {
+      console.error('[member-login] unhandled error:', error);
+    }
+    const clientMessage = safeToExpose && error.message ? error.message : 'Failed to sign in';
+    return jsonResponse(statusCode, { error: clientMessage }, error.headers || {});
   }
 }

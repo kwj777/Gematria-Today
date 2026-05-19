@@ -1,7 +1,10 @@
 :root {
-  --brand-amber: #d97706;
-  --brand-amber-hover: #b45309;
-  --brand-amber-rgb: 217, 119, 6;
+  /* Darkened from #d97706 -> #b45309 so white text on filled
+     brand-amber surfaces (btn-warning, .btn-amber, membership CTA) clears
+     WCAG AA 4.5:1 -- the old amber sat at ~3.2:1 against #fff. */
+  --brand-amber: #b45309;
+  --brand-amber-hover: #92400e;
+  --brand-amber-rgb: 180, 83, 9;
   /* Foreground (text/icon) color used on filled brand-amber surfaces. */
   --brand-amber-fg: #ffffff;
   /* Muted-tan background applied to brand-amber buttons when they're in the
@@ -2832,8 +2835,8 @@ a.badge,
 }
 
 :root[data-bs-theme="dark"] .form-check-input:checked {
-  background-color: var(--brand-amber, #d97706);
-  border-color: var(--brand-amber, #d97706);
+  background-color: var(--brand-amber, #b45309);
+  border-color: var(--brand-amber, #b45309);
 }
 
 /* Forced-colors (Windows High Contrast): restore system colors and ensure

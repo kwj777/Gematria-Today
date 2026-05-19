@@ -1834,6 +1834,10 @@ footer.site-footer a:focus-visible {
   margin: 0 auto;
 }
 
+.admin-container {
+  max-width: 980px;
+}
+
 body.page-render-pending nav,
 body.page-render-pending main,
 body.page-render-pending footer {

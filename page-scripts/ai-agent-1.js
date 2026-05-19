@@ -292,7 +292,7 @@
         }
 
         const keywordTargetMatch = normalizedPrompt.match(
-          /\b(?:calculate|calculation|calculate\s+for|gematria|value|values|number|numbers|math|snapshot|lookup|analyze|analysis|compare|comparison)\b[^A-Za-z0-9]+(?:for|of|on|about)?\s*([A-Za-z][A-Za-z' -]*(?:\s*(?:,|and|&)\s*[A-Za-z][A-Za-z' -]*)*)/i
+          /\b(?:calculate|calculation|calculate\s+for|gematria|value|values|number|numbers|math|snapshot|lookup|analyze|analysis|compare|comparison|contrast|contrasting)\b[^A-Za-z0-9]+(?:for|of|on|about|between)?\s*([A-Za-z][A-Za-z' -]*(?:\s*(?:,|and|&|vs\.?|versus)\s*[A-Za-z][A-Za-z' -]*)*)/i
         );
         const candidateBlock = keywordTargetMatch ? keywordTargetMatch[1] : normalizedPrompt;
         const trailingPunctuationStripped = candidateBlock
@@ -320,17 +320,90 @@
           .trim();
 
         const splitTargets = trailingPunctuationStripped
-          .split(/\s*(?:,| and | & )\s*/i)
+          .split(/\s*(?:,| and | & | vs\.? | versus | v\. )\s*/i)
           .map((target) => sanitizeTarget(target).replace(/^[^A-Za-z]+|[^A-Za-z'-]+$/g, ''))
           .filter((target) => /^[A-Za-z][A-Za-z' -]*$/.test(target))
           .filter((target) => {
             const wordCount = target.split(/\s+/).filter(Boolean).length;
             if (wordCount > 5) return false;
-            if (/^(?:please|provide|give|show|calculate|calculation|gematria|value|values|number|numbers|for|of|and)$/i.test(target)) return false;
+            if (/^(?:please|provide|give|show|calculate|calculation|gematria|value|values|number|numbers|for|of|and|vs|versus)$/i.test(target)) return false;
             return true;
           });
 
         return [...new Set(splitTargets)].slice(0, 6);
+      }
+
+      function isComparisonRequest(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return false;
+        return /\b(?:compare|comparison|comparing|contrast|contrasting|difference\s+between|side[\s-]?by[\s-]?side|vs\.?|versus|v\.)\b/i.test(normalized);
+      }
+
+      function buildComparisonSummary(reports) {
+        if (!Array.isArray(reports) || reports.length < 2) return '';
+
+        const sortedByTotal = [...reports].sort((a, b) => b.total - a.total);
+        const highest = sortedByTotal[0];
+        const lowest = sortedByTotal[sortedByTotal.length - 1];
+        const span = highest.total - lowest.total;
+        const totalsAllEqual = reports.every((entry) => entry.total === reports[0].total);
+        const rootsAllEqual = reports.every((entry) => entry.root === reports[0].root);
+        const baseRootCount = reports.filter((entry) => entry.isBaseRoot).length;
+
+        const letterSets = reports.map((entry) => new Set(entry.letters.map((letter) => letter.char)));
+        const sharedLetters = [...letterSets[0]].filter((char) => letterSets.every((set) => set.has(char)));
+
+        const tableRows = reports.map((entry) => `
+          <tr>
+            <td>${escapeHtml(entry.target)}</td>
+            <td>${entry.total}</td>
+            <td>${entry.root}</td>
+            <td>${entry.isBaseRoot ? 'Yes' : 'No'}</td>
+            <td>${Number.isFinite(entry.matchCount) ? entry.matchCount : '—'}</td>
+          </tr>
+        `).join('');
+
+        const highlights = [];
+        if (totalsAllEqual) {
+          highlights.push(`<li><strong>Exact gematria match</strong> — all ${reports.length} targets equal <strong>${highest.total}</strong>.</li>`);
+        } else {
+          highlights.push(`<li>Highest: <strong>${escapeHtml(highest.target)}</strong> (${highest.total}). Lowest: <strong>${escapeHtml(lowest.target)}</strong> (${lowest.total}). Span: <strong>${span}</strong>.</li>`);
+        }
+        if (rootsAllEqual && !totalsAllEqual) {
+          highlights.push(`<li>Shared digital root: <strong>${reports[0].root}</strong>.</li>`);
+        }
+        if (baseRootCount === reports.length) {
+          highlights.push(`<li>All targets land on a <strong>base-root</strong> pattern.</li>`);
+        } else if (baseRootCount === 0) {
+          highlights.push(`<li>None of the targets land on a base-root pattern.</li>`);
+        } else {
+          highlights.push(`<li>Base-root mix: <strong>${baseRootCount}</strong> of ${reports.length} are base-root.</li>`);
+        }
+        if (sharedLetters.length) {
+          highlights.push(`<li>Letters present in every target: <code>${sharedLetters.join(', ')}</code>.</li>`);
+        }
+        if (reports.length === 2 && !totalsAllEqual) {
+          const [a, b] = reports;
+          const diff = Math.abs(a.total - b.total);
+          const ratio = Math.min(a.total, b.total) === 0
+            ? null
+            : Math.max(a.total, b.total) / Math.min(a.total, b.total);
+          const ratioText = ratio === null ? 'undefined' : ratio.toFixed(2);
+          highlights.push(`<li>Pair gap: difference <strong>${diff}</strong>, ratio <strong>${ratioText}×</strong>.</li>`);
+        }
+
+        return `
+          <section class="border rounded-3 p-2 mb-3">
+            <p class="mb-2"><strong>Comparison summary</strong></p>
+            <div class="table-responsive mb-2">
+              <table class="table table-sm mb-0">
+                <thead><tr><th>Target</th><th>Total</th><th>Root</th><th>Base-root</th><th>Archived</th></tr></thead>
+                <tbody>${tableRows}</tbody>
+              </table>
+            </div>
+            <ul class="mb-0">${highlights.join('')}</ul>
+          </section>
+        `;
       }
 
       function extractReverseGematriaValue(prompt) {
@@ -1472,9 +1545,13 @@ View results: ${shareUrl}`.trim(),
           };
         });
 
+        const comparisonRequested = isComparisonRequest(normalizedPrompt) && allWordReports.length >= 2;
+        const comparisonSummary = comparisonRequested ? buildComparisonSummary(allWordReports) : '';
+
         return `
           ${learnedResponse ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
           <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
+          ${comparisonSummary}
           ${allWordReports.length ? `
             <p class="mb-2"><strong>Full calculation report for each detected word</strong></p>
             <div class="d-flex flex-column gap-2 mb-3">

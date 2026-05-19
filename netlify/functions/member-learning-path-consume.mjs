@@ -1,5 +1,5 @@
 import { getAuthenticatedMember, jsonResponse } from './_member.mjs';
-import { generateCsrfToken, validateCsrfToken, getCsrfTokenFromRequest } from './_auth.mjs';
+import { generateCsrfToken, validateCsrfRequest } from './_auth.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -9,8 +9,7 @@ export async function handler(event) {
   try {
     const { sql, member, sessionToken } = await getAuthenticatedMember(event, { requireAuth: true });
 
-    const csrfToken = getCsrfTokenFromRequest(event);
-    if (!validateCsrfToken(csrfToken, sessionToken)) {
+    if (!validateCsrfRequest(event, sessionToken)) {
       return jsonResponse(403, { error: 'Invalid or missing CSRF token' });
     }
 

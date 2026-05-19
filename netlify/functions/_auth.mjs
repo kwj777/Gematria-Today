@@ -369,6 +369,64 @@ export function getCsrfTokenFromRequest(event) {
   return String(event?.headers?.[CSRF_TOKEN_HEADER] || '').trim();
 }
 
+function readRequestHeader(event, name) {
+  const lower = name.toLowerCase();
+  if (typeof event?.headers?.get === 'function') {
+    return String(event.headers.get(lower) || '').trim();
+  }
+  const headers = event?.headers || {};
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === lower) {
+      return String(headers[key] || '').trim();
+    }
+  }
+  return '';
+}
+
+function getRequestHost(event) {
+  const forwarded = readRequestHeader(event, 'x-forwarded-host');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim().toLowerCase();
+  }
+  const host = readRequestHeader(event, 'host');
+  return host ? host.toLowerCase() : '';
+}
+
+function extractHost(url) {
+  try {
+    return new URL(url).host.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+export function isSameOriginRequest(event) {
+  const host = getRequestHost(event);
+  if (!host) {
+    return false;
+  }
+  const origin = readRequestHeader(event, 'origin');
+  if (origin) {
+    if (origin === 'null') {
+      return false;
+    }
+    return extractHost(origin) === host;
+  }
+  const referer = readRequestHeader(event, 'referer');
+  if (referer) {
+    return extractHost(referer) === host;
+  }
+  return false;
+}
+
+export function validateCsrfRequest(event, sessionToken) {
+  const providedToken = getCsrfTokenFromRequest(event);
+  if (providedToken && validateCsrfToken(providedToken, sessionToken)) {
+    return true;
+  }
+  return isSameOriginRequest(event);
+}
+
 export async function getAuthenticatedUser(event, {
   sql,
   cookieName = AUTH_COOKIES.admin,

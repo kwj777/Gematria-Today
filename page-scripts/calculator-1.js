@@ -1295,6 +1295,7 @@ View results: ${shareUrl}`.trim(),
           setLookupSubmitBusy(true);
           try {
             await renderGematriaMatches(numericValue);
+            revealLearningPathReturnButton();
           } finally {
             focusLookupAreaFromHash();
             hideCalculatorLoadingOverlay();

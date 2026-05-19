@@ -7,7 +7,7 @@ const FEED_TITLE = 'Gematria.Today Blog';
 const FEED_DESCRIPTION = 'Latest articles from Gematria.Today blog.';
 const MAX_ITEMS = 50;
 
-function escapeXml(value = '') {
+export function escapeXml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -16,7 +16,7 @@ function escapeXml(value = '') {
     .replace(/'/g, '&apos;');
 }
 
-function stripHtml(value = '') {
+export function stripHtml(value = '') {
   return String(value)
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
@@ -25,7 +25,7 @@ function stripHtml(value = '') {
     .trim();
 }
 
-function toAbsoluteUrl(value = '') {
+export function toAbsoluteUrl(value = '') {
   const raw = String(value || '').trim();
   if (!raw) return `${SITE_ORIGIN}${BLOG_PATH}`;
   if (/^https?:\/\//i.test(raw)) return raw;
@@ -33,13 +33,13 @@ function toAbsoluteUrl(value = '') {
   return `${SITE_ORIGIN}/${raw}`;
 }
 
-function formatRfc822Date(value) {
+export function formatRfc822Date(value) {
   const parsed = value ? new Date(value) : new Date();
   if (Number.isNaN(parsed.getTime())) return new Date().toUTCString();
   return parsed.toUTCString();
 }
 
-function extractDescription(post) {
+export function extractDescription(post) {
   const summary = stripHtml(post.summary || '');
   if (summary) return summary;
   const body = stripHtml(post.body || '');
@@ -47,7 +47,7 @@ function extractDescription(post) {
   return body.length > 220 ? `${body.slice(0, 220).trimEnd()}…` : body;
 }
 
-function buildItem(post) {
+export function buildItem(post) {
   const postUrl = toAbsoluteUrl(`/blog/${encodeURIComponent(post.slug)}`);
   const description = extractDescription(post);
   const publishedAt = post.publishedAt || post.createdAt;

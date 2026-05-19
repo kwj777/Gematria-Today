@@ -242,25 +242,6 @@ Review:
 2. **Sprint 2 (trust + optimization):** support/policy pages, content guides, SEO, analytics, QA hardening
 </script>
     </main>
-    <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        const markdownSource = document.getElementById('markdownSource');
-        const guideContent = document.getElementById('guideContent');
-        const markdown = markdownSource ? markdownSource.textContent : '';
-
-        if (!window.marked) {
-          guideContent.textContent = markdown;
-          return;
-        }
-
-        marked.setOptions({
-          gfm: true,
-          breaks: false,
-          headerIds: true,
-          mangle: false,
-        });
-        guideContent.innerHTML = marked.parse(markdown);
-      });
-    </script>
+    <script src="/site-adaptation-guide-renderer.js" defer></script>
   </body>
 </html>

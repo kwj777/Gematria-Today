@@ -234,25 +234,6 @@ If delivering as a client project, consider:
 This keeps the church site current without requiring internal technical overhead.
 </script>
     </main>
-    <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        const markdownSource = document.getElementById('markdownSource');
-        const guideContent = document.getElementById('guideContent');
-        const markdown = markdownSource ? markdownSource.textContent : '';
-
-        if (!window.marked) {
-          guideContent.textContent = markdown;
-          return;
-        }
-
-        marked.setOptions({
-          gfm: true,
-          breaks: false,
-          headerIds: true,
-          mangle: false,
-        });
-        guideContent.innerHTML = marked.parse(markdown);
-      });
-    </script>
+    <script src="/site-adaptation-guide-renderer.js" defer></script>
   </body>
 </html>

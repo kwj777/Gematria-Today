@@ -6,30 +6,12 @@
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      (function () {
-        var hasPromise = typeof window.Promise === 'function';
-        var hasFetch = typeof window.fetch === 'function';
-        var userAgent = ((window.navigator && window.navigator.userAgent) || '').toLowerCase();
-        var isBot = /bot|crawl|spider|slurp|bingpreview|google web preview|facebookexternalhit|whatsapp|telegrambot|linkedinbot|twitterbot/.test(userAgent);
-        if ((hasPromise && hasFetch) || isBot) {
-          return;
-        }
-
-        var pathname = (window.location && window.location.pathname) || '';
-        if (pathname === '/unsupported-browser.html') {
-          return;
-        }
-
-        var redirectUrl = '/unsupported-browser.html?from=' + encodeURIComponent(pathname || '/');
-        window.location.replace(redirectUrl);
-      })();
-    </script>
+    <script src="/unsupported-browser-redirect.js"></script>
     <title>Offline | Gematria.Today</title>
-    <link rel="preload" as="style" href="/api/public-theme-css" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
     <link rel="stylesheet" href="/theme.css" />
-    <link rel="preload" as="style" href="/theme-deferred.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <style>
       :root { color-scheme: dark; }
@@ -38,6 +20,7 @@
       .offline-card .btn-primary { display: inline-block; padding: 0.5rem 1rem; border-radius: 0.375rem; background: #2563eb; color: #fff; text-decoration: none; font-weight: 500; border: 1px solid #2563eb; }
       .offline-card .btn-primary:hover, .offline-card .btn-primary:focus-visible { background: #1d4ed8; border-color: #1d4ed8; }
     </style>
+      <script src="/preload-stylesheet.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>

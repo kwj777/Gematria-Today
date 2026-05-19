@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "lint": "npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs && node scripts/check-google-analytics.mjs",
+    "lint": "npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs && node scripts/check-google-analytics.mjs && node scripts/check-no-inline-scripts.mjs",
     "check:google-analytics": "node scripts/check-google-analytics.mjs",
     "format:check": "node scripts/check-formatting.mjs",
     "test": "node --test tests/*.test.mjs",

@@ -2,7 +2,7 @@ import { ensureAdminSchema, getSqlClient, syncBootstrapAdminUser } from './_admi
 import { buildCacheKey, withCachedJson } from './_security.mjs';
 import { loadPublicSiteSettings } from './_site-modules.mjs';
 
-const BASE_DISALLOWS = Object.freeze([
+export const BASE_DISALLOWS = Object.freeze([
   '/admin',
   '/admin.html',
   '/account-recovery',
@@ -13,7 +13,7 @@ const BASE_DISALLOWS = Object.freeze([
   '/.netlify/functions/',
 ]);
 
-function buildRobotsTxt({ siteOrigin, modules }) {
+export function buildRobotsTxt({ siteOrigin, modules }) {
   const disabledModulePaths = [];
 
   if (modules.blog === false) {

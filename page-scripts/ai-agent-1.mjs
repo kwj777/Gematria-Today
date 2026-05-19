@@ -27,6 +27,9 @@
         extractWordnikRelationshipType,
         buildCloseSpellingVariants,
         formatComparisonText,
+        describeMatchCountError,
+        formatReverseLookupText,
+        formatReverseRangeText,
       } from '/page-scripts/ai-agent-helpers.mjs';
 
       const form = document.getElementById('agentForm');
@@ -57,6 +60,31 @@
       let lastCalculationContext = null;
       const recentCalculations = [];
       const RECENT_CALCULATIONS_CAP = 10;
+      const RECENT_CALCULATIONS_STORAGE_KEY = 'gematriaAgentRecentCalculations.v1';
+
+      function persistRecentCalculations() {
+        try {
+          window.sessionStorage.setItem(RECENT_CALCULATIONS_STORAGE_KEY, JSON.stringify(recentCalculations));
+        } catch {
+          // sessionStorage may be unavailable (private mode, quota); recall just stays in-memory.
+        }
+      }
+
+      function loadRecentCalculations() {
+        try {
+          const raw = window.sessionStorage.getItem(RECENT_CALCULATIONS_STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return;
+          const sanitized = parsed
+            .filter((entry) => entry && typeof entry.target === 'string' && entry.target.length)
+            .slice(0, RECENT_CALCULATIONS_CAP);
+          recentCalculations.length = 0;
+          recentCalculations.push(...sanitized);
+        } catch {
+          // ignore corrupt payloads
+        }
+      }
 
       function rememberRecentCalculation(entry) {
         if (!entry || !entry.target) return;
@@ -71,6 +99,7 @@
         });
         recentCalculations.length = 0;
         recentCalculations.push(...filtered.slice(0, RECENT_CALCULATIONS_CAP));
+        persistRecentCalculations();
       }
 
       function findRecentCalculation(target) {
@@ -416,7 +445,7 @@
       function buildRecallReply(entry) {
         return `
           <p class="mb-2"><strong>From this session:</strong> "${escapeHtml(entry.target)}" → total <strong>${entry.total}</strong>, digital root <strong>${entry.root}</strong>, base-root <strong>${entry.isBaseRoot ? 'Yes' : 'No'}</strong>.</p>
-          <p class="mb-0">${Number.isFinite(entry.matchCount) ? `Archive density at that time: <strong>${entry.matchCount}</strong> (${describeMatchConfidence(entry.matchCount)}).` : 'Archive count was unavailable in the original lookup.'}</p>
+          <p class="mb-0">${Number.isFinite(entry.matchCount) ? `Archive density at that time: <strong>${entry.matchCount}</strong> (${describeMatchConfidence(entry.matchCount)}).` : `Archive count was unavailable in the original lookup — ${describeMatchCountError(entry.matchCount)}.`}</p>
         `;
       }
 
@@ -505,7 +534,7 @@
           ? `It lands on a <strong>base-root</strong> pattern — <code>(${total} − 6) ÷ 54</code> is a whole number, placing it in the resonant series 6, 60, 114, 168, 222, 276 …`
           : `It does <em>not</em> land on a base-root pattern; the total minus 6 is not divisible by 54.`;
         const matchLine = !Number.isFinite(matchCount)
-          ? 'Archived match count was unavailable for this run.'
+          ? `Archived match count was unavailable for this run — ${describeMatchCountError(matchCount)}.`
           : `Archive density: <strong>${matchCount}</strong> — ${describeMatchConfidence(matchCount)}.`;
         return `
           <p class="mb-2"><strong>Why this matters for "${escapeHtml(topic)}":</strong></p>
@@ -1167,13 +1196,23 @@ View results: ${shareUrl}`.trim(),
       }
 
       async function fetchMatchCount(total) {
+        let response;
         try {
-          const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(total))}`);
-          if (!response.ok) return null;
-          const payload = await response.json();
-          return Number(payload?.count);
+          response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(total))}`);
         } catch {
-          return null;
+          return 'network';
+        }
+        if (!response.ok) {
+          if (response.status === 429) return 'rate-limit';
+          if (response.status >= 500) return 'server';
+          return 'unknown';
+        }
+        try {
+          const payload = await response.json();
+          const count = Number(payload?.count);
+          return Number.isFinite(count) ? count : 'unknown';
+        } catch {
+          return 'unknown';
         }
       }
 
@@ -1487,10 +1526,19 @@ View results: ${shareUrl}`.trim(),
               `).join('')
             : '<p class="mb-0">No archived words landed on any total in this range.</p>';
 
+          const rangePayloadAttr = escapeHtml(JSON.stringify({
+            min: reverseRange.min,
+            max: reverseRange.max,
+            buckets: populated
+          }));
           return `
             <p class="mb-2"><strong>Reverse gematria range ${reverseRange.min} → ${reverseRange.max}</strong>${headerNote}</p>
             <p class="mb-2">Scanned <strong>${reverseRange.values.length}</strong> valid total${reverseRange.values.length === 1 ? '' : 's'} (multiples of 6). Found <strong>${totalMatches}</strong> archived match${totalMatches === 1 ? '' : 'es'} across <strong>${populated.length}</strong> bucket${populated.length === 1 ? '' : 's'}.</p>
             ${bucketsHtml}
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <button type="button" class="btn btn-sm btn-outline-success agent-copy-reverse-range-button" data-reverse-range="${rangePayloadAttr}">Copy lookup</button>
+              <button type="button" class="btn btn-sm btn-outline-info agent-share-reverse-range-button" data-reverse-range="${rangePayloadAttr}">Share lookup</button>
+            </div>
           `;
         }
 
@@ -1533,10 +1581,14 @@ View results: ${shareUrl}`.trim(),
 
           lastCalculationContext = { kind: 'reverse', value: gematriaValue, archivedCount: wordsList.length };
 
+          const reversePayloadAttr = escapeHtml(JSON.stringify({
+            value: gematriaValue,
+            words: wordsList
+          }));
           return `
             <p class="mb-2"><strong>Reverse gematria lookup for ${gematriaValue}</strong></p>
             <p class="mb-2">Found ${wordsList.length} archived match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full GemaBot lookup for it.</p>
-            <ul class="mb-0 ${wordsList.length > 30 ? 'agent-multi-column-list' : ''}">
+            <ul class="mb-2 ${wordsList.length > 30 ? 'agent-multi-column-list' : ''}">
               ${wordsList.map((word) => `
                 <li>
                   <button
@@ -1547,6 +1599,10 @@ View results: ${shareUrl}`.trim(),
                 </li>
               `).join('')}
             </ul>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm btn-outline-success agent-copy-reverse-button" data-reverse="${reversePayloadAttr}">Copy lookup</button>
+              <button type="button" class="btn btn-sm btn-outline-info agent-share-reverse-button" data-reverse="${reversePayloadAttr}">Share lookup</button>
+            </div>
           `;
         }
 
@@ -1614,8 +1670,8 @@ View results: ${shareUrl}`.trim(),
         const memoryContext = '';
 
         function refineAnalysis(previousStep, round) {
-          const nuance = matchCount === null
-            ? 'Archive count is temporarily unavailable, so prioritize manual grouping checks this round.'
+          const nuance = !Number.isFinite(matchCount)
+            ? `${describeMatchCountError(matchCount)}; prioritize manual grouping checks this round.`
             : matchCount === 0
               ? 'No archived matches yet; this could be a new lead, so validate with spelling variants and adjacent concepts.'
               : `There ${matchCount === 1 ? 'is' : 'are'} ${matchCount} archived ${matchCount === 1 ? 'match' : 'matches'}; inspect semantic quality, not only numeric overlap.`;
@@ -1707,7 +1763,7 @@ View results: ${shareUrl}`.trim(),
 
                 const archiveCountLabel = Number.isFinite(entry.matchCount)
                   ? `${entry.matchCount} (${describeMatchConfidence(entry.matchCount)})`
-                  : 'Unavailable right now';
+                  : describeMatchCountError(entry.matchCount);
                 const inlineDefinition = perWordDefinitionSummary
                   ? `<p class="mb-2 fst-italic text-secondary-emphasis">${escapeHtml(perWordDefinitionSummary.slice(0, 200))}${perWordDefinitionSummary.length > 200 ? '…' : ''}</p>`
                   : '';
@@ -1870,6 +1926,7 @@ View results: ${shareUrl}`.trim(),
         pendingRelatedWordsSuggestionTopic = '';
         lastCalculationContext = null;
         recentCalculations.length = 0;
+        persistRecentCalculations();
         renderRelatedWordsFollowupSuggestion();
         refreshExamplePromptsVisibility();
         promptInput.focus();
@@ -1941,6 +1998,66 @@ View results: ${shareUrl}`.trim(),
           } else {
             try {
               await sharePage({ title: 'Gematria comparison', text, url: window.location.href }, window.location.href);
+            } catch {
+              window.alert(text);
+            }
+          }
+          return;
+        }
+
+        const copyReverseButton = event.target.closest('.agent-copy-reverse-button');
+        const shareReverseButton = event.target.closest('.agent-share-reverse-button');
+        if (copyReverseButton || shareReverseButton) {
+          const sourceButton = copyReverseButton || shareReverseButton;
+          let payload = null;
+          try {
+            payload = JSON.parse(sourceButton.dataset.reverse || 'null');
+          } catch {
+            payload = null;
+          }
+          const text = payload ? formatReverseLookupText(payload) : '';
+          if (!text) return;
+          if (copyReverseButton) {
+            try {
+              await navigator.clipboard.writeText(text);
+              copyReverseButton.textContent = 'Copied!';
+              setTimeout(() => { copyReverseButton.textContent = 'Copy lookup'; }, 1500);
+            } catch {
+              window.alert(text);
+            }
+          } else {
+            try {
+              await sharePage({ title: 'Reverse gematria lookup', text, url: window.location.href }, window.location.href);
+            } catch {
+              window.alert(text);
+            }
+          }
+          return;
+        }
+
+        const copyReverseRangeButton = event.target.closest('.agent-copy-reverse-range-button');
+        const shareReverseRangeButton = event.target.closest('.agent-share-reverse-range-button');
+        if (copyReverseRangeButton || shareReverseRangeButton) {
+          const sourceButton = copyReverseRangeButton || shareReverseRangeButton;
+          let payload = null;
+          try {
+            payload = JSON.parse(sourceButton.dataset.reverseRange || 'null');
+          } catch {
+            payload = null;
+          }
+          const text = payload ? formatReverseRangeText(payload) : '';
+          if (!text) return;
+          if (copyReverseRangeButton) {
+            try {
+              await navigator.clipboard.writeText(text);
+              copyReverseRangeButton.textContent = 'Copied!';
+              setTimeout(() => { copyReverseRangeButton.textContent = 'Copy lookup'; }, 1500);
+            } catch {
+              window.alert(text);
+            }
+          } else {
+            try {
+              await sharePage({ title: 'Reverse gematria range lookup', text, url: window.location.href }, window.location.href);
             } catch {
               window.alert(text);
             }
@@ -2079,5 +2196,6 @@ View results: ${shareUrl}`.trim(),
       });
 
       loadGlobalLearnings();
+      loadRecentCalculations();
       ensurePremiumAccess();
       showSharedResultIfPresent();

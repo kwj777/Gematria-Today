@@ -125,8 +125,14 @@ export function isComparisonRequest(prompt) {
 }
 
 export function resolvePronouns(prompt, context) {
-  if (!context || context.kind !== 'calculation' || !context.topic) return prompt;
-  const topic = context.topic;
+  if (!context) return prompt;
+  let topic = '';
+  if (context.kind === 'calculation' && context.topic) {
+    topic = context.topic;
+  } else if (context.kind === 'comparison' && Array.isArray(context.reports) && context.reports.length) {
+    topic = String(context.reports[0]?.target || '');
+  }
+  if (!topic) return prompt;
   return String(prompt || '')
     .replace(/\bit's\b/gi, `${topic} is`)
     .replace(/\bits\b/gi, `${topic}'s`)
@@ -430,6 +436,48 @@ export function buildCloseSpellingVariants(word) {
 
   variants.delete(normalized);
   return [...variants].filter((value) => /^[a-z][a-z'-]+$/.test(value)).slice(0, 12);
+}
+
+export function describeMatchCountError(error) {
+  switch (error) {
+    case 'rate-limit':
+      return 'archive count unavailable — the archive service is rate-limiting requests, so retrying in a minute should clear it';
+    case 'network':
+      return 'archive count unavailable — the request did not reach the archive service (network failure); check your connection and retry';
+    case 'server':
+      return 'archive count unavailable — the archive service returned a server error; retrying may succeed';
+    default:
+      return 'archive count unavailable — the archive service did not return a usable count';
+  }
+}
+
+export function formatReverseLookupText({ value, words }) {
+  const safeValue = Number(value);
+  if (!Number.isFinite(safeValue)) return '';
+  const list = Array.isArray(words) ? words.filter(Boolean) : [];
+  const root = digitalRoot(safeValue);
+  const baseRoot = isBaseRootTotal(safeValue) ? ', base-root' : '';
+  const header = `Reverse gematria ${safeValue} (root ${root}${baseRoot})`;
+  if (!list.length) {
+    return `${header}\nNo archived words match this total yet.`;
+  }
+  return `${header}\nArchived matches (${list.length}): ${list.join(', ')}`;
+}
+
+export function formatReverseRangeText({ min, max, buckets }) {
+  const lo = Number(min);
+  const hi = Number(max);
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return '';
+  const populated = Array.isArray(buckets)
+    ? buckets.filter((bucket) => bucket && Array.isArray(bucket.words) && bucket.words.length)
+    : [];
+  const totalMatches = populated.reduce((sum, bucket) => sum + bucket.words.length, 0);
+  const header = `Reverse gematria range ${lo}–${hi}`;
+  if (!populated.length) {
+    return `${header}\nNo archived words land in this range.`;
+  }
+  const lines = populated.map((bucket) => `  ${bucket.value}: ${bucket.words.join(', ')}`);
+  return `${header}\n${totalMatches} match${totalMatches === 1 ? '' : 'es'} across ${populated.length} bucket${populated.length === 1 ? '' : 's'}:\n${lines.join('\n')}`;
 }
 
 export function formatComparisonText(reports) {

@@ -333,7 +333,7 @@ export async function authenticateCredentials(sql, identifier, password, { role 
 export const CSRF_TOKEN_HEADER = 'x-csrf-token';
 
 function getCsrfSecret() {
-  const secret = String(process.env.CSRF_SECRET || process.env.DATABASE_URL || '').trim();
+  const secret = String(process.env.CSRF_SECRET || '').trim();
   if (!secret) {
     throw new Error('Missing CSRF_SECRET environment variable');
   }

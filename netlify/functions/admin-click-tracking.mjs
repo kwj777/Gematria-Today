@@ -8,11 +8,11 @@ const ALLOWED_HOUR_WINDOWS = new Set([1, 6, 12]);
 const AUTOMATION_USER_AGENT_PATTERN = '(bot|crawler|spider|headless|lighthouse|netlify|pingdom|uptimerobot|statuscake|gtmetrix|pagespeed|chrome-lighthouse|curl|wget|axios|python-requests|node-fetch|node\\.js|nodejs|node/|undici|postman|insomnia|k6|playwright|puppeteer|httpclient)';
 let SITE_PUBLIC_DIR = null;
 try {
-  SITE_PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public');
+  SITE_PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 } catch {
   // import.meta.url may not resolve to a file path in all bundling environments;
   // fall back to process.cwd() which is the project root in netlify dev
-  SITE_PUBLIC_DIR = path.resolve(process.cwd(), 'public');
+  SITE_PUBLIC_DIR = path.resolve(process.cwd());
 }
 const EXCLUDED_REPORT_ROUTES = new Set(['/admin-click-tracking.html', '/unsupported-browser.html', '/offline.html']);
 
@@ -54,8 +54,8 @@ function stripHtml(rawText) {
 
 async function collectTrackableElements() {
   const candidates = SITE_PUBLIC_DIR ? [SITE_PUBLIC_DIR] : [];
-  const cwdPublic = path.resolve(process.cwd(), 'public');
-  if (SITE_PUBLIC_DIR !== cwdPublic) candidates.push(cwdPublic);
+  const cwdRoot = path.resolve(process.cwd());
+  if (SITE_PUBLIC_DIR !== cwdRoot) candidates.push(cwdRoot);
 
   let files = null;
   let resolvedDir = null;

@@ -1,6 +1,6 @@
 [build]
   functions = "netlify/functions"
-  publish = "public"
+  publish = "."
 
 [[redirects]]
   from = "/robots.txt"
@@ -166,7 +166,7 @@
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
 
 [functions."admin-click-tracking"]
-  included_files = ["public/*.html"]
+  included_files = ["*.html"]
 
 [functions."super-admin-static-page"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]

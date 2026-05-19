@@ -1,4 +1,4 @@
-name: Check mirrored page sources
+name: Quality checks
 
 on:
   pull_request:
@@ -18,5 +18,4 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm test
-      - run: npm run check-root-pages
       - run: npm run check:google-analytics

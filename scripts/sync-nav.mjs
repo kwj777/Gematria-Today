@@ -4,7 +4,6 @@ import { join } from 'node:path';
 const mode = process.argv.includes('--check') ? 'check' : 'write';
 const rootDir = process.cwd();
 const partialPath = join(rootDir, 'partials', 'nav.html');
-const publicDir = join(rootDir, 'public');
 
 // Pages that should use the consolidated public-site nav.
 // Admin pages have their own nav and are intentionally excluded.
@@ -15,7 +14,7 @@ const EXCLUDED_FILES = new Set([
 ]);
 const EXCLUDED_PREFIXES = ['admin'];
 
-// Maps a public HTML filename to the href that should be marked active.
+// Maps an HTML filename to the href that should be marked active.
 // Pages not listed get no active link (e.g. policy pages, account-recovery).
 // The Calculator / Name Calculator / GemaBot pages don't appear directly in
 // the nav, so we mark the Tools link active when the user is on one of them.
@@ -62,7 +61,7 @@ async function loadPartial() {
 }
 
 async function listHtmlFiles() {
-  const entries = await readdir(publicDir, { withFileTypes: true });
+  const entries = await readdir(rootDir, { withFileTypes: true });
   return entries
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
@@ -76,8 +75,8 @@ const drifted = [];
 const missingNav = [];
 
 for (const fileName of await listHtmlFiles()) {
-  const publicFile = join(publicDir, fileName);
-  const original = await readFile(publicFile, 'utf8');
+  const pageFile = join(rootDir, fileName);
+  const original = await readFile(pageFile, 'utf8');
 
   if (!NAV_BLOCK_RE.test(original)) {
     missingNav.push(fileName);
@@ -87,7 +86,7 @@ for (const fileName of await listHtmlFiles()) {
   const desiredNav = applyActiveState(partialSource, ACTIVE_LINK_BY_FILE[fileName] || null);
   const updated = original.replace(NAV_BLOCK_RE, (match, leadingIndent) => {
     // Re-indent the partial to match the source file (partial is already
-    // 4-space indented, which matches all current public pages).
+    // 4-space indented, which matches all current pages).
     void leadingIndent;
     return `${desiredNav}\n`;
   });
@@ -96,8 +95,8 @@ for (const fileName of await listHtmlFiles()) {
 
   drifted.push(fileName);
   if (mode === 'write') {
-    await writeFile(publicFile, updated);
-    console.log(`Synced nav in public/${fileName}`);
+    await writeFile(pageFile, updated);
+    console.log(`Synced nav in ${fileName}`);
   }
 }
 
@@ -114,7 +113,7 @@ if (mode === 'check') {
     console.error('\nRun `npm run sync-nav` to update.');
     process.exit(1);
   }
-  console.log(`Nav markup matches partials/nav.html in all public pages.`);
+  console.log(`Nav markup matches partials/nav.html in all pages.`);
 } else {
   console.log(`Synced ${drifted.length} file(s).`);
 }

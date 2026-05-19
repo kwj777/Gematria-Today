@@ -554,33 +554,30 @@
         return payload;
       }
 
-      const MEMBERSHIP_UPGRADE_AUTO_OPEN_INTERVAL_MS = 14 * 24 * 60 * 60 * 1000;
-
-      function membershipUpgradeAutoOpenStorageKey(member) {
+      function membershipUpgradeDismissedStorageKey(member) {
         const memberId = String(member?.id || member?.memberId || member?.email || '').trim().toLowerCase();
         return memberId
-          ? `membershipUpgradeAutoOpenAt:${memberId}`
-          : 'membershipUpgradeAutoOpenAt';
+          ? `membershipUpgradeDismissed:${memberId}`
+          : 'membershipUpgradeDismissed';
       }
 
-      function shouldAutoOpenMembershipUpgrade(member) {
+      function isMembershipUpgradeDismissed(member) {
         try {
-          const key = membershipUpgradeAutoOpenStorageKey(member);
-          const lastOpenedRaw = window.localStorage?.getItem(key);
-          const lastOpened = Number(lastOpenedRaw);
-          if (!Number.isFinite(lastOpened) || lastOpened <= 0) {
-            return true;
-          }
-          return Date.now() - lastOpened >= MEMBERSHIP_UPGRADE_AUTO_OPEN_INTERVAL_MS;
+          const key = membershipUpgradeDismissedStorageKey(member);
+          return window.localStorage?.getItem(key) === '1';
         } catch (error) {
           return false;
         }
       }
 
-      function recordMembershipUpgradeAutoOpen(member) {
+      function setMembershipUpgradeDismissed(member, dismissed) {
         try {
-          const key = membershipUpgradeAutoOpenStorageKey(member);
-          window.localStorage?.setItem(key, String(Date.now()));
+          const key = membershipUpgradeDismissedStorageKey(member);
+          if (dismissed) {
+            window.localStorage?.setItem(key, '1');
+          } else {
+            window.localStorage?.removeItem(key);
+          }
         } catch (error) {
           /* storage unavailable */
         }
@@ -590,14 +587,11 @@
         const level = member?.membershipLevel;
         const isFree = level === 'free';
         membershipUpgradeSection.classList.toggle('d-none', !isFree);
-        const autoOpen = isFree && shouldAutoOpenMembershipUpgrade(member);
-        membershipUpgradeContent.classList.toggle('show', autoOpen);
-        membershipUpgradeToggleButton.setAttribute('aria-expanded', autoOpen ? 'true' : 'false');
-        membershipUpgradeToggleArrow.textContent = autoOpen ? '▲' : '▼';
+        const expand = isFree && !isMembershipUpgradeDismissed(member);
+        membershipUpgradeContent.classList.toggle('show', expand);
+        membershipUpgradeToggleButton.setAttribute('aria-expanded', expand ? 'true' : 'false');
+        membershipUpgradeToggleArrow.textContent = expand ? '▲' : '▼';
         membershipUpgradeToggleLabel.textContent = 'Upgrade to Premium';
-        if (autoOpen) {
-          recordMembershipUpgradeAutoOpen(member);
-        }
       }
 
       function syncComparisonCurrentLevel(member = session?.member) {
@@ -2543,11 +2537,13 @@
       membershipUpgradeContent.addEventListener('show.bs.collapse', () => {
         membershipUpgradeToggleArrow.textContent = '▲';
         membershipUpgradeToggleButton.setAttribute('aria-expanded', 'true');
+        setMembershipUpgradeDismissed(session?.member, false);
       });
 
       membershipUpgradeContent.addEventListener('hide.bs.collapse', () => {
         membershipUpgradeToggleArrow.textContent = '▼';
         membershipUpgradeToggleButton.setAttribute('aria-expanded', 'false');
+        setMembershipUpgradeDismissed(session?.member, true);
       });
 
       premiumBlogProposalContent?.addEventListener('show.bs.collapse', () => {

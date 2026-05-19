@@ -24,8 +24,19 @@ export async function handler(event) {
       });
     }
 
-    const rows = await sql`SELECT * FROM faqs WHERE is_published = TRUE ORDER BY sort_order ASC, created_at ASC LIMIT 1000`;
-    const payload = { items: rows.map(formatFaq) };
+    const query = event.queryStringParameters || {};
+    const requestedLimit = Number.parseInt(query.limit, 10);
+    const requestedOffset = Number.parseInt(query.offset, 10);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 50;
+    const offset = Number.isFinite(requestedOffset) && requestedOffset > 0 ? requestedOffset : 0;
+
+    const rows = await sql`
+      SELECT * FROM faqs
+      WHERE is_published = TRUE
+      ORDER BY sort_order ASC, created_at ASC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    const payload = { items: rows.map(formatFaq), limit, offset };
 
     await logRequestAudit(sql, event, {
       route: 'public-faqs',

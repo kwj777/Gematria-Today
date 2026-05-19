@@ -191,6 +191,12 @@
     Cache-Control = "no-cache"
 
 [[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
   for = "/manifest.webmanifest"
   [headers.values]
     Cache-Control = "public, max-age=3600"

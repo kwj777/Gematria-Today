@@ -39,6 +39,39 @@
     <meta name="twitter:title" content="Tools | Gematria.Today" />
     <meta name="twitter:description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, or GemaBot for conversational analysis." />
     <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Gematria Research Tools",
+      "url": "https://gematria.today/tools.html",
+      "itemListOrder": "https://schema.org/ItemListOrderAscending",
+      "numberOfItems": 3,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "url": "https://gematria.today/calculator.html",
+          "name": "Calculator",
+          "description": "Run any word or phrase through multiple gematria ciphers at once and compare results side by side."
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "url": "https://gematria.today/name-calculator.html",
+          "name": "Name Calculator",
+          "description": "Analyze personal names — first, last, and full — with cipher breakdowns tuned for name-based research."
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "url": "https://gematria.today/ai-agent.html",
+          "name": "GemaBot",
+          "description": "Conversational gematria analysis. Ask in plain language; GemaBot looks up matches across ciphers and explains its reasoning."
+        }
+      ]
+    }
+    </script>
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" data-promote-stylesheet>
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"></noscript>
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
@@ -49,13 +82,95 @@
     <style>
       .gemabot-cta--premium,
       .gemabot-cta--upgrade,
-      .gemabot-premium-note { display: none; }
+      .gemabot-premium-note,
+      .gemabot-sample-link { display: none; }
       html.auth-premium .gemabot-cta--premium,
       html.auth-lifetime .gemabot-cta--premium { display: inline-flex; }
       html.auth-anon .gemabot-cta--upgrade,
       html.auth-free .gemabot-cta--upgrade { display: inline-flex; }
       html.auth-anon .gemabot-premium-note,
-      html.auth-free .gemabot-premium-note { display: block; }
+      html.auth-free .gemabot-premium-note { display: inline-flex; }
+      html.auth-anon .gemabot-sample-link,
+      html.auth-free .gemabot-sample-link { display: inline; }
+
+      .tool-card-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.85rem;
+        background: rgba(251, 191, 36, 0.14);
+        color: #b45309;
+        margin-bottom: 1rem;
+      }
+      .tool-card-icon svg { width: 1.6rem; height: 1.6rem; }
+      :root[data-bs-theme="dark"] .tool-card-icon {
+        background: rgba(251, 191, 36, 0.18);
+        color: #fbbf24;
+      }
+
+      .tool-card-best {
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        margin: 0 0 0.65rem 0;
+      }
+      .tool-card-best strong { color: #b45309; font-weight: 700; }
+      :root[data-bs-theme="dark"] .tool-card-best { color: #94a3b8; }
+      :root[data-bs-theme="dark"] .tool-card-best strong { color: #fbbf24; }
+
+      .tool-card-examples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin: 0.5rem 0 1rem 0;
+        padding: 0;
+        list-style: none;
+      }
+      .tool-card-examples li {
+        font-size: 0.82rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.06);
+        color: #334155;
+        font-weight: 500;
+      }
+      :root[data-bs-theme="dark"] .tool-card-examples li {
+        background: rgba(255, 255, 255, 0.08);
+        color: #cbd5e1;
+      }
+
+      .tool-card-badge-free {
+        background: rgba(34, 197, 94, 0.16);
+        color: #15803d;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      :root[data-bs-theme="dark"] .tool-card-badge-free {
+        background: rgba(34, 197, 94, 0.22);
+        color: #4ade80;
+      }
+
+      .gemabot-premium-note {
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #92400e;
+        margin: 0 0 0.85rem 0;
+      }
+      .gemabot-premium-note svg { flex: 0 0 auto; width: 1rem; height: 1rem; }
+      :root[data-bs-theme="dark"] .gemabot-premium-note { color: #fbbf24; }
+
+      .tools-help-line {
+        font-size: 0.95rem;
+        margin-top: 0.85rem;
+        margin-bottom: 0;
+        color: #475569;
+      }
+      :root[data-bs-theme="dark"] .tools-help-line { color: #94a3b8; }
     </style>
     <script defer src="/cookie-consent.js"></script>
     <script defer src="/ui-feedback.js"></script>
@@ -92,37 +207,76 @@
           <p class="section-kicker mb-2">Tools</p>
           <h1 class="mb-3">Gematria Research Tools</h1>
           <p class="mb-0">Three ways to explore the numerical patterns behind words, names, and phrases. Pick the one that fits how you want to work.</p>
+          <p class="tools-help-line">Not sure which to use? Start with the <a href="/calculator.html">Calculator</a> for words and phrases, or see the <a href="/faq.html">FAQ</a> for a quick comparison.</p>
         </section>
 
         <div class="row g-4">
           <div class="col-12 col-lg-4 d-flex">
             <section class="content-panel p-4 p-lg-5 w-100 d-flex flex-column">
-              <h2 class="h4 mb-2">Calculator</h2>
-              <p class="flex-grow-1">Run any word or phrase through multiple gematria ciphers at once and compare the results side by side.</p>
-              <p class="mb-0"><a class="btn btn-warning fw-semibold" href="/calculator.html" aria-label="Open Calculator">Open</a></p>
+              <span class="tool-card-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 7h8"></path><path d="M8 12h.01"></path><path d="M12 12h.01"></path><path d="M16 12h.01"></path><path d="M8 16h.01"></path><path d="M12 16h.01"></path><path d="M16 16h.01"></path></svg>
+              </span>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <h2 class="h4 mb-0">Calculator</h2>
+                <span class="badge tool-card-badge-free">Free</span>
+              </div>
+              <p class="tool-card-best"><strong>Best for:</strong> words &amp; phrases</p>
+              <p class="mb-1">Run any word or phrase through multiple gematria ciphers at once and compare the results side by side.</p>
+              <ul class="tool-card-examples" aria-label="Example inputs">
+                <li>love</li>
+                <li>truth</li>
+                <li>as above so below</li>
+              </ul>
+              <div class="mt-auto">
+                <a class="btn btn-warning fw-semibold w-100" href="/calculator.html" aria-label="Open Calculator">Open Calculator</a>
+              </div>
             </section>
           </div>
           <div class="col-12 col-lg-4 d-flex">
             <section class="content-panel p-4 p-lg-5 w-100 d-flex flex-column">
-              <h2 class="h4 mb-2">Name Calculator</h2>
-              <p class="flex-grow-1">Analyze personal names — first, last, and full — with cipher breakdowns tuned for name-based research.</p>
-              <p class="mb-0"><a class="btn btn-warning fw-semibold" href="/name-calculator.html" aria-label="Open Name Calculator">Open</a></p>
+              <span class="tool-card-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </span>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <h2 class="h4 mb-0">Name Calculator</h2>
+                <span class="badge tool-card-badge-free">Free</span>
+              </div>
+              <p class="tool-card-best"><strong>Best for:</strong> people &amp; names</p>
+              <p class="mb-1">Analyze personal names — first, last, and full — with cipher breakdowns tuned for name-based research.</p>
+              <ul class="tool-card-examples" aria-label="Example inputs">
+                <li>John Smith</li>
+                <li>Mary Magdalene</li>
+                <li>Isaac Newton</li>
+              </ul>
+              <div class="mt-auto">
+                <a class="btn btn-warning fw-semibold w-100" href="/name-calculator.html" aria-label="Open Name Calculator">Open Name Calculator</a>
+              </div>
             </section>
           </div>
           <div class="col-12 col-lg-4 d-flex" data-module="gemabot">
             <section class="content-panel p-4 p-lg-5 w-100 d-flex flex-column">
+              <span class="tool-card-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M12 3v3"></path><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><path d="M9 16h6"></path><path d="M3 12h-1"></path><path d="M22 12h-1"></path></svg>
+              </span>
               <div class="d-flex align-items-center gap-2 mb-2">
                 <h2 class="h4 mb-0">GemaBot</h2>
                 <span class="badge bg-warning text-dark text-uppercase" style="letter-spacing: 0.05em;">Premium</span>
               </div>
-              <p class="flex-grow-1">Ask questions in plain language. GemaBot looks up matches across ciphers and explains its reasoning as it goes.</p>
-              <p class="gemabot-premium-note alert alert-warning small mb-3" role="note">
-                <strong>GemaBot is a premium-only feature.</strong> Upgrade your membership to unlock conversational gematria analysis.
+              <p class="tool-card-best"><strong>Best for:</strong> open-ended questions</p>
+              <p class="mb-1">Ask questions in plain language. GemaBot looks up matches across ciphers and explains its reasoning as it goes.</p>
+              <ul class="tool-card-examples" aria-label="Example questions">
+                <li>Why is 137 important?</li>
+                <li>What shares the value of "wisdom"?</li>
+                <li>Compare "light" and "love"</li>
+              </ul>
+              <p class="gemabot-premium-note" role="note">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>Premium-only. <a class="gemabot-sample-link" href="/ai-agent.html">See a sample answer</a></span>
               </p>
-              <p class="mb-0">
-                <a class="btn btn-warning fw-semibold gemabot-cta--premium" href="/ai-agent.html" aria-label="Open GemaBot">Open</a>
-                <a class="btn btn-warning fw-semibold gemabot-cta--upgrade" href="/member.html#membershipUpgradeSection">Upgrade to Premium</a>
-              </p>
+              <div class="mt-auto">
+                <a class="btn btn-warning fw-semibold w-100 gemabot-cta--premium" href="/ai-agent.html" aria-label="Open GemaBot">Open GemaBot</a>
+                <a class="btn btn-warning fw-semibold w-100 gemabot-cta--upgrade" href="/member.html#membershipUpgradeSection">Upgrade to Premium</a>
+              </div>
             </section>
           </div>
         </div>

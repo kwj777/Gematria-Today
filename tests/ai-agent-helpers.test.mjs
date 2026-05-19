@@ -31,6 +31,9 @@ import {
   extractWordnikRelationshipType,
   buildCloseSpellingVariants,
   formatComparisonText,
+  describeMatchCountError,
+  formatReverseLookupText,
+  formatReverseRangeText,
 } from '../page-scripts/ai-agent-helpers.mjs';
 
 // ---------- escapeHtml ----------
@@ -276,6 +279,24 @@ test('resolvePronouns leaves bare "that" and "this" untouched (too ambiguous)', 
   const ctx = { kind: 'calculation', topic: 'jerusalem' };
   assert.equal(resolvePronouns('what about that?', ctx), 'what about that?');
   assert.equal(resolvePronouns('this is interesting', ctx), 'this is interesting');
+});
+
+test('resolvePronouns resolves to first target in comparison context', () => {
+  const ctx = {
+    kind: 'comparison',
+    reports: [
+      { target: 'alpha', total: 156 },
+      { target: 'omega', total: 270 },
+    ],
+  };
+  assert.equal(resolvePronouns('is it base-root?', ctx), 'is alpha base-root?');
+  assert.equal(resolvePronouns('save the result', ctx), 'save alpha');
+  assert.equal(resolvePronouns('show that one', ctx), 'show alpha');
+});
+
+test('resolvePronouns is a no-op for comparison context without reports', () => {
+  assert.equal(resolvePronouns('is it base-root?', { kind: 'comparison', reports: [] }), 'is it base-root?');
+  assert.equal(resolvePronouns('is it base-root?', { kind: 'comparison' }), 'is it base-root?');
 });
 
 // ---------- parseSpelledNumber ----------
@@ -527,4 +548,58 @@ test('formatComparisonText calls out exact matches', () => {
 test('formatComparisonText returns empty for empty input', () => {
   assert.equal(formatComparisonText([]), '');
   assert.equal(formatComparisonText(null), '');
+});
+
+// ---------- describeMatchCountError ----------
+
+test('describeMatchCountError distinguishes rate-limit, network, server, unknown', () => {
+  assert.match(describeMatchCountError('rate-limit'), /rate-limit/);
+  assert.match(describeMatchCountError('network'), /network failure/);
+  assert.match(describeMatchCountError('server'), /server error/);
+  assert.match(describeMatchCountError('unknown'), /unavailable/);
+  assert.match(describeMatchCountError(null), /unavailable/);
+});
+
+// ---------- formatReverseLookupText ----------
+
+test('formatReverseLookupText lists archived words with root and base-root metadata', () => {
+  const text = formatReverseLookupText({ value: 144, words: ['alpha', 'omega'] });
+  assert.match(text, /Reverse gematria 144/);
+  assert.match(text, /root 9/);
+  assert.match(text, /Archived matches \(2\): alpha, omega/);
+});
+
+test('formatReverseLookupText reports empty archives without crashing', () => {
+  const text = formatReverseLookupText({ value: 144, words: [] });
+  assert.match(text, /No archived words match this total yet/);
+});
+
+test('formatReverseLookupText returns empty string when value is not a number', () => {
+  assert.equal(formatReverseLookupText({ value: 'oops', words: [] }), '');
+});
+
+// ---------- formatReverseRangeText ----------
+
+test('formatReverseRangeText lists buckets with words', () => {
+  const text = formatReverseRangeText({
+    min: 120,
+    max: 144,
+    buckets: [
+      { value: 120, words: ['foo'] },
+      { value: 144, words: ['alpha', 'omega'] },
+    ],
+  });
+  assert.match(text, /Reverse gematria range 120–144/);
+  assert.match(text, /3 matches across 2 buckets/);
+  assert.match(text, /120: foo/);
+  assert.match(text, /144: alpha, omega/);
+});
+
+test('formatReverseRangeText handles empty range without crashing', () => {
+  const text = formatReverseRangeText({ min: 6, max: 12, buckets: [] });
+  assert.match(text, /No archived words land in this range/);
+});
+
+test('formatReverseRangeText returns empty string when min/max are not numbers', () => {
+  assert.equal(formatReverseRangeText({ min: 'a', max: 'b', buckets: [] }), '');
 });

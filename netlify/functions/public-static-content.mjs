@@ -32,16 +32,44 @@ function normalizePageId(rawValue = '') {
   return value.replace(/\.html$/, '');
 }
 
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
+function parsePagination(query = {}) {
+  const offsetRaw = Number.parseInt(String(query.offset ?? '0'), 10);
+  const limitRaw = Number.parseInt(String(query.limit ?? DEFAULT_LIMIT), 10);
+  const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0
+    ? Math.min(limitRaw, MAX_LIMIT)
+    : DEFAULT_LIMIT;
+  return { offset, limit };
+}
+
 export async function handler(event) {
-  if (event.httpMethod !== 'GET') {
-    return jsonResponse(405, { error: 'Method not allowed' });
-  }
+  try {
+    if (event.httpMethod !== 'GET') {
+      return jsonResponse(405, { error: 'Method not allowed' });
+    }
 
-  const pageParam = event.queryStringParameters?.page || '';
-  const pageId = normalizePageId(pageParam);
-  if (!pageId) {
-    return jsonResponse(400, { error: 'page query parameter is required' });
-  }
+    const query = event.queryStringParameters || {};
+    const pageParam = query.page || '';
+    const pageId = normalizePageId(pageParam);
+    if (!pageId) {
+      return jsonResponse(400, { error: 'page query parameter is required' });
+    }
 
-  return jsonResponse(200, { pageId, content: {}, updatedAt: null });
+    const { offset, limit } = parsePagination(query);
+
+    return jsonResponse(200, {
+      pageId,
+      content: {},
+      updatedAt: null,
+      pagination: { offset, limit, total: 0 },
+    });
+  } catch (error) {
+    console.error('public-static-content failed', error);
+    return jsonResponse(error.statusCode || 500, {
+      error: 'Failed to load static content',
+    });
+  }
 }

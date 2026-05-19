@@ -755,6 +755,69 @@ View results: ${shareUrl}`.trim(),
         return root;
       }
 
+      const STEM_SUFFIXES = [
+        'ational', 'ization', 'iveness', 'fulness', 'ousness',
+        'ation', 'ness', 'tion', 'sion', 'ment', 'able', 'ible', 'ance', 'ence',
+        'ize', 'ise', 'ous', 'ive', 'ity', 'ful', 'ies', 'ied',
+        'ing', 'est', 'ors', 'ers', 'ed', 'ly', 'or', 'er', 'es', 's',
+      ];
+
+      function stripOneSuffix(word) {
+        for (const suffix of STEM_SUFFIXES) {
+          if (word.length - suffix.length >= 3 && word.endsWith(suffix)) {
+            const trimmed = word.slice(0, -suffix.length);
+            if (suffix === 'ies' || suffix === 'ied') return `${trimmed}y`;
+            return trimmed;
+          }
+        }
+        return word;
+      }
+
+      function stemToken(token) {
+        let w = String(token || '').toLowerCase().replace(/[^a-z]+/g, '');
+        if (w.length <= 3) return w;
+        const afterFirst = stripOneSuffix(w);
+        if (afterFirst !== w) {
+          w = afterFirst;
+          const afterSecond = stripOneSuffix(w);
+          if (afterSecond !== w && afterSecond.length >= 3) w = afterSecond;
+        }
+        if (w.length > 3 && w.endsWith('e')) w = w.slice(0, -1);
+        if (w.length > 3 && w.endsWith('i')) w = `${w.slice(0, -1)}y`;
+        if (w.length >= 4 && w[w.length - 1] === w[w.length - 2] && !'aeiou'.includes(w[w.length - 1])) {
+          w = w.slice(0, -1);
+        }
+        return w;
+      }
+
+      function stemPhraseKey(phrase) {
+        const tokens = String(phrase || '').toLowerCase().split(/\s+/).filter(Boolean);
+        if (tokens.length === 0) return '';
+        return tokens.map(stemToken).filter(Boolean).join(' ');
+      }
+
+      function groupWordsByStem(words) {
+        const stemMap = new Map();
+        words.forEach((entry) => {
+          const stem = stemPhraseKey(entry.word) || String(entry.word || '').toLowerCase();
+          if (!stemMap.has(stem)) stemMap.set(stem, []);
+          stemMap.get(stem).push(entry);
+        });
+        const groups = [];
+        const singletons = [];
+        stemMap.forEach((entries, stem) => {
+          if (entries.length >= 2) {
+            entries.sort((a, b) => a.word.length - b.word.length || a.word.localeCompare(b.word));
+            groups.push({ stem, entries, root: entries[0].word });
+          } else {
+            singletons.push(entries[0]);
+          }
+        });
+        groups.sort((a, b) => b.entries.length - a.entries.length || a.root.localeCompare(b.root));
+        singletons.sort((a, b) => String(a.word).localeCompare(String(b.word)));
+        return { groups, singletons };
+      }
+
       function createReverseLookupShareUrl(gematriaValue) {
         const shareUrl = new URL('/calculator.html', getCanonicalShareOrigin());
         shareUrl.searchParams.set('query', String(gematriaValue));
@@ -804,7 +867,7 @@ View results: ${shareUrl}`.trim(),
 
           const disclaimer = document.createElement('p');
           disclaimer.className = 'muted disclaimer';
-          disclaimer.textContent = '*  Gematria value matches are limited to the words currently in our database.';
+          disclaimer.textContent = '*  Gematria value matches are limited to the words currently in our database. Words sharing the same root form are grouped together below.';
           wrapper.appendChild(disclaimer);
 
           if (payload.count === 0) {
@@ -812,12 +875,45 @@ View results: ${shareUrl}`.trim(),
             emptyState.textContent = 'No words in the database currently match this gematria value.';
             wrapper.appendChild(emptyState);
           } else {
-            const grid = document.createElement('div');
-            grid.className = 'results-grid related-words-grid';
-            payload.words.forEach((wordResult) => {
-              grid.appendChild(createWordCard({ word: wordResult.word, gematria: wordResult }, payload.gematria));
+            const { groups, singletons } = groupWordsByStem(payload.words);
+
+            groups.forEach((group) => {
+              const groupSection = document.createElement('section');
+              groupSection.className = 'related-word-group';
+
+              const groupHeading = document.createElement('h4');
+              groupHeading.className = 'related-word-group-heading';
+              groupHeading.textContent = `Variants of “${group.root}” (${group.entries.length})`;
+              groupSection.appendChild(groupHeading);
+
+              const grid = document.createElement('div');
+              grid.className = 'results-grid related-words-grid';
+              group.entries.forEach((entry) => {
+                grid.appendChild(createWordCard({ word: entry.word, gematria: entry }, payload.gematria));
+              });
+              groupSection.appendChild(grid);
+              wrapper.appendChild(groupSection);
             });
-            wrapper.appendChild(grid);
+
+            if (singletons.length > 0) {
+              const standaloneSection = document.createElement('section');
+              standaloneSection.className = 'related-word-group related-word-group-standalone';
+
+              if (groups.length > 0) {
+                const standaloneHeading = document.createElement('h4');
+                standaloneHeading.className = 'related-word-group-heading';
+                standaloneHeading.textContent = `Other matches (${singletons.length})`;
+                standaloneSection.appendChild(standaloneHeading);
+              }
+
+              const grid = document.createElement('div');
+              grid.className = 'results-grid related-words-grid';
+              singletons.forEach((entry) => {
+                grid.appendChild(createWordCard({ word: entry.word, gematria: entry }, payload.gematria));
+              });
+              standaloneSection.appendChild(grid);
+              wrapper.appendChild(standaloneSection);
+            }
           }
 
           relatedWordsResult.appendChild(wrapper);

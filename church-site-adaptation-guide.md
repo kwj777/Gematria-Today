@@ -11,7 +11,7 @@ Update global identity across the homepage and shared pages:
 - Footer organization details
 
 Primary file to start with:
-- `public/index.html`
+- `index.html`
 
 Key changes:
 - Replace current brand references with your church name, mission statement, and city.
@@ -31,17 +31,17 @@ A practical primary navigation for churches:
 - Contact
 
 Files to update:
-- `public/index.html` (header and homepage sections)
-- Other page templates in `public/` to match final navigation
+- `index.html` (header and homepage sections)
+- Other page templates at the repo root to match final navigation
 
 Recommended new pages:
-- `public/new-here.html`
-- `public/about.html`
-- `public/ministries.html`
-- `public/sermons.html`
-- `public/events.html`
-- `public/give.html`
-- `public/prayer.html`
+- `new-here.html`
+- `about.html`
+- `ministries.html`
+- `sermons.html`
+- `events.html`
+- `give.html`
+- `prayer.html`
 
 ## 3) Restructure homepage sections for church outcomes
 
@@ -58,8 +58,8 @@ Keep copy warm and simple, and use prominent action buttons.
 ## 4) Adjust visual design for warmth and clarity
 
 Primary style files:
-- `public/theme.css`
-- Inline styles in `public/index.html` where applicable
+- `theme.css`
+- Inline styles in `index.html` where applicable
 
 Suggested design direction:
 - Soft neutral background and accessible contrast
@@ -70,7 +70,7 @@ Suggested design direction:
 ## 5) Disable modules that are not ministry-relevant
 
 This repository supports feature toggles via:
-- `public/site-modules.js`
+- `site-modules.js`
 
 Action:
 - Keep only modules you need for launch.
@@ -83,7 +83,7 @@ Recommended content model:
 - **Devotionals/Updates:** short pastoral messages and church announcements
 
 Likely touchpoints:
-- `public/blog.html` (if repurposed)
+- `blog.html` (if repurposed)
 - Related content functions in `netlify/functions/` if you keep dynamic publishing
 
 ## 7) Build a church-first contact flow
@@ -95,7 +95,7 @@ Update contact forms to capture:
 - New visitor follow-up preferences
 
 Files to review:
-- `public/contact.html`
+- `contact.html`
 - Any submission handlers in `netlify/functions/`
 
 ## 8) Define data structures for sermons and events (if dynamic)
@@ -159,8 +159,6 @@ Review:
 - Validate all CTAs, forms, and navigation links
 - Test mobile UX for first-time visitors
 - Run static checks and any relevant tests
-- Sync root pages if required:
-  - `npm run sync-root-pages`
 
 ---
 

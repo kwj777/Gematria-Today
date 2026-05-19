@@ -6,24 +6,25 @@ A web-based Gematria calculator application built with HTML, CSS, JavaScript, an
 
 ```
 .
-├── public/                        # Static front-end files
-│   ├── index.html
-│   ├── calculator.html
-│   ├── nameCalculator.html
-│   ├── gematria-results.html
-│   ├── admin.html
-│   ├── blog.html
-│   ├── news.html
-│   ├── faq.html
-│   ├── contact.html
-│   ├── privacy.html
-│   ├── terms.html
-│   ├── disclaimer.html
-│   ├── accessibility.html
-│   ├── theme.css
-│   └── netlify/functions/         # Deployed Netlify functions
+├── index.html                     # Static front-end pages live at repo root
+├── calculator.html
+├── name-calculator.html
+├── gematria-results.html
+├── admin.html
+├── blog.html
+├── news.html
+├── faq.html
+├── contact.html
+├── privacy.html
+├── terms.html
+├── disclaimer.html
+├── accessibility.html
+├── theme.css
+├── site-modules.js
+├── assets/                        # Images, icons, SVGs
 ├── netlify/
-│   └── functions/                 # Netlify serverless functions (Node.js / .mjs)
+│   ├── functions/                 # Netlify serverless functions (Node.js / .mjs)
+│   └── edge-functions/            # Netlify edge functions
 ├── sql/
 │   ├── admin_schema.sql           # Admin/auth/content schema
 │   └── member_schema.sql          # Member profile/history schema
@@ -31,24 +32,14 @@ A web-based Gematria calculator application built with HTML, CSS, JavaScript, an
 ├── package.json
 ```
 
-## Page source of truth
-
-Deployable pages live in `public/` and are the canonical source.
-
-Root-level mirrored files (`index.html`, `calculator.html`, etc.) are generated from `public/` for compatibility and should not be edited manually.
-
-- `npm run sync-root-pages` updates root mirrors from `public/`.
-- `npm run check-root-pages` fails if any mirrored root file diverges.
-
-A GitHub Actions workflow runs the mirror check on pushes and pull requests.
+Pages are served directly from the repository root; Netlify's `publish` directory is `.` (see `netlify.toml`). Edit the root files in place — there is no separate source directory.
 
 ## Modular site builds (Forum / KnowBot / GemaBot / etc.)
 
-The site now includes a lightweight module toggle system in `public/site-modules.js`.
+The site includes a lightweight module toggle system in `site-modules.js`.
 
 - Default modules are configured in `DEFAULT_MODULES`.
 - Page elements can be tied to modules using `data-module="forum"` (or comma-separated values).
-- The same script is mirrored at root as `site-modules.js` for compatibility.
 - Module selection is **locked for non-admin users**.
 - Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `gematria.siteModules` — legacy `endtimes.siteModules` is read as a fallback and migrated forward — and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
 
@@ -68,13 +59,9 @@ The site now includes a lightweight module toggle system in `public/site-modules
 
 ### How to create a custom build
 
-1. Open `public/site-modules.js`.
+1. Open `site-modules.js`.
 2. Change values in `DEFAULT_MODULES` to `true`/`false` for the modules you want.
-3. Run:
-   ```bash
-   npm run sync-root-pages
-   ```
-4. Deploy.
+3. Deploy.
 
 ## Lines of Code
 

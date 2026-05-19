@@ -16,9 +16,9 @@ Use this checklist to adapt this codebase into a **Family Tree Creator Platform*
 - [ ] Update `<title>`, meta descriptions, canonical URLs, and social share metadata.
 - [ ] Replace logo, favicon, and support/legal copy.
 - [ ] Add trust language emphasizing data ownership and privacy.
-- [ ] Update `public/index.html`.
-- [ ] Update shared static pages in `public/*.html`.
-- [ ] Update brand assets in `public/assets/`.
+- [ ] Update `index.html`.
+- [ ] Update shared static pages in `*.html` at the repo root.
+- [ ] Update brand assets in `assets/`.
 
 ## 3) Replace navigation with creator-first information architecture
 
@@ -28,13 +28,13 @@ Use this checklist to adapt this codebase into a **Family Tree Creator Platform*
 
 ## 4) Build core page set for acquisition + activation
 
-- [ ] Create or repurpose `public/features.html`.
-- [ ] Create or repurpose `public/how-it-works.html`.
-- [ ] Create or repurpose `public/pricing.html`.
-- [ ] Create or repurpose `public/templates.html`.
-- [ ] Create or repurpose `public/help-center.html`.
-- [ ] Create or repurpose `public/tree-builder.html` (app shell).
-- [ ] Create or repurpose `public/tree-share.html` (invite/collaboration landing).
+- [ ] Create or repurpose `features.html`.
+- [ ] Create or repurpose `how-it-works.html`.
+- [ ] Create or repurpose `pricing.html`.
+- [ ] Create or repurpose `templates.html`.
+- [ ] Create or repurpose `help-center.html`.
+- [ ] Create or repurpose `tree-builder.html` (app shell).
+- [ ] Create or repurpose `tree-share.html` (invite/collaboration landing).
 - [ ] Validate visitor → signup → first tree flow can be completed in under 10 minutes.
 
 ## 5) Define a practical genealogy data model early
@@ -97,11 +97,11 @@ Use this checklist to adapt this codebase into a **Family Tree Creator Platform*
 - [ ] Add search and filter (name, generation, branch).
 - [ ] Add undo/redo and autosave.
 - [ ] Add conflict prompts for duplicate or contradictory records.
-- [ ] Update style touchpoints in `public/theme.css` and page-level styles in `public/*.html`.
+- [ ] Update style touchpoints in `theme.css` and page-level styles in `*.html` at the repo root.
 
 ## 8) Configure modules for collaboration and support
 
-- [ ] Review feature gating in `public/site-modules.js`.
+- [ ] Review feature gating in `site-modules.js`.
 - [ ] Keep account/auth modules enabled.
 - [ ] Keep chatbot only if scoped to onboarding/support.
 - [ ] Disable unrelated community modules unless social features are in roadmap.
@@ -124,9 +124,9 @@ Use this checklist to adapt this codebase into a **Family Tree Creator Platform*
 - [ ] Add invite roles (viewer, editor, owner).
 - [ ] Add audit log for edits and collaboration actions.
 - [ ] Add data export and deletion controls.
-- [ ] Update `public/privacy.html`.
-- [ ] Update `public/terms.html`.
-- [ ] Update `public/disclaimer.html`.
+- [ ] Update `privacy.html`.
+- [ ] Update `terms.html`.
+- [ ] Update `disclaimer.html`.
 
 ## 11) SEO and discoverability plan for genealogy intent
 
@@ -148,4 +148,3 @@ Use this checklist to adapt this codebase into a **Family Tree Creator Platform*
 - [ ] Export/deletion flows validated.
 - [ ] `npm run sync:site-adaptation-guides` completed.
 - [ ] `npm run check:site-adaptation-guides` passes.
-- [ ] `npm run check-root-pages` passes (if any root/public mirrors changed).

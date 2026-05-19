@@ -1,5 +1,5 @@
 import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
-import { generateCsrfToken, validateCsrfToken, getCsrfTokenFromRequest } from './_auth.mjs';
+import { generateCsrfToken, validateCsrfRequest } from './_auth.mjs';
 
 export async function handler(event) {
   try {
@@ -10,8 +10,7 @@ export async function handler(event) {
     }
 
     if (event.httpMethod === 'PATCH' || event.httpMethod === 'PUT') {
-      const csrfToken = getCsrfTokenFromRequest(event);
-      if (!validateCsrfToken(csrfToken, sessionToken)) {
+      if (!validateCsrfRequest(event, sessionToken)) {
         return jsonResponse(403, { error: 'Invalid or missing CSRF token' });
       }
 

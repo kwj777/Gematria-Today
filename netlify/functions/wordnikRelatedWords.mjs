@@ -2,8 +2,8 @@ import { getSqlClient, jsonResponse } from './_auth.mjs';
 import { getAuthenticatedMember } from './_member.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
 
-const DEFAULT_WORDNIK_RELATIONSHIP_TYPE = 'synonym';
-const ALLOWED_WORDNIK_RELATIONSHIP_TYPES = new Set([
+export const DEFAULT_WORDNIK_RELATIONSHIP_TYPE = 'synonym';
+export const ALLOWED_WORDNIK_RELATIONSHIP_TYPES = new Set([
   'antonym',
   'synonym',
   'equivalent',
@@ -13,8 +13,8 @@ const ALLOWED_WORDNIK_RELATIONSHIP_TYPES = new Set([
   'variant',
   'same-context',
 ]);
-const PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE = 250;
-const FREE_LIMIT_PER_RELATIONSHIP_TYPE = 100;
+export const PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE = 250;
+export const FREE_LIMIT_PER_RELATIONSHIP_TYPE = 100;
 const PREMIUM_TIERS = new Set(['premium', 'lifetime']);
 
 function toResponse(statusCode, payload, extraHeaders = {}) {
@@ -24,7 +24,7 @@ function toResponse(statusCode, payload, extraHeaders = {}) {
   });
 }
 
-function extractRequestOptionsFromEvent(event) {
+export function extractRequestOptionsFromEvent(event) {
   if (!event || typeof event !== 'object') return { term: null, limit: null, relationshipType: null };
   if ('queryStringParameters' in event) {
     return {
@@ -44,11 +44,11 @@ function extractRequestOptionsFromEvent(event) {
   return { term: null, limit: null, relationshipType: null };
 }
 
-function getTierLimit(membershipLevel) {
+export function getTierLimit(membershipLevel) {
   return PREMIUM_TIERS.has(membershipLevel) ? PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE : FREE_LIMIT_PER_RELATIONSHIP_TYPE;
 }
 
-function parseLimit(limit, { membershipLevel } = {}) {
+export function parseLimit(limit, { membershipLevel } = {}) {
   const tierLimit = getTierLimit(membershipLevel);
   if (limit == null || limit === '') return tierLimit;
   const parsedLimit = Number.parseInt(limit, 10);
@@ -57,7 +57,7 @@ function parseLimit(limit, { membershipLevel } = {}) {
   return parsedLimit;
 }
 
-function parseRelationshipType(relationshipType) {
+export function parseRelationshipType(relationshipType) {
   if (relationshipType == null || relationshipType === '') return DEFAULT_WORDNIK_RELATIONSHIP_TYPE;
   const parsedRelationshipType = String(relationshipType).trim().toLowerCase();
   if (!ALLOWED_WORDNIK_RELATIONSHIP_TYPES.has(parsedRelationshipType)) {
@@ -66,7 +66,7 @@ function parseRelationshipType(relationshipType) {
   return parsedRelationshipType;
 }
 
-function buildWordnikUrl(term, limit, relationshipType) {
+export function buildWordnikUrl(term, limit, relationshipType) {
   const baseUrl = process.env.WORDNIK_BASE_URL;
   const apiKey = process.env.WORDNIK_API_KEY;
   if (!baseUrl) throw new Error('Missing WORDNIK_BASE_URL environment variable');
@@ -80,7 +80,7 @@ function buildWordnikUrl(term, limit, relationshipType) {
   return wordnikUrl;
 }
 
-function getErrorStatusCode(error) {
+export function getErrorStatusCode(error) {
   if (error.message?.startsWith('Missing required query parameter: word')) return 400;
   if (error.message?.startsWith('Query parameter "limit"')) return 400;
   if (error.message?.startsWith('Query parameter "relationshipType"')) return 400;

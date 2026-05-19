@@ -124,6 +124,16 @@
         return total >= 6 && (total - 6) % 54 === 0;
       }
 
+      function describeMatchConfidence(matchCount) {
+        if (!Number.isFinite(matchCount)) return 'archive count unavailable';
+        if (matchCount === 0) return 'singular — no other archived words land on this total yet';
+        if (matchCount === 1) return 'rare — only one other archived word shares this total';
+        if (matchCount <= 4) return 'uncommon — a small cluster of archived words shares this total';
+        if (matchCount <= 14) return 'moderate — a meaningful cluster of archived words shares this total';
+        if (matchCount <= 49) return 'common — a busy gematria address with many archived neighbors';
+        return 'saturated — many archived words share this total, so semantic context matters more than the number';
+      }
+
       function normalizeCandidate(value) {
         return String(value || '').replace(/\s+/g, ' ').trim();
       }
@@ -602,11 +612,7 @@
           : `It does <em>not</em> land on a base-root pattern; the total minus 6 is not divisible by 54.`;
         const matchLine = !Number.isFinite(matchCount)
           ? 'Archived match count was unavailable for this run.'
-          : matchCount === 0
-            ? 'No other archived words share this total yet — it may be a fresh lead worth saving.'
-            : matchCount === 1
-              ? 'One other archived word shares this total — limited overlap, so context still drives interpretation.'
-              : `${matchCount} archived words share this total — broader thematic overlap is plausible; inspect the archived list for context.`;
+          : `Archive density: <strong>${matchCount}</strong> — ${describeMatchConfidence(matchCount)}.`;
         return `
           <p class="mb-2"><strong>Why this matters for "${escapeHtml(topic)}":</strong></p>
           <ul class="mb-2">
@@ -1306,6 +1312,34 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
+      async function fetchSpellingVariantHits(topic) {
+        const lowerTopic = String(topic || '').toLowerCase().trim();
+        if (!lowerTopic) return [];
+        const candidates = [...new Set(
+          buildCloseSpellingVariants(topic)
+            .map((variant) => String(variant || '').toLowerCase().trim())
+            .filter((variant) => variant && variant !== lowerTopic)
+        )].slice(0, 8);
+        if (!candidates.length) return [];
+
+        const enriched = await Promise.all(candidates.map(async (variant) => {
+          const total = englishGematria(variant);
+          const matchCount = await fetchMatchCount(total);
+          return {
+            variant,
+            total,
+            root: digitalRoot(total),
+            isBaseRoot: isBaseRootTotal(total),
+            matchCount
+          };
+        }));
+
+        return enriched
+          .filter((entry) => Number.isFinite(entry.matchCount) && entry.matchCount > 0)
+          .sort((a, b) => b.matchCount - a.matchCount)
+          .slice(0, 6);
+      }
+
       async function fetchWordsByGematriaValue(gematriaValue) {
         try {
           const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(gematriaValue))}`);
@@ -1679,6 +1713,10 @@ View results: ${shareUrl}`.trim(),
         const definitionSummary = topicLookupDetails.definitionSummary;
         const relatedWords = topicLookupDetails.relatedWords;
 
+        const autoSpellingVariantHits = (allWordReports.length === 1 && primaryWordReport?.matchCount === 0)
+          ? await fetchSpellingVariantHits(topic)
+          : [];
+
         const iterations = 2;
         const memoryContext = '';
 
@@ -1774,16 +1812,31 @@ View results: ${shareUrl}`.trim(),
                   };
                 });
 
+                const archiveCountLabel = Number.isFinite(entry.matchCount)
+                  ? `${entry.matchCount} (${describeMatchConfidence(entry.matchCount)})`
+                  : 'Unavailable right now';
+                const inlineDefinition = perWordDefinitionSummary
+                  ? `<p class="mb-2 fst-italic text-secondary-emphasis">${escapeHtml(perWordDefinitionSummary.slice(0, 200))}${perWordDefinitionSummary.length > 200 ? '…' : ''}</p>`
+                  : '';
+
                 return `
                 <section class="border rounded-3 p-2">
                   <p class="mb-1"><strong>${escapeHtml(entry.target)}</strong></p>
+                  ${inlineDefinition}
                   <ul class="mb-2">
                     <li><strong>Total:</strong> ${entry.total}</li>
                     <li><strong>Digital root:</strong> ${entry.root}</li>
                     <li><strong>Base-root pattern:</strong> ${entry.isBaseRoot ? 'Yes' : 'No'}</li>
-                    <li><strong>Current archived matches:</strong> ${Number.isFinite(entry.matchCount) ? entry.matchCount : 'Unavailable right now'}</li>
+                    <li><strong>Current archived matches:</strong> ${archiveCountLabel}</li>
                     <li><strong>Letter breakdown:</strong> ${entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.'}</li>
                   </ul>
+                  ${(allWordReports.length === 1 && entry.matchCount === 0 && autoSpellingVariantHits.length) ? `
+                    <p class="mb-1"><strong>Close spelling variants with archive hits</strong></p>
+                    <p class="small text-muted mb-2">No archived words land on ${entry.total} yet. These near-spellings do appear in the archive — click any to deep-look-up.</p>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                      ${autoSpellingVariantHits.map((hit) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(hit.variant)}">${escapeHtml(hit.variant)} (${hit.total}, ${hit.matchCount} match${hit.matchCount === 1 ? '' : 'es'})</button>`).join('')}
+                    </div>
+                  ` : ''}
                   ${allWordReports.length > 1 ? `
                     <p class="mb-2"><strong>Suggested next lookups for "${escapeHtml(entry.target)}"</strong></p>
                     <ul class="mb-2">

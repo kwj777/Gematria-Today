@@ -96,25 +96,33 @@ function buildSvg({ topic, total, root, summaryLines }) {
 }
 
 export default async function onRequest(request) {
-  const url = new URL(request.url);
-  const topic = truncate(url.searchParams.get('topic') || 'Gematria Agent Result', 48);
-  const total = String(url.searchParams.get('total') || '?').trim();
-  const root = String(url.searchParams.get('root') || '?').trim();
-  const summaryLines = normalizeSummaryLines(url.searchParams.get('summary') || '');
+  try {
+    const url = new URL(request.url);
+    const topic = truncate(url.searchParams.get('topic') || 'Gematria Agent Result', 48);
+    const total = String(url.searchParams.get('total') || '?').trim();
+    const root = String(url.searchParams.get('root') || '?').trim();
+    const summaryLines = normalizeSummaryLines(url.searchParams.get('summary') || '');
 
-  const svg = buildSvg({ topic, total, root, summaryLines });
+    const svg = buildSvg({ topic, total, root, summaryLines });
 
-  const resvg = new Resvg(svg, {
-    fitTo: { mode: 'width', value: WIDTH },
-  });
-  const pngData = resvg.render();
-  const pngBuffer = pngData.asPng();
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: 'width', value: WIDTH },
+    });
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
 
-  return new Response(pngBuffer, {
-    status: 200,
-    headers: {
-      'content-type': 'image/png',
-      'cache-control': 'public, max-age=300',
-    },
-  });
+    return new Response(pngBuffer, {
+      status: 200,
+      headers: {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=300',
+      },
+    });
+  } catch (error) {
+    console.error('ai-agent-share-image failed', error);
+    return new Response('Failed to render share image', {
+      status: 500,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
 }

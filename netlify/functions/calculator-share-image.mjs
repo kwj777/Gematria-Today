@@ -107,11 +107,12 @@ function drawNameImage(searchParams) {
 }
 
 export default async (request) => {
-  const url = new URL(request.url);
-  const type = String(url.searchParams.get('type') || 'word').toLowerCase();
-  const content = type === 'name' ? drawNameImage(url.searchParams) : drawWordImage(url.searchParams);
+  try {
+    const url = new URL(request.url);
+    const type = String(url.searchParams.get('type') || 'word').toLowerCase();
+    const content = type === 'name' ? drawNameImage(url.searchParams) : drawWordImage(url.searchParams);
 
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" viewBox="0 0 ${IMAGE_WIDTH} ${IMAGE_HEIGHT}">
   <defs>
     <linearGradient id="bgBase" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -136,10 +137,17 @@ export default async (request) => {
   ${content}
 </svg>`;
 
-  return new Response(svg, {
-    headers: {
-      'content-type': 'image/svg+xml; charset=utf-8',
-      'cache-control': 'public, max-age=600',
-    },
-  });
+    return new Response(svg, {
+      headers: {
+        'content-type': 'image/svg+xml; charset=utf-8',
+        'cache-control': 'public, max-age=600',
+      },
+    });
+  } catch (error) {
+    console.error('calculator-share-image failed', error);
+    return new Response('Failed to render share image', {
+      status: 500,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
 };

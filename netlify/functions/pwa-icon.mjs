@@ -131,17 +131,25 @@ function normalizeSize(value) {
 }
 
 export default async (request) => {
-  const url = new URL(request.url);
-  const size = normalizeSize(url.searchParams.get('size'));
-  const variant = String(url.searchParams.get('variant') || 'default');
-  const maskable = variant === 'maskable';
-  const image = encodePng(size, maskable);
+  try {
+    const url = new URL(request.url);
+    const size = normalizeSize(url.searchParams.get('size'));
+    const variant = String(url.searchParams.get('variant') || 'default');
+    const maskable = variant === 'maskable';
+    const image = encodePng(size, maskable);
 
-  return new Response(image, {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=31536000, immutable'
-    }
-  });
+    return new Response(image, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=31536000, immutable'
+      }
+    });
+  } catch (error) {
+    console.error('pwa-icon failed', error);
+    return new Response('Failed to render icon', {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
 };

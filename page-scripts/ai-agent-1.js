@@ -324,6 +324,14 @@
 
 
 
+      const MAX_TARGET_LENGTH = 40;
+      const MAX_TARGET_WORD_LENGTH = 30;
+
+      function isReasonableTargetLength(target) {
+        if (!target || target.length > MAX_TARGET_LENGTH) return false;
+        return target.split(/\s+/).every((word) => word.length <= MAX_TARGET_WORD_LENGTH);
+      }
+
       function extractQuotedTargets(prompt) {
         const rawPrompt = normalizeCandidate(prompt);
         if (!rawPrompt) return [];
@@ -333,7 +341,8 @@
             .split(',')
             .map((target) => normalizeCandidate(target))
           )
-          .filter(Boolean);
+          .filter(Boolean)
+          .filter(isReasonableTargetLength);
       }
 
       function extractCalculationTargets(prompt) {
@@ -389,6 +398,7 @@
           .filter((target) => {
             const wordCount = target.split(/\s+/).filter(Boolean).length;
             if (wordCount > 5) return false;
+            if (!isReasonableTargetLength(target)) return false;
             if (/^(?:please|provide|give|show|calculate|calculation|gematria|value|values|number|numbers|for|of|and|vs|versus)$/i.test(target)) return false;
             return true;
           });

@@ -8,6 +8,7 @@
       const toggleHeroButton = document.getElementById('toggleHeroVisibility');
       const heroPanel = document.getElementById('agentHeroPanel');
       const compactTitle = document.getElementById('agentCompactTitle');
+      const examplePromptsPanel = document.getElementById('agentExamplePrompts');
       const premiumGate = document.getElementById('premiumGate');
       const sharedResultBanner = document.getElementById('sharedResultBanner');
       const relatedWordsFollowupSuggestion = document.getElementById('relatedWordsFollowupSuggestion');
@@ -23,6 +24,29 @@
       };
       let pendingRelatedWordsSuggestionTopic = '';
       let lastCalculationContext = null;
+      const recentCalculations = [];
+      const RECENT_CALCULATIONS_CAP = 10;
+
+      function rememberRecentCalculation(entry) {
+        if (!entry || !entry.target) return;
+        const key = String(entry.target).toLowerCase();
+        const filtered = recentCalculations.filter((item) => item.target.toLowerCase() !== key);
+        filtered.unshift({
+          target: entry.target,
+          total: entry.total,
+          root: entry.root,
+          isBaseRoot: entry.isBaseRoot,
+          matchCount: Number.isFinite(entry.matchCount) ? entry.matchCount : null
+        });
+        recentCalculations.length = 0;
+        recentCalculations.push(...filtered.slice(0, RECENT_CALCULATIONS_CAP));
+      }
+
+      function findRecentCalculation(target) {
+        const key = String(target || '').toLowerCase().trim();
+        if (!key) return null;
+        return recentCalculations.find((entry) => entry.target.toLowerCase() === key) || null;
+      }
       const AGENT_LEARNING_KEY = 'gematriaAgentLearnedResponses.v1';
       const DEFAULT_LEARNINGS = {
         entries: []
@@ -47,6 +71,11 @@
         compactTitle.hidden = !isHidden;
         toggleHeroButton.textContent = isHidden ? 'Show intro' : 'Hide intro';
         toggleHeroButton.setAttribute('aria-expanded', String(!isHidden));
+      }
+
+      function refreshExamplePromptsVisibility() {
+        if (!examplePromptsPanel) return;
+        examplePromptsPanel.hidden = chatLog.children.length > 0;
       }
 
       function initializeHeroVisibility() {
@@ -276,6 +305,16 @@
         return intersection / unionSize;
       }
 
+      function forgetLocalLearning(promptKey) {
+        const key = normalizeCandidate(promptKey).toLowerCase();
+        if (!key) return false;
+        const learnings = readAgentLearnings();
+        const filtered = learnings.entries.filter((entry) => entry.prompt.toLowerCase() !== key);
+        if (filtered.length === learnings.entries.length) return false;
+        writeAgentLearnings({ entries: filtered });
+        return true;
+      }
+
       function findLearnedResponse(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         if (!normalizedPrompt) return null;
@@ -465,6 +504,14 @@
           highlights.push(`<li>Pair gap: difference <strong>${diff}</strong>, ratio <strong>${ratioText}×</strong>.</li>`);
         }
 
+        const payload = reports.map((entry) => ({
+          target: entry.target,
+          total: entry.total,
+          root: entry.root,
+          isBaseRoot: entry.isBaseRoot
+        }));
+        const payloadAttr = escapeHtml(JSON.stringify(payload));
+
         return `
           <section class="border rounded-3 p-2 mb-3">
             <p class="mb-2"><strong>Comparison summary</strong></p>
@@ -474,9 +521,25 @@
                 <tbody>${tableRows}</tbody>
               </table>
             </div>
-            <ul class="mb-0">${highlights.join('')}</ul>
+            <ul class="mb-2">${highlights.join('')}</ul>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm btn-outline-success agent-copy-comparison-button" data-comparison="${payloadAttr}">Copy comparison</button>
+              <button type="button" class="btn btn-sm btn-outline-info agent-share-comparison-button" data-comparison="${payloadAttr}">Share comparison</button>
+            </div>
           </section>
         `;
+      }
+
+      function formatComparisonText(reports) {
+        if (!Array.isArray(reports) || !reports.length) return '';
+        const lines = reports.map((entry) => `${entry.target}: ${entry.total} (root ${entry.root}${entry.isBaseRoot ? ', base-root' : ''})`);
+        const totals = reports.map((entry) => entry.total);
+        const span = Math.max(...totals) - Math.min(...totals);
+        const allEqual = totals.every((value) => value === totals[0]);
+        const summary = allEqual
+          ? `Exact gematria match at ${totals[0]}.`
+          : `Range ${Math.min(...totals)}–${Math.max(...totals)} (span ${span}).`;
+        return `Gematria comparison\n${lines.join('\n')}\n${summary}`;
       }
 
       function buildGematriaRangeValues(minRaw, maxRaw) {
@@ -606,6 +669,89 @@
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         if (!normalizedPrompt) return false;
         return /^(?:yes|yep|yeah|sure|ok|okay|please do|go ahead|do it|sounds good|that works|absolutely|affirmative)\b/.test(normalizedPrompt);
+      }
+
+      function extractRecallTarget(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return null;
+        const match = normalized.match(
+          /\b(?:what(?:'s|\s+was|\s+is|\s+were)?|recall|remind\s+me\s+(?:of|about)|remember)\s+(?:the\s+)?(?:total|value|number|gematria|root)\s+(?:for|of|on)\s+([A-Za-z][A-Za-z' -]{0,40})/i
+        ) || normalized.match(
+          /\b([A-Za-z][A-Za-z' -]{0,40})\s+again\b\??\s*$/i
+        );
+        if (!match) return null;
+        return normalizeCandidate(match[1]).replace(/[?.!,;:]+$/g, '');
+      }
+
+      function buildRecallReply(entry) {
+        return `
+          <p class="mb-2"><strong>From this session:</strong> "${escapeHtml(entry.target)}" → total <strong>${entry.total}</strong>, digital root <strong>${entry.root}</strong>, base-root <strong>${entry.isBaseRoot ? 'Yes' : 'No'}</strong>.</p>
+          <p class="mb-0">${Number.isFinite(entry.matchCount) ? `Archive density at that time: <strong>${entry.matchCount}</strong> (${describeMatchConfidence(entry.matchCount)}).` : 'Archive count was unavailable in the original lookup.'}</p>
+        `;
+      }
+
+      function extractHypothesisIntent(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return null;
+
+        const baseRootMatch = normalized.match(
+          /\b(?:is|does)\s+([A-Za-z][A-Za-z' -]{0,40}?)\s+(?:a\s+)?(?:have\s+a\s+)?base[-\s]?root\b/i
+        );
+        if (baseRootMatch) {
+          return { kind: 'baseRoot', target: normalizeCandidate(baseRootMatch[1]).replace(/[?.!,;:]+$/g, '') };
+        }
+
+        const equalMatch = normalized.match(
+          /\b(?:does|do)\s+([A-Za-z][A-Za-z' -]{0,40}?)\s+(?:equal|match)\s+([A-Za-z][A-Za-z' -]{0,40}?)\s*[?.!]*\s*$/i
+        );
+        if (equalMatch) {
+          return {
+            kind: 'equal',
+            a: normalizeCandidate(equalMatch[1]).replace(/[?.!,;:]+$/g, ''),
+            b: normalizeCandidate(equalMatch[2]).replace(/[?.!,;:]+$/g, '')
+          };
+        }
+
+        const comparisonMatch = normalized.match(
+          /\bis\s+([A-Za-z][A-Za-z' -]{0,40}?)\s+(bigger|larger|greater|higher|smaller|lower|less)\s+than\s+([A-Za-z][A-Za-z' -]{0,40}?)\s*[?.!]*\s*$/i
+        );
+        if (comparisonMatch) {
+          const direction = /bigger|larger|greater|higher/i.test(comparisonMatch[2]) ? 'greater' : 'less';
+          return {
+            kind: 'compareTotals',
+            a: normalizeCandidate(comparisonMatch[1]).replace(/[?.!,;:]+$/g, ''),
+            b: normalizeCandidate(comparisonMatch[3]).replace(/[?.!,;:]+$/g, ''),
+            direction
+          };
+        }
+
+        return null;
+      }
+
+      function buildHypothesisReply(intent) {
+        if (intent.kind === 'baseRoot') {
+          const total = englishGematria(intent.target);
+          const yes = isBaseRootTotal(total);
+          const detail = yes
+            ? `(${total} − 6) ÷ 54 = ${(total - 6) / 54}, a whole number — so yes, "${escapeHtml(intent.target)}" lands on a base-root.`
+            : `(${total} − 6) ÷ 54 is not a whole number, so no, "${escapeHtml(intent.target)}" is not base-root.`;
+          return `<p class="mb-0"><strong>${yes ? 'Yes' : 'No'}.</strong> ${detail}</p>`;
+        }
+        if (intent.kind === 'equal') {
+          const totalA = englishGematria(intent.a);
+          const totalB = englishGematria(intent.b);
+          const same = totalA === totalB;
+          return `<p class="mb-0"><strong>${same ? 'Yes' : 'No'}.</strong> "${escapeHtml(intent.a)}" totals <strong>${totalA}</strong>; "${escapeHtml(intent.b)}" totals <strong>${totalB}</strong>.${same ? ' Exact gematria match.' : ` Gap of ${Math.abs(totalA - totalB)}.`}</p>`;
+        }
+        if (intent.kind === 'compareTotals') {
+          const totalA = englishGematria(intent.a);
+          const totalB = englishGematria(intent.b);
+          const actual = totalA > totalB ? 'greater' : totalA < totalB ? 'less' : 'equal';
+          const matched = actual === intent.direction;
+          const word = totalA === totalB ? 'equal to' : totalA > totalB ? 'greater than' : 'less than';
+          return `<p class="mb-0"><strong>${matched ? 'Yes' : 'No'}.</strong> "${escapeHtml(intent.a)}" (${totalA}) is ${word} "${escapeHtml(intent.b)}" (${totalB}).</p>`;
+        }
+        return '';
       }
 
       function isFollowupQuestion(prompt) {
@@ -884,6 +1030,7 @@
         wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
         wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'GemaBot' : 'You'}</p><div data-message-content>${contentHtml}</div>`;
         chatLog.append(wrapper);
+        refreshExamplePromptsVisibility();
         if (pinToTop) {
           scrollMessageToTop(wrapper);
         } else {
@@ -1007,10 +1154,15 @@
         });
 
         noButton?.addEventListener('click', () => {
+          const appliedLearningNode = messageElement.querySelector('[data-applied-learning]');
+          const appliedKey = appliedLearningNode?.getAttribute('data-applied-learning') || '';
+          const suppressed = appliedKey ? forgetLocalLearning(appliedKey) : false;
           if (followup) followup.hidden = false;
           if (status) {
             status.hidden = false;
-            status.textContent = 'Thanks for the correction. Share what you expected, then save learning.';
+            status.textContent = suppressed
+              ? 'Thanks. I removed that learned preference for this device. Share what you expected, then save learning.'
+              : 'Thanks for the correction. Share what you expected, then save learning.';
           }
         });
 
@@ -1606,6 +1758,19 @@ View results: ${shareUrl}`.trim(),
           return buildFollowupReply(lastCalculationContext);
         }
 
+        const recallTarget = extractRecallTarget(normalizedPrompt);
+        if (recallTarget) {
+          const remembered = findRecentCalculation(recallTarget);
+          if (remembered) {
+            return buildRecallReply(remembered);
+          }
+        }
+
+        const hypothesisIntent = extractHypothesisIntent(normalizedPrompt);
+        if (hypothesisIntent) {
+          return buildHypothesisReply(hypothesisIntent);
+        }
+
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
         const reverseRange = extractRangeReverseLookup(normalizedPrompt);
@@ -1758,6 +1923,8 @@ View results: ${shareUrl}`.trim(),
           };
         }));
 
+        allWordReports.forEach((report) => rememberRecentCalculation(report));
+
         const primaryWordReport = allWordReports.find((entry) => entry.target === topic) || allWordReports[0];
         const matchCount = primaryWordReport?.matchCount ?? null;
 
@@ -1855,7 +2022,7 @@ View results: ${shareUrl}`.trim(),
           : { kind: 'calculation', topic, total, root, isBaseRoot, matchCount };
 
         return `
-          ${learnedResponse ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
+          ${learnedResponse ? `<p class="mb-2" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
           <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
           ${comparisonSummary}
           ${allWordReports.length ? `
@@ -2038,9 +2205,22 @@ View results: ${shareUrl}`.trim(),
         chatLog.innerHTML = '';
         pendingRelatedWordsSuggestionTopic = '';
         lastCalculationContext = null;
+        recentCalculations.length = 0;
         renderRelatedWordsFollowupSuggestion();
+        refreshExamplePromptsVisibility();
         promptInput.focus();
       });
+
+      examplePromptsPanel?.addEventListener('click', (event) => {
+        const chip = event.target.closest('.agent-example-prompt');
+        if (!chip) return;
+        const prompt = String(chip.dataset.prompt || '').trim();
+        if (!prompt) return;
+        promptInput.value = prompt;
+        form.requestSubmit();
+      });
+
+      refreshExamplePromptsVisibility();
 
       saveConversationButton.addEventListener('click', async () => {
         saveConversationButton.disabled = true;
@@ -2071,6 +2251,36 @@ View results: ${shareUrl}`.trim(),
           window.hideWorkingOverlay?.();
           const assistantMessage = addMessage('assistant', replyHtml);
           attachResultFeedbackUi(assistantMessage, href, replyHtml);
+          return;
+        }
+
+        const copyComparisonButton = event.target.closest('.agent-copy-comparison-button');
+        const shareComparisonButton = event.target.closest('.agent-share-comparison-button');
+        if (copyComparisonButton || shareComparisonButton) {
+          const sourceButton = copyComparisonButton || shareComparisonButton;
+          let reports = [];
+          try {
+            reports = JSON.parse(sourceButton.dataset.comparison || '[]');
+          } catch {
+            reports = [];
+          }
+          const text = formatComparisonText(reports);
+          if (!text) return;
+          if (copyComparisonButton) {
+            try {
+              await navigator.clipboard.writeText(text);
+              copyComparisonButton.textContent = 'Copied!';
+              setTimeout(() => { copyComparisonButton.textContent = 'Copy comparison'; }, 1500);
+            } catch {
+              window.alert(text);
+            }
+          } else {
+            try {
+              await sharePage({ title: 'Gematria comparison', text, url: window.location.href }, window.location.href);
+            } catch {
+              window.alert(text);
+            }
+          }
           return;
         }
 

@@ -248,6 +248,11 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
   html { scroll-behavior: smooth; }
 }
 
+/* Warm charcoal navbar -- harmonizes with the amber brand without competing
+   with the amber CTA buttons that sit in the nav. Overrides Bootstrap's
+   .bg-dark (#212529) only on the navbar so other dark surfaces are unaffected. */
+.navbar.bg-dark { background-color: #1f1b16 !important; }
+
 .navbar-brand { letter-spacing: 0.04em; }
 
 .navbar-nav {

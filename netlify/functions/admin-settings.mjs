@@ -51,7 +51,7 @@ function normalizeSiteModules(rawValue = null) {
   }, {});
 }
 
-function normalizeSettings(body = {}) {
+export function normalizeSettings(body = {}) {
   const hasThemeCatalog = Object.hasOwn(body, 'themeCatalog');
   const hasPrivateThemeCatalog = Object.hasOwn(body, 'privateThemeCatalog');
   const hasGoogleAnalyticsMeasurementId = Object.hasOwn(body, 'googleAnalyticsMeasurementId');
@@ -77,7 +77,7 @@ function normalizeSettings(body = {}) {
   };
 }
 
-function toKebabCase(value = '') {
+export function toKebabCase(value = '') {
   return String(value || '')
     .trim()
     .toLowerCase()
@@ -86,7 +86,7 @@ function toKebabCase(value = '') {
     .slice(0, 64);
 }
 
-function normalizeThemeCatalog(input = {}) {
+export function normalizeThemeCatalog(input = {}) {
   const rawPresets = Array.isArray(input?.presets) ? input.presets : [];
   const seenSlugs = new Set();
   const presets = rawPresets.reduce((result, preset) => {
@@ -128,7 +128,7 @@ function normalizeThemeCatalog(input = {}) {
   return { activeThemeSlug, presets };
 }
 
-function normalizeEmailTemplate(body = {}) {
+export function normalizeEmailTemplate(body = {}) {
   return {
     id: String(body.id ?? '').trim().toLowerCase(),
     subject: String(body.subject ?? '').trim(),
@@ -136,7 +136,7 @@ function normalizeEmailTemplate(body = {}) {
   };
 }
 
-function serializeSettings(settings = {}) {
+export function serializeSettings(settings = {}) {
   const normalizedThemeCatalog = normalizeThemeCatalog(settings.themeCatalog || {});
   const normalizedPrivateThemeCatalog = normalizeThemeCatalog(settings.privateThemeCatalog || {});
   return {

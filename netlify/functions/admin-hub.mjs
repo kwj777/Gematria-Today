@@ -69,7 +69,7 @@ async function resolveGuideDirectory() {
   return candidates[0] || cwdDir;
 }
 
-function guideDisplayName(fileName) {
+export function guideDisplayName(fileName) {
   return String(fileName || '')
     .replace(/\.html$/, '')
     .split('-')
@@ -78,7 +78,7 @@ function guideDisplayName(fileName) {
     .join(' ');
 }
 
-function normalizeGuideName(value) {
+export function normalizeGuideName(value) {
   return String(value || '')
     .trim()
     .toLowerCase()
@@ -130,7 +130,7 @@ async function handleGuideContent(rawFile) {
 // Token generation
 // ---------------------------------------------------------------------------
 
-function generateHubToken(userId, sharedSecret) {
+export function generateHubToken(userId, sharedSecret) {
   const payload = {
     userId: String(userId),
     ts: Date.now(),
@@ -142,15 +142,15 @@ function generateHubToken(userId, sharedSecret) {
 }
 
 
-function generateSharedSecret() {
+export function generateSharedSecret() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function normalizeSiteUrl(value) {
+export function normalizeSiteUrl(value) {
   return String(value || '').trim().replace(/\/$/, '');
 }
 
-function getRequestOrigin(event) {
+export function getRequestOrigin(event) {
   const fromRawUrl = String(event?.rawUrl || '').trim();
   if (fromRawUrl) {
     try {
@@ -242,7 +242,7 @@ async function getHubSites(sql) {
   }
 }
 
-function findSiteByOrigin(sites, origin) {
+export function findSiteByOrigin(sites, origin) {
   const normalizedOrigin = normalizeSiteUrl(origin).toLowerCase();
   if (!normalizedOrigin) return null;
   return sites.find((site) => normalizeSiteUrl(site?.url).toLowerCase() === normalizedOrigin) || null;
@@ -254,7 +254,7 @@ function findSiteByOrigin(sites, origin) {
  * when the client omits the secret for an existing site it sends '__keep__' instead
  * of re-transmitting the secret value (which is never exposed to the browser).
  */
-function validateSites(raw, existingSites = []) {
+export function validateSites(raw, existingSites = []) {
   if (!Array.isArray(raw)) throw Object.assign(new Error('sites must be an array'), { statusCode: 400 });
 
   return raw.map((site, i) => {

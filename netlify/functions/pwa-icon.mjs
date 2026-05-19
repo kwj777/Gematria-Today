@@ -124,7 +124,7 @@ function encodePng(size, maskable = false) {
   ]);
 }
 
-function normalizeSize(value) {
+export function normalizeSize(value) {
   const parsed = Number.parseInt(String(value || '180'), 10);
   if ([180, 192, 512].includes(parsed)) return parsed;
   return 180;

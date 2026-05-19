@@ -3,7 +3,7 @@ import { join, relative, sep } from 'node:path';
 
 const ROOT = process.cwd();
 const GA_MEASUREMENT_ID = 'G-E611H84D6Y';
-const BOOTSTRAP_SRC = 'analytics-bootstrap.js';
+const BOOTSTRAP_SRCS = ['analytics-bootstrap.js', 'site-bundle.js'];
 const EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'secure', 'tests', 'docs', 'sql']);
 
 function walk(dir, acc = []) {
@@ -33,7 +33,7 @@ for (const file of files) {
   scanned += 1;
 
   const hasInlineSnippet = source.includes(GA_MEASUREMENT_ID);
-  const hasBootstrap = source.includes(BOOTSTRAP_SRC);
+  const hasBootstrap = BOOTSTRAP_SRCS.some((src) => source.includes(src));
   if (!hasInlineSnippet && !hasBootstrap) {
     missing.push(relative(ROOT, file).split(sep).join('/'));
   }
@@ -46,7 +46,7 @@ if (missing.length > 0) {
   }
   console.error(
     `\nEvery deployed HTML page must reference the GA measurement ID ${GA_MEASUREMENT_ID} ` +
-      `or include <script defer src="/${BOOTSTRAP_SRC}"></script>.`
+      `or include one of: ${BOOTSTRAP_SRCS.map((s) => `<script defer src="/${s}"></script>`).join(', ')}.`
   );
   process.exit(1);
 }

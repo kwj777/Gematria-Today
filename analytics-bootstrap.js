@@ -92,5 +92,42 @@
     gtag('js', new Date());
     gtag('config', gaMeasurementId);
   }
-  initializeGoogleAnalytics();
+
+  // Defer loading the 150+ KB gtag.js bundle until the page is idle (or a
+  // user interacts) so it doesn't compete with LCP and TBT during the
+  // initial load.
+  const INTERACTION_EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+  let scheduled = false;
+
+  function triggerInitialization() {
+    if (scheduled) {
+      return;
+    }
+    scheduled = true;
+    for (const eventName of INTERACTION_EVENTS) {
+      window.removeEventListener(eventName, triggerInitialization, { capture: true });
+    }
+    initializeGoogleAnalytics();
+  }
+
+  function scheduleInitialization() {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(triggerInitialization, { timeout: 4000 });
+    } else {
+      setTimeout(triggerInitialization, 2500);
+    }
+    for (const eventName of INTERACTION_EVENTS) {
+      window.addEventListener(eventName, triggerInitialization, {
+        capture: true,
+        once: true,
+        passive: true,
+      });
+    }
+  }
+
+  if (document.readyState === 'complete') {
+    scheduleInitialization();
+  } else {
+    window.addEventListener('load', scheduleInitialization, { once: true });
+  }
 })();

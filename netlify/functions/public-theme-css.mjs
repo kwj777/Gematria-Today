@@ -40,7 +40,7 @@ body {
 }`;
 
 
-function safeJsonParse(value, fallback = {}) {
+export function safeJsonParse(value, fallback = {}) {
   if (!value || typeof value !== 'string') {
     return fallback;
   }
@@ -51,11 +51,11 @@ function safeJsonParse(value, fallback = {}) {
   }
 }
 
-function escapeCssComment(value = '') {
+export function escapeCssComment(value = '') {
   return String(value || '').replaceAll('*/', '*\\/');
 }
 
-function normalizeThemeCatalog(input = {}) {
+export function normalizeThemeCatalog(input = {}) {
   const presets = Array.isArray(input?.presets) ? input.presets : [];
   const activeThemeSlug = String(input?.activeThemeSlug || 'default').trim().toLowerCase();
   return {
@@ -71,7 +71,7 @@ function normalizeThemeCatalog(input = {}) {
   };
 }
 
-function buildCss(catalog, { includeCustomCss = true } = {}) {
+export function buildCss(catalog, { includeCustomCss = true } = {}) {
   const active = catalog.presets.find((preset) => preset.slug === catalog.activeThemeSlug);
   if (!active) {
     return `${BASE_BOOTSTRAP_THEME_CSS}\n`;
@@ -91,14 +91,14 @@ function buildCss(catalog, { includeCustomCss = true } = {}) {
   ].filter(Boolean).join('\n');
 }
 
-function stripBootswatchImports(cssText) {
+export function stripBootswatchImports(cssText) {
   return String(cssText || '').replace(
     BOOTSWATCH_IMPORT_PATTERN,
     '/* Bootswatch @import stripped; use --bs-* variable overrides instead. */',
   );
 }
 
-function shouldIncludeCustomCss(event) {
+export function shouldIncludeCustomCss(event) {
   const referer = String(event?.headers?.referer || event?.headers?.Referer || '').trim();
   if (!referer) {
     return true;

@@ -68,7 +68,12 @@ export async function handler(event) {
       return jsonResponse(400, { error: 'Invalid Stripe webhook signature' });
     }
 
-    const stripeEvent = JSON.parse(body);
+    let stripeEvent;
+    try {
+      stripeEvent = JSON.parse(body);
+    } catch {
+      return jsonResponse(400, { error: 'Invalid Stripe webhook payload' });
+    }
     const eventType = String(stripeEvent.type || '');
     const object = stripeEvent.data?.object || {};
 

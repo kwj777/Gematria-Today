@@ -1,7 +1,7 @@
 import type { Config, Context } from '@netlify/edge-functions';
 
-const SITE_ORIGIN = 'https://gematria.today';
-const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/beast-identity-rev13-hero-16x9.svg`;
+const FALLBACK_SITE_ORIGIN = 'https://gematria.today';
+const DEFAULT_OG_IMAGE_PATH = '/assets/beast-identity-rev13-hero-16x9.svg';
 const OGP_IMAGE_WIDTH = 1200;
 const OGP_IMAGE_FORMAT = 'jpg';
 const DEFAULT_TITLE = 'Gematria.Today Blog';
@@ -21,7 +21,7 @@ interface Post {
   sliderImageUrl?: string;
 }
 
-function toAbsoluteImageUrl(value?: string | null): string {
+function toAbsoluteImageUrl(value: string | null | undefined, siteOrigin: string): string {
   const url = String(value ?? '').trim();
   if (!url || /^data:image\//i.test(url)) {
     return '';
@@ -32,17 +32,17 @@ function toAbsoluteImageUrl(value?: string | null): string {
   if (/^https?:\/\//i.test(url)) {
     return url;
   }
-  return `${SITE_ORIGIN}${url.startsWith('/') ? url : `/${url}`}`;
+  return `${siteOrigin}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
-function toShareImageUrl(value?: string | null): string {
-  const absoluteUrl = toAbsoluteImageUrl(value);
+function toShareImageUrl(value: string | null | undefined, siteOrigin: string): string {
+  const absoluteUrl = toAbsoluteImageUrl(value, siteOrigin);
   if (!absoluteUrl) {
     return '';
   }
   if (/\.svg(?:$|[?#])/i.test(absoluteUrl)) {
     const encoded = encodeURIComponent(absoluteUrl);
-    return `${SITE_ORIGIN}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
+    return `${siteOrigin}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
   }
   return absoluteUrl;
 }
@@ -55,7 +55,7 @@ function getPostHeroImage(post?: Post | null): string {
     String(post?.imageUrl || '').trim() ||
     String(post?.sliderImageUrl || '').trim() ||
     String(HERO_IMAGE_OVERRIDES[slug] || '').trim() ||
-    DEFAULT_OG_IMAGE
+    ''
   );
 }
 
@@ -83,6 +83,9 @@ export default async (req: Request, context: Context) => {
   if (!postSlug) {
     return;
   }
+
+  const siteOrigin = (url.origin || FALLBACK_SITE_ORIGIN).replace(/\/+$/, '');
+  const defaultOgImage = `${siteOrigin}${DEFAULT_OG_IMAGE_PATH}`;
 
   const response = await context.next();
   let html = await response.text();
@@ -115,8 +118,9 @@ export default async (req: Request, context: Context) => {
 
   const title = String(post.title || DEFAULT_TITLE).trim();
   const description = String(post.summary || DEFAULT_DESCRIPTION).trim();
-  const imageUrl = toShareImageUrl(getPostHeroImage(post)) || toShareImageUrl(DEFAULT_OG_IMAGE);
-  const shareUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(postSlug)}#${encodeURIComponent(postSlug)}`;
+  const heroImage = getPostHeroImage(post) || defaultOgImage;
+  const imageUrl = toShareImageUrl(heroImage, siteOrigin) || toShareImageUrl(defaultOgImage, siteOrigin);
+  const shareUrl = `${siteOrigin}/blog.html?post=${encodeURIComponent(postSlug)}#${encodeURIComponent(postSlug)}`;
 
   // Replace title tag
   html = html.replace(

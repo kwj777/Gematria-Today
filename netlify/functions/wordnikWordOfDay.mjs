@@ -74,7 +74,32 @@ async function fetchWordOfDay(sql, source) {
     ttlSeconds: 60 * 60 * 24,
     compute: async () => {
       const url = buildWordnikWordOfDayUrl();
-      const response = await fetchWithTimeout(url, {}, getProtectionConfig().wordnikTimeoutMs);
+      const timeoutMs = getProtectionConfig().wordnikTimeoutMs;
+      const maxAttempts = 3;
+      let response;
+      let lastError;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          response = await fetchWithTimeout(url, {}, timeoutMs);
+        } catch (networkError) {
+          lastError = networkError;
+          response = null;
+        }
+        const isTransient = !response || response.status === 429 || (response.status >= 500 && response.status <= 599);
+        if (!isTransient) {
+          break;
+        }
+        if (attempt < maxAttempts) {
+          const backoffMs = 250 * 2 ** (attempt - 1);
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
+        }
+      }
+      if (!response) {
+        throw Object.assign(
+          new Error("We couldn't reach Wordnik just now. Please try again in a little while."),
+          { statusCode: 502, upstreamStatus: 0, upstreamBody: lastError?.message || 'network error' },
+        );
+      }
       if (!response.ok) {
         const errorText = await response.text();
         if (response.status === 429) {

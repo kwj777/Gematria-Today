@@ -22,6 +22,7 @@
         membershipLevel: ''
       };
       let pendingRelatedWordsSuggestionTopic = '';
+      let lastCalculationContext = null;
       const AGENT_LEARNING_KEY = 'gematriaAgentLearnedResponses.v1';
       const DEFAULT_LEARNINGS = {
         entries: []
@@ -121,6 +122,16 @@
 
       function isBaseRootTotal(total) {
         return total >= 6 && (total - 6) % 54 === 0;
+      }
+
+      function describeMatchConfidence(matchCount) {
+        if (!Number.isFinite(matchCount)) return 'archive count unavailable';
+        if (matchCount === 0) return 'singular — no other archived words land on this total yet';
+        if (matchCount === 1) return 'rare — only one other archived word shares this total';
+        if (matchCount <= 4) return 'uncommon — a small cluster of archived words shares this total';
+        if (matchCount <= 14) return 'moderate — a meaningful cluster of archived words shares this total';
+        if (matchCount <= 49) return 'common — a busy gematria address with many archived neighbors';
+        return 'saturated — many archived words share this total, so semantic context matters more than the number';
       }
 
       function normalizeCandidate(value) {
@@ -234,11 +245,63 @@
         }
       }
 
+      const LEARNING_STOP_WORDS = new Set([
+        'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'of', 'for', 'to', 'in', 'on', 'at', 'and', 'or', 'but', 'with', 'by',
+        'as', 'it', 'this', 'that', 'these', 'those', 'i', 'you', 'we', 'me',
+        'my', 'your', 'our', 'their', 'do', 'does', 'did', 'done', 'have',
+        'has', 'had', 'can', 'could', 'should', 'would', 'will', 'shall', 'may',
+        'might', 'must', 'if', 'so', 'then', 'than', 'about', 'from', 'into',
+        'over', 'just', 'also', 'too', 'very', 'really', 'please', 'thanks'
+      ]);
+
+      function tokenizeForLearning(text) {
+        return [...new Set(
+          String(text || '')
+            .toLowerCase()
+            .split(/[^a-z0-9-]+/)
+            .filter((token) => token && token.length > 1 && !LEARNING_STOP_WORDS.has(token))
+        )];
+      }
+
+      function scoreLearningOverlap(promptTokens, entryTokens) {
+        if (!promptTokens.length || !entryTokens.length) return 0;
+        const entrySet = new Set(entryTokens);
+        let intersection = 0;
+        for (const token of promptTokens) {
+          if (entrySet.has(token)) intersection += 1;
+        }
+        if (intersection < 2) return 0;
+        const unionSize = new Set([...promptTokens, ...entryTokens]).size;
+        return intersection / unionSize;
+      }
+
       function findLearnedResponse(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         if (!normalizedPrompt) return null;
         const learnings = readCombinedLearnings();
-        return learnings.entries.find((entry) => normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)) || null;
+        if (!learnings.entries.length) return null;
+
+        const substringHit = learnings.entries.find((entry) =>
+          normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)
+        );
+        if (substringHit) return substringHit;
+
+        const promptTokens = tokenizeForLearning(normalizedPrompt);
+        if (promptTokens.length < 2) return null;
+
+        let best = null;
+        let bestScore = 0;
+        for (const entry of learnings.entries) {
+          const entryTokens = tokenizeForLearning(entry.prompt);
+          if (entryTokens.length < 2) continue;
+          const score = scoreLearningOverlap(promptTokens, entryTokens);
+          if (score >= 0.4 && score > bestScore) {
+            best = entry;
+            bestScore = score;
+          }
+        }
+        return best;
       }
 
       async function submitChatbotFeedback(query, answerText, wasExpected, feedbackText) {
@@ -261,6 +324,14 @@
 
 
 
+      const MAX_TARGET_LENGTH = 40;
+      const MAX_TARGET_WORD_LENGTH = 30;
+
+      function isReasonableTargetLength(target) {
+        if (!target || target.length > MAX_TARGET_LENGTH) return false;
+        return target.split(/\s+/).every((word) => word.length <= MAX_TARGET_WORD_LENGTH);
+      }
+
       function extractQuotedTargets(prompt) {
         const rawPrompt = normalizeCandidate(prompt);
         if (!rawPrompt) return [];
@@ -270,7 +341,8 @@
             .split(',')
             .map((target) => normalizeCandidate(target))
           )
-          .filter(Boolean);
+          .filter(Boolean)
+          .filter(isReasonableTargetLength);
       }
 
       function extractCalculationTargets(prompt) {
@@ -292,7 +364,7 @@
         }
 
         const keywordTargetMatch = normalizedPrompt.match(
-          /\b(?:calculate|calculation|calculate\s+for|gematria|value|values|number|numbers|math|snapshot|lookup|analyze|analysis|compare|comparison)\b[^A-Za-z0-9]+(?:for|of|on|about)?\s*([A-Za-z][A-Za-z' -]*(?:\s*(?:,|and|&)\s*[A-Za-z][A-Za-z' -]*)*)/i
+          /\b(?:calculate|calculation|calculate\s+for|gematria|value|values|number|numbers|math|snapshot|lookup|analyze|analysis|compare|comparison|contrast|contrasting)\b[^A-Za-z0-9]+(?:for|of|on|about|between)?\s*([A-Za-z][A-Za-z' -]*(?:\s*(?:,|and|&|vs\.?|versus)\s*[A-Za-z][A-Za-z' -]*)*)/i
         );
         const candidateBlock = keywordTargetMatch ? keywordTargetMatch[1] : normalizedPrompt;
         const trailingPunctuationStripped = candidateBlock
@@ -320,17 +392,184 @@
           .trim();
 
         const splitTargets = trailingPunctuationStripped
-          .split(/\s*(?:,| and | & )\s*/i)
+          .split(/\s*(?:,| and | & | vs\.? | versus | v\. )\s*/i)
           .map((target) => sanitizeTarget(target).replace(/^[^A-Za-z]+|[^A-Za-z'-]+$/g, ''))
           .filter((target) => /^[A-Za-z][A-Za-z' -]*$/.test(target))
           .filter((target) => {
             const wordCount = target.split(/\s+/).filter(Boolean).length;
             if (wordCount > 5) return false;
-            if (/^(?:please|provide|give|show|calculate|calculation|gematria|value|values|number|numbers|for|of|and)$/i.test(target)) return false;
+            if (!isReasonableTargetLength(target)) return false;
+            if (/^(?:please|provide|give|show|calculate|calculation|gematria|value|values|number|numbers|for|of|and|vs|versus)$/i.test(target)) return false;
             return true;
           });
 
         return [...new Set(splitTargets)].slice(0, 6);
+      }
+
+      function isComparisonRequest(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return false;
+        return /\b(?:compare|comparison|comparing|contrast|contrasting|difference\s+between|side[\s-]?by[\s-]?side|vs\.?|versus|v\.)\b/i.test(normalized);
+      }
+
+      function buildComparisonSummary(reports) {
+        if (!Array.isArray(reports) || reports.length < 2) return '';
+
+        const sortedByTotal = [...reports].sort((a, b) => b.total - a.total);
+        const highest = sortedByTotal[0];
+        const lowest = sortedByTotal[sortedByTotal.length - 1];
+        const span = highest.total - lowest.total;
+        const totalsAllEqual = reports.every((entry) => entry.total === reports[0].total);
+        const rootsAllEqual = reports.every((entry) => entry.root === reports[0].root);
+        const baseRootCount = reports.filter((entry) => entry.isBaseRoot).length;
+
+        const letterSets = reports.map((entry) => new Set(entry.letters.map((letter) => letter.char)));
+        const sharedLetters = [...letterSets[0]].filter((char) => letterSets.every((set) => set.has(char)));
+
+        const tableRows = reports.map((entry) => `
+          <tr>
+            <td>${escapeHtml(entry.target)}</td>
+            <td>${entry.total}</td>
+            <td>${entry.root}</td>
+            <td>${entry.isBaseRoot ? 'Yes' : 'No'}</td>
+            <td>${Number.isFinite(entry.matchCount) ? entry.matchCount : '—'}</td>
+          </tr>
+        `).join('');
+
+        const highlights = [];
+        if (totalsAllEqual) {
+          highlights.push(`<li><strong>Exact gematria match</strong> — all ${reports.length} targets equal <strong>${highest.total}</strong>.</li>`);
+        } else {
+          highlights.push(`<li>Highest: <strong>${escapeHtml(highest.target)}</strong> (${highest.total}). Lowest: <strong>${escapeHtml(lowest.target)}</strong> (${lowest.total}). Span: <strong>${span}</strong>.</li>`);
+        }
+        if (rootsAllEqual && !totalsAllEqual) {
+          highlights.push(`<li>Shared digital root: <strong>${reports[0].root}</strong>.</li>`);
+        }
+        if (baseRootCount === reports.length) {
+          highlights.push(`<li>All targets land on a <strong>base-root</strong> pattern.</li>`);
+        } else if (baseRootCount === 0) {
+          highlights.push(`<li>None of the targets land on a base-root pattern.</li>`);
+        } else {
+          highlights.push(`<li>Base-root mix: <strong>${baseRootCount}</strong> of ${reports.length} are base-root.</li>`);
+        }
+        if (sharedLetters.length) {
+          highlights.push(`<li>Letters present in every target: <code>${sharedLetters.join(', ')}</code>.</li>`);
+        }
+        if (reports.length === 2 && !totalsAllEqual) {
+          const [a, b] = reports;
+          const diff = Math.abs(a.total - b.total);
+          const ratio = Math.min(a.total, b.total) === 0
+            ? null
+            : Math.max(a.total, b.total) / Math.min(a.total, b.total);
+          const ratioText = ratio === null ? 'undefined' : ratio.toFixed(2);
+          highlights.push(`<li>Pair gap: difference <strong>${diff}</strong>, ratio <strong>${ratioText}×</strong>.</li>`);
+        }
+
+        return `
+          <section class="border rounded-3 p-2 mb-3">
+            <p class="mb-2"><strong>Comparison summary</strong></p>
+            <div class="table-responsive mb-2">
+              <table class="table table-sm mb-0">
+                <thead><tr><th>Target</th><th>Total</th><th>Root</th><th>Base-root</th><th>Archived</th></tr></thead>
+                <tbody>${tableRows}</tbody>
+              </table>
+            </div>
+            <ul class="mb-0">${highlights.join('')}</ul>
+          </section>
+        `;
+      }
+
+      function buildGematriaRangeValues(minRaw, maxRaw) {
+        const a = Number(minRaw);
+        const b = Number(maxRaw);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+        const lo = Math.max(6, Math.min(a, b));
+        const hi = Math.max(a, b);
+        const firstMultiple = Math.ceil(lo / 6) * 6;
+        const lastMultiple = Math.floor(hi / 6) * 6;
+        if (lastMultiple < firstMultiple) return null;
+        const MAX_VALUES = 20;
+        const values = [];
+        for (let value = firstMultiple; value <= lastMultiple && values.length < MAX_VALUES; value += 6) {
+          values.push(value);
+        }
+        const fullCount = (lastMultiple - firstMultiple) / 6 + 1;
+        return {
+          values,
+          min: firstMultiple,
+          max: values[values.length - 1],
+          requestedMin: Math.min(a, b),
+          requestedMax: Math.max(a, b),
+          truncated: fullCount > MAX_VALUES
+        };
+      }
+
+      function extractRangeReverseLookup(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return null;
+
+        const reverseKeyword = /\breverse(?:\s+(?:gematria|lookup|search))?\b/i.test(normalized);
+        const wordListIntent = /\b(?:show|list|find|get|give|which|what|any|search|look(?:\s*up)?)\b[\s\S]*\b(?:words?|matches?|results?|hits?|entries?|terms?)\b/i.test(normalized);
+        const gematriaContext = /\b(?:gematria|equal|equals|matching|matches|match|total|totals|sum|sums|value|values|number|numbers)\b/i.test(normalized);
+        const triggered = reverseKeyword || wordListIntent || gematriaContext;
+
+        const betweenMatch = normalized.match(/\b(?:between|from)\s+(\d{1,6})\s+(?:to|and|-|–|—)\s+(\d{1,6})\b/i);
+        if (betweenMatch && triggered) {
+          return buildGematriaRangeValues(betweenMatch[1], betweenMatch[2]);
+        }
+
+        const plusMinusMatch = normalized.match(/\b(\d{1,6})\s*(?:±|\+\/?-|plus\s+or\s+minus)\s*(\d{1,4})\b/i);
+        if (plusMinusMatch && triggered) {
+          const center = Number(plusMinusMatch[1]);
+          const span = Number(plusMinusMatch[2]);
+          return buildGematriaRangeValues(center - span, center + span);
+        }
+
+        const nearMatch = normalized.match(/\b(?:near|around|close\s+to|approximately|approx\.?|about|circa|~)\s*(\d{1,6})\b/i);
+        if (nearMatch && triggered) {
+          const center = Number(nearMatch[1]);
+          const defaultSpan = 18;
+          return buildGematriaRangeValues(center - defaultSpan, center + defaultSpan);
+        }
+
+        return null;
+      }
+
+      async function fetchWordsForGematriaValues(values) {
+        const buckets = await Promise.all(values.map(async (value) => {
+          const words = await fetchWordsByGematriaValue(value);
+          return {
+            value,
+            words: words.map((entry) => String(entry?.word || '').trim()).filter(Boolean)
+          };
+        }));
+        return buckets;
+      }
+
+      function extractReverseGematriaValue(prompt) {
+        const normalized = normalizeCandidate(prompt);
+        if (!normalized) return null;
+
+        const bareNumeric = normalized.match(/^\s*(\d{1,6})\s*[?.!]*\s*$/);
+        if (bareNumeric) return Number(bareNumeric[1]);
+
+        const reverseKeyword = /\breverse(?:\s+(?:gematria|lookup|search))?\b/i.test(normalized);
+        const wordListIntent = /\b(?:show|list|find|get|give|which|what|any|search|look(?:\s*up)?)\b[\s\S]*\b(?:words?|matches?|results?|hits?|entries?|terms?)\b/i.test(normalized);
+        const gematriaContext = /\b(?:gematria|equal|equals|matching|matches|match|total|totals|totaling|sum|sums|summing|value|values|number|numbers|calculation)\b/i.test(normalized);
+
+        const labeledNumberMatch = normalized.match(
+          /\b(?:gematria(?:\s+value)?|value|number|calculation|total|sum|equals?|matches?|matching|reverse)\s*(?:of|for|is|to|at|=)?\s*(\d{1,6})\b/i
+        );
+        const trailingLabeledMatch = normalized.match(
+          /\b(\d{1,6})\s*(?:gematria|value|total|sum|matches?)\b/i
+        );
+        const numberMatch = labeledNumberMatch || trailingLabeledMatch || normalized.match(/\b(\d{1,6})\b/);
+
+        if (numberMatch && (reverseKeyword || (wordListIntent && gematriaContext))) {
+          return Number(numberMatch[1]);
+        }
+
+        return null;
       }
 
       function extractWordnikLookupWord(prompt) {
@@ -367,6 +606,85 @@
         const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
         if (!normalizedPrompt) return false;
         return /^(?:yes|yep|yeah|sure|ok|okay|please do|go ahead|do it|sounds good|that works|absolutely|affirmative)\b/.test(normalizedPrompt);
+      }
+
+      function isFollowupQuestion(prompt) {
+        const stripped = normalizeCandidate(prompt).toLowerCase().replace(/[?.!]+$/g, '').trim();
+        if (!stripped || stripped.length > 60) return false;
+        return /^(?:why|how come|huh|wait|so what|context|meaning|interpret(?:\s+(?:that|this|it))?|explain(?:\s+(?:that|this|it|more))?|elaborate|tell\s+me\s+more|more(?:\s+details?)?|details?|what(?:'s|\s+is|\s+does)?\s*(?:that|this|it)?\s*(?:mean|meaning|matter|signify|imply)?)$/.test(stripped);
+      }
+
+      function buildFollowupReply(context) {
+        if (!context) {
+          return '<p class="mb-0">No previous calculation to interpret yet. Try calculating a word first (example: <code>calculate jerusalem</code>) or run a reverse lookup (<code>reverse gematria 144</code>).</p>';
+        }
+
+        if (context.kind === 'reverseRange') {
+          return `
+            <p class="mb-2"><strong>About the range scan ${context.min}–${context.max}:</strong></p>
+            <p class="mb-2">Swept <strong>${context.valueCount}</strong> valid gematria total${context.valueCount === 1 ? '' : 's'} (multiples of 6) and surfaced <strong>${context.totalMatches}</strong> archived match${context.totalMatches === 1 ? '' : 'es'} across <strong>${context.bucketCount}</strong> bucket${context.bucketCount === 1 ? '' : 's'}. Range scans are useful when a word's exact total feels off-by-a-letter, or when sweeping a thematic neighborhood.</p>
+            <p class="mb-0">Drill into a single total with <code>reverse gematria N</code> for the focused view.</p>
+          `;
+        }
+
+        if (context.kind === 'reverse') {
+          const baseRootNote = isBaseRootTotal(context.value)
+            ? ' It also lands on a <strong>base-root</strong> pattern (the total minus 6 divides evenly by 54), which often signals a resonant series worth tracking.'
+            : '';
+          const archiveNote = context.archivedCount === 0
+            ? 'No archived words landed on that total in this run.'
+            : `${context.archivedCount} archived word${context.archivedCount === 1 ? '' : 's'} share that total — each spells (A=6 … Z=156) to exactly ${context.value}.`;
+          return `
+            <p class="mb-2"><strong>About reverse lookup ${context.value}:</strong></p>
+            <p class="mb-2">${archiveNote} Its digital root is <strong>${digitalRoot(context.value)}</strong>.${baseRootNote}</p>
+            <p class="mb-0">For a deeper read, calculate any of the listed words to see letter breakdowns and related terms.</p>
+          `;
+        }
+
+        if (context.kind === 'comparison') {
+          const reports = Array.isArray(context.reports) ? context.reports : [];
+          const totals = reports.map((entry) => entry.total);
+          const allEqual = totals.length > 0 && totals.every((value) => value === totals[0]);
+          const sharedRoot = reports.length > 0 && reports.every((entry) => entry.root === reports[0].root);
+          const baseRootCount = reports.filter((entry) => entry.isBaseRoot).length;
+          const lines = [];
+          lines.push(`You compared ${reports.length} target${reports.length === 1 ? '' : 's'}: ${reports.map((entry) => `<strong>${escapeHtml(entry.target)}</strong> (${entry.total})`).join(', ')}.`);
+          if (allEqual) {
+            lines.push(`The totals all match at <strong>${totals[0]}</strong> — an exact gematria alignment, which in this system is the strongest numeric link.`);
+          } else if (sharedRoot) {
+            lines.push(`The totals differ but reduce to the same digital root <strong>${reports[0].root}</strong>, a softer alignment worth weighing alongside thematic context.`);
+          } else {
+            const span = Math.max(...totals) - Math.min(...totals);
+            lines.push(`Totals span <strong>${span}</strong>, with no shared digital root — numerically these read as independent rather than linked.`);
+          }
+          if (baseRootCount === reports.length) {
+            lines.push('Every target lands on a base-root pattern, which strengthens the case for a structural relationship.');
+          } else if (baseRootCount > 0) {
+            lines.push(`${baseRootCount} of ${reports.length} land on a base-root pattern — partial alignment only.`);
+          }
+          return `
+            <p class="mb-2"><strong>What that comparison means:</strong></p>
+            <ul class="mb-0">${lines.map((line) => `<li>${line}</li>`).join('')}</ul>
+          `;
+        }
+
+        const { topic, total, root, isBaseRoot, matchCount } = context;
+        const baseRootLine = isBaseRoot
+          ? `It lands on a <strong>base-root</strong> pattern — <code>(${total} − 6) ÷ 54</code> is a whole number, placing it in the resonant series 6, 60, 114, 168, 222, 276 …`
+          : `It does <em>not</em> land on a base-root pattern; the total minus 6 is not divisible by 54.`;
+        const matchLine = !Number.isFinite(matchCount)
+          ? 'Archived match count was unavailable for this run.'
+          : `Archive density: <strong>${matchCount}</strong> — ${describeMatchConfidence(matchCount)}.`;
+        return `
+          <p class="mb-2"><strong>Why this matters for "${escapeHtml(topic)}":</strong></p>
+          <ul class="mb-2">
+            <li>Total <strong>${total}</strong> = sum of letter values (A=6, B=12 … Z=156).</li>
+            <li>Digital root <strong>${root}</strong> = repeatedly summing the digits of ${total}.</li>
+            <li>${baseRootLine}</li>
+            <li>${matchLine}</li>
+          </ul>
+          <p class="mb-0">Next steps: <code>reverse gematria ${total}</code> to see who else lands there, or <code>compare ${escapeHtml(topic)} and …</code> against a related concept.</p>
+        `;
       }
 
       function extractRelatedWordsCalculationTarget(prompt) {
@@ -1056,6 +1374,34 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
+      async function fetchSpellingVariantHits(topic) {
+        const lowerTopic = String(topic || '').toLowerCase().trim();
+        if (!lowerTopic) return [];
+        const candidates = [...new Set(
+          buildCloseSpellingVariants(topic)
+            .map((variant) => String(variant || '').toLowerCase().trim())
+            .filter((variant) => variant && variant !== lowerTopic)
+        )].slice(0, 8);
+        if (!candidates.length) return [];
+
+        const enriched = await Promise.all(candidates.map(async (variant) => {
+          const total = englishGematria(variant);
+          const matchCount = await fetchMatchCount(total);
+          return {
+            variant,
+            total,
+            root: digitalRoot(total),
+            isBaseRoot: isBaseRootTotal(total),
+            matchCount
+          };
+        }));
+
+        return enriched
+          .filter((entry) => Number.isFinite(entry.matchCount) && entry.matchCount > 0)
+          .sort((a, b) => b.matchCount - a.matchCount)
+          .slice(0, 6);
+      }
+
       async function fetchWordsByGematriaValue(gematriaValue) {
         try {
           const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(gematriaValue))}`);
@@ -1255,16 +1601,15 @@ View results: ${shareUrl}`.trim(),
 
       async function buildAgentReply(prompt) {
         const normalizedPrompt = normalizeCandidate(prompt);
+
+        if (isFollowupQuestion(normalizedPrompt)) {
+          return buildFollowupReply(lastCalculationContext);
+        }
+
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
-        const gematriaValueLookupMatch = normalizedPrompt.match(
-          /\b(?:gematria(?:\s+value)?|value|number|calculation)\s*(?:of|for|=|is|to|at)?\s*(\d+)\b/i
-        ) || normalizedPrompt.match(/\b(\d+)\b/);
-        const requestingWordListByGematria = /\b(?:show|list|find|get|give|which|what)\b[\s\S]*\bwords?\b/i.test(normalizedPrompt)
-          && (
-            /\bgematria\b/i.test(normalizedPrompt)
-            || /\b(?:equal|equals|matching|match|total|totals|value|number|calculation)\b/i.test(normalizedPrompt)
-          );
+        const reverseRange = extractRangeReverseLookup(normalizedPrompt);
+        const reverseGematriaValue = reverseRange ? null : extractReverseGematriaValue(normalizedPrompt);
         const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
         const explicitRelatedWordsTarget = extractRelatedWordsCalculationTarget(normalizedPrompt);
         const affirmativeFollowup = isAffirmativePrompt(normalizedPrompt);
@@ -1290,28 +1635,83 @@ View results: ${shareUrl}`.trim(),
           return '<p class="mb-0">I could not load the live word count right now. Please try again in a moment.</p>';
         }
 
-        if (requestingWordListByGematria && gematriaValueLookupMatch) {
-          const gematriaValue = Number(gematriaValueLookupMatch[1]);
-          if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) {
+        if (reverseRange && reverseRange.values.length) {
+          const buckets = await fetchWordsForGematriaValues(reverseRange.values);
+          const populated = buckets.filter((bucket) => bucket.words.length > 0);
+          const totalMatches = populated.reduce((sum, bucket) => sum + bucket.words.length, 0);
+
+          lastCalculationContext = {
+            kind: 'reverseRange',
+            min: reverseRange.min,
+            max: reverseRange.max,
+            valueCount: reverseRange.values.length,
+            bucketCount: populated.length,
+            totalMatches
+          };
+
+          const headerNote = reverseRange.truncated
+            ? ` (capped at the first ${reverseRange.values.length} multiples; requested span ${reverseRange.requestedMin}–${reverseRange.requestedMax} was wider)`
+            : '';
+          const bucketsHtml = populated.length
+            ? populated.map((bucket) => `
+                <section class="border rounded-3 p-2 mb-2">
+                  <p class="mb-1"><strong>${bucket.value}</strong> — ${bucket.words.length} match${bucket.words.length === 1 ? '' : 'es'}</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    ${bucket.words.map((word) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(word)}">${escapeHtml(word)}</button>`).join('')}
+                  </div>
+                </section>
+              `).join('')
+            : '<p class="mb-0">No archived words landed on any total in this range.</p>';
+
+          return `
+            <p class="mb-2"><strong>Reverse gematria range ${reverseRange.min} → ${reverseRange.max}</strong>${headerNote}</p>
+            <p class="mb-2">Scanned <strong>${reverseRange.values.length}</strong> valid total${reverseRange.values.length === 1 ? '' : 's'} (multiples of 6). Found <strong>${totalMatches}</strong> archived match${totalMatches === 1 ? '' : 'es'} across <strong>${populated.length}</strong> bucket${populated.length === 1 ? '' : 's'}.</p>
+            ${bucketsHtml}
+          `;
+        }
+
+        if (Number.isFinite(reverseGematriaValue)) {
+          const gematriaValue = reverseGematriaValue;
+          if (gematriaValue <= 0) {
             return '<p class="mb-0">Please provide a positive gematria number so I can search the word database.</p>';
           }
 
           if (gematriaValue % 6 !== 0) {
-            return '<p class="mb-0">The gematria value must be a Base-6 Gematria value (multiple of 6).</p>';
+            const lower = Math.floor(gematriaValue / 6) * 6;
+            const upper = lower + 6;
+            const suggestions = [lower, upper].filter((value) => value > 0);
+            const suggestionButtons = suggestions
+              .map((value) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-reverse-lookup-button" data-gematria-value="${value}">${value}</button>`)
+              .join(' ');
+            return `
+              <p class="mb-2">English gematria values are multiples of 6 (A=6, B=12 ... Z=156), so <strong>${gematriaValue}</strong> is not a valid base-6 total.</p>
+              <p class="mb-0">Try the nearest valid totals: ${suggestionButtons}</p>
+            `;
           }
 
           const words = await fetchWordsByGematriaValue(gematriaValue);
           if (!words.length) {
-            return `<p class="mb-0">I found no words in the current database for gematria value <strong>${gematriaValue}</strong>.</p>`;
+            const lower = gematriaValue - 6;
+            const upper = gematriaValue + 6;
+            const neighborButtons = [lower, upper]
+              .filter((value) => value > 0)
+              .map((value) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-reverse-lookup-button" data-gematria-value="${value}">${value}</button>`)
+              .join(' ');
+            return `
+              <p class="mb-2">No archived words match gematria value <strong>${gematriaValue}</strong> yet.</p>
+              <p class="mb-0">Try the neighbors: ${neighborButtons}</p>
+            `;
           }
 
           const wordsList = words
             .map((entry) => String(entry?.word || '').trim())
             .filter(Boolean);
 
+          lastCalculationContext = { kind: 'reverse', value: gematriaValue, archivedCount: wordsList.length };
+
           return `
-            <p class="mb-2"><strong>Database words with gematria value ${gematriaValue}</strong></p>
-            <p class="mb-2">Found ${wordsList.length} match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full GemaBot lookup for it.</p>
+            <p class="mb-2"><strong>Reverse gematria lookup for ${gematriaValue}</strong></p>
+            <p class="mb-2">Found ${wordsList.length} archived match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full GemaBot lookup for it.</p>
             <ul class="mb-0 ${wordsList.length > 30 ? 'agent-multi-column-list' : ''}">
               ${wordsList.map((word) => `
                 <li>
@@ -1328,6 +1728,11 @@ View results: ${shareUrl}`.trim(),
 
         const calculationTargets = extractCalculationTargets(normalizedPrompt);
         if (!calculationTargets.length) {
+          const strayNumberMatch = normalizedPrompt.match(/\b(\d{1,6})\b/);
+          if (strayNumberMatch) {
+            const strayValue = Number(strayNumberMatch[1]);
+            return `<p class="mb-0">Did not see a word or phrase to calculate. To run a reverse gematria lookup for <strong>${strayValue}</strong>, try <code>reverse gematria ${strayValue}</code> or <code>what words equal ${strayValue}</code>.</p>`;
+          }
           return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try the KnowBot? (on top menu)</p>';
         }
 
@@ -1369,6 +1774,10 @@ View results: ${shareUrl}`.trim(),
         const topicLookupDetails = lookupDetailsByTarget.get(topic) || { definitionSummary: '', relatedWords: [] };
         const definitionSummary = topicLookupDetails.definitionSummary;
         const relatedWords = topicLookupDetails.relatedWords;
+
+        const autoSpellingVariantHits = (allWordReports.length === 1 && primaryWordReport?.matchCount === 0)
+          ? await fetchSpellingVariantHits(topic)
+          : [];
 
         const iterations = 2;
         const memoryContext = '';
@@ -1430,9 +1839,25 @@ View results: ${shareUrl}`.trim(),
           };
         });
 
+        const comparisonRequested = isComparisonRequest(normalizedPrompt) && allWordReports.length >= 2;
+        const comparisonSummary = comparisonRequested ? buildComparisonSummary(allWordReports) : '';
+
+        lastCalculationContext = comparisonRequested
+          ? {
+              kind: 'comparison',
+              reports: allWordReports.map((entry) => ({
+                target: entry.target,
+                total: entry.total,
+                root: entry.root,
+                isBaseRoot: entry.isBaseRoot
+              }))
+            }
+          : { kind: 'calculation', topic, total, root, isBaseRoot, matchCount };
+
         return `
           ${learnedResponse ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
           <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
+          ${comparisonSummary}
           ${allWordReports.length ? `
             <p class="mb-2"><strong>Full calculation report for each detected word</strong></p>
             <div class="d-flex flex-column gap-2 mb-3">
@@ -1449,16 +1874,31 @@ View results: ${shareUrl}`.trim(),
                   };
                 });
 
+                const archiveCountLabel = Number.isFinite(entry.matchCount)
+                  ? `${entry.matchCount} (${describeMatchConfidence(entry.matchCount)})`
+                  : 'Unavailable right now';
+                const inlineDefinition = perWordDefinitionSummary
+                  ? `<p class="mb-2 fst-italic text-secondary-emphasis">${escapeHtml(perWordDefinitionSummary.slice(0, 200))}${perWordDefinitionSummary.length > 200 ? '…' : ''}</p>`
+                  : '';
+
                 return `
                 <section class="border rounded-3 p-2">
                   <p class="mb-1"><strong>${escapeHtml(entry.target)}</strong></p>
+                  ${inlineDefinition}
                   <ul class="mb-2">
                     <li><strong>Total:</strong> ${entry.total}</li>
                     <li><strong>Digital root:</strong> ${entry.root}</li>
                     <li><strong>Base-root pattern:</strong> ${entry.isBaseRoot ? 'Yes' : 'No'}</li>
-                    <li><strong>Current archived matches:</strong> ${Number.isFinite(entry.matchCount) ? entry.matchCount : 'Unavailable right now'}</li>
+                    <li><strong>Current archived matches:</strong> ${archiveCountLabel}</li>
                     <li><strong>Letter breakdown:</strong> ${entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.'}</li>
                   </ul>
+                  ${(allWordReports.length === 1 && entry.matchCount === 0 && autoSpellingVariantHits.length) ? `
+                    <p class="mb-1"><strong>Close spelling variants with archive hits</strong></p>
+                    <p class="small text-muted mb-2">No archived words land on ${entry.total} yet. These near-spellings do appear in the archive — click any to deep-look-up.</p>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                      ${autoSpellingVariantHits.map((hit) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(hit.variant)}">${escapeHtml(hit.variant)} (${hit.total}, ${hit.matchCount} match${hit.matchCount === 1 ? '' : 'es'})</button>`).join('')}
+                    </div>
+                  ` : ''}
                   ${allWordReports.length > 1 ? `
                     <p class="mb-2"><strong>Suggested next lookups for "${escapeHtml(entry.target)}"</strong></p>
                     <ul class="mb-2">
@@ -1597,6 +2037,7 @@ View results: ${shareUrl}`.trim(),
       clearConversationButton.addEventListener('click', () => {
         chatLog.innerHTML = '';
         pendingRelatedWordsSuggestionTopic = '';
+        lastCalculationContext = null;
         renderRelatedWordsFollowupSuggestion();
         promptInput.focus();
       });
@@ -1630,6 +2071,25 @@ View results: ${shareUrl}`.trim(),
           window.hideWorkingOverlay?.();
           const assistantMessage = addMessage('assistant', replyHtml);
           attachResultFeedbackUi(assistantMessage, href, replyHtml);
+          return;
+        }
+
+        const reverseLookupButton = event.target.closest('.agent-reverse-lookup-button');
+        if (reverseLookupButton) {
+          const gematriaValue = Number(reverseLookupButton.dataset.gematriaValue);
+          if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) return;
+          const promptText = `reverse gematria ${gematriaValue}`;
+          addMessage('user', `<p class="mb-0">${escapeHtml(promptText)}</p>`, { pinToTop: true });
+          setComposerWaitingState(true);
+          window.showWorkingOverlay?.();
+          try {
+            const replyHtml = await buildAgentReply(promptText);
+            const assistantMessage = addMessage('assistant', replyHtml);
+            attachResultFeedbackUi(assistantMessage, promptText, replyHtml);
+          } finally {
+            window.hideWorkingOverlay?.();
+            setComposerWaitingState(false);
+          }
           return;
         }
 

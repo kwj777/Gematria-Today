@@ -163,6 +163,27 @@
       .gemabot-premium-note svg { flex: 0 0 auto; width: 1rem; height: 1rem; }
       :root[data-bs-theme="dark"] .gemabot-premium-note { color: #fbbf24; }
 
+      .gemabot-sample-modal .gemabot-sample-log article[data-role="user"] {
+        align-self: flex-end;
+        max-width: 90%;
+      }
+      .gemabot-sample-modal .gemabot-sample-log article[data-role="assistant"] {
+        align-self: flex-start;
+        max-width: 100%;
+      }
+      :root[data-bs-theme="dark"] .gemabot-sample-modal article[data-role="user"] {
+        background-color: #1f2937 !important;
+        color: #e5e7eb;
+      }
+      :root[data-bs-theme="dark"] .gemabot-sample-modal article[data-role="assistant"] {
+        background-color: #111827 !important;
+        color: #e5e7eb;
+      }
+      :root[data-bs-theme="dark"] .gemabot-sample-modal .gemabot-sample-table {
+        --bs-table-color: #e5e7eb;
+        --bs-table-bg: transparent;
+      }
+
       .tools-help-line {
         font-size: 0.95rem;
         margin-top: 0.85rem;
@@ -267,7 +288,7 @@
               </ul>
               <p class="gemabot-premium-note" role="note">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                <span>Premium-only. <a class="gemabot-sample-link" href="/ai-agent.html">See a sample answer</a></span>
+                <span>Premium-only. <a class="gemabot-sample-link" href="#" data-bs-toggle="modal" data-bs-target="#gemabotSampleModal">See a sample answer</a></span>
               </p>
               <div class="mt-auto">
                 <a class="btn btn-warning fw-semibold w-100 gemabot-cta--premium" href="/ai-agent.html" aria-label="Open GemaBot">Open GemaBot</a>
@@ -278,6 +299,59 @@
         </div>
       </div>
     </main>
+
+    <div class="modal fade gemabot-sample-modal" id="gemabotSampleModal" tabindex="-1" aria-labelledby="gemabotSampleModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title h5 mb-0" id="gemabotSampleModalTitle">Sample GemaBot answer</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="small text-muted mb-3">This is a preview of what a GemaBot response looks like for the prompt below. The live assistant is available to Premium members.</p>
+            <div class="gemabot-sample-log d-flex flex-column gap-3" role="region" aria-label="Sample GemaBot conversation">
+              <article class="p-3 rounded-3 border bg-white" data-role="user">
+                <p class="small text-muted mb-2">You</p>
+                <div>Compare &ldquo;light&rdquo; and &ldquo;love&rdquo;.</div>
+              </article>
+              <article class="p-3 rounded-3 border bg-light border-secondary-subtle" data-role="assistant">
+                <p class="small text-muted mb-2">GemaBot</p>
+                <div>
+                  <p class="mb-2">Here&rsquo;s a side-by-side using English gematria (A=6, B=12 &hellip; Z=156):</p>
+                  <div class="table-responsive mb-3">
+                    <table class="table table-sm align-middle mb-0 gemabot-sample-table">
+                      <thead>
+                        <tr><th scope="col">Word</th><th scope="col" class="text-end">Gematria</th><th scope="col" class="text-end">Digital root</th><th scope="col" class="text-end">Letter count</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><th scope="row">light</th><td class="text-end">336</td><td class="text-end">3</td><td class="text-end">5</td></tr>
+                        <tr><th scope="row">love</th><td class="text-end">324</td><td class="text-end">9</td><td class="text-end">4</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p class="mb-2"><strong>Difference:</strong> 336 &minus; 324 = <strong>12</strong>. The two words are only one cipher-step apart (A=6, B=12), which is the smallest non-zero gap this cipher can produce.</p>
+                  <p class="mb-2"><strong>Per-letter breakdown</strong></p>
+                  <ul class="mb-3">
+                    <li><em>light:</em> L 72 + I 54 + G 42 + H 48 + T 120 = 336</li>
+                    <li><em>love:</em> L 72 + O 90 + V 132 + E 30 = 324</li>
+                  </ul>
+                  <p class="mb-2"><strong>Observations</strong></p>
+                  <ul class="mb-0">
+                    <li>Both share the leading <em>L</em> (72), so the divergence comes from their remaining letters.</li>
+                    <li>Their digital roots (3 and 9) are both multiples of 3, putting them in the same triadic family under digital-root grouping.</li>
+                    <li>336 also matches words like <em>creator</em> and <em>sunrise</em>; 324 matches <em>truth</em> and <em>kingdom</em> &mdash; useful anchors if you want to build a theme cluster.</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </div>
+          <div class="modal-footer justify-content-between flex-wrap gap-2">
+            <p class="small text-muted mb-0">Want to ask your own questions? GemaBot is included with Premium.</p>
+            <a class="btn btn-warning fw-semibold" href="/member.html#membershipUpgradeSection">Upgrade to Premium</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">

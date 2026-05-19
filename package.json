@@ -13,6 +13,7 @@
     "check-nav": "node scripts/sync-nav.mjs --check",
     "audit:accessibility": "node scripts/accessibility-audit.mjs",
     "screenshot": "node scripts/capture-screenshot.mjs",
+    "preview:gemabot-modal": "node scripts/preview-gemabot-modal.mjs",
     "map:markdown-post": "node scripts/map-markdown-post.mjs",
     "sync:architect-guide": "npm run sync:site-adaptation-guides",
     "check:architect-guide": "npm run check:site-adaptation-guides",

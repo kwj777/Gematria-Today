@@ -92,6 +92,13 @@
         padding-right: 0 !important;
       }
 
+      @media (min-width: 919px) {
+        .tools-grid > [class*="col-"] {
+          flex: 0 0 auto;
+          width: 33.3333333%;
+        }
+      }
+
       .tool-card {
         transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
       }
@@ -283,7 +290,7 @@
           <p class="tools-help-line">Not sure which to use? Start with the <a href="/calculator.html">Calculator</a> for words and phrases, or see the <a href="/faq.html">FAQ</a> for a quick comparison.</p>
         </section>
 
-        <div class="row g-4">
+        <div class="row g-4 tools-grid">
           <div class="col-12 col-lg-4 d-flex">
             <section class="content-panel tool-card p-4 p-lg-5 w-100 d-flex flex-column">
               <span class="tool-card-icon" aria-hidden="true">

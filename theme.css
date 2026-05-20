@@ -1787,6 +1787,54 @@ footer.site-footer a:focus-visible {
   outline: none;
 }
 
+.blog-reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  z-index: 1100;
+  pointer-events: none;
+}
+
+.blog-reading-progress__bar {
+  height: 100%;
+  width: 0%;
+  background: var(--bs-primary, #0d6efd);
+  transition: width 80ms linear;
+}
+
+.blog-related__item + .blog-related__item {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--color-border-soft, rgba(15, 23, 42, 0.08));
+}
+
+.blog-related__link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.blog-related__title {
+  display: block;
+  font-weight: 600;
+  color: var(--color-text-strong, #0f172a);
+}
+
+.blog-related__summary {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.blog-related__link:hover .blog-related__title,
+.blog-related__link:focus-visible .blog-related__title {
+  color: var(--bs-primary, #0d6efd);
+}
+
 .followit-card {
   padding: clamp(0.9rem, 2vw, 1.15rem);
   border-radius: var(--radius-xl);

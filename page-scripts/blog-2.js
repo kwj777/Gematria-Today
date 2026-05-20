@@ -571,6 +571,7 @@
       };
 
       let latestPosts = [];
+      let allLoadedPosts = [];
       let selectedTag = '';
       let searchQuery = '';
       let previewModeActive = false;
@@ -715,6 +716,51 @@
         const tocMarkup = `<nav class="blog-post-toc content-panel p-3 mb-4" aria-label="On this page"><p class="section-kicker mb-2">On this page</p><ol class="list-unstyled small mb-0">${items.map((item) => `<li class="blog-post-toc__item"><a class="blog-post-toc__link" href="#${escapeHtml(item.id)}">${escapeHtml(item.label)}</a></li>`).join('')}</ol></nav>`;
         body.insertAdjacentHTML('afterbegin', tocMarkup);
       };
+      const buildRelatedPosts = (postCard, currentPost) => {
+        if (!postCard || !currentPost) {
+          return;
+        }
+        const currentSlug = String(currentPost.slug || '').toLowerCase();
+        const currentTags = getPostTags(currentPost).map((tag) => tag.toLowerCase());
+        const candidates = allLoadedPosts.filter((post) => String(post.slug || '').toLowerCase() !== currentSlug);
+        if (!candidates.length) {
+          return;
+        }
+        const scored = candidates.map((post) => {
+          const postTags = getPostTags(post).map((tag) => tag.toLowerCase());
+          const overlap = postTags.filter((tag) => currentTags.includes(tag)).length;
+          return { post, overlap };
+        });
+        scored.sort((left, right) => right.overlap - left.overlap);
+        const related = scored.slice(0, 3).map((entry) => entry.post);
+        if (!related.length) {
+          return;
+        }
+        const itemMarkup = related.map((post) => {
+          const href = `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+          const summary = String(post.summary || '').trim();
+          return `<li class="blog-related__item"><a class="blog-related__link" href="${escapeHtml(href)}"><span class="blog-related__title">${escapeHtml(post.title || 'Untitled post')}</span>${summary ? `<span class="blog-related__summary">${escapeHtml(summary)}</span>` : ''}</a></li>`;
+        }).join('');
+        const relatedMarkup = `<aside class="blog-related content-panel p-4 mt-4" aria-label="Related posts"><p class="section-kicker mb-2">Related posts</p><ul class="list-unstyled mb-0">${itemMarkup}</ul></aside>`;
+        postCard.insertAdjacentHTML('afterend', relatedMarkup);
+      };
+      const updateReadingProgress = () => {
+        const bar = document.getElementById('blogReadingProgress');
+        const postCard = document.querySelector('.blog-post-card');
+        if (!bar || !postCard) {
+          return;
+        }
+        const rect = postCard.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const total = rect.height - viewportHeight;
+        if (total <= 0) {
+          bar.style.width = '100%';
+          return;
+        }
+        const scrolled = Math.min(Math.max(-rect.top, 0), total);
+        const percent = Math.min(100, Math.max(0, (scrolled / total) * 100));
+        bar.style.width = `${percent}%`;
+      };
       const updateBlogChrome = (detailViewActive, requestedTargetPost) => {
         const toolbar = document.getElementById('blogListToolbar');
         if (toolbar) {
@@ -728,6 +774,16 @@
             breadcrumb.classList.remove('d-none');
           } else {
             breadcrumb.classList.add('d-none');
+          }
+        }
+        const progressBar = document.getElementById('blogReadingProgress');
+        if (progressBar) {
+          const wrap = progressBar.parentElement;
+          if (wrap) {
+            wrap.classList.toggle('d-none', !detailViewActive);
+          }
+          if (!detailViewActive) {
+            progressBar.style.width = '0%';
           }
         }
       };
@@ -753,8 +809,20 @@
         return rawSlug ? `/admin-posts.html?editPost=${encodeURIComponent(rawSlug)}` : '/admin-posts.html';
       };
 
+      const sortPostsEditorial = (posts) => {
+        const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
+        return posts.slice().sort((left, right) => {
+          const leftFeatured = isTruthyFlag(left?.featured || left?.isFeatured) ? 1 : 0;
+          const rightFeatured = isTruthyFlag(right?.featured || right?.isFeatured) ? 1 : 0;
+          if (leftFeatured !== rightFeatured) {
+            return rightFeatured - leftFeatured;
+          }
+          return collator.compare(String(left?.title || ''), String(right?.title || ''));
+        });
+      };
       function renderPosts(posts) {
-        latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
+        latestPosts = sortPostsEditorial(posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) })));
+        allLoadedPosts = latestPosts.filter((post) => !isHiddenFromMainBlog(post));
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
         const requestedPostId = String(getRequestedPostId() || '').trim();
         const detailViewActive = Boolean(requestedPostSlug || requestedPostId);
@@ -825,7 +893,10 @@
         }
         updatePostsCount(filteredPosts.length, latestPosts.length, detailViewActive);
         if (detailViewActive) {
-          buildTableOfContents(postsContainer.querySelector('.blog-post-card'));
+          const detailCard = postsContainer.querySelector('.blog-post-card');
+          buildTableOfContents(detailCard);
+          buildRelatedPosts(detailCard, requestedTargetPost);
+          updateReadingProgress();
         }
 
         if (filteredPosts.length) {
@@ -913,6 +984,18 @@
         window.setTimeout(() => focusLinkedPost(linkedSlug), 0);
       });
       window.addEventListener('resize', () => window.requestAnimationFrame(updateTagFilterOverflowState));
+      let readingProgressRafHandle = null;
+      const scheduleReadingProgressUpdate = () => {
+        if (readingProgressRafHandle) {
+          return;
+        }
+        readingProgressRafHandle = window.requestAnimationFrame(() => {
+          readingProgressRafHandle = null;
+          updateReadingProgress();
+        });
+      };
+      window.addEventListener('scroll', scheduleReadingProgressUpdate, { passive: true });
+      window.addEventListener('resize', scheduleReadingProgressUpdate, { passive: true });
 
       selectedTag = getRequestedTag();
 

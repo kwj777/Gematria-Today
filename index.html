@@ -46,7 +46,7 @@
       .hero-panel h1 { font-family: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif; line-height: 1.1; color: #fff; }
       .hero-quick-calc { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: var(--radius-2xl, 1rem); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
       @media (min-width: 992px) { .hero-quick-calc { padding: 1.5rem; } }
-      .hero-quick-calc__label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.92); margin: 0; }
+      .hero-quick-calc__label { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.92); margin: 0; }
       .hero-quick-calc__input { width: 100%; padding: 0.7rem 0.95rem; font-size: 1.125rem; font-family: inherit; border-radius: 0.65rem; border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.96); color: #0d1a30; }
       .hero-quick-calc__input::placeholder { color: #6b7280; }
       .hero-quick-calc__input:focus { outline: none; box-shadow: 0 0 0 3px rgba(180,83,9,0.5); border-color: #b45309; }
@@ -54,11 +54,12 @@
       .hero-quick-calc__value { font-family: "Fraunces","Source Serif Pro",Georgia,"Times New Roman",serif; font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1; transition: opacity 0.15s ease; }
       .hero-quick-calc__value[data-example="true"] { opacity: 0.55; }
       .hero-quick-calc__caption { font-size: 0.82rem; color: rgba(255,255,255,0.9); margin-top: 0.4rem; letter-spacing: 0.04em; }
-      .hero-quick-calc__deep-link { display: inline-flex; align-items: center; font-weight: 600; color: #fbbf24; text-decoration: none; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease; }
+      .hero-quick-calc__deep-link { align-self: flex-start; display: inline-flex; align-items: center; font-weight: 600; color: #fbbf24; text-decoration: none; padding: 0.45rem 0.85rem; border: 1px solid rgba(251,191,36,0.55); border-radius: 0.55rem; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease; }
       .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; }
-      .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: underline; }
+      .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: none; background: rgba(251,191,36,0.12); border-color: #fbbf24; }
       .word-of-day-spotlight[aria-busy="true"] .wotd-stats,
       .word-of-day-spotlight[aria-busy="true"] .wotd-breakdown { display: none; }
+      .site-footer-quick-links__label { letter-spacing: 0.06em; }
     </style>
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet fetchpriority="low" />
@@ -111,21 +112,17 @@
       <div class="container">
         <noscript>
           <div class="alert alert-warning" role="alert">
-            <strong>JavaScript is disabled.</strong> Some sections of this page (featured blog posts, word-of-the-day, and the calculator) need JavaScript to load. The site links above still work, so you can browse to the <a href="/blog.html" class="alert-link">blog</a>, <a href="/news.html" class="alert-link">news</a>, or <a href="/faq.html" class="alert-link">FAQ</a> directly.
+            <strong>JavaScript is disabled.</strong> The quick calculator, word-of-the-day, and featured posts on this page all need JavaScript to load. The site links above still work, so you can browse to the <a href="/calculator.html" class="alert-link">calculator</a>, <a href="/blog.html" class="alert-link">blog</a>, or <a href="/faq.html" class="alert-link">FAQ</a> directly.
           </div>
         </noscript>
         <section class="hero-panel hero-panel--compact p-4 p-lg-4 mb-5" aria-label="Homepage highlight">
-          <div class="row align-items-center g-4">
-            <div class="col-lg-7">
-              <p class="section-kicker mb-2">Gematria Focus</p>
+          <div class="row align-items-start g-4">
+            <div class="col-lg-7 order-1">
+              <span class="section-kicker d-block mb-2">Gematria Focus</span>
               <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number. See the patterns it shares.</h1>
-              <p id="homeHeroLead" class="lead mb-4">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
-              <div class="d-flex flex-column flex-sm-row flex-wrap gap-2">
-                <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Dig Deeper — Free</a>
-                <a id="homeCalculatorCta" class="btn btn-link btn-lg touch-target-lg text-warning fw-semibold text-decoration-none" href="/calculator.html">Or open the full calculator →</a>
-              </div>
+              <p id="homeHeroLead" class="lead mb-0 mb-lg-4">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
             </div>
-            <div class="col-lg-5">
+            <div class="col-lg-5 order-2 order-lg-3">
               <div class="hero-quick-calc" role="group" aria-labelledby="heroQuickCalcLabel">
                 <label class="hero-quick-calc__label" id="heroQuickCalcLabel" for="heroQuickCalcInput">Try it — type a word or name</label>
                 <input
@@ -144,7 +141,13 @@
                   <span class="hero-quick-calc__value" id="heroQuickCalcValue" aria-live="polite" aria-atomic="true">—</span>
                   <span class="hero-quick-calc__caption" id="heroQuickCalcCaption">English gematria value</span>
                 </div>
-                <a class="hero-quick-calc__deep-link" id="heroQuickCalcDeepLink" href="/gematria-account-setup.html" aria-disabled="true">Unlock related words — free →</a>
+                <a class="hero-quick-calc__deep-link" id="heroQuickCalcDeepLink" href="/calculator.html?query=light" aria-disabled="true">See related words →</a>
+              </div>
+            </div>
+            <div class="col-lg-7 order-3 order-lg-2">
+              <div class="d-flex flex-column flex-sm-row flex-wrap gap-2">
+                <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Dig Deeper — Free</a>
+                <a id="homeCalculatorCta" class="btn btn-link btn-lg touch-target-lg text-warning fw-semibold text-decoration-none" href="/calculator.html">Or open the full calculator →</a>
               </div>
             </div>
           </div>
@@ -153,7 +156,7 @@
         <section class="content-panel p-4 p-lg-4 mb-5" aria-label="Why English Gematria">
           <div class="row align-items-start g-3">
             <div class="col-md-4">
-              <p class="section-kicker mb-2">Methodology</p>
+              <span class="section-kicker d-block mb-2">Methodology</span>
               <h2 class="h4 mb-0">Why English Gematria?</h2>
             </div>
             <div class="col-md-8">
@@ -196,7 +199,7 @@
         <section class="content-panel p-4 p-lg-5 mb-5 d-none" data-module="blog_home_slider">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div>
-              <p class="section-kicker mb-2">Featured</p>
+              <span class="section-kicker d-block mb-2">Featured</span>
               <h2 class="mb-1">Featured insights from the blog</h2>
               <p class="text-muted mb-0">Use the slider to preview key posts, then open the full blog page to keep reading.</p>
             </div>
@@ -228,8 +231,8 @@
 
         <section class="word-of-day-spotlight p-4 p-lg-5 mb-5" data-module="wordnik_wotd_slider" aria-busy="true">
           <header class="mb-4">
-            <p class="section-kicker mb-2">Wordnik Word of the Day</p>
-            <h2 id="homeWordnikWotdTitle" class="display-5 fw-bold mb-2 placeholder-glow">
+            <span class="section-kicker d-block mb-2">Wordnik Word of the Day</span>
+            <h2 id="homeWordnikWotdTitle" class="h2 fw-bold mb-2 placeholder-glow">
               <span class="visually-hidden">Daily word is loading.</span>
               <span class="placeholder async-shell-line async-shell-line--lg col-5" aria-hidden="true"></span>
             </h2>
@@ -267,7 +270,7 @@
         <section class="home-section mb-5" data-module="blog_home_featured_grid">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 pb-3 home-section__header">
             <div>
-              <p class="section-kicker mb-2">Latest Posts</p>
+              <span class="section-kicker d-block mb-2">Latest Posts</span>
               <h2 class="mb-1">Latest analysis and deep dives</h2>
               <p class="text-muted mb-0">Hand-picked posts on gematria methodology, pattern checks, and case studies.</p>
             </div>
@@ -289,9 +292,9 @@
       <div class="container d-flex flex-column gap-3 small text-muted">
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
           <span>Gematria.Today — a research workspace.</span>
-          <nav aria-label="Quick links" class="d-flex flex-wrap gap-3 site-footer-quick-links">
-            <strong class="text-uppercase fw-semibold me-1" style="letter-spacing: 0.06em;">Start here:</strong>
-            <a href="/calculator.html">Calculator</a>
+          <nav aria-label="Quick links" class="d-flex flex-wrap align-items-baseline gap-2 site-footer-quick-links">
+            <strong class="text-uppercase fw-semibold site-footer-quick-links__label">Start here</strong>
+            <a class="ms-1" href="/calculator.html">Calculator</a>
             <a href="/blog.html">Blog</a>
             <a href="/faq.html">FAQ</a>
             <a href="/tools.html">Tools</a>

@@ -280,7 +280,10 @@ async function loadWordnikWordOfDayHero() {
       definitionCta.href = definitionHref;
       definitionCta.hidden = !definitionPreview;
     }
-    if (calculatorCta) calculatorCta.href = calculatorHref;
+    if (calculatorCta) {
+      calculatorCta.href = calculatorHref;
+      calculatorCta.textContent = `Explore "${word}" in the calculator`;
+    }
   } catch (_error) {
     const title = document.getElementById('homeWordnikWotdTitle');
     const definition = document.getElementById('homeWordnikWotdDefinition');

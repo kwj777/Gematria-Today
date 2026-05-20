@@ -1806,6 +1806,55 @@ html.blog-detail-view .blog-post-body h2[id]:focus-within .blog-heading-anchor {
   opacity: 1;
 }
 
+@media print {
+  html.blog-detail-view nav.sticky-top,
+  html.blog-detail-view .blog-reading-progress,
+  html.blog-detail-view #blogBreadcrumb,
+  html.blog-detail-view #blogListToolbar,
+  html.blog-detail-view .blog-sidebar,
+  html.blog-detail-view .blog-series-strip,
+  html.blog-detail-view .blog-post-toc,
+  html.blog-detail-view .blog-related,
+  html.blog-detail-view .blog-copy-link-button,
+  html.blog-detail-view .share-action-button,
+  html.blog-detail-view .site-footer,
+  html.blog-detail-view .blog-heading-anchor,
+  html.blog-detail-view #learningPathCompletionBanner {
+    display: none !important;
+  }
+  html.blog-detail-view body {
+    background: #fff;
+    color: #000;
+  }
+  html.blog-detail-view main {
+    padding: 0 !important;
+  }
+  html.blog-detail-view .col-lg-8,
+  html.blog-detail-view .col-lg-4 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+  html.blog-detail-view .blog-post-card {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+  html.blog-detail-view .blog-post-image-frame {
+    max-height: none;
+    page-break-inside: avoid;
+  }
+  html.blog-detail-view .blog-post-body a {
+    color: #000;
+    text-decoration: underline;
+  }
+  html.blog-detail-view .blog-post-body a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+}
+
 .blog-post-toc__item + .blog-post-toc__item {
   margin-top: 0.35rem;
 }

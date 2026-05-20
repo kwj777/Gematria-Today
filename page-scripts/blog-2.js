@@ -960,7 +960,8 @@
           const adminEditButtonMarkup = adminSessionActive
             ? `<a class="btn btn-sm btn-outline-primary fw-semibold" href="${escapeHtml(getPostEditUrl(post))}">Edit</a>`
             : '';
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
+          const copyLinkButtonMarkup = `<button type="button" class="btn btn-sm btn-outline-secondary fw-semibold blog-copy-link-button" data-copy-link="${escapeHtml(post.slug)}">Copy link</button>`;
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}${copyLinkButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         });
         const postsContainer = document.getElementById('blogPosts');
         const showSeriesPromo = !detailViewActive && !searchQuery.trim() && !selectedTag;
@@ -1042,6 +1043,34 @@
           renderPosts(latestPosts);
           return;
         }
+        const copyLinkButton = event.target.closest('[data-copy-link]');
+        if (copyLinkButton) {
+          const slug = String(copyLinkButton.dataset.copyLink || '').trim().toLowerCase();
+          const post = latestPosts.find((entry) => entry.slug.toLowerCase() === slug);
+          if (post) {
+            const shareUrl = buildSharePostUrl(post.slug);
+            const restoreLabel = copyLinkButton.textContent;
+            const setLabel = (text) => {
+              copyLinkButton.textContent = text;
+              window.setTimeout(() => {
+                copyLinkButton.textContent = restoreLabel;
+              }, 1800);
+            };
+            const writeWithClipboard = navigator.clipboard
+              ? navigator.clipboard.writeText(shareUrl)
+              : Promise.reject(new Error('Clipboard API unavailable'));
+            writeWithClipboard
+              .then(() => {
+                reportButtonEvent('copy_link_button_click', { source: 'blog_post_card', slug: post.slug });
+                setLabel('Copied!');
+              })
+              .catch(() => {
+                setLabel('Press Ctrl+C');
+                window.prompt('Copy this link', shareUrl);
+              });
+          }
+          return;
+        }
         const shareButton = event.target.closest('[data-share-post]');
         if (shareButton) {
           const slug = String(shareButton.dataset.sharePost || '').trim().toLowerCase();
@@ -1065,6 +1094,23 @@
         window.setTimeout(() => focusLinkedPost(linkedSlug), 0);
       });
       window.addEventListener('resize', () => window.requestAnimationFrame(updateTagFilterOverflowState));
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) {
+          return;
+        }
+        const target = event.target;
+        const tagName = target && target.tagName;
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || (target && target.isContentEditable)) {
+          return;
+        }
+        const searchInput = document.getElementById('blogSearchInput');
+        if (!searchInput || searchInput.offsetParent === null) {
+          return;
+        }
+        event.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      });
       let readingProgressRafHandle = null;
       const scheduleReadingProgressUpdate = () => {
         if (readingProgressRafHandle) {

@@ -8,13 +8,6 @@
       const faqNoResults = document.getElementById('faqNoResults');
       const faqExpandAll = document.getElementById('faqExpandAll');
       const faqCollapseAll = document.getElementById('faqCollapseAll');
-      const faqPageLoadingOverlay = document.getElementById('faqPageLoadingOverlay');
-
-      function hideFaqPageLoadingOverlay() {
-        if (faqPageLoadingOverlay) {
-          faqPageLoadingOverlay.hidden = true;
-        }
-      }
 
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
@@ -354,7 +347,4 @@
           faqLoading.classList.add('d-none');
           faqError.textContent = error.message;
           faqError.classList.remove('d-none');
-        })
-        .finally(() => {
-          hideFaqPageLoadingOverlay();
         });

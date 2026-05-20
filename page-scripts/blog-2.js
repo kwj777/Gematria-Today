@@ -716,7 +716,7 @@
         if (!body) {
           return;
         }
-        const headings = Array.from(body.querySelectorAll('h2'));
+        const headings = Array.from(body.querySelectorAll('h2, h3'));
         if (headings.length < 2) {
           return;
         }
@@ -866,15 +866,6 @@
           threshold: 0,
         });
         headings.forEach((heading) => tocObserver.observe(heading));
-      };
-      const updateBackToTopVisibility = () => {
-        const button = document.getElementById('blogBackToTopButton');
-        if (!button) {
-          return;
-        }
-        const onDetailView = document.documentElement.classList.contains('blog-detail-view');
-        const scrolled = (window.scrollY || window.pageYOffset || 0) > 600;
-        button.classList.toggle('d-none', !(onDetailView && scrolled));
       };
       const updateReadingProgressOffset = () => {
         const navbar = document.querySelector('nav.sticky-top');
@@ -1044,7 +1035,6 @@
           updateReadingProgressOffset();
           updateReadingProgress();
         }
-        updateBackToTopVisibility();
 
         if (filteredPosts.length) {
           const requestedSlug = getRequestedPostSlug();
@@ -1080,12 +1070,6 @@
         }, 120);
       });
       document.addEventListener('click', (event) => {
-        const backToTopButton = event.target.closest('#blogBackToTopButton');
-        if (backToTopButton) {
-          event.preventDefault();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        }
         const clearFiltersButton = event.target.closest('#blogClearFiltersButton');
         if (clearFiltersButton) {
           searchQuery = '';
@@ -1190,7 +1174,6 @@
         readingProgressRafHandle = window.requestAnimationFrame(() => {
           readingProgressRafHandle = null;
           updateReadingProgress();
-          updateBackToTopVisibility();
         });
       };
       window.addEventListener('scroll', scheduleReadingProgressUpdate, { passive: true });

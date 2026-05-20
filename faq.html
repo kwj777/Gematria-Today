@@ -90,15 +90,23 @@
     </nav>
     <main id="mainContent" class="py-5">
       <div class="container">
-        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4">
-          <p class="section-kicker mb-3">FAQ</p>
+        <section class="hero-panel hero-panel--compact faq-hero p-4 p-lg-5 mb-4">
           <div class="row g-4 align-items-center">
-            <div class="col-lg-8">
-              <h1 class="display-5 fw-bold mb-3">Frequently asked questions</h1>
-              <p class="lead mb-0">English gematria applies an ancient meaning system to today’s dominant language, keeping it relevant rather than purely historical.</p>
+            <div class="col-lg-7">
+              <p class="section-kicker mb-2">FAQ</p>
+              <h1 class="display-5 fw-bold mb-2">Frequently asked questions</h1>
+              <p class="lead mb-4">Answers about the calculators, membership, and methodology behind Gematria.Today.</p>
+              <div class="faq-hero-search">
+                <label class="visually-hidden" for="faqSearch">Search FAQ</label>
+                <div class="faq-hero-search__input-wrap">
+                  <svg class="faq-hero-search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                  <input id="faqSearch" type="search" class="form-control form-control-lg faq-hero-search__input" placeholder="Search questions and answers…" autocomplete="off" disabled />
+                </div>
+                <p id="faqSearchStatus" class="faq-hero-search__status mt-2 mb-0 small" aria-live="polite">Loading FAQ…</p>
+              </div>
             </div>
-            <div class="col-lg-4">
-              <figure class="content-panel hero-media-panel hero-image-frame h-100 mb-0 overflow-hidden">
+            <div class="col-lg-5 d-none d-lg-block">
+              <figure class="hero-image-frame h-100 mb-0 overflow-hidden">
                 <img
                   class="hero-selling-points-image faq-hero-image"
                   src="/assets/faq-hero-guidance.svg"
@@ -113,42 +121,43 @@
           </div>
         </section>
 
-        <section class="content-panel p-4 mb-4">
-          <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
-            <div>
-              <p class="section-kicker mb-1">Editorial Trust</p>
-              <p class="mb-0 small text-muted">Author: Gematria.Today Editorial Team · Last updated: March 28, 2026</p>
+        <section class="content-panel faq-trust-strip p-3 mb-4">
+          <div class="d-flex flex-column flex-md-row justify-content-between gap-2 small">
+            <div class="text-muted">
+              <span class="section-kicker me-2">Editorial Trust</span>
+              Gematria.Today Editorial Team · Last updated March 28, 2026
             </div>
-            <div class="small d-flex flex-wrap gap-3">
+            <div class="d-flex flex-wrap gap-3">
               <a href="/disclaimer.html">Editorial policy</a>
               <a href="/contact.html">Ask the editorial team</a>
-              <a href="/gematria-guide.html">Read the evergreen guide</a>
+              <a href="/gematria-guide.html">Evergreen guide</a>
             </div>
           </div>
-          <hr />
-          <h2 class="h5 mb-3">FAQ helpful links</h2>
-          <ul class="mb-0">
-            <li><a href="/calculator.html">Start with the Word/Phrase Calculator for basic values.</a></li>
-            <li><a href="/name-calculator.html">Run people and place names in the Name Calculator.</a></li>
-            <li><a href="/">Review matching totals in the Gematria Results page.</a></li>
-            <li><a href="/blog.html">Use Blog checklists to test pattern quality before conclusions.</a></li>
-            <li><a href="/news.html">Connect studies to current events through the News feed.</a></li>
-            <li><a href="/premium-research.html">Upgrade for advanced Wordnik and statistics workflows.</a></li>
-          </ul>
         </section>
+
         <div id="faqLoading" class="content-panel p-4 text-muted async-content-shell async-content-shell--md">
           <p class="placeholder-glow mb-3"><span class="placeholder async-shell-line async-shell-line--lg col-5"></span></p>
           <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-9"></span></p>
           <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-7"></span></p>
         </div>
         <div id="faqError" class="alert alert-danger d-none" role="alert"></div>
-        <div id="faqSearchShell" class="content-panel p-3 p-lg-4 mb-3 d-none">
-          <label class="form-label fw-semibold" for="faqSearch">Search FAQ</label>
-          <input id="faqSearch" type="search" class="form-control" placeholder="Type a keyword to filter questions" autocomplete="off" />
-          <p id="faqSearchStatus" class="form-text mb-0 mt-2" aria-live="polite"></p>
+
+        <div id="faqBody" class="row g-4 d-none">
+          <aside class="col-lg-3 faq-toc-col">
+            <nav class="faq-toc" aria-label="FAQ categories">
+              <p class="section-kicker mb-2">Categories</p>
+              <ul id="faqToc" class="faq-toc__list list-unstyled mb-3"></ul>
+              <div class="faq-toc__actions d-flex flex-wrap gap-2">
+                <button id="faqExpandAll" type="button" class="btn btn-sm btn-outline-secondary">Expand all</button>
+                <button id="faqCollapseAll" type="button" class="btn btn-sm btn-outline-secondary">Collapse all</button>
+              </div>
+            </nav>
+          </aside>
+          <div class="col-lg-9">
+            <div id="faqGroups"></div>
+            <p id="faqNoResults" class="text-muted small mt-3 d-none" role="status">No FAQ entries match your search. Try different keywords.</p>
+          </div>
         </div>
-        <div id="faqAccordion" class="accordion d-none async-content-shell async-content-shell--md"></div>
-        <p id="faqNoResults" class="text-muted small mt-3 d-none" role="status">No FAQ entries match your search. Try different keywords.</p>
       </div>
     </main>
     <footer class="site-footer py-4 mt-5">

@@ -1,0 +1,119 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="reTitle reDesc">
+  <title id="reTitle">Renaissance Crossroads — Agrippa and the Baconian cipher</title>
+  <desc id="reDesc">Two paired diagrams: a planetary letter-correspondence wheel for Agrippa''s vernacular cabala on the left, and Francis Bacon''s biliteral cipher table showing letters encoded as five-place a/b sequences on the right.</desc>
+
+  <defs>
+    <linearGradient id="reBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="reGlow" cx="800" cy="540" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316" stop-opacity="0.18"/>
+      <stop offset="0.6" stop-color="#F97316" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rePanel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1A2452"/>
+      <stop offset="1" stop-color="#0A1130"/>
+    </linearGradient>
+    <linearGradient id="reHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <pattern id="reDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#reBg)"/>
+  <rect width="1600" height="900" fill="url(#reDots)"/>
+  <rect width="1600" height="900" fill="url(#reGlow)"/>
+
+  <!-- Header -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="620" y="58" width="360" height="38" rx="19" fill="#F97316" fill-opacity="0.18" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#FFB779" letter-spacing="3">SERIES · POST 3 OF 6</text>
+    <text x="800" y="158" font-size="56" font-weight="800" fill="#F4F8FF">Renaissance Crossroads</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">Agrippa''s warrant · Bacon''s cipher</text>
+  </g>
+
+  <!-- Left panel: Agrippa wheel -->
+  <g>
+    <rect x="100" y="260" width="640" height="560" rx="22" fill="url(#rePanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="130" y="302" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">AGRIPPA · DE OCCULTA PHILOSOPHIA</text>
+      <text x="130" y="338" font-size="24" font-weight="700" fill="#E6F2FF">Letters → planets, signs, elements</text>
+    </g>
+
+    <!-- Wheel -->
+    <g transform="translate(420 580)">
+      <circle r="200" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4" stroke-dasharray="2 9" fill="none"/>
+      <circle r="140" stroke="#7ED9FF" stroke-opacity="0.28" stroke-width="1" fill="none"/>
+      <circle r="60" fill="#0B1230" stroke="url(#reHot)" stroke-width="2"/>
+      <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+        <text y="-4" font-size="13" font-weight="700" fill="#FBBF24" letter-spacing="2">CELESTIAL</text>
+        <text y="18" font-size="13" font-weight="700" fill="#FBBF24" letter-spacing="2">ORDER</text>
+      </g>
+      <!-- 7 planet nodes -->
+      <g font-family="'JetBrains Mono', 'Consolas', monospace" font-weight="700" text-anchor="middle">
+        <g><circle cx="0" cy="-180" r="28" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.6" stroke-width="1.2"/><text y="-174" font-size="22" fill="#E6F2FF">☉</text></g>
+        <g><circle cx="141" cy="-115" r="28" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.6" stroke-width="1.2"/><text x="141" y="-108" font-size="22" fill="#E6F2FF">♀</text></g>
+        <g><circle cx="176" cy="38" r="28" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.6" stroke-width="1.2"/><text x="176" y="46" font-size="22" fill="#E6F2FF">☿</text></g>
+        <g><circle cx="100" cy="160" r="28" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.6" stroke-width="1.2"/><text x="100" y="168" font-size="22" fill="#E6F2FF">♂</text></g>
+        <g><circle cx="-100" cy="160" r="28" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.6" stroke-width="1.2"/><text x="-100" y="168" font-size="22" fill="#E6F2FF">♃</text></g>
+        <g><circle cx="-176" cy="38" r="28" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.6" stroke-width="1.2"/><text x="-176" y="46" font-size="22" fill="#E6F2FF">♄</text></g>
+        <g><circle cx="-141" cy="-115" r="28" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.6" stroke-width="1.2"/><text x="-141" y="-108" font-size="22" fill="#E6F2FF">☽</text></g>
+      </g>
+    </g>
+
+    <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+      <text x="420" y="800" font-size="16" fill="#9BE0FF">Vernacular alphabets made numerically legible</text>
+    </g>
+  </g>
+
+  <!-- Right panel: Bacon biliteral -->
+  <g>
+    <rect x="860" y="260" width="640" height="560" rx="22" fill="url(#rePanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="890" y="302" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">BACON · BILITERAL CIPHER</text>
+      <text x="890" y="338" font-size="24" font-weight="700" fill="#E6F2FF">A cipher, not a gematria</text>
+    </g>
+
+    <!-- Biliteral table -->
+    <g font-family="'JetBrains Mono', 'Consolas', monospace">
+      <text x="890" y="392" font-size="22" font-weight="700" fill="#E6F2FF">A = aaaaa</text>
+      <text x="890" y="424" font-size="22" font-weight="700" fill="#E6F2FF">B = aaaab</text>
+      <text x="890" y="456" font-size="22" font-weight="700" fill="#FBBF24">C = aaaba</text>
+      <text x="890" y="488" font-size="22" font-weight="700" fill="#E6F2FF">D = aaabb</text>
+      <text x="890" y="520" font-size="22" font-weight="700" fill="#E6F2FF">E = aabaa</text>
+      <text x="890" y="552" font-size="22" font-weight="700" fill="#E6F2FF">F = aabab</text>
+      <text x="890" y="584" font-size="22" font-weight="700" fill="#9BE0FF">…</text>
+
+      <!-- Right column -->
+      <text x="1180" y="392" font-size="22" font-weight="700" fill="#E6F2FF">L = abaaa</text>
+      <text x="1180" y="424" font-size="22" font-weight="700" fill="#E6F2FF">M = abaab</text>
+      <text x="1180" y="456" font-size="22" font-weight="700" fill="#E6F2FF">N = ababa</text>
+      <text x="1180" y="488" font-size="22" font-weight="700" fill="#E6F2FF">O = ababb</text>
+      <text x="1180" y="520" font-size="22" font-weight="700" fill="#E6F2FF">P = abbaa</text>
+      <text x="1180" y="552" font-size="22" font-weight="700" fill="#E6F2FF">Q = abbab</text>
+      <text x="1180" y="584" font-size="22" font-weight="700" fill="#9BE0FF">…</text>
+    </g>
+
+    <!-- Worked example -->
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <line x1="890" y1="640" x2="1470" y2="640" stroke="#7ED9FF" stroke-opacity="0.3" stroke-width="1"/>
+      <text x="890" y="676" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="2">CAB IS NOT SUMMED — IT IS ENCODED</text>
+    </g>
+    <g font-family="'JetBrains Mono', 'Consolas', monospace">
+      <text x="890" y="724" font-size="22" font-weight="700" fill="#E6F2FF">C A B</text>
+      <text x="890" y="756" font-size="20" fill="#9BE0FF">aaaba · aaaaa · aaaab</text>
+      <text x="890" y="792" font-size="16" fill="#9BE0FF" font-family="'Inter', 'Segoe UI', sans-serif">Concealment by graphical alternation, not summation.</text>
+    </g>
+  </g>
+
+  <!-- Footer caption -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="868" font-size="20" fill="#9CC8FF" fill-opacity="0.9">Different intellectual projects — easily confused later, but not the same thing.</text>
+  </g>
+</svg>

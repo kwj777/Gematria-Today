@@ -1,0 +1,128 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mcTitle mcDesc">
+  <title id="mcTitle">Methodological Cautions — confirmation bias, apophenia, and the Bacon lesson</title>
+  <desc id="mcDesc">A three-bucket Venn-style diagram contrasting documented historical use, internally coherent symbolic systems, and modern overreading, paired with a checklist of practical research postures.</desc>
+
+  <defs>
+    <linearGradient id="mcBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="mcGlow" cx="800" cy="540" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316" stop-opacity="0.18"/>
+      <stop offset="0.6" stop-color="#F97316" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mcPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1A2452"/>
+      <stop offset="1" stop-color="#0A1130"/>
+    </linearGradient>
+    <linearGradient id="mcHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <pattern id="mcDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#mcBg)"/>
+  <rect width="1600" height="900" fill="url(#mcDots)"/>
+  <rect width="1600" height="900" fill="url(#mcGlow)"/>
+
+  <!-- Header -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="620" y="58" width="360" height="38" rx="19" fill="#F97316" fill-opacity="0.18" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#FFB779" letter-spacing="3">SERIES · POST 6 OF 6</text>
+    <text x="800" y="158" font-size="56" font-weight="800" fill="#F4F8FF">Methodological Cautions</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">Differentiating documented use · coherent systems · modern overreading</text>
+  </g>
+
+  <!-- Left panel: three overlapping circles -->
+  <g>
+    <rect x="100" y="260" width="700" height="560" rx="22" fill="url(#mcPanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="130" y="302" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">THREE CATEGORIES — NOT INTERCHANGEABLE</text>
+    </g>
+
+    <!-- Venn -->
+    <g transform="translate(450 560)">
+      <circle cx="-120" cy="-30" r="160" fill="#7ED9FF" fill-opacity="0.10" stroke="#7ED9FF" stroke-opacity="0.5" stroke-width="1.4"/>
+      <circle cx="120" cy="-30" r="160" fill="#FBBF24" fill-opacity="0.10" stroke="#FBBF24" stroke-opacity="0.55" stroke-width="1.4"/>
+      <circle cx="0" cy="140" r="160" fill="#F97316" fill-opacity="0.10" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.4"/>
+
+      <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+        <text x="-200" y="-110" font-size="18" font-weight="700" fill="#9BE0FF">Documented</text>
+        <text x="-200" y="-86" font-size="18" font-weight="700" fill="#9BE0FF">historical use</text>
+
+        <text x="200" y="-110" font-size="18" font-weight="700" fill="#FBBF24">Coherent</text>
+        <text x="200" y="-86" font-size="18" font-weight="700" fill="#FBBF24">symbolic systems</text>
+
+        <text x="0" y="260" font-size="18" font-weight="700" fill="#FFB779">Modern</text>
+        <text x="0" y="284" font-size="18" font-weight="700" fill="#FFB779">overreading</text>
+
+        <!-- Center label -->
+        <text x="0" y="44" font-size="14" font-weight="700" fill="#E6F2FF">Where</text>
+        <text x="0" y="64" font-size="14" font-weight="700" fill="#E6F2FF">careful work</text>
+        <text x="0" y="84" font-size="14" font-weight="700" fill="#E6F2FF">lives</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Right panel: workable posture checklist -->
+  <g>
+    <rect x="820" y="260" width="680" height="560" rx="22" fill="url(#mcPanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="850" y="302" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">A WORKABLE POSTURE</text>
+      <text x="850" y="338" font-size="22" font-weight="700" fill="#E6F2FF">Five practical implications</text>
+    </g>
+
+    <!-- Checklist items -->
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <!-- Item 1 -->
+      <g transform="translate(850 380)">
+        <circle cx="14" cy="14" r="14" fill="url(#mcHot)"/>
+        <text x="14" y="20" font-size="16" font-weight="700" fill="#1B0E45" text-anchor="middle">1</text>
+        <text x="42" y="20" font-size="20" font-weight="700" fill="#F4F8FF">Name the cipher.</text>
+        <text x="42" y="44" font-size="16" fill="#9BE0FF">"X equals Y in gematria" is untestable without it.</text>
+      </g>
+      <!-- Item 2 -->
+      <g transform="translate(850 460)">
+        <circle cx="14" cy="14" r="14" fill="url(#mcHot)"/>
+        <text x="14" y="20" font-size="16" font-weight="700" fill="#1B0E45" text-anchor="middle">2</text>
+        <text x="42" y="20" font-size="20" font-weight="700" fill="#F4F8FF">Distinguish historical from reconstructed.</text>
+        <text x="42" y="44" font-size="16" fill="#9BE0FF">"Agrippa" and "Hebrew" labels are not primary sources.</text>
+      </g>
+      <!-- Item 3 -->
+      <g transform="translate(850 540)">
+        <circle cx="14" cy="14" r="14" fill="url(#mcHot)"/>
+        <text x="14" y="20" font-size="16" font-weight="700" fill="#1B0E45" text-anchor="middle">3</text>
+        <text x="42" y="20" font-size="20" font-weight="700" fill="#F4F8FF">Treat single matches as weak evidence.</text>
+        <text x="42" y="44" font-size="16" fill="#9BE0FF">Themed clusters plus variant controls do the work.</text>
+      </g>
+      <!-- Item 4 -->
+      <g transform="translate(850 620)">
+        <circle cx="14" cy="14" r="14" fill="url(#mcHot)"/>
+        <text x="14" y="20" font-size="16" font-weight="700" fill="#1B0E45" text-anchor="middle">4</text>
+        <text x="42" y="20" font-size="20" font-weight="700" fill="#F4F8FF">Log non-matches as carefully as matches.</text>
+        <text x="42" y="44" font-size="16" fill="#9BE0FF">Apophenia thrives on selective recall.</text>
+      </g>
+      <!-- Item 5 -->
+      <g transform="translate(850 700)">
+        <circle cx="14" cy="14" r="14" fill="url(#mcHot)"/>
+        <text x="14" y="20" font-size="16" font-weight="700" fill="#1B0E45" text-anchor="middle">5</text>
+        <text x="42" y="20" font-size="20" font-weight="700" fill="#F4F8FF">Separate historical from evidential force.</text>
+        <text x="42" y="44" font-size="16" fill="#9BE0FF">Cultural significance ≠ factual claim about the world.</text>
+      </g>
+    </g>
+
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="850" y="790" font-size="14" fill="#9BE0FF" font-style="italic">Scholem · Dudley · Nickerson · Friedman — the cautions, taken together.</text>
+    </g>
+  </g>
+
+  <!-- Footer caption -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="868" font-size="20" fill="#9CC8FF" fill-opacity="0.9">Not blanket dismissal — careful differentiation.</text>
+  </g>
+</svg>

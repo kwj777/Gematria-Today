@@ -82,8 +82,8 @@
         <section class="content-panel p-4 mb-4" aria-label="Learning path progress">
           <p class="section-kicker mb-2">Progress</p>
           <p class="mb-2"><strong>You're on Level 0 of 4:</strong> Account setup.</p>
-          <div class="progress" role="progressbar" aria-label="Learning path completion" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0">
-            <div class="progress-bar bg-info text-dark" style="width: 20%">Level 0/4</div>
+          <div class="progress" role="progressbar" aria-label="Learning path completion" aria-valuemin="0" aria-valuemax="4" aria-valuenow="1">
+            <div class="progress-bar bg-info text-dark" style="width: 25%">Level 0/4</div>
           </div>
         </section>
 
@@ -147,11 +147,16 @@
               </div>
               <div id="lzRegConfirmPasswordMismatch" class="form-text text-danger d-none">Passwords don't match yet.</div>
             </div>
+            <div class="col-12">
+              <p class="small text-muted mb-0">By creating an account you agree to our <a href="/terms.html">Terms of Use</a> and <a href="/privacy.html">Privacy Policy</a>.</p>
+            </div>
             <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
               <button id="lzRegSubmit" class="btn btn-warning fw-semibold" type="submit">Create Free Account</button>
-              <a class="btn btn-outline-primary" href="/gematria-basics.html">Skip and continue to Level 1</a>
               <a class="btn btn-ghost" href="/gematria-guide.html">Back to learning path</a>
-              <a class="btn btn-link ms-auto" href="/member.html#authSection?auth=login">Already have an account? Sign in</a>
+              <a class="btn btn-link ms-auto" href="/member.html?auth=login#authSection">Already have an account? Sign in</a>
+            </div>
+            <div class="col-12">
+              <a class="small text-muted" href="/gematria-basics.html">Skip account setup and continue to Level 1</a>
             </div>
           </form>
 

@@ -4,16 +4,21 @@ import { join, relative } from 'node:path';
 const ROOT = process.cwd();
 const INCLUDED_EXTENSIONS = new Set(['.js', '.mjs', '.json', '.md', '.yml', '.yaml', '.toml', '.sql', '.css', '.html']);
 const EXCLUDED_DIRS = new Set(['.git', 'node_modules']);
+const EXCLUDED_PATH_PREFIXES = ['assets/vendor/'];
 
 function walk(dir, acc = []) {
   for (const entry of readdirSync(dir)) {
     if (EXCLUDED_DIRS.has(entry)) continue;
     const absolute = join(dir, entry);
+    const rel = relative(ROOT, absolute).split(/[\\/]/).join('/');
     const st = statSync(absolute);
     if (st.isDirectory()) {
+      if (EXCLUDED_PATH_PREFIXES.some((prefix) => `${rel}/`.startsWith(prefix))) continue;
       walk(absolute, acc);
       continue;
     }
+
+    if (EXCLUDED_PATH_PREFIXES.some((prefix) => rel.startsWith(prefix))) continue;
 
     const extension = entry.includes('.') ? entry.slice(entry.lastIndexOf('.')) : '';
     if (INCLUDED_EXTENSIONS.has(extension)) {

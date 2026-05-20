@@ -92,6 +92,12 @@
         padding-right: 0 !important;
       }
 
+      /* Logged-in members already know what these tools are. Hide the hero
+         so the tool cards land above the fold without scrolling. */
+      html.auth-free .tools-hero,
+      html.auth-premium .tools-hero,
+      html.auth-lifetime .tools-hero { display: none; }
+
       @media (min-width: 970px) {
         .tools-grid > [class*="col-"] {
           flex: 0 0 auto;

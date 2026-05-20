@@ -394,7 +394,7 @@ View results: ${shareUrl}`.trim(),
         const cta = document.createElement('a');
         cta.className = 'btn btn-sm btn-primary';
         cta.href = '/member.html#registerForm';
-        cta.textContent = 'Get Free Membership';
+        cta.textContent = 'Join for free';
 
         callout.append(title, document.createElement('br'), details, cta);
         relatedWordsResult.appendChild(callout);
@@ -534,27 +534,19 @@ View results: ${shareUrl}`.trim(),
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
           if (memberSaveShell) {
-            memberSaveShell.hidden = false;
+            memberSaveShell.hidden = true;
           }
-          if (memberLink) {
-            memberLink.href = '/member.html#authSection';
-            memberLink.textContent = 'Join for free';
-            memberLink.classList.remove('btn-outline-primary');
-            memberLink.classList.add('btn-primary');
+          saveHistoryButton.hidden = true;
+          if (saveHistoryHintRow) {
+            saveHistoryHintRow.hidden = true;
           }
-          saveHistoryButton.disabled = false;
-          saveHistoryButton.textContent = 'Sign up to save';
-          saveHistoryButton.classList.add('member-save-button--guest');
-          createMembersOnlyPopover();
-          memberSaveMeta.textContent = currentSearchPayload
-            ? 'Join for free to save this result and see related words.'
-            : 'Join for free to save searches and see related words.';
+          destroyMembersOnlyPopover();
           if (lookupSubmitLabelNode) lookupSubmitLabelNode.textContent = 'Calculate';
           updateNextStepsState();
-          syncSaveHistoryHint();
           return;
         }
 
+        saveHistoryButton.hidden = false;
         if (memberSaveShell) {
           memberSaveShell.hidden = false;
         }

@@ -572,6 +572,7 @@
 
       let latestPosts = [];
       let selectedTag = '';
+      let searchQuery = '';
       let previewModeActive = false;
       let adminSessionActive = false;
       let loadedPublishedPosts = [];
@@ -655,11 +656,50 @@
         updateTagFilterOverflowState();
       };
 
-      const getVisiblePosts = () => {
-        if (!selectedTag) {
-          return latestPosts;
+      const matchesSearchQuery = (post, query) => {
+        if (!query) {
+          return true;
         }
-        return latestPosts.filter((post) => getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag));
+        const haystack = `${String(post?.title || '')} ${String(post?.summary || '')}`.toLowerCase();
+        return haystack.includes(query);
+      };
+      const getVisiblePosts = () => {
+        const query = searchQuery.trim().toLowerCase();
+        return latestPosts.filter((post) => {
+          if (selectedTag && !getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag)) {
+            return false;
+          }
+          return matchesSearchQuery(post, query);
+        });
+      };
+      const updateBlogChrome = (detailViewActive, requestedTargetPost) => {
+        const toolbar = document.getElementById('blogListToolbar');
+        if (toolbar) {
+          toolbar.classList.toggle('d-none', detailViewActive);
+        }
+        const breadcrumb = document.getElementById('blogBreadcrumb');
+        const breadcrumbCurrent = document.getElementById('blogBreadcrumbCurrent');
+        if (breadcrumb && breadcrumbCurrent) {
+          if (detailViewActive && requestedTargetPost) {
+            breadcrumbCurrent.textContent = String(requestedTargetPost.title || 'Post');
+            breadcrumb.classList.remove('d-none');
+          } else {
+            breadcrumb.classList.add('d-none');
+          }
+        }
+      };
+      const updatePostsCount = (visibleCount, totalCount, detailViewActive) => {
+        const countEl = document.getElementById('blogPostsCount');
+        if (!countEl) {
+          return;
+        }
+        if (detailViewActive || !totalCount) {
+          countEl.textContent = '';
+          return;
+        }
+        countEl.textContent = visibleCount === totalCount
+          ? `${totalCount} post${totalCount === 1 ? '' : 's'}`
+          : `Showing ${visibleCount} of ${totalCount} posts`;
       };
       const getPostEditUrl = (post) => {
         const rawId = String(post?.id || '').trim();
@@ -691,8 +731,9 @@
           return !isHiddenFromMainBlog(post);
         });
         renderTagFilters(latestPosts);
+        updateBlogChrome(detailViewActive, requestedTargetPost);
 
-        const filteredPosts = getVisiblePosts();
+        const filteredPosts = detailViewActive ? latestPosts : getVisiblePosts();
         const previewRequestActive = isPreviewRequested();
         const postMarkup = filteredPosts.map((post) => {
           const preRenderedBodyHtml = String(post.renderedBodyHtml || '').trim();
@@ -733,7 +774,13 @@
             : '';
           return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         });
-        document.getElementById('blogPosts').innerHTML = postMarkup.join('');
+        const postsContainer = document.getElementById('blogPosts');
+        if (!postMarkup.length && !detailViewActive) {
+          postsContainer.innerHTML = `<div class="content-panel p-4 text-muted small">No posts match your filters. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="blogClearFiltersButton">Clear filters</button></div>`;
+        } else {
+          postsContainer.innerHTML = postMarkup.join('');
+        }
+        updatePostsCount(filteredPosts.length, latestPosts.length, detailViewActive);
 
         if (filteredPosts.length) {
           const requestedSlug = getRequestedPostSlug();
@@ -753,7 +800,34 @@
         }
         focusLinkedPost(getRequestedPostSlug());
       });
+      let searchDebounceHandle = null;
+      document.addEventListener('input', (event) => {
+        const searchInput = event.target.closest('#blogSearchInput');
+        if (!searchInput) {
+          return;
+        }
+        if (searchDebounceHandle) {
+          clearTimeout(searchDebounceHandle);
+        }
+        const value = String(searchInput.value || '');
+        searchDebounceHandle = setTimeout(() => {
+          searchQuery = value;
+          renderPosts(latestPosts);
+        }, 120);
+      });
       document.addEventListener('click', (event) => {
+        const clearFiltersButton = event.target.closest('#blogClearFiltersButton');
+        if (clearFiltersButton) {
+          searchQuery = '';
+          selectedTag = '';
+          syncTagLocation('');
+          const searchInput = document.getElementById('blogSearchInput');
+          if (searchInput) {
+            searchInput.value = '';
+          }
+          renderPosts(latestPosts);
+          return;
+        }
         const tagFilterToggle = event.target.closest('#blogTagFiltersToggle');
         if (tagFilterToggle) {
           const tagFiltersEl = document.getElementById('blogTagFilters');

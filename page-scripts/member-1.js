@@ -1740,7 +1740,7 @@
         }
         chatSessionList.innerHTML = chatSessions.length ? chatSessions.map((sessionItem) => {
           const transcriptEntries = Array.isArray(sessionItem.transcript) ? sessionItem.transcript : [];
-          const transcriptSummary = transcriptEntries.slice(0, 8).map((entry) => `
+          const transcriptSummary = transcriptEntries.map((entry) => `
             <li><strong>${entry.role === 'assistant' ? 'Agent' : 'You'}:</strong><div class="mt-1">${formatTranscriptEntryHtml(entry.text || '')}</div></li>
           `).join('');
 

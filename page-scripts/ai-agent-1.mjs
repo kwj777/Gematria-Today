@@ -2061,7 +2061,12 @@ View results: ${shareUrl}`.trim(),
       chatLog.addEventListener('input', (event) => {
         const filterInput = event.target.closest('.agent-reverse-filter');
         if (!filterInput) return;
-        applyReverseListState(filterInput.closest('.agent-reverse-lookup'));
+        const container = filterInput.closest('.agent-reverse-lookup');
+        const list = container?.querySelector('.agent-reverse-list');
+        if (list && String(filterInput.value || '').trim().length === 0) {
+          list.dataset.showAll = 'false';
+        }
+        applyReverseListState(container);
       });
 
       chatLog.addEventListener('click', async (event) => {

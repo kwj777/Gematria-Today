@@ -1585,23 +1585,50 @@ View results: ${shareUrl}`.trim(),
             value: gematriaValue,
             words: wordsList
           }));
+          const REVERSE_PREVIEW_LIMIT = 30;
+          const hasOverflow = wordsList.length > REVERSE_PREVIEW_LIMIT;
+          const hiddenCount = Math.max(0, wordsList.length - REVERSE_PREVIEW_LIMIT);
+          const useMultiColumn = wordsList.length > 12;
           return `
-            <p class="mb-2"><strong>Reverse gematria lookup for ${gematriaValue}</strong></p>
-            <p class="mb-2">Found ${wordsList.length} archived match${wordsList.length === 1 ? '' : 'es'}. Click any word to run a full GemaBot lookup for it.</p>
-            <ul class="mb-2 ${wordsList.length > 30 ? 'agent-multi-column-list' : ''}">
-              ${wordsList.map((word) => `
-                <li>
-                  <button
-                    type="button"
-                    class="btn btn-link p-0 align-baseline agent-word-lookup-button"
-                    data-word="${escapeHtml(word)}"
-                  >${escapeHtml(word)}</button>
-                </li>
-              `).join('')}
-            </ul>
-            <div class="d-flex flex-wrap gap-2">
-              <button type="button" class="btn btn-sm btn-outline-success agent-copy-reverse-button" data-reverse="${reversePayloadAttr}">Copy lookup</button>
-              <button type="button" class="btn btn-sm btn-outline-info agent-share-reverse-button" data-reverse="${reversePayloadAttr}">Share lookup</button>
+            <div class="agent-reverse-lookup" data-total="${wordsList.length}" data-preview-limit="${REVERSE_PREVIEW_LIMIT}">
+              <div class="d-flex justify-content-between align-items-start flex-wrap agent-reverse-header mb-2">
+                <div>
+                  <p class="mb-1"><strong>Reverse gematria lookup for ${gematriaValue}</strong></p>
+                  <p class="small text-muted mb-0">${wordsList.length} archived match${wordsList.length === 1 ? '' : 'es'} · click any word to look it up.</p>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                  <button type="button" class="btn btn-sm btn-outline-success agent-copy-reverse-button" data-reverse="${reversePayloadAttr}">Copy</button>
+                  <button type="button" class="btn btn-sm btn-outline-info agent-share-reverse-button" data-reverse="${reversePayloadAttr}">Share</button>
+                </div>
+              </div>
+              ${wordsList.length > 8 ? `
+                <input
+                  type="search"
+                  class="form-control form-control-sm agent-reverse-filter mb-2"
+                  placeholder="Filter ${wordsList.length} words…"
+                  aria-label="Filter words"
+                />
+              ` : ''}
+              <p class="agent-reverse-empty mb-2" aria-live="polite">No words match that filter.</p>
+              <ul class="mb-2 agent-reverse-list ${useMultiColumn ? 'agent-multi-column-list' : ''}" data-show-all="false">
+                ${wordsList.map((word, idx) => `
+                  <li data-filter-text="${escapeHtml(word.toLowerCase())}"${idx >= REVERSE_PREVIEW_LIMIT ? ' data-tail-item="true" hidden' : ''}>
+                    <button
+                      type="button"
+                      class="btn btn-link p-0 align-baseline agent-word-lookup-button"
+                      data-word="${escapeHtml(word)}"
+                    >${escapeHtml(word)}</button>
+                  </li>
+                `).join('')}
+              </ul>
+              ${hasOverflow ? `
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm p-0 agent-reverse-show-all"
+                  data-total="${wordsList.length}"
+                  data-hidden-count="${hiddenCount}"
+                >Show all ${wordsList.length} (${hiddenCount} more)</button>
+              ` : ''}
             </div>
           `;
         }
@@ -2005,7 +2032,50 @@ View results: ${shareUrl}`.trim(),
       });
 
 
+      function applyReverseListState(container) {
+        if (!container) return;
+        const list = container.querySelector('.agent-reverse-list');
+        if (!list) return;
+        const filterInput = container.querySelector('.agent-reverse-filter');
+        const showAllBtn = container.querySelector('.agent-reverse-show-all');
+        const emptyMsg = container.querySelector('.agent-reverse-empty');
+        const filterValue = String(filterInput?.value || '').trim().toLowerCase();
+        const filtering = filterValue.length > 0;
+        const showAll = list.dataset.showAll === 'true';
+        let visibleCount = 0;
+        list.querySelectorAll('li[data-filter-text]').forEach((li) => {
+          const inTail = li.getAttribute('data-tail-item') === 'true';
+          const matches = !filtering || li.dataset.filterText.includes(filterValue);
+          const visible = matches && (showAll || filtering || !inTail);
+          li.hidden = !visible;
+          if (visible) visibleCount += 1;
+        });
+        if (emptyMsg) {
+          emptyMsg.dataset.visible = (filtering && visibleCount === 0) ? 'true' : 'false';
+        }
+        if (showAllBtn) {
+          showAllBtn.hidden = showAll || filtering;
+        }
+      }
+
+      chatLog.addEventListener('input', (event) => {
+        const filterInput = event.target.closest('.agent-reverse-filter');
+        if (!filterInput) return;
+        applyReverseListState(filterInput.closest('.agent-reverse-lookup'));
+      });
+
       chatLog.addEventListener('click', async (event) => {
+        const showAllBtn = event.target.closest('.agent-reverse-show-all');
+        if (showAllBtn) {
+          const container = showAllBtn.closest('.agent-reverse-lookup');
+          const list = container?.querySelector('.agent-reverse-list');
+          if (list) {
+            list.dataset.showAll = 'true';
+            applyReverseListState(container);
+          }
+          return;
+        }
+
         const jsonPreviewLink = event.target.closest('a[data-json-preview]');
         if (jsonPreviewLink) {
           event.preventDefault();

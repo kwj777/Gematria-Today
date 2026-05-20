@@ -115,18 +115,22 @@
       .agent-actions-menu {
         position: relative;
         flex-shrink: 0;
+        display: inline-block;
       }
 
       .agent-actions-menu > summary {
         cursor: pointer;
         list-style: none;
+        display: inline-block;
         font-size: 0.8rem;
-        padding: 0.15rem 0.55rem;
+        line-height: 1.2;
+        padding: 0.2rem 0.55rem;
         border: 1px solid rgba(0, 0, 0, 0.15);
         border-radius: 0.4rem;
         color: #555;
         background-color: rgba(255, 255, 255, 0.9);
         user-select: none;
+        white-space: nowrap;
       }
 
       .agent-actions-menu > summary::-webkit-details-marker {
@@ -143,6 +147,7 @@
         top: calc(100% + 0.3rem);
         z-index: 5;
         min-width: 12rem;
+        max-width: calc(100vw - 2rem);
         display: flex;
         flex-direction: column;
         gap: 0.25rem;

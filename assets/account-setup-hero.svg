@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Saved gematria research illustration</title>
+  <desc id="desc">A stylized dashboard card titled "Your saved searches" listing three calculated words with numeric values and checkmarks, representing how a free account preserves history across sessions.</desc>
+  <defs>
+    <linearGradient id="asBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b132b"/>
+      <stop offset="55%" stop-color="#1c2541"/>
+      <stop offset="100%" stop-color="#3a506b"/>
+    </linearGradient>
+    <radialGradient id="asGlow" cx="80%" cy="20%" r="55%">
+      <stop offset="0%" stop-color="#fde68a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#fde68a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="asCard" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="asBadge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fcd34d"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="asShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1200" fill="url(#asBg)"/>
+  <rect width="1600" height="1200" fill="url(#asGlow)"/>
+
+  <g opacity="0.18" stroke="#93c5fd" stroke-width="2" fill="none">
+    <circle cx="220" cy="200" r="90"/>
+    <circle cx="220" cy="200" r="150"/>
+    <circle cx="220" cy="200" r="220"/>
+    <circle cx="1380" cy="1000" r="70"/>
+    <circle cx="1380" cy="1000" r="130"/>
+  </g>
+
+  <g opacity="0.35" fill="#cbd5e1" font-family="'Times New Roman', serif" font-size="46">
+    <text x="120" y="900">3</text>
+    <text x="1450" y="320">7</text>
+    <text x="1500" y="540">11</text>
+    <text x="80" y="1100">22</text>
+    <text x="1520" y="780">33</text>
+  </g>
+
+  <g transform="translate(800 600)">
+    <ellipse cx="0" cy="380" rx="520" ry="36" fill="#000" opacity="0.35" filter="url(#asShadow)"/>
+  </g>
+
+  <g transform="translate(260 220)">
+    <rect width="1080" height="760" rx="36" ry="36" fill="url(#asCard)"/>
+    <rect width="1080" height="760" rx="36" ry="36" fill="none" stroke="#94a3b8" stroke-width="2"/>
+
+    <rect x="0" y="0" width="1080" height="120" rx="36" ry="36" fill="#0f172a"/>
+    <rect x="0" y="84" width="1080" height="36" fill="#0f172a"/>
+    <circle cx="56" cy="60" r="14" fill="#ef4444"/>
+    <circle cx="100" cy="60" r="14" fill="#f59e0b"/>
+    <circle cx="144" cy="60" r="14" fill="#10b981"/>
+    <text x="220" y="76" fill="#e2e8f0" font-family="'Inter', system-ui, sans-serif" font-size="40" font-weight="600">Your saved searches</text>
+
+    <g font-family="'Inter', system-ui, sans-serif">
+      <g transform="translate(56 200)">
+        <rect width="968" height="140" rx="20" ry="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <rect x="24" y="24" width="92" height="92" rx="18" fill="url(#asBadge)"/>
+        <text x="70" y="86" text-anchor="middle" fill="#0f172a" font-size="40" font-weight="700">74</text>
+        <text x="148" y="62" fill="#0f172a" font-size="36" font-weight="600">"jesus"</text>
+        <text x="148" y="104" fill="#475569" font-size="24">English ordinal · saved 3 days ago</text>
+        <path d="M880 60 l28 28 l54 -54" stroke="#16a34a" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <g transform="translate(56 360)">
+        <rect width="968" height="140" rx="20" ry="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <rect x="24" y="24" width="92" height="92" rx="18" fill="url(#asBadge)"/>
+        <text x="70" y="86" text-anchor="middle" fill="#0f172a" font-size="40" font-weight="700">93</text>
+        <text x="148" y="62" fill="#0f172a" font-size="36" font-weight="600">"god is love"</text>
+        <text x="148" y="104" fill="#475569" font-size="24">English ordinal · saved last week</text>
+        <path d="M880 60 l28 28 l54 -54" stroke="#16a34a" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <g transform="translate(56 520)">
+        <rect width="968" height="140" rx="20" ry="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+        <rect x="24" y="24" width="92" height="92" rx="18" fill="url(#asBadge)"/>
+        <text x="70" y="86" text-anchor="middle" fill="#0f172a" font-size="40" font-weight="700">26</text>
+        <text x="148" y="62" fill="#0f172a" font-size="36" font-weight="600">"yhwh"</text>
+        <text x="148" y="104" fill="#475569" font-size="24">English ordinal · saved last week</text>
+        <path d="M880 60 l28 28 l54 -54" stroke="#16a34a" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </g>
+  </g>
+
+  <g transform="translate(1280 200)" opacity="0.95">
+    <path d="M0 -60 L18 -18 L60 0 L18 18 L0 60 L-18 18 L-60 0 L-18 -18 Z" fill="#fde68a"/>
+    <circle cx="0" cy="0" r="6" fill="#fff"/>
+  </g>
+</svg>

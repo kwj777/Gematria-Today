@@ -67,7 +67,7 @@
       passwordMismatchAlert?.classList.remove('d-none');
     }
     function syncConfirmHint() {
-      if (!confirmMismatchHint) return;
+      if (!confirmMismatchHint || !fields.confirmPassword) return;
       const confirm = fields.confirmPassword.value;
       const password = fields.password.value;
       const mismatch = confirm.length > 0 && confirm !== password;
@@ -80,15 +80,17 @@
       syncConfirmHint();
     };
     fields.password.addEventListener('input', onPasswordInput);
-    fields.confirmPassword.addEventListener('input', onPasswordInput);
-    fields.confirmPassword.addEventListener('blur', syncConfirmHint);
+    if (fields.confirmPassword) {
+      fields.confirmPassword.addEventListener('input', onPasswordInput);
+      fields.confirmPassword.addEventListener('blur', syncConfirmHint);
+    }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       pageAlert.clear?.();
       clearMismatchAlert();
 
-      if (fields.password.value !== fields.confirmPassword.value) {
+      if (fields.confirmPassword && fields.password.value !== fields.confirmPassword.value) {
         showMismatchAlert();
         return;
       }

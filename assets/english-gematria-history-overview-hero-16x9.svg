@@ -1,0 +1,115 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ovTitle ovDesc">
+  <title id="ovTitle">History of English Gematria — overview hero</title>
+  <desc id="ovDesc">A branching genealogy diagram showing Hebrew gematria and Greek isopsephy as roots, flowing through Renaissance cabala, the Victorian revival, Thelema, and the calculator era into five families of English gematria.</desc>
+
+  <defs>
+    <linearGradient id="ovBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="ovGlow" cx="800" cy="500" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316" stop-opacity="0.20"/>
+      <stop offset="0.6" stop-color="#F97316" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ovNode" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#243067"/>
+      <stop offset="1" stop-color="#0B1230"/>
+    </linearGradient>
+    <linearGradient id="ovHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <pattern id="ovDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#ovBg)"/>
+  <rect width="1600" height="900" fill="url(#ovDots)"/>
+  <rect width="1600" height="900" fill="url(#ovGlow)"/>
+
+  <!-- Title bar -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="612" y="58" width="376" height="38" rx="19" fill="#F97316" fill-opacity="0.18" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#FFB779" letter-spacing="3">HISTORY · SERIES OVERVIEW</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">History of English Gematria</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">One umbrella term, five lineages, four turning points</text>
+  </g>
+
+  <!-- Roots row -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <g>
+      <rect x="360" y="270" width="280" height="78" rx="14" fill="url(#ovNode)" stroke="#7ED9FF" stroke-opacity="0.55" stroke-width="1.5"/>
+      <text x="500" y="304" font-size="20" font-weight="700" fill="#E6F2FF">Hebrew gematria</text>
+      <text x="500" y="328" font-size="15" fill="#9BE0FF">Sefer Yetzirah · rabbinic</text>
+    </g>
+    <g>
+      <rect x="960" y="270" width="280" height="78" rx="14" fill="url(#ovNode)" stroke="#7ED9FF" stroke-opacity="0.55" stroke-width="1.5"/>
+      <text x="1100" y="304" font-size="20" font-weight="700" fill="#E6F2FF">Greek isopsephy</text>
+      <text x="1100" y="328" font-size="15" fill="#9BE0FF">Iesous = 888 · Nero / 666</text>
+    </g>
+  </g>
+
+  <!-- Connectors from roots to mid -->
+  <g stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4" fill="none">
+    <path d="M 500 348 C 500 410, 720 420, 800 460"/>
+    <path d="M 1100 348 C 1100 410, 880 420, 800 460"/>
+  </g>
+
+  <!-- Mid: turning points -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="640" y="460" width="320" height="78" rx="14" fill="#0B1230" stroke="url(#ovHot)" stroke-width="2"/>
+    <text x="800" y="494" font-size="20" font-weight="700" fill="#FBBF24">Four turning points</text>
+    <text x="800" y="518" font-size="15" fill="#9BE0FF">Cabala · Revival · Thelema · Calculator</text>
+  </g>
+
+  <!-- Connectors mid -> families -->
+  <g stroke="#F97316" stroke-opacity="0.45" stroke-width="1.6" stroke-dasharray="4 6" fill="none">
+    <path d="M 720 538 C 580 620, 360 640, 240 700"/>
+    <path d="M 760 538 C 660 620, 540 660, 520 700"/>
+    <path d="M 800 538 L 800 700"/>
+    <path d="M 840 538 C 940 620, 1060 660, 1080 700"/>
+    <path d="M 880 538 C 1020 620, 1240 640, 1360 700"/>
+  </g>
+
+  <!-- Bottom: five families -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <g>
+      <rect x="100" y="700" width="260" height="100" rx="14" fill="url(#ovNode)" stroke="#7ED9FF" stroke-opacity="0.4" stroke-width="1.3"/>
+      <text x="230" y="736" font-size="18" font-weight="700" fill="#E6F2FF">Transliteration</text>
+      <text x="230" y="762" font-size="14" fill="#9BE0FF">English → Hebrew / Greek</text>
+      <text x="230" y="782" font-size="14" fill="#9BE0FF">Iesous · Neron Caesar</text>
+    </g>
+    <g>
+      <rect x="380" y="700" width="280" height="100" rx="14" fill="url(#ovNode)" stroke="#7ED9FF" stroke-opacity="0.4" stroke-width="1.3"/>
+      <text x="520" y="736" font-size="18" font-weight="700" fill="#E6F2FF">Direct alphabetic</text>
+      <text x="520" y="762" font-size="14" fill="#9BE0FF">Ordinal A=1..Z=26</text>
+      <text x="520" y="782" font-size="14" fill="#9BE0FF">Full reduction 1–9</text>
+    </g>
+    <g>
+      <rect x="680" y="700" width="240" height="100" rx="14" fill="url(#ovNode)" stroke="#7ED9FF" stroke-opacity="0.4" stroke-width="1.3"/>
+      <text x="800" y="736" font-size="18" font-weight="700" fill="#E6F2FF">Symbolic</text>
+      <text x="800" y="762" font-size="14" fill="#9BE0FF">Cheiro-style</text>
+      <text x="800" y="782" font-size="14" fill="#9BE0FF">"Chaldean" table</text>
+    </g>
+    <g>
+      <rect x="940" y="700" width="280" height="100" rx="14" fill="url(#ovNode)" stroke="#7ED9FF" stroke-opacity="0.4" stroke-width="1.3"/>
+      <text x="1080" y="736" font-size="18" font-weight="700" fill="#E6F2FF">Latinized / cabalistic</text>
+      <text x="1080" y="762" font-size="14" fill="#9BE0FF">Agrippa-style hybrids</text>
+      <text x="1080" y="782" font-size="14" fill="#9BE0FF">"Latin" · "Jewish"</text>
+    </g>
+    <g>
+      <rect x="1240" y="700" width="260" height="100" rx="14" fill="url(#ovNode)" stroke="#7ED9FF" stroke-opacity="0.4" stroke-width="1.3"/>
+      <text x="1370" y="736" font-size="18" font-weight="700" fill="#E6F2FF">Ciphers · permutations</text>
+      <text x="1370" y="762" font-size="14" fill="#9BE0FF">Bacon biliteral</text>
+      <text x="1370" y="782" font-size="14" fill="#9BE0FF">English Qaballa (ALW)</text>
+    </g>
+  </g>
+
+  <!-- Footer caption -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="852" font-size="20" fill="#9CC8FF" fill-opacity="0.9">A family of practices stitched together — not one inherited system.</text>
+  </g>
+</svg>

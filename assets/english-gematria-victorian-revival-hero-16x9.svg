@@ -1,0 +1,162 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="viTitle viDesc">
+  <title id="viTitle">The Victorian Revival — Mathers, Waite, the Golden Dawn, and Cheiro</title>
+  <desc id="viDesc">A simplified Tree of Life diagram on the left representing Mathers, Waite, and the Golden Dawn, paired with Cheiro''s Chaldean letter-number table on the right.</desc>
+
+  <defs>
+    <linearGradient id="viBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="viGlow" cx="800" cy="540" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316" stop-opacity="0.18"/>
+      <stop offset="0.6" stop-color="#F97316" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="viPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1A2452"/>
+      <stop offset="1" stop-color="#0A1130"/>
+    </linearGradient>
+    <linearGradient id="viHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <pattern id="viDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#viBg)"/>
+  <rect width="1600" height="900" fill="url(#viDots)"/>
+  <rect width="1600" height="900" fill="url(#viGlow)"/>
+
+  <!-- Header -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="620" y="58" width="360" height="38" rx="19" fill="#F97316" fill-opacity="0.18" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#FFB779" letter-spacing="3">SERIES · POST 4 OF 6</text>
+    <text x="800" y="158" font-size="56" font-weight="800" fill="#F4F8FF">The Victorian Revival</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">Mathers · Waite · Golden Dawn · Cheiro</text>
+  </g>
+
+  <!-- Left panel: Tree of Life -->
+  <g>
+    <rect x="100" y="260" width="640" height="560" rx="22" fill="url(#viPanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="130" y="302" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">KABBALAH AS STRUCTURAL THEORY</text>
+      <text x="130" y="338" font-size="22" font-weight="700" fill="#E6F2FF">Mathers · Waite · the Golden Dawn</text>
+    </g>
+
+    <!-- Tree of Life nodes (simplified) -->
+    <g transform="translate(420 380)" font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+      <!-- Lines between sefirot -->
+      <g stroke="#7ED9FF" stroke-opacity="0.4" stroke-width="1.4" fill="none">
+        <!-- Top triangle -->
+        <line x1="0" y1="0" x2="-90" y2="80"/>
+        <line x1="0" y1="0" x2="90" y2="80"/>
+        <line x1="-90" y1="80" x2="90" y2="80"/>
+        <!-- Mid -->
+        <line x1="-90" y1="80" x2="-90" y2="200"/>
+        <line x1="90" y1="80" x2="90" y2="200"/>
+        <line x1="-90" y1="80" x2="0" y2="160"/>
+        <line x1="90" y1="80" x2="0" y2="160"/>
+        <line x1="0" y1="160" x2="-90" y2="200"/>
+        <line x1="0" y1="160" x2="90" y2="200"/>
+        <!-- Lower -->
+        <line x1="-90" y1="200" x2="0" y2="280"/>
+        <line x1="90" y1="200" x2="0" y2="280"/>
+        <line x1="-90" y1="200" x2="90" y2="200"/>
+        <line x1="0" y1="280" x2="-90" y2="200"/>
+        <line x1="0" y1="280" x2="90" y2="200"/>
+        <line x1="0" y1="280" x2="0" y2="380"/>
+        <line x1="-90" y1="200" x2="0" y2="380"/>
+        <line x1="90" y1="200" x2="0" y2="380"/>
+      </g>
+      <!-- Sefirot circles -->
+      <g>
+        <circle cx="0" cy="0" r="22" fill="url(#viHot)" stroke="#FFE6A8" stroke-opacity="0.9" stroke-width="1.4"/>
+        <text y="6" font-size="13" font-weight="700" fill="#1B0E45">Keter</text>
+        <circle cx="-90" cy="80" r="22" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.65" stroke-width="1.4"/>
+        <text x="-90" y="86" font-size="11" font-weight="700" fill="#E6F2FF">Binah</text>
+        <circle cx="90" cy="80" r="22" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.65" stroke-width="1.4"/>
+        <text x="90" y="86" font-size="11" font-weight="700" fill="#E6F2FF">Hokm.</text>
+        <circle cx="-90" cy="200" r="22" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.65" stroke-width="1.4"/>
+        <text x="-90" y="206" font-size="11" font-weight="700" fill="#E6F2FF">Geb.</text>
+        <circle cx="90" cy="200" r="22" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.65" stroke-width="1.4"/>
+        <text x="90" y="206" font-size="11" font-weight="700" fill="#E6F2FF">Hesed</text>
+        <circle cx="0" cy="160" r="22" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.65" stroke-width="1.4"/>
+        <text y="166" font-size="11" font-weight="700" fill="#E6F2FF">Tif.</text>
+        <circle cx="0" cy="280" r="22" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.65" stroke-width="1.4"/>
+        <text y="286" font-size="11" font-weight="700" fill="#E6F2FF">Yes.</text>
+        <circle cx="0" cy="380" r="22" fill="url(#viHot)" stroke="#FFE6A8" stroke-opacity="0.9" stroke-width="1.4"/>
+        <text y="386" font-size="11" font-weight="700" fill="#1B0E45">Mal.</text>
+      </g>
+    </g>
+
+    <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+      <text x="420" y="800" font-size="16" fill="#9BE0FF">A working theory for English-language magical orders.</text>
+    </g>
+  </g>
+
+  <!-- Right panel: Cheiro Chaldean table -->
+  <g>
+    <rect x="860" y="260" width="640" height="560" rx="22" fill="url(#viPanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="890" y="302" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">CHEIRO · BOOK OF NUMBERS</text>
+      <text x="890" y="338" font-size="22" font-weight="700" fill="#E6F2FF">The "Chaldean" name-number table</text>
+    </g>
+
+    <g font-family="'JetBrains Mono', 'Consolas', monospace">
+      <!-- 9 rows -->
+      <g>
+        <rect x="890" y="364" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="392" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">1</text>
+        <text x="954" y="392" font-size="20" fill="#E6F2FF">A · I · J · Q · Y</text>
+      </g>
+      <g>
+        <rect x="890" y="412" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="440" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">2</text>
+        <text x="954" y="440" font-size="20" fill="#E6F2FF">B · K · R</text>
+      </g>
+      <g>
+        <rect x="890" y="460" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="488" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">3</text>
+        <text x="954" y="488" font-size="20" fill="#E6F2FF">C · G · L · S</text>
+      </g>
+      <g>
+        <rect x="890" y="508" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="536" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">4</text>
+        <text x="954" y="536" font-size="20" fill="#E6F2FF">D · M · T</text>
+      </g>
+      <g>
+        <rect x="890" y="556" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="584" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">5</text>
+        <text x="954" y="584" font-size="20" fill="#E6F2FF">E · H · N · X</text>
+      </g>
+      <g>
+        <rect x="890" y="604" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="632" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">6</text>
+        <text x="954" y="632" font-size="20" fill="#E6F2FF">U · V · W</text>
+      </g>
+      <g>
+        <rect x="890" y="652" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="680" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">7</text>
+        <text x="954" y="680" font-size="20" fill="#E6F2FF">O · Z</text>
+      </g>
+      <g>
+        <rect x="890" y="700" width="44" height="40" rx="6" fill="url(#viHot)"/>
+        <text x="912" y="728" font-size="22" font-weight="700" fill="#1B0E45" text-anchor="middle">8</text>
+        <text x="954" y="728" font-size="20" fill="#E6F2FF">F · P</text>
+      </g>
+      <g>
+        <rect x="890" y="748" width="44" height="40" rx="6" fill="#243067" stroke="#7ED9FF" stroke-opacity="0.5"/>
+        <text x="912" y="776" font-size="22" font-weight="700" fill="#9BE0FF" text-anchor="middle">9</text>
+        <text x="954" y="776" font-size="18" fill="#9BE0FF" font-style="italic">often unused / special</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Footer caption -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="868" font-size="20" fill="#9CC8FF" fill-opacity="0.9">From scriptural exegesis to mass-market name numerology.</text>
+  </g>
+</svg>

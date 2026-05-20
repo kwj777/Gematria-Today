@@ -1,0 +1,97 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="anTitle anDesc">
+  <title id="anTitle">Ancient Foundations — Hebrew gematria and Greek isopsephy</title>
+  <desc id="anDesc">Two columns of canonical examples — Hebrew letters totaling ha-satan = 364 and Neron Caesar = 666 on the left, Greek letters totaling Iesous = 888 on the right — flanking a central scroll motif.</desc>
+
+  <defs>
+    <linearGradient id="anBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="anGlow" cx="800" cy="500" r="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316" stop-opacity="0.22"/>
+      <stop offset="0.55" stop-color="#F97316" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="anHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <linearGradient id="anPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1A2452"/>
+      <stop offset="1" stop-color="#0A1130"/>
+    </linearGradient>
+    <pattern id="anDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#anBg)"/>
+  <rect width="1600" height="900" fill="url(#anDots)"/>
+  <rect width="1600" height="900" fill="url(#anGlow)"/>
+
+  <!-- Header -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="620" y="58" width="360" height="38" rx="19" fill="#F97316" fill-opacity="0.18" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#FFB779" letter-spacing="3">SERIES · POST 2 OF 6</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">Ancient Foundations</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">Letters that were already numerals</text>
+  </g>
+
+  <!-- Left panel: Hebrew -->
+  <g>
+    <rect x="100" y="270" width="600" height="540" rx="22" fill="url(#anPanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="130" y="312" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">HEBREW</text>
+      <text x="130" y="350" font-size="28" font-weight="700" fill="#E6F2FF">Sefer Yetzirah · Talmud</text>
+    </g>
+
+    <!-- Example 1: ha-satan -->
+    <g font-family="'JetBrains Mono', 'Consolas', monospace">
+      <text x="130" y="416" font-size="20" fill="#9BE0FF">ha-satan (Yoma 20a)</text>
+      <text x="130" y="468" font-size="44" font-weight="700" fill="#F4F8FF" direction="rtl">השטן</text>
+      <text x="130" y="510" font-size="18" fill="#9BE0FF">ה=5 · ש=300 · ט=9 · ן=50</text>
+      <text x="130" y="540" font-size="26" font-weight="700" fill="#FBBF24">= 364</text>
+    </g>
+
+    <!-- Example 2: Neron Caesar -->
+    <g font-family="'JetBrains Mono', 'Consolas', monospace">
+      <text x="130" y="600" font-size="20" fill="#9BE0FF">Neron Caesar (Rev. 13:18)</text>
+      <text x="130" y="654" font-size="44" font-weight="700" fill="#F4F8FF" direction="rtl">נרון קסר</text>
+      <text x="130" y="696" font-size="18" fill="#9BE0FF">נ=50 · ר=200 · ו=6 · ן=50</text>
+      <text x="130" y="720" font-size="18" fill="#9BE0FF">ק=100 · ס=60 · ר=200</text>
+      <text x="130" y="752" font-size="26" font-weight="700" fill="#FBBF24">= 666</text>
+    </g>
+  </g>
+
+  <!-- Right panel: Greek -->
+  <g>
+    <rect x="900" y="270" width="600" height="540" rx="22" fill="url(#anPanel)" stroke="#7ED9FF" stroke-opacity="0.35" stroke-width="1.4"/>
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="930" y="312" font-size="16" font-weight="700" fill="#FBBF24" letter-spacing="3">GREEK</text>
+      <text x="930" y="350" font-size="28" font-weight="700" fill="#E6F2FF">Isopsephy · Christian numerology</text>
+    </g>
+
+    <!-- Example: Iesous -->
+    <g font-family="'JetBrains Mono', 'Consolas', monospace">
+      <text x="930" y="416" font-size="20" fill="#9BE0FF">Iesous (Ιησους)</text>
+      <text x="930" y="478" font-size="56" font-weight="700" fill="#F4F8FF">Ιησους</text>
+      <text x="930" y="522" font-size="18" fill="#9BE0FF">Ι=10 · η=8 · σ=200</text>
+      <text x="930" y="546" font-size="18" fill="#9BE0FF">ο=70 · υ=400 · ς=200</text>
+      <text x="930" y="586" font-size="32" font-weight="700" fill="#FBBF24">= 888</text>
+    </g>
+
+    <!-- Inheritance list -->
+    <g font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="930" y="650" font-size="18" font-weight="700" fill="#FBBF24" letter-spacing="2">WHAT ENGLISH INHERITED</text>
+      <text x="930" y="688" font-size="18" fill="#9BE0FF">• A conceptual template</text>
+      <text x="930" y="716" font-size="18" fill="#9BE0FF">• Canonical examples</text>
+      <text x="930" y="744" font-size="18" fill="#9BE0FF">• A prestige source (Kabbalah)</text>
+    </g>
+  </g>
+
+  <!-- Footer caption -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="858" font-size="20" fill="#9CC8FF" fill-opacity="0.9">The template was complete long before English existed.</text>
+  </g>
+</svg>

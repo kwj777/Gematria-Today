@@ -46,17 +46,19 @@
       .hero-panel h1 { font-family: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif; line-height: 1.1; color: #fff; }
       .hero-quick-calc { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: var(--radius-2xl, 1rem); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
       @media (min-width: 992px) { .hero-quick-calc { padding: 1.5rem; } }
-      .hero-quick-calc__label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.78); margin: 0; }
+      .hero-quick-calc__label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.92); margin: 0; }
       .hero-quick-calc__input { width: 100%; padding: 0.7rem 0.95rem; font-size: 1.125rem; font-family: inherit; border-radius: 0.65rem; border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.96); color: #0d1a30; }
       .hero-quick-calc__input::placeholder { color: #6b7280; }
       .hero-quick-calc__input:focus { outline: none; box-shadow: 0 0 0 3px rgba(180,83,9,0.5); border-color: #b45309; }
       .hero-quick-calc__result { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
-      .hero-quick-calc__value { font-family: "Fraunces","Source Serif Pro",Georgia,"Times New Roman",serif; font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1; }
-      .hero-quick-calc__caption { font-size: 0.78rem; color: rgba(255,255,255,0.72); margin-top: 0.4rem; letter-spacing: 0.04em; }
+      .hero-quick-calc__value { font-family: "Fraunces","Source Serif Pro",Georgia,"Times New Roman",serif; font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1; transition: opacity 0.15s ease; }
+      .hero-quick-calc__value[data-example="true"] { opacity: 0.55; }
+      .hero-quick-calc__caption { font-size: 0.82rem; color: rgba(255,255,255,0.9); margin-top: 0.4rem; letter-spacing: 0.04em; }
       .hero-quick-calc__deep-link { display: inline-flex; align-items: center; font-weight: 600; color: #fbbf24; text-decoration: none; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease; }
       .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; }
       .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: underline; }
-      .navbar { background: #1a202c; }
+      .word-of-day-spotlight[aria-busy="true"] .wotd-stats,
+      .word-of-day-spotlight[aria-busy="true"] .wotd-breakdown { display: none; }
     </style>
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet fetchpriority="low" />
@@ -98,7 +100,8 @@
             <li class="nav-item"><a class="nav-link" href="/definitions.html">Glossary</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-actions-divider d-lg-none" role="presentation" aria-hidden="true"></li>
-            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2" href="https://gematria.today/member#authSection">Join Free/Login</a></li>
+            <li class="nav-item nav-auth nav-auth--anon"><a class="nav-link" href="https://gematria.today/member#authSection">Log in</a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2" href="/gematria-account-setup.html">Join free</a></li>
             <li class="nav-item nav-search"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
@@ -115,11 +118,11 @@
           <div class="row align-items-center g-4">
             <div class="col-lg-7">
               <p class="section-kicker mb-2">Gematria Focus</p>
-              <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number. What's yours hiding?</h1>
+              <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number. See the patterns it shares.</h1>
               <p id="homeHeroLead" class="lead mb-4">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
               <div class="d-flex flex-column flex-sm-row flex-wrap gap-2">
                 <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Dig Deeper — Free</a>
-                <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html">Open the full calculator</a>
+                <a id="homeCalculatorCta" class="btn btn-link btn-lg touch-target-lg text-warning fw-semibold text-decoration-none" href="/calculator.html">Or open the full calculator →</a>
               </div>
             </div>
             <div class="col-lg-5">
@@ -148,14 +151,44 @@
         </section>
 
         <section class="content-panel p-4 p-lg-4 mb-5" aria-label="Why English Gematria">
-          <div class="row align-items-center g-3">
+          <div class="row align-items-start g-3">
             <div class="col-md-4">
               <p class="section-kicker mb-2">Methodology</p>
               <h2 class="h4 mb-0">Why English Gematria?</h2>
             </div>
             <div class="col-md-8">
-              <p class="mb-3 mb-md-0 d-inline">In this project, English gematria is used as a pattern-analysis tool to create a structured comparison system that can be checked, repeated, and challenged.</p>
-              <a class="btn btn-link p-0 align-baseline fw-semibold" href="/why-english-gematria.html">Read the explainer →</a>
+              <p class="mb-2">In this project, English gematria is used as a pattern-analysis tool to create a structured comparison system that can be checked, repeated, and challenged.</p>
+              <a class="btn btn-link p-0 fw-semibold" href="/why-english-gematria.html">Read the explainer →</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="row g-4 mb-5" aria-label="What you can do here">
+          <div class="col-md-4">
+            <div class="feature-card-icon">
+              <span class="feature-card-icon__icon" aria-hidden="true">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              </span>
+              <h3 class="feature-card-icon__title">Research words</h3>
+              <p class="feature-card-icon__body">Use the calculator to inspect related terms, roots, and definitions.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-card-icon">
+              <span class="feature-card-icon__icon" aria-hidden="true">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+              </span>
+              <h3 class="feature-card-icon__title">Compare names</h3>
+              <p class="feature-card-icon__body">Test multiple names in parallel and follow links to matching result pages.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-card-icon">
+              <span class="feature-card-icon__icon" aria-hidden="true">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              </span>
+              <h3 class="feature-card-icon__title">Share insights</h3>
+              <p class="feature-card-icon__body">Share findings with clear, linkable result pages that make patterns and takeaways easy to revisit.</p>
             </div>
           </div>
         </section>
@@ -163,7 +196,7 @@
         <section class="content-panel p-4 p-lg-5 mb-5 d-none" data-module="blog_home_slider">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div>
-              <p class="section-kicker mb-2">Selected Blog Posts</p>
+              <p class="section-kicker mb-2">Featured</p>
               <h2 class="mb-1">Featured insights from the blog</h2>
               <p class="text-muted mb-0">Use the slider to preview key posts, then open the full blog page to keep reading.</p>
             </div>
@@ -190,43 +223,6 @@
               <span class="carousel-control-next-icon" aria-hidden="true"></span>
               <span class="visually-hidden">Next</span>
             </button>
-          </div>
-        </section>
-
-        <section class="home-section mb-5" data-module="blog_home_featured_grid">
-          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 pb-3 home-section__header">
-            <div>
-              <p class="section-kicker mb-2">From the Blog</p>
-              <h2 class="mb-1">Latest analysis and deep dives</h2>
-              <p class="text-muted mb-0">Hand-picked posts on gematria methodology, pattern checks, and case studies.</p>
-            </div>
-            <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
-          </div>
-          <div id="homeFeaturedPostsGrid" class="row g-4 async-content-shell async-content-shell--md" aria-live="polite" aria-busy="true">
-            <div class="col-12 col-md-6 col-xl-4" aria-hidden="true">
-              <article class="blog-home-featured-card h-100 p-3 p-lg-4 async-shell-card">
-                <div class="blog-home-featured-image-frame mb-3 placeholder-glow"><span class="placeholder w-100 h-100 d-block"></span></div>
-                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line async-shell-line--lg col-9"></span></p>
-                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-11"></span></p>
-                <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-7"></span></p>
-              </article>
-            </div>
-            <div class="col-12 col-md-6 col-xl-4 d-none d-md-block" aria-hidden="true">
-              <article class="blog-home-featured-card h-100 p-3 p-lg-4 async-shell-card">
-                <div class="blog-home-featured-image-frame mb-3 placeholder-glow"><span class="placeholder w-100 h-100 d-block"></span></div>
-                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line async-shell-line--lg col-8"></span></p>
-                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-10"></span></p>
-                <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-6"></span></p>
-              </article>
-            </div>
-            <div class="col-12 col-md-6 col-xl-4 d-none d-xl-block" aria-hidden="true">
-              <article class="blog-home-featured-card h-100 p-3 p-lg-4 async-shell-card">
-                <div class="blog-home-featured-image-frame mb-3 placeholder-glow"><span class="placeholder w-100 h-100 d-block"></span></div>
-                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line async-shell-line--lg col-7"></span></p>
-                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-11"></span></p>
-                <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-8"></span></p>
-              </article>
-            </div>
           </div>
         </section>
 
@@ -268,32 +264,21 @@
           </div>
         </section>
 
-        <section class="row g-4 mb-5">
-          <div class="col-md-4">
-            <div class="feature-card-icon">
-              <span class="feature-card-icon__icon" aria-hidden="true">
-                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-              </span>
-              <h3 class="feature-card-icon__title">Research words</h3>
-              <p class="feature-card-icon__body">Use the calculator to inspect related terms, roots, and definitions.</p>
+        <section class="home-section mb-5" data-module="blog_home_featured_grid">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 pb-3 home-section__header">
+            <div>
+              <p class="section-kicker mb-2">Latest Posts</p>
+              <h2 class="mb-1">Latest analysis and deep dives</h2>
+              <p class="text-muted mb-0">Hand-picked posts on gematria methodology, pattern checks, and case studies.</p>
             </div>
+            <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
           </div>
-          <div class="col-md-4">
-            <div class="feature-card-icon">
-              <span class="feature-card-icon__icon" aria-hidden="true">
-                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
-              </span>
-              <h3 class="feature-card-icon__title">Compare names</h3>
-              <p class="feature-card-icon__body">Test multiple names in parallel and follow links to matching result pages.</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="feature-card-icon">
-              <span class="feature-card-icon__icon" aria-hidden="true">
-                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-              </span>
-              <h3 class="feature-card-icon__title">Share insights</h3>
-              <p class="feature-card-icon__body">Share findings with clear, linkable result pages that make patterns and takeaways easy to revisit.</p>
+          <div id="homeFeaturedPostsGrid" class="row g-4 async-content-shell async-content-shell--md" aria-live="polite" aria-busy="true">
+            <div class="col-12" aria-hidden="true">
+              <article class="blog-home-featured-card h-100 p-3 p-lg-4 async-shell-card">
+                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line async-shell-line--lg col-6"></span></p>
+                <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-9"></span></p>
+              </article>
             </div>
           </div>
         </section>
@@ -302,8 +287,15 @@
     </main>
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">
-        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
           <span>Gematria.Today — a research workspace.</span>
+          <nav aria-label="Quick links" class="d-flex flex-wrap gap-3 site-footer-quick-links">
+            <strong class="text-uppercase fw-semibold me-1" style="letter-spacing: 0.06em;">Start here:</strong>
+            <a href="/calculator.html">Calculator</a>
+            <a href="/blog.html">Blog</a>
+            <a href="/faq.html">FAQ</a>
+            <a href="/tools.html">Tools</a>
+          </nav>
         </div>
         <div class="d-flex flex-wrap gap-3 site-legal-links">
           <a href="/privacy.html">Privacy Policy</a>

@@ -12,7 +12,7 @@
       const registerPasswordInput = document.getElementById('registerPassword');
       const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
       const profileSaveButton = document.getElementById('profileSaveButton');
-      const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
+      const FREE_MEMBERSHIP_SAVE_LIMIT = 7;
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/UGRiajBXSUFKaWpwZ1h3Q0xaQzdXdTV5UUdaamJxaFcvTXpQbWR5RjFpTExacnNMZE9MdkdkelY0ZGdza1R2M1ZkYnR6RDdvak5vYno4YzNEaEQwZC9ORkhma1RMdloyekNPTFphV1BrWVJzbHYvbTR5RzdiM0tBTGlzcXZPUHZ8NXlRaUNjSHhLN05ISUJ1RnhsWXJRakZqQkt4K1pwc1NxVlIyaGVybTdxND0=/8';
       const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
       const messageInboxCard = document.getElementById('messageInboxCard');
@@ -629,7 +629,7 @@
         comparisonMemberCurrent.classList.toggle('d-none', level !== 'free');
         comparisonPremiumCurrent.classList.toggle('d-none', !(level === 'premium' || level === 'lifetime'));
 
-        comparisonCreateAccountButton.classList.toggle('d-none', level !== 'visitor');
+        comparisonCreateAccountButton.classList.add('d-none');
 
         if (level === 'free') {
           comparisonCurrentLevel.textContent = 'Current level: Member (Free)';
@@ -774,6 +774,7 @@
         renderMessageCenter();
         renderForumNotifications();
         membershipPageContent.classList.remove('d-none');
+        document.getElementById('membershipPageLoading')?.classList.add('d-none');
       }
 
       function formatMembershipWindow(member) {
@@ -791,14 +792,32 @@
       }
 
       function syncPremiumResearchLink(member = session?.member) {
+        if (!premiumResearchLink) return;
         const isPremium = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
-        premiumResearchLink.classList.toggle('disabled', !isPremium);
-        premiumResearchLink.classList.add('btn-outline-secondary');
-        premiumResearchLink.classList.remove('btn-warning');
-        premiumResearchLink.setAttribute('aria-disabled', isPremium ? 'false' : 'true');
-        premiumResearchLink.tabIndex = isPremium ? 0 : -1;
-        premiumResearchLink.textContent = isPremium ? 'Premium research' : 'Premium research (locked)';
+        premiumResearchLink.dataset.unlocked = isPremium ? 'true' : 'false';
+        premiumResearchLink.textContent = isPremium ? 'Premium research' : 'Premium research 🔒';
+        premiumResearchLink.setAttribute('aria-label', isPremium ? 'Open premium research' : 'Premium research (locked — upgrade required)');
       }
+
+      premiumResearchLink?.addEventListener('click', () => {
+        const isUnlocked = premiumResearchLink.dataset.unlocked === 'true';
+        const targetHref = premiumResearchLink.dataset.href || '/premium-research.html';
+        if (isUnlocked) {
+          window.location.assign(targetHref);
+          return;
+        }
+        showAlert('Premium Research is a premium-member feature. Expand the upgrade panel below to unlock it.', 'info');
+        const upgradeSection = document.getElementById('membershipUpgradeSection');
+        if (upgradeSection && !upgradeSection.classList.contains('d-none')) {
+          if (!membershipUpgradeContent.classList.contains('show')) {
+            membershipUpgradeToggleButton.click();
+          }
+          upgradeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          const authSection = document.getElementById('authSection');
+          authSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
 
       function syncAdminPageButton(member = session?.member, user = session?.user) {
         const isSuperAdmin = user?.role === 'super_admin' || member?.role === 'super_admin';
@@ -806,6 +825,7 @@
         adminPageButton.classList.toggle('d-none', !isAdminLevel);
         superAdminPageButton?.classList.toggle('d-none', !isSuperAdmin);
         siteHubPageButton?.classList.toggle('d-none', !isSuperAdmin);
+        document.getElementById('adminMenuWrap')?.classList.toggle('d-none', !isAdminLevel);
       }
 
       function isPremiumMembershipLevel(level) {
@@ -1681,7 +1701,7 @@
         if (canExpandHistoryList) {
           historyListToggleWrap.classList.remove('d-none');
           historyListToggleButton.textContent = showAllHistoryItems
-            ? 'Show only first 3 calculations'
+            ? 'Show only first 7 calculations'
             : 'View all saved calculations';
         } else {
           historyListToggleWrap.classList.add('d-none');
@@ -2008,9 +2028,19 @@
         const paymentState = url.searchParams.get('payment');
         const stripeSessionId = url.searchParams.get('session_id');
         const verifyEmailToken = url.searchParams.get('verify_email_token');
-        const authView = normalizeAuthView(url.searchParams.get('auth'));
+        const explicitAuthParam = url.searchParams.get('auth');
+        let initialAuthView;
+        if (explicitAuthParam) {
+          initialAuthView = normalizeAuthView(explicitAuthParam);
+        } else {
+          let hasLoggedInBefore = false;
+          try {
+            hasLoggedInBefore = window.localStorage.getItem('memberHasLoggedInBefore') === 'true';
+          } catch (_error) { /* storage unavailable */ }
+          initialAuthView = hasLoggedInBefore ? 'login' : 'register';
+        }
 
-        setAuthView(authView, { updateUrl: false });
+        setAuthView(initialAuthView, { updateUrl: false });
 
         if (verifyEmailToken) {
           try {
@@ -2194,6 +2224,9 @@
             }, 350);
             return;
           }
+          try {
+            window.localStorage.setItem('memberHasLoggedInBefore', 'true');
+          } catch (_error) { /* storage unavailable */ }
           loadFavoriteHistoryIds();
           showAlert('Signed in successfully.', 'success');
           setLoggedIn(true);
@@ -2528,7 +2561,7 @@
         setMessageCenterOpen(false);
       });
 
-      messageInboxCard?.addEventListener('click', async () => {
+      messageInboxOpenButton?.addEventListener('click', async () => {
         if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
           showAlert('Message Center is available to premium members only.', 'warning');
           return;
@@ -2538,18 +2571,6 @@
         renderMessageCenter();
         setMessageCenterOpen(true);
         messageCenterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-
-      messageInboxCard?.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          messageInboxCard.click();
-        }
-      });
-
-      messageInboxOpenButton?.addEventListener('click', (event) => {
-        event.stopPropagation();
-        messageInboxCard?.click();
       });
 
       membershipUpgradeContent.addEventListener('show.bs.collapse', () => {

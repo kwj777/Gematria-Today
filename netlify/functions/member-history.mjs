@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { formatCalculationHistory, getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
 
 const MAX_HISTORY_ITEMS = 100;
-const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
+const FREE_MEMBERSHIP_SAVE_LIMIT = 7;
 
 export async function handler(event) {
   try {

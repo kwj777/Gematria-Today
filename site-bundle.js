@@ -1042,7 +1042,7 @@
   if (window.__gematriaGlossaryLoaded) return;
   window.__gematriaGlossaryLoaded = true;
 
-  var CACHE_KEY = 'gematria.glossary.v1';
+  var CACHE_KEY = 'gematria.glossary.v2';
   var CACHE_TTL_MS = 24 * 60 * 60 * 1000;
   var DEFINITIONS_URL = '/definitions.html';
   var STYLE_ID = 'gematria-glossary-styles';
@@ -1140,24 +1140,42 @@
     var main = doc.getElementById('mainContent') || doc.body;
     if (!main) return [];
     var terms = [];
+    var seen = {};
+
+    function recordPair(dt, dd) {
+      if (!dt || !dd) return;
+      var label = (dt.textContent || '').trim();
+      if (!label) return;
+      var slug = dt.id && dt.id.indexOf('defn-') === 0 ? dt.id.slice(5) : slugify(label);
+      if (seen[slug]) return;
+      seen[slug] = true;
+      var ddClone = dd.cloneNode(true);
+      var examples = ddClone.querySelectorAll('.defn-example');
+      for (var i = 0; i < examples.length; i++) examples[i].parentNode.removeChild(examples[i]);
+      var defText = (ddClone.textContent || '').replace(/\s+/g, ' ').trim();
+      if (defText.length > 260) defText = defText.slice(0, 257).replace(/\s+\S*$/, '') + '…';
+      terms.push({
+        slug: slug,
+        label: label,
+        definition: defText,
+        aliases: buildAliases(label)
+      });
+    }
+
+    // Walk each <dl> in order. Children may be flat DT/DD pairs or
+    // <div class="defn-card"> wrappers containing DT and DD.
     main.querySelectorAll('dl').forEach(function (dl) {
       var kids = Array.from(dl.children);
       for (var i = 0; i < kids.length; i++) {
-        if (kids[i].tagName !== 'DT') continue;
-        var dt = kids[i];
-        var dd = kids[i + 1];
-        if (!dd || dd.tagName !== 'DD') continue;
-        var label = (dt.textContent || '').trim();
-        if (!label) continue;
-        var slug = dt.id && dt.id.indexOf('defn-') === 0 ? dt.id.slice(5) : slugify(label);
-        var defText = (dd.textContent || '').replace(/\s+/g, ' ').trim();
-        if (defText.length > 260) defText = defText.slice(0, 257).replace(/\s+\S*$/, '') + '…';
-        terms.push({
-          slug: slug,
-          label: label,
-          definition: defText,
-          aliases: buildAliases(label)
-        });
+        var child = kids[i];
+        if (child.tagName === 'DT') {
+          var dd = kids[i + 1];
+          if (dd && dd.tagName === 'DD') recordPair(child, dd);
+        } else if (child.tagName === 'DIV') {
+          var dt2 = child.querySelector('dt');
+          var dd2 = child.querySelector('dd');
+          recordPair(dt2, dd2);
+        }
       }
     });
     return terms;

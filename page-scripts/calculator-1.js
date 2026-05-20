@@ -561,9 +561,9 @@ View results: ${shareUrl}`.trim(),
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
           if (memberSaveShell) {
-            memberSaveShell.hidden = true;
+            memberSaveShell.classList.add('d-none');
           }
-          saveHistoryButton.hidden = true;
+          saveHistoryButton.classList.add('d-none');
           if (saveHistoryHintRow) {
             saveHistoryHintRow.hidden = true;
           }
@@ -573,9 +573,9 @@ View results: ${shareUrl}`.trim(),
           return;
         }
 
-        saveHistoryButton.hidden = false;
+        saveHistoryButton.classList.remove('d-none');
         if (memberSaveShell) {
-          memberSaveShell.hidden = false;
+          memberSaveShell.classList.remove('d-none');
         }
         if (memberLink) {
           memberLink.href = '/member.html';

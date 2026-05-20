@@ -1057,12 +1057,13 @@
         }
       }
 
-      function showSharePicker(shareUrl, shareText) {
+      function showSharePicker(shareUrl, shareText, nativePayload) {
         const existing = document.getElementById('sharePickerOverlay');
         if (existing) existing.remove();
 
         const encodedUrl = encodeURIComponent(shareUrl);
         const encodedText = encodeURIComponent(shareText);
+        const canUseNativeShare = Boolean(nativePayload && typeof navigator.share === 'function');
 
         const overlay = document.createElement('div');
         overlay.id = 'sharePickerOverlay';
@@ -1086,6 +1087,11 @@
             <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" id="sharePickerCopy">
               Copy link
             </button>
+            ${canUseNativeShare ? `
+              <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" id="sharePickerNative">
+                More apps…
+              </button>
+            ` : ''}
             <button type="button" class="btn btn-link btn-sm text-muted" id="sharePickerClose">
               Cancel
             </button>
@@ -1110,14 +1116,32 @@
             overlay.remove();
           }
         });
+        const nativeButton = dialog.querySelector('#sharePickerNative');
+        if (nativeButton) {
+          nativeButton.addEventListener('click', async function() {
+            try {
+              await navigator.share(nativePayload);
+              overlay.remove();
+            } catch (error) {
+              if (!error || error.name !== 'AbortError') {
+                overlay.remove();
+              }
+            }
+          });
+        }
+        dialog.querySelectorAll('a[target="_blank"]').forEach((link) => {
+          link.addEventListener('click', () => {
+            setTimeout(() => overlay.remove(), 150);
+          });
+        });
 
         return overlay;
       }
 
       async function sharePage(payload, fallbackShareUrl) {
-        const shareUrl = String(payload.url || '').trim();
+        const shareUrl = String(payload.url || fallbackShareUrl || '').trim();
         const shareText = String(payload.text || '').trim();
-        const sharePayload = {
+        const nativePayload = {
           title: payload.title || document.title,
           text: shareText.includes(shareUrl) ? shareText : `${shareText}
 
@@ -1129,25 +1153,13 @@ View results: ${shareUrl}`.trim(),
         if (imageUrl) {
           const imageFile = await fetchShareImageFile(imageUrl);
           if (imageFile) {
-            const filePayload = { ...sharePayload, files: [imageFile] };
             if (typeof navigator.canShare !== 'function' || navigator.canShare({ files: [imageFile] })) {
-              Object.assign(sharePayload, filePayload);
+              nativePayload.files = [imageFile];
             }
           }
         }
 
-        if (navigator.share) {
-          try {
-            await navigator.share(sharePayload);
-            return true;
-          } catch (error) {
-            if (error && error.name === 'AbortError') {
-              return false;
-            }
-          }
-        }
-
-        showSharePicker(shareUrl, shareText);
+        showSharePicker(shareUrl, shareText, nativePayload);
         return true;
       }
 

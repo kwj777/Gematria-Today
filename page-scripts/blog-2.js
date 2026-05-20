@@ -574,6 +574,32 @@
       let allLoadedPosts = [];
       let selectedTag = '';
       let searchQuery = '';
+      const BLOG_SERIES = [
+        {
+          id: 'pattern-layers',
+          label: 'Pattern Layers',
+          title: 'Pattern Layers — a 3-part workflow',
+          summary: 'Stack three layers — full totals, digital roots, and base-rooted words — into one repeatable research method.',
+          posts: [
+            { slug: 'digital-roots-in-gematria', title: 'Digital Roots and Their Significance in Gematria' },
+            { slug: 'digital-roots-vs-full-totals-when-each-wins', title: 'Digital Roots vs. Full Totals: When Each Wins' },
+            { slug: 'combining-full-totals-digital-roots-and-base-rooted-words', title: 'Combining Full Totals, Digital Roots, and Base-Rooted Words' },
+          ],
+        },
+      ];
+      const findSeriesForPost = (slug) => {
+        if (!slug) {
+          return null;
+        }
+        const normalized = String(slug).toLowerCase();
+        for (const series of BLOG_SERIES) {
+          const index = series.posts.findIndex((post) => post.slug.toLowerCase() === normalized);
+          if (index !== -1) {
+            return { series, index };
+          }
+        }
+        return null;
+      };
       let previewModeActive = false;
       let adminSessionActive = false;
       let loadedPublishedPosts = [];
@@ -715,6 +741,40 @@
         }
         const tocMarkup = `<nav class="blog-post-toc content-panel p-3 mb-4" aria-label="On this page"><p class="section-kicker mb-2">On this page</p><ol class="list-unstyled small mb-0">${items.map((item) => `<li class="blog-post-toc__item"><a class="blog-post-toc__link" href="#${escapeHtml(item.id)}">${escapeHtml(item.label)}</a></li>`).join('')}</ol></nav>`;
         body.insertAdjacentHTML('afterbegin', tocMarkup);
+      };
+      const buildSeriesPromoMarkup = () => {
+        if (!BLOG_SERIES.length) {
+          return '';
+        }
+        const series = BLOG_SERIES[0];
+        const items = series.posts.map((post, index) => {
+          const href = `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+          return `<li class="blog-series-promo__step"><span class="blog-series-promo__step-number">${index + 1}</span><a class="blog-series-promo__step-link" href="${escapeHtml(href)}">${escapeHtml(post.title)}</a></li>`;
+        }).join('');
+        return `<aside class="blog-series-promo content-panel p-4 mb-4" aria-label="Featured reading path"><p class="section-kicker mb-2">Start here · Reading path</p><h2 class="h5 mb-2">${escapeHtml(series.title)}</h2><p class="small text-muted mb-3">${escapeHtml(series.summary)}</p><ol class="blog-series-promo__list list-unstyled mb-0">${items}</ol></aside>`;
+      };
+      const buildSeriesStrip = (postCard, currentPost) => {
+        if (!postCard || !currentPost) {
+          return;
+        }
+        const match = findSeriesForPost(currentPost.slug);
+        if (!match) {
+          return;
+        }
+        const { series, index } = match;
+        const prev = index > 0 ? series.posts[index - 1] : null;
+        const next = index < series.posts.length - 1 ? series.posts[index + 1] : null;
+        const linkFor = (post, direction) => {
+          if (!post) {
+            return `<span class="blog-series-strip__cell blog-series-strip__cell--empty"></span>`;
+          }
+          const href = `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+          const label = direction === 'prev' ? '&larr; Previous' : 'Next &rarr;';
+          const alignClass = direction === 'prev' ? '' : ' blog-series-strip__cell--end';
+          return `<a class="blog-series-strip__cell${alignClass}" href="${escapeHtml(href)}"><span class="blog-series-strip__direction">${label}</span><span class="blog-series-strip__title">${escapeHtml(post.title)}</span></a>`;
+        };
+        const stripMarkup = `<nav class="blog-series-strip content-panel p-3 mb-4" aria-label="${escapeHtml(series.label)} series navigation"><div class="blog-series-strip__meta small text-muted mb-2"><strong>${escapeHtml(series.label)}</strong> · Part ${index + 1} of ${series.posts.length}</div><div class="blog-series-strip__grid">${linkFor(prev, 'prev')}${linkFor(next, 'next')}</div></nav>`;
+        postCard.insertAdjacentHTML('beforebegin', stripMarkup);
       };
       const buildRelatedPosts = (postCard, currentPost) => {
         if (!postCard || !currentPost) {
@@ -894,14 +954,17 @@
           return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         });
         const postsContainer = document.getElementById('blogPosts');
+        const showSeriesPromo = !detailViewActive && !searchQuery.trim() && !selectedTag;
+        const seriesPromoMarkup = showSeriesPromo ? buildSeriesPromoMarkup() : '';
         if (!postMarkup.length && !detailViewActive) {
-          postsContainer.innerHTML = `<div class="content-panel p-4 text-muted small">No posts match your filters. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="blogClearFiltersButton">Clear filters</button></div>`;
+          postsContainer.innerHTML = `${seriesPromoMarkup}<div class="content-panel p-4 text-muted small">No posts match your filters. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="blogClearFiltersButton">Clear filters</button></div>`;
         } else {
-          postsContainer.innerHTML = postMarkup.join('');
+          postsContainer.innerHTML = `${seriesPromoMarkup}${postMarkup.join('')}`;
         }
         updatePostsCount(filteredPosts.length, latestPosts.length, detailViewActive);
         if (detailViewActive) {
           const detailCard = postsContainer.querySelector('.blog-post-card');
+          buildSeriesStrip(detailCard, requestedTargetPost);
           buildTableOfContents(detailCard);
           buildRelatedPosts(detailCard, requestedTargetPost);
           updateReadingProgressOffset();

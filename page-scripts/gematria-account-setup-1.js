@@ -72,8 +72,13 @@
           alert: pageAlert,
           source: 'level_zero_register_form',
           extraFields: { signupSource: 'learning_path_level_0' },
-          onSuccess() {
+          onSuccess(response, context) {
             window.localStorage.setItem('learningPathStep1Intent', 'true');
+            const emailEl = document.getElementById('signUpSuccessEmail');
+            const submittedEmail = context?.payload?.email || response?.member?.email;
+            if (emailEl && submittedEmail) {
+              emailEl.textContent = submittedEmail;
+            }
             form.classList.add('d-none');
             successPanel?.classList.remove('d-none');
             successPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });

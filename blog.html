@@ -158,9 +158,22 @@
               <h2 class="h4 mb-3">Start with these reads</h2>
               <div class="mb-4">
                 <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
-                <select id="blogTagFilters" class="form-select form-select-sm" aria-label="Filter blog posts by tag">
-                  <option value="">Loading tags…</option>
-                </select>
+                <div
+                  id="blogTagFilters"
+                  class="blog-tag-filters blog-tag-filters--collapsed d-flex flex-wrap gap-2"
+                  role="group"
+                  aria-label="Filter blog posts by tag"
+                >
+                  <span class="text-muted small">Loading tags…</span>
+                </div>
+                <button
+                  id="blogTagFiltersToggle"
+                  type="button"
+                  class="btn btn-link btn-sm px-0 mt-2"
+                  aria-controls="blogTagFilters"
+                  aria-expanded="false"
+                  hidden
+                >Show all tags</button>
               </div>
               <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
                 <div class="followit--follow-form-container followit-card followit-card--sidebar" attr-a attr-b attr-c attr-d attr-e attr-f>
@@ -218,7 +231,7 @@
               </article>
             </div>
             <div id="blogLoadMoreWrap" class="d-flex justify-content-center mt-4 d-none">
-              <button id="blogLoadMoreButton" type="button" class="btn btn-outline-primary fw-semibold">Load older posts</button>
+              <button id="blogLoadMoreButton" type="button" class="btn btn-outline-primary fw-semibold">Load more posts</button>
             </div>
           </div>
         </section>

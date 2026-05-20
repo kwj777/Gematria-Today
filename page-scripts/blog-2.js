@@ -612,7 +612,7 @@
           button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading…';
           button.setAttribute('aria-busy', 'true');
         } else {
-          button.textContent = 'Load older posts';
+          button.textContent = 'Load more posts';
           button.removeAttribute('aria-busy');
         }
       };
@@ -641,13 +641,18 @@
         if (!tagFiltersEl) {
           return;
         }
-        tagFiltersEl.innerHTML = [
-          `<option value="">All posts (${posts.length})</option>`,
-          ...sortedTags.map((tag) => {
-            return `<option value="${escapeHtml(tag.label.toLowerCase())}">${escapeHtml(tag.label)} (${tag.count})</option>`;
-          })
-        ].join('');
-        tagFiltersEl.value = selectedTag;
+        const renderChip = (value, label, count, isActive) => {
+          const activeClass = isActive ? 'blog-tag-chip--active' : '';
+          const pressed = isActive ? 'true' : 'false';
+          return `<button type="button" class="blog-tag-chip ${activeClass}" data-tag-filter="${escapeHtml(value)}" aria-pressed="${pressed}"><span class="blog-tag-chip__label">${escapeHtml(label)}</span><span class="blog-tag-chip__count">${count}</span></button>`;
+        };
+        const chips = [renderChip('', 'All posts', posts.length, !selectedTag)];
+        sortedTags.forEach((tag) => {
+          const value = tag.label.toLowerCase();
+          chips.push(renderChip(value, tag.label, tag.count, selectedTag === value));
+        });
+        tagFiltersEl.innerHTML = chips.join('');
+        updateTagFilterOverflowState();
       };
 
       const getVisiblePosts = () => {
@@ -656,24 +661,6 @@
         }
         return latestPosts.filter((post) => getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag));
       };
-      const inlineFollowFormMarkup = `
-        <section class="content-panel p-4 p-lg-5 blog-post-card" aria-label="Email subscription">
-          <div class="followit--follow-form-container followit-card followit-card--inline" attr-a attr-b attr-c attr-d attr-e attr-f>
-            <form action="https://api.follow.it/subscription-form/UGRiajBXSUFKaWpwZ1h3Q0xaQzdXdTV5UUdaamJxaFcvTXpQbWR5RjFpTExacnNMZE9MdkdkelY0ZGdza1R2M1ZkYnR6RDdvak5vYno4YzNEaEQwZC9ORkhma1RMdloyekNPTFphV1BrWVJzbHYvbTR5RzdiM0tBTGlzcXZPUHZ8NXlRaUNjSHhLN05ISUJ1RnhsWXJRakZqQkt4K1pwc1NxVlIyaGVybTdxND0=/8" method="post">
-              <div class="form-preview" data-v-8a8a107f="">
-                <div class="preview-heading" data-v-8a8a107f="">
-                  <h5 data-v-8a8a107f="">Get new posts by email:</h5>
-                </div>
-                <div class="preview-input-field" data-v-8a8a107f="">
-                  <input type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" data-v-8a8a107f="">
-                </div>
-                <div class="preview-submit-button" data-v-8a8a107f="">
-                  <button type="submit" data-v-8a8a107f="">Subscribe</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </section>`;
       const getPostEditUrl = (post) => {
         const rawId = String(post?.id || '').trim();
         if (rawId) {
@@ -746,11 +733,6 @@
             : '';
           return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         });
-        if (postMarkup.length > 2) {
-          postMarkup.splice(2, 0, inlineFollowFormMarkup);
-        } else if (postMarkup.length > 1) {
-          postMarkup.push(inlineFollowFormMarkup);
-        }
         document.getElementById('blogPosts').innerHTML = postMarkup.join('');
 
         if (filteredPosts.length) {
@@ -770,15 +752,6 @@
           renderPosts(latestPosts);
         }
         focusLinkedPost(getRequestedPostSlug());
-      });
-      document.addEventListener('change', (event) => {
-        const tagFilterSelect = event.target.closest('#blogTagFilters');
-        if (!tagFilterSelect) {
-          return;
-        }
-        selectedTag = String(tagFilterSelect.value || '').trim().toLowerCase();
-        syncTagLocation(selectedTag);
-        renderPosts(latestPosts);
       });
       document.addEventListener('click', (event) => {
         const tagFilterToggle = event.target.closest('#blogTagFiltersToggle');

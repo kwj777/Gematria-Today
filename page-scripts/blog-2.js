@@ -744,6 +744,14 @@
         const relatedMarkup = `<aside class="blog-related content-panel p-4 mt-4" aria-label="Related posts"><p class="section-kicker mb-2">Related posts</p><ul class="list-unstyled mb-0">${itemMarkup}</ul></aside>`;
         postCard.insertAdjacentHTML('afterend', relatedMarkup);
       };
+      const updateReadingProgressOffset = () => {
+        const navbar = document.querySelector('nav.sticky-top');
+        if (!navbar) {
+          return;
+        }
+        const height = Math.round(navbar.getBoundingClientRect().height);
+        document.documentElement.style.setProperty('--blog-reading-progress-top', `${height}px`);
+      };
       const updateReadingProgress = () => {
         const bar = document.getElementById('blogReadingProgress');
         const postCard = document.querySelector('.blog-post-card');
@@ -896,6 +904,7 @@
           const detailCard = postsContainer.querySelector('.blog-post-card');
           buildTableOfContents(detailCard);
           buildRelatedPosts(detailCard, requestedTargetPost);
+          updateReadingProgressOffset();
           updateReadingProgress();
         }
 
@@ -995,7 +1004,17 @@
         });
       };
       window.addEventListener('scroll', scheduleReadingProgressUpdate, { passive: true });
-      window.addEventListener('resize', scheduleReadingProgressUpdate, { passive: true });
+      window.addEventListener('resize', () => {
+        updateReadingProgressOffset();
+        scheduleReadingProgressUpdate();
+      }, { passive: true });
+      updateReadingProgressOffset();
+      const navbarToggler = document.querySelector('.navbar-toggler');
+      if (navbarToggler) {
+        navbarToggler.addEventListener('click', () => {
+          window.setTimeout(updateReadingProgressOffset, 350);
+        });
+      }
 
       selectedTag = getRequestedTag();
 

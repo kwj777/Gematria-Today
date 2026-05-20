@@ -1789,12 +1789,12 @@ footer.site-footer a:focus-visible {
 
 .blog-reading-progress {
   position: fixed;
-  top: 0;
+  top: var(--blog-reading-progress-top, 0);
   left: 0;
   right: 0;
   height: 3px;
   background: transparent;
-  z-index: 1100;
+  z-index: 1010;
   pointer-events: none;
 }
 

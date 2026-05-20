@@ -61,6 +61,141 @@
         margin-bottom: 0.25rem;
       }
 
+      .agent-result-card {
+        background-color: #fff;
+      }
+
+      .agent-stat-row {
+        font-variant-numeric: tabular-nums;
+        line-height: 1.6;
+      }
+
+      .agent-stat-row strong {
+        font-weight: 600;
+      }
+
+      .agent-disclosure {
+        border-top: 1px dashed rgba(0, 0, 0, 0.08);
+        padding-top: 0.4rem;
+      }
+
+      .agent-disclosure > summary {
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-link, #2d547c);
+        list-style: none;
+        padding: 0.1rem 0;
+      }
+
+      .agent-disclosure > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .agent-disclosure > summary::before {
+        content: '▸';
+        display: inline-block;
+        width: 1rem;
+        font-size: 0.75rem;
+        transition: transform 0.15s ease;
+      }
+
+      .agent-disclosure[open] > summary::before {
+        transform: rotate(90deg);
+      }
+
+      .agent-disclosure > summary:hover {
+        text-decoration: underline;
+      }
+
+      .agent-disclosure-body {
+        padding: 0.35rem 0 0.1rem 1rem;
+      }
+
+      .agent-actions-menu {
+        position: relative;
+        flex-shrink: 0;
+        display: inline-block;
+      }
+
+      .agent-actions-menu > summary {
+        cursor: pointer;
+        list-style: none;
+        display: inline-block;
+        font-size: 0.8rem;
+        line-height: 1.2;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 0.4rem;
+        color: #555;
+        background-color: rgba(255, 255, 255, 0.9);
+        user-select: none;
+        white-space: nowrap;
+      }
+
+      .agent-actions-menu > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .agent-actions-menu > summary:hover {
+        background-color: #f3f4f6;
+      }
+
+      .agent-actions-popover {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.3rem);
+        z-index: 5;
+        min-width: 12rem;
+        max-width: calc(100vw - 2rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.4rem;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 0.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      }
+
+      .agent-actions-popover button {
+        text-align: left;
+        justify-content: flex-start;
+      }
+
+      .agent-form-help {
+        margin-top: 0.25rem;
+      }
+
+      .agent-form-help > summary {
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--color-link, #2d547c);
+        font-weight: 600;
+        list-style: none;
+        padding: 0.15rem 0;
+      }
+
+      .agent-form-help > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .agent-form-help > summary::before {
+        content: '▸';
+        display: inline-block;
+        width: 1rem;
+        font-size: 0.75rem;
+        transition: transform 0.15s ease;
+      }
+
+      .agent-form-help[open] > summary::before {
+        transform: rotate(90deg);
+      }
+
+      .agent-form-help-body {
+        padding-top: 0.35rem;
+      }
+
       .agent-hero-image {
         width: 100%;
         height: auto;
@@ -93,10 +228,6 @@
 
       #agentHeroPanel[hidden] {
         display: none !important;
-      }
-
-      .agent-form-help {
-        margin-top: 0.25rem;
       }
 
       #agentForm[aria-busy="true"] {
@@ -197,12 +328,15 @@
             <div class="col-12">
               <p id="agentWaitingIndicator" class="agent-waiting-indicator small text-primary-emphasis mb-0" role="status" aria-live="polite" hidden><span class="agent-working-icon" aria-hidden="true"></span><span>Agent is working on your request…</span></p>
             </div>
-            <div class="col-12 agent-form-help">
-              <p class="form-text mb-0">Type the word(s) you want calculated in natural language (quotes are optional).</p>
-              <p class="form-text mb-0">For multiple targets, separate with commas or use words like "and" (example: <code>calculate pilot and process</code>).</p>
-              <p class="form-text mb-0">For reverse gematria, give a number (example: <code>reverse gematria 144</code> or <code>what words equal 432</code>). Range scans work too (<code>words near 144</code> or <code>words between 120 and 180</code>).</p>
-              <p class="form-text mb-0">For comparisons, use "vs" or "compare" (example: <code>compare alpha and omega</code> or <code>light vs dark</code>).</p>
-            </div>
+            <details class="col-12 agent-form-help">
+              <summary>Tips for prompts</summary>
+              <div class="agent-form-help-body">
+                <p class="form-text mb-0">Type the word(s) you want calculated in natural language (quotes are optional).</p>
+                <p class="form-text mb-0">For multiple targets, separate with commas or use words like "and" (example: <code>calculate pilot and process</code>).</p>
+                <p class="form-text mb-0">For reverse gematria, give a number (example: <code>reverse gematria 144</code> or <code>what words equal 432</code>). Range scans work too (<code>words near 144</code> or <code>words between 120 and 180</code>).</p>
+                <p class="form-text mb-0">For comparisons, use "vs" or "compare" (example: <code>compare alpha and omega</code> or <code>light vs dark</code>).</p>
+              </div>
+            </details>
           </form>
         </section>
       </div>

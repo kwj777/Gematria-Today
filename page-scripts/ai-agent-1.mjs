@@ -1648,23 +1648,19 @@ View results: ${shareUrl}`.trim(),
         const primaryWordReport = allWordReports.find((entry) => entry.target === topic) || allWordReports[0];
         const matchCount = primaryWordReport?.matchCount ?? null;
 
-        const lookupDetailsByTarget = new Map(await Promise.all(
-          allWordReports.map(async (entry) => {
-            const [definitionSummary, relatedWords] = await Promise.all([
-              fetchDefinitionSummary(entry.target),
-              fetchRelatedWordsSummary(entry.target)
-            ]);
-            return [entry.target, { definitionSummary, relatedWords }];
-          })
-        ));
+        // Secondary lookups (definitions, related words, spelling variants) run in parallel
+        // with the headline render. The finalize closure awaits them and appends to the cards.
+        const perTargetLookupsPromise = Promise.all(allWordReports.map(async (entry) => {
+          const [definitionSummary, relatedWords] = await Promise.all([
+            fetchDefinitionSummary(entry.target),
+            fetchRelatedWordsSummary(entry.target),
+          ]);
+          return { target: entry.target, definitionSummary, relatedWords };
+        }));
 
-        const topicLookupDetails = lookupDetailsByTarget.get(topic) || { definitionSummary: '', relatedWords: [] };
-        const definitionSummary = topicLookupDetails.definitionSummary;
-        const relatedWords = topicLookupDetails.relatedWords;
-
-        const autoSpellingVariantHits = (allWordReports.length === 1 && primaryWordReport?.matchCount === 0)
-          ? await fetchSpellingVariantHits(topic)
-          : [];
+        const autoSpellingVariantHitsPromise = (allWordReports.length === 1 && primaryWordReport?.matchCount === 0)
+          ? fetchSpellingVariantHits(topic)
+          : Promise.resolve([]);
 
         const iterations = 2;
         const memoryContext = '';
@@ -1716,15 +1712,6 @@ View results: ${shareUrl}`.trim(),
             isBaseRoot: isBaseRootTotal(total)
           };
         });
-        const relatedWordsWithTotals = relatedWords.map((word) => {
-          const total = englishGematria(word);
-          return {
-            word,
-            total,
-            root: digitalRoot(total),
-            isBaseRoot: isBaseRootTotal(total)
-          };
-        });
 
         const comparisonRequested = isComparisonRequest(normalizedPrompt) && allWordReports.length >= 2;
         const comparisonSummary = comparisonRequested ? buildComparisonSummary(allWordReports) : '';
@@ -1741,106 +1728,64 @@ View results: ${shareUrl}`.trim(),
             }
           : { kind: 'calculation', topic, total, root, isBaseRoot, matchCount };
 
-        return `
+        const letterBreakdownText = (entry) => entry.letters.length
+          ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ')
+          : 'No alphabetical letters detected.';
+
+        const initialHtml = `
           ${learnedResponse ? `<p class="mb-2" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
-          <p class="mb-2"><strong>Detected calculation target${calculationTargets.length === 1 ? '' : 's'}:</strong> ${escapeHtml(calculationTargets.join(', '))}</p>
           ${comparisonSummary}
-          ${allWordReports.length ? `
-            <p class="mb-2"><strong>Full calculation report for each detected word</strong></p>
-            <div class="d-flex flex-column gap-2 mb-3">
-              ${allWordReports.map((entry) => {
-                const lookupDetails = lookupDetailsByTarget.get(entry.target) || { definitionSummary: '', relatedWords: [] };
-                const perWordDefinitionSummary = lookupDetails.definitionSummary;
-                const perWordRelatedWordsWithTotals = (lookupDetails.relatedWords || []).map((word) => {
-                  const total = englishGematria(word);
-                  return {
-                    word,
-                    total,
-                    root: digitalRoot(total),
-                    isBaseRoot: isBaseRootTotal(total)
-                  };
-                });
-
-                const archiveCountLabel = Number.isFinite(entry.matchCount)
-                  ? `${entry.matchCount} (${describeMatchConfidence(entry.matchCount)})`
-                  : describeMatchCountError(entry.matchCount);
-                const inlineDefinition = perWordDefinitionSummary
-                  ? `<p class="mb-2 fst-italic text-secondary-emphasis">${escapeHtml(perWordDefinitionSummary.slice(0, 200))}${perWordDefinitionSummary.length > 200 ? '…' : ''}</p>`
-                  : '';
-
-                return `
-                <section class="border rounded-3 p-2">
-                  <p class="mb-1"><strong>${escapeHtml(entry.target)}</strong></p>
-                  ${inlineDefinition}
-                  <ul class="mb-2">
-                    <li><strong>Total:</strong> ${entry.total}</li>
-                    <li><strong>Digital root:</strong> ${entry.root}</li>
-                    <li><strong>Base-root pattern:</strong> ${entry.isBaseRoot ? 'Yes' : 'No'}</li>
-                    <li><strong>Current archived matches:</strong> ${archiveCountLabel}</li>
-                    <li><strong>Letter breakdown:</strong> ${entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.'}</li>
-                  </ul>
-                  ${(allWordReports.length === 1 && entry.matchCount === 0 && autoSpellingVariantHits.length) ? `
-                    <p class="mb-1"><strong>Close spelling variants with archive hits</strong></p>
-                    <p class="small text-muted mb-2">No archived words land on ${entry.total} yet. These near-spellings do appear in the archive — click any to deep-look-up.</p>
-                    <div class="d-flex flex-wrap gap-2 mb-2">
-                      ${autoSpellingVariantHits.map((hit) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(hit.variant)}">${escapeHtml(hit.variant)} (${hit.total}, ${hit.matchCount} match${hit.matchCount === 1 ? '' : 'es'})</button>`).join('')}
-                    </div>
-                  ` : ''}
-                  ${allWordReports.length > 1 ? `
-                    <p class="mb-2"><strong>Suggested next lookups for "${escapeHtml(entry.target)}"</strong></p>
-                    <ul class="mb-2">
-                      ${perWordDefinitionSummary ? `<li><a href="/definition?word=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(entry.target)}"</a> — Preview: ${escapeHtml(perWordDefinitionSummary.slice(0, 180))}${perWordDefinitionSummary.length > 180 ? '…' : ''}</li>` : ''}
-                      <li><a href="/calculator.html?query=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Calculator search for "${escapeHtml(entry.target)}"</a></li>
-                      <li>
-                        Related words lookup:
-                        ${perWordRelatedWordsWithTotals.length ? `
-                          <div class="d-flex flex-wrap gap-2 mt-2">
-                            ${perWordRelatedWordsWithTotals.map((relatedEntry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(relatedEntry.word)}">${escapeHtml(relatedEntry.word)} (${relatedEntry.isBaseRoot ? 'base-root' : 'not base-root'})</button>`).join('')}
-                          </div>
-                        ` : '<span> No related terms were found right now.</span>'}
-                      </li>
-                    </ul>
-                  ` : ''}
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-success agent-save-history-button"
-                    data-topic="${escapeHtml(entry.target)}"
-                    data-total="${entry.total}"
-                    data-root="${entry.root}"
-                    data-matches="${Number.isFinite(entry.matchCount) ? entry.matchCount : ''}"
-                    data-rounds="${iterations}"
-                  >
-                    Save "${escapeHtml(entry.target)}" to my dashboard
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-warning agent-save-image-button ms-2"
-                    data-topic="${escapeHtml(entry.target)}"
-                    data-total="${entry.total}"
-                    data-root="${entry.root}"
-                    data-base-root="${entry.isBaseRoot ? 'true' : 'false'}"
-                    data-definition-preview="${escapeHtml(perWordDefinitionSummary || '')}"
-                    data-per-letter-values="${escapeHtml(entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.')}"
-                  >
-                    Save image
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-info agent-share-image-button ms-2"
-                    data-topic="${escapeHtml(entry.target)}"
-                    data-total="${entry.total}"
-                    data-root="${entry.root}"
-                    data-base-root="${entry.isBaseRoot ? 'true' : 'false'}"
-                    data-definition-preview="${escapeHtml(perWordDefinitionSummary || '')}"
-                    data-per-letter-values="${escapeHtml(entry.letters.length ? entry.letters.map((letter) => `${letter.char}=${letter.value}`).join(', ') : 'No alphabetical letters detected.')}"
-                  >
-                    Share
-                  </button>
+          <div class="d-flex flex-column gap-2 mb-2" data-agent-cards>
+            ${allWordReports.map((entry) => {
+              const archiveCountLabel = Number.isFinite(entry.matchCount)
+                ? `${entry.matchCount} (${describeMatchConfidence(entry.matchCount)})`
+                : describeMatchCountError(entry.matchCount);
+              const perLetterValues = letterBreakdownText(entry);
+              return `
+                <section class="agent-result-card border rounded-3 p-3" data-target-index="${allWordReports.indexOf(entry)}">
+                  <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                    <p class="mb-0 fw-bold">${escapeHtml(entry.target)}</p>
+                    <details class="agent-actions-menu">
+                      <summary aria-label="Actions for ${escapeHtml(entry.target)}">Actions ⋯</summary>
+                      <div class="agent-actions-popover">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-success agent-save-history-button"
+                          data-topic="${escapeHtml(entry.target)}"
+                          data-total="${entry.total}"
+                          data-root="${entry.root}"
+                          data-matches="${Number.isFinite(entry.matchCount) ? entry.matchCount : ''}"
+                          data-rounds="${iterations}"
+                        >Save to dashboard</button>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-warning agent-save-image-button"
+                          data-topic="${escapeHtml(entry.target)}"
+                          data-total="${entry.total}"
+                          data-root="${entry.root}"
+                          data-base-root="${entry.isBaseRoot ? 'true' : 'false'}"
+                          data-definition-preview=""
+                          data-per-letter-values="${escapeHtml(perLetterValues)}"
+                        >Save image</button>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-info agent-share-image-button"
+                          data-topic="${escapeHtml(entry.target)}"
+                          data-total="${entry.total}"
+                          data-root="${entry.root}"
+                          data-base-root="${entry.isBaseRoot ? 'true' : 'false'}"
+                          data-definition-preview=""
+                          data-per-letter-values="${escapeHtml(perLetterValues)}"
+                        >Share</button>
+                      </div>
+                    </details>
+                  </div>
+                  <p class="agent-stat-row small mb-0">Total <strong>${entry.total}</strong> · Root <strong>${entry.root}</strong> · ${entry.isBaseRoot ? 'Base-root' : 'Not base-root'} · Archived: ${archiveCountLabel}</p>
+                  <div data-secondary-slot></div>
                 </section>
               `;
-              }).join('')}
-            </div>
-          ` : ''}
+            }).join('')}
+          </div>
           ${requestedSpellingVariantLookup ? `
             <p class="mt-3 mb-2"><strong>Close spelling-variant lookup for "${escapeHtml(topic)}"</strong></p>
             ${closeSpellingVariants.length ? `
@@ -1849,23 +1794,90 @@ View results: ${shareUrl}`.trim(),
               </ul>
             ` : '<p class="mb-0">No close spelling variants were generated from this input. Try a single-word topic for variant lookups.</p>'}
           ` : ''}
-          ${allWordReports.length === 1 ? `
-            <hr />
-            <p class="mb-2"><strong>Suggested next lookups</strong></p>
-            <ul class="mb-0">
-              ${definitionSummary ? `<li><a href="/definition?word=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(topic)}"</a> — Preview: ${escapeHtml(definitionSummary.slice(0, 180))}${definitionSummary.length > 180 ? '…' : ''}</li>` : ''}
-              <li><a href="/calculator.html?query=${encodeURIComponent(topic)}" target="_blank" rel="noopener noreferrer">Calculator search for "${escapeHtml(topic)}"</a></li>
-              <li>
-                Related words lookup:
-                ${relatedWordsWithTotals.length ? `
-                  <div class="d-flex flex-wrap gap-2 mt-2">
-                    ${relatedWordsWithTotals.map((entry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(entry.word)}">${escapeHtml(entry.word)} (${entry.isBaseRoot ? 'base-root' : 'not base-root'})</button>`).join('')}
-                  </div>
-                ` : '<span> No related terms were found right now.</span>'}
-              </li>
-            </ul>
-          ` : ''}
         `;
+
+        function renderRelatedWordsButtons(words) {
+          if (!words.length) return '<span class="small text-muted">No related terms were found right now.</span>';
+          const withTotals = words.map((word) => {
+            const total = englishGematria(word);
+            return {
+              word,
+              total,
+              isBaseRoot: isBaseRootTotal(total),
+            };
+          });
+          return `
+            <div class="d-flex flex-wrap gap-2 mt-1">
+              ${withTotals.map((relatedEntry) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(relatedEntry.word)}">${escapeHtml(relatedEntry.word)} (${relatedEntry.isBaseRoot ? 'base-root' : 'not base-root'})</button>`).join('')}
+            </div>
+          `;
+        }
+
+        function renderCardSecondaryHtml(entry, definitionSummary, relatedWords, spellingHitsForCard) {
+          const perLetterValues = letterBreakdownText(entry);
+          const inlineDefinition = definitionSummary
+            ? `<p class="small fst-italic text-secondary-emphasis mb-1 mt-2">${escapeHtml(definitionSummary.slice(0, 200))}${definitionSummary.length > 200 ? '…' : ''}</p>`
+            : '';
+          const closeSpellingBlock = spellingHitsForCard.length
+            ? `
+              <details class="agent-disclosure mt-2" open>
+                <summary>Close spelling variants with archive hits</summary>
+                <div class="agent-disclosure-body">
+                  <p class="small text-muted mb-2">No archived words land on ${entry.total} yet. These near-spellings do appear in the archive — click to deep-look-up.</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    ${spellingHitsForCard.map((hit) => `<button type="button" class="btn btn-sm btn-outline-secondary agent-word-lookup-button" data-word="${escapeHtml(hit.variant)}">${escapeHtml(hit.variant)} (${hit.total}, ${hit.matchCount} match${hit.matchCount === 1 ? '' : 'es'})</button>`).join('')}
+                  </div>
+                </div>
+              </details>
+            `
+            : '';
+          return `
+            ${inlineDefinition}
+            <details class="agent-disclosure mt-2">
+              <summary>Letter breakdown</summary>
+              <div class="agent-disclosure-body small">${escapeHtml(perLetterValues)}</div>
+            </details>
+            ${closeSpellingBlock}
+            <details class="agent-disclosure mt-1">
+              <summary>Suggested next lookups</summary>
+              <div class="agent-disclosure-body">
+                <ul class="small mb-1">
+                  ${definitionSummary ? `<li><a href="/definition?word=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Dictionary page for "${escapeHtml(entry.target)}"</a></li>` : ''}
+                  <li><a href="/calculator.html?query=${encodeURIComponent(entry.target)}" target="_blank" rel="noopener noreferrer">Calculator search for "${escapeHtml(entry.target)}"</a></li>
+                </ul>
+                <p class="small mb-1">Related words:</p>
+                ${renderRelatedWordsButtons(relatedWords || [])}
+              </div>
+            </details>
+          `;
+        }
+
+        return {
+          initialHtml,
+          finalize: async (messageElement) => {
+            const [perTargetLookups, autoSpellingVariantHits] = await Promise.all([
+              perTargetLookupsPromise,
+              autoSpellingVariantHitsPromise,
+            ]);
+            const cards = messageElement.querySelectorAll('.agent-result-card');
+            allWordReports.forEach((entry, idx) => {
+              const card = cards[idx];
+              if (!card) return;
+              const lookup = perTargetLookups[idx] || { definitionSummary: '', relatedWords: [] };
+              const showSpellingHits = (allWordReports.length === 1 && entry.matchCount === 0 && autoSpellingVariantHits.length)
+                ? autoSpellingVariantHits
+                : [];
+              const slot = card.querySelector('[data-secondary-slot]');
+              if (slot) {
+                slot.innerHTML = renderCardSecondaryHtml(entry, lookup.definitionSummary, lookup.relatedWords, showSpellingHits);
+              }
+              const preview = lookup.definitionSummary || '';
+              card.querySelectorAll('.agent-save-image-button, .agent-share-image-button').forEach((btn) => {
+                btn.dataset.definitionPreview = preview;
+              });
+            });
+          },
+        };
       }
 
       function setComposerWaitingState(isWaiting) {
@@ -1884,12 +1896,41 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
+      async function renderAgentReply(prompt) {
+        const reply = await buildAgentReply(prompt);
+        const isStreaming = reply && typeof reply === 'object' && 'initialHtml' in reply;
+        const initialHtml = isStreaming ? reply.initialHtml : reply;
+        const assistantMessage = addMessage('assistant', initialHtml);
+        if (isStreaming && typeof reply.finalize === 'function') {
+          try {
+            await reply.finalize(assistantMessage);
+          } catch (error) {
+            // Secondary content failed; the headline is still useful.
+          }
+        }
+        const contentNode = assistantMessage.querySelector('[data-message-content]');
+        const finalAnswerHtml = contentNode ? contentNode.innerHTML : initialHtml;
+        attachResultFeedbackUi(assistantMessage, prompt, finalAnswerHtml);
+        scrollChatToBottom();
+        return assistantMessage;
+      }
+
+      let hasAutoCollapsedHero = false;
+      function autoCollapseHeroOnFirstUse() {
+        if (hasAutoCollapsedHero) return;
+        hasAutoCollapsedHero = true;
+        if (heroPanel && !heroPanel.hidden) {
+          setHeroVisibility(true);
+        }
+      }
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!premiumAccess) return;
         const prompt = promptInput.value.trim();
         if (!prompt) return;
         addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
+        autoCollapseHeroOnFirstUse();
         promptInput.value = '';
 
         const originalAskButtonText = askAgentButton?.textContent || 'Ask GemaBot';
@@ -1901,9 +1942,7 @@ View results: ${shareUrl}`.trim(),
         setComposerWaitingState(true);
         window.showWorkingOverlay?.();
         try {
-          const replyHtml = await buildAgentReply(prompt);
-          const assistantMessage = addMessage('assistant', replyHtml);
-          attachResultFeedbackUi(assistantMessage, prompt, replyHtml);
+          await renderAgentReply(prompt);
         } finally {
           window.hideWorkingOverlay?.();
           setComposerWaitingState(false);
@@ -1943,6 +1982,13 @@ View results: ${shareUrl}`.trim(),
 
       refreshExamplePromptsVisibility();
 
+      document.addEventListener('click', (event) => {
+        const openMenu = document.querySelector('details.agent-actions-menu[open]');
+        if (!openMenu) return;
+        if (openMenu.contains(event.target)) return;
+        openMenu.open = false;
+      });
+
       saveConversationButton.addEventListener('click', async () => {
         saveConversationButton.disabled = true;
         const originalText = saveConversationButton.textContent;
@@ -1967,6 +2013,7 @@ View results: ${shareUrl}`.trim(),
           if (!href) return;
           const previewType = String(jsonPreviewLink.dataset.jsonPreview || '').trim();
           addMessage('user', `<p class="mb-0">${escapeHtml(jsonPreviewLink.textContent || 'Preview JSON link')}</p>`, { pinToTop: true });
+          autoCollapseHeroOnFirstUse();
           window.showWorkingOverlay?.();
           const replyHtml = await buildJsonLinkPreviewReply(href, previewType);
           window.hideWorkingOverlay?.();
@@ -2071,12 +2118,11 @@ View results: ${shareUrl}`.trim(),
           if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) return;
           const promptText = `reverse gematria ${gematriaValue}`;
           addMessage('user', `<p class="mb-0">${escapeHtml(promptText)}</p>`, { pinToTop: true });
+          autoCollapseHeroOnFirstUse();
           setComposerWaitingState(true);
           window.showWorkingOverlay?.();
           try {
-            const replyHtml = await buildAgentReply(promptText);
-            const assistantMessage = addMessage('assistant', replyHtml);
-            attachResultFeedbackUi(assistantMessage, promptText, replyHtml);
+            await renderAgentReply(promptText);
           } finally {
             window.hideWorkingOverlay?.();
             setComposerWaitingState(false);
@@ -2089,12 +2135,11 @@ View results: ${shareUrl}`.trim(),
           const selectedWord = String(wordLookupButton.dataset.word || '').trim();
           if (!selectedWord) return;
           addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`, { pinToTop: true });
+          autoCollapseHeroOnFirstUse();
           setComposerWaitingState(true);
           window.showWorkingOverlay?.();
           try {
-            const replyHtml = await buildAgentReply(`"${selectedWord}"`);
-            const assistantMessage = addMessage('assistant', replyHtml);
-            attachResultFeedbackUi(assistantMessage, selectedWord, replyHtml);
+            await renderAgentReply(`"${selectedWord}"`);
           } finally {
             window.hideWorkingOverlay?.();
             setComposerWaitingState(false);

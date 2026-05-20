@@ -271,6 +271,47 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
 .navbar-nav .nav-link {
   display: flex;
   align-items: center;
+  color: var(--nav-on-dark-text);
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus-visible,
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link[aria-current="page"] {
+  color: #ffffff;
+}
+
+/* Orange accent: underline on desktop, left edge bar on mobile. The
+   accent appears on hover and on the link representing the current page
+   so users always have a clear "you are here" cue. */
+@media (min-width: 992px) {
+  .navbar-nav .nav-link:not(.nav-search-link) {
+    position: relative;
+  }
+
+  .navbar-nav .nav-link:not(.nav-search-link)::after {
+    content: "";
+    position: absolute;
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 0.35rem;
+    height: 2px;
+    background: var(--brand-amber);
+    border-radius: 2px;
+    opacity: 0;
+    transform: scaleX(0.6);
+    transform-origin: center;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .navbar-nav .nav-link:not(.nav-search-link):hover::after,
+  .navbar-nav .nav-link:not(.nav-search-link):focus-visible::after,
+  .navbar-nav .nav-link:not(.nav-search-link).active::after,
+  .navbar-nav .nav-link:not(.nav-search-link)[aria-current="page"]::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 .navbar-nav .nav-item.nav-auth { display: none; }
@@ -3220,9 +3261,87 @@ a.badge,
     color: rgba(255, 255, 255, 0.92);
   }
 
+  .navbar-toggler[aria-expanded="true"]::after {
+    content: "Close";
+  }
+
   .navbar-toggler:focus-visible {
     box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.45);
     outline: none;
+  }
+
+  /* Replace Bootstrap's static SVG icon with CSS-drawn bars so the
+     hamburger can animate to an X when the menu opens. The middle bar
+     is the .navbar-toggler-icon element itself; the two outer bars are
+     drawn as box-shadow clones so we don't need any extra markup. */
+  .navbar-toggler .navbar-toggler-icon {
+    background-image: none;
+    width: 1.25rem;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.92);
+    position: relative;
+    transition: background-color 0.15s ease;
+  }
+
+  .navbar-toggler .navbar-toggler-icon::before,
+  .navbar-toggler .navbar-toggler-icon::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.92);
+    transition: transform 0.2s ease, top 0.2s ease;
+  }
+
+  .navbar-toggler .navbar-toggler-icon::before { top: -6px; }
+  .navbar-toggler .navbar-toggler-icon::after  { top: 6px; }
+
+  .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+    background-color: transparent;
+  }
+
+  .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
+    top: 0;
+    transform: rotate(45deg);
+  }
+
+  .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
+    top: 0;
+    transform: rotate(-45deg);
+  }
+
+  /* Persistent search affordance sitting in the header strip next to
+     the menu toggle so users can search without opening the menu. */
+  .nav-header-search {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .nav-header-search:hover,
+  .nav-header-search:focus-visible {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
+    border-color: var(--nav-on-dark-border-hover);
+    outline: none;
+  }
+
+  .nav-header-search:focus-visible {
+    box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.45);
+  }
+
+  .nav-header-search svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    display: block;
   }
 
   .navbar-collapse.collapsing,
@@ -3252,9 +3371,20 @@ a.badge,
   }
 
   /* The ul now supplies the side indent, so links drop their horizontal
-     padding -- this also keeps every label flush to the same left edge. */
+     padding -- this also keeps every label flush to the same left edge.
+     A transparent left border reserves space for the hover/active accent
+     so the label doesn't shift horizontally when the bar appears. */
   .navbar-nav .nav-link:not(.nav-search-link) {
-    padding: 0.75rem 0;
+    padding: 0.6rem 0 0.6rem 0.75rem;
+    border-left: 3px solid transparent;
+    margin-left: -0.75rem;
+  }
+
+  .navbar-nav .nav-link:not(.nav-search-link):hover,
+  .navbar-nav .nav-link:not(.nav-search-link):focus-visible,
+  .navbar-nav .nav-link:not(.nav-search-link).active,
+  .navbar-nav .nav-link:not(.nav-search-link)[aria-current="page"] {
+    border-left-color: var(--brand-amber);
   }
 
   /* Hairline rule between the navigation links and the action pills. */

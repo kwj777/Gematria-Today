@@ -73,12 +73,14 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg?v=2" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+        <div class="nav-header-actions d-flex align-items-center gap-2 d-lg-none">
+          <a class="nav-header-search" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/index.html">Home</a></li>
             <li class="nav-item"><a class="nav-link" href="/tools.html">Tools</a></li>
             <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
             <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
@@ -87,7 +89,7 @@
             <li class="nav-actions-divider d-lg-none" role="presentation" aria-hidden="true"></li>
             <li class="nav-item nav-auth nav-auth--anon"><a class="nav-link" href="https://gematria.today/member#authSection">Log in</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2" href="/gematria-account-setup.html">Join free</a></li>
-            <li class="nav-item nav-search"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
+            <li class="nav-item nav-search d-none d-lg-flex"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
           </ul>
         </div>
       </div>

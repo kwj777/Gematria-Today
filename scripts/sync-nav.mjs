@@ -19,7 +19,6 @@ const EXCLUDED_PREFIXES = ['admin'];
 // The Calculator / Name Calculator / GemaBot pages don't appear directly in
 // the nav, so we mark the Tools link active when the user is on one of them.
 const ACTIVE_LINK_BY_FILE = {
-  'index.html': '/index.html',
   'blog.html': '/blog.html',
   'faq.html': '/faq.html',
   'searchbot.html': '/searchbot.html',

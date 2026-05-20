@@ -720,12 +720,64 @@
 
       function readChatTranscriptFromDom() {
         const normalizeTranscriptLine = (line) => String(line || '').replace(/[\t\f\v ]+/g, ' ').trim();
+        const NOISE_SELECTORS = [
+          '.agent-actions-menu',
+          '.agent-copy-comparison-button',
+          '.agent-copy-reverse-button',
+          '.agent-copy-reverse-range-button',
+          '.agent-reverse-filter',
+          '.agent-reverse-show-all',
+          '.agent-reverse-empty',
+        ].join(',');
+
+        const flattenTableToLines = (table) => {
+          const headers = [...table.querySelectorAll('thead th')]
+            .map((cell) => normalizeTranscriptLine(cell.textContent));
+          const rows = [...table.querySelectorAll('tbody tr')].map((tr) => {
+            const cells = [...tr.querySelectorAll('th,td')]
+              .map((cell) => normalizeTranscriptLine(cell.textContent));
+            if (headers.length === cells.length) {
+              return cells.map((cell, idx) => headers[idx] ? `${headers[idx]} ${cell}` : cell).join(' · ');
+            }
+            return cells.join(' · ');
+          });
+          const replacement = table.ownerDocument.createElement('div');
+          replacement.textContent = rows.join('\n');
+          table.replaceWith(replacement);
+        };
+
+        const prepareTranscriptCopy = (sourceElement) => {
+          const clone = sourceElement.cloneNode(true);
+          clone.querySelectorAll(NOISE_SELECTORS).forEach((node) => node.remove());
+          // Collapsed disclosure panels: keep the summary label, drop the hidden body.
+          clone.querySelectorAll('details.agent-disclosure:not([open])').forEach((details) => {
+            const summary = details.querySelector('summary');
+            const summaryText = summary ? summary.textContent : '';
+            const replacement = details.ownerDocument.createElement('div');
+            replacement.textContent = normalizeTranscriptLine(summaryText);
+            details.replaceWith(replacement);
+          });
+          clone.querySelectorAll('table').forEach(flattenTableToLines);
+          return clone;
+        };
+
+        const readClonedInnerText = (clone) => {
+          const staging = document.createElement('div');
+          staging.style.cssText = 'position:absolute;left:-99999px;top:-99999px;width:800px;visibility:hidden;pointer-events:none;';
+          staging.appendChild(clone);
+          document.body.appendChild(staging);
+          const text = clone.innerText || clone.textContent || '';
+          staging.remove();
+          return text;
+        };
+
         const removeTranscriptUiLines = (text) => String(text || '')
           .replace(/\bSave to (?:my|membership) dashboard\b/gi, '')
           .replace(/\bSave "[^"\n]+" to my dashboard\b/gi, '')
           .replace(/\b(?:Open calculator search for|Calculator search for)\s+"[^"\n]*"/gi, '')
           .replace(/\b(?:Dictionary lookup page for|Dictionary page for)\s+"[^"\n]*"(?:\s+—\s+Preview:[^\n]*)?/gi, '')
           .replace(/\bRun at least 3 semantic neighbors and compare both full totals and digital roots\./gi, '')
+          .replace(/\(\s*(singular|rare|uncommon|moderate|common|saturated)\s+—\s+[^)]+\)/gi, '($1)')
           .replace(
             /(Detected calculation targets?:\s*[^\n]+)\s+(For\s+(?:"[^"\n]+"|[^,\n]+),\s+here\s+is\s+the\s+current\s+gematria\s+snapshot:)/gi,
             '$1\n\n$2',
@@ -741,7 +793,8 @@
           .map((article) => {
             const role = String(article.dataset.role || '').trim();
             const contentElement = article.querySelector('[data-message-content]') || article;
-            const rawText = String(contentElement.innerText || '')
+            const transcriptCopy = prepareTranscriptCopy(contentElement);
+            const rawText = String(readClonedInnerText(transcriptCopy) || '')
               .replace(/\r\n?/g, '\n')
               .trim();
             const text = rawText

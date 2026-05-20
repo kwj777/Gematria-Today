@@ -51,7 +51,8 @@
       .hero-quick-calc__input::placeholder { color: #6b7280; }
       .hero-quick-calc__input:focus { outline: none; box-shadow: 0 0 0 3px rgba(180,83,9,0.5); border-color: #b45309; }
       .hero-quick-calc__result { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
-      .hero-quick-calc__value { font-family: "Fraunces","Source Serif Pro",Georgia,"Times New Roman",serif; font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1; }
+      .hero-quick-calc__value { font-family: "Fraunces","Source Serif Pro",Georgia,"Times New Roman",serif; font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1; transition: opacity 0.15s ease; }
+      .hero-quick-calc__value[data-example="true"] { opacity: 0.55; }
       .hero-quick-calc__caption { font-size: 0.78rem; color: rgba(255,255,255,0.72); margin-top: 0.4rem; letter-spacing: 0.04em; }
       .hero-quick-calc__deep-link { display: inline-flex; align-items: center; font-weight: 600; color: #fbbf24; text-decoration: none; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease; }
       .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; }
@@ -115,11 +116,11 @@
           <div class="row align-items-center g-4">
             <div class="col-lg-7">
               <p class="section-kicker mb-2">Gematria Focus</p>
-              <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number. What's yours hiding?</h1>
+              <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number. See the patterns it shares.</h1>
               <p id="homeHeroLead" class="lead mb-4">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
               <div class="d-flex flex-column flex-sm-row flex-wrap gap-2">
                 <a id="homeJoinCta" class="btn btn-warning btn-lg touch-target-lg fw-bold" href="/gematria-account-setup.html">Dig Deeper — Free</a>
-                <a id="homeCalculatorCta" class="btn btn-outline-light btn-lg touch-target-lg" href="/calculator.html">Open the full calculator</a>
+                <a id="homeCalculatorCta" class="btn btn-link btn-lg touch-target-lg text-warning fw-semibold text-decoration-none" href="/calculator.html">Or open the full calculator →</a>
               </div>
             </div>
             <div class="col-lg-5">

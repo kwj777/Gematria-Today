@@ -439,32 +439,33 @@ const computeEnglishGematria = (input) => {
 const initializeHeroQuickCalc = () => {
   const input = document.getElementById('heroQuickCalcInput');
   const valueNode = document.getElementById('heroQuickCalcValue');
+  const caption = document.getElementById('heroQuickCalcCaption');
   const deepLink = document.getElementById('heroQuickCalcDeepLink');
   if (!input || !valueNode || !deepLink) return;
 
-  const isAnon = () => (window.__gematriaAuthTier || 'anon') === 'anon';
+  const exampleWord = (input.getAttribute('placeholder') || 'light').replace(/^e\.g\.\s*/i, '').trim() || 'light';
+  const defaultCaption = caption ? caption.textContent : 'English gematria value';
 
   let trackedThisSession = false;
   const update = () => {
     const raw = input.value.trim();
-    const anon = isAnon();
     if (!raw) {
-      valueNode.textContent = '—';
-      deepLink.textContent = anon ? 'Unlock related words — free →' : 'See related words →';
-      deepLink.setAttribute('href', anon ? '/gematria-account-setup.html' : '/calculator.html');
+      const exampleTotal = computeEnglishGematria(exampleWord);
+      valueNode.textContent = exampleTotal.toLocaleString();
+      valueNode.setAttribute('data-example', 'true');
+      if (caption) caption.textContent = `Example — value of "${exampleWord}"`;
+      deepLink.textContent = 'See related words →';
+      deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(exampleWord)}`);
       deepLink.setAttribute('aria-disabled', 'true');
       deepLink.removeAttribute('data-active');
       return;
     }
     const total = computeEnglishGematria(raw);
     valueNode.textContent = total.toLocaleString();
-    if (anon) {
-      deepLink.textContent = 'Unlock related words — free →';
-      deepLink.setAttribute('href', '/gematria-account-setup.html');
-    } else {
-      deepLink.textContent = 'See related words →';
-      deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
-    }
+    valueNode.removeAttribute('data-example');
+    if (caption) caption.textContent = defaultCaption;
+    deepLink.textContent = 'See related words →';
+    deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
     deepLink.setAttribute('aria-disabled', 'false');
     deepLink.setAttribute('data-active', 'true');
     if (!trackedThisSession) {
@@ -473,7 +474,6 @@ const initializeHeroQuickCalc = () => {
     }
   };
 
-  // Initialize copy based on tier before any input.
   update();
 
   input.addEventListener('input', update);

@@ -672,6 +672,49 @@
           return matchesSearchQuery(post, query);
         });
       };
+      const slugifyHeading = (text) => {
+        return String(text || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      };
+      const buildTableOfContents = (postCard) => {
+        if (!postCard) {
+          return;
+        }
+        const body = postCard.querySelector('.blog-post-body');
+        if (!body) {
+          return;
+        }
+        const headings = Array.from(body.querySelectorAll('h2'));
+        if (headings.length < 2) {
+          return;
+        }
+        const seenIds = new Set();
+        const items = headings.map((heading) => {
+          let id = heading.id || slugifyHeading(heading.textContent);
+          if (!id) {
+            return null;
+          }
+          let unique = id;
+          let counter = 2;
+          while (seenIds.has(unique)) {
+            unique = `${id}-${counter}`;
+            counter += 1;
+          }
+          seenIds.add(unique);
+          heading.id = unique;
+          return { id: unique, label: heading.textContent.trim() };
+        }).filter(Boolean);
+        if (items.length < 2) {
+          return;
+        }
+        const tocMarkup = `<nav class="blog-post-toc content-panel p-3 mb-4" aria-label="On this page"><p class="section-kicker mb-2">On this page</p><ol class="list-unstyled small mb-0">${items.map((item) => `<li class="blog-post-toc__item"><a class="blog-post-toc__link" href="#${escapeHtml(item.id)}">${escapeHtml(item.label)}</a></li>`).join('')}</ol></nav>`;
+        body.insertAdjacentHTML('afterbegin', tocMarkup);
+      };
       const updateBlogChrome = (detailViewActive, requestedTargetPost) => {
         const toolbar = document.getElementById('blogListToolbar');
         if (toolbar) {
@@ -748,8 +791,8 @@
           const renderedBodyHtml = previewModeActive
             ? appendImageVersionTokenToHtmlImages(sanitizedBodyHtml, previewImageVersionToken)
             : sanitizedBodyHtml;
-          const inlineReadMoreMarkup = `<p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}" data-read-more-toggle="${escapeHtml(post.slug)}" aria-expanded="false">Read more...</a></p>`;
-          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p>${inlineReadMoreMarkup}<div class="blog-post-read-more d-none">${renderedBodyHtml}${fallbackRelatedLinks}</div>`;
+          const inlineReadMoreMarkup = `<p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}">Read full post &rarr;</a></p>`;
+          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p>${inlineReadMoreMarkup}`;
           const bodyHtml = detailViewActive
             ? `${renderedBodyHtml}${fallbackRelatedLinks}`
             : listSummaryHtml;
@@ -781,6 +824,9 @@
           postsContainer.innerHTML = postMarkup.join('');
         }
         updatePostsCount(filteredPosts.length, latestPosts.length, detailViewActive);
+        if (detailViewActive) {
+          buildTableOfContents(postsContainer.querySelector('.blog-post-card'));
+        }
 
         if (filteredPosts.length) {
           const requestedSlug = getRequestedPostSlug();
@@ -842,26 +888,6 @@
           selectedTag = String(tagFilter.dataset.tagFilter || '').trim().toLowerCase();
           syncTagLocation(selectedTag);
           renderPosts(latestPosts);
-          return;
-        }
-        const readMoreToggle = event.target.closest('[data-read-more-toggle]');
-        if (readMoreToggle) {
-          event.preventDefault();
-          const postCard = readMoreToggle.closest('.blog-post-card');
-          const readMoreContent = postCard?.querySelector('.blog-post-read-more');
-          if (!readMoreContent) {
-            return;
-          }
-          const isExpanded = !readMoreContent.classList.contains('d-none');
-          if (isExpanded) {
-            readMoreContent.classList.add('d-none');
-            readMoreToggle.textContent = 'Read more...';
-            readMoreToggle.setAttribute('aria-expanded', 'false');
-          } else {
-            readMoreContent.classList.remove('d-none');
-            readMoreToggle.textContent = 'Show less';
-            readMoreToggle.setAttribute('aria-expanded', 'true');
-          }
           return;
         }
         const shareButton = event.target.closest('[data-share-post]');

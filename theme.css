@@ -1765,6 +1765,28 @@ footer.site-footer a:focus-visible {
   color: #fff;
 }
 
+.blog-post-toc {
+  border-left: 3px solid rgba(var(--bs-primary-rgb), 0.45);
+  background: var(--color-surface-highlight-soft, rgba(15, 23, 42, 0.03));
+}
+
+.blog-post-toc__item + .blog-post-toc__item {
+  margin-top: 0.35rem;
+}
+
+.blog-post-toc__link {
+  text-decoration: none;
+  color: var(--color-text-strong, #0f172a);
+  border-bottom: 1px dotted rgba(var(--bs-primary-rgb), 0.4);
+}
+
+.blog-post-toc__link:hover,
+.blog-post-toc__link:focus-visible {
+  color: var(--bs-primary, #0d6efd);
+  border-bottom-color: var(--bs-primary, #0d6efd);
+  outline: none;
+}
+
 .followit-card {
   padding: clamp(0.9rem, 2vw, 1.15rem);
   border-radius: var(--radius-xl);

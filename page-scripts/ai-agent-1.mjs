@@ -410,7 +410,6 @@
             <ul class="mb-2">${highlights.join('')}</ul>
             <div class="d-flex flex-wrap gap-2">
               <button type="button" class="btn btn-sm btn-outline-success agent-copy-comparison-button" data-comparison="${payloadAttr}">Copy comparison</button>
-              <button type="button" class="btn btn-sm btn-outline-info agent-share-comparison-button" data-comparison="${payloadAttr}">Share comparison</button>
             </div>
           </section>
         `;
@@ -1011,11 +1010,19 @@
         return imageUrl.toString();
       }
 
-      function buildAgentShareUrl({ topic, total, root }) {
-        const shareUrl = new URL('/api/ai-agent-share', getCanonicalOrigin());
-        shareUrl.searchParams.set('topic', topic);
+      function buildAgentShareUrl({ topic, total, root, isBaseRoot, definitionPreview, perLetterValues }) {
+        const shareUrl = new URL('/calculator.html', getCanonicalOrigin());
+        shareUrl.searchParams.set('query', topic);
         shareUrl.searchParams.set('total', String(total));
-        shareUrl.searchParams.set('root', String(root));
+        shareUrl.searchParams.set('digitalRoot', String(root));
+        shareUrl.searchParams.set('isBaseRoot', String(Boolean(isBaseRoot)));
+        if (definitionPreview) {
+          shareUrl.searchParams.set('definitionPreview', definitionPreview);
+        }
+        if (perLetterValues) {
+          shareUrl.searchParams.set('perLetterValues', perLetterValues);
+        }
+        shareUrl.hash = 'gematria-result';
         return shareUrl.toString();
       }
 
@@ -1549,7 +1556,6 @@ View results: ${shareUrl}`.trim(),
             ${bucketsHtml}
             <div class="d-flex flex-wrap gap-2 mt-2">
               <button type="button" class="btn btn-sm btn-outline-success agent-copy-reverse-range-button" data-reverse-range="${rangePayloadAttr}">Copy lookup</button>
-              <button type="button" class="btn btn-sm btn-outline-info agent-share-reverse-range-button" data-reverse-range="${rangePayloadAttr}">Share lookup</button>
             </div>
           `;
         }
@@ -1610,7 +1616,6 @@ View results: ${shareUrl}`.trim(),
                 </div>
                 <div class="d-flex gap-2 flex-shrink-0">
                   <button type="button" class="btn btn-sm btn-outline-success agent-copy-reverse-button" data-reverse="${reversePayloadAttr}">Copy</button>
-                  <button type="button" class="btn btn-sm btn-outline-info agent-share-reverse-button" data-reverse="${reversePayloadAttr}">Share</button>
                 </div>
               </div>
               ${wordsList.length > 8 ? `
@@ -2110,91 +2115,61 @@ View results: ${shareUrl}`.trim(),
         }
 
         const copyComparisonButton = event.target.closest('.agent-copy-comparison-button');
-        const shareComparisonButton = event.target.closest('.agent-share-comparison-button');
-        if (copyComparisonButton || shareComparisonButton) {
-          const sourceButton = copyComparisonButton || shareComparisonButton;
+        if (copyComparisonButton) {
           let reports = [];
           try {
-            reports = JSON.parse(sourceButton.dataset.comparison || '[]');
+            reports = JSON.parse(copyComparisonButton.dataset.comparison || '[]');
           } catch {
             reports = [];
           }
           const text = formatComparisonText(reports);
           if (!text) return;
-          if (copyComparisonButton) {
-            try {
-              await navigator.clipboard.writeText(text);
-              copyComparisonButton.textContent = 'Copied!';
-              setTimeout(() => { copyComparisonButton.textContent = 'Copy comparison'; }, 1500);
-            } catch {
-              window.alert(text);
-            }
-          } else {
-            try {
-              await sharePage({ title: 'Gematria comparison', text, url: window.location.href }, window.location.href);
-            } catch {
-              window.alert(text);
-            }
+          try {
+            await navigator.clipboard.writeText(text);
+            copyComparisonButton.textContent = 'Copied!';
+            setTimeout(() => { copyComparisonButton.textContent = 'Copy comparison'; }, 1500);
+          } catch {
+            window.alert(text);
           }
           return;
         }
 
         const copyReverseButton = event.target.closest('.agent-copy-reverse-button');
-        const shareReverseButton = event.target.closest('.agent-share-reverse-button');
-        if (copyReverseButton || shareReverseButton) {
-          const sourceButton = copyReverseButton || shareReverseButton;
+        if (copyReverseButton) {
           let payload = null;
           try {
-            payload = JSON.parse(sourceButton.dataset.reverse || 'null');
+            payload = JSON.parse(copyReverseButton.dataset.reverse || 'null');
           } catch {
             payload = null;
           }
           const text = payload ? formatReverseLookupText(payload) : '';
           if (!text) return;
-          if (copyReverseButton) {
-            try {
-              await navigator.clipboard.writeText(text);
-              copyReverseButton.textContent = 'Copied!';
-              setTimeout(() => { copyReverseButton.textContent = 'Copy lookup'; }, 1500);
-            } catch {
-              window.alert(text);
-            }
-          } else {
-            try {
-              await sharePage({ title: 'Reverse gematria lookup', text, url: window.location.href }, window.location.href);
-            } catch {
-              window.alert(text);
-            }
+          try {
+            await navigator.clipboard.writeText(text);
+            copyReverseButton.textContent = 'Copied!';
+            setTimeout(() => { copyReverseButton.textContent = 'Copy'; }, 1500);
+          } catch {
+            window.alert(text);
           }
           return;
         }
 
         const copyReverseRangeButton = event.target.closest('.agent-copy-reverse-range-button');
-        const shareReverseRangeButton = event.target.closest('.agent-share-reverse-range-button');
-        if (copyReverseRangeButton || shareReverseRangeButton) {
-          const sourceButton = copyReverseRangeButton || shareReverseRangeButton;
+        if (copyReverseRangeButton) {
           let payload = null;
           try {
-            payload = JSON.parse(sourceButton.dataset.reverseRange || 'null');
+            payload = JSON.parse(copyReverseRangeButton.dataset.reverseRange || 'null');
           } catch {
             payload = null;
           }
           const text = payload ? formatReverseRangeText(payload) : '';
           if (!text) return;
-          if (copyReverseRangeButton) {
-            try {
-              await navigator.clipboard.writeText(text);
-              copyReverseRangeButton.textContent = 'Copied!';
-              setTimeout(() => { copyReverseRangeButton.textContent = 'Copy lookup'; }, 1500);
-            } catch {
-              window.alert(text);
-            }
-          } else {
-            try {
-              await sharePage({ title: 'Reverse gematria range lookup', text, url: window.location.href }, window.location.href);
-            } catch {
-              window.alert(text);
-            }
+          try {
+            await navigator.clipboard.writeText(text);
+            copyReverseRangeButton.textContent = 'Copied!';
+            setTimeout(() => { copyReverseRangeButton.textContent = 'Copy lookup'; }, 1500);
+          } catch {
+            window.alert(text);
           }
           return;
         }
@@ -2272,7 +2247,7 @@ View results: ${shareUrl}`.trim(),
               window.alert('Image downloaded.');
             } else {
               reportButtonEvent('share_button_click', { source: 'ai_agent_lookup' });
-              const agentShareUrl = buildAgentShareUrl({ topic, total, root });
+              const agentShareUrl = buildAgentShareUrl({ topic, total, root, isBaseRoot, definitionPreview, perLetterValues });
               const shareText = `Gematria for "${topic}": total ${total}, digital root ${root}.`;
               await sharePage({
                 title: `Gematria for ${topic}`,

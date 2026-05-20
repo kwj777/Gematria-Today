@@ -280,7 +280,11 @@ async function loadWordnikWordOfDayHero() {
       definitionCta.href = definitionHref;
       definitionCta.hidden = !definitionPreview;
     }
-    if (calculatorCta) calculatorCta.href = calculatorHref;
+    if (calculatorCta) {
+      calculatorCta.href = calculatorHref;
+      const labelWord = word.length > 14 ? `${word.slice(0, 13)}…` : word;
+      calculatorCta.textContent = `Explore "${labelWord}" in the calculator`;
+    }
   } catch (_error) {
     const title = document.getElementById('homeWordnikWotdTitle');
     const definition = document.getElementById('homeWordnikWotdDefinition');
@@ -457,6 +461,7 @@ const initializeHeroQuickCalc = () => {
       deepLink.textContent = 'See it on the full calculator →';
       deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(exampleWord)}`);
       deepLink.setAttribute('aria-disabled', 'true');
+      deepLink.setAttribute('tabindex', '-1');
       deepLink.removeAttribute('data-active');
       return;
     }
@@ -467,6 +472,7 @@ const initializeHeroQuickCalc = () => {
     deepLink.textContent = 'See it on the full calculator →';
     deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
     deepLink.setAttribute('aria-disabled', 'false');
+    deepLink.removeAttribute('tabindex');
     deepLink.setAttribute('data-active', 'true');
     if (!trackedThisSession) {
       trackedThisSession = true;
@@ -477,6 +483,17 @@ const initializeHeroQuickCalc = () => {
   update();
 
   input.addEventListener('input', update);
+  input.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    if (deepLink.getAttribute('aria-disabled') === 'true') return;
+    event.preventDefault();
+    window.gematriaTracking?.track('home_hero_quick_calc_deep_link_click', {
+      source: 'home_hero_quick_calc_enter',
+      destination: deepLink.getAttribute('href') || '',
+      tier: window.__gematriaAuthTier || 'anon',
+    });
+    window.location.assign(deepLink.getAttribute('href') || '/calculator.html');
+  });
   deepLink.addEventListener('click', () => {
     window.gematriaTracking?.track('home_hero_quick_calc_deep_link_click', {
       source: 'home_hero_quick_calc',

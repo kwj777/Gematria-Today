@@ -85,8 +85,31 @@
   const MODULE_LINK_HIDDEN_FLAG = 'moduleLinkHidden';
   const MODULE_PRELOAD_HIDDEN_FLAG = 'modulePreloadHidden';
 
-  const hideModuleElementsUntilSettingsLoad = () => {
+  const applySynchronousModuleOverrides = () => {
+    const preloadOverrides = {
+      ...parseModuleOverrides(window.SITE_MODULE_OVERRIDES || {}),
+      ...parseStoredModules(),
+      ...parseModulesFromQuery(),
+    };
+
     document.querySelectorAll('[data-module]').forEach((element) => {
+      const requiredModules = String(element.getAttribute('data-module') || '')
+        .split(',')
+        .map((moduleName) => normalizeName(moduleName))
+        .filter(Boolean);
+
+      if (requiredModules.length === 0) {
+        return;
+      }
+
+      const shouldHide = requiredModules.some((moduleName) => (
+        moduleName in preloadOverrides && preloadOverrides[moduleName] === false
+      ));
+
+      if (!shouldHide) {
+        return;
+      }
+
       if (element.classList.contains('d-none')) {
         return;
       }
@@ -311,13 +334,13 @@
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      hideModuleElementsUntilSettingsLoad();
+      applySynchronousModuleOverrides();
       applyModuleSettings().catch(() => {
         applyModuleVisibility();
       });
     }, { once: true });
   } else {
-    hideModuleElementsUntilSettingsLoad();
+    applySynchronousModuleOverrides();
     applyModuleSettings().catch(() => {
       applyModuleVisibility();
     });

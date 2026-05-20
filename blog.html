@@ -4,7 +4,8 @@
     <script src="/early-bootstrap.js"></script>
     <script src="/page-scripts/blog-1.js"></script>
     <style>
-      html.blog-detail-view #blogLandingHero { display: none; }
+      html.blog-detail-view #blogLandingHero,
+      html.blog-detail-view #blogEditorialTrustPanel { display: none; }
     </style>
 
 <!-- Google Analytics bootstrap moved to deferred module -->
@@ -81,6 +82,9 @@
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <div id="blogReadingProgressWrap" class="blog-reading-progress d-none" aria-hidden="true">
+      <div id="blogReadingProgress" class="blog-reading-progress__bar"></div>
+    </div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg?v=2" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
@@ -132,7 +136,7 @@
         </section>
 
 
-        <section class="content-panel p-4 mb-5">
+        <section id="blogEditorialTrustPanel" class="content-panel p-4 mb-5">
           <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
               <p class="section-kicker mb-1">Editorial Trust</p>
@@ -158,9 +162,22 @@
               <h2 class="h4 mb-3">Start with these reads</h2>
               <div class="mb-4">
                 <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
-                <select id="blogTagFilters" class="form-select form-select-sm" aria-label="Filter blog posts by tag">
-                  <option value="">Loading tags…</option>
-                </select>
+                <div
+                  id="blogTagFilters"
+                  class="blog-tag-filters blog-tag-filters--collapsed d-flex flex-wrap gap-2"
+                  role="group"
+                  aria-label="Filter blog posts by tag"
+                >
+                  <span class="text-muted small">Loading tags…</span>
+                </div>
+                <button
+                  id="blogTagFiltersToggle"
+                  type="button"
+                  class="btn btn-link btn-sm px-0 mt-2"
+                  aria-controls="blogTagFilters"
+                  aria-expanded="false"
+                  hidden
+                >Show all tags</button>
               </div>
               <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
                 <div class="followit--follow-form-container followit-card followit-card--sidebar" attr-a attr-b attr-c attr-d attr-e attr-f>
@@ -210,6 +227,27 @@
                 <a class="btn btn-ghost" href="/member.html">Go to my dashboard</a>
               </div>
             </aside>
+            <nav id="blogBreadcrumb" class="mb-3 d-none" aria-label="Breadcrumb">
+              <ol class="breadcrumb small mb-0">
+                <li class="breadcrumb-item"><a href="/blog.html">Blog</a></li>
+                <li class="breadcrumb-item active" aria-current="page" id="blogBreadcrumbCurrent">Post</li>
+              </ol>
+            </nav>
+            <div id="blogListToolbar" class="content-panel p-3 mb-4 d-flex flex-wrap gap-3 align-items-center">
+              <label for="blogSearchInput" class="visually-hidden">Search posts</label>
+              <div class="flex-grow-1 position-relative">
+                <input
+                  id="blogSearchInput"
+                  type="search"
+                  class="form-control form-control-sm"
+                  placeholder="Search posts by title or summary (press /)"
+                  autocomplete="off"
+                  aria-controls="blogPosts"
+                  aria-keyshortcuts="/"
+                />
+              </div>
+              <p id="blogPostsCount" class="small text-muted mb-0" aria-live="polite"></p>
+            </div>
             <div id="blogPosts" class="d-grid gap-4 async-content-shell async-content-shell--lg" aria-live="polite">
               <article class="blog-post-card p-4 p-lg-5 news-placeholder-panel">
                 <p class="placeholder-glow mb-3"><span class="placeholder async-shell-line async-shell-line--lg col-8"></span></p>
@@ -218,7 +256,7 @@
               </article>
             </div>
             <div id="blogLoadMoreWrap" class="d-flex justify-content-center mt-4 d-none">
-              <button id="blogLoadMoreButton" type="button" class="btn btn-outline-primary fw-semibold">Load older posts</button>
+              <button id="blogLoadMoreButton" type="button" class="btn btn-outline-primary fw-semibold">Load more posts</button>
             </div>
           </div>
         </section>

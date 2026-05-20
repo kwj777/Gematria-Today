@@ -571,7 +571,35 @@
       };
 
       let latestPosts = [];
+      let allLoadedPosts = [];
       let selectedTag = '';
+      let searchQuery = '';
+      const BLOG_SERIES = [
+        {
+          id: 'pattern-layers',
+          label: 'Pattern Layers',
+          title: 'Pattern Layers — a 3-part workflow',
+          summary: 'Stack three layers — full totals, digital roots, and base-rooted words — into one repeatable research method.',
+          posts: [
+            { slug: 'digital-roots-in-gematria', title: 'Digital Roots and Their Significance in Gematria' },
+            { slug: 'digital-roots-vs-full-totals-when-each-wins', title: 'Digital Roots vs. Full Totals: When Each Wins' },
+            { slug: 'combining-full-totals-digital-roots-and-base-rooted-words', title: 'Combining Full Totals, Digital Roots, and Base-Rooted Words' },
+          ],
+        },
+      ];
+      const findSeriesForPost = (slug) => {
+        if (!slug) {
+          return null;
+        }
+        const normalized = String(slug).toLowerCase();
+        for (const series of BLOG_SERIES) {
+          const index = series.posts.findIndex((post) => post.slug.toLowerCase() === normalized);
+          if (index !== -1) {
+            return { series, index };
+          }
+        }
+        return null;
+      };
       let previewModeActive = false;
       let adminSessionActive = false;
       let loadedPublishedPosts = [];
@@ -612,7 +640,7 @@
           button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading…';
           button.setAttribute('aria-busy', 'true');
         } else {
-          button.textContent = 'Load older posts';
+          button.textContent = 'Load more posts';
           button.removeAttribute('aria-busy');
         }
       };
@@ -641,39 +669,268 @@
         if (!tagFiltersEl) {
           return;
         }
-        tagFiltersEl.innerHTML = [
-          `<option value="">All posts (${posts.length})</option>`,
-          ...sortedTags.map((tag) => {
-            return `<option value="${escapeHtml(tag.label.toLowerCase())}">${escapeHtml(tag.label)} (${tag.count})</option>`;
-          })
-        ].join('');
-        tagFiltersEl.value = selectedTag;
+        const renderChip = (value, label, count, isActive) => {
+          const activeClass = isActive ? 'blog-tag-chip--active' : '';
+          const pressed = isActive ? 'true' : 'false';
+          return `<button type="button" class="blog-tag-chip ${activeClass}" data-tag-filter="${escapeHtml(value)}" aria-pressed="${pressed}"><span class="blog-tag-chip__label">${escapeHtml(label)}</span><span class="blog-tag-chip__count">${count}</span></button>`;
+        };
+        const chips = [renderChip('', 'All posts', posts.length, !selectedTag)];
+        sortedTags.forEach((tag) => {
+          const value = tag.label.toLowerCase();
+          chips.push(renderChip(value, tag.label, tag.count, selectedTag === value));
+        });
+        tagFiltersEl.innerHTML = chips.join('');
+        updateTagFilterOverflowState();
       };
 
-      const getVisiblePosts = () => {
-        if (!selectedTag) {
-          return latestPosts;
+      const matchesSearchQuery = (post, query) => {
+        if (!query) {
+          return true;
         }
-        return latestPosts.filter((post) => getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag));
+        const haystack = `${String(post?.title || '')} ${String(post?.summary || '')}`.toLowerCase();
+        return haystack.includes(query);
       };
-      const inlineFollowFormMarkup = `
-        <section class="content-panel p-4 p-lg-5 blog-post-card" aria-label="Email subscription">
-          <div class="followit--follow-form-container followit-card followit-card--inline" attr-a attr-b attr-c attr-d attr-e attr-f>
-            <form action="https://api.follow.it/subscription-form/UGRiajBXSUFKaWpwZ1h3Q0xaQzdXdTV5UUdaamJxaFcvTXpQbWR5RjFpTExacnNMZE9MdkdkelY0ZGdza1R2M1ZkYnR6RDdvak5vYno4YzNEaEQwZC9ORkhma1RMdloyekNPTFphV1BrWVJzbHYvbTR5RzdiM0tBTGlzcXZPUHZ8NXlRaUNjSHhLN05ISUJ1RnhsWXJRakZqQkt4K1pwc1NxVlIyaGVybTdxND0=/8" method="post">
-              <div class="form-preview" data-v-8a8a107f="">
-                <div class="preview-heading" data-v-8a8a107f="">
-                  <h5 data-v-8a8a107f="">Get new posts by email:</h5>
-                </div>
-                <div class="preview-input-field" data-v-8a8a107f="">
-                  <input type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" data-v-8a8a107f="">
-                </div>
-                <div class="preview-submit-button" data-v-8a8a107f="">
-                  <button type="submit" data-v-8a8a107f="">Subscribe</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </section>`;
+      const getVisiblePosts = () => {
+        const query = searchQuery.trim().toLowerCase();
+        return latestPosts.filter((post) => {
+          if (selectedTag && !getPostTags(post).some((tag) => tag.toLowerCase() === selectedTag)) {
+            return false;
+          }
+          return matchesSearchQuery(post, query);
+        });
+      };
+      const slugifyHeading = (text) => {
+        return String(text || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      };
+      const buildTableOfContents = (postCard) => {
+        if (!postCard) {
+          return;
+        }
+        const body = postCard.querySelector('.blog-post-body');
+        if (!body) {
+          return;
+        }
+        const headings = Array.from(body.querySelectorAll('h2, h3'));
+        if (headings.length < 2) {
+          return;
+        }
+        const seenIds = new Set();
+        const items = headings.map((heading) => {
+          let id = heading.id || slugifyHeading(heading.textContent);
+          if (!id) {
+            return null;
+          }
+          let unique = id;
+          let counter = 2;
+          while (seenIds.has(unique)) {
+            unique = `${id}-${counter}`;
+            counter += 1;
+          }
+          seenIds.add(unique);
+          heading.id = unique;
+          const label = heading.textContent.trim();
+          if (!heading.querySelector('.blog-heading-anchor')) {
+            const anchor = document.createElement('a');
+            anchor.className = 'blog-heading-anchor';
+            anchor.href = `#${unique}`;
+            anchor.setAttribute('aria-label', `Link to section: ${label}`);
+            anchor.textContent = '#';
+            heading.appendChild(anchor);
+          }
+          return { id: unique, label };
+        }).filter(Boolean);
+        if (items.length < 2) {
+          return;
+        }
+        const tocMarkup = `<nav class="blog-post-toc content-panel p-3 mb-4" aria-label="On this page"><p class="section-kicker mb-2">On this page</p><ol class="list-unstyled small mb-0">${items.map((item) => `<li class="blog-post-toc__item"><a class="blog-post-toc__link" href="#${escapeHtml(item.id)}">${escapeHtml(item.label)}</a></li>`).join('')}</ol></nav>`;
+        body.insertAdjacentHTML('afterbegin', tocMarkup);
+      };
+      const buildSeriesPromoMarkup = () => {
+        if (!BLOG_SERIES.length) {
+          return '';
+        }
+        const series = BLOG_SERIES[0];
+        const items = series.posts.map((post, index) => {
+          const href = `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+          return `<li class="blog-series-promo__step"><span class="blog-series-promo__step-number">${index + 1}</span><a class="blog-series-promo__step-link" href="${escapeHtml(href)}">${escapeHtml(post.title)}</a></li>`;
+        }).join('');
+        return `<aside class="blog-series-promo content-panel p-4 mb-4" aria-label="Featured reading path"><p class="section-kicker mb-2">Start here · Reading path</p><h2 class="h5 mb-2">${escapeHtml(series.title)}</h2><p class="small text-muted mb-3">${escapeHtml(series.summary)}</p><ol class="blog-series-promo__list list-unstyled mb-0">${items}</ol></aside>`;
+      };
+      const buildSeriesStrip = (postCard, currentPost) => {
+        if (!postCard || !currentPost) {
+          return;
+        }
+        const match = findSeriesForPost(currentPost.slug);
+        if (!match) {
+          return;
+        }
+        const { series, index } = match;
+        const prev = index > 0 ? series.posts[index - 1] : null;
+        const next = index < series.posts.length - 1 ? series.posts[index + 1] : null;
+        const linkFor = (post, direction) => {
+          if (!post) {
+            return `<span class="blog-series-strip__cell blog-series-strip__cell--empty"></span>`;
+          }
+          const href = `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+          const label = direction === 'prev' ? '&larr; Previous' : 'Next &rarr;';
+          const alignClass = direction === 'prev' ? '' : ' blog-series-strip__cell--end';
+          return `<a class="blog-series-strip__cell${alignClass}" href="${escapeHtml(href)}"><span class="blog-series-strip__direction">${label}</span><span class="blog-series-strip__title">${escapeHtml(post.title)}</span></a>`;
+        };
+        const stripMarkup = `<nav class="blog-series-strip content-panel p-3 mb-4" aria-label="${escapeHtml(series.label)} series navigation"><div class="blog-series-strip__meta small text-muted mb-2"><strong>${escapeHtml(series.label)}</strong> · Part ${index + 1} of ${series.posts.length}</div><div class="blog-series-strip__grid">${linkFor(prev, 'prev')}${linkFor(next, 'next')}</div></nav>`;
+        postCard.insertAdjacentHTML('beforebegin', stripMarkup);
+      };
+      const buildRelatedPosts = (postCard, currentPost) => {
+        if (!postCard || !currentPost) {
+          return;
+        }
+        const currentSlug = String(currentPost.slug || '').toLowerCase();
+        const currentTags = getPostTags(currentPost).map((tag) => tag.toLowerCase());
+        const candidates = allLoadedPosts.filter((post) => String(post.slug || '').toLowerCase() !== currentSlug);
+        if (!candidates.length) {
+          return;
+        }
+        const scored = candidates.map((post) => {
+          const postTags = getPostTags(post).map((tag) => tag.toLowerCase());
+          const overlap = postTags.filter((tag) => currentTags.includes(tag)).length;
+          return { post, overlap };
+        });
+        scored.sort((left, right) => right.overlap - left.overlap);
+        const related = scored.slice(0, 3).map((entry) => entry.post);
+        if (!related.length) {
+          return;
+        }
+        const itemMarkup = related.map((post) => {
+          const href = `/blog.html?post=${encodeURIComponent(post.slug)}#${encodeURIComponent(post.slug)}`;
+          const summary = String(post.summary || '').trim();
+          return `<li class="blog-related__item"><a class="blog-related__link" href="${escapeHtml(href)}"><span class="blog-related__title">${escapeHtml(post.title || 'Untitled post')}</span>${summary ? `<span class="blog-related__summary">${escapeHtml(summary)}</span>` : ''}</a></li>`;
+        }).join('');
+        const relatedMarkup = `<aside class="blog-related content-panel p-4 mt-4" aria-label="Related posts"><p class="section-kicker mb-2">Related posts</p><ul class="list-unstyled mb-0">${itemMarkup}</ul></aside>`;
+        postCard.insertAdjacentHTML('afterend', relatedMarkup);
+      };
+      let tocObserver = null;
+      const enableTocScrollSpy = (postCard) => {
+        if (tocObserver) {
+          tocObserver.disconnect();
+          tocObserver = null;
+        }
+        if (!postCard) {
+          return;
+        }
+        const tocLinks = Array.from(postCard.querySelectorAll('.blog-post-toc__link'));
+        if (!tocLinks.length || typeof IntersectionObserver === 'undefined') {
+          return;
+        }
+        const linkById = new Map(tocLinks.map((link) => [link.getAttribute('href').slice(1), link]));
+        const headingIds = Array.from(linkById.keys());
+        const headings = headingIds
+          .map((id) => postCard.querySelector(`#${CSS.escape(id)}`))
+          .filter(Boolean);
+        if (!headings.length) {
+          return;
+        }
+        const activeIds = new Set();
+        const refresh = () => {
+          tocLinks.forEach((link) => link.classList.remove('blog-post-toc__link--active'));
+          if (!activeIds.size) {
+            return;
+          }
+          const firstMatchingId = headingIds.find((id) => activeIds.has(id));
+          if (firstMatchingId) {
+            const link = linkById.get(firstMatchingId);
+            if (link) {
+              link.classList.add('blog-post-toc__link--active');
+            }
+          }
+        };
+        tocObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            const id = entry.target.id;
+            if (!id) {
+              return;
+            }
+            if (entry.isIntersecting) {
+              activeIds.add(id);
+            } else {
+              activeIds.delete(id);
+            }
+          });
+          refresh();
+        }, {
+          rootMargin: '-30% 0px -55% 0px',
+          threshold: 0,
+        });
+        headings.forEach((heading) => tocObserver.observe(heading));
+      };
+      const updateReadingProgressOffset = () => {
+        const navbar = document.querySelector('nav.sticky-top');
+        if (!navbar) {
+          return;
+        }
+        const height = Math.round(navbar.getBoundingClientRect().height);
+        document.documentElement.style.setProperty('--blog-reading-progress-top', `${height}px`);
+      };
+      const updateReadingProgress = () => {
+        const bar = document.getElementById('blogReadingProgress');
+        const postCard = document.querySelector('.blog-post-card');
+        if (!bar || !postCard) {
+          return;
+        }
+        const rect = postCard.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const total = rect.height - viewportHeight;
+        if (total <= 0) {
+          bar.style.width = '100%';
+          return;
+        }
+        const scrolled = Math.min(Math.max(-rect.top, 0), total);
+        const percent = Math.min(100, Math.max(0, (scrolled / total) * 100));
+        bar.style.width = `${percent}%`;
+      };
+      const updateBlogChrome = (detailViewActive, requestedTargetPost) => {
+        const toolbar = document.getElementById('blogListToolbar');
+        if (toolbar) {
+          toolbar.classList.toggle('d-none', detailViewActive);
+        }
+        const breadcrumb = document.getElementById('blogBreadcrumb');
+        const breadcrumbCurrent = document.getElementById('blogBreadcrumbCurrent');
+        if (breadcrumb && breadcrumbCurrent) {
+          if (detailViewActive && requestedTargetPost) {
+            breadcrumbCurrent.textContent = String(requestedTargetPost.title || 'Post');
+            breadcrumb.classList.remove('d-none');
+          } else {
+            breadcrumb.classList.add('d-none');
+          }
+        }
+        const progressBar = document.getElementById('blogReadingProgress');
+        if (progressBar) {
+          const wrap = progressBar.parentElement;
+          if (wrap) {
+            wrap.classList.toggle('d-none', !detailViewActive);
+          }
+          if (!detailViewActive) {
+            progressBar.style.width = '0%';
+          }
+        }
+      };
+      const updatePostsCount = (visibleCount, totalCount, detailViewActive) => {
+        const countEl = document.getElementById('blogPostsCount');
+        if (!countEl) {
+          return;
+        }
+        if (detailViewActive || !totalCount) {
+          countEl.textContent = '';
+          return;
+        }
+        countEl.textContent = visibleCount === totalCount
+          ? `${totalCount} post${totalCount === 1 ? '' : 's'}`
+          : `Showing ${visibleCount} of ${totalCount} posts`;
+      };
       const getPostEditUrl = (post) => {
         const rawId = String(post?.id || '').trim();
         if (rawId) {
@@ -683,8 +940,20 @@
         return rawSlug ? `/admin-posts.html?editPost=${encodeURIComponent(rawSlug)}` : '/admin-posts.html';
       };
 
+      const sortPostsEditorial = (posts) => {
+        const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
+        return posts.slice().sort((left, right) => {
+          const leftFeatured = isTruthyFlag(left?.featured || left?.isFeatured) ? 1 : 0;
+          const rightFeatured = isTruthyFlag(right?.featured || right?.isFeatured) ? 1 : 0;
+          if (leftFeatured !== rightFeatured) {
+            return rightFeatured - leftFeatured;
+          }
+          return collator.compare(String(left?.title || ''), String(right?.title || ''));
+        });
+      };
       function renderPosts(posts) {
-        latestPosts = posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) }));
+        latestPosts = sortPostsEditorial(posts.map((post, index) => ({ ...post, slug: createPostSlug(post, index) })));
+        allLoadedPosts = latestPosts.filter((post) => !isHiddenFromMainBlog(post));
         const requestedPostSlug = String(getRequestedPostSlug() || '').trim();
         const requestedPostId = String(getRequestedPostId() || '').trim();
         const detailViewActive = Boolean(requestedPostSlug || requestedPostId);
@@ -704,8 +973,9 @@
           return !isHiddenFromMainBlog(post);
         });
         renderTagFilters(latestPosts);
+        updateBlogChrome(detailViewActive, requestedTargetPost);
 
-        const filteredPosts = getVisiblePosts();
+        const filteredPosts = detailViewActive ? latestPosts : getVisiblePosts();
         const previewRequestActive = isPreviewRequested();
         const postMarkup = filteredPosts.map((post) => {
           const preRenderedBodyHtml = String(post.renderedBodyHtml || '').trim();
@@ -720,8 +990,8 @@
           const renderedBodyHtml = previewModeActive
             ? appendImageVersionTokenToHtmlImages(sanitizedBodyHtml, previewImageVersionToken)
             : sanitizedBodyHtml;
-          const inlineReadMoreMarkup = `<p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}" data-read-more-toggle="${escapeHtml(post.slug)}" aria-expanded="false">Read more...</a></p>`;
-          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p>${inlineReadMoreMarkup}<div class="blog-post-read-more d-none">${renderedBodyHtml}${fallbackRelatedLinks}</div>`;
+          const inlineReadMoreMarkup = `<p class="mb-0"><a class="news-inline-link fw-semibold" href="${escapeHtml(readMoreHref)}">Read full post &rarr;</a></p>`;
+          const listSummaryHtml = `<p>${escapeHtml(summaryText || 'Open this post to read the full article.')}</p>${inlineReadMoreMarkup}`;
           const bodyHtml = detailViewActive
             ? `${renderedBodyHtml}${fallbackRelatedLinks}`
             : listSummaryHtml;
@@ -744,14 +1014,27 @@
           const adminEditButtonMarkup = adminSessionActive
             ? `<a class="btn btn-sm btn-outline-primary fw-semibold" href="${escapeHtml(getPostEditUrl(post))}">Edit</a>`
             : '';
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
+          const copyLinkButtonMarkup = `<button type="button" class="btn btn-sm btn-outline-secondary fw-semibold blog-copy-link-button" data-copy-link="${escapeHtml(post.slug)}">Copy link</button>`;
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}${copyLinkButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         });
-        if (postMarkup.length > 2) {
-          postMarkup.splice(2, 0, inlineFollowFormMarkup);
-        } else if (postMarkup.length > 1) {
-          postMarkup.push(inlineFollowFormMarkup);
+        const postsContainer = document.getElementById('blogPosts');
+        const showSeriesPromo = !detailViewActive && !searchQuery.trim() && !selectedTag;
+        const seriesPromoMarkup = showSeriesPromo ? buildSeriesPromoMarkup() : '';
+        if (!postMarkup.length && !detailViewActive) {
+          postsContainer.innerHTML = `${seriesPromoMarkup}<div class="content-panel p-4 text-muted small">No posts match your filters. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="blogClearFiltersButton">Clear filters</button></div>`;
+        } else {
+          postsContainer.innerHTML = `${seriesPromoMarkup}${postMarkup.join('')}`;
         }
-        document.getElementById('blogPosts').innerHTML = postMarkup.join('');
+        updatePostsCount(filteredPosts.length, latestPosts.length, detailViewActive);
+        if (detailViewActive) {
+          const detailCard = postsContainer.querySelector('.blog-post-card');
+          buildSeriesStrip(detailCard, requestedTargetPost);
+          buildTableOfContents(detailCard);
+          enableTocScrollSpy(detailCard);
+          buildRelatedPosts(detailCard, requestedTargetPost);
+          updateReadingProgressOffset();
+          updateReadingProgress();
+        }
 
         if (filteredPosts.length) {
           const requestedSlug = getRequestedPostSlug();
@@ -771,16 +1054,34 @@
         }
         focusLinkedPost(getRequestedPostSlug());
       });
-      document.addEventListener('change', (event) => {
-        const tagFilterSelect = event.target.closest('#blogTagFilters');
-        if (!tagFilterSelect) {
+      let searchDebounceHandle = null;
+      document.addEventListener('input', (event) => {
+        const searchInput = event.target.closest('#blogSearchInput');
+        if (!searchInput) {
           return;
         }
-        selectedTag = String(tagFilterSelect.value || '').trim().toLowerCase();
-        syncTagLocation(selectedTag);
-        renderPosts(latestPosts);
+        if (searchDebounceHandle) {
+          clearTimeout(searchDebounceHandle);
+        }
+        const value = String(searchInput.value || '');
+        searchDebounceHandle = setTimeout(() => {
+          searchQuery = value;
+          renderPosts(latestPosts);
+        }, 120);
       });
       document.addEventListener('click', (event) => {
+        const clearFiltersButton = event.target.closest('#blogClearFiltersButton');
+        if (clearFiltersButton) {
+          searchQuery = '';
+          selectedTag = '';
+          syncTagLocation('');
+          const searchInput = document.getElementById('blogSearchInput');
+          if (searchInput) {
+            searchInput.value = '';
+          }
+          renderPosts(latestPosts);
+          return;
+        }
         const tagFilterToggle = event.target.closest('#blogTagFiltersToggle');
         if (tagFilterToggle) {
           const tagFiltersEl = document.getElementById('blogTagFilters');
@@ -797,23 +1098,31 @@
           renderPosts(latestPosts);
           return;
         }
-        const readMoreToggle = event.target.closest('[data-read-more-toggle]');
-        if (readMoreToggle) {
-          event.preventDefault();
-          const postCard = readMoreToggle.closest('.blog-post-card');
-          const readMoreContent = postCard?.querySelector('.blog-post-read-more');
-          if (!readMoreContent) {
-            return;
-          }
-          const isExpanded = !readMoreContent.classList.contains('d-none');
-          if (isExpanded) {
-            readMoreContent.classList.add('d-none');
-            readMoreToggle.textContent = 'Read more...';
-            readMoreToggle.setAttribute('aria-expanded', 'false');
-          } else {
-            readMoreContent.classList.remove('d-none');
-            readMoreToggle.textContent = 'Show less';
-            readMoreToggle.setAttribute('aria-expanded', 'true');
+        const copyLinkButton = event.target.closest('[data-copy-link]');
+        if (copyLinkButton) {
+          const slug = String(copyLinkButton.dataset.copyLink || '').trim().toLowerCase();
+          const post = latestPosts.find((entry) => entry.slug.toLowerCase() === slug);
+          if (post) {
+            const shareUrl = buildSharePostUrl(post.slug);
+            const restoreLabel = copyLinkButton.textContent;
+            const setLabel = (text) => {
+              copyLinkButton.textContent = text;
+              window.setTimeout(() => {
+                copyLinkButton.textContent = restoreLabel;
+              }, 1800);
+            };
+            const writeWithClipboard = navigator.clipboard
+              ? navigator.clipboard.writeText(shareUrl)
+              : Promise.reject(new Error('Clipboard API unavailable'));
+            writeWithClipboard
+              .then(() => {
+                reportButtonEvent('copy_link_button_click', { source: 'blog_post_card', slug: post.slug });
+                setLabel('Copied!');
+              })
+              .catch(() => {
+                setLabel('Press Ctrl+C');
+                window.prompt('Copy this link', shareUrl);
+              });
           }
           return;
         }
@@ -840,6 +1149,45 @@
         window.setTimeout(() => focusLinkedPost(linkedSlug), 0);
       });
       window.addEventListener('resize', () => window.requestAnimationFrame(updateTagFilterOverflowState));
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) {
+          return;
+        }
+        const target = event.target;
+        const tagName = target && target.tagName;
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || (target && target.isContentEditable)) {
+          return;
+        }
+        const searchInput = document.getElementById('blogSearchInput');
+        if (!searchInput || searchInput.offsetParent === null) {
+          return;
+        }
+        event.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      });
+      let readingProgressRafHandle = null;
+      const scheduleReadingProgressUpdate = () => {
+        if (readingProgressRafHandle) {
+          return;
+        }
+        readingProgressRafHandle = window.requestAnimationFrame(() => {
+          readingProgressRafHandle = null;
+          updateReadingProgress();
+        });
+      };
+      window.addEventListener('scroll', scheduleReadingProgressUpdate, { passive: true });
+      window.addEventListener('resize', () => {
+        updateReadingProgressOffset();
+        scheduleReadingProgressUpdate();
+      }, { passive: true });
+      updateReadingProgressOffset();
+      const navbarToggler = document.querySelector('.navbar-toggler');
+      if (navbarToggler) {
+        navbarToggler.addEventListener('click', () => {
+          window.setTimeout(updateReadingProgressOffset, 350);
+        });
+      }
 
       selectedTag = getRequestedTag();
 

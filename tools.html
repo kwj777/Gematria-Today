@@ -111,14 +111,16 @@
       @media (prefers-reduced-motion: reduce) {
         .tool-card { transition: none; }
       }
-      .tool-card:hover,
-      .tool-card:focus-within {
-        transform: translateY(-2px);
-        box-shadow: 0 0.65rem 1.5rem rgba(15, 23, 42, 0.10);
-      }
-      :root[data-bs-theme="dark"] .tool-card:hover,
-      :root[data-bs-theme="dark"] .tool-card:focus-within {
-        box-shadow: 0 0.65rem 1.5rem rgba(0, 0, 0, 0.4);
+      @media (hover: hover) {
+        .tool-card:hover,
+        .tool-card:focus-within {
+          transform: translateY(-2px);
+          box-shadow: 0 0.65rem 1.5rem rgba(15, 23, 42, 0.10);
+        }
+        :root[data-bs-theme="dark"] .tool-card:hover,
+        :root[data-bs-theme="dark"] .tool-card:focus-within {
+          box-shadow: 0 0.65rem 1.5rem rgba(0, 0, 0, 0.4);
+        }
       }
 
       .tool-card--premium {

@@ -37,7 +37,9 @@
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <style>
-      .recovery-stepper { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+      .recovery-stepper { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0 0 1.5rem; padding: 0; list-style: none; }
+      .recovery-stepper > li { list-style: none; }
+      .recovery-stepper > li::marker { content: ''; }
       .recovery-stepper .step { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.85rem; border-radius: 999px; background: rgba(148,163,184,0.15); color: var(--bs-secondary-color, #64748b); font-size: 0.875rem; font-weight: 500; }
       .recovery-stepper .step.is-active { background: var(--bs-primary, #0d6efd); color: #fff; }
       .recovery-stepper .step.is-done { background: rgba(25,135,84,0.18); color: #198754; }

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "lint": "npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs && node scripts/check-google-analytics.mjs && node scripts/check-no-inline-scripts.mjs && node scripts/build-site-bundle.mjs --check",
+    "lint": "npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs && node scripts/check-google-analytics.mjs && node scripts/check-no-inline-scripts.mjs && node scripts/build-site-bundle.mjs --check && node scripts/update-sitemap-lastmod.mjs --check",
     "build:bundle": "node scripts/build-site-bundle.mjs",
     "check:google-analytics": "node scripts/check-google-analytics.mjs",
     "format:check": "node scripts/check-formatting.mjs",
@@ -19,7 +19,9 @@
     "check:architect-guide": "npm run check:site-adaptation-guides",
     "sync:site-adaptation-guides": "node scripts/sync-site-adaptation-guides.mjs --write",
     "check:site-adaptation-guides": "node scripts/sync-site-adaptation-guides.mjs --check",
-    "audit:redirects": "node scripts/audit-sitemap-redirects.mjs"
+    "audit:redirects": "node scripts/audit-sitemap-redirects.mjs",
+    "sync:sitemap": "node scripts/update-sitemap-lastmod.mjs --write",
+    "check:sitemap": "node scripts/update-sitemap-lastmod.mjs --check"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.0",

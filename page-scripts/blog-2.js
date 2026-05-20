@@ -813,6 +813,69 @@
         const relatedMarkup = `<aside class="blog-related content-panel p-4 mt-4" aria-label="Related posts"><p class="section-kicker mb-2">Related posts</p><ul class="list-unstyled mb-0">${itemMarkup}</ul></aside>`;
         postCard.insertAdjacentHTML('afterend', relatedMarkup);
       };
+      let tocObserver = null;
+      const enableTocScrollSpy = (postCard) => {
+        if (tocObserver) {
+          tocObserver.disconnect();
+          tocObserver = null;
+        }
+        if (!postCard) {
+          return;
+        }
+        const tocLinks = Array.from(postCard.querySelectorAll('.blog-post-toc__link'));
+        if (!tocLinks.length || typeof IntersectionObserver === 'undefined') {
+          return;
+        }
+        const linkById = new Map(tocLinks.map((link) => [link.getAttribute('href').slice(1), link]));
+        const headingIds = Array.from(linkById.keys());
+        const headings = headingIds
+          .map((id) => postCard.querySelector(`#${CSS.escape(id)}`))
+          .filter(Boolean);
+        if (!headings.length) {
+          return;
+        }
+        const activeIds = new Set();
+        const refresh = () => {
+          tocLinks.forEach((link) => link.classList.remove('blog-post-toc__link--active'));
+          if (!activeIds.size) {
+            return;
+          }
+          const firstMatchingId = headingIds.find((id) => activeIds.has(id));
+          if (firstMatchingId) {
+            const link = linkById.get(firstMatchingId);
+            if (link) {
+              link.classList.add('blog-post-toc__link--active');
+            }
+          }
+        };
+        tocObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            const id = entry.target.id;
+            if (!id) {
+              return;
+            }
+            if (entry.isIntersecting) {
+              activeIds.add(id);
+            } else {
+              activeIds.delete(id);
+            }
+          });
+          refresh();
+        }, {
+          rootMargin: '-30% 0px -55% 0px',
+          threshold: 0,
+        });
+        headings.forEach((heading) => tocObserver.observe(heading));
+      };
+      const updateBackToTopVisibility = () => {
+        const button = document.getElementById('blogBackToTopButton');
+        if (!button) {
+          return;
+        }
+        const onDetailView = document.documentElement.classList.contains('blog-detail-view');
+        const scrolled = (window.scrollY || window.pageYOffset || 0) > 600;
+        button.classList.toggle('d-none', !(onDetailView && scrolled));
+      };
       const updateReadingProgressOffset = () => {
         const navbar = document.querySelector('nav.sticky-top');
         if (!navbar) {
@@ -976,10 +1039,12 @@
           const detailCard = postsContainer.querySelector('.blog-post-card');
           buildSeriesStrip(detailCard, requestedTargetPost);
           buildTableOfContents(detailCard);
+          enableTocScrollSpy(detailCard);
           buildRelatedPosts(detailCard, requestedTargetPost);
           updateReadingProgressOffset();
           updateReadingProgress();
         }
+        updateBackToTopVisibility();
 
         if (filteredPosts.length) {
           const requestedSlug = getRequestedPostSlug();
@@ -1015,6 +1080,12 @@
         }, 120);
       });
       document.addEventListener('click', (event) => {
+        const backToTopButton = event.target.closest('#blogBackToTopButton');
+        if (backToTopButton) {
+          event.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
         const clearFiltersButton = event.target.closest('#blogClearFiltersButton');
         if (clearFiltersButton) {
           searchQuery = '';
@@ -1119,6 +1190,7 @@
         readingProgressRafHandle = window.requestAnimationFrame(() => {
           readingProgressRafHandle = null;
           updateReadingProgress();
+          updateBackToTopVisibility();
         });
       };
       window.addEventListener('scroll', scheduleReadingProgressUpdate, { passive: true });

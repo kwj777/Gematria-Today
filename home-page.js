@@ -460,6 +460,7 @@ const initializeHeroQuickCalc = () => {
       deepLink.textContent = 'See related words →';
       deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(exampleWord)}`);
       deepLink.setAttribute('aria-disabled', 'true');
+      deepLink.setAttribute('tabindex', '-1');
       deepLink.removeAttribute('data-active');
       return;
     }
@@ -470,6 +471,7 @@ const initializeHeroQuickCalc = () => {
     deepLink.textContent = 'See related words →';
     deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
     deepLink.setAttribute('aria-disabled', 'false');
+    deepLink.removeAttribute('tabindex');
     deepLink.setAttribute('data-active', 'true');
     if (!trackedThisSession) {
       trackedThisSession = true;

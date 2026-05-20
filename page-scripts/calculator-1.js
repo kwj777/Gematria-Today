@@ -382,21 +382,48 @@ View results: ${shareUrl}`.trim(),
       function renderRelatedWordsMembershipCallout(term = '') {
         relatedWordsResult.innerHTML = '';
         const callout = document.createElement('div');
-        callout.className = 'alert alert-info mt-2';
+        callout.className = 'alert alert-info mt-2 related-words-teaser';
 
         const title = document.createElement('strong');
-        title.textContent = 'Related word search is a free-member feature.';
+        title.textContent = term
+          ? `Related words for "${term}" are a free-member feature.`
+          : 'Related word search is a free-member feature.';
+
         const details = document.createElement('p');
         details.className = 'mb-2';
         details.textContent = term
-          ? `You calculated "${term}". Join as a free member to save this search and unlock related words.`
-          : 'Join as a free member to save searches and unlock related word searching.';
+          ? 'Free members can see synonyms, antonyms, and matching-gematria words. Here’s a preview:'
+          : 'Free members see synonyms, antonyms, and matching-gematria words for any lookup.';
+
+        callout.append(title, document.createElement('br'), details);
+
+        const sampleGroups = [
+          { heading: 'Synonyms', words: ['illumination', 'glow', 'radiance'] },
+          { heading: 'Matching gematria', words: ['truth', 'wisdom', 'spirit'] },
+        ];
+        const preview = document.createElement('div');
+        preview.className = 'related-words-teaser-preview';
+        preview.setAttribute('aria-hidden', 'true');
+        sampleGroups.forEach((group) => {
+          const groupNode = document.createElement('div');
+          groupNode.className = 'related-words-teaser-group';
+          const groupHeading = document.createElement('span');
+          groupHeading.className = 'related-words-teaser-heading';
+          groupHeading.textContent = `${group.heading}:`;
+          const wordList = document.createElement('span');
+          wordList.className = 'related-words-teaser-words';
+          wordList.textContent = group.words.join(', ');
+          groupNode.append(groupHeading, ' ', wordList);
+          preview.appendChild(groupNode);
+        });
+        callout.appendChild(preview);
+
         const cta = document.createElement('a');
-        cta.className = 'btn btn-sm btn-primary';
+        cta.className = 'btn btn-sm btn-primary mt-2';
         cta.href = '/member.html#registerForm';
         cta.textContent = 'Join for free';
+        callout.appendChild(cta);
 
-        callout.append(title, document.createElement('br'), details, cta);
         relatedWordsResult.appendChild(callout);
       }
       const memberSaveShell = document.querySelector('#member-save-shell');
@@ -624,13 +651,14 @@ View results: ${shareUrl}`.trim(),
         const wrapper = document.createElement('span');
         wrapper.hidden = true;
         const definitionLink = document.createElement('a');
-        definitionLink.className = 'definition-link';
+        definitionLink.className = 'definition-link definition-pill';
         const returnTo = `${window.location.pathname}${window.location.search}`;
         const definitionParams = new URLSearchParams({ word, returnTo });
         definitionLink.href = `/definition?${definitionParams.toString()}`;
         definitionLink.target = '_blank';
         definitionLink.rel = 'noopener noreferrer';
-        definitionLink.textContent = '(definition)';
+        definitionLink.textContent = 'Definition';
+        definitionLink.title = `View definition for "${word}"`;
         definitionLink.setAttribute('aria-label', `Definition for ${word}`);
         wrapper.appendChild(definitionLink);
         if (trailingSeparator) wrapper.appendChild(document.createTextNode(trailingSeparator));
@@ -1038,6 +1066,9 @@ View results: ${shareUrl}`.trim(),
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = isBaseRoot ? 'Base rooted' : 'Not base rooted';
+        link.title = isBaseRoot
+          ? 'This word reduces to a base root (multiple of 6). Learn more.'
+          : 'This word does not reduce to a base root. Learn more.';
         if (!isBaseRoot) return link;
         const wrapper = document.createElement('span');
         wrapper.className = 'meta-highlight';
@@ -1047,7 +1078,10 @@ View results: ${shareUrl}`.trim(),
 
       function formatSearchCount(count) {
         const value = Number(count) || 0;
-        return `${value} ${value === 1 ? 'search' : 'searches'}`;
+        const node = document.createElement('span');
+        node.textContent = value === 1 ? 'Searched 1 time' : `Searched ${value} times`;
+        node.title = 'How many times this word has been looked up on Gematria Today.';
+        return node;
       }
 
       function formatBaseRootLabel(isBaseRoot) {
@@ -1095,9 +1129,10 @@ View results: ${shareUrl}`.trim(),
         return node;
       }
 
-      function createPerLetterDetails(input) {
+      function createPerLetterDetails(input, { open = false } = {}) {
         const details = document.createElement('details');
         details.className = 'per-letter-details';
+        if (open) details.open = true;
         const summary = document.createElement('summary');
         summary.className = 'small text-muted';
         summary.textContent = 'Per-letter values';
@@ -1211,7 +1246,7 @@ View results: ${shareUrl}`.trim(),
         shareButton.classList.remove('mt-2');
         const downloadImageButton = document.createElement('button');
         downloadImageButton.type = 'button';
-        downloadImageButton.className = 'btn btn-outline-warning btn-sm fw-semibold share-action-button';
+        downloadImageButton.className = 'btn btn-outline-secondary btn-sm fw-semibold share-action-button';
         downloadImageButton.textContent = 'Download image';
         downloadImageButton.addEventListener('click', async () => {
           reportButtonEvent('image_download', { source: 'calculator_lookup' });
@@ -1256,7 +1291,7 @@ View results: ${shareUrl}`.trim(),
           promptLine,
           totalLine,
           metaLine,
-          createPerLetterDetails(searchGematria.word),
+          createPerLetterDetails(searchGematria.word, { open: true }),
           shareActions,
         );
       }

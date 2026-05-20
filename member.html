@@ -102,6 +102,10 @@
           </div>
         </div>
       </noscript>
+      <div id="membershipPageLoading" class="container py-5 text-center" aria-live="polite">
+        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+        <p class="text-muted mt-3 mb-0">Loading your membership dashboard…</p>
+      </div>
       <div id="membershipPageContent" class="container d-none">
         <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5 d-none">
           <div class="row g-4 align-items-center">
@@ -154,7 +158,7 @@
                 <tr>
                   <th scope="row">Saved gematria history</th>
                   <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="No saved history">&mdash;</span></td>
-                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Save up to 3 calculations</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Save up to 7 calculations</span></td>
                   <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Unlimited saved calculations</span></td>
                 </tr>
                 <tr>
@@ -227,7 +231,6 @@
               <div class="col-md-6"><label class="form-label" for="registerUsername">Username <span class="text-danger" aria-hidden="true">*</span></label><input id="registerUsername" class="form-control" autocomplete="username" required /></div>
               <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" autocomplete="nickname" /></div>
               <div class="col-12"><label class="form-label" for="registerEmail">Email <span class="text-danger" aria-hidden="true">*</span></label><input id="registerEmail" class="form-control" type="email" autocomplete="email" required /></div>
-              <div id="registerPasswordMismatchAlert" class="col-12 alert alert-warning d-none mb-0" role="alert">Password and confirm password do not match.</div>
               <div class="col-12"><label class="form-label" for="registerPassword">Password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerPasswordRequirements" /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerPassword" aria-label="Show password" aria-pressed="false">Show</button></div><div id="registerPasswordRequirements" class="form-text">Must be at least 8 characters.</div></div>
               <div class="col-12"><label class="form-label" for="registerConfirmPassword">Confirm password <span class="text-danger" aria-hidden="true">*</span></label><div class="input-group"><input id="registerConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerConfirmPasswordHint registerConfirmPasswordMismatch" /><button class="btn btn-outline-secondary" type="button" data-password-toggle="registerConfirmPassword" aria-label="Show password" aria-pressed="false">Show</button></div><div id="registerConfirmPasswordHint" class="form-text">Re-enter the password to confirm.</div><div id="registerConfirmPasswordMismatch" class="form-text text-danger d-none">Passwords don't match yet.</div></div>
               <div class="col-12">
@@ -313,7 +316,7 @@
                     <tbody>
                       <tr>
                         <th scope="row">Saved gematria history</th>
-                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Save up to 3 calculations</span></td>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Save up to 7 calculations</span></td>
                         <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Unlimited saved calculations</span></td>
                       </tr>
                       <tr>
@@ -387,12 +390,17 @@
               <p id="memberMeta" class="text-muted small mb-0"></p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-              <a id="premiumResearchLink" class="btn btn-outline-secondary premium-research-button disabled" href="/premium-research.html" aria-disabled="true" tabindex="-1">Premium research</a>
-                            <button id="messageCenterOpenButton" class="btn btn-outline-dark d-none" type="button">Message Center</button>
-              <a id="adminPageButton" class="btn btn-outline-dark d-none" href="/admin.html">Admin page</a>
-              <a id="superAdminPageButton" class="btn btn-outline-dark d-none" href="/admin-super-admin.html">Super Admin</a>
-              <a id="siteHubPageButton" class="btn btn-outline-dark d-none" href="/admin-hub.html">Site Hub</a>
-              <button id="logoutButton" class="btn btn-outline-danger" type="button">Sign out</button>
+              <button id="premiumResearchLink" class="btn btn-outline-secondary premium-research-button" type="button" data-href="/premium-research.html">Premium research</button>
+              <button id="messageCenterOpenButton" class="btn btn-outline-dark d-none" type="button">Message Center</button>
+              <div id="adminMenuWrap" class="dropdown d-none">
+                <button id="adminMenuToggle" class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenuToggle">
+                  <li><a id="adminPageButton" class="dropdown-item d-none" href="/admin.html">Admin page</a></li>
+                  <li><a id="superAdminPageButton" class="dropdown-item d-none" href="/admin-super-admin.html">Super Admin</a></li>
+                  <li><a id="siteHubPageButton" class="dropdown-item d-none" href="/admin-hub.html">Site Hub</a></li>
+                </ul>
+              </div>
+              <button id="logoutButton" class="btn btn-outline-secondary" type="button">Sign out</button>
             </div>
           </div>
 
@@ -435,7 +443,7 @@
               </div>
             </div>
             <div class="col-md-4">
-              <div id="messageInboxCard" class="stat-card stat-card-button p-4 h-100 text-start w-100" role="button" tabindex="0">
+              <div id="messageInboxCard" class="stat-card p-4 h-100 w-100">
                 <div class="section-kicker mb-2">Inbox Messages</div>
                 <div id="messageInboxCount" class="metric-value text-info">0</div>
                 <p id="messageInboxMeta" class="mb-3 text-muted">Admin replies waiting in your message center inbox.</p>
@@ -457,14 +465,14 @@
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#achievementsContent"
-                aria-expanded="false"
+                aria-expanded="true"
                 aria-controls="achievementsContent"
               >
-                <span id="achievementsToggleLabel">Expand</span>
-                <span id="achievementsToggleArrow" aria-hidden="true">▼</span>
+                <span id="achievementsToggleLabel">Collapse</span>
+                <span id="achievementsToggleArrow" aria-hidden="true">▲</span>
               </button>
             </div>
-            <div id="achievementsContent" class="collapse" role="region" aria-labelledby="achievementsSectionTitle">
+            <div id="achievementsContent" class="collapse show" role="region" aria-labelledby="achievementsSectionTitle">
               <div class="row g-3 mb-3" id="achievementsStatsRow"></div>
               <h4 class="h6 mt-3 mb-2">Earned badges</h4>
               <div id="achievementsEarnedList" class="d-flex flex-wrap gap-2 mb-3">
@@ -525,7 +533,6 @@
               <section class="content-panel p-4 h-100 w-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
-                    <p class="section-kicker mb-2">History</p>
                     <h3 id="historySectionTitle" class="h4 mb-0">Saved calculations (0)</h3>
                   </div>
                   <button
@@ -534,14 +541,14 @@
                     type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#historySectionContent"
-                    aria-expanded="false"
+                    aria-expanded="true"
                     aria-controls="historySectionContent"
                   >
-                    <span id="historySectionToggleLabel">Expand</span>
-                    <span id="historySectionToggleArrow" aria-hidden="true">▼</span>
+                    <span id="historySectionToggleLabel">Collapse</span>
+                    <span id="historySectionToggleArrow" aria-hidden="true">▲</span>
                   </button>
                 </div>
-                <div id="historySectionContent" class="collapse" role="region" aria-labelledby="historySectionTitle">
+                <div id="historySectionContent" class="collapse show" role="region" aria-labelledby="historySectionTitle">
                   <div id="historyList" class="admin-list"></div>
                   <div id="historyListToggleWrap" class="mt-3 d-none">
                     <button id="historyListToggleButton" class="btn btn-outline-primary btn-sm" type="button">View all saved calculations</button>
@@ -553,7 +560,6 @@
               <section class="content-panel p-4 h-100 w-100">
                 <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
                   <div>
-                    <p class="section-kicker mb-2">AI Agent Sessions</p>
                     <h3 id="chatSessionSectionTitle" class="h4 mb-0">Saved chat sessions (0)</h3>
                   </div>
                   <button
@@ -684,7 +690,6 @@
           <a href="/disclaimer.html">Disclaimer</a>
           <a href="/accessibility.html">Accessibility</a>
           <a href="/contact.html">Contact</a>
-          <a href="/member.html">Dashboard</a>
         </div>
         <div class="site-credit text-center text-lg-start mt-2">
           &copy; 2026 Lunar Web Studio LLC. All rights reserved.<br>Designed by <a href="https://lunarwebstudio.com" target="_blank" rel="noopener">Lunar Web Studio</a>.

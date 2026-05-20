@@ -408,7 +408,7 @@ View results: ${shareUrl}`.trim(),
       const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
         ? new window.BroadcastChannel('member-dashboard-sync')
         : null;
-      const FREE_MEMBERSHIP_SAVE_LIMIT = 3;
+      const FREE_MEMBERSHIP_SAVE_LIMIT = 7;
       let currentSearchPayload = null;
       let lastSavedSearchPayload = null;
       let memberSession = null;

@@ -282,7 +282,8 @@ async function loadWordnikWordOfDayHero() {
     }
     if (calculatorCta) {
       calculatorCta.href = calculatorHref;
-      calculatorCta.textContent = `Explore "${word}" in the calculator`;
+      const labelWord = word.length > 14 ? `${word.slice(0, 13)}…` : word;
+      calculatorCta.textContent = `Explore "${labelWord}" in the calculator`;
     }
   } catch (_error) {
     const title = document.getElementById('homeWordnikWotdTitle');
@@ -482,6 +483,17 @@ const initializeHeroQuickCalc = () => {
   update();
 
   input.addEventListener('input', update);
+  input.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    if (deepLink.getAttribute('aria-disabled') === 'true') return;
+    event.preventDefault();
+    window.gematriaTracking?.track('home_hero_quick_calc_deep_link_click', {
+      source: 'home_hero_quick_calc_enter',
+      destination: deepLink.getAttribute('href') || '',
+      tier: window.__gematriaAuthTier || 'anon',
+    });
+    window.location.assign(deepLink.getAttribute('href') || '/calculator.html');
+  });
   deepLink.addEventListener('click', () => {
     window.gematriaTracking?.track('home_hero_quick_calc_deep_link_click', {
       source: 'home_hero_quick_calc',

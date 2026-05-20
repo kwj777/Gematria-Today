@@ -42,12 +42,14 @@
           { width: '100%', cls: 'bg-success', label: 'Strong password' },
         ];
 
+        const PASSWORD_HINT = 'Must be at least 8 characters.';
+
         function updateStrength() {
           if (!passwordInput || !strengthBar || !strengthLabel || !strengthWrap) return;
           const value = passwordInput.value;
           if (!value) {
             strengthWrap.classList.add('d-none');
-            strengthLabel.textContent = '';
+            strengthLabel.textContent = PASSWORD_HINT;
             return;
           }
           strengthWrap.classList.remove('d-none');

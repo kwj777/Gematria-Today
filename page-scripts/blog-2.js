@@ -734,7 +734,16 @@
           }
           seenIds.add(unique);
           heading.id = unique;
-          return { id: unique, label: heading.textContent.trim() };
+          const label = heading.textContent.trim();
+          if (!heading.querySelector('.blog-heading-anchor')) {
+            const anchor = document.createElement('a');
+            anchor.className = 'blog-heading-anchor';
+            anchor.href = `#${unique}`;
+            anchor.setAttribute('aria-label', `Link to section: ${label}`);
+            anchor.textContent = '#';
+            heading.appendChild(anchor);
+          }
+          return { id: unique, label };
         }).filter(Boolean);
         if (items.length < 2) {
           return;

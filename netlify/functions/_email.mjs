@@ -8,6 +8,45 @@ function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function interpretSendGridError(status, body, fromEmail) {
+  let firstMessage = '';
+  if (body) {
+    try {
+      const parsed = JSON.parse(body);
+      firstMessage = String(parsed?.errors?.[0]?.message || '').trim();
+    } catch {
+      firstMessage = String(body).slice(0, 200).trim();
+    }
+  }
+
+  const lower = firstMessage.toLowerCase();
+  const senderDomain = String(fromEmail || '').split('@')[1] || '';
+  const senderHint = senderDomain ? ` (${senderDomain})` : '';
+
+  if (status === 401 || lower.includes('permission denied') || lower.includes('authorization')) {
+    return 'SendGrid rejected the API key. Check that SENDGRID_API_KEY is set and has Mail Send permission.';
+  }
+  if (status === 403) {
+    if (lower.includes('verified sender') || lower.includes('sender identity')) {
+      return `SendGrid rejected the From address${senderHint}: sender identity is not verified. Authenticate the sending domain in SendGrid or update the From email to a verified sender.`;
+    }
+    if (lower.includes('domain') && lower.includes('authenticat')) {
+      return `SendGrid rejected the From address${senderHint}: sending domain is not authenticated. Complete Sender Authentication for the domain in SendGrid.`;
+    }
+    if (lower.includes('credit') || lower.includes('quota')) {
+      return 'SendGrid rejected the request: account credit/quota exceeded.';
+    }
+    return `SendGrid rejected the request (403)${senderHint}. Most often this means the From address is not a verified sender — check SendGrid → Settings → Sender Authentication.${firstMessage ? ` Detail: ${firstMessage}` : ''}`;
+  }
+  if (status === 413) {
+    return 'SendGrid rejected the request: payload too large.';
+  }
+  if (status === 429) {
+    return 'SendGrid rate limit exceeded. Try again shortly.';
+  }
+  return `SendGrid request failed with status ${status}${firstMessage ? `: ${firstMessage}` : ''}`;
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -93,7 +132,8 @@ export async function sendTransactionalEmail({ toEmail, subject, text, html, sql
 
   if (!response.ok) {
     const details = await response.text();
-    throw Object.assign(new Error(`SendGrid request failed with status ${response.status}`), {
+    const message = interpretSendGridError(response.status, details, config.fromEmail);
+    throw Object.assign(new Error(message), {
       statusCode: 502,
       details,
     });

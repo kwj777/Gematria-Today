@@ -22,10 +22,19 @@
     <loc>https://gematria.today/contact.html</loc>
   </url>
   <url>
+    <loc>https://gematria.today/definitions.html</loc>
+  </url>
+  <url>
     <loc>https://gematria.today/disclaimer.html</loc>
   </url>
   <url>
     <loc>https://gematria.today/faq.html</loc>
+  </url>
+  <url>
+    <loc>https://gematria.today/forum.html</loc>
+  </url>
+  <url>
+    <loc>https://gematria.today/forum-reputation-scale.html</loc>
   </url>
   <url>
     <loc>https://gematria.today/gematria-basics.html</loc>
@@ -55,7 +64,13 @@
     <loc>https://gematria.today/privacy.html</loc>
   </url>
   <url>
+    <loc>https://gematria.today/searchbot.html</loc>
+  </url>
+  <url>
     <loc>https://gematria.today/terms.html</loc>
+  </url>
+  <url>
+    <loc>https://gematria.today/tools.html</loc>
   </url>
   <url>
     <loc>https://gematria.today/why-english-gematria.html</loc>

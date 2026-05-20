@@ -774,7 +774,6 @@
         renderMessageCenter();
         renderForumNotifications();
         membershipPageContent.classList.remove('d-none');
-        document.getElementById('membershipPageLoading')?.classList.add('d-none');
       }
 
       function formatMembershipWindow(member) {

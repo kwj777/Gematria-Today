@@ -110,6 +110,11 @@
       const forumModuleEnabled = siteModules?.isEnabled('forum') !== false;
       const gemabotModuleEnabled = siteModules?.isEnabled('gemabot') !== false;
 
+      const scheduleIdle = (cb) =>
+        (typeof window.requestIdleCallback === 'function'
+          ? window.requestIdleCallback(cb, { timeout: 1500 })
+          : window.setTimeout(cb, 200));
+
       let session = null;
       let csrfToken = null;
       let historyItems = [];
@@ -2040,23 +2045,26 @@
           loadFavoriteHistoryIds();
           setLoggedIn(true);
           populateProfile(session.member, session.profile, session.user);
-          if (forumModuleEnabled) {
-            loadForumNotificationsInBackground();
-          }
           loadHistory().catch((error) => {
             showAlert(error.message || 'Unable to load saved calculations.');
           });
-          loadAchievements().catch(() => {});
-          if (gemabotModuleEnabled) {
-            loadChatSessions().catch((error) => {
-              showAlert(error.message || 'Unable to load chat sessions.');
-            });
-          } else {
+          if (!gemabotModuleEnabled) {
             chatSessions = [];
             renderChatSessions();
           }
-          loadMemberProposals().catch(() => {});
-          loadMemberChatbotFeedback().catch(() => {});
+          scheduleIdle(() => {
+            if (forumModuleEnabled) {
+              loadForumNotificationsInBackground();
+            }
+            loadAchievements().catch(() => {});
+            if (gemabotModuleEnabled) {
+              loadChatSessions().catch((error) => {
+                showAlert(error.message || 'Unable to load chat sessions.');
+              });
+            }
+            loadMemberProposals().catch(() => {});
+            loadMemberChatbotFeedback().catch(() => {});
+          });
 
           if (paymentState === 'success' && stripeSessionId) {
             await csrfReady;

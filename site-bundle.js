@@ -1196,19 +1196,27 @@
   }
 
   var SKIP_TAGS = {
-    A: 1, BUTTON: 1, CODE: 1, PRE: 1, INPUT: 1, TEXTAREA: 1, SELECT: 1, OPTION: 1,
+    A: 1, BUTTON: 1, SUMMARY: 1, CODE: 1, PRE: 1, INPUT: 1, TEXTAREA: 1, SELECT: 1, OPTION: 1,
     LABEL: 1, NAV: 1, HEADER: 1, FOOTER: 1, FORM: 1, SCRIPT: 1, STYLE: 1, NOSCRIPT: 1,
     H1: 1, H2: 1, H3: 1, H4: 1, H5: 1, H6: 1
+  };
+
+  var INTERACTIVE_ROLES = {
+    button: 1, link: 1, tab: 1, menuitem: 1, menuitemcheckbox: 1,
+    menuitemradio: 1, option: 1, switch: 1, checkbox: 1, radio: 1, treeitem: 1
   };
 
   function ancestorDisallowed(node, root) {
     var p = node.parentNode;
     while (p && p !== root && p.nodeType === 1) {
       if (SKIP_TAGS[p.tagName]) return true;
+      var role = p.getAttribute && p.getAttribute('role');
+      if (role && INTERACTIVE_ROLES[role]) return true;
       var cls = p.classList;
       if (cls) {
         if (cls.contains('defn-term') || cls.contains('defn-popup')) return true;
         if (cls.contains('no-glossary')) return true;
+        if (cls.contains('section-kicker')) return true;
       }
       if (p.hasAttribute && p.hasAttribute('data-no-glossary')) return true;
       if (p.isContentEditable) return true;
@@ -1263,6 +1271,8 @@
     if (root.nodeType !== 1) return;
     if (isInsideGlossaryNode(root)) return;
     if (SKIP_TAGS[root.tagName]) return;
+    var rootRole = root.getAttribute && root.getAttribute('role');
+    if (rootRole && INTERACTIVE_ROLES[rootRole]) return;
     if (root[PROCESSED_FLAG]) return;
     root[PROCESSED_FLAG] = true;
 

@@ -19,6 +19,7 @@ const SOURCES = [
   'ui-feedback.js',
   'conversion-tracking.js',
   'glossary-popup.js',
+  'nav-scroll.js',
 ];
 const OUTPUT = 'site-bundle.js';
 

@@ -21,15 +21,18 @@ const EXCLUDED_PREFIXES = ['admin'];
 const ACTIVE_LINK_BY_FILE = {
   'blog.html': '/blog.html',
   'faq.html': '/faq.html',
+  'definitions.html': '/definitions.html',
+  'gematria-basics.html': '/gematria-basics.html',
+  'gematria-guide.html': '/gematria-guide.html',
   'searchbot.html': '/searchbot.html',
   'tools.html': '/tools.html',
-  'calculator.html': '/tools.html',
-  'name-calculator.html': '/tools.html',
-  'ai-agent.html': '/tools.html',
+  'calculator.html': '/calculator.html',
+  'name-calculator.html': '/name-calculator.html',
+  'ai-agent.html': '/ai-agent.html',
   'member.html': '/member.html',
 };
 
-const NAV_BLOCK_RE = /(^[ \t]*)<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">[\s\S]*?<\/nav>\n/m;
+const NAV_BLOCK_RE = /(^[ \t]*)<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top"[^>]*>[\s\S]*?<\/nav>\n/m;
 
 function shouldProcess(fileName) {
   if (!fileName.endsWith('.html')) return false;
@@ -43,9 +46,10 @@ function applyActiveState(nav, activeHref) {
 
   let result = nav;
 
-  // Mark the matching <a> as active.
+  // Mark the matching <a> as active. Supports nav-link (top-level),
+  // dropdown-item (Bootstrap dropdowns), and nav-mega-item (Tools mega-menu).
   const escapedHref = activeHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const linkRegex = new RegExp(`(<a class="nav-link(?!\\s+active)[^"]*)("(?:[^>]*?\\s)?href="${escapedHref}")`);
+  const linkRegex = new RegExp(`(<a class="(?:nav-link|dropdown-item|nav-mega-item)(?!\\s+active)[^"]*)("(?:[^>]*?\\s)?href="${escapedHref}")`);
   const matched = result.replace(linkRegex, (_, classOpen, hrefPart) => `${classOpen} active${hrefPart} aria-current="page"`);
   if (matched === result) {
     throw new Error(`Could not find link with href="${activeHref}" to mark active`);

@@ -71,7 +71,7 @@
   </head>
   <body>
     <a class="skip-link" href="#mainContent">Skip to main content</a>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top" data-nav-shrink>
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg?v=2" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
         <div class="nav-header-actions d-flex align-items-center gap-2 d-lg-none">
@@ -82,15 +82,45 @@
         </div>
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/tools.html">Tools</a></li>
-            <li class="nav-item" data-module="blog"><a class="nav-link" href="/blog.html">Blog</a></li>
-            <li class="nav-item"><a class="nav-link" href="/faq.html">FAQ</a></li>
-            <li class="nav-item"><a class="nav-link" href="/definitions.html">Glossary</a></li>
+            <li class="nav-item dropdown nav-mega">
+              <a class="nav-link dropdown-toggle" href="/tools.html" id="navTools" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tools</a>
+              <div class="dropdown-menu dropdown-menu-end nav-mega-menu" aria-labelledby="navTools">
+                <div class="nav-mega-grid">
+                  <a class="nav-mega-item" href="/calculator.html">
+                    <span class="nav-mega-item__title">Calculator</span>
+                    <span class="nav-mega-item__desc">Run text through every cipher in one click.</span>
+                  </a>
+                  <a class="nav-mega-item" href="/name-calculator.html">
+                    <span class="nav-mega-item__title">Name Calculator</span>
+                    <span class="nav-mega-item__desc">Analyze first, last, and full names.</span>
+                  </a>
+                  <a class="nav-mega-item" href="/ai-agent.html">
+                    <span class="nav-mega-item__title">GemaBot</span>
+                    <span class="nav-mega-item__desc">Ask in plain language, get cipher-aware answers.</span>
+                  </a>
+                  <a class="nav-mega-item" href="/searchbot.html">
+                    <span class="nav-mega-item__title">KnowBot Search</span>
+                    <span class="nav-mega-item__desc">Search the site and gematria knowledge base.</span>
+                  </a>
+                </div>
+                <a class="nav-mega-footer" href="/tools.html">See all tools →</a>
+              </div>
+            </li>
+            <li class="nav-item dropdown nav-learn">
+              <a class="nav-link dropdown-toggle" href="#" id="navLearn" role="button" data-bs-toggle="dropdown" aria-expanded="false">Learn</a>
+              <ul class="dropdown-menu dropdown-menu-end nav-learn-menu" aria-labelledby="navLearn">
+                <li data-module="blog"><a class="dropdown-item" href="/blog.html">Blog</a></li>
+                <li><a class="dropdown-item" href="/faq.html">FAQ</a></li>
+                <li><a class="dropdown-item" href="/definitions.html">Glossary</a></li>
+                <li><a class="dropdown-item" href="/gematria-basics.html">Gematria Basics</a></li>
+                <li><a class="dropdown-item" href="/gematria-guide.html">Gematria Guide</a></li>
+              </ul>
+            </li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-actions-divider d-lg-none" role="presentation" aria-hidden="true"></li>
-            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2" href="/gematria-account-setup.html">Join free</a></li>
-            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--login"><a class="btn btn-sm fw-semibold ms-lg-2" href="https://gematria.today/member?auth=login#authSection">Log in</a></li>
             <li class="nav-item nav-search d-none d-lg-flex"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Open KnowBot search" title="KnowBot"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Search</span></a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2" href="/gematria-account-setup.html">Join free</a></li>
+            <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--login"><a class="nav-link nav-login-link" href="https://gematria.today/member?auth=login#authSection">Log in</a></li>
           </ul>
         </div>
       </div>
@@ -225,6 +255,6 @@
     </footer>
 
     <script src="/page-scripts/account-recovery-1.js"></script>
-    <script src="/assets/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

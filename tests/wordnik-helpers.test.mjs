@@ -66,20 +66,13 @@ test('parseLimit accepts integer strings within the tier cap', () => {
   assert.equal(parseLimit('200', { membershipLevel: 'premium' }), 200);
 });
 
-test('parseLimit rejects values above the free-tier cap for free users', () => {
-  // A free user asking for premium-tier volume must be rejected.
-  assert.throws(
-    () => parseLimit('200', { membershipLevel: 'free' }),
-    /must not exceed/,
-  );
+test('parseLimit clamps values above the free-tier cap down to the cap for free users', () => {
+  assert.equal(parseLimit('200', { membershipLevel: 'free' }), FREE_LIMIT_PER_RELATIONSHIP_TYPE);
 });
 
-test('parseLimit permits values up to the premium cap for premium users', () => {
+test('parseLimit permits values up to the premium cap for premium users and clamps beyond it', () => {
   assert.equal(parseLimit('250', { membershipLevel: 'premium' }), 250);
-  assert.throws(
-    () => parseLimit('251', { membershipLevel: 'premium' }),
-    /must not exceed/,
-  );
+  assert.equal(parseLimit('251', { membershipLevel: 'premium' }), PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE);
 });
 
 test('parseLimit rejects non-integer and non-positive values', () => {
@@ -90,7 +83,7 @@ test('parseLimit rejects non-integer and non-positive values', () => {
 
 test('parseLimit treats an unspecified membership level as the free tier', () => {
   assert.equal(parseLimit(null), FREE_LIMIT_PER_RELATIONSHIP_TYPE);
-  assert.throws(() => parseLimit('200'), /must not exceed/);
+  assert.equal(parseLimit('200'), FREE_LIMIT_PER_RELATIONSHIP_TYPE);
 });
 
 // ---------- parseRelationshipType ----------

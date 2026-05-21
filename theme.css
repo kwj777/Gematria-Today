@@ -3598,6 +3598,17 @@ a.badge,
     height: 32px;
   }
 
+  /* Fade out the "RESEARCH · CALCULATE · DISCOVER" sub-line + gilt rule
+     in the shrunken state. The wordmark+seal carry the brand on their
+     own once the page is scrolled, and the tiny tagline becomes
+     illegible at the smaller logo size. */
+  .site-logo__sub {
+    transition: opacity 0.18s ease;
+  }
+  nav.navbar.sticky-top.is-scrolled .site-logo__sub {
+    opacity: 0;
+  }
+
   /* Dark dropdown surface shared by Tools mega-menu and Learn menu. */
   .navbar-dark .navbar-nav .dropdown-menu {
     background: #2a241d;
@@ -3694,7 +3705,64 @@ a.badge,
   .navbar-nav .nav-item.dropdown:has(.nav-mega-item.active) > .nav-link,
   .navbar-nav .nav-item.dropdown:has(.nav-mega-item[aria-current="page"]) > .nav-link {
     color: #ffffff;
+    background: rgba(var(--brand-amber-rgb), 0.14);
+    border-radius: 0.4rem;
   }
+
+  /* Chevron caret — replaces Bootstrap's static border-triangle ::after with
+     an inline SVG chevron that rotates 180° when the dropdown is open. */
+  .navbar-nav .dropdown-toggle::after {
+    border: 0;
+    width: 0.7em;
+    height: 0.7em;
+    margin-left: 0.35em;
+    vertical-align: middle;
+    background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.75;
+    transition: transform 0.18s ease, opacity 0.15s ease;
+    transform-origin: center;
+  }
+  .navbar-nav .dropdown-toggle:hover::after,
+  .navbar-nav .dropdown-toggle:focus-visible::after,
+  .navbar-nav .dropdown-toggle[aria-expanded="true"]::after {
+    opacity: 1;
+  }
+  .navbar-nav .dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+  }
+}
+
+/* Search keyboard-shortcut hint. The kbd badge tells keyboard users they
+   can press "/" anywhere on the site to jump into KnowBot search. Hidden
+   on touch/mobile via pointer-fine guard since the key prompt is
+   meaningless without a hardware keyboard. */
+.nav-search-link__kbd {
+  display: none;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 0.25rem;
+}
+@media (min-width: 992px) and (hover: hover) and (pointer: fine) {
+  .nav-search-link__kbd {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+.nav-search-link:hover .nav-search-link__kbd,
+.nav-search-link:focus-visible .nav-search-link__kbd {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
 }
 
 /* ── Mobile nav: collapse dropdowns to inline lists ───────────────────── */

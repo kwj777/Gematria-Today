@@ -53,8 +53,7 @@ export function parseLimit(limit, { membershipLevel } = {}) {
   if (limit == null || limit === '') return tierLimit;
   const parsedLimit = Number.parseInt(limit, 10);
   if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) throw new Error('Query parameter "limit" must be a positive integer');
-  if (parsedLimit > tierLimit) throw new Error(`Query parameter "limit" must not exceed ${tierLimit}`);
-  return parsedLimit;
+  return Math.min(parsedLimit, tierLimit);
 }
 
 export function parseRelationshipType(relationshipType) {

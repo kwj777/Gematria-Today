@@ -62,7 +62,7 @@ test('parseLimit defaults to the tier limit when input is null or empty', () => 
 });
 
 test('parseLimit accepts integer strings within the tier cap', () => {
-  assert.equal(parseLimit('25', { membershipLevel: 'free' }), 25);
+  assert.equal(parseLimit('5', { membershipLevel: 'free' }), 5);
   assert.equal(parseLimit('200', { membershipLevel: 'premium' }), 200);
 });
 

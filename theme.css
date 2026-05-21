@@ -1583,9 +1583,51 @@ footer.site-footer a:focus-visible {
 .per-letter-details[open] > summary { margin-bottom: .25rem; }
 #related-words-result .panel, #results-shell .result-card { margin-top: 1rem; }
 #related-words-result .matching-word, .meta-highlight { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: rgba(var(--bs-warning-rgb), .18); color: #7a4e00; font-weight: 600; }
+#related-words-result .matching-word { text-decoration: none; }
+#related-words-result .matching-word:hover,
+#related-words-result .matching-word:focus-visible { text-decoration: underline; }
+:root[data-bs-theme="dark"] #related-words-result .matching-word,
+:root[data-bs-theme="dark"] .meta-highlight {
+  background: rgba(var(--bs-warning-rgb), .28);
+  color: #ffd591;
+}
 .meta-highlight a { color: inherit; font-weight: inherit; text-decoration: underline; }
 .meta-highlight a:hover, .meta-highlight a:focus-visible { text-decoration: underline; }
 #related-words-result .word-link, #related-words-result .definition-link, #related-words-result .inline-button, #results-shell .inline-button, #results-shell .word-button, #word-list a { color: var(--bs-primary); }
+button.inline-button,
+button.word-link,
+button.word-button,
+button.definition-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+button.inline-button:hover,
+button.word-link:hover,
+button.word-button:hover,
+button.definition-link:hover,
+button.inline-button:focus-visible,
+button.word-link:focus-visible,
+button.word-button:focus-visible,
+button.definition-link:focus-visible {
+  text-decoration: underline;
+}
+:root[data-bs-theme="dark"] #related-words-result .word-link,
+:root[data-bs-theme="dark"] #related-words-result .definition-link,
+:root[data-bs-theme="dark"] #related-words-result .inline-button,
+:root[data-bs-theme="dark"] #results-shell .inline-button,
+:root[data-bs-theme="dark"] #results-shell .word-button,
+:root[data-bs-theme="dark"] #word-list a {
+  color: #6ea8fe;
+}
+:root[data-bs-theme="dark"] #related-words-result .related-word-card-meta.text-muted,
+:root[data-bs-theme="dark"] #related-words-result .text-muted {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
 #related-words-result .related-word { word-spacing: 6px; }
 #related-words-result li { padding-bottom: 12px; }
 #related-words-result ul, #results-shell .word-list { padding-left: 1.2rem; }

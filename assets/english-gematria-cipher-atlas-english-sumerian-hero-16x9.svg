@@ -1,0 +1,63 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="caEsTitle caEsDesc">
+  <title id="caEsTitle">Cipher Atlas — English Sumerian (×6) hero</title>
+  <desc id="caEsDesc">A scaled staircase showing the alphabet rising in steps of six, A=6 through Z=156, with simple ordinal shown beneath as the underlying baseline.</desc>
+  <defs>
+    <linearGradient id="caEsBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="caEsGlow" cx="800" cy="500" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F472B6" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#F472B6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="caEsHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#F9A8D4"/>
+      <stop offset="1" stop-color="#BE185D"/>
+    </linearGradient>
+    <pattern id="caEsDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#caEsBg)"/>
+  <rect width="1600" height="900" fill="url(#caEsDots)"/>
+  <rect width="1600" height="900" fill="url(#caEsGlow)"/>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="582" y="58" width="436" height="38" rx="19" fill="#F472B6" fill-opacity="0.18" stroke="#F472B6" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#F9A8D4" letter-spacing="3">CIPHER ATLAS · POST 5 OF 8</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">English Sumerian (×6)</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">A = 6, B = 12, … Z = 156 — ordinal scaled by six</text>
+  </g>
+
+  <g transform="translate(160,290)">
+    <rect x="0" y="0" width="1280" height="440" rx="18" fill="#0B1230" stroke="#243067" stroke-width="1.5"/>
+    <g stroke="#243067" stroke-opacity="0.6" stroke-width="1">
+      <line x1="0" y1="110" x2="1280" y2="110"/>
+      <line x1="0" y1="220" x2="1280" y2="220"/>
+      <line x1="0" y1="330" x2="1280" y2="330"/>
+    </g>
+    <!-- Scaled staircase ×6, big rise -->
+    <polyline fill="none" stroke="url(#caEsHot)" stroke-width="3.5"
+      points="0,420 50,420 50,404 100,404 100,388 150,388 150,372 200,372 200,356 250,356 250,340 300,340 300,324 350,324 350,308 400,308 400,292 450,292 450,276 500,276 500,260 550,260 550,244 600,244 600,228 650,228 650,212 700,212 700,196 750,196 750,180 800,180 800,164 850,164 850,148 900,148 900,132 950,132 950,116 1000,116 1000,100 1050,100 1050,84 1100,84 1100,68 1150,68 1150,52 1200,52 1200,36 1250,36 1250,20 1280,20"/>
+    <!-- Underlying ordinal (smaller scale) -->
+    <polyline fill="none" stroke="#F97316" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="6 8"
+      points="0,420 1280,353"/>
+    <g fill="#F9A8D4">
+      <circle cx="25" cy="412" r="6"/>
+      <circle cx="625" cy="220" r="6"/>
+      <circle cx="1265" cy="28" r="6"/>
+    </g>
+    <g font-family="'Inter', 'Segoe UI', sans-serif" font-size="16" fill="#F9A8D4">
+      <text x="40" y="402" text-anchor="start">A = 6</text>
+      <text x="640" y="208" text-anchor="start">M = 78</text>
+      <text x="1180" y="20" text-anchor="end">Z = 156</text>
+    </g>
+    <text x="640" y="395" font-size="15" fill="#9CC8FF">Same shape as ordinal · multiplied by 6 · no new information</text>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="800" font-size="22" fill="#F4F8FF" font-weight="600">ENGLISH = 74 × 6 = 444</text>
+    <text x="800" y="852" font-size="20" fill="#9CC8FF" fill-opacity="0.9">An amplification, not an independent cipher — its matches are ordinal matches in disguise.</text>
+  </g>
+</svg>

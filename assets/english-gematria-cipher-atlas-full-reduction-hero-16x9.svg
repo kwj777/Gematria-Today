@@ -1,0 +1,84 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="caFrTitle caFrDesc">
+  <title id="caFrTitle">Cipher Atlas — Full Reduction (1 to 9) hero</title>
+  <desc id="caFrDesc">Three cycles of digits 1 through 9 wrapping around the alphabet, with J restarting at 1 and S restarting again at 1.</desc>
+  <defs>
+    <linearGradient id="caFrBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="caFrGlow" cx="800" cy="500" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="caFrCell" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#243067"/>
+      <stop offset="1" stop-color="#0B1230"/>
+    </linearGradient>
+    <linearGradient id="caFrHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#C4B5FD"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <pattern id="caFrDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#caFrBg)"/>
+  <rect width="1600" height="900" fill="url(#caFrDots)"/>
+  <rect width="1600" height="900" fill="url(#caFrGlow)"/>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="582" y="58" width="436" height="38" rx="19" fill="#A78BFA" fill-opacity="0.18" stroke="#A78BFA" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#C4B5FD" letter-spacing="3">CIPHER ATLAS · POST 3 OF 8</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">Full Reduction</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">A–I = 1–9 · J–R = 1–9 · S–Z = 1–8 — the Pythagorean wrap</text>
+  </g>
+
+  <!-- Three rows: 9, 9, 8 cells -->
+  <g font-family="'JetBrains Mono', 'Menlo', monospace" text-anchor="middle">
+    <!-- Row 1: A-I -->
+    <g transform="translate(248,300)">
+      <g>
+        <rect x="0" y="0" width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/>
+        <text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">A</text>
+        <text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">1</text>
+      </g>
+      <g transform="translate(112,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">B</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">2</text></g>
+      <g transform="translate(224,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">C</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">3</text></g>
+      <g transform="translate(336,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">D</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">4</text></g>
+      <g transform="translate(448,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">E</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">5</text></g>
+      <g transform="translate(560,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">F</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">6</text></g>
+      <g transform="translate(672,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">G</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">7</text></g>
+      <g transform="translate(784,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">H</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">8</text></g>
+      <g transform="translate(896,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="url(#caFrHot)" stroke-width="2"/><text x="50" y="42" font-size="28" font-weight="700" fill="#FBBF24">I</text><text x="50" y="80" font-size="34" font-weight="800" fill="#FBBF24">9</text></g>
+    </g>
+    <!-- Row 2: J-R restart -->
+    <g transform="translate(248,420)">
+      <g><rect x="0" y="0" width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="url(#caFrHot)" stroke-width="2"/><text x="50" y="42" font-size="28" font-weight="700" fill="#FBBF24">J</text><text x="50" y="80" font-size="34" font-weight="800" fill="#FBBF24">1</text></g>
+      <g transform="translate(112,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">K</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">2</text></g>
+      <g transform="translate(224,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">L</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">3</text></g>
+      <g transform="translate(336,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">M</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">4</text></g>
+      <g transform="translate(448,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">N</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">5</text></g>
+      <g transform="translate(560,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">O</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">6</text></g>
+      <g transform="translate(672,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">P</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">7</text></g>
+      <g transform="translate(784,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">Q</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">8</text></g>
+      <g transform="translate(896,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="url(#caFrHot)" stroke-width="2"/><text x="50" y="42" font-size="28" font-weight="700" fill="#FBBF24">R</text><text x="50" y="80" font-size="34" font-weight="800" fill="#FBBF24">9</text></g>
+    </g>
+    <!-- Row 3: S-Z restart, 8 cells -->
+    <g transform="translate(304,540)">
+      <g><rect x="0" y="0" width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="url(#caFrHot)" stroke-width="2"/><text x="50" y="42" font-size="28" font-weight="700" fill="#FBBF24">S</text><text x="50" y="80" font-size="34" font-weight="800" fill="#FBBF24">1</text></g>
+      <g transform="translate(112,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">T</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">2</text></g>
+      <g transform="translate(224,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">U</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">3</text></g>
+      <g transform="translate(336,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">V</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">4</text></g>
+      <g transform="translate(448,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">W</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">5</text></g>
+      <g transform="translate(560,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">X</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">6</text></g>
+      <g transform="translate(672,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">Y</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">7</text></g>
+      <g transform="translate(784,0)"><rect width="100" height="100" rx="10" fill="url(#caFrCell)" stroke="#7C3AED" stroke-opacity="0.5"/><text x="50" y="42" font-size="28" font-weight="700" fill="#E6F2FF">Z</text><text x="50" y="80" font-size="34" font-weight="800" fill="#C4B5FD">8</text></g>
+    </g>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="730" font-size="22" fill="#F4F8FF" font-weight="600">ENGLISH = 5 + 5 + 7 + 3 + 9 + 1 + 8 = 38</text>
+    <text x="800" y="852" font-size="20" fill="#9CC8FF" fill-opacity="0.9">Compresses 26 letters into 9 buckets — a grouping tool, not a precision tool.</text>
+  </g>
+</svg>

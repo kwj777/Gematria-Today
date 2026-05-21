@@ -3598,17 +3598,6 @@ a.badge,
     height: 32px;
   }
 
-  /* Fade out the "RESEARCH · CALCULATE · DISCOVER" sub-line + gilt rule
-     in the shrunken state. The wordmark+seal carry the brand on their
-     own once the page is scrolled, and the tiny tagline becomes
-     illegible at the smaller logo size. */
-  .site-logo__sub {
-    transition: opacity 0.18s ease;
-  }
-  nav.navbar.sticky-top.is-scrolled .site-logo__sub {
-    opacity: 0;
-  }
-
   /* Dark dropdown surface shared by Tools mega-menu and Learn menu. */
   .navbar-dark .navbar-nav .dropdown-menu {
     background: #2a241d;

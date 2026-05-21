@@ -2401,6 +2401,38 @@ html.blog-detail-view .blog-post-body h3[id]:focus-within .blog-heading-anchor {
   font-size: 1.05rem;
 }
 
+:root[data-bs-theme="dark"] .followit-card {
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
+}
+
+:root[data-bs-theme="dark"] .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview {
+  background: rgba(15, 21, 30, 0.6);
+  border-color: var(--color-border-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-bs-theme="dark"] .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-heading h5 {
+  color: var(--color-text-on-dark);
+}
+
+:root[data-bs-theme="dark"] .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input {
+  background: rgba(9, 14, 21, 0.7);
+  border-color: var(--color-border-dark);
+  color: var(--color-text-on-dark);
+}
+
+:root[data-bs-theme="dark"] .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input::placeholder {
+  color: rgba(230, 235, 242, 0.55);
+}
+
+:root[data-bs-theme="dark"] .followit--follow-form-container[attr-a][attr-b][attr-c][attr-d][attr-e][attr-f] .form-preview .preview-input-field input:focus {
+  background: rgba(9, 14, 21, 0.85);
+  border-color: rgba(var(--bs-primary-rgb), 0.55);
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.22);
+}
+
 @media (max-width: 991px) {
   .blog-slide-card {
     margin: 0;

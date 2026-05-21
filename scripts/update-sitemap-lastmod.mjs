@@ -21,17 +21,18 @@ function urlToFile(loc) {
 }
 
 function lastCommitDate(file) {
-  const output = execFileSync('git', ['log', '-1', '--format=%cs', 'HEAD', '--', file], {
+  const output = execFileSync('git', ['log', '-1', '--format=%ct', 'HEAD', '--', file], {
     cwd: rootDir,
     encoding: 'utf8',
   }).trim();
   if (!output) {
     throw new Error(`No git history for ${file}`);
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(output)) {
-    throw new Error(`Unexpected git date format for ${file}: ${output}`);
+  const seconds = Number(output);
+  if (!Number.isFinite(seconds)) {
+    throw new Error(`Unexpected git timestamp for ${file}: ${output}`);
   }
-  return output;
+  return new Date(seconds * 1000).toISOString().slice(0, 10);
 }
 
 const sitemap = await readFile(sitemapPath, 'utf8');

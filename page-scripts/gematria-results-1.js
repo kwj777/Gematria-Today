@@ -1,7 +1,6 @@
 const titleNode = document.querySelector('#page-title');
       const metaNode = document.querySelector('#page-meta');
       const returnLink = document.querySelector('#return-link');
-      const learningPathLink = document.querySelector('#learning-path-link');
       const clearSearchButtons = [
         document.querySelector('#clear-search-top'),
         document.querySelector('#clear-search-bottom')
@@ -201,10 +200,6 @@ const titleNode = document.querySelector('#page-title');
         if (safeReturnPath) {
           returnLink.href = safeReturnPath;
           returnLink.textContent = '← Back to previous calculator';
-        }
-
-        if (learningPathLink && safeReturnPath && safeReturnPath.startsWith('/gematria-')) {
-          learningPathLink.hidden = false;
         }
 
         if (!gematria) {

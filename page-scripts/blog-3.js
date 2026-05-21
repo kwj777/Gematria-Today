@@ -61,17 +61,62 @@
           }
         }
 
+        function isStillOnChecklistPost() {
+          return getRequestedSlug().toLowerCase() === CHECKLIST_SLUG && detectSource() !== null;
+        }
+
+        function removeLearningPathBreadcrumb() {
+          const stale = document.querySelector('[data-learning-path-crumb]');
+          if (stale) stale.remove();
+        }
+
+        function insertLearningPathBreadcrumb() {
+          const breadcrumb = document.getElementById('blogBreadcrumb');
+          if (!breadcrumb) return;
+          const list = breadcrumb.querySelector('.breadcrumb');
+          if (!list || list.querySelector('[data-learning-path-crumb]')) return;
+          const crumb = document.createElement('li');
+          crumb.className = 'breadcrumb-item';
+          crumb.dataset.learningPathCrumb = 'true';
+          const link = document.createElement('a');
+          link.href = '/gematria-guide.html#learning-path';
+          link.textContent = 'Learning Path';
+          crumb.appendChild(link);
+          const blogCrumb = list.firstElementChild;
+          if (blogCrumb && blogCrumb.nextSibling) {
+            list.insertBefore(crumb, blogCrumb.nextSibling);
+          } else {
+            list.appendChild(crumb);
+          }
+
+          // The blog uses replaceState to navigate between posts without a
+          // full reload. Watch the breadcrumb's current item text for
+          // changes so we can drop the Learning Path crumb if the user
+          // navigates away from the checklist post.
+          const current = document.getElementById('blogBreadcrumbCurrent');
+          if (current && !current.dataset.learningPathObserverAttached) {
+            current.dataset.learningPathObserverAttached = 'true';
+            const observer = new MutationObserver(() => {
+              if (!isStillOnChecklistPost()) removeLearningPathBreadcrumb();
+            });
+            observer.observe(current, { childList: true, characterData: true, subtree: true });
+          }
+        }
+
         function maybeShow() {
           const banner = document.getElementById('learningPathCompletionBanner');
           if (!banner) return;
+          if (getRequestedSlug().toLowerCase() !== CHECKLIST_SLUG) return;
+          const source = detectSource();
+          if (!source) return;
+
+          insertLearningPathBreadcrumb();
+
           try {
             if (window.sessionStorage.getItem(DISMISS_KEY) === 'true') return;
           } catch {
             // sessionStorage may be blocked; proceed without dismissal memory.
           }
-          if (getRequestedSlug().toLowerCase() !== CHECKLIST_SLUG) return;
-          const source = detectSource();
-          if (!source) return;
 
           banner.classList.remove('d-none');
           window.gematriaTracking?.track?.('learning_path_completion_view', { source });

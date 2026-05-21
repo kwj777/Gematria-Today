@@ -798,20 +798,6 @@ View results: ${shareUrl}`.trim(),
       }
 
       function configureLearningPathReturn() {
-        const getLearningPathLevel = (pathname) => {
-          const normalizedPath = String(pathname || '').toLowerCase();
-          if (normalizedPath === '/gematria-name-analysis.html') {
-            return 3;
-          }
-          if (normalizedPath === '/gematria-pattern-grouping.html') {
-            return 2;
-          }
-          if (normalizedPath === '/gematria-basics.html') {
-            return 1;
-          }
-          return null;
-        };
-
         const searchParams = new URLSearchParams(window.location.search);
         const source = String(searchParams.get('source') || '').trim();
         const returnTo = String(searchParams.get('returnTo') || '').trim();
@@ -825,7 +811,7 @@ View results: ${shareUrl}`.trim(),
             return;
           }
           learningPathReturnLink.href = `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`;
-          const level = getLearningPathLevel(returnUrl.pathname);
+          const level = window.gematriaLearningPath?.getLevel?.(returnUrl.pathname) ?? null;
           learningPathReturnLink.textContent = level
             ? `Nice! Back to Level ${level}`
             : 'Nice! Back to lesson';

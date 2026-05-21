@@ -729,6 +729,14 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   color: rgba(230, 235, 242, 0.72) !important;
 }
 
+/* These sit on .content-panel, which goes dark in dark mode while the link text
+   stays on the #0f172a fallback -- restore contrast. */
+:root[data-bs-theme="dark"] .blog-series-promo__step-link,
+:root[data-bs-theme="dark"] .blog-post-toc__link,
+:root[data-bs-theme="dark"] .blog-related__title {
+  color: #f1f5f9;
+}
+
 :root[data-bs-theme="dark"] .admin-item-card,
 :root[data-bs-theme="dark"] .border,
 :root[data-bs-theme="dark"] .rounded-3 {

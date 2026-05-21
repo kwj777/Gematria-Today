@@ -338,6 +338,20 @@ html.auth-lifetime .auth-only.auth-only--member { display: revert; }
 .navbar-nav .nav-cta .btn { white-space: nowrap; align-self: center; }
 .navbar-nav .nav-search .nav-search-link { align-self: center; }
 
+/* Secondary "Log in" pill: same geometry as Join free, but ghosted so the
+   amber CTA stays the primary action. */
+.navbar-nav .nav-cta--login .btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: var(--nav-on-dark-text);
+}
+.navbar-nav .nav-cta--login .btn:hover,
+.navbar-nav .nav-cta--login .btn:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+}
+
 @media (min-width: 992px) {
   .navbar-nav .nav-item.nav-search { margin-left: 0.5rem; }
 

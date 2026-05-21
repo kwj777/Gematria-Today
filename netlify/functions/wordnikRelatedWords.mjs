@@ -14,7 +14,7 @@ export const ALLOWED_WORDNIK_RELATIONSHIP_TYPES = new Set([
   'same-context',
 ]);
 export const PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE = 250;
-export const FREE_LIMIT_PER_RELATIONSHIP_TYPE = 100;
+export const FREE_LIMIT_PER_RELATIONSHIP_TYPE = 9;
 const PREMIUM_TIERS = new Set(['premium', 'lifetime']);
 
 function toResponse(statusCode, payload, extraHeaders = {}) {

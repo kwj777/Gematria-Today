@@ -624,6 +624,16 @@ export async function getAuthenticatedMember(event, { requireAuth = true } = {})
   const member = formatMemberUser(memberRows[0]);
   const profile = profileRows.length ? formatMemberProfile(profileRows[0]) : await ensureMemberProfile(sql, authResult.user.id, {});
 
+  // Admins and super admins should always be treated as lifetime members in the
+  // member-facing dashboard and APIs, regardless of the membership_level column.
+  const isAdminUser =
+    authResult.user.role === 'admin' ||
+    authResult.user.role === 'super_admin' ||
+    Boolean(authResult.user.isAdmin);
+  if (isAdminUser) {
+    member.membershipLevel = 'lifetime';
+  }
+
   return {
     sql,
     sessionToken: authResult.sessionToken,

@@ -290,13 +290,14 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
    accent appears on hover and on the link representing the current page
    so users always have a clear "you are here" cue. */
 @media (min-width: 992px) {
-  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle) {
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):not(.nav-login-link) {
     position: relative;
   }
 
-  /* Dropdown toggles get their caret from Bootstrap's own ::after, so the
-     orange underline below must skip them or it overwrites the caret. */
-  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle)::after {
+  /* Dropdown toggles get their caret from Bootstrap's own ::after, and the
+     Log in link uses its own text-decoration underline on hover, so the
+     amber underline below must skip both of those to avoid overlap. */
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):not(.nav-login-link)::after {
     content: "";
     position: absolute;
     left: 0.5rem;
@@ -311,10 +312,10 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
     transition: opacity 0.15s ease, transform 0.15s ease;
   }
 
-  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):hover::after,
-  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):focus-visible::after,
-  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle).active::after,
-  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle)[aria-current="page"]::after {
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):not(.nav-login-link):hover::after,
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):not(.nav-login-link):focus-visible::after,
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):not(.nav-login-link).active::after,
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):not(.nav-login-link)[aria-current="page"]::after {
     opacity: 1;
     transform: scaleX(1);
   }
@@ -359,10 +360,11 @@ html.auth-lifetime .auth-only.auth-only--member { display: revert; }
 
 @media (min-width: 992px) {
   /* Search sits between the text dropdowns and the auth CTAs, so add a
-     small gap on its left and a slightly larger one on Join free to set
-     the actions cluster apart from the navigation cluster. */
+     small gap on its left and on the first auth item to set the actions
+     cluster apart from the navigation cluster. Log in comes before Join
+     free so the amber CTA terminates the bar. */
   .navbar-nav .nav-item.nav-search { margin-left: 0.5rem; }
-  .navbar-nav .nav-item.nav-cta--join { margin-left: 0.5rem; }
+  .navbar-nav .nav-item.nav-cta--login { margin-left: 0.5rem; }
 
   /* Match the CTA button's box geometry to the Search pill so the two
      trailing actions share a shape. The yellow btn-warning fill is kept

@@ -1812,7 +1812,9 @@ footer.site-footer a:focus-visible {
 .blog-sidebar {
   top: 5.5rem;
   max-height: calc(100vh - 6.5rem);
-  overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   display: flex;
   flex-direction: column;
 }

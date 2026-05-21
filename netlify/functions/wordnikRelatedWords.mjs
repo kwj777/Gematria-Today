@@ -105,7 +105,8 @@ async function fetchRelatedWords(sql, source, term, limit, relationshipType, { m
     route: 'wordnikRelatedWords',
     ttlSeconds: 600,
     compute: async () => {
-      const url = buildWordnikUrl(normalizedTerm, parsedLimit, parsedRelationshipType);
+      const overfetchLimit = parsedLimit + 1;
+      const url = buildWordnikUrl(normalizedTerm, overfetchLimit, parsedRelationshipType);
       const response = await fetchWithTimeout(url, {}, getProtectionConfig().wordnikTimeoutMs);
       if (!response.ok) {
         const errorText = await response.text();
@@ -123,8 +124,19 @@ async function fetchRelatedWords(sql, source, term, limit, relationshipType, { m
           { statusCode: 502, upstreamStatus: response.status, upstreamBody: errorText || response.statusText },
         );
       }
-      const data = await response.json();
-      return { query: trimmedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit, url: url.toString(), data };
+      const rawData = await response.json();
+      let hasMore = false;
+      const data = Array.isArray(rawData)
+        ? rawData.map((entry) => {
+            const words = Array.isArray(entry?.words) ? entry.words : [];
+            if (words.length > parsedLimit) {
+              hasMore = true;
+              return { ...entry, words: words.slice(0, parsedLimit) };
+            }
+            return entry;
+          })
+        : rawData;
+      return { query: trimmedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit, url: url.toString(), data, hasMore };
     },
   });
 

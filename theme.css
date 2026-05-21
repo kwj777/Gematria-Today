@@ -737,6 +737,10 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   color: #f1f5f9;
 }
 
+:root[data-bs-theme="dark"] .blog-related__summary {
+  color: rgba(230, 235, 242, 0.72);
+}
+
 :root[data-bs-theme="dark"] .admin-item-card,
 :root[data-bs-theme="dark"] .border,
 :root[data-bs-theme="dark"] .rounded-3 {

@@ -221,6 +221,10 @@ summary:focus-visible,
    button size on the same scale via --radius-btn tokens. */
 .btn {
   --bs-btn-border-radius: var(--radius-btn);
+  /* iOS Safari treats the first tap on hover-styled controls as a "hover"
+     gesture and requires a second tap to activate. `manipulation` opts the
+     element out of double-tap-to-zoom so taps register as direct clicks. */
+  touch-action: manipulation;
 }
 .btn-lg {
   --bs-btn-border-radius: var(--radius-btn-lg);
@@ -2995,6 +2999,7 @@ a.badge,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 }
 
 /* On touch devices, grow .btn-sm to the WCAG 44px tap target. Bootstrap's

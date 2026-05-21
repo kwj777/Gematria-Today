@@ -1762,6 +1762,12 @@ footer.site-footer a:focus-visible {
   box-shadow: 0 0.8rem 1.6rem rgba(63,64,58,.07);
 }
 
+:root[data-bs-theme="dark"] .blog-home-featured-card {
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
+}
+
 .blog-home-featured-readmore {
   margin-top: auto;
   align-self: flex-start;

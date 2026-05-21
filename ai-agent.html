@@ -80,7 +80,21 @@
       }
 
       .agent-result-card {
-        background-color: #fff;
+        background-color: var(--color-surface, #fff);
+      }
+
+      :root[data-bs-theme="dark"] .agent-result-card {
+        background-color: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(148, 177, 215, 0.22)) !important;
+      }
+
+      /* Bootstrap's bg-light/bg-white utilities don't flip with data-bs-theme,
+         so the chat bubbles render as cream/white on the dark page. */
+      :root[data-bs-theme="dark"] #chatLog > article[data-role="assistant"],
+      :root[data-bs-theme="dark"] #chatLog > article[data-role="user"] {
+        background-color: var(--color-surface-dark, rgba(17, 24, 34, 0.94)) !important;
+        border-color: var(--color-border-dark, rgba(148, 177, 215, 0.22)) !important;
+        color: var(--color-text-on-dark, #f8fafc);
       }
 
       .agent-stat-row {
@@ -95,6 +109,10 @@
       .agent-disclosure {
         border-top: 1px dashed rgba(0, 0, 0, 0.08);
         padding-top: 0.4rem;
+      }
+
+      :root[data-bs-theme="dark"] .agent-disclosure {
+        border-top-color: rgba(255, 255, 255, 0.18);
       }
 
       .agent-disclosure > summary {
@@ -159,6 +177,16 @@
         background-color: #f3f4f6;
       }
 
+      :root[data-bs-theme="dark"] .agent-actions-menu > summary {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.18);
+        color: var(--color-text-on-dark, #f8fafc);
+      }
+
+      :root[data-bs-theme="dark"] .agent-actions-menu > summary:hover {
+        background-color: rgba(255, 255, 255, 0.14);
+      }
+
       .agent-actions-popover {
         position: absolute;
         right: 0;
@@ -174,6 +202,12 @@
         border: 1px solid rgba(0, 0, 0, 0.12);
         border-radius: 0.5rem;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      }
+
+      :root[data-bs-theme="dark"] .agent-actions-popover {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.98));
+        border-color: rgba(255, 255, 255, 0.14);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
       }
 
       .agent-actions-popover button {

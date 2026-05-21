@@ -3758,6 +3758,49 @@ a.badge,
     align-items: center;
   }
 }
+
+/* Hairline separator between the navigation cluster (Tools / Learn) and
+   the actions cluster (Ask KnowBot / Log in / Join free). The Search
+   item is already desktop-only via .d-none.d-lg-flex, so the divider
+   only shows where the two clusters are actually visible side by side. */
+@media (min-width: 992px) {
+  .navbar-nav .nav-item.nav-search {
+    position: relative;
+    padding-left: 0.85rem;
+  }
+  .navbar-nav .nav-item.nav-search::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 25%;
+    bottom: 25%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+}
+
+/* Brand-mark hover: subtle bloom on the celestial seal. The seal group
+   gets a transform-origin pinned to its visual center so the scale
+   doesn't drift the wordmark sideways. Reduced-motion users opt out. */
+.site-logo__seal {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+.navbar-brand:hover .site-logo__seal,
+.navbar-brand:focus-visible .site-logo__seal {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 5px rgba(var(--brand-amber-rgb), 0.55));
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-logo__seal,
+  .navbar-brand:hover .site-logo__seal,
+  .navbar-brand:focus-visible .site-logo__seal {
+    transition: none;
+    transform: none;
+    filter: none;
+  }
+}
 .nav-search-link:hover .nav-search-link__kbd,
 .nav-search-link:focus-visible .nav-search-link__kbd {
   background: rgba(255, 255, 255, 0.16);

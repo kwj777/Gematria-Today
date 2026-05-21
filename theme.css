@@ -1827,6 +1827,19 @@ button.definition-link:focus-visible {
   box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
 }
 
+:root[data-bs-theme="dark"] .blog-slide-card,
+:root[data-bs-theme="dark"] .blog-post-card,
+:root[data-bs-theme="dark"] .blog-mini-link,
+:root[data-bs-theme="dark"] .news-feature-card,
+:root[data-bs-theme="dark"] .news-preview-card,
+:root[data-bs-theme="dark"] .news-summary-card,
+:root[data-bs-theme="dark"] .news-placeholder-panel,
+:root[data-bs-theme="dark"] .async-shell-card {
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
+}
+
 .blog-home-featured-readmore {
   margin-top: auto;
   align-self: flex-start;

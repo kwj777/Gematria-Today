@@ -650,6 +650,12 @@
       if (!link || !collapse.classList.contains('show')) {
         return;
       }
+      // Tapping a dropdown toggle (Tools, Learn) should expand its submenu,
+      // not collapse the entire mobile nav. Skip those clicks.
+      if (link.classList.contains('dropdown-toggle') ||
+          link.getAttribute('data-bs-toggle') === 'dropdown') {
+        return;
+      }
       const toggler = document.querySelector('.navbar .navbar-toggler');
       if (toggler) {
         toggler.click();

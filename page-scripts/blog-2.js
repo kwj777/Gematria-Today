@@ -606,7 +606,7 @@
       let paginationOffset = 0;
       let hasMorePublishedPosts = false;
       let loadingMorePosts = false;
-      const BLOG_LIST_PAGE_LIMIT = 12;
+      const BLOG_LIST_PAGE_LIMIT = 2;
       const updateTagFilterOverflowState = () => {
         const tagFiltersEl = document.getElementById('blogTagFilters');
         const toggleEl = document.getElementById('blogTagFiltersToggle');

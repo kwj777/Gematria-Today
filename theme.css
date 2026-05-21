@@ -641,6 +641,17 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   color: #fff;
 }
 
+/* Bootstrap's .text-muted resolves to a dark gray that disappears against
+   the hero's dark navy gradient. The dark-theme override at the bottom of
+   this file only kicks in when the document is in dark mode, so light-mode
+   visitors lose the byline metadata and any muted helper copy in the hero.
+   Lighten muted text (and the address byline, which isn't .text-muted) so
+   it stays legible on the gradient. */
+.hero-panel .text-muted,
+.hero-panel address {
+  color: rgba(230, 235, 242, 0.78) !important;
+}
+
 .hero-panel .btn-outline-primary {
   --bs-btn-color: #ffffff;
   --bs-btn-border-color: rgba(255, 255, 255, 0.85);

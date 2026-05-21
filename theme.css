@@ -3581,18 +3581,17 @@ a.badge,
 /* ── Desktop nav: dropdowns, mega-menu, sticky-shrink ─────────────────── */
 @media (min-width: 992px) {
   /* Sticky-shrink: when the page is scrolled, the nav-scroll.js helper adds
-     .is-scrolled to the sticky navbar so it tightens vertically and the logo
-     scales down. Gives more vertical room to long-scroll pages without
-     sacrificing the brand on first paint. */
+     .is-scrolled to the sticky navbar so the logo scales down. The navbar
+     itself is pinned to its full-size min-height — because the navbar is
+     position: sticky, animating its height would reflow the document below
+     and cause the page content to slide as the user scrolls past the
+     threshold. Locking min-height keeps the box stable; only the logo
+     telegraphs scroll state. */
   nav.navbar.sticky-top {
-    transition: padding 0.18s ease;
+    min-height: 66px;
   }
   nav.navbar.sticky-top .site-logo {
     transition: height 0.18s ease;
-  }
-  nav.navbar.sticky-top.is-scrolled {
-    padding-top: 0.2rem;
-    padding-bottom: 0.2rem;
   }
   nav.navbar.sticky-top.is-scrolled .site-logo {
     height: 32px;

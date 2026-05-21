@@ -176,6 +176,7 @@
       if (cls) {
         if (cls.contains('defn-term') || cls.contains('defn-popup')) return true;
         if (cls.contains('no-glossary')) return true;
+        if (cls.contains('section-kicker')) return true;
       }
       if (p.hasAttribute && p.hasAttribute('data-no-glossary')) return true;
       if (p.isContentEditable) return true;

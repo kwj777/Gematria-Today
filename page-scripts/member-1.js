@@ -2274,13 +2274,6 @@
           if (session?.csrfToken) {
             csrfToken = session.csrfToken;
           }
-          if (session?.route === 'admin') {
-            showAlert('Admin sign-in successful. Redirecting to admin dashboard…', 'success');
-            window.setTimeout(() => {
-              window.location.assign('/admin.html');
-            }, 350);
-            return;
-          }
           try {
             window.localStorage.setItem('memberHasLoggedInBefore', 'true');
           } catch (_error) { /* storage unavailable */ }

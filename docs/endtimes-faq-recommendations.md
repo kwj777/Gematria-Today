@@ -38,7 +38,7 @@ with duplicate topics removed.
    No. Gematria is presented as a research and pattern-analysis method, not as standalone proof or guaranteed date prediction.
 
 10. **Why do my totals differ from another tool?**
-    Totals often differ due to different ciphers, punctuation handling, transliteration choices, or spacing/formatting rules. Match settings before comparing outputs.
+    Other tools may use a different cipher than Gematria.Today's English (Base-6), and totals also vary with punctuation handling, transliteration choices, or spacing/formatting rules. Match settings before comparing outputs.
 
 ## Content trust and editorial standards
 

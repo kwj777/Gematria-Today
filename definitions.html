@@ -17,7 +17,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
     <title>Gematria Definitions: Glossary of Terms for New Users | Gematria.Today</title>
-    <meta name="description" content="Plain-language glossary of gematria terms — ciphers, ordinal values, reductions, clusters, matches, and research vocabulary used across Gematria.Today." />
+    <meta name="description" content="Plain-language glossary of gematria terms — the English (Base-6) cipher used here, letter values, clusters, matches, and research vocabulary used across Gematria.Today." />
     <link rel="canonical" href="https://gematria.today/definitions.html" />
     <meta name="robots" content="index,follow" />
     <meta name="last-updated" content="2026-05-18" />
@@ -71,7 +71,7 @@
           { "@type": "DefinedTerm", "name": "Overfitting", "termCode": "overfitting", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-overfitting", "description": "Choosing words after the fact so they fit a desired total." },
           { "@type": "DefinedTerm", "name": "Coincidence floor", "termCode": "coincidence-floor", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-coincidence-floor", "description": "The reminder that some matches will always occur by chance." },
           { "@type": "DefinedTerm", "name": "Cherry-picking", "termCode": "cherry-picking", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-cherry-picking", "description": "Selecting only the terms that support a conclusion while ignoring those that don't." },
-          { "@type": "DefinedTerm", "name": "Cross-validation", "termCode": "cross-validation", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-cross-validation", "description": "Testing a pattern against new words, ciphers, or phrase sets to confirm it isn't an artifact." },
+          { "@type": "DefinedTerm", "name": "Cross-validation", "termCode": "cross-validation", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-cross-validation", "description": "Testing a pattern against new words or unrelated phrase sets to confirm it isn't an artifact." },
           { "@type": "DefinedTerm", "name": "Sample size", "termCode": "sample-size", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-sample-size", "description": "How many independently related terms you compared." },
           { "@type": "DefinedTerm", "name": "Confidence level", "termCode": "confidence-level", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-confidence-level", "description": "A plain-language note (low / medium / high) about how strongly your data supports your interpretation." },
           { "@type": "DefinedTerm", "name": "Editorial policy", "termCode": "editorial-policy", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-editorial-policy", "description": "The standards Gematria.Today applies to interpretive content." },
@@ -458,7 +458,7 @@
                 <div class="nav-mega-grid">
                   <a class="nav-mega-item" href="/calculator.html">
                     <span class="nav-mega-item__title">Calculator</span>
-                    <span class="nav-mega-item__desc">Run text through every cipher in one click.</span>
+                    <span class="nav-mega-item__desc">Calculate gematria values for any word or phrase in one click.</span>
                   </a>
                   <a class="nav-mega-item" href="/name-calculator.html">
                     <span class="nav-mega-item__title">Name Calculator</span>
@@ -466,7 +466,7 @@
                   </a>
                   <a class="nav-mega-item" href="/ai-agent.html">
                     <span class="nav-mega-item__title">GemaBot</span>
-                    <span class="nav-mega-item__desc">Ask in plain language, get cipher-aware answers.</span>
+                    <span class="nav-mega-item__desc">Ask in plain language, get gematria-aware answers.</span>
                   </a>
                   <a class="nav-mega-item" href="/searchbot.html">
                     <span class="nav-mega-item__title">KnowBot Search</span>
@@ -522,7 +522,7 @@
                 <h2>On this page</h2>
                 <ol id="glossaryTocList">
                   <li><a href="#core-concepts">Core concepts</a></li>
-                  <li><a href="#ciphers-and-methods">Ciphers &amp; methods</a></li>
+                  <li><a href="#ciphers-and-methods">Cipher &amp; methods</a></li>
                   <li><a href="#calculator-terms">Calculator terms</a></li>
                   <li><a href="#results-and-patterns">Results &amp; patterns</a></li>
                   <li><a href="#research-vocabulary">Research vocabulary</a></li>
@@ -574,7 +574,7 @@
                     <span class="defn-badge defn-badge--beginner">Beginner</span>
                     <a class="defn-anchor" href="#defn-letter-value" aria-label="Copy link to Letter value">#</a>
                   </div>
-                  <dd>The number assigned to one letter under a particular cipher. For example, in the simplest English cipher A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2, and so on to Z&nbsp;=&nbsp;26.<br><span class="defn-example">A = 1 · B = 2 · … · Z = 26</span></dd>
+                  <dd>The number assigned to one letter under a particular cipher. This site uses the English (Base-6) cipher: A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12, and so on to Z&nbsp;=&nbsp;156.<br><span class="defn-example">A = 6 · B = 12 · … · Z = 156</span></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
@@ -601,16 +601,17 @@
                     <span class="defn-badge defn-badge--beginner">Beginner</span>
                     <a class="defn-anchor" href="#defn-cipher" aria-label="Copy link to Cipher">#</a>
                   </div>
-                  <dd>A specific rule set for converting letters into numbers. Different ciphers can give the same word different totals, so it matters which one you used.</dd>
+                  <dd>A specific rule set for converting letters into numbers. Gematria.Today uses one — English (Base-6), where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 … Z&nbsp;=&nbsp;156. Other ciphers exist (and are listed below for reference) and can produce different totals for the same word.</dd>
                 </div>
               </dl>
             </section>
 
-            <section id="ciphers-and-methods" class="defn-section content-panel p-4 mb-4" data-section-title="Ciphers &amp; methods">
+            <section id="ciphers-and-methods" class="defn-section content-panel p-4 mb-4" data-section-title="Cipher &amp; methods">
               <div class="defn-section__head">
-                <h2 class="h4 mb-0">Ciphers and methods</h2>
+                <h2 class="h4 mb-0">Cipher and methods</h2>
                 <span class="defn-section__count" data-section-count></span>
               </div>
+              <p class="small text-muted mb-3">Gematria.Today calculates values using one cipher only: <strong>English Gematria (multiples of six)</strong>, where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 … Z&nbsp;=&nbsp;156. The other cipher entries below are included as a reference glossary so readers recognize the terms when they encounter them elsewhere — they are not used on this site.</p>
               <dl class="defn-grid">
                 <div class="defn-card" data-difficulty="beginner">
                   <div class="defn-card__head">
@@ -822,7 +823,7 @@
                     <span class="defn-badge defn-badge--intermediate">Intermediate</span>
                     <a class="defn-anchor" href="#defn-cross-validation" aria-label="Copy link to Cross-validation">#</a>
                   </div>
-                  <dd>Testing a pattern against new words, new ciphers, or unrelated phrase sets to confirm it isn't an artifact of one chosen list.</dd>
+                  <dd>Testing a pattern against new words or unrelated phrase sets to confirm it isn't an artifact of one chosen list.</dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">

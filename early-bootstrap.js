@@ -1,4 +1,30 @@
 (function () {
+  // Theme bootstrap. Runs before first paint so the cascade has the right
+  // data-bs-theme value when <style> blocks are parsed. Stored preference
+  // wins; otherwise follow the OS via prefers-color-scheme.
+  var THEME_STORAGE_KEY = 'publicThemePreference';
+  function readStoredTheme() {
+    try {
+      var v = window.localStorage.getItem(THEME_STORAGE_KEY);
+      return v === 'dark' || v === 'light' ? v : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  function osPrefersDark() {
+    try {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch (_) {
+      return false;
+    }
+  }
+  function applyInitialTheme() {
+    var stored = readStoredTheme();
+    var theme = stored || (osPrefersDark() ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-bs-theme', theme);
+  }
+  applyInitialTheme();
+
   var TIERS = ['anon', 'free', 'premium', 'lifetime'];
   function applyAuthState() {
     var tier;

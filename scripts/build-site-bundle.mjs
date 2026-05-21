@@ -20,6 +20,7 @@ const SOURCES = [
   'conversion-tracking.js',
   'glossary-popup.js',
   'nav-scroll.js',
+  'public-theme.js',
 ];
 const OUTPUT = 'site-bundle.js';
 

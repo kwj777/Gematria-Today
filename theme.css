@@ -1654,6 +1654,11 @@ footer.site-footer a:focus-visible {
   box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
 }
 #results-shell .result-card { border: 1px solid rgba(53,65,79,.08); border-radius: var(--radius-xl); background: rgba(255,255,255,.92); box-shadow: var(--shadow-card); padding: 1rem; }
+:root[data-bs-theme="dark"] #results-shell .result-card {
+  background: var(--color-surface-dark, rgba(17,24,34,.94));
+  border-color: var(--color-border-dark, rgba(255,255,255,.08));
+  box-shadow: 0 0.5rem 1.25rem rgba(5, 9, 14, 0.25);
+}
 #word-list .word-item { list-style: none; }
 
 .results-grid {

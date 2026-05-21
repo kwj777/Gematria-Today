@@ -2008,6 +2008,35 @@ button.definition-link:focus-visible {
   color: #fff;
 }
 
+:root[data-bs-theme="dark"] .blog-tag-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-text-on-dark, #f8fafc);
+}
+
+:root[data-bs-theme="dark"] .blog-tag-chip:hover,
+:root[data-bs-theme="dark"] .blog-tag-chip:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(var(--bs-primary-rgb), 0.7);
+  box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.25);
+}
+
+:root[data-bs-theme="dark"] .blog-tag-chip__count {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(230, 235, 242, 0.85);
+}
+
+:root[data-bs-theme="dark"] .blog-tag-chip--active {
+  background: var(--bs-primary, #0d6efd);
+  border-color: var(--bs-primary, #0d6efd);
+  color: #fff;
+}
+
+:root[data-bs-theme="dark"] .blog-tag-chip--active .blog-tag-chip__count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
 .blog-post-toc {
   border-left: 3px solid rgba(var(--bs-primary-rgb), 0.45);
   background: var(--color-surface-highlight-soft, rgba(15, 23, 42, 0.03));

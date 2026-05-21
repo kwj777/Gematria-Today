@@ -2262,7 +2262,6 @@
         event.preventDefault();
         clearAlert();
         setLoginSubmittingState(true);
-        showAlert('Signing in and loading your dashboard. This can take a few seconds…', 'info');
         try {
           session = await request('/api/member-login', {
             method: 'POST',

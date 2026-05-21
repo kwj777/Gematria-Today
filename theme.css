@@ -729,6 +729,13 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   color: rgba(230, 235, 242, 0.72) !important;
 }
 
+/* Bootstrap's .bg-light utility is a fixed cream tone and does not flip with
+   data-bs-theme, so panels using it render washed-out on the dark page. */
+:root[data-bs-theme="dark"] .bg-light {
+  background-color: var(--color-surface-dark) !important;
+  color: var(--color-text-on-dark, #f8fafc);
+}
+
 :root[data-bs-theme="dark"] .admin-item-card,
 :root[data-bs-theme="dark"] .border,
 :root[data-bs-theme="dark"] .rounded-3 {

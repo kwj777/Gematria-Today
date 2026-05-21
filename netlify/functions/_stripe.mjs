@@ -131,6 +131,20 @@ export async function getCheckoutSession(sessionId, sql = null) {
   return stripeRequest(`/checkout/sessions/${encodeURIComponent(sessionId)}`, { sql, method: 'GET' });
 }
 
+export async function createBillingPortalSession(event, customerId, sql = null) {
+  if (!customerId) {
+    throw Object.assign(new Error('No Stripe customer is linked to this account. Complete a checkout before opening the billing portal.'), { statusCode: 400 });
+  }
+
+  const siteUrl = getSiteUrl(event);
+  const params = new URLSearchParams({
+    customer: customerId,
+    return_url: `${siteUrl}/member.html?billing=portal`,
+  });
+
+  return stripeRequest('/billing_portal/sessions', { sql, method: 'POST', body: params });
+}
+
 export async function getSubscription(subscriptionId, sql = null) {
   if (!subscriptionId) {
     throw Object.assign(new Error('Missing Stripe subscription ID'), { statusCode: 400 });

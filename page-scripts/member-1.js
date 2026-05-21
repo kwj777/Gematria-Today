@@ -68,6 +68,7 @@
       const learningPathCompletedSection = document.getElementById('learningPathCompletedSection');
       const learningPathCompletedAtText = document.getElementById('learningPathCompletedAtText');
       const messageCenterOpenButton = document.getElementById('messageCenterOpenButton');
+      const manageSubscriptionButton = document.getElementById('manageSubscriptionButton');
       const messageCenterSection = document.getElementById('messageCenterSection');
       const messageCenterCloseButton = document.getElementById('messageCenterCloseButton');
       const messageCenterArchiveToggleButton = document.getElementById('messageCenterArchiveToggleButton');
@@ -852,6 +853,7 @@
         if (!isPremium) {
           setMessageCenterOpen(false);
         }
+        manageSubscriptionButton?.classList.toggle('d-none', !(isPremium && member?.stripeCustomerId));
       }
 
       function getMessageCenterSentItems({ archived = false } = {}) {
@@ -2596,6 +2598,29 @@
           });
           syncPaymentButton(session.member);
           showAlert(error.message || 'Unable to start Stripe checkout.');
+        }
+      });
+
+      manageSubscriptionButton?.addEventListener('click', async () => {
+        clearAlert();
+        if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
+          showAlert('Subscription management is available to premium members only.', 'warning');
+          return;
+        }
+        if (!session?.member?.stripeCustomerId) {
+          showAlert('No Stripe customer is linked to this account yet. Contact support@lunarwebstudio.com for help.', 'warning');
+          return;
+        }
+        const originalLabel = manageSubscriptionButton.textContent;
+        try {
+          manageSubscriptionButton.disabled = true;
+          manageSubscriptionButton.textContent = 'Opening Stripe…';
+          const payload = await request('/api/member-billing-portal', { method: 'POST', body: '{}' });
+          window.location.assign(payload.portalUrl);
+        } catch (error) {
+          manageSubscriptionButton.disabled = false;
+          manageSubscriptionButton.textContent = originalLabel;
+          showAlert(error.message || 'Unable to open the Stripe billing portal.');
         }
       });
 

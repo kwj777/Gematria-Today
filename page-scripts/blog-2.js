@@ -1311,10 +1311,8 @@
             previewNotice.classList.toggle('d-none', !previewModeActive);
           }
           const hasRequestedPost = Boolean(getRequestedPostSlug() || getRequestedPostId());
-          const mergedPosts = mergeWithFallbackPosts(loadedPublishedPosts);
-          selectedTag = getRequestedTag();
           const fallbackSet = previewModeActive || hasRequestedPost ? [] : fallbackPosts;
-          renderPosts(mergedPosts.length ? mergedPosts : fallbackSet);
+          renderPosts(loadedPublishedPosts.length ? loadedPublishedPosts : fallbackSet);
           updateLoadMoreControl();
         })
         .catch(() => {
@@ -1339,7 +1337,7 @@
           loadedPublishedPosts = mergeUniquePosts([...loadedPublishedPosts, ...publishedItems]);
           paginationOffset = loadedPublishedPosts.length;
           hasMorePublishedPosts = Boolean(payload?.hasMore);
-          renderPosts(mergeWithFallbackPosts(loadedPublishedPosts));
+          renderPosts(loadedPublishedPosts);
         } catch (_) {
           hasMorePublishedPosts = false;
         } finally {

@@ -729,11 +729,12 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   color: rgba(230, 235, 242, 0.72) !important;
 }
 
-/* Bootstrap's .bg-light utility is a fixed cream tone and does not flip with
-   data-bs-theme, so panels using it render washed-out on the dark page. */
-:root[data-bs-theme="dark"] .bg-light {
-  background-color: var(--color-surface-dark) !important;
-  color: var(--color-text-on-dark, #f8fafc);
+/* These sit on .content-panel, which goes dark in dark mode while the link text
+   stays on the #0f172a fallback -- restore contrast. */
+:root[data-bs-theme="dark"] .blog-series-promo__step-link,
+:root[data-bs-theme="dark"] .blog-post-toc__link,
+:root[data-bs-theme="dark"] .blog-related__title {
+  color: #f1f5f9;
 }
 
 :root[data-bs-theme="dark"] .admin-item-card,

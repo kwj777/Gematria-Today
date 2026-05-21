@@ -290,11 +290,13 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
    accent appears on hover and on the link representing the current page
    so users always have a clear "you are here" cue. */
 @media (min-width: 992px) {
-  .navbar-nav .nav-link:not(.nav-search-link) {
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle) {
     position: relative;
   }
 
-  .navbar-nav .nav-link:not(.nav-search-link)::after {
+  /* Dropdown toggles get their caret from Bootstrap's own ::after, so the
+     orange underline below must skip them or it overwrites the caret. */
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle)::after {
     content: "";
     position: absolute;
     left: 0.5rem;
@@ -309,10 +311,10 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
     transition: opacity 0.15s ease, transform 0.15s ease;
   }
 
-  .navbar-nav .nav-link:not(.nav-search-link):hover::after,
-  .navbar-nav .nav-link:not(.nav-search-link):focus-visible::after,
-  .navbar-nav .nav-link:not(.nav-search-link).active::after,
-  .navbar-nav .nav-link:not(.nav-search-link)[aria-current="page"]::after {
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):hover::after,
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle):focus-visible::after,
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle).active::after,
+  .navbar-nav .nav-link:not(.nav-search-link):not(.dropdown-toggle)[aria-current="page"]::after {
     opacity: 1;
     transform: scaleX(1);
   }
@@ -342,22 +344,25 @@ html.auth-lifetime .auth-only.auth-only--member { display: revert; }
 .navbar-nav .nav-cta .btn { white-space: nowrap; align-self: center; }
 .navbar-nav .nav-search .nav-search-link { align-self: center; }
 
-/* Secondary "Log in" pill: same geometry as Join free, but ghosted so the
-   amber CTA stays the primary action. */
-.navbar-nav .nav-cta--login .btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+/* "Log in" plain text link. Sits beside the amber Join CTA so the join
+   action stays visually dominant; returning users still scan to the top-
+   right corner for sign-in regardless. */
+.navbar-nav .nav-login-link {
   color: var(--nav-on-dark-text);
+  text-decoration: none;
 }
-.navbar-nav .nav-cta--login .btn:hover,
-.navbar-nav .nav-cta--login .btn:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.65);
+.navbar-nav .nav-login-link:hover,
+.navbar-nav .nav-login-link:focus-visible {
   color: #ffffff;
+  text-decoration: underline;
 }
 
 @media (min-width: 992px) {
+  /* Search sits between the text dropdowns and the auth CTAs, so add a
+     small gap on its left and a slightly larger one on Join free to set
+     the actions cluster apart from the navigation cluster. */
   .navbar-nav .nav-item.nav-search { margin-left: 0.5rem; }
+  .navbar-nav .nav-item.nav-cta--join { margin-left: 0.5rem; }
 
   /* Match the CTA button's box geometry to the Search pill so the two
      trailing actions share a shape. The yellow btn-warning fill is kept
@@ -3571,3 +3576,188 @@ a.badge,
   }
 }
 
+/* ── Desktop nav: dropdowns, mega-menu, sticky-shrink ─────────────────── */
+@media (min-width: 992px) {
+  /* Sticky-shrink: when the page is scrolled, the nav-scroll.js helper adds
+     .is-scrolled to the sticky navbar so it tightens vertically and the logo
+     scales down. Gives more vertical room to long-scroll pages without
+     sacrificing the brand on first paint. */
+  nav.navbar.sticky-top {
+    transition: padding 0.18s ease;
+  }
+  nav.navbar.sticky-top .site-logo {
+    transition: height 0.18s ease;
+  }
+  nav.navbar.sticky-top.is-scrolled {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+  }
+  nav.navbar.sticky-top.is-scrolled .site-logo {
+    height: 32px;
+  }
+
+  /* Dark dropdown surface shared by Tools mega-menu and Learn menu. */
+  .navbar-dark .navbar-nav .dropdown-menu {
+    background: #2a241d;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.35);
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  /* Learn dropdown: standard vertical list. */
+  .nav-learn-menu .dropdown-item {
+    color: var(--nav-on-dark-text);
+    border-radius: 0.4rem;
+    padding: 0.45rem 0.75rem;
+  }
+  .nav-learn-menu .dropdown-item:hover,
+  .nav-learn-menu .dropdown-item:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+  }
+  .nav-learn-menu .dropdown-item.active,
+  .nav-learn-menu .dropdown-item[aria-current="page"] {
+    background: rgba(var(--brand-amber-rgb), 0.18);
+    color: #ffffff;
+    box-shadow: inset 2px 0 0 var(--brand-amber);
+  }
+
+  /* Tools mega-menu: 2-column grid with title + description per item. */
+  .nav-mega-menu {
+    min-width: 480px;
+    padding: 1rem;
+  }
+  .nav-mega-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+  .nav-mega-item {
+    display: block;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.5rem;
+    color: var(--nav-on-dark-text);
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .nav-mega-item:hover,
+  .nav-mega-item:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    text-decoration: none;
+  }
+  .nav-mega-item.active,
+  .nav-mega-item[aria-current="page"] {
+    background: rgba(var(--brand-amber-rgb), 0.18);
+    color: #ffffff;
+    box-shadow: inset 2px 0 0 var(--brand-amber);
+    text-decoration: none;
+  }
+  .nav-mega-item__title {
+    display: block;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .nav-mega-item__desc {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.62);
+  }
+  .nav-mega-footer {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem 0.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--brand-amber);
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .nav-mega-footer:hover,
+  .nav-mega-footer:focus-visible {
+    color: var(--brand-amber);
+    text-decoration: underline;
+  }
+
+  /* When the active page lives inside a dropdown, tint the toggle so the
+     user still gets a "you are here" cue at the top level. Relies on :has()
+     which is widely supported in evergreen browsers; non-supporting
+     browsers degrade to no parent highlight, which is acceptable. */
+  .navbar-nav .nav-item.dropdown:has(.dropdown-item.active) > .nav-link,
+  .navbar-nav .nav-item.dropdown:has(.dropdown-item[aria-current="page"]) > .nav-link,
+  .navbar-nav .nav-item.dropdown:has(.nav-mega-item.active) > .nav-link,
+  .navbar-nav .nav-item.dropdown:has(.nav-mega-item[aria-current="page"]) > .nav-link {
+    color: #ffffff;
+  }
+}
+
+/* ── Mobile nav: collapse dropdowns to inline lists ───────────────────── */
+@media (max-width: 991.98px) {
+  /* The parent .nav-item is display:flex (so nav links stretch vertically
+     in the row-wrapped navbar-nav). For dropdowns that flex makes the
+     toggle and its menu sit side-by-side; switch to column so the menu
+     drops below the toggle the way a sub-list should. */
+  .navbar-nav .nav-item.dropdown {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Bootstrap floats dropdown-menus by default. Inside the collapsed
+     navbar we want them to render as a plain indented sub-list. */
+  .navbar-nav .dropdown-menu {
+    position: static;
+    float: none;
+    width: auto;
+    margin: 0 0 0.25rem 0;
+    padding: 0 0 0 1rem;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+  .navbar-nav .dropdown-item {
+    color: var(--nav-on-dark-text);
+    padding: 0.4rem 0;
+    background: transparent;
+  }
+  .navbar-nav .dropdown-item:hover,
+  .navbar-nav .dropdown-item:focus-visible,
+  .navbar-nav .dropdown-item.active {
+    color: #ffffff;
+    background: transparent;
+  }
+
+  /* Mega-menu collapses to a single column with descriptions hidden so the
+     mobile menu stays scannable. */
+  .nav-mega-grid {
+    display: block;
+  }
+  .nav-mega-item {
+    display: block;
+    padding: 0.4rem 0;
+    color: var(--nav-on-dark-text);
+    text-decoration: none;
+  }
+  .nav-mega-item:hover,
+  .nav-mega-item:focus-visible {
+    color: #ffffff;
+  }
+  .nav-mega-item__title {
+    display: block;
+    font-weight: 500;
+  }
+  .nav-mega-item__desc {
+    display: none;
+  }
+  .nav-mega-footer {
+    display: block;
+    margin-top: 0.25rem;
+    padding: 0.4rem 0;
+    color: var(--brand-amber);
+    font-weight: 600;
+    text-decoration: none;
+  }
+}

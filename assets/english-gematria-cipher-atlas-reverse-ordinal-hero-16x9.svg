@@ -1,0 +1,63 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="caRoTitle caRoDesc">
+  <title id="caRoTitle">Cipher Atlas — Reverse Ordinal (A=26 to Z=1) hero</title>
+  <desc id="caRoDesc">A descending staircase from A=26 down to Z=1, mirroring the simple ordinal staircase to illustrate the reversed letter mapping.</desc>
+  <defs>
+    <linearGradient id="caRoBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="caRoGlow" cx="800" cy="500" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="caRoHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#67E8F9"/>
+      <stop offset="1" stop-color="#0891B2"/>
+    </linearGradient>
+    <pattern id="caRoDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#caRoBg)"/>
+  <rect width="1600" height="900" fill="url(#caRoDots)"/>
+  <rect width="1600" height="900" fill="url(#caRoGlow)"/>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="582" y="58" width="436" height="38" rx="19" fill="#22D3EE" fill-opacity="0.18" stroke="#22D3EE" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#67E8F9" letter-spacing="3">CIPHER ATLAS · POST 2 OF 8</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">Reverse Ordinal</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">A = 26, B = 25, … Z = 1 — the mirror cipher</text>
+  </g>
+
+  <g transform="translate(160,300)">
+    <rect x="0" y="0" width="1280" height="420" rx="18" fill="#0B1230" stroke="#243067" stroke-width="1.5"/>
+    <g stroke="#243067" stroke-opacity="0.6" stroke-width="1">
+      <line x1="0" y1="105" x2="1280" y2="105"/>
+      <line x1="0" y1="210" x2="1280" y2="210"/>
+      <line x1="0" y1="315" x2="1280" y2="315"/>
+    </g>
+    <!-- descending staircase: 26 steps from 20 down to 412 -->
+    <polyline fill="none" stroke="url(#caRoHot)" stroke-width="3"
+      points="0,20 50,20 50,36 100,36 100,52 150,52 150,68 200,68 200,84 250,84 250,100 300,100 300,116 350,116 350,132 400,132 400,148 450,148 450,164 500,164 500,180 550,180 550,196 600,196 600,212 650,212 650,228 700,228 700,244 750,244 750,260 800,260 800,276 850,276 850,292 900,292 900,308 950,308 950,324 1000,324 1000,340 1050,340 1050,356 1100,356 1100,372 1150,372 1150,388 1200,388 1200,404 1250,404 1250,420 1280,420"/>
+    <!-- ghost ascending overlay for comparison -->
+    <polyline fill="none" stroke="#F97316" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="6 8"
+      points="0,420 1280,20"/>
+    <g fill="#67E8F9">
+      <circle cx="25" cy="28" r="6"/>
+      <circle cx="625" cy="220" r="6"/>
+      <circle cx="1265" cy="412" r="6"/>
+    </g>
+    <g font-family="'Inter', 'Segoe UI', sans-serif" font-size="16" fill="#67E8F9">
+      <text x="40" y="22" text-anchor="start">A = 26</text>
+      <text x="640" y="208" text-anchor="start">N = 13</text>
+      <text x="1180" y="404" text-anchor="end">Z = 1</text>
+    </g>
+    <text x="640" y="380" font-size="15" fill="#9CC8FF">Same 1–26 range · mirrored mapping · pairs sum to 27</text>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="800" font-size="22" fill="#F4F8FF" font-weight="600">ENGLISH = 22 + 13 + 20 + 15 + 18 + 8 + 19 = 115</text>
+    <text x="800" y="852" font-size="20" fill="#9CC8FF" fill-opacity="0.9">A second view of the same word — and a check on whether the first view is doing all the work.</text>
+  </g>
+</svg>

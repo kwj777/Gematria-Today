@@ -1,0 +1,92 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="caBaTitle caBaDesc">
+  <title id="caBaTitle">Cipher Atlas — Baconian Biliteral Cipher hero</title>
+  <desc id="caBaDesc">Five-place a/b sequences for the word CAB shown as binary cells, with a comparison of Bacon's Simple and Kaye 24-letter alphabets.</desc>
+  <defs>
+    <linearGradient id="caBaBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="caBaGlow" cx="800" cy="500" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#94A3B8" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#94A3B8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="caBaA" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1E293B"/>
+      <stop offset="1" stop-color="#0B1230"/>
+    </linearGradient>
+    <linearGradient id="caBaB" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#B45309"/>
+    </linearGradient>
+    <pattern id="caBaDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#caBaBg)"/>
+  <rect width="1600" height="900" fill="url(#caBaDots)"/>
+  <rect width="1600" height="900" fill="url(#caBaGlow)"/>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="582" y="58" width="436" height="38" rx="19" fill="#94A3B8" fill-opacity="0.18" stroke="#94A3B8" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#CBD5E1" letter-spacing="3">CIPHER ATLAS · POST 7 OF 8</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">Baconian Cipher</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">A 5-bit binary alphabet — concealment, not summation</text>
+  </g>
+
+  <!-- Three letters as 5-bit rows -->
+  <g font-family="'JetBrains Mono', 'Menlo', monospace" text-anchor="middle">
+    <!-- C = aaaba -->
+    <g transform="translate(300,300)">
+      <text x="-40" y="55" font-family="'Inter', 'Segoe UI', sans-serif" font-size="36" font-weight="800" fill="#F4F8FF" text-anchor="end">C</text>
+      <g><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(120,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(240,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(360,0)"><rect width="100" height="100" rx="10" fill="url(#caBaB)"/><text x="50" y="64" font-size="40" font-weight="800" fill="#1E1B0F">b</text></g>
+      <g transform="translate(480,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+    </g>
+    <!-- A = aaaaa -->
+    <g transform="translate(300,420)">
+      <text x="-40" y="55" font-family="'Inter', 'Segoe UI', sans-serif" font-size="36" font-weight="800" fill="#F4F8FF" text-anchor="end">A</text>
+      <g><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(120,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(240,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(360,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(480,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+    </g>
+    <!-- B = aaaab -->
+    <g transform="translate(300,540)">
+      <text x="-40" y="55" font-family="'Inter', 'Segoe UI', sans-serif" font-size="36" font-weight="800" fill="#F4F8FF" text-anchor="end">B</text>
+      <g><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(120,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(240,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(360,0)"><rect width="100" height="100" rx="10" fill="url(#caBaA)" stroke="#475569" stroke-opacity="0.6"/><text x="50" y="64" font-size="40" font-weight="800" fill="#94A3B8">a</text></g>
+      <g transform="translate(480,0)"><rect width="100" height="100" rx="10" fill="url(#caBaB)"/><text x="50" y="64" font-size="40" font-weight="800" fill="#1E1B0F">b</text></g>
+    </g>
+  </g>
+
+  <!-- Simple vs Kaye comparison panel -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" transform="translate(1050,290)">
+    <rect x="0" y="0" width="420" height="380" rx="14" fill="#0B1230" stroke="#FBBF24" stroke-opacity="0.45" stroke-width="1.5"/>
+    <text x="210" y="46" font-size="22" font-weight="700" fill="#FBBF24" text-anchor="middle">Simple vs Kaye</text>
+    <line x1="210" y1="60" x2="210" y2="370" stroke="#243067" stroke-width="1.2"/>
+    <text x="105" y="92" font-size="16" font-weight="700" fill="#9CC8FF" text-anchor="middle">SIMPLE (24)</text>
+    <text x="315" y="92" font-size="16" font-weight="700" fill="#9CC8FF" text-anchor="middle">KAYE (26)</text>
+    <g font-family="'JetBrains Mono', 'Menlo', monospace" font-size="15" fill="#E6F2FF" text-anchor="middle">
+      <text x="105" y="124">I = J</text><text x="315" y="124">I ≠ J</text>
+      <text x="105" y="152">U = V</text><text x="315" y="152">U ≠ V</text>
+      <text x="105" y="180">A = aaaaa</text><text x="315" y="180">A = aaaaa</text>
+      <text x="105" y="208">I = abaaa</text><text x="315" y="208">I = abaaa</text>
+      <text x="105" y="236">J = abaaa</text><text x="315" y="236">J = abaab</text>
+      <text x="105" y="264">U = baabb</text><text x="315" y="264">U = babaa</text>
+      <text x="105" y="292">V = baabb</text><text x="315" y="292">V = babab</text>
+      <text x="105" y="320">Z = babbb</text><text x="315" y="320">Z = bbabb</text>
+    </g>
+    <text x="210" y="356" font-size="13" fill="#9CC8FF" fill-opacity="0.8" text-anchor="middle">Two tables — different decoded outputs</text>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="780" font-size="22" fill="#F4F8FF" font-weight="600">CAB = aaaba · aaaaa · aaaab (encoded, not summed)</text>
+    <text x="800" y="852" font-size="20" fill="#9CC8FF" fill-opacity="0.9">A cipher, not a gematria — concealment by alternation, not significance by total.</text>
+  </g>
+</svg>

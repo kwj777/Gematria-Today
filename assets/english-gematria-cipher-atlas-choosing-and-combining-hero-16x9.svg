@@ -1,0 +1,110 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="caCcTitle caCcDesc">
+  <title id="caCcTitle">Cipher Atlas — Choosing and Combining Ciphers hero</title>
+  <desc id="caCcDesc">A single word ENGLISH fanned out into seven cipher totals, with overlapping rings showing the base-four matrix at the center and outliers around the edge.</desc>
+  <defs>
+    <linearGradient id="caCcBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="caCcGlow" cx="800" cy="500" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="caCcCell" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#243067"/>
+      <stop offset="1" stop-color="#0B1230"/>
+    </linearGradient>
+    <linearGradient id="caCcHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <pattern id="caCcDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#caCcBg)"/>
+  <rect width="1600" height="900" fill="url(#caCcDots)"/>
+  <rect width="1600" height="900" fill="url(#caCcGlow)"/>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="582" y="58" width="436" height="38" rx="19" fill="#F97316" fill-opacity="0.18" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#FFB779" letter-spacing="3">CIPHER ATLAS · POST 8 OF 8</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">Choosing and Combining</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">The base four · the dependent ciphers · cross-cipher matches</text>
+  </g>
+
+  <!-- Center: word -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <circle cx="800" cy="510" r="120" fill="#0B1230" stroke="url(#caCcHot)" stroke-width="3"/>
+    <text x="800" y="500" font-size="32" font-weight="800" fill="#F4F8FF">ENGLISH</text>
+    <text x="800" y="538" font-size="16" fill="#9CC8FF">one word · seven views</text>
+  </g>
+
+  <!-- Spokes / cipher totals -->
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <!-- 7 ciphers: Simple, Reverse, Reduction, Reverse Reduction (base four, inner ring), Jewish, Sumerian, Bacon (outer/dependent) -->
+    <!-- inner ring positions: 0, 90, 180, 270 -->
+    <g>
+      <line x1="800" y1="390" x2="800" y2="320" stroke="url(#caCcHot)" stroke-width="2"/>
+      <g transform="translate(800,290)">
+        <rect x="-130" y="-30" width="260" height="60" rx="12" fill="url(#caCcCell)" stroke="url(#caCcHot)" stroke-width="2"/>
+        <text x="0" y="-4" font-size="14" font-weight="700" fill="#FBBF24">SIMPLE ORDINAL</text>
+        <text x="0" y="22" font-size="22" font-weight="800" fill="#F4F8FF">74</text>
+      </g>
+    </g>
+    <g>
+      <line x1="920" y1="510" x2="990" y2="510" stroke="url(#caCcHot)" stroke-width="2"/>
+      <g transform="translate(1120,510)">
+        <rect x="-130" y="-30" width="260" height="60" rx="12" fill="url(#caCcCell)" stroke="url(#caCcHot)" stroke-width="2"/>
+        <text x="0" y="-4" font-size="14" font-weight="700" fill="#FBBF24">REVERSE ORDINAL</text>
+        <text x="0" y="22" font-size="22" font-weight="800" fill="#F4F8FF">115</text>
+      </g>
+    </g>
+    <g>
+      <line x1="800" y1="630" x2="800" y2="700" stroke="url(#caCcHot)" stroke-width="2"/>
+      <g transform="translate(800,730)">
+        <rect x="-130" y="-30" width="260" height="60" rx="12" fill="url(#caCcCell)" stroke="url(#caCcHot)" stroke-width="2"/>
+        <text x="0" y="-4" font-size="14" font-weight="700" fill="#FBBF24">FULL REDUCTION</text>
+        <text x="0" y="22" font-size="22" font-weight="800" fill="#F4F8FF">38</text>
+      </g>
+    </g>
+    <g>
+      <line x1="680" y1="510" x2="610" y2="510" stroke="url(#caCcHot)" stroke-width="2"/>
+      <g transform="translate(480,510)">
+        <rect x="-130" y="-30" width="260" height="60" rx="12" fill="url(#caCcCell)" stroke="url(#caCcHot)" stroke-width="2"/>
+        <text x="0" y="-4" font-size="14" font-weight="700" fill="#FBBF24">REVERSE REDUCTION</text>
+        <text x="0" y="22" font-size="22" font-weight="800" fill="#F4F8FF">34</text>
+      </g>
+    </g>
+    <!-- Dependent / outer ring (lighter accent) -->
+    <g opacity="0.85">
+      <line x1="710" y1="425" x2="640" y2="370" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 6"/>
+      <g transform="translate(490,340)">
+        <rect x="-130" y="-30" width="260" height="60" rx="12" fill="url(#caCcCell)" stroke="#94A3B8" stroke-opacity="0.7"/>
+        <text x="0" y="-4" font-size="13" font-weight="700" fill="#CBD5E1">ENGLISH SUMERIAN (×6)</text>
+        <text x="0" y="22" font-size="22" font-weight="800" fill="#F4F8FF">444</text>
+      </g>
+    </g>
+    <g opacity="0.85">
+      <line x1="890" y1="425" x2="960" y2="370" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 6"/>
+      <g transform="translate(1110,340)">
+        <rect x="-130" y="-30" width="260" height="60" rx="12" fill="url(#caCcCell)" stroke="#94A3B8" stroke-opacity="0.7"/>
+        <text x="0" y="-4" font-size="14" font-weight="700" fill="#CBD5E1">JEWISH / LATIN</text>
+        <text x="0" y="22" font-size="22" font-weight="800" fill="#F4F8FF">209</text>
+      </g>
+    </g>
+    <g opacity="0.75">
+      <line x1="800" y1="630" x2="540" y2="680" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 6"/>
+      <g transform="translate(380,720)">
+        <rect x="-150" y="-30" width="300" height="60" rx="12" fill="url(#caCcCell)" stroke="#94A3B8" stroke-opacity="0.7"/>
+        <text x="0" y="-4" font-size="13" font-weight="700" fill="#CBD5E1">BACONIAN (encoded)</text>
+        <text x="0" y="22" font-size="14" font-weight="600" fill="#F4F8FF" font-family="'JetBrains Mono', monospace">aaaaa baaba baabb...</text>
+      </g>
+    </g>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="852" font-size="20" fill="#9CC8FF" fill-opacity="0.9">Four independent ciphers in the inner ring · the rest are amplifications, ladders, or codes.</text>
+  </g>
+</svg>

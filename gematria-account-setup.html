@@ -190,13 +190,15 @@
           <div id="signUpSuccessPanel" class="d-none">
             <div class="alert alert-success mb-3" role="status">
               <p class="mb-2"><strong>Account created.</strong> We sent a verification link to <strong id="signUpSuccessEmail">your inbox</strong>.</p>
-              <p class="mb-0">Once you've verified, sign in and you'll be routed straight to Level 1.</p>
+              <p class="mb-0">Once you've verified, sign in and you'll be routed straight to Level 1. The link expires in 24 hours.</p>
             </div>
-            <p class="small text-muted mb-3">
+            <p class="small text-muted mb-2">
               Didn't see it? It can take a minute to arrive — check your spam or promotions folder for a message from
-              <strong>Gematria.Today</strong>. If it still hasn't arrived after 10 minutes, try signing in to request a new link.
+              <strong>Gematria.Today</strong>.
             </p>
+            <div id="signUpResendAlert" class="alert d-none mb-3" role="status" aria-live="polite"></div>
             <div class="d-flex flex-wrap gap-2">
+              <button id="signUpResendButton" class="btn btn-outline-secondary" type="button">Resend verification email</button>
               <a class="btn btn-warning fw-semibold" href="/member.html?auth=login#authSection">Sign in</a>
               <a class="btn btn-outline-primary" href="/gematria-basics.html">Continue to Level 1 now</a>
             </div>

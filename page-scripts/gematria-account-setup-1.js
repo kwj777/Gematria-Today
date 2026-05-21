@@ -62,7 +62,9 @@
 
         passwordInput?.addEventListener('input', updateStrength);
 
-        window.GematriaRegisterForm.initRegisterForm({
+        let lastSubmittedIdentifier = '';
+
+        const registerHelpers = window.GematriaRegisterForm.initRegisterForm({
           form,
           fields: {
             username: document.getElementById('lzRegUsername'),
@@ -81,9 +83,44 @@
             if (emailEl && submittedEmail) {
               emailEl.textContent = submittedEmail;
             }
+            lastSubmittedIdentifier = submittedEmail || context?.payload?.username || '';
             form.classList.add('d-none');
             successPanel?.classList.remove('d-none');
             successPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           },
+        });
+
+        const resendButton = document.getElementById('signUpResendButton');
+        const resendAlert = document.getElementById('signUpResendAlert');
+
+        function setResendAlert(message, tone) {
+          if (!resendAlert) return;
+          resendAlert.textContent = message;
+          resendAlert.classList.remove('d-none', 'alert-success', 'alert-warning', 'alert-danger', 'alert-info');
+          resendAlert.classList.add('alert-' + (tone || 'info'));
+        }
+
+        resendButton?.addEventListener('click', async () => {
+          if (!lastSubmittedIdentifier) {
+            setResendAlert('Submit the form first to receive a verification email.', 'warning');
+            return;
+          }
+          const originalLabel = resendButton.innerHTML;
+          resendButton.disabled = true;
+          resendButton.setAttribute('aria-busy', 'true');
+          resendButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending…';
+          try {
+            const response = await registerHelpers.request('/api/member-resend-verification', {
+              method: 'POST',
+              body: JSON.stringify({ identifier: lastSubmittedIdentifier }),
+            });
+            setResendAlert(response?.message || 'If a pending account matches that identifier, a fresh verification link has been sent by email.', 'success');
+          } catch (error) {
+            setResendAlert((error && error.message) || 'Unable to resend the verification email right now. Please try again in a few minutes.', 'danger');
+          } finally {
+            resendButton.disabled = false;
+            resendButton.removeAttribute('aria-busy');
+            resendButton.innerHTML = originalLabel;
+          }
         });
       });

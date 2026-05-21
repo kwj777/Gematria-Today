@@ -223,6 +223,20 @@
             </li>
           </ul>
           <div id="memberAlert" class="alert d-none mb-4" role="alert"></div>
+          <div id="resendVerificationPanel" class="content-panel content-panel--inset p-3 mb-4 d-none">
+            <h3 class="h6 mb-2">Need a fresh verification link?</h3>
+            <p class="small text-muted mb-3">Verification links expire 24 hours after signup. Enter the username or email you registered with and we'll send a new one.</p>
+            <form id="resendVerificationForm" class="row g-2 align-items-end">
+              <div class="col-12 col-md">
+                <label class="form-label" for="resendVerificationIdentifier">Username or email</label>
+                <input id="resendVerificationIdentifier" class="form-control" autocomplete="username" required />
+              </div>
+              <div class="col-12 col-md-auto">
+                <button id="resendVerificationSubmit" class="btn btn-outline-primary" type="submit">Send a fresh link</button>
+              </div>
+            </form>
+            <div id="resendVerificationAlert" class="alert d-none mt-3 mb-0" role="status" aria-live="polite"></div>
+          </div>
           <div id="authPanelRegister" data-auth-panel="register">
             <p class="section-kicker mb-3">New Member</p>
             <p class="mb-3"><a id="registerBenefitsPreviewLink" class="link-primary text-decoration-none" href="#comparisonSection">Curious what you get? See membership benefits</a></p>

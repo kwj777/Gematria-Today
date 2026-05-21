@@ -1261,6 +1261,15 @@
         }, 300);
       }
 
+      function revealResendVerificationPanel() {
+        const panel = document.getElementById('resendVerificationPanel');
+        if (!panel) return;
+        panel.classList.remove('d-none');
+        window.setTimeout(() => {
+          document.getElementById('resendVerificationIdentifier')?.focus({ preventScroll: true });
+        }, 50);
+      }
+
       function normalizeAuthView(value) {
         return value === 'login' ? 'login' : 'register';
       }
@@ -2049,6 +2058,7 @@
             scrollToLoginArea();
           } catch (error) {
             showAlert(error.message || 'Email verification link is invalid or expired.', 'warning');
+            revealResendVerificationPanel();
           } finally {
             url.searchParams.delete('verify_email_token');
             window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + (url.hash || ''));
@@ -2189,6 +2199,48 @@
         setAuthView('login', { updateUrl: true });
       });
 
+      const resendVerificationForm = document.getElementById('resendVerificationForm');
+      const resendVerificationSubmit = document.getElementById('resendVerificationSubmit');
+      const resendVerificationAlert = document.getElementById('resendVerificationAlert');
+      const resendVerificationIdentifier = document.getElementById('resendVerificationIdentifier');
+
+      function setResendVerificationAlert(message, tone) {
+        if (!resendVerificationAlert) return;
+        resendVerificationAlert.textContent = message;
+        resendVerificationAlert.classList.remove('d-none', 'alert-success', 'alert-warning', 'alert-danger', 'alert-info');
+        resendVerificationAlert.classList.add('alert-' + (tone || 'info'));
+      }
+
+      resendVerificationForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const identifier = (resendVerificationIdentifier?.value || '').trim();
+        if (!identifier) {
+          setResendVerificationAlert('Enter the username or email you registered with.', 'warning');
+          return;
+        }
+        const defaultLabel = resendVerificationSubmit?.textContent || 'Send a fresh link';
+        if (resendVerificationSubmit) {
+          resendVerificationSubmit.disabled = true;
+          resendVerificationSubmit.setAttribute('aria-busy', 'true');
+          resendVerificationSubmit.textContent = 'Sending…';
+        }
+        try {
+          const response = await request('/api/member-resend-verification', {
+            method: 'POST',
+            body: JSON.stringify({ identifier }),
+          });
+          setResendVerificationAlert(response?.message || 'If a pending account matches that identifier, a fresh verification link has been sent by email.', 'success');
+        } catch (error) {
+          setResendVerificationAlert(error.message || 'Unable to resend the verification email right now. Please try again in a few minutes.', 'danger');
+        } finally {
+          if (resendVerificationSubmit) {
+            resendVerificationSubmit.disabled = false;
+            resendVerificationSubmit.removeAttribute('aria-busy');
+            resendVerificationSubmit.textContent = defaultLabel;
+          }
+        }
+      });
+
       const loginForm = document.getElementById('loginForm');
       const loginSubmitButton = document.getElementById('loginSubmitButton');
       const loginSubmitButtonDefaultLabel = loginSubmitButton?.textContent || 'Sign in';
@@ -2245,6 +2297,13 @@
           await loadMemberChatbotFeedback();
         } catch (error) {
           showAlert(error.message || 'Unable to sign in.');
+          if (/verify your email/i.test(error?.message || '')) {
+            revealResendVerificationPanel();
+            const submittedIdentifier = document.getElementById('loginIdentifier')?.value.trim();
+            if (submittedIdentifier && resendVerificationIdentifier) {
+              resendVerificationIdentifier.value = submittedIdentifier;
+            }
+          }
         } finally {
           setLoginSubmittingState(false);
         }

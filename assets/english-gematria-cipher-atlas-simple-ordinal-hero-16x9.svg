@@ -1,0 +1,78 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="caSoTitle caSoDesc">
+  <title id="caSoTitle">Cipher Atlas — Simple Ordinal (A=1 to Z=26) hero</title>
+  <desc id="caSoDesc">A 26-cell grid showing A through Z numbered 1 to 26 in ascending order, with the alphabet rising diagonally as a staircase of values.</desc>
+  <defs>
+    <linearGradient id="caSoBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#070B22"/>
+      <stop offset="0.55" stop-color="#101742"/>
+      <stop offset="1" stop-color="#1B0E45"/>
+    </linearGradient>
+    <radialGradient id="caSoGlow" cx="800" cy="500" r="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#F97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="caSoCell" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#243067"/>
+      <stop offset="1" stop-color="#0B1230"/>
+    </linearGradient>
+    <linearGradient id="caSoHot" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <pattern id="caSoDots" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.5" fill="#7AB8FF" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#caSoBg)"/>
+  <rect width="1600" height="900" fill="url(#caSoDots)"/>
+  <rect width="1600" height="900" fill="url(#caSoGlow)"/>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <rect x="582" y="58" width="436" height="38" rx="19" fill="#F97316" fill-opacity="0.18" stroke="#F97316" stroke-opacity="0.55" stroke-width="1.2"/>
+    <text x="800" y="84" font-size="18" font-weight="700" fill="#FFB779" letter-spacing="3">CIPHER ATLAS · POST 1 OF 8</text>
+    <text x="800" y="158" font-size="58" font-weight="800" fill="#F4F8FF">Simple Ordinal</text>
+    <text x="800" y="200" font-size="22" font-weight="500" fill="#9CC8FF">A = 1, B = 2, … Z = 26 — the baseline cipher</text>
+  </g>
+
+  <!-- 13x2 grid of letters with ordinal values -->
+  <g font-family="'JetBrains Mono', 'Menlo', monospace" text-anchor="middle">
+    <g id="caSoRow1">
+      <!-- letters A..M -->
+    </g>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <!-- ascending staircase plot -->
+    <g transform="translate(160,300)">
+      <rect x="0" y="0" width="1280" height="420" rx="18" fill="#0B1230" stroke="#243067" stroke-width="1.5"/>
+      <!-- gridlines -->
+      <g stroke="#243067" stroke-opacity="0.6" stroke-width="1">
+        <line x1="0" y1="105" x2="1280" y2="105"/>
+        <line x1="0" y1="210" x2="1280" y2="210"/>
+        <line x1="0" y1="315" x2="1280" y2="315"/>
+      </g>
+      <!-- staircase: 26 steps -->
+      <g>
+        <polyline fill="none" stroke="url(#caSoHot)" stroke-width="3"
+          points="0,420 50,420 50,404 100,404 100,388 150,388 150,372 200,372 200,356 250,356 250,340 300,340 300,324 350,324 350,308 400,308 400,292 450,292 450,276 500,276 500,260 550,260 550,244 600,244 600,228 650,228 650,212 700,212 700,196 750,196 750,180 800,180 800,164 850,164 850,148 900,148 900,132 950,132 950,116 1000,116 1000,100 1050,100 1050,84 1100,84 1100,68 1150,68 1150,52 1200,52 1200,36 1250,36 1250,20 1280,20"/>
+      </g>
+      <!-- step dots for A, M, Z -->
+      <g fill="#FBBF24">
+        <circle cx="25" cy="412" r="6"/>
+        <circle cx="625" cy="220" r="6"/>
+        <circle cx="1265" cy="28" r="6"/>
+      </g>
+      <g font-family="'Inter', 'Segoe UI', sans-serif" font-size="16" fill="#FBBF24">
+        <text x="40" y="402" text-anchor="start">A = 1</text>
+        <text x="640" y="208" text-anchor="start">M = 13</text>
+        <text x="1180" y="20" text-anchor="end">Z = 26</text>
+      </g>
+      <text x="640" y="380" font-size="15" fill="#9CC8FF">26 steps · one per letter · constant +1 rise</text>
+    </g>
+  </g>
+
+  <g font-family="'Inter', 'Segoe UI', sans-serif" text-anchor="middle">
+    <text x="800" y="800" font-size="22" fill="#F4F8FF" font-weight="600">ENGLISH = 5 + 14 + 7 + 12 + 9 + 19 + 8 = 74</text>
+    <text x="800" y="852" font-size="20" fill="#9CC8FF" fill-opacity="0.9">The default starting point — every other English cipher reacts to this one.</text>
+  </g>
+</svg>

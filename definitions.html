@@ -417,6 +417,104 @@
         .glossary-toc-wrap.is-open { display: block; }
       }
 
+      /* Dark mode */
+      :root[data-bs-theme="dark"] .glossary-toc {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+      }
+      :root[data-bs-theme="dark"] .glossary-toc h2 { color: rgba(230, 235, 242, 0.65); }
+      :root[data-bs-theme="dark"] .glossary-toc a { color: rgba(230, 235, 242, 0.82); }
+      :root[data-bs-theme="dark"] .glossary-toc a::before { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .glossary-toc a:hover,
+      :root[data-bs-theme="dark"] .glossary-toc a.is-active {
+        background: rgba(96, 165, 250, 0.16);
+        color: #93c5fd;
+      }
+      :root[data-bs-theme="dark"] .glossary-toc a.is-active::before { color: #93c5fd; }
+
+      :root[data-bs-theme="dark"] .glossary-controls {
+        background: var(--gt-controls-bg-dark, rgba(11, 16, 24, 0.85));
+      }
+      :root[data-bs-theme="dark"] .glossary-controls.is-stuck {
+        border-bottom-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+      }
+      :root[data-bs-theme="dark"] .glossary-search input {
+        background: rgba(17, 24, 34, 0.94);
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.12));
+        color: #e6ebf2;
+      }
+      :root[data-bs-theme="dark"] .glossary-search input::placeholder { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .glossary-search input:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22);
+      }
+      :root[data-bs-theme="dark"] .glossary-search__icon { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .glossary-search__clear { color: rgba(230, 235, 242, 0.55); }
+      :root[data-bs-theme="dark"] .glossary-search__clear:hover,
+      :root[data-bs-theme="dark"] .glossary-search__clear:focus-visible {
+        color: #e6ebf2;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      :root[data-bs-theme="dark"] .glossary-search__count { color: rgba(230, 235, 242, 0.6); }
+
+      :root[data-bs-theme="dark"] .glossary-az a,
+      :root[data-bs-theme="dark"] .glossary-az span {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(230, 235, 242, 0.78);
+      }
+      :root[data-bs-theme="dark"] .glossary-az a:hover,
+      :root[data-bs-theme="dark"] .glossary-az a:focus-visible {
+        background: #60a5fa;
+        color: #0b1018;
+      }
+
+      :root[data-bs-theme="dark"] .defn-section__count { color: rgba(230, 235, 242, 0.6); }
+
+      :root[data-bs-theme="dark"] .defn-card {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+      }
+      :root[data-bs-theme="dark"] .defn-card:hover {
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+      :root[data-bs-theme="dark"] .defn-card.is-flash,
+      :root[data-bs-theme="dark"] .defn-card:target {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
+      }
+      :root[data-bs-theme="dark"] .defn-card dt { color: #f1f5f9; }
+      :root[data-bs-theme="dark"] .defn-card dd { color: rgba(230, 235, 242, 0.78); }
+      :root[data-bs-theme="dark"] .defn-anchor { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .defn-anchor:hover,
+      :root[data-bs-theme="dark"] .defn-anchor:focus-visible {
+        color: #93c5fd;
+        background: rgba(96, 165, 250, 0.14);
+      }
+      :root[data-bs-theme="dark"] .defn-example {
+        background: rgba(255, 255, 255, 0.06);
+        color: #e6ebf2;
+      }
+      :root[data-bs-theme="dark"] .defn-badge--beginner { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+      :root[data-bs-theme="dark"] .defn-badge--intermediate { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+      :root[data-bs-theme="dark"] .defn-badge--advanced { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+      :root[data-bs-theme="dark"] .defn-card mark.defn-hl {
+        background: rgba(250, 204, 21, 0.28);
+        color: inherit;
+      }
+
+      :root[data-bs-theme="dark"] .defn-no-results {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.12));
+        color: rgba(230, 235, 242, 0.65);
+      }
+
+      :root[data-bs-theme="dark"] .glossary-toc-toggle {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+        color: #e6ebf2;
+      }
+      :root[data-bs-theme="dark"] .glossary-toc-toggle::after { color: rgba(230, 235, 242, 0.55); }
+
       /* Print */
       @media print {
         .navbar,

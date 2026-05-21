@@ -1,6 +1,7 @@
 import {
   AUTH_COOKIES,
   clearSessionCookie,
+  createMemberTierCookie,
   createSession,
   createSessionCookie,
   getOptionalAuthenticatedSession,
@@ -66,7 +67,10 @@ export async function handler(event) {
       authenticated: true,
       user: { id: user.id, username: user.username, role: user.role },
     }, {
-      'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+      'set-cookie': [
+        createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+        createMemberTierCookie('lifetime', expiresAt),
+      ],
     });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Failed to log in' }, error.headers || {});

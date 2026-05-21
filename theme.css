@@ -452,6 +452,10 @@ html.auth-lifetime .auth-only.auth-only--member { display: revert; }
 :root[data-bs-theme="dark"] .nav-theme-toggle__sun { display: block; }
 :root[data-bs-theme="dark"] .nav-theme-toggle__moon { display: none; }
 
+/* Visual breathing room between the KnowBot search pill and the theme
+   toggle. The navbar-nav column-gap is tight; nudge the toggle out. */
+.nav-theme-toggle--desktop { margin-left: 0.5rem; }
+
 .skip-link {
   position: absolute;
   top: 0.5rem;

@@ -836,7 +836,7 @@ View results: ${shareUrl}`.trim(),
             .map((result) => result.gematria.gematria.total);
           const shareAllButton = document.createElement('button');
           shareAllButton.type = 'button';
-          shareAllButton.className = 'btn btn-sm btn-warning fw-semibold share-action-button';
+          shareAllButton.className = 'btn btn-sm btn-outline-primary fw-semibold share-action-button';
           shareAllButton.textContent = 'Share comparison';
           shareAllButton.setAttribute('aria-label', 'Share this comparison');
           shareAllButton.addEventListener('click', async () => {

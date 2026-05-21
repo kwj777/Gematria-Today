@@ -834,7 +834,7 @@ View results: ${shareUrl}`.trim(),
       function appendReverseLookupShareButton(payload) {
         const shareButton = document.createElement('button');
         shareButton.type = 'button';
-        shareButton.className = 'btn btn-warning btn-sm fw-semibold share-action-button';
+        shareButton.className = 'btn btn-outline-primary btn-sm fw-semibold share-action-button';
         shareButton.textContent = 'Share this lookup';
         shareButton.addEventListener('click', async () => {
           reportButtonEvent('share_button_click', { source: 'calculator_reverse_lookup' });
@@ -1216,7 +1216,7 @@ View results: ${shareUrl}`.trim(),
       function renderSearchGematriaSummary(searchGematria) {
         const shareButton = document.createElement('button');
         shareButton.type = 'button';
-        shareButton.className = 'btn btn-warning btn-sm mt-2 fw-semibold share-action-button';
+        shareButton.className = 'btn btn-outline-primary btn-sm mt-2 fw-semibold share-action-button';
         shareButton.textContent = 'Share this lookup';
         shareButton.addEventListener('click', async () => {
           reportButtonEvent('share_button_click', { source: 'calculator_lookup' });

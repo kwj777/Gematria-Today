@@ -723,7 +723,7 @@
         if (session?.profile?.preferences) {
           delete session.profile.preferences.learningPathStep1Intent;
         }
-        request('/api/member-learning-path-consume', { method: 'POST', body: '{}' })
+        return request('/api/member-learning-path-consume', { method: 'POST', body: '{}' })
           .catch(() => {
             // Non-fatal: localStorage clear and client-side state still apply.
           });
@@ -732,7 +732,6 @@
       function consumeLearningPathStep1Redirect() {
         if (!hasLearningPathStep1Intent()) return false;
         window.localStorage.removeItem('learningPathStep1Intent');
-        clearServerLearningPathStep1Intent();
         window.gematriaTracking?.track?.('cta_ladder_click', {
           step: 'learning_path_step_1',
           location: 'member_dashboard_auto_redirect',
@@ -740,9 +739,14 @@
           authenticated: true,
         });
         showAlert('Signed in. Routing you to Level 1…', 'success');
-        window.setTimeout(() => {
+        // Ensure the server-side intent is cleared before redirecting so the
+        // dashboard doesn't re-trigger this auto-redirect on the next sign-in.
+        // Cap the wait so a hung request can't strand the user here.
+        const consume = clearServerLearningPathStep1Intent();
+        const fallback = new Promise((resolve) => window.setTimeout(resolve, 1500));
+        Promise.race([consume, fallback]).then(() => {
           window.location.assign('/gematria-basics.html');
-        }, 400);
+        });
         return true;
       }
 

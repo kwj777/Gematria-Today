@@ -26,16 +26,27 @@
           return null;
         }
 
+        function revealAnonNotice() {
+          const notice = document.getElementById('learningPathCompletionBannerAnonNotice');
+          if (notice) notice.classList.remove('d-none');
+        }
+
         async function recordCompletionForSignedInMember() {
           try {
             const csrfResponse = await fetch('/api/member-csrf', {
               credentials: 'same-origin',
               headers: { accept: 'application/json' },
             });
-            if (!csrfResponse.ok) return;
+            if (!csrfResponse.ok) {
+              revealAnonNotice();
+              return;
+            }
             const csrfPayload = await csrfResponse.json().catch(() => ({}));
             const token = csrfPayload && csrfPayload.csrfToken;
-            if (!token) return; // Anonymous visitor; nothing to persist.
+            if (!token) {
+              revealAnonNotice();
+              return;
+            }
             await fetch('/api/member-learning-path-complete', {
               method: 'POST',
               credentials: 'same-origin',

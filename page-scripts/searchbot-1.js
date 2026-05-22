@@ -12,7 +12,31 @@
       const feedbackText = document.getElementById('feedbackText');
       const submitFeedbackButton = document.getElementById('submitFeedbackButton');
       const feedbackStatus = document.getElementById('feedbackStatus');
+      const followUpPanel = document.getElementById('followUpPanel');
+      const askAnotherButton = document.getElementById('askAnotherButton');
+      const refineQueryButton = document.getElementById('refineQueryButton');
+      const exampleQuestionsPanel = document.getElementById('exampleQuestionsPanel');
+      const conversationThread = document.getElementById('conversationThread');
+      const conversationThreadBody = document.getElementById('conversationThreadBody');
+      const startOverButton = document.getElementById('startOverButton');
+      const contextToggleWrap = document.getElementById('contextToggleWrap');
+      const useContextToggle = document.getElementById('useContextToggle');
+      const emptyStatePanel = document.getElementById('emptyStatePanel');
+      const emptyStateMessage = document.getElementById('emptyStateMessage');
+
+      const MAX_CONVERSATION_TURNS = 6;
       let latestSearchPayload = null;
+      const conversationHistory = [];
+
+      function focusChatQuestion() {
+        if (!chatQuestion) return;
+        chatQuestion.focus();
+        try {
+          chatQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (_error) {
+          chatQuestion.scrollIntoView();
+        }
+      }
 
       function escapeHtml(value) {
         return String(value || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
@@ -55,6 +79,85 @@
         }).join('');
       }
 
+      function renderConversationThread() {
+        if (!conversationThread || !conversationThreadBody) return;
+        if (!conversationHistory.length) {
+          conversationThread.classList.add('d-none');
+          conversationThreadBody.innerHTML = '';
+          return;
+        }
+        conversationThreadBody.innerHTML = conversationHistory.map((turn, index) => {
+          const safeQuestion = escapeHtml(turn.question);
+          const safeAnswer = escapeHtml(turn.answer);
+          const turnNumber = index + 1;
+          return `<article class="conversation-turn border rounded p-3 mb-2"><p class="small text-muted mb-1">Q${turnNumber}</p><p class="fw-semibold mb-2">${safeQuestion}</p><p class="small mb-0">${safeAnswer}</p></article>`;
+        }).join('');
+        conversationThread.classList.remove('d-none');
+      }
+
+      function archiveCurrentTurn() {
+        if (!latestSearchPayload) return;
+        const question = String(latestSearchPayload.userQuestion || latestSearchPayload.query || '').trim();
+        const answer = String(latestSearchPayload.answer || '').trim();
+        if (!question) return;
+        conversationHistory.push({
+          question,
+          answer,
+          searchQuery: String(latestSearchPayload.query || question).trim(),
+        });
+        while (conversationHistory.length > MAX_CONVERSATION_TURNS) {
+          conversationHistory.shift();
+        }
+        renderConversationThread();
+      }
+
+      function resetConversation() {
+        conversationHistory.length = 0;
+        latestSearchPayload = null;
+        chatQuestion.value = '';
+        sourceList.innerHTML = '';
+        answerText.textContent = '';
+        feedbackText.value = '';
+        feedbackNoForm.classList.add('d-none');
+        resultFeedbackPanel.classList.add('d-none');
+        followUpPanel?.classList.add('d-none');
+        emptyStatePanel?.classList.add('d-none');
+        feedbackStatus.className = 'small text-muted mt-2 mb-0';
+        feedbackStatus.textContent = '';
+        chatResult.classList.add('d-none');
+        contextToggleWrap?.classList.add('d-none');
+        if (useContextToggle) useContextToggle.checked = true;
+        exampleQuestionsPanel?.classList.remove('d-none');
+        renderConversationThread();
+        statusMessage.className = 'alert alert-info';
+        statusMessage.textContent = 'SiteSeeker is ready.';
+      }
+
+      function buildSearchPayloadQuery(userQuery) {
+        const trimmed = String(userQuery || '').trim();
+        if (!trimmed) return trimmed;
+        const wantsContext = Boolean(useContextToggle?.checked);
+        if (!wantsContext || !conversationHistory.length) return trimmed;
+        const priorTerms = conversationHistory
+          .map((turn) => String(turn.searchQuery || turn.question || '').trim())
+          .filter(Boolean)
+          .join(' ');
+        if (!priorTerms) return trimmed;
+        const combined = `${priorTerms} ${trimmed}`.replace(/\s+/g, ' ').trim();
+        return combined.length > 400 ? combined.slice(0, 400) : combined;
+      }
+
+      function showEmptyState(userQuery) {
+        if (!emptyStatePanel) return;
+        const safeQuery = escapeHtml(String(userQuery || '').trim());
+        if (emptyStateMessage) {
+          emptyStateMessage.innerHTML = safeQuery
+            ? `SiteSeeker did not find published site content matching <strong>"${safeQuery}"</strong>.`
+            : 'SiteSeeker did not find published site content matching your question.';
+        }
+        emptyStatePanel.classList.remove('d-none');
+      }
+
       async function submitFeedback(wasExpected) {
         if (!latestSearchPayload?.query) return;
         const message = String(feedbackText?.value || '').trim();
@@ -94,44 +197,71 @@
         }
       }
 
-      chatForm?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const query = chatQuestion.value.trim();
-        if (!query) return;
+      async function runSearch(userQuery) {
+        const trimmed = String(userQuery || '').trim();
+        if (!trimmed) return;
 
+        exampleQuestionsPanel?.classList.add('d-none');
+        emptyStatePanel?.classList.add('d-none');
         statusMessage.className = 'alert alert-info';
-        statusMessage.textContent = 'Searching published site content…';
+        statusMessage.textContent = conversationHistory.length
+          ? 'Searching with your earlier questions as context…'
+          : 'Searching published site content…';
+
+        const searchQuery = buildSearchPayloadQuery(trimmed);
 
         try {
           const response = await fetch('/api/public-site-chatbot', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ query })
+            body: JSON.stringify({ query: searchQuery })
           });
 
           const payload = await response.json();
           if (!response.ok) throw new Error(payload?.error || 'Search request failed');
 
-          const highlightQuery = String(payload.query || query || '').trim();
+          const highlightQuery = String(payload.query || trimmed || '').trim();
+          const sources = Array.isArray(payload.sources) ? payload.sources : [];
           answerText.textContent = payload.answer || 'No response generated.';
-          renderSources(payload.sources || [], highlightQuery);
-          chatResult.classList.remove('d-none');
-          latestSearchPayload = payload;
+          renderSources(sources, highlightQuery);
+          latestSearchPayload = { ...payload, userQuestion: trimmed };
           feedbackNoForm.classList.add('d-none');
           feedbackText.value = '';
           feedbackStatus.className = 'small text-muted mt-2 mb-0';
           feedbackStatus.textContent = 'Please confirm whether these were the expected results.';
-          resultFeedbackPanel.classList.remove('d-none');
 
-          statusMessage.className = 'alert alert-success';
-          statusMessage.textContent = `Search complete. Indexed entries: ${Number(payload.corpusSize || 0)}.`;
+          if (sources.length === 0) {
+            chatResult.classList.add('d-none');
+            resultFeedbackPanel.classList.add('d-none');
+            followUpPanel?.classList.remove('d-none');
+            showEmptyState(trimmed);
+            statusMessage.className = 'alert alert-warning';
+            statusMessage.textContent = 'No confident match found. Try a related question or rephrase.';
+          } else {
+            chatResult.classList.remove('d-none');
+            resultFeedbackPanel.classList.remove('d-none');
+            followUpPanel?.classList.remove('d-none');
+            statusMessage.className = 'alert alert-success';
+            statusMessage.textContent = `Search complete. Indexed entries: ${Number(payload.corpusSize || 0)}. Ask another question whenever you're ready.`;
+          }
         } catch (error) {
           statusMessage.className = 'alert alert-danger';
           statusMessage.textContent = error.message || 'Unable to search site content right now.';
         }
+      }
+
+      chatForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        runSearch(chatQuestion.value.trim());
       });
 
       clearResultsButton?.addEventListener('click', () => {
+        chatQuestion.value = '';
+        focusChatQuestion();
+      });
+
+      askAnotherButton?.addEventListener('click', () => {
+        archiveCurrentTurn();
         chatQuestion.value = '';
         sourceList.innerHTML = '';
         answerText.textContent = '';
@@ -139,11 +269,28 @@
         feedbackText.value = '';
         feedbackNoForm.classList.add('d-none');
         resultFeedbackPanel.classList.add('d-none');
+        followUpPanel?.classList.add('d-none');
+        emptyStatePanel?.classList.add('d-none');
         feedbackStatus.className = 'small text-muted mt-2 mb-0';
         feedbackStatus.textContent = '';
         chatResult.classList.add('d-none');
-        statusMessage.className = 'alert alert-success';
-        statusMessage.textContent = 'Ready for the next search.';
+        contextToggleWrap?.classList.remove('d-none');
+        statusMessage.className = 'alert alert-info';
+        statusMessage.textContent = conversationHistory.length
+          ? 'Ready for your next question. Earlier questions are kept as context — toggle off for a fresh search.'
+          : 'SiteSeeker is ready for your next question.';
+        focusChatQuestion();
+      });
+
+      refineQueryButton?.addEventListener('click', () => {
+        statusMessage.className = 'alert alert-info';
+        statusMessage.textContent = 'Adjust your question and search again.';
+        focusChatQuestion();
+      });
+
+      startOverButton?.addEventListener('click', () => {
+        resetConversation();
+        focusChatQuestion();
       });
 
       feedbackYesButton?.addEventListener('click', () => submitFeedback(true));
@@ -154,3 +301,15 @@
         feedbackText.focus();
       });
       submitFeedbackButton?.addEventListener('click', () => submitFeedback(false));
+
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const exampleButton = target.closest('.example-question');
+        if (!exampleButton) return;
+        const question = exampleButton.getAttribute('data-question') || exampleButton.textContent || '';
+        const trimmed = String(question).trim();
+        if (!trimmed) return;
+        chatQuestion.value = trimmed;
+        runSearch(trimmed);
+      });

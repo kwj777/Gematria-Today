@@ -3,7 +3,7 @@
  *      scroll threshold so theme.css can tighten padding and hide the
  *      brand tagline. Uses requestAnimationFrame to avoid layout work on
  *      every scroll event.
- *   2. "/" keyboard shortcut — jump to KnowBot search from any page. If
+ *   2. "/" keyboard shortcut — jump to SiteSeeker search from any page. If
  *      the user is already on /searchbot.html, focus the question field;
  *      otherwise navigate there with ?focus=knowbot so the field can be
  *      focused on arrival. Ignored when typing in another input.

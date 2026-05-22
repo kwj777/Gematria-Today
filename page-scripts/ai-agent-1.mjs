@@ -1710,7 +1710,7 @@ View results: ${shareUrl}`.trim(),
             const strayValue = Number(strayNumberMatch[1]);
             return `<p class="mb-0">Did not see a word or phrase to calculate. To run a reverse gematria lookup for <strong>${strayValue}</strong>, try <code>reverse gematria ${strayValue}</code> or <code>what words equal ${strayValue}</code>.</p>`;
           }
-          return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try the KnowBot? (on top menu)</p>';
+          return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try SiteSeeker? (on top menu)</p>';
         }
 
         const calculationTargets = rawCalculationTargets.filter((target) => gematriaLetterBreakdown(target).length > 0);

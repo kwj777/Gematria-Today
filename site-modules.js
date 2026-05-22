@@ -214,7 +214,7 @@
 
     const moduleMeta = [
       ['forum', 'Forum'],
-      ['knowbot', 'Knowbot'],
+      ['knowbot', 'SiteSeeker'],
       ['gemabot', 'GemaBot'],
       ['news', 'News'],
       ['blog', 'Blog'],

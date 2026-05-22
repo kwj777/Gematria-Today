@@ -113,7 +113,7 @@
       }
 
       function renderSiteModules() {
-        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'Knowbot'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Word of the Day'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
+        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'SiteSeeker'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Word of the Day'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
         const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
         siteModulesForm.removeAttribute('aria-busy');
         siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `

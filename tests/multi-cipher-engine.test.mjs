@@ -6,6 +6,7 @@ import {
   digitalRoot,
   calculateCipher,
   calculateAllCiphers,
+  buildSearchPayload,
 } from '../page-scripts/multi-cipher-engine.mjs';
 
 test('exposes the seven canonical ciphers', () => {
@@ -129,4 +130,56 @@ test('throws on non-string input', () => {
 
 test('throws on unknown cipher id', () => {
   assert.throws(() => calculateCipher('abc', 'nonexistent'), /Unknown cipher/);
+});
+
+test('buildSearchPayload puts Sumerian in typed columns and all 7 in result_payload', () => {
+  const allResults = calculateAllCiphers('truth');
+  const payload = buildSearchPayload({ query: 'truth', mode: 'all', cipherId: null, allResults });
+
+  // Typed columns mirror the Sumerian result (site default cipher).
+  const sumerian = allResults.find((r) => r.cipherId === 'sumerian');
+  assert.equal(payload.queryText, 'truth');
+  assert.equal(payload.queryType, 'word');
+  assert.equal(payload.calculatorSource, 'multi-cipher-calculator');
+  assert.equal(payload.gematriaTotal, sumerian.total);
+  assert.equal(payload.digitalRoot, sumerian.digitalRoot);
+
+  // result_payload carries all 7 cipher values + mode.
+  assert.equal(payload.resultPayload.mode, 'all');
+  assert.equal(payload.resultPayload.selectedCipherId, null);
+  assert.equal(payload.resultPayload.ciphers.length, 7);
+  const ids = payload.resultPayload.ciphers.map((c) => c.cipherId);
+  assert.ok(ids.includes('english-ordinal'));
+  assert.ok(ids.includes('jewish-latin'));
+});
+
+test('buildSearchPayload single-mode preserves the chosen cipher id', () => {
+  const allResults = calculateAllCiphers('truth');
+  const payload = buildSearchPayload({
+    query: 'truth', mode: 'single', cipherId: 'english-ordinal', allResults,
+  });
+  assert.equal(payload.resultPayload.mode, 'single');
+  assert.equal(payload.resultPayload.selectedCipherId, 'english-ordinal');
+});
+
+test('buildSearchPayload computes isBaseRoot using the Sumerian (total - 6) % 54 rule', () => {
+  // Pick a word whose Sumerian total is known to be a base-root multiple.
+  // (6 - 6) % 54 === 0, so a single "A" qualifies (Sumerian total 6).
+  const aResults = calculateAllCiphers('a');
+  const aPayload = buildSearchPayload({ query: 'a', mode: 'all', cipherId: null, allResults: aResults });
+  assert.equal(aPayload.gematriaTotal, 6);
+  assert.equal(aPayload.isBaseRoot, true);
+
+  // "ab" Sumerian = 18; (18 - 6) % 54 = 12 → not a base root.
+  const abResults = calculateAllCiphers('ab');
+  const abPayload = buildSearchPayload({ query: 'ab', mode: 'all', cipherId: null, allResults: abResults });
+  assert.equal(abPayload.gematriaTotal, 18);
+  assert.equal(abPayload.isBaseRoot, false);
+});
+
+test('buildSearchPayload returns isBaseRoot=false for empty input', () => {
+  const results = calculateAllCiphers('!!! 123');
+  const payload = buildSearchPayload({ query: '!!! 123', mode: 'all', cipherId: null, allResults: results });
+  assert.equal(payload.gematriaTotal, 0);
+  assert.equal(payload.isBaseRoot, false);
 });

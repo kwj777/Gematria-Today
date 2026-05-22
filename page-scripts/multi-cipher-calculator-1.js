@@ -1,4 +1,7 @@
-import { CIPHERS, calculateAllCiphers, calculateCipher } from '/page-scripts/multi-cipher-engine.mjs';
+import { CIPHERS, buildSearchPayload, calculateAllCiphers, calculateCipher } from '/page-scripts/multi-cipher-engine.mjs';
+
+const FREE_MEMBERSHIP_SAVE_LIMIT = 7;
+const MEMBER_DASHBOARD_SYNC_KEY = 'memberDashboardUpdate';
 
 const form = document.getElementById('multi-cipher-form');
 const input = document.getElementById('multi-cipher-input');
@@ -9,6 +12,20 @@ const allResult = document.getElementById('multi-cipher-result-all');
 const singleResult = document.getElementById('multi-cipher-result-single');
 const status = document.getElementById('multi-cipher-status');
 const clearButton = document.getElementById('multi-cipher-clear');
+const saveButton = document.getElementById('multi-cipher-save-button');
+const saveHintRow = document.getElementById('multi-cipher-save-hint-row');
+const memberSaveShell = document.getElementById('member-save-shell');
+const memberSaveMeta = document.getElementById('member-save-meta');
+const memberLink = document.getElementById('member-link');
+
+let memberSession = null;
+let currentSearchPayload = null;
+let lastSavedSearchPayload = null;
+let saveHistoryPopover = null;
+
+const memberDashboardSyncChannel = typeof window.BroadcastChannel === 'function'
+  ? new window.BroadcastChannel('member-dashboard-sync')
+  : null;
 
 function currentMode() {
   const checked = modeRadios.find((r) => r.checked);
@@ -26,18 +43,15 @@ function populateCipherSelect() {
 }
 
 function updateModeVisibility() {
-  const mode = currentMode();
-  if (mode === 'single') {
-    singleSelectRow.hidden = false;
-  } else {
-    singleSelectRow.hidden = true;
-  }
+  singleSelectRow.hidden = currentMode() !== 'single';
 }
 
 function clearResults() {
   allResult.innerHTML = '';
   singleResult.innerHTML = '';
   status.textContent = '';
+  currentSearchPayload = null;
+  updateMemberSaveState();
 }
 
 function escapeHtml(value) {
@@ -67,7 +81,6 @@ function renderAllCiphers(query) {
         </tr>`;
     })
     .join('');
-
   allResult.innerHTML = `
     <div class="mb-2 small text-muted">
       Showing all 7 ciphers for <strong>${escapeHtml(query)}</strong>
@@ -88,6 +101,8 @@ function renderAllCiphers(query) {
       </table>
     </div>
   `;
+  currentSearchPayload = buildSearchPayload({ query, mode: 'all', cipherId: null, allResults: results });
+  updateMemberSaveState();
 }
 
 function renderSingleCipher(query, cipherId) {
@@ -99,7 +114,6 @@ function renderSingleCipher(query, cipherId) {
   const valueDisplay = isSumerian
     ? `<a href="/gematria-results.html?query=${encodeURIComponent(result.total)}" class="display-5 fw-bold text-decoration-none">${result.total}</a>`
     : `<span class="display-5 fw-bold">${result.total}</span>`;
-
   singleResult.innerHTML = `
     <div class="content-panel p-3 p-lg-4">
       <p class="section-kicker mb-2">${escapeHtml(result.cipherName)}</p>
@@ -117,6 +131,144 @@ function renderSingleCipher(query, cipherId) {
         : ''}
     </div>
   `;
+  const allResults = calculateAllCiphers(query);
+  currentSearchPayload = buildSearchPayload({ query, mode: 'single', cipherId, allResults });
+  updateMemberSaveState();
+}
+
+async function requestMemberSession() {
+  try {
+    const response = await fetch('/api/member-session', { credentials: 'same-origin' });
+    if (!response.ok) {
+      memberSession = null;
+      return null;
+    }
+    memberSession = await response.json();
+    return memberSession;
+  } catch {
+    memberSession = null;
+    return null;
+  }
+}
+
+function showMembersOnlySaveMessage() {
+  if (!memberSaveMeta) return;
+  memberSaveMeta.textContent = '';
+  memberSaveMeta.append('Only registered members can save searches. ');
+  const joinLink = document.createElement('a');
+  joinLink.href = '/member.html#authSection';
+  joinLink.textContent = 'Join';
+  memberSaveMeta.append(joinLink, '.');
+}
+
+function destroyMembersOnlyPopover() {
+  if (!saveHistoryPopover) return;
+  saveHistoryPopover.dispose();
+  saveHistoryPopover = null;
+}
+
+function syncSaveHint() {
+  if (!saveHintRow) return;
+  const needsCalc = saveButton.disabled && saveButton.textContent === 'Save result';
+  saveHintRow.hidden = !needsCalc;
+}
+
+function updateMemberSaveState() {
+  if (!memberSession?.authenticated) {
+    if (memberSaveShell) memberSaveShell.classList.remove('d-none');
+    if (memberSaveMeta && !memberSaveMeta.textContent) {
+      memberSaveMeta.textContent = 'Join for free to save searches across all seven ciphers.';
+    }
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = 'Save result';
+      saveButton.classList.add('member-save-button--guest');
+    }
+    syncSaveHint();
+    return;
+  }
+  saveButton.classList.remove('member-save-button--guest');
+  if (memberLink) {
+    memberLink.href = '/member.html';
+    memberLink.textContent = 'Go to My Dashboard';
+    memberLink.classList.remove('btn-primary');
+    memberLink.classList.add('btn-outline-primary');
+  }
+  destroyMembersOnlyPopover();
+  if (currentSearchPayload && currentSearchPayload === lastSavedSearchPayload) {
+    saveButton.textContent = 'Saved';
+    saveButton.disabled = true;
+  } else {
+    saveButton.textContent = 'Save result';
+    saveButton.disabled = !currentSearchPayload;
+  }
+  const memberName = memberSession.member?.displayName || memberSession.member?.username || 'member';
+  const freeTierSuffix = memberSession.member?.membershipLevel === 'free'
+    ? ` Free memberships can save up to ${FREE_MEMBERSHIP_SAVE_LIMIT} searches.`
+    : '';
+  if (memberSaveMeta) {
+    memberSaveMeta.textContent = currentSearchPayload
+      ? `Signed in as ${memberName}. Save this result to history.${freeTierSuffix}`
+      : `Signed in as ${memberName}. Run a calculation to save it.${freeTierSuffix}`;
+  }
+  syncSaveHint();
+}
+
+function notifyDashboardUpdate() {
+  const update = { kind: 'history', at: Date.now() };
+  try {
+    window.localStorage.setItem(MEMBER_DASHBOARD_SYNC_KEY, JSON.stringify(update));
+  } catch {
+    // localStorage may be unavailable; BroadcastChannel still wakes live tabs when present.
+  }
+  memberDashboardSyncChannel?.postMessage(update);
+}
+
+async function saveCurrentSearch(noteText = '') {
+  if (!currentSearchPayload) {
+    memberSaveMeta.textContent = 'Run a calculation before saving history.';
+    return;
+  }
+  if (!memberSession?.authenticated) {
+    memberSaveMeta.textContent = 'Sign in on the membership page before saving history.';
+    return;
+  }
+  saveButton.disabled = true;
+  memberSaveMeta.textContent = 'Saving search to your account...';
+  const requestBody = { ...currentSearchPayload, note: String(noteText ?? '').trim() };
+  const response = await fetch('/api/member-history', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    saveButton.disabled = !currentSearchPayload;
+    throw new Error(payload.error || 'Unable to save search history.');
+  }
+  memberSaveMeta.textContent = memberSession?.member?.membershipLevel === 'free'
+    ? `Saved to your account history. Free memberships can store up to ${FREE_MEMBERSHIP_SAVE_LIMIT} saved searches.`
+    : 'Saved to your account history.';
+  notifyDashboardUpdate();
+  lastSavedSearchPayload = currentSearchPayload;
+  saveButton.textContent = 'Saved';
+  saveButton.disabled = true;
+  syncSaveHint();
+}
+
+function getSaveNoteModal() {
+  const modalElement = document.getElementById('multi-cipher-save-note-modal');
+  if (!modalElement || !window.bootstrap?.Modal) return null;
+  return window.bootstrap.Modal.getOrCreateInstance(modalElement);
+}
+
+async function performSaveWithNote(noteText) {
+  try {
+    await saveCurrentSearch(noteText);
+  } catch (error) {
+    memberSaveMeta.textContent = error.message || 'Unable to save search history.';
+  }
 }
 
 function handleSubmit(event) {
@@ -140,6 +292,7 @@ function handleSubmit(event) {
 
 populateCipherSelect();
 updateModeVisibility();
+updateMemberSaveState();
 modeRadios.forEach((radio) => radio.addEventListener('change', () => {
   updateModeVisibility();
   clearResults();
@@ -149,4 +302,54 @@ clearButton.addEventListener('click', () => {
   input.value = '';
   clearResults();
   input.focus();
+});
+
+['mouseenter', 'focus'].forEach((eventName) => {
+  saveButton.addEventListener(eventName, () => {
+    if (!memberSession?.authenticated) {
+      showMembersOnlySaveMessage();
+      if (!saveHistoryPopover && window.createMembersOnlySavePopover) {
+        saveHistoryPopover = window.createMembersOnlySavePopover(saveButton);
+      }
+      saveHistoryPopover?.show();
+    }
+  });
+});
+
+saveButton.addEventListener('click', (event) => {
+  if (!memberSession?.authenticated) {
+    event.preventDefault();
+    showMembersOnlySaveMessage();
+    if (!saveHistoryPopover && window.createMembersOnlySavePopover) {
+      saveHistoryPopover = window.createMembersOnlySavePopover(saveButton);
+    }
+    saveHistoryPopover?.show();
+    return;
+  }
+  if (!currentSearchPayload) {
+    memberSaveMeta.textContent = 'Run a calculation before saving history.';
+    return;
+  }
+  const modal = getSaveNoteModal();
+  const noteInput = document.getElementById('multi-cipher-save-note-input');
+  if (noteInput) noteInput.value = '';
+  if (modal) {
+    modal.show();
+  } else {
+    performSaveWithNote('');
+  }
+});
+
+document.addEventListener('click', async (event) => {
+  const target = event.target.closest('#multi-cipher-save-note-confirm');
+  if (!target) return;
+  const noteInput = document.getElementById('multi-cipher-save-note-input');
+  const noteText = noteInput?.value ?? '';
+  getSaveNoteModal()?.hide();
+  await performSaveWithNote(noteText);
+});
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await requestMemberSession().catch(() => null);
+  updateMemberSaveState();
 });

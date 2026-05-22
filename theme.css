@@ -1391,6 +1391,83 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   opacity: 0.75;
 }
 
+:root[data-bs-theme="dark"] .membership-comparison-wrap {
+  background: rgba(17, 24, 34, 0.6);
+  border-color: var(--color-border-dark);
+}
+
+:root[data-bs-theme="dark"] .membership-comparison-table thead th {
+  background: linear-gradient(180deg, rgba(148, 177, 215, 0.22), rgba(148, 177, 215, 0.08));
+  color: #e6ebf2;
+}
+
+:root[data-bs-theme="dark"] .membership-comparison-table thead th.comparison-col--premium {
+  background: linear-gradient(180deg, rgba(212, 160, 23, 0.32), rgba(212, 160, 23, 0.14));
+  color: #f5d97a;
+}
+
+:root[data-bs-theme="dark"] .membership-comparison-table tbody th {
+  color: #f1f5f9;
+}
+
+:root[data-bs-theme="dark"] .membership-comparison-table td,
+:root[data-bs-theme="dark"] .membership-comparison-table th {
+  border-color: rgba(148, 177, 215, 0.14);
+}
+
+:root[data-bs-theme="dark"] .membership-comparison-table tbody tr:nth-child(odd) > * {
+  background-color: rgba(148, 177, 215, 0.05);
+}
+
+:root[data-bs-theme="dark"] .membership-comparison-table .comparison-col--premium {
+  background-color: rgba(212, 160, 23, 0.08);
+}
+
+:root[data-bs-theme="dark"] .membership-comparison-table tbody tr:nth-child(odd) .comparison-col--premium {
+  background-color: rgba(212, 160, 23, 0.12);
+}
+
+:root[data-bs-theme="dark"] .comparison-current-badge {
+  border-color: rgba(148, 177, 215, 0.55);
+  color: #b6cfee;
+}
+
+:root[data-bs-theme="dark"] .comparison-pill--included {
+  background: rgba(45, 196, 130, 0.22);
+  color: #8af0bc;
+}
+
+:root[data-bs-theme="dark"] .comparison-pill--highlight {
+  background: linear-gradient(135deg, rgba(212, 160, 23, 0.4), rgba(212, 160, 23, 0.22));
+  color: #fce19a;
+  border-color: rgba(212, 160, 23, 0.7);
+}
+
+:root[data-bs-theme="dark"] .comparison-pill--limited {
+  background: rgba(255, 193, 7, 0.22);
+  color: #ffdf80;
+  border-color: rgba(255, 193, 7, 0.5);
+}
+
+:root[data-bs-theme="dark"] .comparison-pill--muted {
+  background: rgba(148, 177, 215, 0.14);
+  color: rgba(230, 235, 242, 0.78);
+}
+
+:root[data-bs-theme="dark"] .comparison-pill--unavailable {
+  color: rgba(230, 235, 242, 0.55);
+}
+
+:root[data-bs-theme="dark"] .comparison-pill--neutral {
+  background: rgba(99, 162, 255, 0.18);
+  color: #9ec5ff;
+}
+
+:root[data-bs-theme="dark"] .comparison-pill--premium {
+  background: linear-gradient(135deg, rgba(99, 162, 255, 0.28), rgba(212, 160, 23, 0.42));
+  color: #fce19a;
+}
+
 @media (max-width: 991.98px) {
   .membership-comparison-wrap {
     border: none;
@@ -1482,6 +1559,23 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
 
   .comparison-pill--premium {
     padding: 0.35rem 0.65rem;
+  }
+
+  :root[data-bs-theme="dark"] .membership-comparison-table tbody tr {
+    background: rgba(17, 24, 34, 0.7);
+    border-color: var(--color-border-dark);
+  }
+
+  :root[data-bs-theme="dark"] .membership-comparison-table tbody th {
+    border-bottom-color: rgba(148, 177, 215, 0.18);
+  }
+
+  :root[data-bs-theme="dark"] .membership-comparison-table tbody td::before {
+    color: #b6cfee;
+  }
+
+  :root[data-bs-theme="dark"] .membership-comparison-table tbody td.comparison-col--premium::before {
+    color: #f5d97a;
   }
 }
 

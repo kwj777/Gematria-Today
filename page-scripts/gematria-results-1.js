@@ -92,7 +92,7 @@ const titleNode = document.querySelector('#page-title');
         const item = document.createElement('li');
         item.className = 'word-item';
         const isDigitalRootSix = Number(entry.gematria?.digitalRoot) === 6;
-        const definitionHref = `/definition?${new URLSearchParams({ word: entry.word, returnTo: returnTo || `/calculator.html?query=${encodeURIComponent(wordParam)}` }).toString()}`;
+        const definitionHref = `/definition?${new URLSearchParams({ word: entry.word, returnTo: returnTo || `${window.location.pathname}${window.location.search}` }).toString()}`;
         item.innerHTML = `
           <a class="word-link" href="/calculator.html?query=${encodeURIComponent(entry.word)}">${escapeHtml(entry.word)}</a>
           <div class="word-actions">

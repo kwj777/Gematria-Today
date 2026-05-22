@@ -129,8 +129,8 @@
         if (useContextToggle) useContextToggle.checked = true;
         exampleQuestionsPanel?.classList.remove('d-none');
         renderConversationThread();
-        statusMessage.className = 'alert alert-info';
-        statusMessage.textContent = 'SiteSeeker is ready.';
+        statusMessage.className = 'alert alert-info d-none';
+        statusMessage.textContent = '';
       }
 
       function buildSearchPayloadQuery(userQuery) {
@@ -275,10 +275,8 @@
         feedbackStatus.textContent = '';
         chatResult.classList.add('d-none');
         contextToggleWrap?.classList.remove('d-none');
-        statusMessage.className = 'alert alert-info';
-        statusMessage.textContent = conversationHistory.length
-          ? 'Ready for your next question. Earlier questions are kept as context — toggle off for a fresh search.'
-          : 'SiteSeeker is ready for your next question.';
+        statusMessage.className = 'alert alert-info d-none';
+        statusMessage.textContent = '';
         focusChatQuestion();
       });
 

@@ -76,7 +76,7 @@ function renderAllCiphers(query) {
         <tr>
           <th scope="row" class="fw-semibold">${escapeHtml(r.cipherName)}</th>
           <td class="text-end">${valueCell}</td>
-          <td class="text-end">${r.digitalRoot}</td>
+          <td class="text-center">${r.digitalRoot}</td>
           <td class="small text-muted">${escapeHtml(r.description)}</td>
         </tr>`;
     })
@@ -93,7 +93,7 @@ function renderAllCiphers(query) {
           <tr>
             <th scope="col">Cipher</th>
             <th scope="col" class="text-end">Value</th>
-            <th scope="col" class="text-end">Digital root</th>
+            <th scope="col" class="text-center">Digital root</th>
             <th scope="col">Notes</th>
           </tr>
         </thead>

@@ -27,6 +27,7 @@ const ACTIVE_LINK_BY_FILE = {
   'searchbot.html': '/searchbot.html',
   'tools.html': '/tools.html',
   'calculator.html': '/calculator.html',
+  'multi-cipher-calculator.html': '/multi-cipher-calculator.html',
   'name-calculator.html': '/name-calculator.html',
   'ai-agent.html': '/ai-agent.html',
   'member.html': '/member.html',

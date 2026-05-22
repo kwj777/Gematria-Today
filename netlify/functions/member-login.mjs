@@ -7,6 +7,7 @@ import {
   createSession,
   createSessionCookie,
   ensureMemberProfile,
+  formatMemberUser,
   getOptionalAuthenticatedSession,
   getSqlClient,
   jsonResponse,
@@ -77,13 +78,35 @@ export async function handler(event) {
         metadata: { userId: admin.id },
       });
 
+      const adminMemberRows = await sql`
+        SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_id, stripe_subscription_status, stripe_subscription_current_period_end, status, email_verified, created_at, updated_at
+        FROM users
+        WHERE id = ${admin.id}
+        LIMIT 1
+      `;
+      const adminMember = adminMemberRows.length ? formatMemberUser(adminMemberRows[0]) : null;
+      if (adminMember) {
+        adminMember.membershipLevel = 'lifetime';
+      }
+      const adminProfile = adminMember ? await ensureMemberProfile(sql, admin.id, {}) : null;
+
       return jsonResponse(200, {
         authenticated: true,
-        user: { id: admin.id, username: admin.username, role: admin.role },
+        user: {
+          id: admin.id,
+          username: admin.username,
+          role: admin.role,
+          isAdmin: admin.role === 'admin' || admin.role === 'super_admin' || Boolean(admin.isAdmin),
+        },
+        member: adminMember,
+        profile: adminProfile,
         route: 'admin',
         csrfToken: generateCsrfToken(token),
       }, {
-        'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+        'set-cookie': [
+          createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+          createMemberTierCookie('lifetime', expiresAt),
+        ],
       });
     }
 

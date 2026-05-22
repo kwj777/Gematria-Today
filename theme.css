@@ -3013,12 +3013,18 @@ body.page-render-pending footer {
 .site-logo {
   height: 40px;
   width: auto;
+  max-width: 100%;
   display: block;
 }
 
-@media (max-width: 576px) {
+/* On mobile widths the SVG must be able to scale below its intrinsic width
+   so the navbar header (brand + search/theme/menu actions) stays on one row
+   instead of wrapping to two lines on iPhones. Using max-height + auto sizing
+   lets the logo shrink proportionally when horizontal space runs out. */
+@media (max-width: 991.98px) {
   .site-logo {
-    height: 34px;
+    height: auto;
+    max-height: 34px;
   }
 }
 
@@ -3463,6 +3469,25 @@ a.badge,
    and a paired CTA + Search row -- two visual zones (browse vs. act) instead
    of a top-heavy stack of mismatched shapes. */
 @media (max-width: 991.98px) {
+  /* Keep the brand and the trailing search/theme/menu pills on a single row
+     even on narrow iPhones. Bootstrap's default flex-wrap on .navbar will
+     drop the action cluster to a second line once the SVG logo's intrinsic
+     width plus the .navbar-brand right margin pushes total content past the
+     viewport; pinning nowrap and letting the brand shrink keeps the header
+     compact. The SVG logo itself scales via max-width:100% on .site-logo. */
+  nav.navbar > .container {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+  nav.navbar > .container > .navbar-brand {
+    min-width: 0;
+    flex: 0 1 auto;
+    margin-right: 0;
+  }
+  nav.navbar > .container > .nav-header-actions {
+    flex-shrink: 0;
+  }
+
   .navbar-toggler {
     padding: 0.5rem 0.75rem;
     border: 1px solid rgba(255, 255, 255, 0.25);
@@ -3725,7 +3750,18 @@ a.badge,
    logo size, and headings further so content does not crush at <=380px. */
 @media (max-width: 380px) {
   .site-logo {
-    height: 28px;
+    max-height: 28px;
+  }
+
+  /* On the narrowest phones the "Menu" text label inside the toggle costs
+     ~50px that the logo needs more. Drop it to icon-only; the hamburger and
+     aria-label still communicate the affordance. */
+  .navbar-toggler::after {
+    content: none;
+  }
+  .navbar-toggler {
+    padding: 0.5rem 0.6rem;
+    gap: 0;
   }
 
   .hero-panel,

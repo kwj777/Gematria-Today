@@ -3531,6 +3531,24 @@ a.badge,
   border-color: rgba(34, 197, 94, 0.55);
 }
 
+/* Sticky "Back to lesson" bar shown on the calculator while a learner is
+   inside a learning-path lesson. Stays visible while scrolling a large
+   results cluster so the return path is always one tap away. The `top`
+   value clears the sticky navbar (66px on desktop, ~56px on mobile). */
+.learning-path-return-sticky {
+  position: sticky;
+  top: 56px;
+  z-index: 5;
+  background: var(--bs-body-bg);
+  padding: 0.5rem 0;
+}
+
+@media (min-width: 992px) {
+  .learning-path-return-sticky {
+    top: 66px;
+  }
+}
+
 /* ----- Form controls: focus, validation, touch targets ------------------- */
 /* Gives every Bootstrap form-control a consistent brand-amber focus ring,
    a real .is-invalid state, and a 44px touch target on mobile. The disabled

@@ -9,6 +9,8 @@ const lookupForm = document.querySelector('#lookup-form');
       const relatedWordsResult = document.querySelector('#related-words-result');
       const learningPathReturnNode = document.querySelector('#learning-path-return');
       const learningPathReturnLink = document.querySelector('#learning-path-return-link');
+      const learningPathReturnStickyNode = document.querySelector('#learning-path-return-sticky');
+      const learningPathReturnStickyLink = document.querySelector('#learning-path-return-sticky-link');
       let learningPathReturnHref = '';
       let shareStatusTimeout = null;
       let lastSearchTerm = '';
@@ -97,9 +99,12 @@ const lookupForm = document.querySelector('#lookup-form');
           learningPathReturnHref = `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`;
           learningPathReturnLink.href = learningPathReturnHref;
           const level = window.gematriaLearningPath?.getLevel?.(returnUrl.pathname) ?? null;
-          learningPathReturnLink.textContent = level
-            ? `Nice! Back to Level ${level}`
-            : 'Nice! Back to lesson';
+          const label = level ? `Nice! Back to Level ${level}` : 'Nice! Back to lesson';
+          learningPathReturnLink.textContent = label;
+          if (learningPathReturnStickyLink) {
+            learningPathReturnStickyLink.href = learningPathReturnHref;
+            learningPathReturnStickyLink.textContent = label;
+          }
         } catch {
           // Ignore invalid return URL values.
         }
@@ -111,6 +116,9 @@ const lookupForm = document.querySelector('#lookup-form');
         }
 
         learningPathReturnNode.hidden = false;
+        if (learningPathReturnStickyNode) {
+          learningPathReturnStickyNode.hidden = false;
+        }
       }
 
       function setShareStatus(message) {

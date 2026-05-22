@@ -70,7 +70,7 @@ function renderAllCiphers(query) {
     .map((r) => {
       const isSumerian = r.cipherId === 'sumerian';
       const valueCell = isSumerian
-        ? `<a href="/gematria-results.html?query=${encodeURIComponent(r.total)}" class="fw-semibold">${r.total}</a>`
+        ? `<a href="/gematria-results.html?gematria=${encodeURIComponent(r.total)}" class="fw-semibold">${r.total}</a>`
         : `<span class="fw-semibold">${r.total}</span>`;
       const blogHref = blogUrlForCipher(r.cipherId);
       const nameCell = blogHref
@@ -116,7 +116,7 @@ function renderSingleCipher(query, cipherId) {
     .join('');
   const isSumerian = result.cipherId === 'sumerian';
   const valueDisplay = isSumerian
-    ? `<a href="/gematria-results.html?query=${encodeURIComponent(result.total)}" class="display-5 fw-bold text-decoration-none">${result.total}</a>`
+    ? `<a href="/gematria-results.html?gematria=${encodeURIComponent(result.total)}" class="display-5 fw-bold text-decoration-none">${result.total}</a>`
     : `<span class="display-5 fw-bold">${result.total}</span>`;
   const blogHref = blogUrlForCipher(result.cipherId);
   const cipherHeading = blogHref
@@ -135,7 +135,7 @@ function renderSingleCipher(query, cipherId) {
       </div>
       ${result.perLetter.length ? `<div class="d-flex flex-wrap">${letterBreakdown}</div>` : ''}
       ${isSumerian
-        ? `<p class="small mt-3 mb-0">This is the cipher the rest of the site uses. <a href="/gematria-results.html?query=${encodeURIComponent(result.total)}">See related words for ${result.total} →</a></p>`
+        ? `<p class="small mt-3 mb-0">This is the cipher the rest of the site uses. <a href="/gematria-results.html?gematria=${encodeURIComponent(result.total)}">See related words for ${result.total} →</a></p>`
         : ''}
     </div>
   `;

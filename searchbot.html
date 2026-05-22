@@ -16,8 +16,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
-    <title>KnowBot | Gematria.Today</title>
-    <meta name="description" content="Search Gematria.Today with KnowBot: instantly find answers across FAQs, gematria guides, blog posts, and static pages without leaving the research workflow." />
+    <title>SiteSeeker | Gematria.Today</title>
+    <meta name="description" content="Search Gematria.Today with SiteSeeker: instantly find answers across FAQs, gematria guides, blog posts, and static pages without leaving the research workflow." />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://gematria.today/searchbot.html" />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
@@ -55,7 +55,7 @@
                     <span class="nav-mega-item__desc">Ask in plain language, get gematria-aware answers.</span>
                   </a>
                   <a class="nav-mega-item active" href="/searchbot.html" aria-current="page">
-                    <span class="nav-mega-item__title">KnowBot Search</span>
+                    <span class="nav-mega-item__title">SiteSeeker Search</span>
                     <span class="nav-mega-item__desc">Search the site and gematria knowledge base.</span>
                   </a>
                 </div>
@@ -74,7 +74,7 @@
             </li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
             <li class="nav-actions-divider d-lg-none" role="presentation" aria-hidden="true"></li>
-            <li class="nav-item nav-search"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Ask KnowBot (press /)" title="Ask KnowBot — press / to search"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Ask KnowBot</span><kbd class="nav-search-link__kbd" aria-hidden="true">/</kbd></a></li>
+            <li class="nav-item nav-search"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Ask SiteSeeker (press /)" title="Ask SiteSeeker — press / to search"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Ask SiteSeeker</span><kbd class="nav-search-link__kbd" aria-hidden="true">/</kbd></a></li>
             <li class="nav-item nav-theme d-flex align-items-center"><button type="button" class="nav-theme-toggle nav-theme-toggle--desktop" data-theme-toggle aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="icon nav-theme-toggle__moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg><svg class="icon nav-theme-toggle__sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m4.93 19.07 1.41-1.41"></path><path d="m17.66 6.34 1.41-1.41"></path></svg></button></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--login"><a class="nav-link nav-login-link" href="https://gematria.today/member?auth=login#authSection">Log in</a></li>
             <li class="nav-item nav-auth nav-auth--anon nav-cta nav-cta--join"><a class="btn btn-warning btn-sm fw-semibold ms-lg-2" href="/gematria-account-setup.html">Join free</a></li>
@@ -87,25 +87,50 @@
       <div class="container">
         <section class="hero-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Public Research Tool</p>
-          <h1 class="h2 mb-3">KnowBot</h1>
-          <p class="mb-0">Ask questions and KnowBot will answer using published site FAQs, blog posts, and static page content only.</p>
+          <h1 class="h2 mb-3">SiteSeeker</h1>
+          <p class="mb-0">Ask questions and SiteSeeker will answer using published site FAQs, blog posts, and static page content only.</p>
         </section>
 
         <section class="content-panel p-4 p-lg-5">
-          <div id="statusMessage" class="alert alert-info">KnowBot is ready.</div>
-          <form id="chatForm" class="row g-3" aria-label="KnowBot form">
+          <div id="statusMessage" class="alert alert-info">SiteSeeker is ready.</div>
+
+          <section id="exampleQuestionsPanel" class="mb-4" aria-label="Example questions">
+            <p class="small text-muted mb-2 fw-semibold">Need a starting point? Try one of these:</p>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm btn-outline-primary example-question" data-question="How is English gematria calculated?">How is English gematria calculated?</button>
+              <button type="button" class="btn btn-sm btn-outline-primary example-question" data-question="What does the calculator do?">What does the calculator do?</button>
+              <button type="button" class="btn btn-sm btn-outline-primary example-question" data-question="How do I save my research?">How do I save my research?</button>
+              <button type="button" class="btn btn-sm btn-outline-primary example-question" data-question="What is a name analysis?">What is a name analysis?</button>
+            </div>
+          </section>
+
+          <form id="chatForm" class="row g-3" aria-label="SiteSeeker form">
             <div class="col-12">
-              <label class="form-label fw-semibold" for="chatQuestion">Ask KnowBot a question</label>
+              <label class="form-label fw-semibold" for="chatQuestion">Ask SiteSeeker a question</label>
               <textarea id="chatQuestion" class="form-control" rows="3" maxlength="400" placeholder="Example: What does the FAQ say about matching values?" required></textarea>
             </div>
             <div class="col-12 d-flex flex-wrap gap-2">
               <button class="btn btn-primary" type="submit">Search site knowledge</button>
               <button class="btn btn-outline-secondary" type="button" id="clearResults">Clear</button>
             </div>
+            <div class="col-12 d-none" id="contextToggleWrap">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="useContextToggle" checked />
+                <label class="form-check-label small" for="useContextToggle">Use earlier questions in this conversation as search context</label>
+              </div>
+            </div>
             <div class="col-12">
               <p class="small text-muted mb-0">Short, specific questions work best. After you search, you can tell us whether the answer matched what you expected.</p>
             </div>
           </form>
+
+          <section id="conversationThread" class="mt-4 d-none" aria-label="Conversation history">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h2 class="h6 text-uppercase text-muted mb-0">Earlier in this conversation</h2>
+              <button id="startOverButton" type="button" class="btn btn-sm btn-outline-secondary">Start over</button>
+            </div>
+            <div id="conversationThreadBody"></div>
+          </section>
 
           <article id="chatResult" class="mt-4 d-none" aria-live="polite">
             <h2 class="h5">Answer</h2>
@@ -114,9 +139,26 @@
             <ul id="sourceList" class="list-group"></ul>
           </article>
 
+          <section id="emptyStatePanel" class="mt-4 border rounded p-3 bg-light d-none" aria-live="polite">
+            <h2 class="h6 mb-2">No confident match</h2>
+            <p id="emptyStateMessage" class="small mb-3">SiteSeeker did not find published site content matching your question.</p>
+            <p class="small text-muted mb-2 fw-semibold">Things to try:</p>
+            <ul class="small text-muted mb-3 ps-3">
+              <li>Use the page or feature name (e.g. "calculator", "forum reputation").</li>
+              <li>Drop filler words and keep 2–3 specific terms.</li>
+              <li>Check spelling and try a synonym.</li>
+            </ul>
+            <p class="small text-muted mb-2 fw-semibold">Or try a related question:</p>
+            <div class="d-flex flex-wrap gap-2" id="emptyStateSuggestions">
+              <button type="button" class="btn btn-sm btn-outline-primary example-question" data-question="How is English gematria calculated?">How is English gematria calculated?</button>
+              <button type="button" class="btn btn-sm btn-outline-primary example-question" data-question="What does the calculator do?">What does the calculator do?</button>
+              <button type="button" class="btn btn-sm btn-outline-primary example-question" data-question="How do I save my research?">How do I save my research?</button>
+            </div>
+          </section>
+
           <section id="resultFeedbackPanel" class="mt-4 border rounded p-3 bg-light d-none">
             <h3 class="h6 mb-2">Were these the expected results?</h3>
-            <p class="small text-muted mb-2">Guest feedback goes to the admin review queue. KnowBot does not return direct admin replies.</p>
+            <p class="small text-muted mb-2">Guest feedback goes to the admin review queue. SiteSeeker does not return direct admin replies.</p>
             <div class="d-flex flex-wrap gap-2 mb-3">
               <button id="feedbackYesButton" type="button" class="btn btn-sm btn-outline-success">Yes</button>
               <button id="feedbackNoButton" type="button" class="btn btn-sm btn-outline-danger">No</button>
@@ -133,7 +175,7 @@
 
           <section id="followUpPanel" class="mt-4 border rounded p-3 d-none" aria-live="polite">
             <h3 class="h6 mb-2">Want to ask another question?</h3>
-            <p class="small text-muted mb-3">KnowBot is ready for a follow-up search across site FAQs, guides, blog posts, and static pages.</p>
+            <p class="small text-muted mb-3">SiteSeeker is ready for a follow-up search across site FAQs, guides, blog posts, and static pages.</p>
             <div class="d-flex flex-wrap gap-2">
               <button id="askAnotherButton" type="button" class="btn btn-sm btn-primary">Ask another question</button>
               <button id="refineQueryButton" type="button" class="btn btn-sm btn-outline-secondary">Refine this question</button>

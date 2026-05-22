@@ -34,7 +34,7 @@ A web-based Gematria calculator application built with HTML, CSS, JavaScript, an
 
 Pages are served directly from the repository root; Netlify's `publish` directory is `.` (see `netlify.toml`). Edit the root files in place — there is no separate source directory.
 
-## Modular site builds (Forum / KnowBot / GemaBot / etc.)
+## Modular site builds (Forum / SiteSeeker / GemaBot / etc.)
 
 The site includes a lightweight module toggle system in `site-modules.js`.
 

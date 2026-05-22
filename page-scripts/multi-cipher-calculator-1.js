@@ -1,4 +1,4 @@
-import { CIPHERS, buildSearchPayload, calculateAllCiphers, calculateCipher } from '/page-scripts/multi-cipher-engine.mjs';
+import { CIPHERS, blogUrlForCipher, buildSearchPayload, calculateAllCiphers, calculateCipher } from '/page-scripts/multi-cipher-engine.mjs';
 
 const FREE_MEMBERSHIP_SAVE_LIMIT = 7;
 const MEMBER_DASHBOARD_SYNC_KEY = 'memberDashboardUpdate';
@@ -72,9 +72,13 @@ function renderAllCiphers(query) {
       const valueCell = isSumerian
         ? `<a href="/gematria-results.html?query=${encodeURIComponent(r.total)}" class="fw-semibold">${r.total}</a>`
         : `<span class="fw-semibold">${r.total}</span>`;
+      const blogHref = blogUrlForCipher(r.cipherId);
+      const nameCell = blogHref
+        ? `<a href="${escapeHtml(blogHref)}" class="fw-semibold">${escapeHtml(r.cipherName)}</a>`
+        : `<span class="fw-semibold">${escapeHtml(r.cipherName)}</span>`;
       return `
         <tr>
-          <th scope="row" class="fw-semibold">${escapeHtml(r.cipherName)}</th>
+          <th scope="row">${nameCell}</th>
           <td class="text-end">${valueCell}</td>
           <td class="text-center">${r.digitalRoot}</td>
           <td class="small text-muted">${escapeHtml(r.description)}</td>
@@ -114,9 +118,13 @@ function renderSingleCipher(query, cipherId) {
   const valueDisplay = isSumerian
     ? `<a href="/gematria-results.html?query=${encodeURIComponent(result.total)}" class="display-5 fw-bold text-decoration-none">${result.total}</a>`
     : `<span class="display-5 fw-bold">${result.total}</span>`;
+  const blogHref = blogUrlForCipher(result.cipherId);
+  const cipherHeading = blogHref
+    ? `<a href="${escapeHtml(blogHref)}">${escapeHtml(result.cipherName)}</a>`
+    : escapeHtml(result.cipherName);
   singleResult.innerHTML = `
     <div class="content-panel p-3 p-lg-4">
-      <p class="section-kicker mb-2">${escapeHtml(result.cipherName)}</p>
+      <p class="section-kicker mb-2">${cipherHeading}</p>
       <p class="mb-1">Word/phrase: <strong>${escapeHtml(query)}</strong></p>
       <div class="d-flex align-items-baseline gap-3 mb-3 flex-wrap">
         <div>${valueDisplay}</div>

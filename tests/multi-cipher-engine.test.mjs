@@ -7,6 +7,7 @@ import {
   calculateCipher,
   calculateAllCiphers,
   buildSearchPayload,
+  blogUrlForCipher,
 } from '../page-scripts/multi-cipher-engine.mjs';
 
 test('exposes the seven canonical ciphers', () => {
@@ -175,6 +176,25 @@ test('buildSearchPayload computes isBaseRoot using the Sumerian (total - 6) % 54
   const abPayload = buildSearchPayload({ query: 'ab', mode: 'all', cipherId: null, allResults: abResults });
   assert.equal(abPayload.gematriaTotal, 18);
   assert.equal(abPayload.isBaseRoot, false);
+});
+
+test('every cipher links to a Cipher Atlas blog post', () => {
+  for (const cipher of CIPHERS) {
+    const url = blogUrlForCipher(cipher.id);
+    assert.ok(url, `cipher ${cipher.id} should have a blog URL`);
+    assert.match(url, /^\/blog\.html\?post=english-gematria-cipher-atlas-[a-z-]+#english-gematria-cipher-atlas-[a-z-]+$/);
+  }
+});
+
+test('Reverse Sumerian shares the English Sumerian post (no dedicated post in the series)', () => {
+  assert.equal(
+    blogUrlForCipher('reverse-sumerian'),
+    blogUrlForCipher('sumerian'),
+  );
+});
+
+test('blogUrlForCipher returns null for unknown cipher id', () => {
+  assert.equal(blogUrlForCipher('nonexistent'), null);
 });
 
 test('buildSearchPayload returns isBaseRoot=false for empty input', () => {

@@ -100,6 +100,34 @@ export function calculateCipher(input, cipherId) {
   };
 }
 
+// Shape a result set into the payload format expected by the
+// /api/member-history endpoint. The site's existing schema has typed
+// columns for a single cipher (Sumerian), plus a flexible result_payload
+// jsonb column that can hold all seven cipher values for later display.
+export function buildSearchPayload({ query, mode, cipherId, allResults }) {
+  const sumerian = allResults.find((r) => r.cipherId === 'sumerian');
+  const sumerianTotal = sumerian ? sumerian.total : 0;
+  const sumerianDigitalRoot = sumerian ? sumerian.digitalRoot : 0;
+  // Mirrors englishGematria.mjs: (total - 6) % 54 === 0 marks a base-root value.
+  const isBaseRoot = sumerianTotal > 0 && (sumerianTotal - 6) % 54 === 0;
+  const ciphers = allResults.map(({ cipherId: id, cipherName, total, digitalRoot, letterCount }) => ({
+    cipherId: id, cipherName, total, digitalRoot, letterCount,
+  }));
+  return {
+    queryText: query,
+    queryType: 'word',
+    calculatorSource: 'multi-cipher-calculator',
+    gematriaTotal: sumerianTotal,
+    digitalRoot: sumerianDigitalRoot,
+    isBaseRoot,
+    resultPayload: {
+      mode,
+      selectedCipherId: mode === 'single' ? cipherId : null,
+      ciphers,
+    },
+  };
+}
+
 export function calculateAllCiphers(input) {
   const letters = lettersOf(input);
   return CIPHERS.map((cipher) => {

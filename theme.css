@@ -252,6 +252,21 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
   text-decoration-color: currentColor;
 }
 
+:root[data-bs-theme="dark"] main > .container > nav[aria-label="Breadcrumb"] .breadcrumb {
+  --bs-breadcrumb-divider-color: rgba(230, 235, 242, 0.55);
+}
+:root[data-bs-theme="dark"] main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item.active {
+  color: #f1f5f9;
+}
+:root[data-bs-theme="dark"] main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a {
+  color: #8ab4ff;
+  text-decoration-color: rgba(138, 180, 255, 0.5);
+}
+:root[data-bs-theme="dark"] main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:hover,
+:root[data-bs-theme="dark"] main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visible {
+  color: #b3ccff;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }

@@ -91,14 +91,10 @@ const titleNode = document.querySelector('#page-title');
       function createWordItem(entry) {
         const item = document.createElement('li');
         item.className = 'word-item';
-        const isDigitalRootSix = Number(entry.gematria?.digitalRoot) === 6;
         const definitionHref = `/definition?${new URLSearchParams({ word: entry.word, returnTo: returnTo || `${window.location.pathname}${window.location.search}` }).toString()}`;
         item.innerHTML = `
           <a class="word-link" href="/calculator.html?query=${encodeURIComponent(entry.word)}">${escapeHtml(entry.word)}</a>
-          <div class="word-actions">
-            <span class="${isDigitalRootSix ? 'meta-highlight' : ''}">Root ${escapeHtml(String(entry.gematria.digitalRoot))}</span>
-            <a class="definition-link" href="${definitionHref}" hidden>(definition)</a>
-          </div>
+          <a class="definition-link" href="${definitionHref}" hidden>(def)</a>
         `;
         const definitionLinkNode = item.querySelector('.definition-link');
         hasDefinition(entry.word).then((exists) => {
@@ -141,7 +137,8 @@ const titleNode = document.querySelector('#page-title');
         if (!words.length) {
           isCollapsed = false;
           listNode.hidden = true;
-          emptyNode.hidden = false;
+          emptyNode.classList.remove('d-none');
+          emptyNode.classList.add('d-flex');
           const emptyMessageNode = document.querySelector('#empty-message');
           if (emptyMessageNode) {
             emptyMessageNode.textContent = allWords.length
@@ -156,7 +153,8 @@ const titleNode = document.querySelector('#page-title');
           return;
         }
 
-        emptyNode.hidden = true;
+        emptyNode.classList.add('d-none');
+        emptyNode.classList.remove('d-flex');
         collapseButtons.forEach((button) => {
           button.hidden = false;
           button.textContent = isCollapsed ? 'Expand results' : 'Collapse results';

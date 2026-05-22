@@ -798,6 +798,11 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   color: #fff !important;
 }
 
+.badge-contrast-danger {
+  background-color: #b02a37 !important;
+  color: #fff !important;
+}
+
 .hero-media-panel {
   min-height: 100%;
   padding: 0;

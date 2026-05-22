@@ -752,6 +752,20 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   box-shadow: 0 1rem 2rem rgba(3, 7, 12, 0.45);
 }
 
+:root[data-bs-theme="dark"] #resultFeedbackPanel.bg-light {
+  background-color: var(--color-surface-dark) !important;
+  border-color: var(--color-border-dark) !important;
+  color: #f1f5f9;
+}
+
+:root[data-bs-theme="dark"] #resultFeedbackPanel .text-muted {
+  color: rgba(230, 235, 242, 0.78) !important;
+}
+
+:root[data-bs-theme="dark"] #resultFeedbackPanel .form-label {
+  color: #f1f5f9;
+}
+
 .badge-contrast-success {
   background-color: #5a8f13 !important;
   color: #fff !important;

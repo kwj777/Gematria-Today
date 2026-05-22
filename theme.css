@@ -554,6 +554,67 @@ html.auth-lifetime .auth-only.auth-only--member { display: revert; }
   --bs-btn-disabled-border-color: rgba(248, 250, 252, 0.25);
 }
 
+/* Bootstrap's .btn-outline-secondary uses #6c757d for text and border, which
+   barely registers against the dark admin / forum / member surfaces (e.g.
+   Mark reviewed, Cancel, Set pending, the markdown editor toolbar). Lift the
+   tokens to a light grey so they read clearly without competing with primary
+   action buttons. */
+:root[data-bs-theme="dark"] .btn-outline-secondary {
+  --bs-btn-color: #cbd5e1;
+  --bs-btn-border-color: rgba(203, 213, 225, 0.55);
+  --bs-btn-hover-color: #0f172a;
+  --bs-btn-hover-bg: #cbd5e1;
+  --bs-btn-hover-border-color: #cbd5e1;
+  --bs-btn-active-color: #0f172a;
+  --bs-btn-active-bg: #cbd5e1;
+  --bs-btn-active-border-color: #cbd5e1;
+  --bs-btn-disabled-color: rgba(203, 213, 225, 0.55);
+  --bs-btn-disabled-border-color: rgba(203, 213, 225, 0.25);
+}
+
+/* .btn-outline-primary / -success render as dark blue/green text on dark
+   surfaces, which clears WCAG AA only barely. Use the matching Bootstrap
+   "text-emphasis" tokens (the same ones .text-primary swaps to in dark
+   mode) so the outline buttons stay on-brand but readable. */
+:root[data-bs-theme="dark"] .btn-outline-primary {
+  --bs-btn-color: #6ea8fe;
+  --bs-btn-border-color: rgba(110, 168, 254, 0.65);
+  --bs-btn-hover-color: #0f172a;
+  --bs-btn-hover-bg: #6ea8fe;
+  --bs-btn-hover-border-color: #6ea8fe;
+  --bs-btn-active-color: #0f172a;
+  --bs-btn-active-bg: #6ea8fe;
+  --bs-btn-active-border-color: #6ea8fe;
+  --bs-btn-disabled-color: rgba(110, 168, 254, 0.55);
+  --bs-btn-disabled-border-color: rgba(110, 168, 254, 0.25);
+}
+
+:root[data-bs-theme="dark"] .btn-outline-success {
+  --bs-btn-color: #75b798;
+  --bs-btn-border-color: rgba(117, 183, 152, 0.65);
+  --bs-btn-hover-color: #0f172a;
+  --bs-btn-hover-bg: #75b798;
+  --bs-btn-hover-border-color: #75b798;
+  --bs-btn-active-color: #0f172a;
+  --bs-btn-active-bg: #75b798;
+  --bs-btn-active-border-color: #75b798;
+  --bs-btn-disabled-color: rgba(117, 183, 152, 0.55);
+  --bs-btn-disabled-border-color: rgba(117, 183, 152, 0.25);
+}
+
+:root[data-bs-theme="dark"] .btn-outline-danger {
+  --bs-btn-color: #ea868f;
+  --bs-btn-border-color: rgba(234, 134, 143, 0.65);
+  --bs-btn-hover-color: #0f172a;
+  --bs-btn-hover-bg: #ea868f;
+  --bs-btn-hover-border-color: #ea868f;
+  --bs-btn-active-color: #0f172a;
+  --bs-btn-active-bg: #ea868f;
+  --bs-btn-active-border-color: #ea868f;
+  --bs-btn-disabled-color: rgba(234, 134, 143, 0.55);
+  --bs-btn-disabled-border-color: rgba(234, 134, 143, 0.25);
+}
+
 .btn[aria-disabled="true"],
 .btn:disabled,
 .btn.disabled,

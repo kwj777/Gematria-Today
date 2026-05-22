@@ -89,7 +89,7 @@ function renderHomepageFeaturedGrid(posts, state = 'data') {
     grid.innerHTML = `
       <div class="col-12">
         <article class="blog-home-featured-card p-4 p-lg-5">
-          <span class="badge text-bg-danger mb-3">Couldn't load</span>
+          <span class="badge badge-contrast-danger mb-3">Couldn't load</span>
           <h3 class="mb-3">Featured posts are temporarily unavailable.</h3>
           <p class="text-muted mb-4">We couldn't reach the server. Try refreshing the page, or jump straight to the blog.</p>
           <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
@@ -154,7 +154,7 @@ function renderHomepageSlider(posts, state = 'data') {
     carouselInner.innerHTML = `
       <div class="carousel-item active">
         <article class="blog-slide-card p-4 p-lg-5">
-          <span class="badge text-bg-danger mb-3">Couldn't load</span>
+          <span class="badge badge-contrast-danger mb-3">Couldn't load</span>
           <h3 class="mb-3">Featured posts are temporarily unavailable.</h3>
           <p class="text-muted mb-4">We couldn't reach the server. Try refreshing the page, or jump straight to the blog.</p>
           <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>

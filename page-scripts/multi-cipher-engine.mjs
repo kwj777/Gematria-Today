@@ -43,22 +43,38 @@ function jewishLatinValue(index1to26) {
   return JEWISH_LATIN_TABLE[index1to26 - 1];
 }
 
+// blogSlug points at the matching post in the "English Gematria Cipher Atlas"
+// series. Reverse Sumerian has no dedicated post and shares the English
+// Sumerian post (same ×6 family).
 export const CIPHERS = [
   { id: 'english-ordinal', name: 'English Ordinal', valueFor: ordinalValue,
-    description: 'A=1, B=2, … Z=26.' },
+    description: 'A=1, B=2, … Z=26.',
+    blogSlug: 'english-gematria-cipher-atlas-simple-ordinal' },
   { id: 'reverse-ordinal', name: 'Reverse Ordinal', valueFor: reverseOrdinalValue,
-    description: 'A=26, B=25, … Z=1.' },
+    description: 'A=26, B=25, … Z=1.',
+    blogSlug: 'english-gematria-cipher-atlas-reverse-ordinal' },
   { id: 'full-reduction', name: 'Full Reduction (Pythagorean)', valueFor: fullReductionValue,
-    description: 'Ordinal reduced to a single digit (1..9 cycling).' },
+    description: 'Ordinal reduced to a single digit (1..9 cycling).',
+    blogSlug: 'english-gematria-cipher-atlas-full-reduction' },
   { id: 'reverse-full-reduction', name: 'Reverse Full Reduction', valueFor: reverseFullReductionValue,
-    description: 'Reverse ordinal reduced to a single digit.' },
+    description: 'Reverse ordinal reduced to a single digit.',
+    blogSlug: 'english-gematria-cipher-atlas-reverse-full-reduction' },
   { id: 'sumerian', name: 'Sumerian', valueFor: sumerianValue,
-    description: 'Ordinal × 6 (matches the site’s default cipher).' },
+    description: 'Ordinal × 6 (matches the site’s default cipher).',
+    blogSlug: 'english-gematria-cipher-atlas-english-sumerian' },
   { id: 'reverse-sumerian', name: 'Reverse Sumerian', valueFor: reverseSumerianValue,
-    description: 'Reverse ordinal × 6.' },
+    description: 'Reverse ordinal × 6.',
+    blogSlug: 'english-gematria-cipher-atlas-english-sumerian' },
   { id: 'jewish-latin', name: 'Jewish / Latin', valueFor: jewishLatinValue,
-    description: 'A-I = 1..9, J-R = 10..90, S-Z = 100..800.' },
+    description: 'A-I = 1..9, J-R = 10..90, S-Z = 100..800.',
+    blogSlug: 'english-gematria-cipher-atlas-jewish-latin' },
 ];
+
+export function blogUrlForCipher(cipherId) {
+  const cipher = CIPHERS.find((c) => c.id === cipherId);
+  if (!cipher || !cipher.blogSlug) return null;
+  return `/blog.html?post=${cipher.blogSlug}#${cipher.blogSlug}`;
+}
 
 export function digitalRoot(value) {
   let root = Math.abs(Math.trunc(value));

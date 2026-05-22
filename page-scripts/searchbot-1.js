@@ -12,7 +12,20 @@
       const feedbackText = document.getElementById('feedbackText');
       const submitFeedbackButton = document.getElementById('submitFeedbackButton');
       const feedbackStatus = document.getElementById('feedbackStatus');
+      const followUpPanel = document.getElementById('followUpPanel');
+      const askAnotherButton = document.getElementById('askAnotherButton');
+      const refineQueryButton = document.getElementById('refineQueryButton');
       let latestSearchPayload = null;
+
+      function focusChatQuestion() {
+        if (!chatQuestion) return;
+        chatQuestion.focus();
+        try {
+          chatQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (_error) {
+          chatQuestion.scrollIntoView();
+        }
+      }
 
       function escapeHtml(value) {
         return String(value || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
@@ -122,9 +135,10 @@
           feedbackStatus.className = 'small text-muted mt-2 mb-0';
           feedbackStatus.textContent = 'Please confirm whether these were the expected results.';
           resultFeedbackPanel.classList.remove('d-none');
+          followUpPanel?.classList.remove('d-none');
 
           statusMessage.className = 'alert alert-success';
-          statusMessage.textContent = `Search complete. Indexed entries: ${Number(payload.corpusSize || 0)}.`;
+          statusMessage.textContent = `Search complete. Indexed entries: ${Number(payload.corpusSize || 0)}. Ask another question whenever you're ready.`;
         } catch (error) {
           statusMessage.className = 'alert alert-danger';
           statusMessage.textContent = error.message || 'Unable to search site content right now.';
@@ -139,11 +153,35 @@
         feedbackText.value = '';
         feedbackNoForm.classList.add('d-none');
         resultFeedbackPanel.classList.add('d-none');
+        followUpPanel?.classList.add('d-none');
         feedbackStatus.className = 'small text-muted mt-2 mb-0';
         feedbackStatus.textContent = '';
         chatResult.classList.add('d-none');
         statusMessage.className = 'alert alert-success';
         statusMessage.textContent = 'Ready for the next search.';
+      });
+
+      askAnotherButton?.addEventListener('click', () => {
+        chatQuestion.value = '';
+        sourceList.innerHTML = '';
+        answerText.textContent = '';
+        latestSearchPayload = null;
+        feedbackText.value = '';
+        feedbackNoForm.classList.add('d-none');
+        resultFeedbackPanel.classList.add('d-none');
+        followUpPanel?.classList.add('d-none');
+        feedbackStatus.className = 'small text-muted mt-2 mb-0';
+        feedbackStatus.textContent = '';
+        chatResult.classList.add('d-none');
+        statusMessage.className = 'alert alert-info';
+        statusMessage.textContent = 'KnowBot is ready for your next question.';
+        focusChatQuestion();
+      });
+
+      refineQueryButton?.addEventListener('click', () => {
+        statusMessage.className = 'alert alert-info';
+        statusMessage.textContent = 'Adjust your question and search again.';
+        focusChatQuestion();
       });
 
       feedbackYesButton?.addEventListener('click', () => submitFeedback(true));

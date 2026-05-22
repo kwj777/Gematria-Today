@@ -358,6 +358,13 @@ html.auth-lifetime .auth-only.auth-only--member { display: revert; }
   text-decoration: underline;
 }
 
+/* Mobile drawer: hide the desktop trailing "Log in" CTA so the mobile-only
+   Log in row sitting under Learn carries the auth link. Selector matches
+   the auth-anon enable chain's specificity so it wins without !important. */
+@media (max-width: 991.98px) {
+  html.auth-anon .navbar-nav .nav-item.nav-auth--anon.nav-cta--login { display: none; }
+}
+
 @media (min-width: 992px) {
   /* Search sits between the text dropdowns and the auth CTAs, so add a
      small gap on its left and on the first auth item to set the actions

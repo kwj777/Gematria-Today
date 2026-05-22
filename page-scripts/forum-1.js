@@ -124,7 +124,7 @@
         }
 
         threadListEl.innerHTML = threads.map((thread) => `
-          <button type="button" class="forum-thread-card" data-thread-id="${thread.id}">
+          <article class="forum-thread-card" data-thread-id="${thread.id}" role="button" tabindex="0" aria-label="Open thread: ${esc(thread.title)}">
             <div class="d-flex justify-content-between align-items-start gap-3">
               <div>
                 <h3 class="h6 mb-1 forum-subtitle">${thread.title} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
@@ -133,11 +133,21 @@
               </div>
               <span class="badge text-bg-secondary forum-thread-score">${thread.popularityScore}</span>
             </div>
-          </button>
+          </article>
         `).join('');
 
-        threadListEl.querySelectorAll('[data-thread-id]').forEach((button) => {
-          button.addEventListener('click', () => loadThread(button.dataset.threadId));
+        threadListEl.querySelectorAll('[data-thread-id]').forEach((card) => {
+          card.addEventListener('click', (event) => {
+            if (event.target.closest('.forum-author-trigger, .forum-profile-popover')) return;
+            loadThread(card.dataset.threadId);
+          });
+          card.addEventListener('keydown', (event) => {
+            if (event.target !== card) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              loadThread(card.dataset.threadId);
+            }
+          });
         });
         bindAuthorPopovers(threadListEl);
       }

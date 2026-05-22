@@ -284,6 +284,15 @@
   color: rgba(191, 209, 232, 0.9) !important;
 }
 
+:root[data-bs-theme="dark"] .forum-thread-card .badge.text-bg-light,
+:root[data-bs-theme="dark"] .forum-thread-detail .badge.text-bg-light,
+:root[data-bs-theme="dark"] .forum-reply-card .badge.text-bg-light,
+:root[data-bs-theme="dark"] .forum-profile-popover .badge.text-bg-light {
+  background-color: rgba(56, 189, 248, 0.18) !important;
+  border-color: rgba(125, 211, 252, 0.45) !important;
+  color: rgba(224, 242, 254, 0.95) !important;
+}
+
 :root[data-bs-theme="dark"] .forum-skeleton {
   background: linear-gradient(
     90deg,

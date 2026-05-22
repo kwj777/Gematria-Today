@@ -537,6 +537,23 @@ html.auth-lifetime .auth-only.auth-only--member { display: revert; }
   --bs-btn-active-bg: rgba(158, 197, 254, 0.18);
 }
 
+/* Bootstrap's .btn-outline-dark uses near-black text and border, which
+   disappear against dark surfaces (e.g. the member dashboard's Message
+   Center / Manage subscription / Admin buttons). Invert to a light
+   outline in dark mode so they read like the sibling outline buttons. */
+:root[data-bs-theme="dark"] .btn-outline-dark {
+  --bs-btn-color: var(--color-text-on-dark);
+  --bs-btn-border-color: rgba(248, 250, 252, 0.45);
+  --bs-btn-hover-color: #0f172a;
+  --bs-btn-hover-bg: var(--color-text-on-dark);
+  --bs-btn-hover-border-color: var(--color-text-on-dark);
+  --bs-btn-active-color: #0f172a;
+  --bs-btn-active-bg: var(--color-text-on-dark);
+  --bs-btn-active-border-color: var(--color-text-on-dark);
+  --bs-btn-disabled-color: rgba(248, 250, 252, 0.55);
+  --bs-btn-disabled-border-color: rgba(248, 250, 252, 0.25);
+}
+
 .btn[aria-disabled="true"],
 .btn:disabled,
 .btn.disabled,

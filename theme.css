@@ -3585,7 +3585,11 @@ a.badge,
   }
 
   /* Wrap the menu items so the trailing CTA + Search pills can share one
-     row while plain text links remain stacked above them. */
+     row while plain text links remain stacked above them. Force the ul to
+     fill the absolutely-positioned drawer (cancel Bootstrap's ms-auto,
+     which on desktop right-aligns the nav inside the navbar but in the
+     mobile drawer would otherwise shrink the ul to content-width and pin
+     every item to the right edge). */
   .navbar-nav {
     flex-direction: row;
     flex-wrap: wrap;
@@ -3593,6 +3597,9 @@ a.badge,
     padding: 0 1rem;
     column-gap: 0.6rem;
     row-gap: 0;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   /* Text links (and the Dashboard link when signed in) take a full row. */

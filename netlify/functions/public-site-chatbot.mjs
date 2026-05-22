@@ -10,6 +10,7 @@ import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } f
 
 const MAX_QUERY_LENGTH = 400;
 const MAX_RESULTS = 5;
+const FAQ_ANSWER_MAX_LENGTH = 900;
 const CONVERSATIONAL_PREFIXES = [
   'what about', 'how about', 'what is', 'what are', 'who is', 'who are', 'where is', 'where are',
   'tell me about', 'search for', 'search the site for', 'find', 'look up', 'show me', 'can you tell me about',
@@ -53,6 +54,14 @@ function tokenize(input = '') {
 
 function escapeRegExp(value = '') {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function slugifyQuestion(value = '') {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'faq-item';
 }
 
 function stripConversationalPrefix(rawQuery = '') {
@@ -109,7 +118,17 @@ function scoreDocument(query, terms, document) {
     hasExactPhraseMatch = true;
   }
 
-  return { score, matchedTerms: matchedTerms.size, hasExactPhraseMatch };
+  const titleTerms = tokenize(document.title);
+  const titleTermSet = new Set(titleTerms);
+  const titleMatches = terms.filter((term) => titleTermSet.has(term)).length;
+  const titleOverlap = titleTerms.length ? titleMatches / titleTerms.length : 0;
+  const queryOverlap = terms.length ? titleMatches / terms.length : 0;
+
+  if (document.type === 'faq' && titleMatches >= 2 && (titleOverlap >= 0.6 || queryOverlap >= 0.6)) {
+    score += 20;
+  }
+
+  return { score, matchedTerms: matchedTerms.size, hasExactPhraseMatch, titleOverlap, queryOverlap };
 }
 
 function buildSnippet(text, terms) {
@@ -137,6 +156,14 @@ function buildSnippet(text, terms) {
   return `${prefix}${plainText.slice(start, end).trim()}${suffix}`;
 }
 
+function truncateForAnswer(text, maxLength) {
+  const plain = String(text || '').trim();
+  if (plain.length <= maxLength) return plain;
+  const cutoff = plain.lastIndexOf(' ', maxLength);
+  const safeCut = cutoff > maxLength - 80 ? cutoff : maxLength;
+  return `${plain.slice(0, safeCut).trim()}…`;
+}
+
 function buildAnswer(query, matches) {
   if (!matches.length) {
     return `I could not find a confident answer for "${query}" in the current site content. Try using more specific words from the page title or FAQ.`;
@@ -146,6 +173,11 @@ function buildAnswer(query, matches) {
   const followup = additional.length
     ? ` I also found related references on ${additional.map((item) => item.title).join(' and ')}.`
     : '';
+
+  if (top.type === 'faq' && top.fullAnswer) {
+    return `${truncateForAnswer(top.fullAnswer, FAQ_ANSWER_MAX_LENGTH)}${followup}`;
+  }
+
   return `${top.snippet}${followup}`;
 }
 
@@ -161,7 +193,15 @@ async function loadCorpus(sql) {
     const title = stripHtml(row.question || 'FAQ entry');
     const text = stripHtml(row.answer || '');
     if (!title && !text) continue;
-    corpus.push({ id: `faq:${row.id}`, type: 'faq', title: title || 'FAQ entry', text, url: '/faq.html' });
+    const slug = slugifyQuestion(row.question || '');
+    corpus.push({
+      id: `faq:${row.id}`,
+      type: 'faq',
+      title: title || 'FAQ entry',
+      text,
+      fullAnswer: text,
+      url: `/faq.html?id=${encodeURIComponent(slug)}#faqPanel-${encodeURIComponent(slug)}`,
+    });
   }
 
   for (const row of postRows || []) {
@@ -216,7 +256,7 @@ export async function handler(event) {
     if (!terms.length) return jsonResponse(400, { error: 'Please provide a more specific question.' });
 
     const corpus = await loadCorpus(sql);
-    const ranked = corpus
+    const rankedEntries = corpus
       .map((entry) => {
         const { score, matchedTerms, hasExactPhraseMatch } = scoreDocument(query, terms, entry);
         const minTermMatches = terms.length >= 2 ? 2 : 1;
@@ -232,14 +272,15 @@ export async function handler(event) {
       })
       .filter((entry) => entry.score > 0 && entry.passesRelevanceGate)
       .sort((a, b) => b.score - a.score)
-      .slice(0, MAX_RESULTS)
-      .map((entry) => ({
-        type: entry.type,
-        title: entry.title,
-        url: entry.url,
-        snippet: entry.snippet,
-        score: entry.score,
-      }));
+      .slice(0, MAX_RESULTS);
+
+    const ranked = rankedEntries.map((entry) => ({
+      type: entry.type,
+      title: entry.title,
+      url: entry.url,
+      snippet: entry.snippet,
+      score: entry.score,
+    }));
 
     await logRequestAudit(sql, event, {
       route: 'public-site-chatbot',
@@ -251,7 +292,7 @@ export async function handler(event) {
     const responseHeaders = { 'cache-control': 'no-store' };
     if (isNewVisitor) responseHeaders['set-cookie'] = visitorCookie;
     return jsonResponse(200, {
-      answer: buildAnswer(query, ranked),
+      answer: buildAnswer(query, rankedEntries),
       sources: ranked,
       query,
       highlightTerms: terms,

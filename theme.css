@@ -3478,14 +3478,33 @@ a.badge,
   nav.navbar > .container {
     flex-wrap: nowrap;
     gap: 0.5rem;
+    position: relative;
   }
   nav.navbar > .container > .navbar-brand {
     min-width: 0;
     flex: 0 1 auto;
     margin-right: 0;
   }
-  nav.navbar > .container > .nav-header-actions {
+  nav.navbar > .container > .navbar-toggler {
     flex-shrink: 0;
+  }
+
+  /* The collapse is a flex sibling of the brand/toggler, so with the
+     nowrap above it would otherwise share their row when opened -- the
+     menu items would render inline to the right of the toggle instead of
+     dropping below as a drawer. Pull it out of the flex flow and anchor
+     it to the navbar so it overlays the page content. */
+  nav.navbar > .container > .navbar-collapse {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background: var(--bs-dark, #212529);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    padding: 0.75rem 0;
+    max-height: calc(100vh - 100%);
+    overflow-y: auto;
   }
 
   .navbar-toggler {
@@ -3555,39 +3574,6 @@ a.badge,
     transform: rotate(-45deg);
   }
 
-  /* Persistent search affordance sitting in the header strip next to
-     the menu toggle so users can search without opening the menu. */
-  .nav-header-search {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    color: rgba(255, 255, 255, 0.92);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 999px;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  }
-
-  .nav-header-search:hover,
-  .nav-header-search:focus-visible {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.14);
-    border-color: var(--nav-on-dark-border-hover);
-    outline: none;
-  }
-
-  .nav-header-search:focus-visible {
-    box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.45);
-  }
-
-  .nav-header-search svg {
-    width: 1.1rem;
-    height: 1.1rem;
-    display: block;
-  }
-
   .navbar-collapse.collapsing,
   .navbar-collapse.show {
     animation: navbarSlideDown 0.18s ease-out;
@@ -3610,7 +3596,7 @@ a.badge,
   }
 
   /* Text links (and the Dashboard link when signed in) take a full row. */
-  .navbar-nav > .nav-item:not(.nav-cta):not(.nav-search) {
+  .navbar-nav > .nav-item:not(.nav-cta):not(.nav-search):not(.nav-theme) {
     flex: 0 0 100%;
   }
 
@@ -3640,11 +3626,19 @@ a.badge,
   }
 
   /* CTA: shrink to a content-width pill so it matches the Search pill
-     shape, and let it sit on the same flex row as Search. */
+     shape, and let it sit on the same flex row as Search and the theme
+     toggle (which moved out of the header strip on mobile). */
   .navbar-nav > .nav-item.nav-cta,
-  .navbar-nav > .nav-item.nav-search {
+  .navbar-nav > .nav-item.nav-search,
+  .navbar-nav > .nav-item.nav-theme {
     flex: 0 0 auto;
     align-self: center;
+  }
+
+  /* The "press /" kbd hint inside the Ask KnowBot pill is desktop-only --
+     there's no slash key on touch keyboards, so it's noise on mobile. */
+  .navbar-nav .nav-search-link__kbd {
+    display: none;
   }
 
   /* Force identical box geometry on both pills so they share a baseline.

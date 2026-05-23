@@ -294,12 +294,26 @@ export async function getEarnedBadgeNamesForUserIds(sql, userIds) {
     WHERE user_id = ANY(${unique})
   `;
 
-  const map = new Map();
+  // Per user, collapse each category to its highest-tier badge so the forum
+  // only shows the latest Pioneer/Seeker/etc. rather than every tier earned.
+  const topByUserCategory = new Map();
   for (const row of rows) {
     const def = BADGES_BY_SLUG.get(row.badge_slug);
     if (!def) continue;
-    if (!map.has(row.user_id)) map.set(row.user_id, []);
-    map.get(row.user_id).push(def.name);
+    let perCategory = topByUserCategory.get(row.user_id);
+    if (!perCategory) {
+      perCategory = new Map();
+      topByUserCategory.set(row.user_id, perCategory);
+    }
+    const current = perCategory.get(def.category);
+    if (!current || Number(def.tier || 0) > Number(current.tier || 0)) {
+      perCategory.set(def.category, def);
+    }
+  }
+
+  const map = new Map();
+  for (const [userId, perCategory] of topByUserCategory) {
+    map.set(userId, [...perCategory.values()].map((def) => def.name));
   }
   return map;
 }

@@ -254,9 +254,37 @@
         }
       }
 
+      // Visual theme metadata for the forum's earned badges. Each entry maps a
+      // badge name to an emoji glyph, a category-themed pill style, and (where
+      // relevant) a tier so multi-tier badges (Pioneer, Seeker, etc.) can show
+      // bronze/silver/gold/platinum accents.
+      const BADGE_THEMES = {
+        Moderator:                 { icon: '🛡️', theme: 'mod' },
+        Premium:                   { icon: '⭐',  theme: 'premium' },
+        Contributor:               { icon: '✍️', theme: 'contributor' },
+        Trusted:                   { icon: '✅', theme: 'reputation', tier: 1 },
+        Sage:                      { icon: '📚', theme: 'reputation', tier: 2 },
+        'Pioneer I':               { icon: '🧭', theme: 'pioneer', tier: 1 },
+        'Pioneer II':              { icon: '🧭', theme: 'pioneer', tier: 2 },
+        'Pioneer III':             { icon: '🧭', theme: 'pioneer', tier: 3 },
+        'Seeker I':                { icon: '🔍', theme: 'seeker', tier: 1 },
+        'Seeker II':               { icon: '🔍', theme: 'seeker', tier: 2 },
+        'Seeker III':              { icon: '🔍', theme: 'seeker', tier: 3 },
+        'Seeker IV':               { icon: '🔍', theme: 'seeker', tier: 4 },
+        'Base Root Hunter I':      { icon: '🌳', theme: 'baseroot', tier: 1 },
+        'Base Root Hunter II':     { icon: '🌳', theme: 'baseroot', tier: 2 },
+        'Gematrist I':             { icon: '🔢', theme: 'gematrist', tier: 1 },
+        'Gematrist II':            { icon: '🔢', theme: 'gematrist', tier: 2 },
+        'Beginner Path Graduate':  { icon: '🎓', theme: 'learning' },
+      };
+
       function renderBadges(badges) {
         if (!Array.isArray(badges) || !badges.length) return '';
-        return badges.map((badge) => `<span class="badge rounded-pill text-bg-light border ms-1">${badge}</span>`).join('');
+        return badges.map((badge) => {
+          const theme = BADGE_THEMES[badge] || { icon: '🏅', theme: 'default' };
+          const tierClass = theme.tier ? ` forum-badge--tier-${theme.tier}` : '';
+          return `<span class="forum-badge forum-badge--${theme.theme}${tierClass}" title="${esc(badge)}"><span class="forum-badge-icon" aria-hidden="true">${theme.icon}</span><span class="forum-badge-label">${esc(badge)}</span></span>`;
+        }).join('');
       }
 
       function membershipLabel(level) {

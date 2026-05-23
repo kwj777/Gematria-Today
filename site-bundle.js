@@ -1344,6 +1344,10 @@
   var hideTimer = null;
   var indexRef = null;
   var suppressObserver = false;
+  // On touch-only devices iOS Safari interprets the first tap on a hoverable
+  // element as a "hover preview" and withholds the click event until the
+  // second tap. Gate all hover-triggered popup behavior to real pointers.
+  var HAS_HOVER = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
 
   function ensurePopup() {
     if (popup) return popup;
@@ -1353,8 +1357,10 @@
     popup.setAttribute('role', 'tooltip');
     popup.hidden = true;
     document.body.appendChild(popup);
-    popup.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
-    popup.addEventListener('mouseleave', scheduleHide);
+    if (HAS_HOVER) {
+      popup.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
+      popup.addEventListener('mouseleave', scheduleHide);
+    }
     return popup;
   }
 
@@ -1419,13 +1425,15 @@
   }
 
   function bindGlobalHandlers() {
-    document.addEventListener('mouseover', function (e) {
-      var btn = e.target.closest && e.target.closest('.defn-term');
-      if (btn) showFor(btn);
-    });
-    document.addEventListener('mouseout', function (e) {
-      if (e.target.closest && e.target.closest('.defn-term')) scheduleHide();
-    });
+    if (HAS_HOVER) {
+      document.addEventListener('mouseover', function (e) {
+        var btn = e.target.closest && e.target.closest('.defn-term');
+        if (btn) showFor(btn);
+      });
+      document.addEventListener('mouseout', function (e) {
+        if (e.target.closest && e.target.closest('.defn-term')) scheduleHide();
+      });
+    }
     document.addEventListener('focusin', function (e) {
       var btn = e.target.closest && e.target.closest('.defn-term');
       if (btn) showFor(btn);

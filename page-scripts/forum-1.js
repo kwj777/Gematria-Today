@@ -326,6 +326,10 @@
       }
 
       function bindAuthorPopovers(container) {
+        // On touch-only devices, the synthetic mouseenter on first tap opens
+        // the popover, then the click handler treats it as "already open" and
+        // closes it. Only bind hover behavior when the device has hover.
+        const hasHover = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
         container.querySelectorAll('.forum-author-trigger').forEach((trigger) => {
           const raw = trigger.dataset.authorProfile;
           if (!raw) return;
@@ -336,7 +340,10 @@
             return;
           }
 
-          trigger.addEventListener('mouseenter', () => showAuthorPopover(trigger, profile));
+          if (hasHover) {
+            trigger.addEventListener('mouseenter', () => showAuthorPopover(trigger, profile));
+            trigger.parentElement?.addEventListener('mouseleave', () => closeAuthorPopovers());
+          }
           trigger.addEventListener('keydown', (event) => {
             if (event.key !== 'Enter' && event.key !== ' ') return;
             event.preventDefault();
@@ -351,7 +358,6 @@
             }
             showAuthorPopover(trigger, profile);
           });
-          trigger.parentElement?.addEventListener('mouseleave', () => closeAuthorPopovers());
         });
       }
 

@@ -6,6 +6,10 @@
   const HIDE_DELAY_MS = 200;
   const POPOVER_CONTENT = 'Only registered members can save searches. <a href="/member.html#registerForm">Join</a>.';
   const ARIA_LABEL = 'Only registered members can save searches. Join to unlock this feature.';
+  // iOS treats the first tap on a hoverable element as a hover preview and
+  // delays the click event until the second tap. Only attach hover triggers
+  // on devices that actually have a hover-capable pointer.
+  const HAS_HOVER = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
 
   function createMembersOnlySavePopover(button) {
     if (!button || !window.bootstrap?.Popover) {
@@ -58,16 +62,20 @@
         return;
       }
       tipListenersAttached = true;
-      tip.addEventListener('mouseenter', cancelHide);
-      tip.addEventListener('mouseleave', scheduleHide);
+      if (HAS_HOVER) {
+        tip.addEventListener('mouseenter', cancelHide);
+        tip.addEventListener('mouseleave', scheduleHide);
+      }
     }
 
     function resetTipListenersFlag() {
       tipListenersAttached = false;
     }
 
-    button.addEventListener('mouseenter', showNow);
-    button.addEventListener('mouseleave', scheduleHide);
+    if (HAS_HOVER) {
+      button.addEventListener('mouseenter', showNow);
+      button.addEventListener('mouseleave', scheduleHide);
+    }
     button.addEventListener('focus', showNow);
     button.addEventListener('blur', scheduleHide);
     button.addEventListener('shown.bs.popover', attachTipListeners);
@@ -76,8 +84,10 @@
     const handle = {
       dispose() {
         cancelHide();
-        button.removeEventListener('mouseenter', showNow);
-        button.removeEventListener('mouseleave', scheduleHide);
+        if (HAS_HOVER) {
+          button.removeEventListener('mouseenter', showNow);
+          button.removeEventListener('mouseleave', scheduleHide);
+        }
         button.removeEventListener('focus', showNow);
         button.removeEventListener('blur', scheduleHide);
         button.removeEventListener('shown.bs.popover', attachTipListeners);

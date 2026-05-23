@@ -242,15 +242,21 @@
           }, 150);
         }
 
-        document.addEventListener('mouseover', function (e) {
-          var btn = e.target.closest('.defn-term');
-          if (btn) showFor(btn);
-        });
-        document.addEventListener('mouseout', function (e) {
-          if (e.target.closest('.defn-term')) scheduleHide();
-        });
-        popup.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
-        popup.addEventListener('mouseleave', scheduleHide);
+        // On touch-only devices iOS treats the first tap on a hoverable
+        // element as a hover preview and withholds the click event until the
+        // second tap. Only attach hover triggers on devices with real hover.
+        var hasHover = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+        if (hasHover) {
+          document.addEventListener('mouseover', function (e) {
+            var btn = e.target.closest('.defn-term');
+            if (btn) showFor(btn);
+          });
+          document.addEventListener('mouseout', function (e) {
+            if (e.target.closest('.defn-term')) scheduleHide();
+          });
+          popup.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
+          popup.addEventListener('mouseleave', scheduleHide);
+        }
         document.addEventListener('focusin', function (e) {
           var btn = e.target.closest('.defn-term');
           if (btn) showFor(btn);

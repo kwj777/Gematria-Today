@@ -876,6 +876,20 @@ View results: ${shareUrl}`.trim(),
           disclaimer.textContent = '*  Gematria value matches are limited to the words currently in our database. Words sharing the same root form are grouped together below.';
           wrapper.appendChild(disclaimer);
 
+          if (payload.count > 0) {
+            const sharedDigitalRoot = computeDigitalRoot(Number(payload.gematria));
+            const sharedIsBaseRoot = (Number(payload.gematria) - 6) % 54 === 0;
+            const summary = document.createElement('p');
+            summary.className = 'related-word-card-meta small text-muted shared-facts-summary';
+            summary.append(
+              `Every match below shares these traits — `,
+              createDigitalRootValueNode(sharedDigitalRoot, 'Digital Root '),
+              ' · ',
+              createBaseRootStatusNode(sharedIsBaseRoot),
+            );
+            wrapper.appendChild(summary);
+          }
+
           if (payload.count === 0) {
             const emptyState = document.createElement('p');
             emptyState.textContent = 'No words in the database currently match this gematria value.';
@@ -895,7 +909,7 @@ View results: ${shareUrl}`.trim(),
               const grid = document.createElement('div');
               grid.className = 'results-grid related-words-grid';
               group.entries.forEach((entry) => {
-                grid.appendChild(createWordCard({ word: entry.word, gematria: entry }, payload.gematria));
+                grid.appendChild(createWordCard({ word: entry.word, gematria: entry }, payload.gematria, { suppressSharedConstants: true }));
               });
               groupSection.appendChild(grid);
               wrapper.appendChild(groupSection);
@@ -915,7 +929,7 @@ View results: ${shareUrl}`.trim(),
               const grid = document.createElement('div');
               grid.className = 'results-grid related-words-grid';
               singletons.forEach((entry) => {
-                grid.appendChild(createWordCard({ word: entry.word, gematria: entry }, payload.gematria));
+                grid.appendChild(createWordCard({ word: entry.word, gematria: entry }, payload.gematria, { suppressSharedConstants: true }));
               });
               standaloneSection.appendChild(grid);
               wrapper.appendChild(standaloneSection);
@@ -946,7 +960,8 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
-      function createWordCard(wordResult, searchTotal) {
+      function createWordCard(wordResult, searchTotal, options = {}) {
+        const suppressSharedConstants = Boolean(options.suppressSharedConstants);
         const card = document.createElement('article');
         card.className = 'related-word-card';
 
@@ -967,29 +982,36 @@ View results: ${shareUrl}`.trim(),
 
         if (wordResult.gematria) {
           const payload = wordResult.gematria;
-          const gematriaRow = document.createElement('div');
-          gematriaRow.className = 'related-word-card-gematria';
-          const matchPrefix = hasMatchingGematria ? 'Gematria match! ' : '';
-          const detailPrefix = document.createTextNode(`${matchPrefix}Gematria `);
-          const gematriaButton = document.createElement('button');
-          gematriaButton.type = 'button';
-          gematriaButton.className = 'inline-button';
-          gematriaButton.textContent = payload.gematria.total;
-          gematriaButton.addEventListener('click', () => {
-            renderGematriaMatches(payload.gematria.total);
-          });
-          gematriaRow.append(detailPrefix, gematriaButton);
-          card.appendChild(gematriaRow);
+
+          if (!suppressSharedConstants) {
+            const gematriaRow = document.createElement('div');
+            gematriaRow.className = 'related-word-card-gematria';
+            const matchPrefix = hasMatchingGematria ? 'Gematria match! ' : '';
+            const detailPrefix = document.createTextNode(`${matchPrefix}Gematria `);
+            const gematriaButton = document.createElement('button');
+            gematriaButton.type = 'button';
+            gematriaButton.className = 'inline-button';
+            gematriaButton.textContent = payload.gematria.total;
+            gematriaButton.addEventListener('click', () => {
+              renderGematriaMatches(payload.gematria.total);
+            });
+            gematriaRow.append(detailPrefix, gematriaButton);
+            card.appendChild(gematriaRow);
+          }
 
           const metaLine = document.createElement('div');
           metaLine.className = 'related-word-card-meta small text-muted';
-          metaLine.append(
-            createDigitalRootValueNode(payload.gematria.digitalRoot, 'Digital Root '),
-            ' · ',
-            createBaseRootStatusNode(payload.isBaseRoot),
-            ' · ',
-            formatSearchCount(payload.searchCount),
-          );
+          if (suppressSharedConstants) {
+            metaLine.append(formatSearchCount(payload.searchCount));
+          } else {
+            metaLine.append(
+              createDigitalRootValueNode(payload.gematria.digitalRoot, 'Digital Root '),
+              ' · ',
+              createBaseRootStatusNode(payload.isBaseRoot),
+              ' · ',
+              formatSearchCount(payload.searchCount),
+            );
+          }
           card.appendChild(metaLine);
 
           card.appendChild(createPerLetterDetails(wordResult.word));

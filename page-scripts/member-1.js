@@ -805,15 +805,19 @@
         }
         const progress = Number(profile?.preferences?.learningPathLevelReached || 0);
         if (learningPathAspireProgress) {
-          learningPathAspireProgress.textContent = progress >= 1 && progress <= 3
-            ? `You're on Level ${progress} of 3. Finish all three to unlock the badge on your dashboard and forum profile.`
-            : 'Three short levels. Free for all members. The badge lands on your dashboard and forum profile when you finish.';
+          learningPathAspireProgress.textContent = progress >= 1 && progress <= 4
+            ? `You're on Level ${progress} of 4. Finish all four to unlock the badge on your dashboard and forum profile.`
+            : 'Four short levels. Free for all members. The badge lands on your dashboard and forum profile when you finish.';
         }
         if (learningPathAspireCta) {
-          const nextLevel = Math.min(Math.max(progress, 0) + 1, 3);
+          const nextLevel = Math.min(Math.max(progress, 0) + 1, 4);
           const nextPath = nextLevel === 1
             ? '/gematria-basics.html'
-            : nextLevel === 2 ? '/gematria-pattern-grouping.html' : '/gematria-name-analysis.html';
+            : nextLevel === 2
+              ? '/gematria-pattern-grouping.html'
+              : nextLevel === 3
+                ? '/gematria-name-analysis.html'
+                : '/blog.html?post=a-beginner-s-gematria-research-checklist-before-you-draw-conclusions&from=learning-path#a-beginner-s-gematria-research-checklist-before-you-draw-conclusions';
           learningPathAspireCta.href = nextPath;
           learningPathAspireCta.textContent = progress >= 1 ? `Continue Level ${nextLevel}` : 'Start Level 1';
           if (!learningPathAspireCta.dataset.bound) {

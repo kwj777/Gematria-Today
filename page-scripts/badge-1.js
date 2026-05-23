@@ -93,7 +93,7 @@
       if (earnedAtText) earnedAtText.textContent = earnedAt ? `Earned on ${earnedAt}` : '';
       const headline = `${displayName} earned the Beginner Path Graduate badge | Gematria.Today`;
       if (pageTitle) pageTitle.textContent = headline;
-      if (pageDescription) pageDescription.setAttribute('content', `${displayName} completed the three-level beginner learning path on Gematria.Today.`);
+      if (pageDescription) pageDescription.setAttribute('content', `${displayName} completed the four-level beginner learning path on Gematria.Today.`);
       try { document.title = headline; } catch {}
       const shareUrl = `${window.location.origin}/b/${encodeURIComponent(data.username || username)}`;
       buildShareLinks(displayName, shareUrl);

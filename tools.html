@@ -18,18 +18,18 @@
     <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
 <title>Tools | Gematria.Today</title>
-    <meta name="description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, or GemaBot for conversational analysis." />
+    <meta name="description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, SiteSeeker to search the site, or GemaBot for conversational analysis." />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://gematria.today/tools.html" />
     <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Tools | Gematria.Today" />
-    <meta property="og:description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, or GemaBot for conversational analysis." />
+    <meta property="og:description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, SiteSeeker to search the site, or GemaBot for conversational analysis." />
     <meta property="og:url" content="https://gematria.today/tools.html" />
     <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Tools | Gematria.Today" />
-    <meta name="twitter:description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, or GemaBot for conversational analysis." />
+    <meta name="twitter:description" content="Pick a gematria research tool: the Calculator for words and phrases, the Name Calculator for personal names, SiteSeeker to search the site, or GemaBot for conversational analysis." />
     <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
     <script type="application/ld+json">
     {
@@ -38,7 +38,7 @@
       "name": "Gematria Research Tools",
       "url": "https://gematria.today/tools.html",
       "itemListOrder": "https://schema.org/ItemListOrderAscending",
-      "numberOfItems": 4,
+      "numberOfItems": 5,
       "itemListElement": [
         {
           "@type": "ListItem",
@@ -64,6 +64,13 @@
         {
           "@type": "ListItem",
           "position": 4,
+          "url": "https://gematria.today/searchbot.html",
+          "name": "SiteSeeker",
+          "description": "Search the site for answers across FAQs, blog posts, and static page content without leaving your research workflow."
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
           "url": "https://gematria.today/ai-agent.html",
           "name": "GemaBot",
           "description": "Conversational gematria analysis. Ask in plain language; GemaBot looks up gematria matches and explains its reasoning."
@@ -269,6 +276,118 @@
         color: #475569;
       }
       :root[data-bs-theme="dark"] .tools-help-line { color: #94a3b8; }
+
+      .tools-compare {
+        margin-top: 2.5rem;
+      }
+      .tools-compare__title {
+        margin-bottom: 0.35rem;
+      }
+      .tools-compare__lede {
+        color: #475569;
+        margin-bottom: 1.25rem;
+      }
+      :root[data-bs-theme="dark"] .tools-compare__lede { color: #94a3b8; }
+
+      .tools-compare-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+      .tools-compare-table th,
+      .tools-compare-table td {
+        padding: 0.85rem 0.9rem;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+      .tools-compare-table thead th {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #475569;
+        background: rgba(15, 23, 42, 0.03);
+        border-bottom-width: 2px;
+      }
+      .tools-compare-table tbody th a {
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .tools-compare-table tbody th a:hover,
+      .tools-compare-table tbody th a:focus {
+        text-decoration: underline;
+      }
+      :root[data-bs-theme="dark"] .tools-compare-table th,
+      :root[data-bs-theme="dark"] .tools-compare-table td {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+      }
+      :root[data-bs-theme="dark"] .tools-compare-table thead th {
+        color: #cbd5e1;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      @media (max-width: 991.98px) {
+        .tools-compare-table {
+          display: block;
+        }
+        .tools-compare-table thead {
+          display: none;
+        }
+        .tools-compare-table tbody,
+        .tools-compare-table tr {
+          display: block;
+        }
+        .tools-compare-table tbody tr {
+          border: 1px solid rgba(15, 23, 42, 0.12);
+          border-radius: 0.65rem;
+          padding: 0.35rem 0.85rem;
+          margin-bottom: 0.85rem;
+          background: rgba(15, 23, 42, 0.015);
+        }
+        :root[data-bs-theme="dark"] .tools-compare-table tbody tr {
+          border-color: rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.02);
+        }
+        .tools-compare-table tbody th,
+        .tools-compare-table tbody td {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          gap: 1rem;
+          padding: 0.55rem 0;
+          border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+          text-align: right;
+        }
+        :root[data-bs-theme="dark"] .tools-compare-table tbody th,
+        :root[data-bs-theme="dark"] .tools-compare-table tbody td {
+          border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        .tools-compare-table tbody tr > *:last-child {
+          border-bottom: 0;
+        }
+        .tools-compare-table tbody th::before,
+        .tools-compare-table tbody td::before {
+          content: attr(data-label);
+          font-weight: 700;
+          color: #475569;
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          flex: 0 0 auto;
+          text-align: left;
+        }
+        :root[data-bs-theme="dark"] .tools-compare-table tbody th::before,
+        :root[data-bs-theme="dark"] .tools-compare-table tbody td::before {
+          color: #94a3b8;
+        }
+        .tools-compare-table tbody th[data-label="Tool"] {
+          font-size: 1.05rem;
+        }
+        .tools-compare-table tbody th[data-label="Tool"]::before {
+          align-self: center;
+        }
+      }
     </style>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -307,7 +426,7 @@
                     <span class="nav-mega-item__desc">Search the site and gematria knowledge base.</span>
                   </a>
                 </div>
-                <a class="nav-mega-footer" href="/tools.html">See all tools →</a>
+                <a class="nav-mega-footer" href="/tools.html">Compare tools →</a>
               </div>
             </li>
             <li class="nav-item dropdown nav-learn">
@@ -337,7 +456,7 @@
         <section class="tools-hero content-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Tools</p>
           <h1 class="mb-3">Gematria Research Tools</h1>
-          <p class="mb-0">Three ways to explore the numerical patterns behind words, names, and phrases. Pick the one that fits how you want to work.</p>
+          <p class="mb-0">Several ways to explore the numerical patterns behind words, names, and phrases — plus a search tool for finding answers across the site. Pick the one that fits how you want to work.</p>
           <p class="tools-help-line">Not sure which to use? Start with the <a href="/calculator.html">Calculator</a> for words and phrases, or see the <a href="/faq.html">FAQ</a> for a quick comparison.</p>
         </section>
 
@@ -402,6 +521,26 @@
               </div>
             </section>
           </div>
+          <div class="col-12 col-lg-4 d-flex">
+            <section class="content-panel tool-card p-4 p-lg-5 w-100 d-flex flex-column">
+              <span class="tool-card-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              </span>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <h2 class="h4 mb-0">SiteSeeker</h2>
+                <span class="tool-card-badge tool-card-badge--free">Free</span>
+              </div>
+              <p class="tool-card-best">
+                <span class="tool-card-best__label">Best for</span>
+                <span class="tool-card-best__value">Searching the site</span>
+              </p>
+              <p class="mb-1">Ask a question and SiteSeeker answers from published FAQs, blog posts, and static page content — no account required.</p>
+              <p class="tool-card-examples"><span class="tool-card-examples__label">Try:</span>How is gematria calculated? · What does the calculator do? · How do I save my research?</p>
+              <div class="mt-auto">
+                <a class="btn btn-warning fw-semibold w-100" href="/searchbot.html" aria-label="Open SiteSeeker">Open SiteSeeker</a>
+              </div>
+            </section>
+          </div>
           <div class="col-12 col-lg-4 d-flex" data-module="gemabot">
             <section class="content-panel tool-card tool-card--premium p-4 p-lg-5 w-100 d-flex flex-column">
               <span class="tool-card-icon" aria-hidden="true">
@@ -428,6 +567,67 @@
             </section>
           </div>
         </div>
+
+        <section class="tools-compare" aria-labelledby="toolsCompareTitle">
+          <h2 id="toolsCompareTitle" class="h4 tools-compare__title">Compare tools at a glance</h2>
+          <p class="tools-compare__lede">Side-by-side view of what each tool takes in, what it gives back, and who can use it.</p>
+          <div class="table-responsive-lg">
+            <table class="tools-compare-table">
+              <thead>
+                <tr>
+                  <th scope="col">Tool</th>
+                  <th scope="col">Best for</th>
+                  <th scope="col">You provide</th>
+                  <th scope="col">You get</th>
+                  <th scope="col">Plan</th>
+                  <th scope="col">Account</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/calculator.html">Calculator</a></th>
+                  <td data-label="Best for">Words &amp; phrases</td>
+                  <td data-label="You provide">A word or phrase</td>
+                  <td data-label="You get">Base-6 value, related matches, shared patterns</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/multi-cipher-calculator.html">Multi-Cipher Calculator</a></th>
+                  <td data-label="Best for">Comparing ciphers</td>
+                  <td data-label="You provide">A word or phrase</td>
+                  <td data-label="You get">Values across all seven English ciphers</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/name-calculator.html">Name Calculator</a></th>
+                  <td data-label="Best for">People &amp; names</td>
+                  <td data-label="You provide">A first, last, or full name</td>
+                  <td data-label="You get">Per-part name breakdowns tuned for name research</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/searchbot.html">SiteSeeker</a></th>
+                  <td data-label="Best for">Searching the site</td>
+                  <td data-label="You provide">A plain-language question</td>
+                  <td data-label="You get">Answers drawn from FAQs, blog posts, and static pages</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/ai-agent.html">GemaBot</a></th>
+                  <td data-label="Best for">Open-ended questions</td>
+                  <td data-label="You provide">A plain-language question</td>
+                  <td data-label="You get">Conversational gematria analysis with reasoning</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--premium">Premium</span></td>
+                  <td data-label="Account">Premium account</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </main>
 

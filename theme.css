@@ -2295,11 +2295,16 @@ html.blog-detail-view .blog-post-body h3 {
   scroll-margin-top: calc(var(--blog-reading-progress-top, 4rem) + 1rem);
 }
 
-html.blog-detail-view .blog-post-body h2[id]:hover .blog-heading-anchor,
 html.blog-detail-view .blog-post-body h2[id]:focus-within .blog-heading-anchor,
-html.blog-detail-view .blog-post-body h3[id]:hover .blog-heading-anchor,
 html.blog-detail-view .blog-post-body h3[id]:focus-within .blog-heading-anchor {
   opacity: 1;
+}
+
+@media (hover: hover) {
+  html.blog-detail-view .blog-post-body h2[id]:hover .blog-heading-anchor,
+  html.blog-detail-view .blog-post-body h3[id]:hover .blog-heading-anchor {
+    opacity: 1;
+  }
 }
 
 .blog-heading-anchor {
@@ -2309,6 +2314,15 @@ html.blog-detail-view .blog-post-body h3[id]:focus-within .blog-heading-anchor {
   text-decoration: none;
   opacity: 0;
   transition: opacity 0.15s ease;
+}
+
+/* On touch-only devices the heading anchor cannot be "hover-revealed", and
+   the hover-driven opacity transition causes iOS to consume the first tap as
+   a hover preview, so always show the anchor instead. */
+@media (hover: none) {
+  .blog-heading-anchor {
+    opacity: 1;
+  }
 }
 
 .blog-heading-anchor:focus-visible {

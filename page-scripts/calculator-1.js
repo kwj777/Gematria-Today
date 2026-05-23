@@ -1530,7 +1530,12 @@ View results: ${shareUrl}`.trim(),
         updateMemberSaveState();
       });
 
-      ['mouseenter', 'focus'].forEach((eventName) => {
+      // On touch-only devices, the synthetic mouseenter on first tap shows the
+      // popover and iOS withholds the click event until a second tap. Only bind
+      // mouseenter when the device actually has hover.
+      const hasHover = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+      const previewEvents = hasHover ? ['mouseenter', 'focus'] : ['focus'];
+      previewEvents.forEach((eventName) => {
         saveHistoryButton.addEventListener(eventName, () => {
           if (!memberSession?.authenticated) {
             showMembersOnlySaveMessage();

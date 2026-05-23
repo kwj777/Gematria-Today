@@ -125,6 +125,19 @@
   applyTheme(loadThemePreference());
   applyBootswatchTheme(loadBootswatchPreference());
 
+  // Safety net: admin.html hides #authPanel and #dashboardPanel via the
+  // admin-render-pending body class until page-scripts/admin-1.js calls
+  // settleInitialRender(). If that script throws (e.g. a stale cached copy
+  // referencing a removed element), clear the class anyway so the user
+  // still sees the login form instead of a blank page.
+  function clearAdminRenderPending() {
+    if (document.body) {
+      document.body.classList.remove('admin-render-pending');
+    }
+  }
+  window.addEventListener('error', clearAdminRenderPending);
+  window.setTimeout(clearAdminRenderPending, 5000);
+
   // Wire up interactive controls after the DOM is ready.
   document.addEventListener('DOMContentLoaded', function () {
     updateThemeToggleButton(normalizeTheme(document.documentElement.getAttribute('data-bs-theme')));

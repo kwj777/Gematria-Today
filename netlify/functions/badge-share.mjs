@@ -28,7 +28,7 @@ function buildHtml({ username, displayName, earnedAt }) {
   const canonicalUrl = `${SITE_ORIGIN}/b/${safeUser}`;
   const imageUrl = toShareImageUrl(`/.netlify/functions/badge-share-image?user=${safeUser}`);
   const title = `${displayName} earned the Beginner Path Graduate badge`;
-  const description = `${displayName} completed the three-level beginner learning path on Gematria.Today${earnedAt ? ` on ${earnedAt}` : ''}.`;
+  const description = `${displayName} completed the four-level beginner learning path on Gematria.Today${earnedAt ? ` on ${earnedAt}` : ''}.`;
 
   return `<!doctype html>
 <html lang="en">

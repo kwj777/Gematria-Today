@@ -352,3 +352,53 @@
   }
 }
 
+/* Earned badge chips: themed by category with tier accents on multi-tier badges. */
+.forum-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.25rem;
+  padding: 0.15rem 0.55rem 0.15rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border-radius: 999px;
+  border: 1px solid var(--forum-badge-border, rgba(0, 0, 0, 0.12));
+  background: var(--forum-badge-bg, #f1f5f9);
+  color: var(--forum-badge-fg, #1f2937);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.forum-badge-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.forum-badge--mod        { --forum-badge-bg: #ede9fe; --forum-badge-fg: #4c1d95; --forum-badge-border: rgba(76, 29, 149, 0.3); }
+.forum-badge--premium    { --forum-badge-bg: #fef3c7; --forum-badge-fg: #92400e; --forum-badge-border: rgba(146, 64, 14, 0.3); }
+.forum-badge--contributor{ --forum-badge-bg: #dcfce7; --forum-badge-fg: #166534; --forum-badge-border: rgba(22, 101, 52, 0.3); }
+.forum-badge--reputation { --forum-badge-bg: #cffafe; --forum-badge-fg: #155e75; --forum-badge-border: rgba(21, 94, 117, 0.3); }
+.forum-badge--pioneer    { --forum-badge-bg: #ffedd5; --forum-badge-fg: #9a3412; --forum-badge-border: rgba(154, 52, 18, 0.3); }
+.forum-badge--seeker     { --forum-badge-bg: #e0e7ff; --forum-badge-fg: #3730a3; --forum-badge-border: rgba(55, 48, 163, 0.3); }
+.forum-badge--baseroot   { --forum-badge-bg: #dcfce7; --forum-badge-fg: #14532d; --forum-badge-border: rgba(20, 83, 45, 0.3); }
+.forum-badge--gematrist  { --forum-badge-bg: #fce7f3; --forum-badge-fg: #9d174d; --forum-badge-border: rgba(157, 23, 77, 0.3); }
+.forum-badge--learning   { --forum-badge-bg: #fef9c3; --forum-badge-fg: #854d0e; --forum-badge-border: rgba(133, 77, 14, 0.3); }
+
+/* Tier accents: bronze → silver → gold → platinum. The thicker border
+   and subtle shadow make higher tiers feel more prestigious. */
+.forum-badge--tier-1 { box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.35); }
+.forum-badge--tier-2 { box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.55); }
+.forum-badge--tier-3 { box-shadow: inset 0 0 0 1px rgba(202, 138, 4, 0.6); }
+.forum-badge--tier-4 { box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.8), 0 0 0 1px rgba(56, 189, 248, 0.25); }
+
+:root[data-bs-theme="dark"] .forum-badge--mod        { --forum-badge-bg: rgba(167, 139, 250, 0.18); --forum-badge-fg: #ddd6fe; --forum-badge-border: rgba(167, 139, 250, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--premium    { --forum-badge-bg: rgba(251, 191, 36, 0.18); --forum-badge-fg: #fde68a; --forum-badge-border: rgba(251, 191, 36, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--contributor{ --forum-badge-bg: rgba(74, 222, 128, 0.18); --forum-badge-fg: #bbf7d0; --forum-badge-border: rgba(74, 222, 128, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--reputation { --forum-badge-bg: rgba(34, 211, 238, 0.18); --forum-badge-fg: #a5f3fc; --forum-badge-border: rgba(34, 211, 238, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--pioneer    { --forum-badge-bg: rgba(251, 146, 60, 0.18); --forum-badge-fg: #fed7aa; --forum-badge-border: rgba(251, 146, 60, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--seeker     { --forum-badge-bg: rgba(129, 140, 248, 0.18); --forum-badge-fg: #c7d2fe; --forum-badge-border: rgba(129, 140, 248, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--baseroot   { --forum-badge-bg: rgba(34, 197, 94, 0.18); --forum-badge-fg: #bbf7d0; --forum-badge-border: rgba(34, 197, 94, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--gematrist  { --forum-badge-bg: rgba(244, 114, 182, 0.18); --forum-badge-fg: #fbcfe8; --forum-badge-border: rgba(244, 114, 182, 0.45); }
+:root[data-bs-theme="dark"] .forum-badge--learning   { --forum-badge-bg: rgba(250, 204, 21, 0.18); --forum-badge-fg: #fef08a; --forum-badge-border: rgba(250, 204, 21, 0.45); }
+

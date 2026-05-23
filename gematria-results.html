@@ -99,12 +99,36 @@
       </div>
     </nav>
     <main id="mainContent" class="py-5">
-      <div class="container"><nav aria-label="Breadcrumb" class="mb-3"><ol class="breadcrumb mb-0"><li class="breadcrumb-item"><a href="/index.html">Home</a></li><li class="breadcrumb-item"><a href="/calculator.html">Calculator</a></li><li class="breadcrumb-item active" aria-current="page">Gematria matches</li></ol></nav><section class="content-panel p-4 p-lg-5"><a id="return-link" class="btn btn-outline-secondary btn-sm mb-3" href="/calculator.html">← Back to Calculator</a><h1 id="page-title" class="mb-2">Gematria matches</h1><p id="page-meta" class="text-muted"></p><div class="d-flex flex-wrap gap-2 mb-3"><button id="clear-search-top" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-top" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><label for="word-search" class="form-label fw-semibold">Search these words</label><input id="word-search" class="form-control form-control-lg" type="search" placeholder="Type to filter matching words" /></div></div><p id="status" class="text-muted" aria-live="polite">Loading words…</p><div id="resultsLoadingShell" class="news-placeholder-panel async-content-shell async-content-shell--md mb-3" aria-busy="true">
+      <div class="container"><nav aria-label="Breadcrumb" class="mb-3"><ol class="breadcrumb mb-0"><li class="breadcrumb-item"><a href="/index.html">Home</a></li><li class="breadcrumb-item"><a href="/calculator.html">Calculator</a></li><li class="breadcrumb-item active" aria-current="page">Gematria matches</li></ol></nav><section class="content-panel p-4 p-lg-5"><a id="return-link" class="btn btn-outline-secondary btn-sm mb-3" href="/calculator.html">← Back to Calculator</a><h1 id="page-title" class="mb-2">Gematria matches</h1><p id="page-meta" class="text-muted"></p><div class="d-flex flex-wrap gap-2 mb-3"><button id="clear-search-top" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-top" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><label for="word-search" class="form-label fw-semibold">Search these words</label><input id="word-search" class="form-control form-control-lg" type="search" placeholder="Type to filter matching words" /></div></div><div id="learningPathNudge" class="learning-path-nudge mb-3 d-none" role="complementary" aria-label="Learning path invitation" data-nudge-source="results_page">
+  <span class="learning-path-nudge__icon" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 120" focusable="false">
+      <defs>
+        <linearGradient id="lpNudgeRibL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#065f46"/></linearGradient>
+        <linearGradient id="lpNudgeRibR" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#065f46"/></linearGradient>
+        <radialGradient id="lpNudgeCore" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#fff7d6"/><stop offset="55%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#b45309"/></radialGradient>
+        <linearGradient id="lpNudgeRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="55%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#92400e"/></linearGradient>
+      </defs>
+      <path d="M22 60 L10 110 L34 100 L42 80 Z" fill="url(#lpNudgeRibL)"/>
+      <path d="M74 60 L86 110 L62 100 L54 80 Z" fill="url(#lpNudgeRibR)"/>
+      <circle cx="48" cy="52" r="34" fill="url(#lpNudgeRing)"/>
+      <circle cx="48" cy="52" r="27" fill="url(#lpNudgeCore)"/>
+      <path d="M48 34 L52.6 47.2 L66.5 47.7 L55.4 56.1 L59.4 69.4 L48 61.6 L36.6 69.4 L40.6 56.1 L29.5 47.7 L43.4 47.2 Z" fill="#7c2d12" opacity="0.9"/>
+    </svg>
+  </span>
+  <div class="learning-path-nudge__body">
+    <p class="learning-path-nudge__title">New to gematria? Take the 3-level path.</p>
+    <p class="learning-path-nudge__lead">Free guided introduction. Finish all three levels and earn the Beginner Path Graduate badge on your profile.</p>
+  </div>
+  <a id="learningPathNudgeCta" class="btn btn-warning btn-sm fw-semibold" href="/gematria-basics.html">Start Level 1</a>
+  <button id="learningPathNudgeDismiss" type="button" class="btn-close" aria-label="Dismiss learning path invitation"></button>
+</div>
+<p id="status" class="text-muted" aria-live="polite">Loading words…</p><div id="resultsLoadingShell" class="news-placeholder-panel async-content-shell async-content-shell--md mb-3" aria-busy="true">
                 <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-4"></span></p>
                 <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line col-9"></span></p>
                 <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-6"></span></p>
               </div><ul id="word-list" class="word-grid" hidden></ul><div id="empty" class="alert alert-info align-items-start gap-2 d-none" role="status"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="11" x2="12" y2="16"></line><line x1="12" y1="8" x2="12" y2="8"></line></svg><span id="empty-message">No matching words found.</span></div><div class="d-flex flex-wrap gap-2 mt-4"><button id="clear-search-bottom" class="btn btn-outline-secondary btn-sm" type="button">Clear search</button><button id="collapse-results-bottom" class="btn btn-outline-secondary btn-sm" type="button" hidden>Collapse results</button></div></section></div>
       <script src="/page-scripts/gematria-results-1.js"></script>
+      <script src="/page-scripts/learning-path-nudge.js" defer></script>
     </main>
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">

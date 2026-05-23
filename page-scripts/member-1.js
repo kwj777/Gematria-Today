@@ -68,6 +68,16 @@
       const learningPathCompletedSection = document.getElementById('learningPathCompletedSection');
       const learningPathCompletedAtText = document.getElementById('learningPathCompletedAtText');
       const learningPathCompletedDismiss = document.getElementById('learningPathCompletedDismiss');
+      const learningPathShareLink = document.getElementById('learningPathShareLink');
+      const learningPathShareTwitter = document.getElementById('learningPathShareTwitter');
+      const learningPathShareFacebook = document.getElementById('learningPathShareFacebook');
+      const learningPathShareLinkedIn = document.getElementById('learningPathShareLinkedIn');
+      const learningPathShareCopy = document.getElementById('learningPathShareCopy');
+      const learningPathShareCopied = document.getElementById('learningPathShareCopied');
+      const learningPathShareNative = document.getElementById('learningPathShareNative');
+      const learningPathAspireSection = document.getElementById('learningPathAspireSection');
+      const learningPathAspireCta = document.getElementById('learningPathAspireCta');
+      const learningPathAspireProgress = document.getElementById('learningPathAspireProgress');
       const LEARNING_PATH_COMPLETED_DISMISS_KEY = 'memberLearningPathCompletedDismissedAt';
       const messageCenterOpenButton = document.getElementById('messageCenterOpenButton');
       const manageSubscriptionButton = document.getElementById('manageSubscriptionButton');
@@ -713,6 +723,7 @@
         const completedAt = profile?.preferences?.learningPathCompletedAt;
         const shouldShow = Boolean(member) && Boolean(completedAt) && !isLearningPathCompletedBannerDismissed(completedAt);
         learningPathCompletedSection.classList.toggle('d-none', !shouldShow);
+        if (shouldShow) configureLearningPathShareLinks(member);
         if (!shouldShow) {
           if (learningPathCompletedAtText) learningPathCompletedAtText.textContent = '';
           return;
@@ -728,6 +739,95 @@
         } catch {
           learningPathCompletedAtText.textContent = `Completed on ${parsed.toISOString().slice(0, 10)}.`;
         }
+      }
+
+      function configureLearningPathShareLinks(member) {
+        const username = String(member?.username || '').trim();
+        if (!username || !learningPathShareLink) return;
+        const origin = window.location.origin;
+        const shareUrl = `${origin}/b/${encodeURIComponent(username)}`;
+        const text = `I just earned the Beginner Path Graduate badge on Gematria.Today.`;
+        learningPathShareLink.href = shareUrl;
+        if (learningPathShareTwitter) learningPathShareTwitter.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+        if (learningPathShareFacebook) learningPathShareFacebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        if (learningPathShareLinkedIn) learningPathShareLinkedIn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+        if (learningPathShareNative && typeof navigator.share === 'function' && !learningPathShareNative.dataset.bound) {
+          learningPathShareNative.dataset.bound = '1';
+          learningPathShareNative.classList.remove('d-none');
+          learningPathShareNative.addEventListener('click', () => {
+            navigator.share({ title: 'My Gematria.Today badge', text, url: shareUrl }).catch(() => {});
+            window.gematriaTracking?.track?.('learning_path_badge_share', { channel: 'native', authenticated: true });
+          });
+        }
+        if (learningPathShareCopy && !learningPathShareCopy.dataset.bound) {
+          learningPathShareCopy.dataset.bound = '1';
+          learningPathShareCopy.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              learningPathShareCopied?.classList.remove('d-none');
+              window.setTimeout(() => learningPathShareCopied?.classList.add('d-none'), 2000);
+              window.gematriaTracking?.track?.('learning_path_badge_share', { channel: 'copy', authenticated: true });
+            } catch {
+              window.prompt('Copy this link', shareUrl);
+            }
+          });
+        }
+        [
+          [learningPathShareTwitter, 'twitter'],
+          [learningPathShareFacebook, 'facebook'],
+          [learningPathShareLinkedIn, 'linkedin'],
+          [learningPathShareLink, 'public_page'],
+        ].forEach(([node, channel]) => {
+          if (!node || node.dataset.bound) return;
+          node.dataset.bound = '1';
+          node.addEventListener('click', () => {
+            window.gematriaTracking?.track?.('learning_path_badge_share', { channel, authenticated: true });
+          });
+        });
+      }
+
+      function syncLearningPathAspireSection(member = session?.member, profile = session?.profile) {
+        if (!learningPathAspireSection) return;
+        if (!member) {
+          learningPathAspireSection.classList.add('d-none');
+          return;
+        }
+        const completedAt = profile?.preferences?.learningPathCompletedAt;
+        if (completedAt) {
+          learningPathAspireSection.classList.add('d-none');
+          return;
+        }
+        // Don't double up with the Step 1 redirect card when it's already
+        // showing (the user has an active step-1 intent from the homepage).
+        if (learningPathStep1Section && !learningPathStep1Section.classList.contains('d-none')) {
+          learningPathAspireSection.classList.add('d-none');
+          return;
+        }
+        const progress = Number(profile?.preferences?.learningPathLevelReached || 0);
+        if (learningPathAspireProgress) {
+          learningPathAspireProgress.textContent = progress >= 1 && progress <= 3
+            ? `You're on Level ${progress} of 3. Finish all three to unlock the badge on your dashboard and forum profile.`
+            : 'Three short levels. Free for all members. The badge lands on your dashboard and forum profile when you finish.';
+        }
+        if (learningPathAspireCta) {
+          const nextLevel = Math.min(Math.max(progress, 0) + 1, 3);
+          const nextPath = nextLevel === 1
+            ? '/gematria-basics.html'
+            : nextLevel === 2 ? '/gematria-pattern-grouping.html' : '/gematria-name-analysis.html';
+          learningPathAspireCta.href = nextPath;
+          learningPathAspireCta.textContent = progress >= 1 ? `Continue Level ${nextLevel}` : 'Start Level 1';
+          if (!learningPathAspireCta.dataset.bound) {
+            learningPathAspireCta.dataset.bound = '1';
+            learningPathAspireCta.addEventListener('click', () => {
+              window.gematriaTracking?.track?.('beginner_path_start_click', {
+                source: 'member_dashboard_aspire',
+                destination: learningPathAspireCta.href,
+                authenticated: true,
+              });
+            });
+          }
+        }
+        learningPathAspireSection.classList.remove('d-none');
       }
 
       function clearServerLearningPathStep1Intent() {
@@ -776,6 +876,10 @@
         syncComparisonVisibility(isLoggedIn ? session?.member : null);
         syncLearningPathStep1Cta(isLoggedIn ? session?.member : null);
         syncLearningPathCompletedBadge(
+          isLoggedIn ? session?.member : null,
+          isLoggedIn ? session?.profile : null,
+        );
+        syncLearningPathAspireSection(
           isLoggedIn ? session?.member : null,
           isLoggedIn ? session?.profile : null,
         );

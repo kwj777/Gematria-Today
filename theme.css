@@ -3631,6 +3631,181 @@ a.badge,
   display: block;
 }
 
+.learning-path-achievement-badge--lg {
+  width: 120px;
+  height: 150px;
+}
+
+.learning-path-achievement-badge--sm {
+  width: 56px;
+  height: 70px;
+}
+
+.learning-path-achievement-badge--muted {
+  filter: grayscale(0.85) drop-shadow(0 0.25rem 0.5rem rgba(15, 23, 42, 0.2));
+  opacity: 0.75;
+}
+
+/* Homepage promo strip advertising the 3-level beginner path and the
+   badge graduates earn. Replaces the old "Why English Gematria"
+   methodology card directly below the hero. */
+.learning-path-promo {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0d1a30 0%, #1d3358 60%, #b45309 100%);
+  color: #fff;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  box-shadow: 0 1rem 2rem -1rem rgba(13, 26, 48, 0.45);
+}
+
+.learning-path-promo .section-kicker {
+  color: #fde68a;
+  letter-spacing: 0.08em;
+}
+
+.learning-path-promo h2 {
+  font-family: "Fraunces", "Source Serif Pro", Georgia, serif;
+  color: #fff;
+}
+
+.learning-path-promo p {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.learning-path-promo__steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  display: grid;
+  gap: 0.6rem;
+  counter-reset: lp-step;
+}
+
+.learning-path-promo__steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-weight: 600;
+  counter-increment: lp-step;
+}
+
+.learning-path-promo__steps li::before {
+  content: counter(lp-step);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.95);
+  color: #1d1306;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.learning-path-promo .btn-warning {
+  color: #1d1306;
+}
+
+.learning-path-promo .btn-outline-light:hover,
+.learning-path-promo .btn-outline-light:focus-visible {
+  color: #0d1a30;
+}
+
+/* Inline "earn a badge" nudge added to the calculator + results pages so a
+   user who just ran a search sees the structured-learning offer at a
+   warm moment. */
+.learning-path-nudge {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.85) 0%, rgba(220, 252, 231, 0.85) 100%);
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  color: #1f2937;
+}
+
+.learning-path-nudge__icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 50px;
+  display: inline-block;
+}
+
+.learning-path-nudge__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.learning-path-nudge__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.learning-path-nudge__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.learning-path-nudge__lead {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.learning-path-nudge .btn-close {
+  flex: 0 0 auto;
+}
+
+:root[data-bs-theme="dark"] .learning-path-nudge {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.55) 0%, rgba(6, 78, 59, 0.55) 100%);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #f8fafc;
+}
+
+:root[data-bs-theme="dark"] .learning-path-nudge__lead {
+  color: #cbd5e1;
+}
+
+/* Aspirational card shown to free members who haven't yet completed the
+   learning path — same shape as the completion banner but greyed badge
+   and "earn this" copy. */
+.learning-path-aspire {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(241, 245, 249, 0.95) 0%, rgba(254, 243, 199, 0.55) 100%);
+  border: 1px dashed rgba(180, 83, 9, 0.55);
+}
+
+:root[data-bs-theme="dark"] .learning-path-aspire {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(69, 39, 16, 0.55) 100%);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #f8fafc;
+}
+
+.learning-path-share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.learning-path-share__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #15803d;
+  margin-right: 0.25rem;
+}
+
+:root[data-bs-theme="dark"] .learning-path-share__label {
+  color: #bbf7d0;
+}
+
 /* Sticky "Back to lesson" bar shown on the calculator while a learner is
    inside a learning-path lesson. Stays visible while scrolling a large
    results cluster so the return path is always one tap away. The `top`

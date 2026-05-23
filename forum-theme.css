@@ -402,3 +402,38 @@
 :root[data-bs-theme="dark"] .forum-badge--gematrist  { --forum-badge-bg: rgba(244, 114, 182, 0.18); --forum-badge-fg: #fbcfe8; --forum-badge-border: rgba(244, 114, 182, 0.45); }
 :root[data-bs-theme="dark"] .forum-badge--learning   { --forum-badge-bg: rgba(250, 204, 21, 0.18); --forum-badge-fg: #fef08a; --forum-badge-border: rgba(250, 204, 21, 0.45); }
 
+/* The Beginner Path Graduate badge gets a primary anchor treatment when
+   linked to its public /b/USERNAME page: bolder weight, gold gradient,
+   and slightly larger padding so the achievement reads first in the row. */
+a.forum-badge--primary {
+  text-decoration: none;
+  padding: 0.2rem 0.65rem 0.2rem 0.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fde68a 0%, #fbbf24 60%, #b45309 100%);
+  color: #1d1306;
+  border-color: #92400e;
+  box-shadow: 0 0.25rem 0.6rem -0.25rem rgba(146, 64, 14, 0.5);
+}
+
+a.forum-badge--primary:hover,
+a.forum-badge--primary:focus-visible {
+  color: #1d1306;
+  filter: brightness(1.05);
+  text-decoration: none;
+}
+
+:root[data-bs-theme="dark"] a.forum-badge--primary {
+  background: linear-gradient(135deg, #fde68a 0%, #d97706 100%);
+  color: #1d1306;
+  border-color: #fbbf24;
+}
+
+
+/* The Beginner Path Graduate badge gets a primary anchor treatment when
+   linked to its public /b/USERNAME page: bolder weight, gold gradient, and
+   slightly larger padding so the achievement reads first in the row. */
+a.forum-badge--primary {
+  text-decoration: none;
+  padding: 0.2rem 0.65rem 0.2rem 0.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fde68a 0

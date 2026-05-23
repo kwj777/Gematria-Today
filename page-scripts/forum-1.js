@@ -278,11 +278,25 @@
         'Beginner Path Graduate':  { icon: '🎓', theme: 'learning' },
       };
 
-      function renderBadges(badges) {
+      const LEARNING_PATH_BADGE_NAME = 'Beginner Path Graduate';
+
+      function renderBadges(badges, options = {}) {
         if (!Array.isArray(badges) || !badges.length) return '';
-        return badges.map((badge) => {
+        const username = options.username || '';
+        // Hoist the learning-path graduate badge to the front so the
+        // achievement reads first, and render it as an anchor pointing to
+        // the holder's public /b/USERNAME page so others can verify it.
+        const hasLearningPath = badges.includes(LEARNING_PATH_BADGE_NAME);
+        const remaining = badges.filter((badge) => badge !== LEARNING_PATH_BADGE_NAME);
+        const ordered = hasLearningPath ? [LEARNING_PATH_BADGE_NAME, ...remaining] : remaining;
+        return ordered.map((badge) => {
           const theme = BADGE_THEMES[badge] || { icon: '🏅', theme: 'default' };
           const tierClass = theme.tier ? ` forum-badge--tier-${theme.tier}` : '';
+          if (badge === LEARNING_PATH_BADGE_NAME) {
+            const href = username ? `/b/${encodeURIComponent(username)}` : '/gematria-basics.html';
+            const title = username ? `View ${username}'s Beginner Path Graduate badge` : 'Earn the Beginner Path Graduate badge';
+            return `<a class="forum-badge forum-badge--${theme.theme} forum-badge--primary${tierClass}" href="${href}" target="_blank" rel="noopener" title="${esc(title)}"><span class="forum-badge-icon" aria-hidden="true">${theme.icon}</span><span class="forum-badge-label">${esc(badge)}</span></a>`;
+          }
           return `<span class="forum-badge forum-badge--${theme.theme}${tierClass}" title="${esc(badge)}"><span class="forum-badge-icon" aria-hidden="true">${theme.icon}</span><span class="forum-badge-label">${esc(badge)}</span></span>`;
         }).join('');
       }
@@ -311,7 +325,7 @@
             <button class="forum-author-trigger" type="button" aria-expanded="false" aria-haspopup="dialog" data-author-profile="${payload}">
               ${esc(profile.displayName || profile.username)}
             </button>
-            <span class="small">(${profile.reputation} rep)</span> ${renderBadges(profile.badges)}
+            <span class="small">(${profile.reputation} rep)</span> ${renderBadges(profile.badges, { username: profile.username })}
           </span>
         `;
       }
@@ -334,7 +348,7 @@
           <p class="small text-muted mb-1">@${esc(profile.username)} · ${profile.reputation} rep</p>
           <p class="small text-muted mb-2">${membershipLabel(profile.membershipLevel)} member${profile.joinedAt ? ` · joined ${formatDate(profile.joinedAt)}` : ''}</p>
           <p class="small mb-2">${profile.threadCount} threads · ${profile.replyCount} replies</p>
-          <div>${renderBadges(profile.badges)}</div>
+          <div>${renderBadges(profile.badges, { username: profile.username })}</div>
         `;
         trigger.parentElement.appendChild(popover);
         trigger.setAttribute('aria-expanded', 'true');

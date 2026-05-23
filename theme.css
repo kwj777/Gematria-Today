@@ -3712,6 +3712,17 @@ a.badge,
   color: #0d1a30;
 }
 
+/* Slim variant: keeps the gradient identity but compresses the panel
+   into a single-line banner so it stops competing with the hero. */
+.learning-path-promo--slim h2 {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.learning-path-promo--slim p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* Inline "earn a badge" nudge added to the calculator + results pages so a
    user who just ran a search sees the structured-learning offer at a
    warm moment. */

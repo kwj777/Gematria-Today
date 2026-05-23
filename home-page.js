@@ -513,6 +513,13 @@ const initializeHomePage = () => {
     });
   });
 
+  document.getElementById('learningPathPromoCta')?.addEventListener('click', () => {
+    window.gematriaTracking?.track('beginner_path_start_click', {
+      source: 'home_promo_strip',
+      destination: '/gematria-account-setup.html',
+    });
+  });
+
   initializeHeroQuickCalc();
 
   runAfterFirstPaint(() => {

@@ -74,6 +74,11 @@
   status = 200
 
 [[redirects]]
+  from = "/b/:username"
+  to = "/.netlify/functions/badge-share?user=:username"
+  status = 200
+
+[[redirects]]
   from = "/:page"
   to = "/:page.html"
   status = 301

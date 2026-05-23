@@ -3612,6 +3612,20 @@ a.badge,
   border-color: rgba(34, 197, 94, 0.55);
 }
 
+.learning-path-achievement-badge {
+  flex: 0 0 auto;
+  width: 72px;
+  height: 90px;
+  display: inline-block;
+  filter: drop-shadow(0 0.5rem 0.75rem rgba(146, 64, 14, 0.35));
+}
+
+.learning-path-achievement-badge svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* Sticky "Back to lesson" bar shown on the calculator while a learner is
    inside a learning-path lesson. Stays visible while scrolling a large
    results cluster so the return path is always one tap away. The `top`

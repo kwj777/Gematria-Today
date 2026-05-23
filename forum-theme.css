@@ -332,10 +332,6 @@
   background: rgba(15, 23, 42, 0.82);
 }
 
-:root[data-bs-theme="dark"] .forum-composer-actions {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.95) 40%);
-}
-
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;
@@ -370,6 +366,10 @@
     padding-top: var(--forum-space-2);
     padding-bottom: var(--forum-space-2);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.95) 40%);
+  }
+
+  :root[data-bs-theme="dark"] .forum-composer-actions {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.95) 40%);
   }
 
   .forum-composer-actions .btn {

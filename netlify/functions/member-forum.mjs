@@ -354,8 +354,9 @@ function deriveBadges(points, { threadCount, replyCount, isAdmin, isPremium, ear
   if (isAdmin) badges.push('Moderator');
   if (isPremium) badges.push('Premium');
   if (threadCount >= 1 && replyCount >= 1) badges.push('Contributor');
-  if (points >= 50) badges.push('Trusted');
+  // Reputation tier: only show the highest one the member has reached.
   if (points >= 200) badges.push('Sage');
+  else if (points >= 50) badges.push('Trusted');
   for (const name of earnedBadgeNames) {
     if (!badges.includes(name)) badges.push(name);
   }

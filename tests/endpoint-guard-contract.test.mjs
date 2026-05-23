@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 
 import { handler as publicPostsHandler } from '../netlify/functions/public-posts.mjs';
 import { handler as publicFaqsHandler } from '../netlify/functions/public-faqs.mjs';
-import { handler as publicFeedsHandler } from '../netlify/functions/public-feeds.mjs';
 import { handler as memberSessionHandler } from '../netlify/functions/member-session.mjs';
 import { handler as memberLogoutHandler } from '../netlify/functions/member-logout.mjs';
 import { handler as memberLoginHandler } from '../netlify/functions/member-login.mjs';
@@ -46,7 +45,6 @@ function assertSecurityHeaders(response) {
 const methodGuardCases = [
   { name: 'public-posts', handler: publicPostsHandler, allowedMethod: 'GET' },
   { name: 'public-faqs', handler: publicFaqsHandler, allowedMethod: 'GET' },
-  { name: 'public-feeds', handler: publicFeedsHandler, allowedMethod: 'GET' },
   { name: 'member-session', handler: memberSessionHandler, allowedMethod: 'GET' },
   { name: 'member-logout', handler: memberLogoutHandler, allowedMethod: 'POST' },
   { name: 'member-login', handler: memberLoginHandler, allowedMethod: 'POST' },

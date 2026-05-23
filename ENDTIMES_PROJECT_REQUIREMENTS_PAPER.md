@@ -19,7 +19,7 @@ The project clearly defines a product mission: a web-based Gematria platform wit
 **Evidence:**
 - README project scope and architecture summary.
 - Documented page structure and deployment model (`public/` as source of truth, mirrored root pages).
-- Explicit descriptions of core user surfaces (calculator, member, admin, blog/news/FAQ).
+- Explicit descriptions of core user surfaces (calculator, member, admin, blog/FAQ).
 
 ### 2.2 Requirement quality and feasibility
 Requirements are captured in operationally testable form through documented scripts, APIs, schema migration order, and environment-variable controls.
@@ -35,7 +35,7 @@ The documented features map directly to business outcomes:
 - **Retention/engagement:** member dashboard, saved history, premium research.
 - **Monetization:** Stripe yearly checkout/confirm flow.
 - **Trust and reliability:** account recovery via transactional email, rate limiting, caching, audit logging, and WAF guidance.
-- **Content growth:** admin editorial/static-content workflows, feeds, and FAQ publishing.
+- **Content growth:** admin editorial/static-content workflows and FAQ publishing.
 
 **Conclusion:** Business documentation is specific, actionable, and value-aligned.
 
@@ -44,7 +44,7 @@ The documented features map directly to business outcomes:
 ### 3.1 Functional completeness
 Implementation demonstrates a full-stack web system with substantial feature breadth:
 
-- Public computation and content endpoints (gematria/search/definition/related words/blog/news/FAQ/feeds).
+- Public computation and content endpoints (gematria/search/definition/related words/blog/FAQ).
 - Membership lifecycle endpoints (register/login/session/profile/history/logout/recovery/payment).
 - Admin operations (session/login/logout/settings/reports/memberships/posts/FAQs/static content/forum/chatbot feedback/tasks).
 - Security and platform infrastructure (`_auth`, `_admin`, `_member`, `_security`, `_site-modules`, Stripe/email helpers).

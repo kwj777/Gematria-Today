@@ -20,17 +20,17 @@ test('normalizeSiteModules returns defaults when input is not an object', () => 
 });
 
 test('normalizeSiteModules coerces values to booleans', () => {
-  const result = normalizeSiteModules({ forum: 1, blog: 0, news: 'yes' });
+  const result = normalizeSiteModules({ forum: 1, blog: 0, gemabot: 'yes' });
   assert.equal(result.forum, true);
   assert.equal(result.blog, false);
-  assert.equal(result.news, true);
+  assert.equal(result.gemabot, true);
 });
 
 test('normalizeSiteModules preserves defaults for missing keys', () => {
   const result = normalizeSiteModules({ forum: false });
   assert.equal(result.forum, false);
   assert.equal(result.blog, DEFAULT_SITE_MODULES.blog);
-  assert.equal(result.news, DEFAULT_SITE_MODULES.news);
+  assert.equal(result.membership, DEFAULT_SITE_MODULES.membership);
 });
 
 test('normalizeSiteModules ignores unknown keys', () => {
@@ -63,11 +63,10 @@ test('normalizePublicSiteOrigin returns default for malformed URLs', () => {
 
 test('buildModulePublicPaths returns full set when all modules enabled', () => {
   const paths = buildModulePublicPaths({
-    blog: true, news: true, membership: true, gemabot: true, knowbot: true, forum: true,
+    blog: true, membership: true, gemabot: true, knowbot: true, forum: true,
   });
   assert.ok(paths.includes('/blog.html'));
   assert.ok(paths.includes('/blog.xml'));
-  assert.ok(paths.includes('/news.html'));
   assert.ok(paths.includes('/member.html'));
   assert.ok(paths.includes('/ai-agent.html'));
   assert.ok(paths.includes('/searchbot.html'));
@@ -76,14 +75,14 @@ test('buildModulePublicPaths returns full set when all modules enabled', () => {
 
 test('buildModulePublicPaths omits paths for disabled modules', () => {
   const paths = buildModulePublicPaths({
-    blog: false, news: false, membership: false, gemabot: false, knowbot: false, forum: false,
+    blog: false, membership: false, gemabot: false, knowbot: false, forum: false,
   });
   assert.equal(paths.length, 0);
 });
 
 test('buildModulePublicPaths selectively includes paths per module', () => {
   const paths = buildModulePublicPaths({
-    blog: true, news: false, membership: false, gemabot: false, knowbot: false, forum: false,
+    blog: true, membership: false, gemabot: false, knowbot: false, forum: false,
   });
   assert.deepEqual(paths, ['/blog.html', '/blog.xml']);
 });

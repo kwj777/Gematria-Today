@@ -76,7 +76,7 @@ Action:
 - Keep only modules you need for launch.
 - Disable forum/chatbot/member flows unless they support a defined ministry requirement.
 
-## 6) Convert blog/news into Sermons + Devotionals
+## 6) Convert blog into Sermons + Devotionals
 
 Recommended content model:
 - **Sermons:** series title, speaker, date, scripture, media URL, notes

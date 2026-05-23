@@ -160,31 +160,6 @@
           <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
           <div class="row g-4 admin-dashboard-masonry">
-            <div class="col-md-6 admin-dashboard-masonry-item" data-admin-workspace="content">
-              <section class="content-panel p-4 h-100 admin-dashboard-section">
-                <button class="admin-section-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feedSectionBody" aria-expanded="false" aria-controls="feedSectionBody">
-                  <span>
-                    <span class="section-kicker d-block mb-2">News Sources</span>
-                    <span class="h4 mb-0 d-block">Add RSS feeds</span>
-                  </span>
-                  <span class="d-inline-flex align-items-center gap-3">
-                    <span class="badge text-bg-info">News</span>
-                    <span class="admin-section-toggle-icon" aria-hidden="true">⌄</span>
-                  </span>
-                </button>
-                <div id="feedSectionBody" class="collapse admin-section-body mt-4">
-                <form id="feedForm" class="row g-3">
-                  <div class="col-12"><label class="form-label" for="feedName">Feed name</label><input id="feedName" class="form-control" required /></div>
-                  <div class="col-12"><label class="form-label" for="feedUrl">RSS URL</label><input id="feedUrl" class="form-control" type="url" aria-describedby="feedUrlHelp" required /><div id="feedUrlHelp" class="form-text">Example: https://example.com/feed.xml</div></div>
-                  <div class="col-12"><label class="form-label" for="feedCategory">Category</label><input id="feedCategory" class="form-control" placeholder="World, Alerts, Analysis" /></div>
-                  <div class="col-12"><label class="form-label" for="feedNotes">Editorial notes</label><textarea id="feedNotes" class="form-control" rows="3"></textarea></div>
-                  <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save RSS feed</button></div>
-                </form>
-                <div id="feedList" class="admin-list mt-4"></div>
-                </div>
-              </section>
-            </div>
-
             <div class="col-md-6 admin-dashboard-masonry-item d-none" data-admin-workspace="content" hidden style="display: none !important;">
               <section class="content-panel p-4 h-100 admin-dashboard-section">
                 <a class="admin-section-toggle" href="/admin-posts.html" aria-label="Open blog post management page">

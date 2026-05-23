@@ -417,16 +417,6 @@ const applyStaticContentPromise = () => Promise.race([
         secondaryCtaNode.setAttribute('href', content.ctaUrlSecondary);
       }
     }
-
-    const quaternaryCtaNode = document.getElementById('homeNewsCta');
-    if (quaternaryCtaNode) {
-      if (content.ctaLabelQuaternary) {
-        quaternaryCtaNode.textContent = content.ctaLabelQuaternary;
-      }
-      if (content.ctaUrlQuaternary) {
-        quaternaryCtaNode.setAttribute('href', content.ctaUrlQuaternary);
-      }
-    }
   })
   .catch(() => {});
 

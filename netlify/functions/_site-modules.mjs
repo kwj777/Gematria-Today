@@ -2,7 +2,6 @@ export const DEFAULT_SITE_MODULES = Object.freeze({
   forum: true,
   knowbot: true,
   gemabot: true,
-  news: true,
   blog: true,
   membership: true,
   wordnik_wotd_slider: true,
@@ -49,9 +48,6 @@ export function buildModulePublicPaths(modules = normalizeSiteModules()) {
 
   if (normalizedModules.blog) {
     paths.push('/blog.html', '/blog.xml');
-  }
-  if (normalizedModules.news) {
-    paths.push('/news.html');
   }
   if (normalizedModules.membership) {
     paths.push('/member.html');

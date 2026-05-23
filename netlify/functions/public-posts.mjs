@@ -157,7 +157,6 @@ function buildInternalLinkTargets(posts, currentSlug = '') {
     { phrase: 'name lookup page', href: '/name-calculator.html' },
     { phrase: 'name calculator', href: '/name-calculator.html' },
     { phrase: 'names', href: '/name-calculator.html' },
-    { phrase: 'news feed', href: '/news.html' },
     { phrase: 'FAQ', href: '/faq.html' },
     { phrase: 'premium research tools', href: '/premium-research.html' },
     { phrase: 'gematria guide', href: '/gematria-guide.html' },

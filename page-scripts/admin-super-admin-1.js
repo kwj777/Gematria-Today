@@ -15,7 +15,7 @@
       const removeFromHubButton = document.getElementById('removeFromHubButton');
       const hubSiteIdentity = document.getElementById('hubSiteIdentity');
 
-      const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, news: true, blog: true, membership: true, wordnik_wotd_slider: true, blog_home_slider: true, blog_home_featured_grid: true });
+      const DEFAULT_SITE_MODULES = Object.freeze({ forum: true, knowbot: true, gemabot: true, blog: true, membership: true, wordnik_wotd_slider: true, blog_home_slider: true, blog_home_featured_grid: true });
       let state = {
         user: null,
         settings: null,
@@ -113,7 +113,7 @@
       }
 
       function renderSiteModules() {
-        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'SiteSeeker'], ['gemabot', 'GemaBot'], ['news', 'News'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Word of the Day'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
+        const moduleMeta = [['forum', 'Forum'], ['knowbot', 'SiteSeeker'], ['gemabot', 'GemaBot'], ['blog', 'Blog'], ['membership', 'Membership'], ['wordnik_wotd_slider', 'Word of the Day'], ['blog_home_slider', 'Home Blog Slider'], ['blog_home_featured_grid', 'Home Featured Grid']];
         const modules = { ...DEFAULT_SITE_MODULES, ...(state.siteModules || {}) };
         siteModulesForm.removeAttribute('aria-busy');
         siteModulesForm.innerHTML = moduleMeta.map(([name, label]) => `

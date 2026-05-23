@@ -9,7 +9,6 @@ const TRAFFIC_SPIKE_BASELINE_MINUTES = 60;
 const MONITORED_ROUTE_CONFIG = [
   { route: 'member-login', apiPath: '/api/member-login', threshold: Number.parseInt(process.env.ALERT_MEMBER_LOGIN_SPIKE_5M || '40', 10) },
   { route: 'member-register', apiPath: '/api/member-register', threshold: Number.parseInt(process.env.ALERT_MEMBER_REGISTER_SPIKE_5M || '20', 10) },
-  { route: 'public-feeds', apiPath: '/api/public-feeds', threshold: Number.parseInt(process.env.ALERT_PUBLIC_FEEDS_SPIKE_5M || '60', 10) },
   { route: 'wordnikDefinition', apiPath: '/definition', threshold: Number.parseInt(process.env.ALERT_WORDNIK_DEFINITION_SPIKE_5M || '120', 10) },
   { route: 'wordnikRelatedWords', apiPath: '/api/wordnikRelatedWords', threshold: Number.parseInt(process.env.ALERT_WORDNIK_RELATED_WORDS_SPIKE_5M || '80', 10) },
 ];
@@ -126,7 +125,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, feedRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows] = await Promise.all([
+    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows] = await Promise.all([
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -152,11 +151,6 @@ export async function handler(event) {
             COUNT(*) FILTER (WHERE NOT is_published) ::int AS unpublished,
             COUNT(*)::int AS total
           FROM faqs`,
-      sql`SELECT
-            COUNT(*) FILTER (WHERE is_active) ::int AS active,
-            COUNT(*) FILTER (WHERE NOT is_active) ::int AS inactive,
-            COUNT(*)::int AS total
-          FROM feeds`,
       sql`SELECT route, action, outcome, created_at
           FROM request_audit_log
           WHERE created_at >= NOW() - ${windowInterval}::interval
@@ -546,7 +540,6 @@ export async function handler(event) {
 
     const overview = overviewRows[0] || {};
     const faqCoverage = faqRows[0] || { published: 0, unpublished: 0, total: 0 };
-    const feedCoverage = feedRows[0] || { active: 0, inactive: 0, total: 0 };
     const publicTrafficSummary = publicTrafficSummaryRows[0] || { total_requests: 0, unique_visitors: 0 };
 
     const trafficSpikeMap = new Map(trafficSpikeRows.map((row) => [row.route, row]));
@@ -602,11 +595,6 @@ export async function handler(event) {
         published: Number(faqCoverage.published || 0),
         unpublished: Number(faqCoverage.unpublished || 0),
         total: Number(faqCoverage.total || 0),
-      },
-      feedCoverage: {
-        active: Number(feedCoverage.active || 0),
-        inactive: Number(feedCoverage.inactive || 0),
-        total: Number(feedCoverage.total || 0),
       },
       trafficAlerts: {
         generatedAt: new Date().toISOString(),

@@ -93,7 +93,7 @@ Likely files:
 - `contact.html`
 - Relevant intake handlers in `netlify/functions/`
 
-## 6) Convert blog/news into mission communications
+## 6) Convert blog into mission communications
 
 Repurpose content features into:
 - Impact stories and beneficiary spotlights

@@ -12,7 +12,7 @@ Before changing code, lock in:
 
 - Business type and primary conversion goal (book call, purchase, donation, signup, etc.)
 - Required pages and user journeys
-- Features to keep/disable (forum, blog, news, membership, chatbot)
+- Features to keep/disable (forum, blog, membership, chatbot)
 - Must-have integrations (email, payments, analytics, CRM)
 - Content ownership and launch timeline
 

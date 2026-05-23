@@ -293,6 +293,7 @@ main > .container > nav[aria-label="Breadcrumb"] .breadcrumb-item a:focus-visibl
    with the amber CTA buttons that sit in the nav. Overrides Bootstrap's
    .bg-dark (#212529) only on the navbar so other dark surfaces are unaffected. */
 .navbar.bg-dark { background-color: #1f1b16 !important; }
+:root[data-bs-theme="dark"] .navbar.bg-dark { background-color: #2a241d !important; }
 
 .navbar-brand { letter-spacing: 0.04em; }
 

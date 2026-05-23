@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
   BADGE_DEFINITIONS,
+  EVENT_BADGE_DEFINITIONS,
+  LEARNING_PATH_BADGE_SLUG,
+  ensureLearningPathBadgeIfCompleted,
   getBadgeDefinition,
   recordGematriaNumberSearch,
   recordWordSearchActivity,
@@ -145,4 +148,82 @@ test('recordGematriaNumberSearch swallows SQL errors and returns the empty envel
   const result = await recordGematriaNumberSearch(failingSql, 'user-2');
   assert.deepEqual(result.newBadges, []);
   assert.equal(result.stats.gematria_searches_total, 0);
+});
+
+// ---------- EVENT_BADGE_DEFINITIONS / learning-path badge ----------
+
+test('EVENT_BADGE_DEFINITIONS contains the beginner-path-graduate badge with the required shape', () => {
+  const badge = EVENT_BADGE_DEFINITIONS.find((b) => b.slug === LEARNING_PATH_BADGE_SLUG);
+  assert.ok(badge, 'learning-path badge must exist');
+  assert.equal(typeof badge.name, 'string');
+  assert.ok(badge.name.length > 0);
+  assert.equal(typeof badge.description, 'string');
+  assert.equal(badge.category, 'learning_path');
+  assert.equal(typeof badge.tier, 'number');
+});
+
+test('event badge slugs do not collide with metric-based badge slugs', () => {
+  const metricSlugs = new Set(BADGE_DEFINITIONS.map((b) => b.slug));
+  for (const badge of EVENT_BADGE_DEFINITIONS) {
+    assert.equal(metricSlugs.has(badge.slug), false, `event slug ${badge.slug} collides with metric badge`);
+  }
+});
+
+test('getBadgeDefinition resolves the learning-path event badge by slug', () => {
+  const def = getBadgeDefinition(LEARNING_PATH_BADGE_SLUG);
+  assert.ok(def);
+  assert.equal(def.slug, LEARNING_PATH_BADGE_SLUG);
+  assert.equal(def.category, 'learning_path');
+});
+
+// ---------- ensureLearningPathBadgeIfCompleted ----------
+
+function createMockSql(respondWith) {
+  const calls = [];
+  function sql(strings, ...values) {
+    const query = strings.join('?');
+    calls.push({ query, values });
+    return Promise.resolve(respondWith({ query, values }) ?? []);
+  }
+  return { sql, calls };
+}
+
+test('ensureLearningPathBadgeIfCompleted returns null without touching SQL when userId is missing', async () => {
+  let sqlCalled = false;
+  const sql = () => { sqlCalled = true; return Promise.resolve([]); };
+  const result = await ensureLearningPathBadgeIfCompleted(sql, null);
+  assert.equal(result, null);
+  assert.equal(sqlCalled, false);
+});
+
+test('ensureLearningPathBadgeIfCompleted inserts gated on learningPathCompletedAt and returns the formatted badge', async () => {
+  const earnedAt = '2026-05-23T10:00:00Z';
+  const { sql, calls } = createMockSql(({ query }) => {
+    if (/INSERT INTO member_badges/.test(query)) {
+      return [{ badge_slug: LEARNING_PATH_BADGE_SLUG, earned_at: earnedAt }];
+    }
+    return [];
+  });
+
+  const result = await ensureLearningPathBadgeIfCompleted(sql, 'user-42');
+  const insertCall = calls.find((c) => /INSERT INTO member_badges/.test(c.query));
+  assert.ok(insertCall, 'must issue an INSERT into member_badges');
+  assert.match(insertCall.query, /ON CONFLICT \(user_id, badge_slug\) DO NOTHING/);
+  assert.match(insertCall.query, /preferences \? 'learningPathCompletedAt'/);
+  assert.ok(insertCall.values.includes(LEARNING_PATH_BADGE_SLUG));
+  assert.ok(insertCall.values.includes('user-42'));
+  assert.equal(result?.slug, LEARNING_PATH_BADGE_SLUG);
+  assert.equal(result?.earnedAt, earnedAt);
+});
+
+test('ensureLearningPathBadgeIfCompleted returns null when the user has not completed the path (no rows inserted)', async () => {
+  const { sql } = createMockSql(() => []);
+  const result = await ensureLearningPathBadgeIfCompleted(sql, 'user-1');
+  assert.equal(result, null);
+});
+
+test('ensureLearningPathBadgeIfCompleted swallows SQL errors and returns null', async () => {
+  const failingSql = () => Promise.reject(new Error('connection refused'));
+  const result = await ensureLearningPathBadgeIfCompleted(failingSql, 'user-1');
+  assert.equal(result, null);
 });

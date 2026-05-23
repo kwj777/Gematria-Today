@@ -233,6 +233,24 @@ summary:focus-visible,
   --bs-btn-border-radius: var(--radius-btn-sm);
 }
 
+/* iOS Safari "first tap = hover preview" complement to `touch-action:
+   manipulation` above. `manipulation` only kills the 300ms double-tap-zoom
+   delay; it does not stop Safari from swallowing the first tap on any
+   element that has a `:hover` style different from its base state. On
+   touch-only devices, neutralize the hover swap so Safari has nothing to
+   preview and dispatches `click` on the first tap. Anchors styled as
+   buttons (e.g. the "Open Word/Phrase Calculator" CTAs on the learning
+   path) were the visible regression — the button painted its amber-hover
+   shade on tap one and only navigated on tap two. */
+@media (hover: none) {
+  .btn:hover {
+    color: var(--bs-btn-color);
+    background-color: var(--bs-btn-bg);
+    border-color: var(--bs-btn-border-color);
+    box-shadow: var(--bs-btn-box-shadow);
+  }
+}
+
 main > .container > nav[aria-label="Breadcrumb"] .breadcrumb {
   --bs-breadcrumb-divider-color: rgba(53, 65, 79, 0.55);
 }

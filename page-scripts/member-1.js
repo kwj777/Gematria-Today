@@ -67,6 +67,8 @@
       const goToLearningPathStep1Button = document.getElementById('goToLearningPathStep1Button');
       const learningPathCompletedSection = document.getElementById('learningPathCompletedSection');
       const learningPathCompletedAtText = document.getElementById('learningPathCompletedAtText');
+      const learningPathCompletedDismiss = document.getElementById('learningPathCompletedDismiss');
+      const LEARNING_PATH_COMPLETED_DISMISS_KEY = 'memberLearningPathCompletedDismissedAt';
       const messageCenterOpenButton = document.getElementById('messageCenterOpenButton');
       const manageSubscriptionButton = document.getElementById('manageSubscriptionButton');
       const messageCenterSection = document.getElementById('messageCenterSection');
@@ -697,10 +699,19 @@
         learningPathStep1Section.classList.toggle('d-none', !shouldShow);
       }
 
+      function isLearningPathCompletedBannerDismissed(completedAt) {
+        if (!completedAt) return false;
+        try {
+          return window.localStorage.getItem(LEARNING_PATH_COMPLETED_DISMISS_KEY) === String(completedAt);
+        } catch {
+          return false;
+        }
+      }
+
       function syncLearningPathCompletedBadge(member = session?.member, profile = session?.profile) {
         if (!learningPathCompletedSection) return;
         const completedAt = profile?.preferences?.learningPathCompletedAt;
-        const shouldShow = Boolean(member) && Boolean(completedAt);
+        const shouldShow = Boolean(member) && Boolean(completedAt) && !isLearningPathCompletedBannerDismissed(completedAt);
         learningPathCompletedSection.classList.toggle('d-none', !shouldShow);
         if (!shouldShow) {
           if (learningPathCompletedAtText) learningPathCompletedAtText.textContent = '';
@@ -2737,6 +2748,17 @@
         });
         window.localStorage.removeItem('learningPathStep1Intent');
         clearServerLearningPathStep1Intent();
+      });
+
+      learningPathCompletedDismiss?.addEventListener('click', () => {
+        const completedAt = session?.profile?.preferences?.learningPathCompletedAt;
+        if (completedAt) {
+          try { window.localStorage.setItem(LEARNING_PATH_COMPLETED_DISMISS_KEY, String(completedAt)); } catch {}
+        }
+        learningPathCompletedSection?.classList.add('d-none');
+        window.gematriaTracking?.track?.('learning_path_completion_dismiss', {
+          location: 'member_dashboard',
+        });
       });
 
       window.addEventListener('DOMContentLoaded', bootstrapSession);

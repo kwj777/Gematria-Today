@@ -57,7 +57,23 @@ export const BADGE_DEFINITIONS = [
   { slug: 'gematrist-2', name: 'Gematrist II', description: 'Ran 100 gematria-value searches.', category: 'gematria', metric: 'gematria_searches_total', threshold: 100, tier: 2 },
 ];
 
-const BADGES_BY_SLUG = new Map(BADGE_DEFINITIONS.map((badge) => [badge.slug, badge]));
+// Event-driven badges aren't tied to a numeric stat threshold; they're granted
+// when a specific user action is recorded (e.g. finishing the learning path).
+export const LEARNING_PATH_BADGE_SLUG = 'beginner-path-graduate';
+
+export const EVENT_BADGE_DEFINITIONS = [
+  {
+    slug: LEARNING_PATH_BADGE_SLUG,
+    name: 'Beginner Path Graduate',
+    description: 'Completed the beginner learning path.',
+    category: 'learning_path',
+    tier: 1,
+  },
+];
+
+const BADGES_BY_SLUG = new Map(
+  [...BADGE_DEFINITIONS, ...EVENT_BADGE_DEFINITIONS].map((badge) => [badge.slug, badge]),
+);
 
 export function getBadgeDefinition(slug) {
   return BADGES_BY_SLUG.get(slug) || null;
@@ -198,8 +214,39 @@ function progressForMetric(statsRow, metric) {
   };
 }
 
+// Idempotently grants the learning-path graduate badge to a user iff their
+// profile records `learningPathCompletedAt`. Safe to call repeatedly: the
+// ON CONFLICT clause prevents duplicates. Called both at completion time and
+// on each badge read, so users who completed before this badge existed get
+// it backfilled the next time their dashboard loads.
+export async function ensureLearningPathBadgeIfCompleted(sql, userId) {
+  if (!userId) return null;
+  try {
+    await ensureBadgeSchema(sql);
+    const rows = await sql`
+      INSERT INTO member_badges (id, user_id, badge_slug)
+      SELECT ${crypto.randomUUID()}, user_id, ${LEARNING_PATH_BADGE_SLUG}
+      FROM member_profiles
+      WHERE user_id = ${userId}
+        AND preferences ? 'learningPathCompletedAt'
+      ON CONFLICT (user_id, badge_slug) DO NOTHING
+      RETURNING badge_slug, earned_at
+    `;
+    if (!rows.length) return null;
+    return formatBadgeSummary(rows[0].badge_slug, rows[0].earned_at);
+  } catch (error) {
+    console.warn('[badges] ensureLearningPathBadgeIfCompleted failed', { userId, error: error.message });
+    return null;
+  }
+}
+
 export async function getUserBadgeData(sql, userId) {
   await ensureBadgeSchema(sql);
+
+  // Self-heal: if this user finished the learning path before the badge was
+  // wired up (or before today's completion was awarded), grant it now so it
+  // appears in the response we're about to assemble.
+  await ensureLearningPathBadgeIfCompleted(sql, userId);
 
   const [statsRows, badgeRows] = await Promise.all([
     sql`

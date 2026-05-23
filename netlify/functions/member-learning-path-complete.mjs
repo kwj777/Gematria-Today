@@ -1,5 +1,6 @@
 import { getAuthenticatedMember, jsonResponse } from './_member.mjs';
 import { generateCsrfToken, validateCsrfRequest } from './_auth.mjs';
+import { ensureLearningPathBadgeIfCompleted } from './_badges.mjs';
 
 // Idempotent: writes `learningPathCompletedAt` only when it isn't already set,
 // so a re-run on an already-completed profile preserves the original timestamp.
@@ -36,9 +37,11 @@ export async function handler(event) {
     }
 
     const preferences = await recordLearningPathCompletion(sql, member.id);
+    const newBadge = await ensureLearningPathBadgeIfCompleted(sql, member.id);
 
     return jsonResponse(200, {
       preferences,
+      newBadges: newBadge ? [newBadge] : [],
       csrfToken: generateCsrfToken(sessionToken),
     });
   } catch (error) {

@@ -126,9 +126,14 @@
         threadListEl.innerHTML = threads.map((thread) => `
           <article class="forum-thread-card" data-thread-id="${thread.id}" role="button" tabindex="0" aria-label="Open thread: ${esc(thread.title)}">
             <div class="d-flex justify-content-between align-items-start gap-3">
-              <div>
+              <div class="forum-thread-card-main">
                 <h3 class="h6 mb-1 forum-subtitle">${thread.title} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
-                <p class="small text-muted mb-1 forum-meta">${renderCategoryChip(thread)} · By ${renderAuthorInline(thread)} · ${thread.replyCount} replies · ${thread.viewCount} views</p>
+                <p class="small text-muted mb-1 forum-meta">
+                  <span class="forum-meta-item">${renderCategoryChip(thread)}</span>
+                  <span class="forum-meta-item">By ${renderAuthorInline(thread)}</span>
+                  <span class="forum-meta-item">${thread.replyCount} replies</span>
+                  <span class="forum-meta-item">${thread.viewCount} views</span>
+                </p>
                 <p class="small mb-0 forum-body">${thread.body.slice(0, 180)}</p>
               </div>
               <span class="badge text-bg-secondary forum-thread-score">${thread.popularityScore}</span>
@@ -419,7 +424,12 @@
         currentThread = thread;
 
         document.getElementById('threadDetailTitle').textContent = thread.title;
-        document.getElementById('threadDetailMeta').innerHTML = `${renderCategoryChip(thread)} · ${renderAuthorInline(thread)} · ${thread.replyCount} replies · ${thread.viewCount} views`;
+        document.getElementById('threadDetailMeta').innerHTML = `
+          <span class="forum-meta-item">${renderCategoryChip(thread)}</span>
+          <span class="forum-meta-item">${renderAuthorInline(thread)}</span>
+          <span class="forum-meta-item">${thread.replyCount} replies</span>
+          <span class="forum-meta-item">${thread.viewCount} views</span>
+        `;
         document.getElementById('threadDetailBody').textContent = thread.body;
         document.getElementById('replyThreadId').value = thread.id;
         renderReplies(payload.replies || []);

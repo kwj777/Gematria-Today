@@ -276,6 +276,118 @@
         color: #475569;
       }
       :root[data-bs-theme="dark"] .tools-help-line { color: #94a3b8; }
+
+      .tools-compare {
+        margin-top: 2.5rem;
+      }
+      .tools-compare__title {
+        margin-bottom: 0.35rem;
+      }
+      .tools-compare__lede {
+        color: #475569;
+        margin-bottom: 1.25rem;
+      }
+      :root[data-bs-theme="dark"] .tools-compare__lede { color: #94a3b8; }
+
+      .tools-compare-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+      .tools-compare-table th,
+      .tools-compare-table td {
+        padding: 0.85rem 0.9rem;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+      .tools-compare-table thead th {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #475569;
+        background: rgba(15, 23, 42, 0.03);
+        border-bottom-width: 2px;
+      }
+      .tools-compare-table tbody th a {
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .tools-compare-table tbody th a:hover,
+      .tools-compare-table tbody th a:focus {
+        text-decoration: underline;
+      }
+      :root[data-bs-theme="dark"] .tools-compare-table th,
+      :root[data-bs-theme="dark"] .tools-compare-table td {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+      }
+      :root[data-bs-theme="dark"] .tools-compare-table thead th {
+        color: #cbd5e1;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      @media (max-width: 991.98px) {
+        .tools-compare-table {
+          display: block;
+        }
+        .tools-compare-table thead {
+          display: none;
+        }
+        .tools-compare-table tbody,
+        .tools-compare-table tr {
+          display: block;
+        }
+        .tools-compare-table tbody tr {
+          border: 1px solid rgba(15, 23, 42, 0.12);
+          border-radius: 0.65rem;
+          padding: 0.35rem 0.85rem;
+          margin-bottom: 0.85rem;
+          background: rgba(15, 23, 42, 0.015);
+        }
+        :root[data-bs-theme="dark"] .tools-compare-table tbody tr {
+          border-color: rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.02);
+        }
+        .tools-compare-table tbody th,
+        .tools-compare-table tbody td {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          gap: 1rem;
+          padding: 0.55rem 0;
+          border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+          text-align: right;
+        }
+        :root[data-bs-theme="dark"] .tools-compare-table tbody th,
+        :root[data-bs-theme="dark"] .tools-compare-table tbody td {
+          border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        .tools-compare-table tbody tr > *:last-child {
+          border-bottom: 0;
+        }
+        .tools-compare-table tbody th::before,
+        .tools-compare-table tbody td::before {
+          content: attr(data-label);
+          font-weight: 700;
+          color: #475569;
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          flex: 0 0 auto;
+          text-align: left;
+        }
+        :root[data-bs-theme="dark"] .tools-compare-table tbody th::before,
+        :root[data-bs-theme="dark"] .tools-compare-table tbody td::before {
+          color: #94a3b8;
+        }
+        .tools-compare-table tbody th[data-label="Tool"] {
+          font-size: 1.05rem;
+        }
+        .tools-compare-table tbody th[data-label="Tool"]::before {
+          align-self: center;
+        }
+      }
     </style>
       <script src="/pwa-register.js" defer></script>
   </head>
@@ -455,6 +567,67 @@
             </section>
           </div>
         </div>
+
+        <section class="tools-compare" aria-labelledby="toolsCompareTitle">
+          <h2 id="toolsCompareTitle" class="h4 tools-compare__title">Compare tools at a glance</h2>
+          <p class="tools-compare__lede">Side-by-side view of what each tool takes in, what it gives back, and who can use it.</p>
+          <div class="table-responsive-lg">
+            <table class="tools-compare-table">
+              <thead>
+                <tr>
+                  <th scope="col">Tool</th>
+                  <th scope="col">Best for</th>
+                  <th scope="col">You provide</th>
+                  <th scope="col">You get</th>
+                  <th scope="col">Plan</th>
+                  <th scope="col">Account</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/calculator.html">Calculator</a></th>
+                  <td data-label="Best for">Words &amp; phrases</td>
+                  <td data-label="You provide">A word or phrase</td>
+                  <td data-label="You get">Base-6 value, related matches, shared patterns</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/multi-cipher-calculator.html">Multi-Cipher Calculator</a></th>
+                  <td data-label="Best for">Comparing ciphers</td>
+                  <td data-label="You provide">A word or phrase</td>
+                  <td data-label="You get">Values across all seven English ciphers</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/name-calculator.html">Name Calculator</a></th>
+                  <td data-label="Best for">People &amp; names</td>
+                  <td data-label="You provide">A first, last, or full name</td>
+                  <td data-label="You get">Per-part name breakdowns tuned for name research</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/searchbot.html">SiteSeeker</a></th>
+                  <td data-label="Best for">Searching the site</td>
+                  <td data-label="You provide">A plain-language question</td>
+                  <td data-label="You get">Answers drawn from FAQs, blog posts, and static pages</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--free">Free</span></td>
+                  <td data-label="Account">Not required</td>
+                </tr>
+                <tr>
+                  <th scope="row" data-label="Tool"><a href="/ai-agent.html">GemaBot</a></th>
+                  <td data-label="Best for">Open-ended questions</td>
+                  <td data-label="You provide">A plain-language question</td>
+                  <td data-label="You get">Conversational gematria analysis with reasoning</td>
+                  <td data-label="Plan"><span class="tool-card-badge tool-card-badge--premium">Premium</span></td>
+                  <td data-label="Account">Premium account</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </main>
 

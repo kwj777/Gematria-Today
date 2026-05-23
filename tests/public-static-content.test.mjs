@@ -20,8 +20,7 @@ test('normalizePageId maps /why-english-gematria(.html) to the "about" alias', (
   assert.equal(normalizePageId('/why-english-gematria.html'), 'about');
 });
 
-test('normalizePageId maps the standard alias set for news/blog/faq/contact/privacy/terms', () => {
-  assert.equal(normalizePageId('/news.html'), 'news');
+test('normalizePageId maps the standard alias set for blog/faq/contact/privacy/terms', () => {
   assert.equal(normalizePageId('/blog'), 'blog');
   assert.equal(normalizePageId('/faq.html'), 'faq');
   assert.equal(normalizePageId('/contact'), 'contact');

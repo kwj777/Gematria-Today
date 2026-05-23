@@ -11,8 +11,6 @@ export function normalizePageId(rawValue = '') {
     '/index.html': 'home',
     '/why-english-gematria': 'about',
     '/why-english-gematria.html': 'about',
-    '/news': 'news',
-    '/news.html': 'news',
     '/blog': 'blog',
     '/blog.html': 'blog',
     '/faq': 'faq',

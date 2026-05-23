@@ -12,7 +12,6 @@ A web-based Gematria calculator application built with HTML, CSS, JavaScript, an
 ├── gematria-results.html
 ├── admin.html
 ├── blog.html
-├── news.html
 ├── faq.html
 ├── contact.html
 ├── privacy.html
@@ -53,7 +52,6 @@ The site includes a lightweight module toggle system in `site-modules.js`.
 - `forum`
 - `knowbot`
 - `gemabot`
-- `news`
 - `blog`
 - `membership`
 

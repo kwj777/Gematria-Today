@@ -3,7 +3,6 @@
     forum: true,
     knowbot: true,
     gemabot: true,
-    news: true,
     blog: true,
     membership: true,
     wordnik_wotd_slider: true,
@@ -76,7 +75,6 @@
   const isEnabled = (moduleName) => activeModules[normalizeName(moduleName)] !== false;
 
   const MODULE_PATH_MATCHERS = Object.freeze({
-    news: [/\/news(?:\.html)?(?:[?#].*)?$/i],
     blog: [/\/blog(?:\.html)?(?:[?#].*)?$/i],
     forum: [/\/forum(?:\.html)?(?:[?#].*)?$/i],
     membership: [/\/member(?:\.html)?(?:[?#].*)?$/i],
@@ -216,7 +214,6 @@
       ['forum', 'Forum'],
       ['knowbot', 'SiteSeeker'],
       ['gemabot', 'GemaBot'],
-      ['news', 'News'],
       ['blog', 'Blog'],
       ['membership', 'Membership'],
       ['wordnik_wotd_slider', 'Word of the Day'],

@@ -19,9 +19,6 @@ export function buildRobotsTxt({ siteOrigin, modules }) {
   if (modules.blog === false) {
     disabledModulePaths.push('/blog.html', '/blog.xml', '/blog/');
   }
-  if (modules.news === false) {
-    disabledModulePaths.push('/news.html');
-  }
   if (modules.membership === false) {
     disabledModulePaths.push('/member.html');
   }

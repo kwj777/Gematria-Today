@@ -141,8 +141,8 @@ test('getRequestPath extracts pathname from url', () => {
 
 test('getRequestPath extracts pathname from rawUrl when url is absent', () => {
   assert.equal(
-    getRequestPath({ rawUrl: 'https://gematria.today/news.html' }),
-    '/news.html',
+    getRequestPath({ rawUrl: 'https://gematria.today/tools.html' }),
+    '/tools.html',
   );
 });
 

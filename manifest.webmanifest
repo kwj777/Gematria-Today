@@ -1,7 +1,7 @@
 {
   "name": "Gematria.Today",
   "short_name": "Gematria",
-  "description": "Gematria calculators, curated news, and research tools from Gematria.Today.",
+  "description": "Gematria calculators and research tools from Gematria.Today.",
   "lang": "en",
   "start_url": "/",
   "scope": "/",

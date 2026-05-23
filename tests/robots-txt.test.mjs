@@ -7,11 +7,11 @@ import {
 } from '../netlify/functions/robots-txt.mjs';
 
 const ALL_MODULES_ON = {
-  blog: true, news: true, membership: true, gemabot: true, knowbot: true, forum: true,
+  blog: true, membership: true, gemabot: true, knowbot: true, forum: true,
 };
 
 const ALL_MODULES_OFF = {
-  blog: false, news: false, membership: false, gemabot: false, knowbot: false, forum: false,
+  blog: false, membership: false, gemabot: false, knowbot: false, forum: false,
 };
 
 test('buildRobotsTxt opens with User-agent: * and Allow: /', () => {
@@ -34,7 +34,6 @@ test('buildRobotsTxt appends Disallow lines for disabled modules', () => {
   assert.ok(txt.includes('Disallow: /blog.html'));
   assert.ok(txt.includes('Disallow: /blog.xml'));
   assert.ok(txt.includes('Disallow: /blog/'));
-  assert.ok(txt.includes('Disallow: /news.html'));
   assert.ok(txt.includes('Disallow: /member.html'));
   assert.ok(txt.includes('Disallow: /ai-agent.html'));
   assert.ok(txt.includes('Disallow: /searchbot.html'));
@@ -44,7 +43,6 @@ test('buildRobotsTxt appends Disallow lines for disabled modules', () => {
 test('buildRobotsTxt omits module Disallow lines when modules are enabled', () => {
   const txt = buildRobotsTxt({ siteOrigin: 'https://example.com', modules: ALL_MODULES_ON });
   assert.ok(!txt.includes('Disallow: /blog.html'));
-  assert.ok(!txt.includes('Disallow: /news.html'));
   assert.ok(!txt.includes('Disallow: /member.html'));
   assert.ok(!txt.includes('Disallow: /ai-agent.html'));
   assert.ok(!txt.includes('Disallow: /searchbot.html'));
@@ -75,7 +73,7 @@ test('buildRobotsTxt selectively disallows only the modules that are disabled', 
   });
   assert.ok(txt.includes('Disallow: /forum.html'));
   assert.ok(!txt.includes('Disallow: /blog.html'));
-  assert.ok(!txt.includes('Disallow: /news.html'));
+  assert.ok(!txt.includes('Disallow: /member.html'));
 });
 
 test('buildRobotsTxt ends with a trailing newline', () => {

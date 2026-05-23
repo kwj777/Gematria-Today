@@ -60,7 +60,7 @@ test('normalizeLinkDestination strips trailing .html and /index.html', () => {
 });
 
 test('normalizeLinkDestination preserves the path for normal links', () => {
-  assert.equal(normalizeLinkDestination('/news.html'), '/news');
+  assert.equal(normalizeLinkDestination('/tools.html'), '/tools');
   assert.equal(normalizeLinkDestination('/blog/some-post'), '/blog/some-post');
 });
 
@@ -191,14 +191,14 @@ test('buildNeverClickedElementsReport returns every trackable when no clicks hav
 test('buildNeverClickedElementsReport removes link elements whose page+destination matches a click', () => {
   const trackable = [
     { pagePath: '/', elementType: 'a', destination: '/calculator', descriptor: 'calc', label: 'Calculator' },
-    { pagePath: '/', elementType: 'a', destination: '/news', descriptor: 'news', label: 'News' },
+    { pagePath: '/', elementType: 'a', destination: '/tools', descriptor: 'tools', label: 'Tools' },
   ];
   const clicks = [
     { page_path: '/', element_type: 'a', destination: '/calculator.html' /* matches after stripping .html */ },
   ];
   const result = buildNeverClickedElementsReport(clicks, trackable);
   assert.equal(result.length, 1);
-  assert.equal(result[0].destination, '/news');
+  assert.equal(result[0].destination, '/tools');
 });
 
 test('buildNeverClickedElementsReport removes button elements whose page+descriptor matches a click', () => {
@@ -230,7 +230,7 @@ test('buildNeverClickedElementsReport disambiguates clicks by page path', () => 
     { pagePath: '/blog', elementType: 'button', destination: '', descriptor: 'subscribe', label: 'Subscribe' },
   ];
   const clicks = [
-    { page_path: '/news', element_type: 'button', element_id: 'subscribe' },
+    { page_path: '/tools', element_type: 'button', element_id: 'subscribe' },
   ];
   const result = buildNeverClickedElementsReport(clicks, trackable);
   assert.equal(result.length, 1);
@@ -238,10 +238,10 @@ test('buildNeverClickedElementsReport disambiguates clicks by page path', () => 
 
 test('buildNeverClickedElementsReport falls back to route when page_path is absent on the click row', () => {
   const trackable = [
-    { pagePath: '/news', elementType: 'a', destination: '/calculator', descriptor: 'calc', label: 'Calculator' },
+    { pagePath: '/tools', elementType: 'a', destination: '/calculator', descriptor: 'calc', label: 'Calculator' },
   ];
   const clicks = [
-    { route: '/news', destination: '/calculator' },
+    { route: '/tools', destination: '/calculator' },
   ];
   assert.deepEqual(buildNeverClickedElementsReport(clicks, trackable), []);
 });

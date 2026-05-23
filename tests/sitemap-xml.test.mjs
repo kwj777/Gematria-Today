@@ -8,11 +8,11 @@ import {
 } from '../netlify/functions/sitemap-xml.mjs';
 
 const ALL_MODULES_ON = {
-  blog: true, news: true, membership: true, gemabot: true, knowbot: true, forum: true,
+  blog: true, membership: true, gemabot: true, knowbot: true, forum: true,
 };
 
 const ALL_MODULES_OFF = {
-  blog: false, news: false, membership: false, gemabot: false, knowbot: false, forum: false,
+  blog: false, membership: false, gemabot: false, knowbot: false, forum: false,
 };
 
 test('escapeXml escapes the five required XML entities', () => {
@@ -48,7 +48,6 @@ test('buildSitemapXml includes every STATIC_PATH', () => {
 test('buildSitemapXml includes module-driven paths when modules are enabled', () => {
   const xml = buildSitemapXml({ siteOrigin: 'https://example.com', modules: ALL_MODULES_ON });
   assert.ok(xml.includes('<loc>https://example.com/blog.html</loc>'));
-  assert.ok(xml.includes('<loc>https://example.com/news.html</loc>'));
   assert.ok(xml.includes('<loc>https://example.com/member.html</loc>'));
   assert.ok(xml.includes('<loc>https://example.com/ai-agent.html</loc>'));
   assert.ok(xml.includes('<loc>https://example.com/searchbot.html</loc>'));
@@ -58,7 +57,6 @@ test('buildSitemapXml includes module-driven paths when modules are enabled', ()
 test('buildSitemapXml omits module-driven paths when modules are disabled', () => {
   const xml = buildSitemapXml({ siteOrigin: 'https://example.com', modules: ALL_MODULES_OFF });
   assert.ok(!xml.includes('/blog.html'));
-  assert.ok(!xml.includes('/news.html'));
   assert.ok(!xml.includes('/member.html'));
   assert.ok(!xml.includes('/ai-agent.html'));
   assert.ok(!xml.includes('/searchbot.html'));

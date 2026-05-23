@@ -49,8 +49,8 @@
       function normalizeImportedMarkdown(markdown = '') {
         return String(markdown || '')
           .replaceAll('\r', '')
-          .replace(/\uE200cite\uE202turn(\d+)(?:search|news|fetch)\d+\uE201/g, '[$1]')
-          .replace(/citeturn(\d+)(?:search|news|fetch)\d+/g, '[$1]')
+          .replace(/\uE200cite\uE202turn(\d+)(?:search|fetch)\d+\uE201/g, '[$1]')
+          .replace(/citeturn(\d+)(?:search|fetch)\d+/g, '[$1]')
           .replace(/\n{3,}/g, '\n\n')
           .trim();
       }

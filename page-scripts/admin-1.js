@@ -43,7 +43,6 @@
         forum: true,
         knowbot: true,
         gemabot: true,
-        news: true,
         blog: true,
         membership: true,
       });
@@ -74,7 +73,7 @@
       const postClearImageUrlButton = document.getElementById('postClearImageUrlButton');
 
       const TAG_SEPARATOR_PATTERN = /[;,]/;
-      const state = { user: null, feeds: [], posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
+      const state = { user: null, posts: [], proposals: [], chatbotFeedback: [], chatbotFeedbackStats: { expected: 0, unexpected: 0 }, faqs: [], schemaFaqs: [], tasks: [], stripeSettings: null, emailSettings: null, siteModules: { ...DEFAULT_SITE_MODULES }, themeCatalog: { activeThemeSlug: 'default', presets: [] }, latestGrantedMember: null, latestPromotedMember: null, editingPostId: null, editingFaqId: null, replaceStripeSecretKey: false, replaceStripeWebhookSigningSecret: false, replaceSendgridApiKey: false, emailTemplates: [], editingEmailTemplateId: null };
       const escapeHtml = (value = '') => String(value)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -423,7 +422,6 @@
           ['forum', 'Forum'],
           ['knowbot', 'SiteSeeker'],
           ['gemabot', 'GemaBot'],
-          ['news', 'News'],
           ['blog', 'Blog'],
           ['membership', 'Membership'],
           ['wordnik_wotd_slider', 'Word of the Day'],
@@ -437,25 +435,6 @@
               <span class="form-check-label">${label}</span>
             </label>
           </div>`).join('');
-      }
-
-      function renderFeeds() {
-        const list = document.getElementById('feedList');
-        list.innerHTML = state.feeds.length ? state.feeds.map((feed) => `
-          <article class="admin-item-card mb-3 p-3">
-            <div class="d-flex justify-content-between gap-3">
-              <div>
-                <h4 class="h6 mb-1">${escapeHtml(feed.name)}</h4>
-                <p class="small text-muted mb-2">${escapeHtml(feed.url)}</p>
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                  ${feed.category ? `<span class="badge text-bg-light">${escapeHtml(feed.category)}</span>` : ''}
-                  <span class="badge news-source-badge">${feed.isActive ? 'Active' : 'Inactive'}</span>
-                </div>
-                ${feed.notes ? `<p class="small mb-0">${escapeHtml(feed.notes)}</p>` : ''}
-              </div>
-              <button class="btn btn-sm btn-outline-danger" type="button" data-delete-feed="${feed.id}">Delete</button>
-            </div>
-          </article>`).join('') : '<p class="text-muted small mb-0">No RSS feeds saved yet.</p>';
       }
 
       function renderPosts() {
@@ -790,22 +769,19 @@
       let latestSecondaryDashboardLoadId = 0;
 
       async function refreshDashboard() {
-        const [feeds, posts, proposals, chatbotFeedback, faqs, tasks] = await Promise.all([
-          request('/api/admin-feeds'),
+        const [posts, proposals, chatbotFeedback, faqs, tasks] = await Promise.all([
           request('/api/admin-posts'),
           request('/api/admin-blog-proposals'),
           request('/api/admin-chatbot-feedback'),
           request('/api/admin-faqs'),
           request('/api/admin-tasks'),
         ]);
-        state.feeds = feeds.items || [];
         state.posts = posts.items || [];
         state.proposals = proposals.items || [];
         state.chatbotFeedback = chatbotFeedback.items || [];
         state.chatbotFeedbackStats = chatbotFeedback.stats || { expected: 0, unexpected: 0 };
         state.faqs = faqs.items || [];
         state.tasks = tasks.items || [];
-        renderFeeds();
         renderPosts();
         renderBlogProposals();
         renderChatbotFeedback();
@@ -947,28 +923,6 @@
         state.user = null;
         updateSuperAdminUi(false);
         setLoggedIn(false);
-      });
-
-      document.getElementById('feedForm').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        clearMessage(errorMessage);
-        try {
-          await request('/api/admin-feeds', {
-            method: 'POST',
-            body: JSON.stringify({
-              name: document.getElementById('feedName').value,
-              url: document.getElementById('feedUrl').value,
-              category: document.getElementById('feedCategory').value,
-              notes: document.getElementById('feedNotes').value
-            })
-          });
-          event.target.reset();
-          showMessage(saveMessage, 'RSS feed saved.');
-          await refreshDashboard();
-          collapseAdminSection('feedSectionBody');
-        } catch (error) {
-          showMessage(errorMessage, error.message);
-        }
       });
 
       document.getElementById('postTagsInUse').addEventListener('click', (event) => {
@@ -1401,7 +1355,6 @@
 
       document.addEventListener('click', async (event) => {
         const {
-          deleteFeed,
           editPost,
           deletePost,
           deleteFaq,
@@ -1427,7 +1380,7 @@
           }
           return;
         }
-        if (!deleteFeed && !editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate && !loadProposal && !markProposalReviewed && !markProposalPending && !submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed) {
+        if (!editPost && !deletePost && !deleteFaq && !editFaq && !deleteTask && !editEmailTemplate && !loadProposal && !markProposalReviewed && !markProposalPending && !submitFeedbackReply && !markFeedbackReviewed && !markFeedbackClosed) {
           return;
         }
         clearMessage(errorMessage);
@@ -1496,14 +1449,6 @@
               body: JSON.stringify({ id: feedbackId, status }),
             });
             showMessage(saveMessage, `Feedback marked as ${status}.`);
-          }
-          if (deleteFeed) {
-            const confirmedFeedDelete = window.confirm('Remove this RSS feed? This action cannot be undone.');
-            if (!confirmedFeedDelete) {
-              return;
-            }
-            await request(`/api/admin-feeds?id=${encodeURIComponent(deleteFeed)}`, { method: 'DELETE' });
-            showMessage(saveMessage, 'RSS feed removed.');
           }
           if (deletePost) {
             const postToDelete = state.posts.find((post) => String(post.id) === String(deletePost));

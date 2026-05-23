@@ -96,10 +96,10 @@ test('normalizeSettings returns null siteModules for non-object input (partial-u
 
 test('normalizeSettings coerces siteModules values to booleans and ignores unknown keys', () => {
   const result = normalizeSettings({
-    siteModules: { blog: 1, news: 0, unknown_module: true },
+    siteModules: { blog: 1, forum: 0, unknown_module: true },
   });
   assert.equal(result.siteModules.blog, true);
-  assert.equal(result.siteModules.news, false);
+  assert.equal(result.siteModules.forum, false);
   assert.equal(Object.hasOwn(result.siteModules, 'unknown_module'), false);
 });
 
@@ -262,7 +262,7 @@ test('serializeSettings always returns the full DEFAULT_SITE_MODULES shape', () 
   // documented module key so the admin UI can render checkbox controls.
   const result = serializeSettings({});
   assert.equal(typeof result.siteModules, 'object');
-  for (const key of ['blog', 'news', 'membership', 'forum', 'gemabot', 'knowbot']) {
+  for (const key of ['blog', 'membership', 'forum', 'gemabot', 'knowbot']) {
     assert.ok(key in result.siteModules, `expected siteModules.${key} to be present`);
   }
 });

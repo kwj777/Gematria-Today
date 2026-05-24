@@ -151,12 +151,15 @@ to mirror the homepage meta.
   H1 in view above the fold. Keep at least the `<h1>` and a one-line
   kicker so screen readers and orientation cues survive.
 
-- **P3.** `index.html:253` — Homepage's beginner-path button text is
-  `"This is the way →"`. Brand voice is consistent with other promo
-  spots, but the phrase doesn't describe the action — screen-reader
-  users hear no verb-object pair. Add
+- **P3.** ✅ shipped — every "This is the way →" CTA now carries
   `aria-label="Start the free beginner path"` while keeping the
-  visible text.
+  visible brand-voice text: home (`index.html:253`), calculator
+  nudge (`calculator.html:163`), results nudge
+  (`gematria-results.html:124`), member dashboard
+  (`member.html:421`), and `definitions.html:988`. The member
+  dashboard's JS (`page-scripts/member-1.js:822`) removes the
+  override when the visible text flips to the self-describing
+  "Continue Level N" variant. Closes cross-cutting theme #2.
 
 - **P4.** Featured blog carousel on `index.html:288` still uses
   `d-none` (`data-module="blog_home_slider"`). Server-render at least

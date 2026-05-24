@@ -898,6 +898,10 @@
         renderMessageCenter();
         renderForumNotifications();
         membershipPageContent.classList.remove('d-none');
+        // Server-confirmed auth state is now in the DOM. Mark the page
+        // hydrated so the first-paint CSS auth gating (theme.css) stops
+        // applying and classList toggles above become authoritative.
+        document.documentElement.classList.add('member-page-hydrated');
       }
 
       function formatMembershipWindow(member) {

@@ -174,15 +174,25 @@ Users want to know in 5 seconds: "Do you sell my data? Use cookies? Share with w
 
 ## Suggested roadmap
 
-### Sprint 1 (1-2 weeks) — credibility & accessibility
+### Sprint 1 — credibility & accessibility ✅ shipped 2026-05-24
 - C1, C2, C3, C9, C10, C12, A1, A5, L4
-- Eliminate the auth-state flash, the calculator constraint trap, and bring the accessibility statement up to a defensible claim.
+- Eliminated the auth-state flash on member.html via CSS gating tied to the
+  auth-* class from early-bootstrap.js. Wired aria-describedby + aria-invalid
+  and surfaced the multiple-of-6 rule in the calculator label. Made the name-
+  calculator labels visible. Rewrote the accessibility statement with a
+  WCAG 2.1 AA target, an audited-pages list, known-gaps log, and a 5-/20-day
+  response SLA. Added a 30-second TL;DR card on the privacy policy. Added
+  aria-atomic on the blog post count and FAQ search status. Tightened the
+  cookie banner copy and gave Decline an equal-weight solid fill. Wrapped
+  effective/updated dates in `<time>` across privacy/terms/disclaimer and
+  added Last-updated lines to accessibility/basics/why-english/definitions.
+- C10 was already addressed in earlier work (all `<img>` tags have alt).
 
 ### Sprint 2 (1-2 weeks) — member, forum, GemaBot UX
 - C4, C5, C6, C7, M1, M2, M3, M4, M7
 - Tighten the registration → dashboard → upgrade path and the forum/agent feedback loops.
 
-### Sprint 3 (1 week) — content polish
+### Sprint 3 — content polish ✅ shipped 2026-05-24
 - C8, C11, L1, L2, L3, L5, L7, P5, P6, D3
 - Reading experience, performance budget, print support, deferred-script cleanup.
 

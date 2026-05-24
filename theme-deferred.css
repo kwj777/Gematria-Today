@@ -140,17 +140,20 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   border-color: #1d4ed8;
 }
 
+/* Decline must be visually equivalent to Accept (GDPR / EDPB guidance:
+   reject as easy as accept). Same min-height/padding via .cookie-consent-btn;
+   here we give it a solid contrasting fill so it doesn't read as secondary. */
 .cookie-consent-btn--decline {
-  background: transparent;
-  color: #94a3b8;
-  border-color: #475569;
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #f1f5f9;
 }
 
 .cookie-consent-btn--decline:hover,
 .cookie-consent-btn--decline:focus-visible {
-  background: rgba(255, 255, 255, 0.05);
-  color: #cbd5e1;
-  border-color: #64748b;
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #cbd5e1;
 }
 
 /* ===== print (extracted from theme.css for async load) ===== */

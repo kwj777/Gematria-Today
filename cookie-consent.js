@@ -106,12 +106,12 @@
     banner.innerHTML =
       '<div class="cookie-consent-inner">' +
       '<p class="cookie-consent-text">' +
-      'We use analytics cookies to understand anonymous site usage and improve the experience. ' +
+      'We use Google Analytics to measure anonymous site usage. Declining keeps analytics, ad-storage, and ad-personalization signals turned off for your visit. ' +
       '<a href="/privacy.html" class="cookie-consent-link">Privacy Policy</a>' +
       '</p>' +
       '<div class="cookie-consent-actions">' +
-      '<button id="cookieConsentAccept" class="cookie-consent-btn cookie-consent-btn--accept" type="button">Accept</button>' +
-      '<button id="cookieConsentDecline" class="cookie-consent-btn cookie-consent-btn--decline" type="button">Decline</button>' +
+      '<button id="cookieConsentDecline" class="cookie-consent-btn cookie-consent-btn--decline" type="button" aria-label="Decline analytics and advertising cookies">Decline all</button>' +
+      '<button id="cookieConsentAccept" class="cookie-consent-btn cookie-consent-btn--accept" type="button" aria-label="Accept analytics and advertising cookies">Accept all</button>' +
       '</div>' +
       '</div>';
 

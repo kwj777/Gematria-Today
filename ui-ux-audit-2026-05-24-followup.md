@@ -274,10 +274,10 @@ to mirror the homepage meta.
   `--forum-space-1: var(--spacing-1, 0.25rem);` etc., or drop the
   shadowed declarations entirely.
 
-- **Pol4.** `accessibility.html` lists known limitations but does
-  not link to the live `accessibility-audit.md` doc that backs the
-  WCAG 2.5.5 work. Two clicks from "Read our methodology" → the audit
-  file would make the public commitment auditable.
+- **Pol4.** ✅ shipped — `accessibility.html` now ends "What we've
+  audited" with a methodology line linking to
+  `/accessibility-audit.md` (the WCAG 2.5.5 / Target Size audit
+  report). Public commitments now point at the per-pattern fixes.
 
 - **Pol5.** `pwa-register.js:113-117` — iOS install instructions use
   the literal `􀈂` glyph for the Share icon. On any device that
@@ -286,10 +286,14 @@ to mirror the homepage meta.
   devices that hit the rule still render gracefully — or just hide
   the icon char entirely when not on iOS.
 
-- **Pol6.** Footer copy on all pages: "Gematria.Today — a suite of
-  research tools." is identical across 40+ pages. Consider adding a
-  one-line context per top-level area (Tools / Members / Legal) so
-  the footer doubles as a wayfinding cue.
+- **Pol6.** ✅ shipped — footer one-liner now varies by top-level
+  area instead of repeating "a suite of research tools" everywhere:
+  Tools/calculators get "research tools and calculators."; member +
+  admin surfaces get "your member workspace."; Privacy / Terms /
+  Disclaimer / Accessibility / Contact get "policies, disclosures,
+  and support."; learning pages (Basics, Guide, Why English,
+  Definitions, FAQ, Blog) get "gematria, explained from the basics
+  up." The home page and `404.html` keep the umbrella original.
 
 - **Pol7.** `member.html` and `gematria-account-setup.html` both
   have password strength meters; the labels arrays are defined
@@ -304,15 +308,32 @@ to mirror the homepage meta.
   `--brand-surface` tint, wasting ink. Add
   `@media print { body, main, .content-panel { background: #fff !important; color: #000; } }`.
 
-- **Pol9.** `tools.html` and `gematria-guide.html` link to the
-  individual calculators, but the calculators don't link back. Add a
-  small "← Back to all tools" affordance in the calculator hero so
-  the journey is two-way.
+- **Pol9.** ✅ shipped — all three calculator heroes now lead with
+  "← All tools · {kicker}" linking back to `/tools.html`, making
+  the journey from `tools.html`/`gematria-guide.html` round-trip.
+  Lives in the existing `.section-kicker` so the link inherits the
+  amber treatment and stays inline with the eyebrow.
 
-- **Pol10.** `definitions.html` mobile sidebar toggle still labels
-  itself "Sections" without a `▾` chevron — audit's L6 wasn't
-  addressed in any sprint. The affordance reads as a static heading
-  on mobile, not a toggle.
+- **Pol10.** ✅ already shipped — `definitions.html:429-430` adds
+  `▾` / `▴` via `.glossary-toc-toggle::after` for the mobile
+  Sections toggle (originally L6). False positive in this audit;
+  recording here so future sweeps don't re-flag.
+
+---
+
+## Sprint shipped 2026-05-24 (follow-up quick wins)
+
+- **M8** (original audit) — GemaBot's "Save calculation" modal title
+  is now "Save this calculation" and the body explicitly distinguishes
+  one-result saves from the full chat save (`ai-agent.html:483-487`).
+- **P3** (original audit) — `autocomplete="off"` removed from
+  `calculator.html` and `multi-cipher-calculator.html` lookup inputs;
+  name-calculator already used proper `given-name`/`additional-name`/
+  `family-name`.
+- **Pol4** — accessibility methodology link added (above).
+- **Pol6** — area-specific footer copy across 23 pages (above).
+- **Pol9** — "← All tools" back-link in calculator heroes (above).
+- **Pol10** — verified already shipped.
 
 ---
 

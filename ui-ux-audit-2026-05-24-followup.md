@@ -363,6 +363,26 @@ Round 3:
   `keydown` handler that wires Escape to the same dismiss path as
   the close button. Mouse-only paths still work unchanged.
 
+Round 4 (nav cluster from the original audit):
+- **N1** — Tools mega-menu toggle is now a pure `<button type="button">`
+  with `data-bs-toggle="dropdown"` and `aria-haspopup="true"`, no href.
+  Click can only open the dropdown; the "Compare tools →" footer link
+  carries the direct path to `/tools.html`. `scripts/sync-nav.mjs`
+  regex extended to allow `nav-mega-footer` to receive the active
+  state on `/tools.html`. Propagated via `npm run sync-nav` to all
+  29 nav-bearing pages.
+- **N2** — added a defensive `:focus-visible` rule in `theme.css` for
+  raw `input` / `textarea` / `select` that don't carry the
+  `.form-control` / `.form-select` / `.form-check-input` classes,
+  closing the gap where a third-party widget could leak the native
+  or Bootstrap-blue focus ring.
+- **N3** — verified the search pill is already inside the mobile
+  drawer (not the visible navbar header). Added a ≤400px media
+  query that hides the "Ask SiteSeeker" text label and tightens the
+  pill padding so the four-pill action row clears 360px containers.
+  The `aria-label="Ask SiteSeeker (press /)"` keeps the announcement
+  intact for screen readers.
+
 ---
 
 ## Cross-cutting themes (refresh)

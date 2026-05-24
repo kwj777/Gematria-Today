@@ -4197,6 +4197,19 @@ a.badge,
   outline: none;
 }
 
+/* Defensive coverage for inputs that escape the .form-control / .form-select /
+   .form-check-input classes (third-party widgets, late-added markup). Without
+   this, the native :focus ring or Bootstrap blue can leak through and break
+   the amber focus identity. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-control):not(.form-check-input):focus-visible,
+textarea:not(.form-control):focus-visible,
+select:not(.form-select):focus-visible {
+  border-color: var(--brand-amber);
+  box-shadow: 0 0 0 0.2rem rgba(var(--brand-amber-rgb), 0.18);
+  outline: 2px solid var(--brand-amber);
+  outline-offset: 1px;
+}
+
 .form-control.is-invalid,
 .form-select.is-invalid,
 .was-validated .form-control:invalid,
@@ -4445,6 +4458,23 @@ a.badge,
     line-height: 1;
     border-radius: 999px;
     width: auto;
+  }
+}
+
+/* Mobile-narrow (≤400px) tweak: the action row in the open drawer carries
+   four pills (Search, Theme, Log in, Join free); on 360px viewports their
+   summed width plus gaps brushes against the row edge. Drop the "Ask
+   SiteSeeker" text label so the search reads as just an icon pill; the
+   aria-label still announces the full intent for screen readers. The
+   pill also tightens its horizontal padding so the four-item row clears
+   the container with margin to spare. */
+@media (max-width: 400px) {
+  .navbar-nav .nav-search-link__label {
+    display: none;
+  }
+  .navbar-nav .nav-link.nav-search-link {
+    padding: 0 0.65rem;
+    gap: 0;
   }
 }
 

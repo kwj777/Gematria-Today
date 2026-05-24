@@ -90,9 +90,9 @@ Users want to know in 5 seconds: "Do you sell my data? Use cookies? Share with w
 
 ### Navigation & global
 
-- **N1.** Tools mega-menu toggle uses `href="/tools.html"` AND has a "Compare tools →" footer link. The toggle role is ambiguous — clicking the label may navigate away unexpectedly. Either drop the href or change the toggle to a pure dropdown button. (`partials/nav.html`)
-- **N2.** No global form-control `:focus-visible` rule; some inputs may inherit Bootstrap's default blue ring instead of brand amber. (`theme.css`)
-- **N3.** Mobile SiteSeeker search pill sits at the trailing edge of the navbar. On 360px viewports it competes for space with the hamburger and theme toggle. Consider an in-hero search on mobile or moving the pill into the drawer.
+- **N1.** ✅ shipped — Tools mega-menu toggle is now a pure `<button type="button">` (no href), so a click can only open the dropdown — never navigate. The "Compare tools →" footer link inside the dropdown carries the direct path to `/tools.html`, and `scripts/sync-nav.mjs` was updated to mark that footer link as `.active aria-current="page"` when on `/tools.html`. (`partials/nav.html`)
+- **N2.** ✅ shipped — `theme.css` now also defines a defensive `:focus-visible` rule for raw `input` / `textarea` / `select` that escape the `.form-control` / `.form-select` / `.form-check-input` classes, so the amber ring identity stays consistent for third-party widgets and late-added markup.
+- **N3.** ✅ shipped — verified the search pill is already inside the mobile drawer (not the visible navbar header). At ≤400px viewports the "Ask SiteSeeker" text label is now hidden so the search pill collapses to its icon, leaving room for the Theme toggle + Join free CTA on the same row without crowding the 360px container. The aria-label preserves the full announcement for screen readers.
 
 ### Design system
 

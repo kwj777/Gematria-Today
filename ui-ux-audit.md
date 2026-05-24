@@ -103,8 +103,11 @@ Users want to know in 5 seconds: "Do you sell my data? Use cookies? Share with w
 
 ### Public pages
 
-- **P1.** Homepage hero `.hero-panel--compact .lead { display: none; }` on mobile (`index.html:67`) — removes the elevator pitch on the smallest screens. Keep a shortened version visible.
-- **P2.** `form-control-lg` (Bootstrap 1.125rem ≈ 18px) avoids the iOS zoom trap, but inline-styled inputs on the hero quick-calc (`index.html:52-54`) need verification. Confirm computed `font-size >= 16px` on all calculator inputs.
+- **P1.** ✅ shipped — the `≤575.98px` rule no longer sets `.hero-panel--compact .lead { display: none; }`. The elevator pitch ("Calculate any word's gematria value, then explore the words and patterns it connects to.") stays visible on phones, just shrunk to `font-size: 0.95rem; line-height: 1.35; color: rgba(255,255,255,0.85)` so it doesn't dominate the above-fold layout. The previously-shipped iPhone above-fold tightening (commit 71fcc62) is preserved by the reduced margin.
+- **P2.** ✅ verified — calculator inputs are at or above the iOS zoom floor (`>= 16px`):
+  - Hero `.hero-quick-calc__input` — `1.125rem` (18px) default, `1rem` (16px) at `≤575.98px`. The mobile rule now carries an inline comment locking the floor at 1rem.
+  - `calculator.html`, `multi-cipher-calculator.html`, `name-calculator.html` lookup inputs all carry `.form-control-lg` (Bootstrap default `1.25rem` ≈ 20px); no site CSS overrides `.form-control-lg` smaller.
+  - `html` font-size is unchanged from the browser default (16px), so `1rem` resolves to 16px and the threshold holds.
 - **P3.** `autocomplete="off"` on the calculator input (`calculator.html:200`) disables useful history. Remove or set to `autocomplete="on"`.
 - **P4.** FAQ search input is `disabled` on initial load (`faq.html:145`), waiting on async tag fetch. Render an enabled input immediately and route early queries client-side.
 - **P5.** Blog featured carousel is `d-none` by default with JS reveal (`blog.html:288`). If JS fails, featured content vanishes. Render server-side defaults and let JS enhance.

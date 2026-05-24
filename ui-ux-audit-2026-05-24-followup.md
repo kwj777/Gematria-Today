@@ -395,6 +395,19 @@ Round 5 (design-token cleanup from the original audit):
   `rgba(53, 65, 79, …)` declarations can now route through the
   RGB token in future passes without changing the value.
 
+Round 6 (public-page mobile fixes from the original audit):
+- **P1** — `index.html` no longer sets `.hero-panel--compact .lead
+  { display: none; }` at ≤575.98px. The elevator pitch stays visible
+  on phones at `font-size: 0.95rem; line-height: 1.35; color:
+  rgba(255,255,255,0.85)` and a reduced `margin-bottom: 0.5rem` so
+  the above-fold layout (incl. the iPhone tightening from 71fcc62)
+  still holds.
+- **P2** — verified computed `font-size >= 16px` across calculator
+  inputs (hero `1.125rem` → `1rem` at ≤575.98px, main calculators
+  `.form-control-lg` ≈ `1.25rem`, no `html` font-size override).
+  Added an inline comment at the mobile rule locking the floor at
+  `1rem` so future edits don't drop into the iOS-zoom trap.
+
 ---
 
 ## Cross-cutting themes (refresh)

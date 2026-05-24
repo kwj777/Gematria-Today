@@ -89,6 +89,7 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  row-gap: 0.75rem;
 }
 
 .cookie-consent-text {
@@ -156,6 +157,67 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   border-color: #cbd5e1;
 }
 
+/* Tertiary "Customize" disclosure: outlined so it reads as a secondary option
+   between the two primary CTAs without competing visually. */
+.cookie-consent-btn--customize {
+  background: transparent;
+  color: #e2e8f0;
+  border-color: rgba(226, 232, 240, 0.55);
+}
+
+.cookie-consent-btn--customize:hover,
+.cookie-consent-btn--customize:focus-visible {
+  background: rgba(226, 232, 240, 0.12);
+  border-color: rgba(226, 232, 240, 0.85);
+  color: #f8fafc;
+}
+
+.cookie-consent-options {
+  flex-basis: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.cookie-consent-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  cursor: pointer;
+  margin: 0;
+}
+
+.cookie-consent-option input[type="checkbox"] {
+  margin-top: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #2563eb;
+  flex-shrink: 0;
+}
+
+.cookie-consent-options__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.cookie-consent-btn--save {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.cookie-consent-btn--save:hover,
+.cookie-consent-btn--save:focus-visible {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
 /* ===== print (extracted from theme.css for async load) ===== */
 /* Print: strip site chrome, overlays, and floating widgets so the printed
    page shows page content only. Restores readable black-on-white text. */
@@ -170,6 +232,7 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   .back-to-top-button,
   .cookie-consent-banner,
   .pwa-install-cta,
+  .pwa-update-toast,
   .pwa-launch-overlay,
   .page-render-overlay,
   .global-loading-overlay,

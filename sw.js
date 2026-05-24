@@ -73,6 +73,15 @@ async function refreshRuntimeCaches() {
 
 self.addEventListener('message', (event) => {
   const data = event.data || {};
+
+  if (data.type === 'SKIP_WAITING') {
+    // Hand control to the new worker only when the page asks — keeps the
+    // "new version available" toast in control of when the swap happens so
+    // users don't lose in-flight work mid-session.
+    self.skipWaiting();
+    return;
+  }
+
   if (data.type !== 'REFRESH_CACHE') {
     return;
   }
@@ -97,7 +106,8 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)).catch(() => Promise.resolve())
   );
-  self.skipWaiting();
+  // Do not auto-skipWaiting; the page surfaces a "Refresh to update" toast
+  // and posts SKIP_WAITING when the user accepts.
 });
 
 self.addEventListener('activate', (event) => {

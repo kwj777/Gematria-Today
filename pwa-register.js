@@ -238,10 +238,84 @@
 
   startLaunchOverlayTimer();
 
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Ignore registration failures in unsupported/private browsing scenarios.
+  function removeUpdateToast() {
+    const existing = document.querySelector('[data-pwa-update-toast]');
+    if (existing) {
+      existing.remove();
+    }
+  }
+
+  function showUpdateToast(waitingWorker) {
+    if (!waitingWorker || document.querySelector('[data-pwa-update-toast]')) {
+      return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'pwa-update-toast';
+    toast.setAttribute('data-pwa-update-toast', 'true');
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+
+    const text = document.createElement('p');
+    text.className = 'pwa-update-toast__text';
+    text.textContent = 'A new version of Gematria.Today is available.';
+
+    const refreshButton = document.createElement('button');
+    refreshButton.type = 'button';
+    refreshButton.className = 'btn btn-warning btn-sm fw-semibold pwa-update-toast__button';
+    refreshButton.textContent = 'Refresh to update';
+
+    const dismissButton = document.createElement('button');
+    dismissButton.type = 'button';
+    dismissButton.className = 'pwa-update-toast__dismiss';
+    dismissButton.setAttribute('aria-label', 'Dismiss update notice');
+    dismissButton.textContent = '×';
+
+    refreshButton.addEventListener('click', () => {
+      refreshButton.disabled = true;
+      refreshButton.textContent = 'Refreshing…';
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
     });
+
+    dismissButton.addEventListener('click', removeUpdateToast);
+
+    toast.append(text, refreshButton, dismissButton);
+    document.body.appendChild(toast);
+  }
+
+  function watchForUpdates(registration) {
+    if (!registration) return;
+
+    // If a worker is already waiting from a prior visit, prompt immediately.
+    if (registration.waiting && navigator.serviceWorker.controller) {
+      showUpdateToast(registration.waiting);
+    }
+
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      if (!newWorker) return;
+
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          showUpdateToast(newWorker);
+        }
+      });
+    });
+  }
+
+  let reloadingFromUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadingFromUpdate) return;
+    reloadingFromUpdate = true;
+    window.location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(watchForUpdates)
+      .catch(() => {
+        // Ignore registration failures in unsupported/private browsing scenarios.
+      });
 
     if (isStandaloneMode()) {
       removeInstallCta();

@@ -314,7 +314,10 @@
                   <div class="col-12"><label class="form-label" for="stripeAccountId">Stripe account ID</label><input id="stripeAccountId" class="form-control" placeholder="acct_..." /></div>
                   <div class="col-12"><label class="form-label" for="stripePublishableKey">Publishable key</label><input id="stripePublishableKey" class="form-control" placeholder="pk_live_..." /></div>
                   <div class="col-12">
-                    <label class="form-label" for="stripeSecretKey">Secret key</label>
+                    <label class="form-label d-flex align-items-center gap-2" for="stripeSecretKey">
+                      <span>Secret key</span>
+                      <span id="stripeSecretKeyStatus" class="badge text-bg-secondary admin-secret-status" data-status="unknown">Loading…</span>
+                    </label>
                     <div class="input-group">
                       <input id="stripeSecretKey" class="form-control" type="password" placeholder="Enter a new Stripe secret key" autocomplete="new-password" data-secret-input="stripeSecretKey" disabled />
                       <button id="stripeSecretKeyToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeSecretKey" aria-label="Replace Stripe secret key">Change</button>
@@ -322,7 +325,10 @@
                     <div id="stripeSecretKeyHelp" class="form-text text-muted">Hidden after save. Use Change only when replacing the stored key.</div>
                   </div>
                   <div class="col-12">
-                    <label class="form-label" for="stripeWebhookSigningSecret">Webhook signing secret</label>
+                    <label class="form-label d-flex align-items-center gap-2" for="stripeWebhookSigningSecret">
+                      <span>Webhook signing secret</span>
+                      <span id="stripeWebhookSigningSecretStatus" class="badge text-bg-secondary admin-secret-status" data-status="unknown">Loading…</span>
+                    </label>
                     <div class="input-group">
                       <input id="stripeWebhookSigningSecret" class="form-control" type="password" placeholder="Enter a new Stripe webhook secret" autocomplete="new-password" data-secret-input="stripeWebhookSigningSecret" disabled />
                       <button id="stripeWebhookSigningSecretToggle" class="btn btn-outline-secondary" type="button" data-enable-secret="stripeWebhookSigningSecret" aria-label="Replace Stripe webhook signing secret">Change</button>

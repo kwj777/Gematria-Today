@@ -219,6 +219,14 @@
           }
         });
 
+      // Buffer any term typed before the network response lands so the search
+      // input feels live from first paint instead of looking inert. Applied
+      // for real once the items render.
+      let pendingSearchTerm = '';
+      faqSearch?.addEventListener('input', function bufferPreLoadInput() {
+        pendingSearchTerm = faqSearch.value;
+      });
+
       fetch('/api/public-faqs')
         .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
         .then(({ ok, payload }) => {
@@ -256,9 +264,10 @@
             faqSearchStatus.textContent = `${items.length} questions available.`;
           }
 
-          // Deep-link: ?q=<term>
+          // Deep-link: ?q=<term>. Also replay anything the user typed while
+          // we were still loading.
           const params = new URLSearchParams(window.location.search);
-          const initialQuery = params.get('q') || '';
+          const initialQuery = params.get('q') || pendingSearchTerm || '';
           if (initialQuery && faqSearch) {
             faqSearch.value = initialQuery;
             applySearch(initialQuery, items.length);
@@ -347,4 +356,12 @@
           faqLoading.classList.add('d-none');
           faqError.textContent = error.message;
           faqError.classList.remove('d-none');
+          // Surface a visible dead-search state instead of leaving the input
+          // looking like it still works.
+          if (faqSearch) {
+            faqSearch.disabled = true;
+          }
+          if (faqSearchStatus) {
+            faqSearchStatus.textContent = 'Search index unavailable. Try refreshing the page.';
+          }
         });

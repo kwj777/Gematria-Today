@@ -2385,6 +2385,42 @@
         resendVerificationAlert.classList.add('alert-' + (tone || 'info'));
       }
 
+      function maskEmailForResendNotice(value) {
+        const trimmed = String(value || '').trim();
+        const atIndex = trimmed.lastIndexOf('@');
+        if (atIndex < 1) {
+          return '';
+        }
+        const local = trimmed.slice(0, atIndex);
+        const domain = trimmed.slice(atIndex + 1);
+        if (!local || !domain) {
+          return '';
+        }
+        const visible = local.slice(0, 1);
+        return `${visible}${'*'.repeat(Math.max(local.length - 1, 1))}@${domain}`;
+      }
+
+      function startResendCooldown(seconds) {
+        if (!resendVerificationSubmit) return;
+        const defaultLabel = resendVerificationSubmit.dataset.defaultLabel
+          || resendVerificationSubmit.textContent
+          || 'Send a fresh link';
+        resendVerificationSubmit.dataset.defaultLabel = defaultLabel;
+        let remaining = seconds;
+        resendVerificationSubmit.disabled = true;
+        resendVerificationSubmit.textContent = `Wait ${remaining}s before resending`;
+        const interval = window.setInterval(() => {
+          remaining -= 1;
+          if (remaining <= 0) {
+            window.clearInterval(interval);
+            resendVerificationSubmit.disabled = false;
+            resendVerificationSubmit.textContent = defaultLabel;
+            return;
+          }
+          resendVerificationSubmit.textContent = `Wait ${remaining}s before resending`;
+        }, 1000);
+      }
+
       resendVerificationForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
         const identifier = (resendVerificationIdentifier?.value || '').trim();
@@ -2392,8 +2428,11 @@
           setResendVerificationAlert('Enter the username or email you registered with.', 'warning');
           return;
         }
-        const defaultLabel = resendVerificationSubmit?.textContent || 'Send a fresh link';
+        const defaultLabel = resendVerificationSubmit?.dataset.defaultLabel
+          || resendVerificationSubmit?.textContent
+          || 'Send a fresh link';
         if (resendVerificationSubmit) {
+          resendVerificationSubmit.dataset.defaultLabel = defaultLabel;
           resendVerificationSubmit.disabled = true;
           resendVerificationSubmit.setAttribute('aria-busy', 'true');
           resendVerificationSubmit.textContent = 'Sending…';
@@ -2403,10 +2442,17 @@
             method: 'POST',
             body: JSON.stringify({ identifier }),
           });
-          setResendVerificationAlert(response?.message || 'If a pending account matches that identifier, a fresh verification link has been sent by email.', 'success');
+          const maskedEmail = maskEmailForResendNotice(identifier);
+          const successMessage = maskedEmail
+            ? `Verification email sent to ${maskedEmail}. Check spam if you don't see it within 5 minutes.`
+            : (response?.message || 'If a pending account matches that identifier, a fresh verification link has been sent by email. Check spam if you don\'t see it within 5 minutes.');
+          setResendVerificationAlert(successMessage, 'success');
+          if (resendVerificationSubmit) {
+            resendVerificationSubmit.removeAttribute('aria-busy');
+            startResendCooldown(30);
+          }
         } catch (error) {
           setResendVerificationAlert(error.message || 'Unable to resend the verification email right now. Please try again in a few minutes.', 'danger');
-        } finally {
           if (resendVerificationSubmit) {
             resendVerificationSubmit.disabled = false;
             resendVerificationSubmit.removeAttribute('aria-busy');

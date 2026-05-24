@@ -3753,7 +3753,7 @@ a.badge,
     line-height: 1.4;
   }
 
-  .learning-path-promo--slim > .d-flex > .flex-shrink-0 {
+  .learning-path-promo--slim > .d-flex > .flex-shrink-0:last-child {
     flex-basis: 100%;
     flex-shrink: 1;
   }

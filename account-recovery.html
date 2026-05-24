@@ -179,7 +179,8 @@
             </div>
           </form>
 
-          <div id="recoverySentPanel" class="sent-panel mt-3 d-none" role="status" aria-live="polite">
+          <div id="recoverySentPanel" class="sent-panel mt-3 d-none" role="status" aria-live="polite" tabindex="-1">
+            <h2 id="recoverySentHeading" class="h5 mb-2">Recovery email on the way</h2>
             <p class="mb-2">We sent a recovery email to <span class="sent-email" id="sentEmailDisplay"></span>. Check your inbox (and spam folder).</p>
             <div class="d-flex flex-wrap align-items-center gap-2">
               <button id="resendButton" class="btn btn-sm btn-outline-success" type="button">Resend email</button>

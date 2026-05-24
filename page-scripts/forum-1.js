@@ -16,6 +16,24 @@
       const forumFilterControlsEl = document.getElementById('forumFilterControls');
       const forumFilterToggleButtonEl = document.getElementById('forumFilterToggleButton');
 
+      function wireCharCount(inputId, counterId) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+        if (!input || !counter) return;
+        const max = Number(input.getAttribute('maxlength')) || 0;
+        const update = () => {
+          const len = input.value.length;
+          counter.textContent = `${len} / ${max}`;
+          counter.classList.toggle('forum-char-count--near', max > 0 && len >= max * 0.9);
+          counter.classList.toggle('forum-char-count--at', max > 0 && len >= max);
+        };
+        input.addEventListener('input', update);
+        update();
+      }
+      wireCharCount('newThreadTitle', 'newThreadTitleCount');
+      wireCharCount('newThreadBody', 'newThreadBodyCount');
+      wireCharCount('newReplyBody', 'newReplyBodyCount');
+
       let isAdmin = false;
       let isPremium = false;
       let currentThread = null;
@@ -543,6 +561,12 @@
 
       document.getElementById('deleteThreadButton').addEventListener('click', () => moderateThread('delete_thread').catch((error) => showAlert(error.message)));
 
+      function refreshComposerCounts() {
+        ['newThreadTitle', 'newThreadBody', 'newReplyBody'].forEach((id) => {
+          document.getElementById(id)?.dispatchEvent(new Event('input'));
+        });
+      }
+
       document.getElementById('createThreadForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         try {
@@ -554,6 +578,7 @@
             body: document.getElementById('newThreadBody').value,
           });
           document.getElementById('createThreadForm').reset();
+          refreshComposerCounts();
           await loadThreads();
           showAlert('Thread posted.', 'success');
         } catch (error) {
@@ -568,6 +593,7 @@
           const threadId = document.getElementById('replyThreadId').value;
           await apiPost({ action: 'create_reply', threadId, body: document.getElementById('newReplyBody').value });
           document.getElementById('newReplyBody').value = '';
+          refreshComposerCounts();
           await loadThread(threadId);
           await loadThreads();
           showAlert('Reply posted.', 'success');

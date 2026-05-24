@@ -48,11 +48,12 @@
           if (!passwordInput || !strengthBar || !strengthLabel || !strengthWrap) return;
           const value = passwordInput.value;
           if (!value) {
-            strengthWrap.classList.add('d-none');
+            const empty = STRENGTH_STYLES[0];
+            strengthBar.className = 'progress-bar ' + empty.cls;
+            strengthBar.style.width = empty.width;
             strengthLabel.textContent = PASSWORD_HINT;
             return;
           }
-          strengthWrap.classList.remove('d-none');
           const idx = scorePassword(value);
           const style = STRENGTH_STYLES[idx];
           strengthBar.className = 'progress-bar ' + style.cls;

@@ -158,6 +158,29 @@
   animation: forum-fade-in 0.2s ease-out;
 }
 
+.forum-char-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--app-muted, #64748b);
+  margin-top: 0.25rem;
+}
+
+.forum-char-count--near {
+  color: #b45309;
+}
+
+.forum-char-count--at {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+:root[data-bs-theme="dark"] .forum-char-count--near {
+  color: #fbbf24;
+}
+
+:root[data-bs-theme="dark"] .forum-char-count--at {
+  color: #fca5a5;
+}
+
 .forum-empty-title {
   font-size: var(--forum-subtitle-size);
   font-weight: 700;

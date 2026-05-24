@@ -129,6 +129,7 @@
           sentEmailDisplay.textContent = maskEmail(email);
           sentPanel.classList.remove('d-none');
           requestForm.classList.add('d-none');
+          requestForm.setAttribute('hidden', '');
           startResendCooldown(30);
 
           if (action === 'forgot-userid') {
@@ -140,6 +141,7 @@
             resetSection.classList.remove('d-none');
             requestAlert.show('Recovery email sent. Enter the code below when it arrives.', 'success');
           }
+          sentPanel.focus({ preventScroll: false });
         } catch (error) {
           requestAlert.show(error.message || 'Unable to submit account recovery request.');
         } finally {
@@ -165,6 +167,7 @@
         resendTimer = null;
         sentPanel.classList.add('d-none');
         requestForm.classList.remove('d-none');
+        requestForm.removeAttribute('hidden');
         resetSection.classList.add('d-none');
         requestAlert.clear();
         setStep(1);

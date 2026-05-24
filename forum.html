@@ -329,11 +329,13 @@
             </div>
             <div class="col-md-8">
               <label class="form-label" for="newThreadTitle">Title</label>
-              <input id="newThreadTitle" class="form-control" maxlength="160" required />
+              <input id="newThreadTitle" class="form-control" maxlength="160" required aria-describedby="newThreadTitleCount" />
+              <div id="newThreadTitleCount" class="form-text forum-char-count text-end" aria-live="polite">0 / 160</div>
             </div>
             <div class="col-12">
               <label class="form-label" for="newThreadBody">Thread body</label>
-              <textarea id="newThreadBody" class="form-control" rows="4" maxlength="5000" required></textarea>
+              <textarea id="newThreadBody" class="form-control" rows="4" maxlength="5000" required aria-describedby="newThreadBodyCount"></textarea>
+              <div id="newThreadBodyCount" class="form-text forum-char-count text-end" aria-live="polite">0 / 5000</div>
             </div>
             <div class="col-12 d-grid d-md-flex justify-content-md-end forum-composer-actions">
               <button class="btn btn-primary" type="submit">Post thread</button>
@@ -365,7 +367,8 @@
             <input id="replyThreadId" type="hidden" />
             <div class="col-12">
               <label class="form-label" for="newReplyBody">Add reply</label>
-              <textarea id="newReplyBody" class="form-control" rows="3" maxlength="5000" required></textarea>
+              <textarea id="newReplyBody" class="form-control" rows="3" maxlength="5000" required aria-describedby="newReplyBodyCount"></textarea>
+              <div id="newReplyBodyCount" class="form-text forum-char-count text-end" aria-live="polite">0 / 5000</div>
             </div>
             <div class="col-12 d-grid d-md-flex justify-content-md-end forum-composer-actions">
               <button id="replySubmitButton" class="btn btn-outline-primary" type="submit">Post reply</button>

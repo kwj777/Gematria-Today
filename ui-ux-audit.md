@@ -96,10 +96,10 @@ Users want to know in 5 seconds: "Do you sell my data? Use cookies? Share with w
 
 ### Design system
 
-- **D1.** Disabled amber button (`--brand-amber-disabled-bg: #b8a48a` on white) contrast ≈ 4.2:1 — passes AA by a hair, fails AAA. Pick a token that comfortably clears both.
-- **D2.** `forum-theme.css` defines parallel spacing (`--forum-space-1..6`), typography clamps, and shadows instead of aliasing the main tokens. Maintenance debt — converge into `theme.css`.
+- **D1.** ✅ shipped — disabled `.btn-warning` / `.btn-amber` palette inverted: `--brand-amber-disabled-bg` now `#efe5d4` (pale cream-amber) behind a new `--brand-amber-disabled-fg: #6b3a06` (deep amber). `--bs-btn-disabled-opacity` dropped from 0.75 → 1 (the old 0.75 was crushing the effective ratio against the page to ~1.9:1). The new pair clears WCAG AAA at 7.5:1 on white and still reads as clearly "off" next to the saturated active CTA. (Measured with the standard 2.4-gamma formula on `:root` tokens in `theme.css`.)
+- **D2.** ✅ shipped — see follow-up audit Pol3: `--space-1..6` added to `theme.css`; `forum-theme.css` rewrites every `--forum-space-N` to alias `var(--space-N)`. Forum spacing is in lockstep with the main scale.
 - **D3.** No `font-size-adjust` on fallback stacks; expect 2–4% CLS when Fraunces 700 swaps in. Add `font-size-adjust: 0.5` (approximate) on body and headings, or use the Google Fonts size-adjusted fallback technique.
-- **D4.** No semantic `--color-text` token for light-mode body text; inline hex `#35414f` recurs (e.g. `index.html:40`). Promote to a token.
+- **D4.** ✅ shipped — `theme.css` now declares `--color-text: #35414f` and `--color-text-rgb: 53, 65, 79` so the body-text colour has a single semantic token (the bare hex was previously only available through `--app-ink` set in `public-theme-css.mjs`). Existing `rgba(53, 65, 79, …)` usages can route through `--color-text-rgb` in future passes.
 
 ### Public pages
 

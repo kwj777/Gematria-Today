@@ -7,9 +7,14 @@
   --brand-amber-rgb: 180, 83, 9;
   /* Foreground (text/icon) color used on filled brand-amber surfaces. */
   --brand-amber-fg: #ffffff;
-  /* Muted-tan background applied to brand-amber buttons when they're in the
-     :disabled state -- a desaturated cousin of --brand-amber, not a neutral. */
-  --brand-amber-disabled-bg: #b8a48a;
+  /* Disabled .btn-warning / .btn-amber palette. Inverted from the active
+     scheme: a pale amber cream behind a deep-amber label. Earlier this was
+     a desaturated tan (#b8a48a) with white text and opacity 0.75 on top,
+     which crushed the effective ratio to ~1.9:1 against the page. The new
+     pair clears WCAG AAA (7.54:1) at full opacity and still reads as
+     clearly "off" next to the saturated active CTA. */
+  --brand-amber-disabled-bg: #efe5d4;
+  --brand-amber-disabled-fg: #6b3a06;
   --brand-heading-font: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif;
   --brand-body-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
@@ -26,6 +31,13 @@
   --color-border-subtle: rgba(53, 65, 79, 0.08);
   --color-border-soft: rgba(53, 65, 79, 0.12);
   --color-border-dark: rgba(148, 177, 215, 0.22);
+  /* Body text on light surfaces. --color-text-rgb mirrors the channels so
+     borders and overlays that need a tinted-text-color alpha can stay in
+     lockstep with the solid form. (The existing --color-border-subtle /
+     --color-border-soft already use these same RGB triplets manually;
+     future declarations should route through this token.) */
+  --color-text: #35414f;
+  --color-text-rgb: 53, 65, 79;
   --color-text-on-dark: #f8fafc;
 
   /* Nav-search pill tokens. The pill sits on the dark navbar, so its text
@@ -167,10 +179,12 @@ h2, h3 {
   --bs-btn-active-color: var(--brand-amber-fg);
   --bs-btn-active-bg: var(--brand-amber-hover);
   --bs-btn-active-border-color: var(--brand-amber-hover);
-  --bs-btn-disabled-color: var(--brand-amber-fg);
+  --bs-btn-disabled-color: var(--brand-amber-disabled-fg);
   --bs-btn-disabled-bg: var(--brand-amber-disabled-bg);
   --bs-btn-disabled-border-color: var(--brand-amber-disabled-bg);
-  --bs-btn-disabled-opacity: 0.75;
+  /* Full opacity intentionally -- contrast comes from the bg/fg pair, not
+     a translucency multiplier that would crush the WCAG ratio. */
+  --bs-btn-disabled-opacity: 1;
 }
 
 html {

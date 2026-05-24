@@ -383,6 +383,18 @@ Round 4 (nav cluster from the original audit):
   The `aria-label="Ask SiteSeeker (press /)"` keeps the announcement
   intact for screen readers.
 
+Round 5 (design-token cleanup from the original audit):
+- **D1** — disabled `.btn-warning` / `.btn-amber` palette inverted to
+  pale cream `#efe5d4` behind deep amber `#6b3a06` (new
+  `--brand-amber-disabled-fg` token). `--bs-btn-disabled-opacity`
+  dropped from 0.75 → 1; the old multiplier was crushing the white-
+  on-tan combo to ~1.9:1 against the page. New pair clears WCAG AAA
+  at 7.5:1 and visually reads as clearly "off" next to the active CTA.
+- **D4** — added semantic `--color-text: #35414f` and
+  `--color-text-rgb: 53, 65, 79` to `theme.css`. Existing
+  `rgba(53, 65, 79, …)` declarations can now route through the
+  RGB token in future passes without changing the value.
+
 ---
 
 ## Cross-cutting themes (refresh)

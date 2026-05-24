@@ -114,7 +114,7 @@
 
     const instructions = document.createElement('p');
     instructions.className = 'pwa-ios-popup__instructions';
-    instructions.innerHTML = 'Tap <strong>Share</strong> (􀈂), then choose <strong>Add to Home Screen</strong>.';
+    instructions.innerHTML = 'Tap <strong>Share</strong> (<span aria-hidden="true" style="font-family:-apple-system,BlinkMacSystemFont,sans-serif">􀈂</span>), then choose <strong>Add to Home Screen</strong>.';
 
     const actions = document.createElement('div');
     actions.className = 'pwa-ios-popup__actions';

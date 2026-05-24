@@ -253,13 +253,10 @@ to mirror the homepage meta.
 
 ## 💡 Polish (low-priority, high-quality wins)
 
-- **Pol1.** `index.html:249` — beginner-path promo heading is
-  `<h2 class="h6">`. The semantic level is correct (it's a section
-  heading) but visually styled as h6 inside an aside while the next
-  section uses `<h3 class="feature-card-icon__title">`. The visual
-  hierarchy reads "small → bigger → bigger", which inverts the
-  semantic order. Either downstyle the feature cards or upstyle the
-  promo heading; pick one rhythm.
+- **Pol1.** ✅ shipped — beginner-path promo `<h2>` on the home page
+  now uses `.h5` instead of `.h6` so it visually outranks the
+  `.feature-card-icon__title` h3s (1.25rem vs 1.15rem), matching
+  the semantic order.
 
 - **Pol2.** `manifest.webmanifest` — no `categories`, no
   `screenshots`, no `shortcuts`. Adding
@@ -279,12 +276,12 @@ to mirror the homepage meta.
   `/accessibility-audit.md` (the WCAG 2.5.5 / Target Size audit
   report). Public commitments now point at the per-pattern fixes.
 
-- **Pol5.** `pwa-register.js:113-117` — iOS install instructions use
-  the literal `􀈂` glyph for the Share icon. On any device that
-  isn't iOS, this renders as a tofu box (and on some macOS Safari
-  versions too). Wrap it with `font-family: -apple-system` so other
-  devices that hit the rule still render gracefully — or just hide
-  the icon char entirely when not on iOS.
+- **Pol5.** ✅ shipped — `pwa-register.js:117` wraps the Apple-PUA
+  Share glyph in `<span aria-hidden="true" style="font-family:-apple-system,…">`
+  so even if iOS gating is bypassed on a non-Apple device, the
+  glyph degrades to the system font instead of rendering as a tofu
+  box. The popup itself remains gated to iOS Safari via
+  `shouldShowIosInstallPopup`.
 
 - **Pol6.** ✅ shipped — footer one-liner now varies by top-level
   area instead of repeating "a suite of research tools" everywhere:
@@ -295,18 +292,18 @@ to mirror the homepage meta.
   Definitions, FAQ, Blog) get "gematria, explained from the basics
   up." The home page and `404.html` keep the umbrella original.
 
-- **Pol7.** `member.html` and `gematria-account-setup.html` both
-  have password strength meters; the labels arrays are defined
-  separately in each file
-  (`STRENGTH_LABELS = ['Too short','Weak','Fair','Good','Strong']`).
-  Extract to a shared helper to avoid drift when copy changes.
+- **Pol7.** ✅ shipped — `page-scripts/password-strength-helpers.js`
+  now owns the shared `STRENGTH_STYLES`, `HINT`, and `score`/`styleFor`
+  for both register flows. `member-1.js` and `gematria-account-setup-1.js`
+  drop their local copies and read through `window.GematriaPasswordStrength`;
+  both pages load the helper before the page script. Account-recovery
+  uses a stricter scoring formula and is left untouched.
 
-- **Pol8.** `theme-deferred.css` — print stylesheet hides
-  `.skip-link` and nav (good), but doesn't normalize background
-  colors. Long-form pages (`gematria-guide.html`,
-  `why-english-gematria.html`) still print with the parchment
-  `--brand-surface` tint, wasting ink. Add
-  `@media print { body, main, .content-panel { background: #fff !important; color: #000; } }`.
+- **Pol8.** ✅ shipped — `theme-deferred.css` print block now also
+  normalizes `main`, `.content-panel`, `.card`, `.feature-card`,
+  `.faq-card`, `.hero-panel`, `.legal-copy`, and `.stat-card` to
+  white-on-black. Long-form pages (Guide, Why English, Definitions)
+  no longer print with the parchment `--brand-surface` tint.
 
 - **Pol9.** ✅ shipped — all three calculator heroes now lead with
   "← All tools · {kicker}" linking back to `/tools.html`, making
@@ -323,6 +320,7 @@ to mirror the homepage meta.
 
 ## Sprint shipped 2026-05-24 (follow-up quick wins)
 
+Round 1:
 - **M8** (original audit) — GemaBot's "Save calculation" modal title
   is now "Save this calculation" and the body explicitly distinguishes
   one-result saves from the full chat save (`ai-agent.html:483-487`).
@@ -334,6 +332,23 @@ to mirror the homepage meta.
 - **Pol6** — area-specific footer copy across 23 pages (above).
 - **Pol9** — "← All tools" back-link in calculator heroes (above).
 - **Pol10** — verified already shipped.
+
+Round 2:
+- **P7** (original audit) — each calculator now ends with a small
+  methodology + last-updated line: `calculator.html` and
+  `name-calculator.html` cite the Base-6 cipher and link to
+  basics / why-english-gematria / definitions; `multi-cipher-calculator.html`
+  appends the same to its "About the seven ciphers" panel.
+- **Pol1** — home beginner-path promo heading promoted from `.h6`
+  to `.h5` to outrank feature cards visually (above).
+- **Pol5** — Apple-PUA share glyph wrapped in `-apple-system` span
+  so it degrades gracefully outside iOS Safari (above).
+- **Pol7** — password strength meter scoring + styles extracted to
+  `page-scripts/password-strength-helpers.js`, consumed by both
+  register flows via `window.GematriaPasswordStrength` (above).
+- **Pol8** — print stylesheet now normalizes panel backgrounds to
+  white-on-black so long-form prints don't waste ink on the
+  parchment tint (above).
 
 ---
 

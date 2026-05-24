@@ -173,6 +173,42 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: var(--leading-normal);
+  /* Reduce CLS when Inter swaps in over system-ui by matching the cap-height
+     ratio of the fallback to the web font. Headings get their own value
+     because Fraunces is taller per em than the serif fallback. */
+  font-size-adjust: 0.52;
+}
+
+h1, h2, h3, h4, h5, h6,
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-size-adjust: 0.47;
+}
+
+/* Long-form prose width cap. On 1440px+ displays, body copy inside legal,
+   guide, methodology, and blog body containers stretches past 90ch and
+   becomes hard to scan. Cap to ~70ch unless the container is intentionally
+   wider (cards/grids opt out via direct selectors). The cap is inheritable
+   via `max-inline-size` so block-level children stay inside the bounds. */
+.legal-copy > p,
+.legal-copy > ul,
+.legal-copy > ol,
+.legal-copy > dl,
+.legal-copy > address,
+.blog-post-body > p,
+.blog-post-body > ul,
+.blog-post-body > ol,
+.blog-post-body > dl,
+.blog-post-body > blockquote,
+.prose > p,
+.prose > ul,
+.prose > ol,
+.prose > dl,
+.prose > blockquote,
+article > p,
+.guide-prose p,
+.guide-prose ul,
+.guide-prose ol {
+  max-inline-size: 70ch;
 }
 
 .home-section__header {
@@ -3012,9 +3048,157 @@ body.page-render-pending footer {
   margin-bottom: 0.9rem;
 }
 
+/* Sticky table-of-contents panel for long-form guides (e.g. gematria-guide).
+   Matches the pattern in definitions.html's glossary TOC — stays anchored
+   below the navbar on wide viewports so step-jump links stay reachable
+   while the reader scrolls. */
+@media (min-width: 992px) {
+  .guide-toc-panel {
+    position: sticky;
+    top: 84px;
+    z-index: 5;
+    backdrop-filter: saturate(160%) blur(6px);
+    -webkit-backdrop-filter: saturate(160%) blur(6px);
+  }
+}
+
+/* English Ordinal letter-value chart shown on why-english-gematria.html.
+   Auto-fits a responsive grid of 26 letter/value cells. Each cell pairs a
+   bold serif letter with its numeric value. */
+.letter-value-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.6rem, 1fr));
+  gap: 0.45rem;
+}
+
+.letter-value-grid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.letter-value-grid__letter {
+  font-family: var(--brand-heading-font);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--bs-primary, #0d6efd);
+}
+
+.letter-value-grid__value {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  color: var(--bs-secondary, #64748b);
+  margin-top: 0.25rem;
+}
+
+:root[data-bs-theme="dark"] .letter-value-grid__cell {
+  background: rgba(148, 163, 184, 0.06);
+  border-color: var(--color-border-dark);
+}
+
+:root[data-bs-theme="dark"] .letter-value-grid__letter {
+  color: #fbbf24;
+}
+
+:root[data-bs-theme="dark"] .letter-value-grid__value {
+  color: rgba(226, 232, 240, 0.7);
+}
+
 .legal-copy p:last-child,
 .legal-copy ul:last-child {
   margin-bottom: 0;
+}
+
+/* Sibling-page cross-link strip for legal/policy pages. Sits between the
+   hero and the on-page TOC so readers can hop between Privacy, Terms,
+   Disclaimer, and Accessibility without scrolling to the footer. */
+.legal-related-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.1rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.legal-related-strip__label {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+
+.legal-related-strip a {
+  text-decoration: none;
+  color: var(--bs-primary, #0d6efd);
+  border-bottom: 1px dotted rgba(var(--bs-primary-rgb), 0.4);
+}
+
+.legal-related-strip a:hover,
+.legal-related-strip a:focus-visible {
+  border-bottom-style: solid;
+}
+
+:root[data-bs-theme="dark"] .legal-related-strip {
+  background: rgba(148, 163, 184, 0.06);
+  border-color: var(--color-border-dark);
+}
+
+/* Premium Membership pricing callout (terms.html §premium). Lifts the
+   headline price out of the dense terms list so users see what they're
+   paying for at a glance before reading the line-by-line obligations. */
+.premium-pricing-callout {
+  border-left: 4px solid var(--brand-amber);
+  background: rgba(var(--brand-amber-rgb), 0.06);
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-md);
+}
+
+.premium-pricing-callout__kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--brand-amber);
+}
+
+:root[data-bs-theme="dark"] .premium-pricing-callout {
+  background: rgba(var(--brand-amber-rgb), 0.12);
+}
+
+/* Stacked definition list used for legal/terms sections that previously
+   relied on bullet lists with bold term-style prefixes. Each <dt> sits as
+   a small subhead above its <dd> body so scanning is faster than a wall
+   of bullets. */
+.premium-terms-dl {
+  margin-bottom: 1rem;
+}
+
+.premium-terms-dl dt {
+  font-weight: 700;
+  margin-top: 0.85rem;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-strong, #0f172a);
+}
+
+.premium-terms-dl dt:first-child {
+  margin-top: 0;
+}
+
+.premium-terms-dl dd {
+  margin-left: 0;
+  margin-bottom: 0;
+}
+
+:root[data-bs-theme="dark"] .premium-terms-dl dt {
+  color: #f1f5f9;
 }
 
 .membership-payment-form {

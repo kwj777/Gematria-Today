@@ -398,25 +398,6 @@ const applyStaticContentPromise = () => Promise.race([
       }
     }
 
-    const primaryCtaNode = document.getElementById('homeJoinCta');
-    if (primaryCtaNode) {
-      if (content.ctaLabel) {
-        primaryCtaNode.textContent = content.ctaLabel;
-      }
-      if (content.ctaUrl) {
-        primaryCtaNode.setAttribute('href', content.ctaUrl);
-      }
-    }
-
-    const secondaryCtaNode = document.getElementById('homeCalculatorCta');
-    if (secondaryCtaNode) {
-      if (content.ctaLabelSecondary) {
-        secondaryCtaNode.textContent = content.ctaLabelSecondary;
-      }
-      if (content.ctaUrlSecondary) {
-        secondaryCtaNode.setAttribute('href', content.ctaUrlSecondary);
-      }
-    }
   })
   .catch(() => {});
 
@@ -498,20 +479,6 @@ const initializeHomePage = () => {
   applyHomeHeroImageOptimization();
   resetHomeReadMoreButtons();
   setHomeReadMoreWorkingState();
-
-  document.getElementById('homeJoinCta')?.addEventListener('click', () => {
-    window.gematriaTracking?.track('beginner_path_start_click', {
-      source: 'home_hero_primary_cta',
-      destination: '/gematria-account-setup.html',
-    });
-  });
-
-  document.getElementById('homeCalculatorCta')?.addEventListener('click', () => {
-    window.gematriaTracking?.track('beginner_path_try_calculator_click', {
-      source: 'home_hero_secondary_cta',
-      destination: '/calculator.html',
-    });
-  });
 
   document.getElementById('learningPathPromoCta')?.addEventListener('click', () => {
     window.gematriaTracking?.track('beginner_path_start_click', {

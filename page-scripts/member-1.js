@@ -819,7 +819,7 @@
                 ? '/gematria-name-analysis.html'
                 : '/blog.html?post=a-beginner-s-gematria-research-checklist-before-you-draw-conclusions&from=learning-path#a-beginner-s-gematria-research-checklist-before-you-draw-conclusions';
           learningPathAspireCta.href = nextPath;
-          learningPathAspireCta.textContent = progress >= 1 ? `Continue Level ${nextLevel}` : 'Start Level 1';
+          learningPathAspireCta.textContent = progress >= 1 ? `Continue Level ${nextLevel}` : 'This is the way →';
           if (!learningPathAspireCta.dataset.bound) {
             learningPathAspireCta.dataset.bound = '1';
             learningPathAspireCta.addEventListener('click', () => {

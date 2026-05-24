@@ -384,20 +384,6 @@ const applyStaticContentPromise = () => Promise.race([
       }
     }
 
-    if (content.heroHeadline) {
-      const primaryHeadlineNode = document.getElementById('homeHeroTitle');
-      if (primaryHeadlineNode) {
-        primaryHeadlineNode.textContent = content.heroHeadline;
-      }
-    }
-
-    if (content.heroBody) {
-      const primaryBodyNode = document.getElementById('homeHeroLead');
-      if (primaryBodyNode) {
-        primaryBodyNode.textContent = content.heroBody;
-      }
-    }
-
   })
   .catch(() => {});
 

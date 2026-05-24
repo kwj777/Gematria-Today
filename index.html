@@ -28,10 +28,12 @@
     <meta property="og:description" content="Use Gematria.Today to calculate English gematria values, compare names, explore related words, and read curated blog insights in one place." />
     <meta property="og:url" content="https://gematria.today/" />
     <meta property="og:image" content="https://gematria.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
+    <meta property="og:image:alt" content="Backdrop illustration of English gematria letters paired with their numeric values." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Gematria.Today | Gematria Calculator, Name Meaning & Blog" />
     <meta name="twitter:description" content="Use Gematria.Today to calculate English gematria values, compare names, explore related words, and read curated blog insights in one place." />
     <meta name="twitter:image" content="https://gematria.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
+    <meta name="twitter:image:alt" content="Backdrop illustration of English gematria letters paired with their numeric values." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <style>
       :root { color-scheme: light; --brand-amber: #b45309; }
@@ -71,14 +73,32 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Gematria.Today",
-        "url": "https://gematria.today/",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://gematria.today/calculator.html",
-          "query-input": "required name=search_term_string"
-        }
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://gematria.today/#organization",
+            "name": "Gematria.Today",
+            "url": "https://gematria.today/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://gematria.today/apple-touch-icon.png",
+              "width": 180,
+              "height": 180
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://gematria.today/#website",
+            "name": "Gematria.Today",
+            "url": "https://gematria.today/",
+            "publisher": { "@id": "https://gematria.today/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://gematria.today/calculator.html",
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
       }
     </script>
       <script src="/pwa-register.js" defer></script>

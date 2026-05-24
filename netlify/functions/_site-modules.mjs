@@ -59,7 +59,7 @@ export function buildModulePublicPaths(modules = normalizeSiteModules()) {
     paths.push('/searchbot.html');
   }
   if (normalizedModules.forum) {
-    paths.push('/forum.html');
+    paths.push('/forum.html', '/forum-reputation-scale.html');
   }
 
   return paths;

@@ -15,6 +15,7 @@ const lookupForm = document.querySelector('#lookup-form');
       const calculatorError = document.querySelector('#calculator-error');
       const calculatorErrorMessage = document.querySelector('#calculator-error-message');
       const calculatorRetryButton = document.querySelector('#calculator-retry-button');
+      const lookupInputError = document.querySelector('#lookup-input-error');
       const lookupSubmitSpinner = lookupSubmitButton.querySelector('[data-lookup-submit-spinner]');
       const lookupSubmitLabelNode = lookupSubmitButton.querySelector('[data-lookup-submit-label]');
 
@@ -76,6 +77,26 @@ const lookupForm = document.querySelector('#lookup-form');
         calculatorErrorMessage.textContent = '';
         lookupInput.removeAttribute('aria-invalid');
       }
+
+      function showLookupInputError(message) {
+        if (!lookupInputError) return;
+        lookupInputError.textContent = String(message || '');
+        lookupInputError.hidden = false;
+        lookupInput.setAttribute('aria-invalid', 'true');
+        lookupInput.focus({ preventScroll: true });
+      }
+
+      function clearLookupInputError() {
+        if (lookupInputError && !lookupInputError.hidden) {
+          lookupInputError.textContent = '';
+          lookupInputError.hidden = true;
+        }
+        if (lookupInput.getAttribute('aria-invalid') === 'true' && (!calculatorError || calculatorError.hidden)) {
+          lookupInput.removeAttribute('aria-invalid');
+        }
+      }
+
+      lookupInput.addEventListener('input', clearLookupInputError);
 
       calculatorRetryButton.addEventListener('click', () => {
         hideCalculatorError();
@@ -750,6 +771,7 @@ View results: ${shareUrl}`.trim(),
         gematriaResult.textContent = '';
         relatedWordsResult.innerHTML = '';
         hideCalculatorError();
+        clearLookupInputError();
         const url = new URL(window.location.href);
         url.search = '';
         window.history.replaceState({}, '', url);
@@ -1416,12 +1438,14 @@ View results: ${shareUrl}`.trim(),
         const term = lookupInput.value.trim();
         lastSearchTerm = term;
         hideCalculatorError();
+        clearLookupInputError();
         window.gematriaTracking?.track('calculator_usage_start', {
           source: 'calculator_lookup_form',
           queryLength: term.length,
         });
         if (!term) {
-          lookupStatus.textContent = 'Please enter a word or phrase.';
+          lookupStatus.textContent = '';
+          showLookupInputError('Please enter a word or phrase.');
           gematriaResult.textContent = '';
           relatedWordsResult.innerHTML = '';
           return;
@@ -1431,7 +1455,7 @@ View results: ${shareUrl}`.trim(),
           const numericValue = Number(term);
           if (numericValue <= 0 || numericValue % 6 !== 0) {
             lookupStatus.textContent = '';
-            showCalculatorError('Gematria values must be positive multiples of 6. Try a number like 6, 12, 18, 24, …');
+            showLookupInputError('Gematria values must be positive multiples of 6 — try 6, 12, 18, 24, …');
             gematriaResult.textContent = '';
             relatedWordsResult.innerHTML = '';
             currentSearchPayload = null;

@@ -193,13 +193,16 @@ to mirror the homepage meta.
   (green) or *Not configured* (amber) — driven by a boolean from
   `/api/admin-secrets-status`.
 
-- **F3.** `calculator.html:200` (and the other calculator inputs) —
-  `aria-describedby` is wired to the help text, but I did not see
-  `aria-invalid="true"` toggled when validation fails, nor a
-  dedicated `role="alert"` region per input. Today the success and
-  error messaging share the same panel. Promote inline per-input
-  error state so screen readers announce errors at the input, not
-  via the result panel.
+- **F3.** ✅ shipped — All three calculators now expose a per-input
+  `role="alert"` error region (`#lookup-input-error`,
+  `#multi-cipher-input-error`, `#name-form-error`) wired into the
+  input's `aria-describedby`. Inline validation failures — empty
+  query, "must be a multiple of 6", missing names — set
+  `aria-invalid="true"` on the offending input, write the message
+  into the per-input region, and shift focus back to the input.
+  Typing into the input clears the invalid state. The big
+  `#calculator-error` panel is now reserved for backend / network
+  failures, not user-input mistakes.
 
 ### Security headers / infrastructure
 

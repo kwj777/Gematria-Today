@@ -3753,6 +3753,11 @@ a.badge,
     line-height: 1.4;
   }
 
+  .learning-path-promo--slim > .d-flex > .flex-shrink-0 {
+    flex-basis: 100%;
+    flex-shrink: 1;
+  }
+
   .learning-path-promo--slim #learningPathPromoCta {
     width: 100%;
     text-align: center;

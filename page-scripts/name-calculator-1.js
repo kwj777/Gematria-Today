@@ -57,6 +57,8 @@ const form = document.querySelector('#name-form');
       const nameCalcError = document.querySelector('#name-calculator-error');
       const nameCalcErrorMessage = document.querySelector('#name-calculator-error-message');
       const nameCalcRetryButton = document.querySelector('#name-calculator-retry-button');
+      const nameFormError = document.querySelector('#name-form-error');
+      const firstNameInput = document.querySelector('#name-1');
       const MOBILE_QUERY = '(max-width: 820px), (pointer: coarse)';
       const DISPLAY_RELATED_WORD_LIMIT = 10;
       const FULL_RELATED_WORD_LIMIT = 100;
@@ -100,6 +102,28 @@ const form = document.querySelector('#name-form');
         nameCalcError.hidden = true;
         nameCalcErrorMessage.textContent = '';
       }
+
+      function showNameFormError(message) {
+        if (!nameFormError) return;
+        nameFormError.textContent = String(message || '');
+        nameFormError.hidden = false;
+        if (firstNameInput) {
+          firstNameInput.setAttribute('aria-invalid', 'true');
+          firstNameInput.focus({ preventScroll: true });
+        }
+      }
+
+      function clearNameFormError() {
+        if (nameFormError && !nameFormError.hidden) {
+          nameFormError.textContent = '';
+          nameFormError.hidden = true;
+        }
+        if (firstNameInput?.getAttribute('aria-invalid') === 'true') {
+          firstNameInput.removeAttribute('aria-invalid');
+        }
+      }
+
+      firstNameInput?.addEventListener('input', clearNameFormError);
 
       nameCalcRetryButton.addEventListener('click', () => {
         hideNameError();
@@ -897,10 +921,12 @@ View results: ${shareUrl}`.trim(),
         event.preventDefault();
         mobileNoteNode.textContent = '';
         hideNameError();
+        clearNameFormError();
 
         const names = getNamesFromForm();
         if (!names.length) {
-          statusNode.textContent = 'Please enter at least one name.';
+          statusNode.textContent = '';
+          showNameFormError('Please enter at least one name.');
           resetResultsView();
           return;
         }
@@ -923,6 +949,7 @@ View results: ${shareUrl}`.trim(),
         statusNode.textContent = '';
         mobileNoteNode.textContent = getDefaultMobileNote();
         hideNameError();
+        clearNameFormError();
         document.title = 'Name Calculator | Gematria.Today';
         resetResultsView();
       });

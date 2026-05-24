@@ -11,6 +11,7 @@ const singleSelectRow = document.getElementById('multi-cipher-select-row');
 const allResult = document.getElementById('multi-cipher-result-all');
 const singleResult = document.getElementById('multi-cipher-result-single');
 const status = document.getElementById('multi-cipher-status');
+const inputError = document.getElementById('multi-cipher-input-error');
 const clearButton = document.getElementById('multi-cipher-clear');
 const saveButton = document.getElementById('multi-cipher-save-button');
 const saveHintRow = document.getElementById('multi-cipher-save-hint-row');
@@ -50,8 +51,27 @@ function clearResults() {
   allResult.innerHTML = '';
   singleResult.innerHTML = '';
   status.textContent = '';
+  clearInputError();
   currentSearchPayload = null;
   updateMemberSaveState();
+}
+
+function showInputError(message) {
+  if (!inputError) return;
+  inputError.textContent = String(message || '');
+  inputError.hidden = false;
+  input.setAttribute('aria-invalid', 'true');
+  input.focus({ preventScroll: true });
+}
+
+function clearInputError() {
+  if (inputError && !inputError.hidden) {
+    inputError.textContent = '';
+    inputError.hidden = true;
+  }
+  if (input.getAttribute('aria-invalid') === 'true') {
+    input.removeAttribute('aria-invalid');
+  }
 }
 
 function escapeHtml(value) {
@@ -284,7 +304,7 @@ function handleSubmit(event) {
   const query = input.value.trim();
   clearResults();
   if (!query) {
-    status.textContent = 'Enter a word or phrase to calculate.';
+    showInputError('Enter a word or phrase to calculate.');
     return;
   }
   try {
@@ -294,7 +314,7 @@ function handleSubmit(event) {
       renderAllCiphers(query);
     }
   } catch (error) {
-    status.textContent = `Could not calculate: ${error.message}`;
+    showInputError(`Could not calculate: ${error.message}`);
   }
 }
 
@@ -306,6 +326,7 @@ modeRadios.forEach((radio) => radio.addEventListener('change', () => {
   clearResults();
 }));
 form.addEventListener('submit', handleSubmit);
+input.addEventListener('input', clearInputError);
 clearButton.addEventListener('click', () => {
   input.value = '';
   clearResults();

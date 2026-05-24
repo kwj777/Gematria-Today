@@ -59,6 +59,16 @@
       .hero-quick-calc__deep-link { align-self: flex-start; display: inline-flex; align-items: center; font-weight: 600; color: #fbbf24; text-decoration: none; padding: 0.45rem 0.85rem; border: 1px solid rgba(251,191,36,0.55); border-radius: 0.55rem; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease; }
       .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; }
       .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: none; background: rgba(251,191,36,0.12); border-color: #fbbf24; }
+      @media (max-width: 575.98px) {
+        .hero-panel--compact { padding: 1.1rem; }
+        .hero-panel--compact h1.display-5 { font-size: 1.85rem; line-height: 1.15; margin-bottom: 0.6rem !important; }
+        .hero-panel--compact .lead { display: none; }
+        .hero-quick-calc { padding: 0.9rem; gap: 0.65rem; }
+        .hero-quick-calc__label { font-size: 0.72rem; }
+        .hero-quick-calc__input { font-size: 1rem; padding: 0.6rem 0.85rem; }
+        .hero-quick-calc[data-state="empty"] .hero-quick-calc__result,
+        .hero-quick-calc[data-state="empty"] .hero-quick-calc__deep-link { display: none; }
+      }
       .word-of-day-spotlight[aria-busy="true"] .wotd-stats,
       .word-of-day-spotlight[aria-busy="true"] .wotd-breakdown { visibility: hidden; }
       .site-footer-quick-links__label { letter-spacing: 0.06em; }
@@ -177,7 +187,7 @@
               <p id="homeHeroLead" class="lead mb-0">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
             </div>
             <div class="col-lg-6">
-              <div class="hero-quick-calc" role="group" aria-labelledby="heroQuickCalcLabel">
+              <div class="hero-quick-calc" role="group" aria-labelledby="heroQuickCalcLabel" data-state="empty">
                 <label class="hero-quick-calc__label" id="heroQuickCalcLabel" for="heroQuickCalcInput">Try it — type a word or name</label>
                 <input
                   id="heroQuickCalcInput"

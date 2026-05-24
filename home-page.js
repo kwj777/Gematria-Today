@@ -418,6 +418,7 @@ const initializeHeroQuickCalc = () => {
   const deepLink = document.getElementById('heroQuickCalcDeepLink');
   if (!input || !valueNode || !deepLink) return;
 
+  const container = input.closest('.hero-quick-calc');
   const exampleWord = (input.getAttribute('placeholder') || 'light').replace(/^e\.g\.\s*/i, '').trim() || 'light';
   const defaultCaption = caption ? caption.textContent : 'English gematria value';
 
@@ -434,6 +435,7 @@ const initializeHeroQuickCalc = () => {
       deepLink.setAttribute('aria-disabled', 'true');
       deepLink.setAttribute('tabindex', '-1');
       deepLink.removeAttribute('data-active');
+      if (container) container.setAttribute('data-state', 'empty');
       return;
     }
     const total = computeEnglishGematria(raw);
@@ -445,6 +447,7 @@ const initializeHeroQuickCalc = () => {
     deepLink.setAttribute('aria-disabled', 'false');
     deepLink.removeAttribute('tabindex');
     deepLink.setAttribute('data-active', 'true');
+    if (container) container.setAttribute('data-state', 'filled');
     if (!trackedThisSession) {
       trackedThisSession = true;
       window.gematriaTracking?.track('home_hero_quick_calc_used', { source: 'home_hero_quick_calc' });

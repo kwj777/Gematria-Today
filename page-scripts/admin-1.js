@@ -596,12 +596,29 @@
         meta.textContent = `${member.email} can now sign in to the admin dashboard with their existing account password.`;
       }
 
+      function renderStripeSecretStatusBadge(id, isConfigured) {
+        const badge = document.getElementById(id);
+        if (!badge) return;
+        badge.classList.remove('text-bg-success', 'text-bg-warning', 'text-bg-secondary');
+        if (isConfigured) {
+          badge.classList.add('text-bg-success');
+          badge.dataset.status = 'saved';
+          badge.textContent = 'Saved';
+        } else {
+          badge.classList.add('text-bg-warning');
+          badge.dataset.status = 'missing';
+          badge.textContent = 'Not configured';
+        }
+      }
+
       function renderStripeSettings() {
         const settings = state.stripeSettings || {};
         document.getElementById('stripeAccountId').value = settings.stripeAccountId || '';
         document.getElementById('stripePublishableKey').value = settings.stripePublishableKey || '';
         setSecretFieldMode('stripeSecretKey', false);
         setSecretFieldMode('stripeWebhookSigningSecret', false);
+        renderStripeSecretStatusBadge('stripeSecretKeyStatus', !!settings.hasStripeSecretKey);
+        renderStripeSecretStatusBadge('stripeWebhookSigningSecretStatus', !!settings.hasStripeWebhookSigningSecret);
         const configuredCount = [
           settings.stripeAccountId,
           settings.stripePublishableKey,
@@ -1202,13 +1219,24 @@
 
       document.getElementById('memberPromotionForm').addEventListener('submit', async (event) => {
         event.preventDefault();
+        const promotionEmail = (document.getElementById('memberPromotionEmail').value || '').trim();
+        // Admin promotion is irreversible from this form (only Super Admin >
+        // demote can undo it), so guard against typos and autocomplete misfires.
+        const confirmed = window.confirm(
+          'Promote ' + (promotionEmail || 'this member') + ' to admin?\n\n' +
+          'Admins can edit every page, post, and member. This cannot be undone ' +
+          'from this form — use Super Admin > demote to reverse it.'
+        );
+        if (!confirmed) {
+          return;
+        }
         clearMessage(errorMessage);
         try {
           const payload = await request('/api/admin-memberships', {
             method: 'POST',
             body: JSON.stringify({
               action: 'promote-admin',
-              email: document.getElementById('memberPromotionEmail').value
+              email: promotionEmail
             })
           });
           state.latestPromotedMember = payload.member || null;

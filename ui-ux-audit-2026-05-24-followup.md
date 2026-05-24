@@ -9,6 +9,26 @@ below are NEW or are previous items where the fix is still incomplete.
 Runtime / browser testing was not performed; items tagged
 "verify in browser" need on-device confirmation.
 
+## Sprint completion (2026-05-24, evening)
+
+Bundle 1–4 of the "Suggested next sprint" landed in a single pass:
+
+| Item | Status | Notes |
+|---|---|---|
+| N1 granular consent banner | ✅ shipped | `cookie-consent.js` now exposes Decline / Customize / Accept; Customize reveals Analytics + Advertising checkboxes that map to `analytics_storage` vs `ad_*`. Storage migrated to `{a,m}` JSON; legacy strings honored on read. |
+| N2 PWA update toast | ✅ shipped | `sw.js` no longer auto-`skipWaiting`s; `pwa-register.js` watches `updatefound`, shows "Refresh to update" toast, and reloads on `controllerchange`. |
+| N3 admin promote confirm | ✅ shipped | `page-scripts/admin-1.js:1203` now wraps the submit in `window.confirm` with the typed email and a one-liner explaining the blast radius. |
+| N4 PWA splash + description | ✅ shipped | `manifest.webmanifest` background_color flipped to `#0f172a`; description matches the homepage meta. Also added `categories` and `shortcuts` (Pol2 bonus). |
+| P5 reputation-scale OG/Twitter | ✅ shipped | Canonical + full OG/Twitter set added to `forum-reputation-scale.html`. |
+| C3 sitemap lastmod drift | ✅ shipped | Reviewed sitemap drift — `npm run sync:sitemap` reflects actual git history; the two stale entries are accurate because those files weren't touched after 2026-05-23. |
+| P1 FAQ search dead-state | ✅ shipped | `faq.html` input no longer ships `disabled`; pre-load typing is buffered and replayed; fetch failure now disables the input and writes "Search index unavailable" to the status live region. |
+| F1 resend verification inline | ✅ shipped | `page-scripts/member-1.js` masks the destination email, surfaces "Verification email sent to k***@…", and runs a 30s countdown disable on the submit button. |
+| F2 Stripe secret saved badge | ✅ shipped | `admin.html` adds Saved / Not configured badges next to each secret field, driven from `state.stripeSettings.hasStripe*` in `renderStripeSettings`. |
+| C1 contact response window | ✅ shipped | `contact.html` now states 5/20 business days and links to a new `accessibility.html#response-times` anchor. |
+| C2 contact related-strip | ✅ shipped | `contact.html` gained the `.legal-related-strip` block near its hero (the other legal pages already had it). |
+
+Pol2 was picked up incidentally while editing the manifest.
+
 ---
 
 ## Verification of the previous audit (Sprints 1–3)

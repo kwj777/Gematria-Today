@@ -203,6 +203,28 @@
     }
   }
 
+  // Legacy values were the strings 'accepted' / 'declined'; new storage is a
+  // JSON object {a:0|1, m:0|1} so analytics and advertising can be toggled
+  // independently (EDPB/ICO guidance: categories must be separately consentable).
+  function parseConsent(raw) {
+    if (!raw) return null;
+    if (raw === 'accepted') return { analytics: true, advertising: true };
+    if (raw === 'declined') return { analytics: false, advertising: false };
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return { analytics: !!parsed.a, advertising: !!parsed.m };
+      }
+    } catch (e) {
+      // Fall through and treat as null (re-prompt).
+    }
+    return null;
+  }
+
+  function serializeConsent(prefs) {
+    return JSON.stringify({ a: prefs.analytics ? 1 : 0, m: prefs.advertising ? 1 : 0 });
+  }
+
   function isRegionScopedForBanner() {
     try {
       var timeZone = String((Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || '');
@@ -230,26 +252,33 @@
     }
   }
 
-  function applyConsentMode(accepted) {
+  function applyConsentMode(prefs) {
     if (window.__gematriaGoogleAnalyticsEnabled !== true || typeof window.gtag !== 'function') {
       return;
     }
 
-    var status = accepted ? 'granted' : 'denied';
+    var analyticsStatus = prefs.analytics ? 'granted' : 'denied';
+    var advertisingStatus = prefs.advertising ? 'granted' : 'denied';
     window.gtag('consent', 'update', {
-      analytics_storage: status,
-      ad_storage: status,
-      ad_user_data: status,
-      ad_personalization: status,
+      analytics_storage: analyticsStatus,
+      ad_storage: advertisingStatus,
+      ad_user_data: advertisingStatus,
+      ad_personalization: advertisingStatus,
       region: CONSENT_MODE_REGIONS,
     });
   }
 
-  function fireConsentEvent(accepted) {
+  function fireConsentEvent(prefs) {
     try {
       window.dispatchEvent(
         new CustomEvent('gematria:cookie-consent', {
-          detail: { accepted: accepted },
+          detail: {
+            // `accepted` is preserved for any legacy listener that only cared
+            // about the binary signal; new code should read prefs.
+            accepted: prefs.analytics || prefs.advertising,
+            analytics: prefs.analytics,
+            advertising: prefs.advertising,
+          },
           bubbles: false,
         })
       );
@@ -268,6 +297,13 @@
     }, 300);
   }
 
+  function persistAndApply(banner, prefs) {
+    setConsent(serializeConsent(prefs));
+    applyConsentMode(prefs);
+    fireConsentEvent(prefs);
+    hideBanner(banner);
+  }
+
   function showBanner() {
     var banner = document.createElement('div');
     banner.id = 'cookieConsentBanner';
@@ -280,12 +316,26 @@
     banner.innerHTML =
       '<div class="cookie-consent-inner">' +
       '<p class="cookie-consent-text">' +
-      'We use Google Analytics to measure anonymous site usage. Declining keeps analytics, ad-storage, and ad-personalization signals turned off for your visit. ' +
+      'We use Google Analytics to measure anonymous site usage. Decline all, accept all, or open <em>Customize</em> to pick analytics and advertising independently. ' +
       '<a href="/privacy.html" class="cookie-consent-link">Privacy Policy</a>' +
       '</p>' +
       '<div class="cookie-consent-actions">' +
       '<button id="cookieConsentDecline" class="cookie-consent-btn cookie-consent-btn--decline" type="button" aria-label="Decline analytics and advertising cookies">Decline all</button>' +
+      '<button id="cookieConsentCustomize" class="cookie-consent-btn cookie-consent-btn--customize" type="button" aria-expanded="false" aria-controls="cookieConsentOptions">Customize</button>' +
       '<button id="cookieConsentAccept" class="cookie-consent-btn cookie-consent-btn--accept" type="button" aria-label="Accept analytics and advertising cookies">Accept all</button>' +
+      '</div>' +
+      '<div id="cookieConsentOptions" class="cookie-consent-options" hidden>' +
+      '<label class="cookie-consent-option">' +
+      '<input type="checkbox" id="cookieConsentAnalytics" />' +
+      '<span><strong>Analytics</strong> — anonymous page-view counts that help us see which pages are useful.</span>' +
+      '</label>' +
+      '<label class="cookie-consent-option">' +
+      '<input type="checkbox" id="cookieConsentAdvertising" />' +
+      '<span><strong>Advertising</strong> — personalization signals reserved for any future ad delivery (none today).</span>' +
+      '</label>' +
+      '<div class="cookie-consent-options__actions">' +
+      '<button id="cookieConsentSave" class="cookie-consent-btn cookie-consent-btn--save" type="button">Save my choices</button>' +
+      '</div>' +
       '</div>' +
       '</div>';
 
@@ -298,33 +348,55 @@
       });
     });
 
-    document.getElementById('cookieConsentAccept').addEventListener('click', function () {
-      setConsent('accepted');
-      applyConsentMode(true);
-      fireConsentEvent(true);
-      hideBanner(banner);
+    var acceptBtn = document.getElementById('cookieConsentAccept');
+    var declineBtn = document.getElementById('cookieConsentDecline');
+    var customizeBtn = document.getElementById('cookieConsentCustomize');
+    var saveBtn = document.getElementById('cookieConsentSave');
+    var optionsPanel = document.getElementById('cookieConsentOptions');
+    var analyticsBox = document.getElementById('cookieConsentAnalytics');
+    var advertisingBox = document.getElementById('cookieConsentAdvertising');
+
+    acceptBtn.addEventListener('click', function () {
+      persistAndApply(banner, { analytics: true, advertising: true });
     });
 
-    document.getElementById('cookieConsentDecline').addEventListener('click', function () {
-      setConsent('declined');
-      applyConsentMode(false);
-      fireConsentEvent(false);
-      hideBanner(banner);
+    declineBtn.addEventListener('click', function () {
+      persistAndApply(banner, { analytics: false, advertising: false });
+    });
+
+    customizeBtn.addEventListener('click', function () {
+      var expanded = customizeBtn.getAttribute('aria-expanded') === 'true';
+      if (expanded) {
+        customizeBtn.setAttribute('aria-expanded', 'false');
+        optionsPanel.hidden = true;
+      } else {
+        customizeBtn.setAttribute('aria-expanded', 'true');
+        optionsPanel.hidden = false;
+        // Move focus into the panel so keyboard users land somewhere meaningful.
+        try { analyticsBox.focus(); } catch (e) { /* ignore */ }
+      }
+    });
+
+    saveBtn.addEventListener('click', function () {
+      persistAndApply(banner, {
+        analytics: !!analyticsBox.checked,
+        advertising: !!advertisingBox.checked,
+      });
     });
   }
 
   // Expose a minimal read-only API for other scripts.
   window.gematriaCookieConsent = Object.freeze({
     getConsent: getConsent,
+    getConsentPreferences: function () { return parseConsent(getConsent()); },
     CONSENT_KEY: CONSENT_KEY,
     consentModeRegions: CONSENT_MODE_REGIONS.slice(),
   });
 
   var savedConsent = getConsent();
-  if (savedConsent === 'accepted') {
-    applyConsentMode(true);
-  } else if (savedConsent === 'declined') {
-    applyConsentMode(false);
+  var savedPrefs = parseConsent(savedConsent);
+  if (savedPrefs) {
+    applyConsentMode(savedPrefs);
   }
 
   // Skip for admin sessions, out-of-scope regions, or when the user has already decided.

@@ -1,13 +1,20 @@
 {
   "name": "Gematria.Today",
   "short_name": "Gematria",
-  "description": "Gematria calculators and research tools from Gematria.Today.",
+  "description": "Gematria.Today is a free suite of English-gematria calculators, name and multi-cipher tools, a community forum, and an AI research assistant for exploring numerical patterns in words and names.",
   "lang": "en",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f8f5ef",
+  "background_color": "#0f172a",
   "theme_color": "#0f172a",
+  "categories": ["education", "utilities", "productivity"],
+  "shortcuts": [
+    { "name": "Calculator", "short_name": "Calculator", "url": "/calculator.html" },
+    { "name": "Multi-cipher", "short_name": "Multi-cipher", "url": "/multi-cipher-calculator.html" },
+    { "name": "GemaBot", "short_name": "GemaBot", "url": "/ai-agent.html" },
+    { "name": "Forum", "short_name": "Forum", "url": "/forum.html" }
+  ],
   "icons": [
     {
       "src": "/assets/icons/icon-192.png?v=2",

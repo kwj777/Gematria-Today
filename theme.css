@@ -410,6 +410,24 @@ html.auth-lifetime .auth-only.auth-only--lifetime,
 html.auth-lifetime .auth-only.auth-only--premium,
 html.auth-lifetime .auth-only.auth-only--member { display: revert; }
 
+/* member.html first-paint auth gating. The dashboard/auth sections used
+   to be wrapped in a d-none container that JS removed after the server
+   confirmed the session, producing a visible auth-state flash. Now the
+   wrapper is visible from first paint and these rules use the auth-* tier
+   class set synchronously by early-bootstrap.js to show the right
+   section. member-1.js adds `.member-page-hydrated` to <html> once the
+   server check has finished, after which classList toggles take over. */
+html:not(.member-page-hydrated).auth-free #authSection,
+html:not(.member-page-hydrated).auth-premium #authSection,
+html:not(.member-page-hydrated).auth-lifetime #authSection {
+  display: none;
+}
+html:not(.member-page-hydrated).auth-free #dashboardSection.d-none,
+html:not(.member-page-hydrated).auth-premium #dashboardSection.d-none,
+html:not(.member-page-hydrated).auth-lifetime #dashboardSection.d-none {
+  display: block !important;
+}
+
 .navbar-nav .nav-item.nav-cta,
 .navbar-nav .nav-item.nav-search { align-items: center; }
 .navbar-nav .nav-cta .btn { white-space: nowrap; align-self: center; }
@@ -3199,6 +3217,20 @@ body.page-render-pending footer {
 
 :root[data-bs-theme="dark"] .premium-terms-dl dt {
   color: #f1f5f9;
+}
+
+/* Privacy "at a glance" summary card. Sits between the privacy hero and
+   the TOC so users see the short answer (we don't sell data, payments go
+   through Stripe, EU/UK consent, etc.) before scrolling into the legal
+   detail. Visually distinguished from regular content-panels by an amber
+   accent stripe so it reads as orientation, not as part of the body copy. */
+.privacy-tldr {
+  border-left: 4px solid var(--brand-amber);
+  background: rgba(var(--brand-amber-rgb), 0.06);
+}
+
+:root[data-bs-theme="dark"] .privacy-tldr {
+  background: rgba(var(--brand-amber-rgb), 0.12);
 }
 
 .membership-payment-form {

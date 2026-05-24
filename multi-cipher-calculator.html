@@ -152,9 +152,9 @@
           <h2 class="h4 mb-3">Calculate across multiple ciphers</h2>
           <form id="multi-cipher-form" class="row g-3">
             <div class="col-12">
-              <label class="form-label fw-semibold" for="multi-cipher-input">Word or phrase</label>
-              <input id="multi-cipher-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required />
-              <p class="form-text mb-0">Only A–Z letters are counted. Numbers, spaces, and punctuation are ignored.</p>
+              <label class="form-label fw-semibold" for="multi-cipher-input">Word or phrase <span class="form-label-suffix text-muted fw-normal">(A–Z only)</span></label>
+              <input id="multi-cipher-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required aria-describedby="multi-cipher-input-hint" />
+              <p id="multi-cipher-input-hint" class="form-text mb-0">Only A–Z letters are counted. Numbers, spaces, and punctuation are ignored.</p>
             </div>
             <fieldset class="col-12">
               <legend class="form-label fw-semibold">Display mode</legend>

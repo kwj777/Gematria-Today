@@ -59,6 +59,7 @@ const lookupForm = document.querySelector('#lookup-form');
           calculatorErrorMessage.textContent = msg;
         }
         calculatorError.hidden = false;
+        lookupInput.setAttribute('aria-invalid', 'true');
         if (!calculatorError.hasAttribute('tabindex')) {
           calculatorError.setAttribute('tabindex', '-1');
         }
@@ -73,6 +74,7 @@ const lookupForm = document.querySelector('#lookup-form');
       function hideCalculatorError() {
         calculatorError.hidden = true;
         calculatorErrorMessage.textContent = '';
+        lookupInput.removeAttribute('aria-invalid');
       }
 
       calculatorRetryButton.addEventListener('click', () => {

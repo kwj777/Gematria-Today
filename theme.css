@@ -60,6 +60,16 @@
   --tracking-wider: 0.08em;
   --tracking-widest: 0.14em;
 
+  /* Spacing scale (the forum theme aliases through --forum-space-*).
+     Bootstrap utilities still cover most layout, but components that need
+     a single-source-of-truth ladder route through these. */
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --space-6: 2.5rem;
+
   /* Elevation. Use the semantic aliases (--shadow-card, --shadow-panel,
      --shadow-card-hover) for component styling; the numeric --shadow-sm..xl
      rungs back them and are available for one-off elevation needs.

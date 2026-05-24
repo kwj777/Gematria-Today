@@ -258,18 +258,19 @@ to mirror the homepage meta.
   `.feature-card-icon__title` h3s (1.25rem vs 1.15rem), matching
   the semantic order.
 
-- **Pol2.** `manifest.webmanifest` — no `categories`, no
-  `screenshots`, no `shortcuts`. Adding
-  `"shortcuts": [{name:"Calculator", url:"/calculator.html"}, …]`
-  unlocks long-press menu actions on Android installs at near-zero
-  cost.
+- **Pol2.** ✅ mostly shipped — `categories` and `shortcuts` already
+  landed alongside N4 (see Sprint completion table above). `screenshots`
+  is deliberately deferred: the field requires real PNG/JPEG/WebP
+  captures for install-picker previews, and adding placeholder SVGs
+  would mislead the picker. Track as a future pass once we generate
+  real captures via `npm run screenshot`.
 
-- **Pol3.** `forum-theme.css` still declares its own
-  `--forum-space-*` token ladder rather than aliasing the main
-  `theme.css` tokens. Audit's D2 explicitly flagged this; the file
-  hasn't converged. Convert each forum token to
-  `--forum-space-1: var(--spacing-1, 0.25rem);` etc., or drop the
-  shadowed declarations entirely.
+- **Pol3.** ✅ shipped — added a generic `--space-1`..`--space-6`
+  ladder to `theme.css` (matching the existing forum values), then
+  rewrote `forum-theme.css` so every `--forum-space-N` aliases to
+  `var(--space-N)`. Forum spacing is now in lockstep with the main
+  scale; a future change in `theme.css` propagates automatically.
+  Closes original audit's D2.
 
 - **Pol4.** ✅ shipped — `accessibility.html` now ends "What we've
   audited" with a methodology line linking to
@@ -349,6 +350,18 @@ Round 2:
 - **Pol8** — print stylesheet now normalizes panel backgrounds to
   white-on-black so long-form prints don't waste ink on the
   parchment tint (above).
+
+Round 3:
+- **Pol2** — `categories` + `shortcuts` were already shipped with
+  N4; `screenshots` deferred as a real-capture-only field (above).
+- **Pol3** — `--space-1..6` added to `theme.css`; `forum-theme.css`
+  rewrites `--forum-space-N` to alias `--space-N`. Closes
+  original audit's D2 (forum-theme token convergence).
+- **A6** (original audit) — PWA prompts are now keyboard-dismissable
+  via Escape: iOS install popup, native install CTA, and the
+  "new version" update toast each register/remove their own
+  `keydown` handler that wires Escape to the same dismiss path as
+  the close button. Mouse-only paths still work unchanged.
 
 ---
 

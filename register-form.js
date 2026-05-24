@@ -71,7 +71,11 @@
       const confirm = fields.confirmPassword.value;
       const password = fields.password.value;
       const mismatch = confirm.length > 0 && confirm !== password;
-      confirmMismatchHint.classList.toggle('d-none', !mismatch);
+      if (confirmMismatchHint.dataset.alwaysOn === 'true') {
+        confirmMismatchHint.textContent = mismatch ? "Passwords don't match yet." : '';
+      } else {
+        confirmMismatchHint.classList.toggle('d-none', !mismatch);
+      }
       fields.confirmPassword.setAttribute('aria-invalid', mismatch ? 'true' : 'false');
     }
 

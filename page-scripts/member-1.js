@@ -912,10 +912,19 @@
         return `Premium access active through ${new Date(member.membershipExpiresAt).toLocaleDateString()}.`;
       }
 
+      function setPaymentButtonLabel(label) {
+        const labelEl = paymentButton.querySelector('[data-payment-button-label]');
+        if (labelEl) {
+          labelEl.textContent = label;
+        } else {
+          paymentButton.textContent = label;
+        }
+      }
+
       function syncPaymentButton(member = session?.member) {
         const isPremium = member?.membershipLevel === 'premium';
         paymentButton.disabled = !member || isPremium;
-        paymentButton.textContent = isPremium ? 'Premium membership active' : 'Continue to Stripe';
+        setPaymentButtonLabel(isPremium ? 'Premium membership active' : 'Continue to secure Stripe checkout');
       }
 
       function syncPremiumResearchLink(member = session?.member) {
@@ -2282,6 +2291,42 @@
       }
 
       window.addEventListener('DOMContentLoaded', () => {
+        const registerStrengthBar = document.getElementById('registerPasswordStrengthBar');
+        const registerStrengthLabel = document.getElementById('registerPasswordStrengthLabel');
+        const REGISTER_STRENGTH_STYLES = [
+          { width: '0%', cls: 'bg-secondary', label: 'Must be at least 8 characters.' },
+          { width: '25%', cls: 'bg-danger', label: 'Weak password' },
+          { width: '50%', cls: 'bg-warning', label: 'Fair password' },
+          { width: '75%', cls: 'bg-info', label: 'Good password' },
+          { width: '100%', cls: 'bg-success', label: 'Strong password' },
+        ];
+        const REGISTER_STRENGTH_HINT = 'Must be at least 8 characters.';
+        function scoreRegisterPassword(value) {
+          if (!value) return 0;
+          let score = 0;
+          if (value.length >= 8) score += 1;
+          if (value.length >= 12) score += 1;
+          if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
+          if (/\d/.test(value)) score += 1;
+          if (/[^A-Za-z0-9]/.test(value)) score += 1;
+          return Math.min(score, 4);
+        }
+        function updateRegisterStrength() {
+          if (!registerPasswordInput || !registerStrengthBar || !registerStrengthLabel) return;
+          const value = registerPasswordInput.value;
+          if (!value) {
+            registerStrengthBar.className = 'progress-bar bg-secondary';
+            registerStrengthBar.style.width = '0%';
+            registerStrengthLabel.textContent = REGISTER_STRENGTH_HINT;
+            return;
+          }
+          const style = REGISTER_STRENGTH_STYLES[scoreRegisterPassword(value)];
+          registerStrengthBar.className = 'progress-bar ' + style.cls;
+          registerStrengthBar.style.width = style.width;
+          registerStrengthLabel.textContent = style.label;
+        }
+        registerPasswordInput?.addEventListener('input', updateRegisterStrength);
+
         window.GematriaRegisterForm.initRegisterForm({
           form: document.getElementById('registerForm'),
           fields: {
@@ -2669,6 +2714,9 @@
 
 
       document.getElementById('logoutButton').addEventListener('click', async () => {
+        if (!window.confirm('Sign out of Gematria.Today on this device?')) {
+          return;
+        }
         clearAlert();
         try {
           await request('/api/member-logout', { method: 'POST', body: '{}' });
@@ -2707,7 +2755,7 @@
             currentMembershipLevel: session?.member?.membershipLevel || 'free',
           });
           paymentButton.disabled = true;
-          paymentButton.textContent = 'Opening Stripe…';
+          setPaymentButtonLabel('Opening Stripe…');
           const payload = await request('/api/member-payment-checkout', { method: 'POST', body: '{}' });
           window.location.assign(payload.checkoutUrl);
         } catch (error) {

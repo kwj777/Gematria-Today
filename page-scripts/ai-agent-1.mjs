@@ -2021,11 +2021,15 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
+      let isAgentRequestInFlight = false;
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (isAgentRequestInFlight) return;
         if (!premiumAccess) return;
         const prompt = promptInput.value.trim();
         if (!prompt) return;
+        isAgentRequestInFlight = true;
         addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
         autoCollapseHeroOnFirstUse();
         promptInput.value = '';
@@ -2047,12 +2051,17 @@ View results: ${shareUrl}`.trim(),
             askAgentButton.textContent = originalAskButtonText;
             askAgentButton.disabled = false;
           }
+          isAgentRequestInFlight = false;
           promptInput.focus();
         }
       });
 
       promptInput.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' || event.shiftKey) return;
+        if (isAgentRequestInFlight) {
+          event.preventDefault();
+          return;
+        }
         event.preventDefault();
         form.requestSubmit();
       });

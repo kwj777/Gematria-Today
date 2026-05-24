@@ -3276,6 +3276,22 @@ body.page-render-pending footer {
   font-size: 0.95rem;
 }
 
+.register-perk-strip {
+  border-left: 3px solid var(--brand-amber, #fbbf24);
+  background: rgba(var(--bs-warning-rgb), 0.08);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.register-perk-strip .badge {
+  font-weight: 500;
+  padding: 0.4rem 0.6rem;
+}
+
+:root[data-bs-theme="dark"] .register-perk-strip {
+  background: rgba(var(--bs-warning-rgb), 0.14);
+}
+
 .global-loading-overlay {
   position: fixed;
   inset: 0;

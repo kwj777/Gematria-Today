@@ -188,9 +188,32 @@ Users want to know in 5 seconds: "Do you sell my data? Use cookies? Share with w
   added Last-updated lines to accessibility/basics/why-english/definitions.
 - C10 was already addressed in earlier work (all `<img>` tags have alt).
 
-### Sprint 2 (1-2 weeks) — member, forum, GemaBot UX
+### Sprint 2 — member, forum, GemaBot UX ✅ shipped 2026-05-24
 - C4, C5, C6, C7, M1, M2, M3, M4, M7
-- Tighten the registration → dashboard → upgrade path and the forum/agent feedback loops.
+- Added an always-visible password strength meter on the member-page
+  register form, kept the gematria-account-setup strength bar always
+  visible (was `d-none` until first keystroke), and converted the
+  confirm-password mismatch hint into a persistent `aria-live` region
+  so screen readers announce changes while typing. The account-recovery
+  step-1 form now sets the `hidden` attribute (alongside `d-none`) on
+  submit and focus jumps to the new "Recovery email on the way"
+  heading on the success panel. Forum thread title + thread body +
+  reply body all gained live `aria-describedby` character counters
+  that warn near the cap and flag the limit. GemaBot now guards the
+  submit handler with an in-flight flag so repeated clicks (or Enter
+  presses in the textarea) can't queue concurrent requests, and the
+  chat log gains role-specific bubble styling — amber accent +
+  warm background for assistant turns, blue accent + cool background
+  for user turns, with avatar dots — so user vs. GemaBot is
+  unmistakable in both light and dark modes. Added a compact "what a
+  free account unlocks" perk strip inside the register tab (the full
+  comparison was already above the tabs but the strip surfaces the
+  diff while the form is in focus). Reworked the Stripe checkout
+  button with a padlock icon and honest copy ("Continue to secure
+  Stripe checkout") plus PCI-hosted explanation; added inline
+  auto-renewal terms next to the price; and pulled the Sign-out
+  action out of the admin/dashboard button cluster into the
+  Preferences panel with an explicit confirm step.
 
 ### Sprint 3 — content polish ✅ shipped 2026-05-24
 - C8, C11, L1, L2, L3, L5, L7, P5, P6, D3

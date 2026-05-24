@@ -103,6 +103,9 @@
   to = "/.netlify/functions/pwa-icon?size=512&variant=maskable"
   status = 200
 
+# Security headers — see notes below the CSP for two known trade-offs:
+#   1. style-src keeps 'unsafe-inline' (audit S1 — budget item).
+#   2. Cross-Origin-Embedder-Policy is intentionally omitted (audit S2).
 [[headers]]
   for = "/*"
   [headers.values]
@@ -112,7 +115,19 @@
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Cross-Origin-Opener-Policy = "same-origin"
     Cross-Origin-Resource-Policy = "same-site"
+    # NOTE: Cross-Origin-Embedder-Policy is deliberately NOT set. Enabling
+    # COEP would block cross-origin sub-resources that lack CORP/CORS
+    # (e.g. Follow.It embeds, jsdelivr fonts/styles) and unlock
+    # crossOriginIsolated APIs (SharedArrayBuffer, high-res timers) we
+    # don't currently need. Revisit if GemaBot or another client adds
+    # heavy in-browser compute.
     Permissions-Policy = "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(self), xr-spatial-tracking=()"
+    # NOTE: style-src retains 'unsafe-inline' (audit S1). Every public
+    # page still ships per-page <style> blocks; tightening to a
+    # hash/nonce policy requires first externalizing them into
+    # theme.css or page-scripts/<page>.css bundles. script-src is
+    # already free of 'unsafe-inline' and enforced by
+    # scripts/check-no-inline-scripts.mjs — keep it that way.
     Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://api.follow.it https://follow.it; script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://bootswatch.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests"
 
 [[headers]]

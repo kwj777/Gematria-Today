@@ -47,7 +47,7 @@ Re-checked against current code on `claude/site-audit-ui-ux-content-G8W9r`:
 | C8 prose width cap (`70ch`) | ✅ shipped | |
 | C9 accessibility statement re-write | ✅ shipped | |
 | C10 alt-text audit | ✅ shipped | |
-| C11 early-bootstrap inlined | ❌ **still external** | `index.html:4` still loads `/early-bootstrap.js` as a separate request. |
+| C11 early-bootstrap inlined | 🚫 **won't fix** | Inlining the script would require `script-src 'unsafe-inline'`, which CSP deliberately excludes and `scripts/check-no-inline-scripts.mjs` enforces. The original C11 was misframed — the external request is the cheaper trade vs. weakening CSP `script-src`. Recording here so future audits don't re-flag. |
 | C12 privacy TL;DR | ✅ shipped | |
 | L7 print stylesheet | ✅ shipped | `theme-deferred.css:162`, `theme.css:2395`. |
 | M9 resend countdown live | ✅ shipped | `account-recovery-1.js:82-100` uses `setInterval`. |
@@ -143,13 +143,12 @@ to mirror the homepage meta.
   fall back to in-page substring match until tags arrive, and surface
   a visible "Search index unavailable" state if the fetch errors.
 
-- **P2.** `tools.html:121-125` — The hero is *display:none* for all
-  signed-in users (`auth-free`, `auth-premium`, `auth-lifetime`). The
-  comment ("Logged-in members already know what these tools are")
-  trades navigation context for one row of vertical space; without
-  the hero, returning members land directly on a grid with no page
-  H1 in view above the fold. Keep at least the `<h1>` and a one-line
-  kicker so screen readers and orientation cues survive.
+- **P2.** ✅ shipped — `tools.html` keeps the "Tools" kicker and
+  `<h1>Gematria Research Tools</h1>` visible for signed-in users
+  while collapsing the marketing copy and help line. The hero box's
+  vertical padding shrinks to zero for `auth-free / auth-premium /
+  auth-lifetime` so the tool cards still land above the fold without
+  costing orientation cues.
 
 - **P3.** ✅ shipped — every "This is the way →" CTA now carries
   `aria-label="Start the free beginner path"` while keeping the
@@ -161,11 +160,14 @@ to mirror the homepage meta.
   override when the visible text flips to the self-describing
   "Continue Level N" variant. Closes cross-cutting theme #2.
 
-- **P4.** Featured blog carousel on `index.html:288` still uses
-  `d-none` (`data-module="blog_home_slider"`). Server-render at least
-  the first slide so JS-disabled / failed-load users see featured
-  content. Audit P5 was marked shipped on `blog.html` but the home
-  embed is the same anti-pattern.
+- **P4.** ✅ shipped — `index.html` now ships a real first slide
+  ("Read the latest gematria research" → `/blog.html`) inside the
+  carousel instead of a placeholder skeleton, so the initial paint
+  has meaningful content while the module fetches real posts. A
+  matching `<noscript>` panel sits right after the section to cover
+  JS-disabled visitors (the `d-none` on the section is required by
+  the admin module-toggle, which only runs in JS, so the fallback
+  has to live outside it). Module-disabled state still hides both.
 
 - **P5.** `forum-reputation-scale.html` is missing both
   `<link rel="canonical">` and any Open Graph / Twitter Card tags
@@ -209,23 +211,18 @@ to mirror the homepage meta.
 
 ### Security headers / infrastructure
 
-- **S1.** `netlify.toml:116` — CSP includes
-  `style-src 'self' … 'unsafe-inline'`. Every public page ships
-  inline `<style>` blocks, so this can't be tightened without first
-  externalizing them. Track this as a budget item: move per-page
-  styles into either `theme.css` or a `page-scripts/<page>.css`
-  bundle and drop `'unsafe-inline'` from style-src. Until then,
-  document the deliberate choice somewhere visible (the audit doc,
-  for example) so future contributors don't assume CSP is fully
-  locked down.
+- **S1.** ✅ shipped — `netlify.toml` now carries an inline comment
+  above the CSP explaining that `style-src 'unsafe-inline'` is a
+  deliberate budget item (every public page still ships per-page
+  `<style>` blocks), and that `script-src` stays clean of
+  `'unsafe-inline'` enforced by `scripts/check-no-inline-scripts.mjs`.
+  Future tightening still requires externalizing the per-page CSS.
 
-- **S2.** `netlify.toml` headers — no `Cross-Origin-Embedder-Policy`
-  is set. Combined with COOP `same-origin`, COEP would be required
-  for crossOriginIsolated APIs (SharedArrayBuffer, high-res timers).
-  This is a non-issue *today*, but if the GemaBot adds any heavy
-  client compute later you'll want it. Add a comment in the toml
-  noting that COEP is intentionally omitted while embeddable assets
-  (e.g. Follow.It) need cross-origin access.
+- **S2.** ✅ shipped — `netlify.toml` now documents the deliberate
+  omission of `Cross-Origin-Embedder-Policy` with an inline comment:
+  COEP would block cross-origin sub-resources (Follow.It, jsdelivr)
+  that lack CORP/CORS, and the site doesn't currently need
+  crossOriginIsolated APIs.
 
 ### Content / legal
 

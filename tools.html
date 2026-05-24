@@ -118,11 +118,25 @@
         padding-right: 0 !important;
       }
 
-      /* Logged-in members already know what these tools are. Hide the hero
-         so the tool cards land above the fold without scrolling. */
+      /* Logged-in members already know what these tools are. Collapse the
+         marketing copy but keep the H1 + kicker visible so the page still
+         has a clear heading and orientation cue above the fold. */
+      html.auth-free .tools-hero__intro,
+      html.auth-premium .tools-hero__intro,
+      html.auth-lifetime .tools-hero__intro,
+      html.auth-free .tools-help-line,
+      html.auth-premium .tools-help-line,
+      html.auth-lifetime .tools-help-line { display: none; }
       html.auth-free .tools-hero,
       html.auth-premium .tools-hero,
-      html.auth-lifetime .tools-hero { display: none; }
+      html.auth-lifetime .tools-hero {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 1.25rem !important;
+      }
+      html.auth-free .tools-hero h1,
+      html.auth-premium .tools-hero h1,
+      html.auth-lifetime .tools-hero h1 { margin-bottom: 0 !important; }
 
       @media (min-width: 970px) {
         .tools-grid > [class*="col-"] {
@@ -468,7 +482,7 @@
         <section class="tools-hero content-panel p-4 p-lg-5 mb-4">
           <p class="section-kicker mb-2">Tools</p>
           <h1 class="mb-3">Gematria Research Tools</h1>
-          <p class="mb-0">Several ways to explore the numerical patterns behind words, names, and phrases — plus a search tool for finding answers across the site. Pick the one that fits how you want to work.</p>
+          <p class="tools-hero__intro mb-0">Several ways to explore the numerical patterns behind words, names, and phrases — plus a search tool for finding answers across the site. Pick the one that fits how you want to work.</p>
           <p class="tools-help-line">Not sure which to use? Start with the <a href="/calculator.html">Calculator</a> for words and phrases, or see the <a href="/faq.html">FAQ</a> for a quick comparison.</p>
         </section>
 

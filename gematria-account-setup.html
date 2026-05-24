@@ -2,6 +2,14 @@
 <html lang="en">
   <head>
     <script src="/early-bootstrap.js"></script>
+    <script src="/page-scripts/gematria-account-setup-variant.js"></script>
+    <style>
+      .l0-variant { display: none; }
+      [data-l0-variant="learning"]   .l0-variant--learning   { display: block; }
+      [data-l0-variant="calculator"] .l0-variant--calculator { display: block; }
+      [data-l0-variant="default"]    .l0-variant--default    { display: block; }
+      html:not([data-l0-variant]) .l0-variant--learning { display: block; }
+    </style>
 
 <!-- Google Analytics bootstrap moved to deferred module -->
 <script defer src="/site-bundle.js"></script>
@@ -123,12 +131,12 @@
             <li class="breadcrumb-item active" aria-current="page">Level 0: Account setup</li>
           </ol>
         </nav>
-        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4">
+        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4 l0-variant l0-variant--learning">
           <div class="row g-4 align-items-center">
             <div class="col-lg-7">
               <p class="section-kicker mb-3">Level 0 · Beginner Learning Path</p>
-              <h1 class="display-5 fw-bold mb-3">Start with a free account before you begin Level 1</h1>
-              <p class="lead mb-0">A free account gives you continuity: you can save your searches, revisit comparisons, and build stronger pattern-recognition habits across multiple sessions.</p>
+              <h1 class="display-5 fw-bold mb-3">Set up your account to start the 4-level beginner path</h1>
+              <p class="lead mb-0">Level 1 → 4 takes about an hour. A free account saves your progress between levels and earns you the beginner badge at the end.</p>
             </div>
             <div class="col-lg-5 d-none d-lg-block">
               <figure class="hero-image-frame h-100 mb-0 overflow-hidden">
@@ -146,7 +154,19 @@
           </div>
         </section>
 
-        <section class="content-panel p-4 mb-4" aria-label="Learning path progress">
+        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4 l0-variant l0-variant--calculator">
+          <p class="section-kicker mb-3">Free account</p>
+          <h1 class="display-5 fw-bold mb-3">Save what you just calculated</h1>
+          <p class="lead mb-0">Without an account, your calculation history clears when you close the tab. Sign up in 30 seconds and your phrases, values, and matches stay searchable across sessions.</p>
+        </section>
+
+        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4 l0-variant l0-variant--default">
+          <p class="section-kicker mb-3">Free account</p>
+          <h1 class="display-5 fw-bold mb-3">Create a free Gematria.Today account</h1>
+          <p class="lead mb-0">Free forever, no credit card. Save your calculations, follow the beginner learning path, and post in the forum.</p>
+        </section>
+
+        <section class="content-panel p-4 mb-4 l0-variant l0-variant--learning" aria-label="Learning path progress">
           <p class="section-kicker mb-2">Progress</p>
           <p class="mb-2"><strong>You're on Level 0 of 4:</strong> Account setup.</p>
           <div class="progress" role="progressbar" aria-label="Learning path completion" aria-valuemin="0" aria-valuemax="5" aria-valuenow="1" aria-valuetext="Level 0 of 4 — account setup">
@@ -154,37 +174,14 @@
           </div>
         </section>
 
-        <section class="content-panel p-4 mb-4">
-          <h2 class="h4 mb-3">Why a free account matters for learning</h2>
-          <div class="row g-4">
-            <div class="col-md-6 col-lg-4">
-              <div class="feature-card-icon h-100">
-                <span class="feature-card-icon__icon" aria-hidden="true">
-                  <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                </span>
-                <h3 class="feature-card-icon__title">Preserve context</h3>
-                <p class="feature-card-icon__body">Saved history helps you continue where you left off, instead of restarting your comparisons from memory.</p>
-              </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-              <div class="feature-card-icon h-100">
-                <span class="feature-card-icon__icon" aria-hidden="true">
-                  <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-                </span>
-                <h3 class="feature-card-icon__title">Compare faster</h3>
-                <p class="feature-card-icon__body">When prior searches are available, you can spend more time validating patterns and less time rebuilding lists.</p>
-              </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-              <div class="feature-card-icon h-100">
-                <span class="feature-card-icon__icon" aria-hidden="true">
-                  <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 17l6-6 4 4 8-8"></path><path d="M14 7h7v7"></path></svg>
-                </span>
-                <h3 class="feature-card-icon__title">Learn progressively</h3>
-                <p class="feature-card-icon__body">The beginner path works best when your earlier inputs remain accessible while you advance through each level.</p>
-              </div>
-            </div>
-          </div>
+        <section class="content-panel p-4 mb-4 l0-variant l0-variant--learning">
+          <h2 class="h4 mb-3">What the 4 levels cover</h2>
+          <ol class="mb-0">
+            <li><strong>Level 1 — Basics:</strong> Run the calculator and read cipher values across multiple ciphers.</li>
+            <li><strong>Level 2 — Pattern grouping:</strong> Spot when phrases share values and group them meaningfully.</li>
+            <li><strong>Level 3 — Name analysis:</strong> Apply ciphers to names systematically.</li>
+            <li><strong>Level 4 — Research checklist:</strong> Validate patterns before sharing.</li>
+          </ol>
         </section>
 
         <section id="signUpSection" class="content-panel p-4 mb-4" aria-label="Create your free account">

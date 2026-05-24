@@ -656,7 +656,7 @@
 
       async function buildGeneralChatReply(normalizedPrompt, learnedResponse) {
         const learnedCue = learnedResponse
-          ? `<p class="mb-2"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>`
+          ? `<span class="d-none" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"></span>`
           : '';
         const relatedLookupWord = /\b(?:synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context|related words?)\b/i.test(normalizedPrompt)
           ? extractWordnikLookupWord(normalizedPrompt)
@@ -1830,7 +1830,7 @@ View results: ${shareUrl}`.trim(),
           : 'No alphabetical letters detected.';
 
         const initialHtml = `
-          ${learnedResponse ? `<p class="mb-2" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"><strong>Applied learned preference:</strong> ${escapeHtml(learnedResponse.explanation)}</p>` : ''}
+          ${learnedResponse ? `<span class="d-none" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"></span>` : ''}
           ${comparisonSummary}
           <div class="d-flex flex-column gap-2 mb-2" data-agent-cards>
             ${allWordReports.map((entry) => {

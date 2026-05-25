@@ -85,9 +85,57 @@
     });
   }
 
+  function setupLogout() {
+    let csrfPromise = null;
+    function fetchCsrfToken() {
+      if (!csrfPromise) {
+        csrfPromise = fetch('/api/member-csrf', {
+          credentials: 'same-origin',
+          headers: { accept: 'application/json' },
+        })
+          .then((r) => r.json().catch(() => ({})))
+          .then((p) => (p && p.csrfToken) || null)
+          .catch(() => null);
+      }
+      return csrfPromise;
+    }
+
+    document.addEventListener('click', async (event) => {
+      const trigger = event.target instanceof Element
+        ? event.target.closest('[data-nav-logout]')
+        : null;
+      if (!trigger) return;
+      event.preventDefault();
+      if (trigger.getAttribute('aria-disabled') === 'true') return;
+      if (!window.confirm('Sign out of Gematria.Today on this device?')) return;
+      trigger.setAttribute('aria-disabled', 'true');
+      try {
+        const csrfToken = await fetchCsrfToken();
+        await fetch('/api/member-logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'content-type': 'application/json',
+            ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+          },
+          body: '{}',
+        });
+      } catch (_) {
+        // Best-effort: navigate home regardless so the user sees a fresh state.
+      }
+      try {
+        if (typeof window.__gematriaSyncAuthState === 'function') {
+          window.__gematriaSyncAuthState();
+        }
+      } catch (_) { /* ignore */ }
+      window.location.href = '/';
+    });
+  }
+
   function init() {
     setupShrink();
     setupSearchShortcut();
+    setupLogout();
   }
 
   if (document.readyState === 'loading') {

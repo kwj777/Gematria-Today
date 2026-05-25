@@ -296,6 +296,23 @@
 
   const LG_BREAKPOINT = 992;
 
+  // Same-page anchor: same pathname, same host, just a different #hash.
+  // These don't trigger a page navigation, so the open menu has to be
+  // collapsed manually. Cross-page navigations let the browser unload
+  // the page and the new page renders with a fresh (collapsed) nav.
+  function isSamePageAnchor(href) {
+    if (!href) return false;
+    if (href.startsWith('#')) return true;
+    try {
+      const url = new URL(href, window.location.href);
+      return url.hostname === window.location.hostname
+        && url.pathname === window.location.pathname
+        && url.hash !== '';
+    } catch (_) {
+      return false;
+    }
+  }
+
   function wire() {
     const collapse = document.querySelector('.navbar .navbar-collapse');
     if (!collapse) {
@@ -305,7 +322,7 @@
       if (window.innerWidth >= LG_BREAKPOINT) {
         return;
       }
-      const link = event.target.closest('a.nav-link, a.dropdown-item');
+      const link = event.target.closest('a.nav-link, a.dropdown-item, a.nav-mega-item, a.nav-mega-footer');
       if (!link || !collapse.classList.contains('show')) {
         return;
       }
@@ -315,10 +332,34 @@
           link.getAttribute('data-bs-toggle') === 'dropdown') {
         return;
       }
+
+      const href = link.getAttribute('href') || '';
+
+      // For cross-page navigation, keep the menu open and mark the tapped
+      // link with .is-tapping. The instant-collapse path used to vanish the
+      // menu the moment you tapped — confusing on iPhone, worse when the
+      // next page was slow to load. Leaving the menu visible (with a clear
+      // pressed state on the tapped item) gives continuous feedback until
+      // the new page paints and renders its own collapsed nav.
+      const isInPage = isSamePageAnchor(href);
+      if (href && !href.startsWith('javascript:') && !isInPage) {
+        link.classList.add('is-tapping');
+        return;
+      }
+
       const toggler = document.querySelector('.navbar .navbar-toggler');
       if (toggler) {
         toggler.click();
       }
+    });
+
+    // pageshow fires when the user navigates back via bfcache. Strip any
+    // lingering .is-tapping so a back-button return doesn't show a stale
+    // pressed item.
+    window.addEventListener('pageshow', () => {
+      collapse.querySelectorAll('.is-tapping').forEach((el) => {
+        el.classList.remove('is-tapping');
+      });
     });
   }
 

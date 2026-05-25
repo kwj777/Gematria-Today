@@ -432,6 +432,31 @@ Round 7 (forum moderator UX + premium-area gating):
   "Premium area requires a premium membership. Switched back to
   free member area." No security/UX disconnect.
 
+Round 8 (responsive overflow + dark-mode contrast):
+- **A2** — static audit of the three 320px suspects clears:
+  Tools mega-menu's `min-width: 480px` is scoped inside
+  `@media (min-width: 992px)` (mobile collapses to single column);
+  `.hero-panel` already sets `overflow: hidden`; definitions sidebar
+  uses Bootstrap `.col-lg-3` (collapses to full width on mobile).
+  Belt-and-suspenders: `body` in `theme.css` now sets
+  `overflow-x: hidden; overflow-x: clip;` as a defensive safety net,
+  with `clip` (blocks programmatic scrolling too) gracefully
+  degrading to `hidden` on older browsers.
+- **A3** — `accessibility-audit.md` gained a "Dark-mode contrast
+  ratios" section documenting body, surface, `.text-muted`,
+  `.section-kicker` amber, brand-amber CTA, breadcrumb (active /
+  link / hover-focus), and membership-comparison table (thead,
+  premium thead, odd-row stripe). Computed with the 2.4-gamma sRGB
+  formula against the gradient-midpoint dark page bg. Everything
+  clears AA; body/surface/muted/kicker/breadcrumb/table-cells clear
+  AAA. Two AA-only entries are documented as deliberate design
+  accepts (active `--brand-amber` CTA and the premium thead's
+  warm-gold label hue, paired with AAA cell labels).
+  Also picked up D3 incidentally: `body` and `h1–h6` already carry
+  `font-size-adjust: 0.52` / `0.47` (theme.css:203, 208) — D3 was
+  already shipped before this audit, noted now in the original
+  audit doc.
+
 ---
 
 ## Cross-cutting themes (refresh)

@@ -201,6 +201,14 @@ body {
      ratio of the fallback to the web font. Headings get their own value
      because Fraunces is taller per em than the serif fallback. */
   font-size-adjust: 0.52;
+  /* Defensive horizontal-overflow guard. The known wide elements (hero
+     panel, mega-menu) clip their own overflow, but a rogue inline-styled
+     image or third-party widget can still poke out at 320px viewports and
+     trigger a body-level horizontal scroll. `clip` is stronger than
+     `hidden` -- it disallows programmatic scrolling too -- and degrades
+     gracefully to `hidden` on older browsers. */
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6,

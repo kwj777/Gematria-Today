@@ -128,7 +128,22 @@
     # theme.css or page-scripts/<page>.css bundles. script-src is
     # already free of 'unsafe-inline' and enforced by
     # scripts/check-no-inline-scripts.mjs — keep it that way.
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://api.follow.it https://follow.it; script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://bootswatch.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://api.follow.it https://follow.it; script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://bootswatch.com https://www.google-analytics.com https://region1.google-analytics.com https://ingesteer.services-prod.nsvcs.net; frame-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests"
+
+# Explicit Content-Type for HTML responses so Lighthouse's "Properly defines
+# charset" Best Practices audit passes on the deploy-preview CDN even when
+# Netlify's auto-detected Content-Type omits the charset parameter. Covers
+# the root, *.html files, and the function-served super-admin guides which
+# all return text/html.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
 
 [[headers]]
   for = "/robots.txt"

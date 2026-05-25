@@ -457,6 +457,17 @@ Round 8 (responsive overflow + dark-mode contrast):
   already shipped before this audit, noted now in the original
   audit doc.
 
+Round 9 (M7 verification + SR enhancement):
+- **M7** was already shipped in Sprint 2 (commit d980b05): the chat
+  log already differentiates user vs assistant turns visually
+  (warm-cream/amber for assistant; cool-blue/navy for user) in both
+  light and dark modes, with avatar dots and a 4px colored left
+  border. Follow-on accessibility tweak: each `<article>` in
+  `addMessage` (`page-scripts/ai-agent-1.mjs`) now also carries
+  `aria-label="GemaBot reply"` / `aria-label="Your message"` so the
+  per-turn landmarks announce the role independently of reading the
+  visible role label. Cross-marked in the original audit doc.
+
 ---
 
 ## Cross-cutting themes (refresh)

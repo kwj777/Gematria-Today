@@ -5004,4 +5004,31 @@ select:not(.form-select):focus-visible {
     font-weight: 600;
     text-decoration: none;
   }
+
+  /* Pressed feedback while the next page is loading. The mobile menu
+     stays open during navigation so the tap doesn't appear to vanish;
+     this rule gives the tapped item a clear "you got it, working on it"
+     state that survives until the new page paints. */
+  .navbar-nav .nav-link.is-tapping,
+  .navbar-nav .dropdown-item.is-tapping,
+  .navbar-nav .nav-mega-item.is-tapping,
+  .navbar-nav .nav-mega-footer.is-tapping {
+    background: rgba(251, 191, 36, 0.18);
+    color: #ffffff;
+    border-radius: 0.25rem;
+  }
+  .navbar-nav .nav-link.is-tapping::after {
+    content: " · loading…";
+    font-weight: 400;
+    opacity: 0.75;
+    font-size: 0.85em;
+  }
+  .navbar-nav .dropdown-item.is-tapping::after,
+  .navbar-nav .nav-mega-item.is-tapping .nav-mega-item__title::after,
+  .navbar-nav .nav-mega-footer.is-tapping::after {
+    content: " · loading…";
+    font-weight: 400;
+    opacity: 0.75;
+    font-size: 0.85em;
+  }
 }

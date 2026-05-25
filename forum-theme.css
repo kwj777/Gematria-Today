@@ -476,12 +476,34 @@ a.forum-badge--primary:focus-visible {
   border-color: #fbbf24;
 }
 
+/* Moderator toolbar that sits beside "Report thread" / "Report reply" in
+   the thread detail header. The "Mod" badge labels the cluster so admins
+   reading the page understand the affordances are theirs (and so the
+   visual rhythm telegraphs to non-mods that nothing is missing for them).
+   Toggled via the `hidden` attribute *and* the `.d-none` class for
+   maximum compatibility with the existing Bootstrap pattern. */
+.forum-mod-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-left: 0.5rem;
+  margin-left: 0.25rem;
+  border-left: 1px solid rgba(var(--color-text-rgb, 53, 65, 79), 0.18);
+}
+.forum-mod-toolbar[hidden] { display: none; }
+.forum-mod-toolbar__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+:root[data-bs-theme="dark"] .forum-mod-toolbar {
+  border-left-color: rgba(230, 235, 242, 0.22);
+}
 
-/* The Beginner Path Graduate badge gets a primary anchor treatment when
-   linked to its public /b/USERNAME page: bolder weight, gold gradient, and
-   slightly larger padding so the achievement reads first in the row. */
-a.forum-badge--primary {
-  text-decoration: none;
-  padding: 0.2rem 0.65rem 0.2rem 0.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #fde68a 0
+/* Inline "Mod" label that fronts the per-reply Delete button so admins
+   recognize at a glance that the destructive action is gated to them. */
+.forum-mod-inline-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

@@ -408,6 +408,30 @@ Round 6 (public-page mobile fixes from the original audit):
   Added an inline comment at the mobile rule locking the floor at
   `1rem` so future edits don't drop into the iOS-zoom trap.
 
+Round 7 (forum moderator UX + premium-area gating):
+- **M5** — Lock/Delete on the thread detail header now sit inside a
+  `#threadModToolbar` `role="group" aria-label="Moderator actions"`
+  cluster with a small "Mod" badge label and a left border, so the
+  affordance reads as a distinct moderator toolbar rather than
+  extra-confusing user controls. Each button carries an explicit
+  `aria-label` / `title` (the Lock label swaps to "Unlock…" while
+  locked). The per-reply Delete button is no longer pre-rendered
+  with `.d-none` for non-admins — it's not rendered at all,
+  closing the DOM-inspection leak vector. Server enforcement at
+  `assertAdmin` still backstops every moderation action with a 403.
+  Also repaired a pre-existing truncated `a.forum-badge--primary`
+  rule at the tail of `forum-theme.css` (duplicate of the complete
+  rule earlier in the file).
+- **M6** — verified Premium-area gating is server-side. Every
+  read and write that touches `access_tier = 'premium'` calls
+  `assertPremiumAreaAccess` in `member-forum.mjs`, and the category
+  access tier is constrained at the DB layer
+  (`CHECK (access_tier IN ('free', 'premium'))`). A non-premium
+  user tampering with the client-side `<select>` to `premium`
+  reaches a 403 server response; the client catches it and shows
+  "Premium area requires a premium membership. Switched back to
+  free member area." No security/UX disconnect.
+
 ---
 
 ## Cross-cutting themes (refresh)

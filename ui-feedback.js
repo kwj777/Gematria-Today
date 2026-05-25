@@ -318,6 +318,27 @@
     if (!collapse) {
       return;
     }
+
+    // Stop clicks inside Tools/Learn dropdown menus from bubbling to
+    // Bootstrap's document-level clearMenus handler. data-bs-auto-close
+    // ="outside" on the toggles is supposed to do this, but if anything
+    // (bf-cache, stale instance, older bundle) bypasses it, the dropdown
+    // would still collapse the moment you tap an item — leaving an empty
+    // toggle button on screen while the page loads. We stop propagation
+    // in the bubble phase: the link's default action (navigation) still
+    // fires, but Bootstrap's auto-close never sees the click. Desktop is
+    // unaffected — propagation stops are gated to mobile widths.
+    collapse.querySelectorAll('.dropdown-menu').forEach((menu) => {
+      menu.addEventListener('click', (event) => {
+        if (window.innerWidth >= LG_BREAKPOINT) {
+          return;
+        }
+        if (event.target.closest('a, button')) {
+          event.stopPropagation();
+        }
+      });
+    });
+
     collapse.addEventListener('click', (event) => {
       if (window.innerWidth >= LG_BREAKPOINT) {
         return;

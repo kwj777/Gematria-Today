@@ -202,6 +202,31 @@ export async function applyRateLimit(sql, source, {
   };
 }
 
+export const HONEYPOT_FIELD = 'website_url';
+
+export function isHoneypotTriggered(body) {
+  if (!body || typeof body !== 'object') return false;
+  const value = body[HONEYPOT_FIELD];
+  return value !== undefined && value !== null && String(value).trim() !== '';
+}
+
+export async function assertHoneypotEmpty(sql, source, body, { route, auditMetadata = {} } = {}) {
+  if (!isHoneypotTriggered(body)) return;
+  if (sql) {
+    try {
+      await logRequestAudit(sql, source, {
+        route,
+        action: 'anti_bot',
+        outcome: 'honeypot_triggered',
+        metadata: { ...auditMetadata, honeypotValueLength: String(body[HONEYPOT_FIELD] || '').length },
+      });
+    } catch (_error) {
+      // Audit log is best-effort; never block the reject path on logging.
+    }
+  }
+  throw Object.assign(new Error('Submission rejected'), { statusCode: 400 });
+}
+
 export async function logRequestAudit(sql, source, { route, action, outcome, metadata = {} } = {}) {
   await ensureSecuritySchema(sql);
   const visitorLocationMetadata = getVisitorLocationMetadata(source);

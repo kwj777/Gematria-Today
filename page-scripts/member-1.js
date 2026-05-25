@@ -2428,7 +2428,10 @@
         try {
           const response = await request('/api/member-resend-verification', {
             method: 'POST',
-            body: JSON.stringify({ identifier }),
+            body: JSON.stringify({
+              identifier,
+              ...(window.GematriaAntiBot?.honeypotPayload?.(resendVerificationForm) || {}),
+            }),
           });
           const maskedEmail = maskEmailForResendNotice(identifier);
           const successMessage = maskedEmail
@@ -2470,6 +2473,7 @@
             body: JSON.stringify({
               identifier: document.getElementById('loginIdentifier').value.trim(),
               password: document.getElementById('loginPassword').value,
+              ...(window.GematriaAntiBot?.honeypotPayload?.(loginForm) || {}),
             }),
           });
           if (session?.csrfToken) {

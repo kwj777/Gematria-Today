@@ -211,10 +211,14 @@
         const searchQuery = buildSearchPayloadQuery(trimmed);
 
         try {
+          const chatFormEl = document.getElementById('chatForm');
           const response = await fetch('/api/public-site-chatbot', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ query: searchQuery })
+            body: JSON.stringify({
+              query: searchQuery,
+              ...(window.GematriaAntiBot?.honeypotPayload?.(chatFormEl) || {}),
+            })
           });
 
           const payload = await response.json();

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   assertEndpointEnabled,
+  assertHoneypotEmpty,
   buildCacheKey,
   createRateLimitError,
   getClientIp,
@@ -12,6 +13,8 @@ import {
   getRequestPath,
   getRetentionConfig,
   getUserAgent,
+  HONEYPOT_FIELD,
+  isHoneypotTriggered,
   jsonResponse,
   securityHeaders,
 } from '../netlify/functions/_security.mjs';
@@ -350,5 +353,37 @@ test('assertEndpointEnabled blocks ONLY expensive public routes when the public-
   // Cheap public endpoints stay open.
   assert.doesNotThrow(
     () => assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'cheap' }),
+  );
+});
+
+// ---------- isHoneypotTriggered / assertHoneypotEmpty ----------
+
+test('HONEYPOT_FIELD is the website_url field', () => {
+  assert.equal(HONEYPOT_FIELD, 'website_url');
+});
+
+test('isHoneypotTriggered returns false for empty / missing / whitespace honeypot values', () => {
+  assert.equal(isHoneypotTriggered({}), false);
+  assert.equal(isHoneypotTriggered({ website_url: '' }), false);
+  assert.equal(isHoneypotTriggered({ website_url: '   ' }), false);
+  assert.equal(isHoneypotTriggered({ website_url: null }), false);
+  assert.equal(isHoneypotTriggered(null), false);
+  assert.equal(isHoneypotTriggered(undefined), false);
+});
+
+test('isHoneypotTriggered returns true when the honeypot has any non-whitespace content', () => {
+  assert.equal(isHoneypotTriggered({ website_url: 'https://spam.example' }), true);
+  assert.equal(isHoneypotTriggered({ website_url: 'x' }), true);
+});
+
+test('assertHoneypotEmpty resolves silently when the honeypot is empty', async () => {
+  await assert.doesNotReject(() => assertHoneypotEmpty(null, {}, { foo: 'bar' }, { route: 'r' }));
+  await assert.doesNotReject(() => assertHoneypotEmpty(null, {}, { website_url: '' }, { route: 'r' }));
+});
+
+test('assertHoneypotEmpty throws a 400 when the honeypot has content, even without a sql client', async () => {
+  await assert.rejects(
+    () => assertHoneypotEmpty(null, {}, { website_url: 'spam' }, { route: 'r' }),
+    (err) => err.statusCode === 400,
   );
 });

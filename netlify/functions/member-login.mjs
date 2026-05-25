@@ -15,7 +15,7 @@ import {
 } from './_member.mjs';
 import { generateCsrfToken } from './_auth.mjs';
 import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
-import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
+import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -25,8 +25,13 @@ export async function handler(event) {
   try {
     const sql = getSqlClient();
     await syncBootstrapAdminUser(sql);
-    const { identifier = '', password = '' } = parseBody(event);
+    const body = parseBody(event);
+    const { identifier = '', password = '' } = body;
     const normalizedIdentifier = String(identifier).trim().toLowerCase();
+    await assertHoneypotEmpty(sql, event, body, {
+      route: 'member-login',
+      auditMetadata: { identifier: normalizedIdentifier },
+    });
     const clientIp = getClientIp(event);
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
 

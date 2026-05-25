@@ -10,7 +10,7 @@ import {
   parseBody,
 } from './_member.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
-import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
+import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
 const GENERIC_RESPONSE_MESSAGE = 'If a pending account matches that identifier, a fresh verification link has been sent by email.';
 
@@ -30,6 +30,10 @@ export async function handler(event) {
 
     const clientIp = getClientIp(event);
     const normalizedIdentifier = rawIdentifier.toLowerCase();
+    await assertHoneypotEmpty(sql, event, body, {
+      route: 'member-resend-verification',
+      auditMetadata: { identifier: normalizedIdentifier },
+    });
 
     await applyRateLimit(sql, event, {
       scope: 'member-resend-verification-ip',

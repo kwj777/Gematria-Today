@@ -21,6 +21,7 @@ const SOURCES = [
   'glossary-popup.js',
   'nav-scroll.js',
   'public-theme.js',
+  'anti-bot.js',
 ];
 const OUTPUT = 'site-bundle.js';
 

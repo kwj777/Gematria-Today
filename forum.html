@@ -323,7 +323,7 @@
 
         <section class="content-panel p-4 mb-4 forum-composer-panel">
           <h2 class="h4 mb-3">Create thread</h2>
-          <form id="createThreadForm" class="row g-3">
+          <form id="createThreadForm" class="row g-3" data-anti-bot="1">
             <div class="col-md-4">
               <label class="form-label" for="newThreadCategory">Category</label>
               <select id="newThreadCategory" class="form-select" required></select>
@@ -367,7 +367,7 @@
           <h3 class="h5">Replies</h3>
           <div id="replyList" class="mb-4 forum-reply-list"></div>
 
-          <form id="createReplyForm" class="row g-3 forum-composer-panel">
+          <form id="createReplyForm" class="row g-3 forum-composer-panel" data-anti-bot="1">
             <input id="replyThreadId" type="hidden" />
             <div class="col-12">
               <label class="form-label" for="newReplyBody">Add reply</label>

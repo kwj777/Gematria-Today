@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGE_CACHE = `pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;
@@ -79,6 +79,14 @@ self.addEventListener('message', (event) => {
     // "new version available" toast in control of when the swap happens so
     // users don't lose in-flight work mid-session.
     self.skipWaiting();
+    return;
+  }
+
+  if (data.type === 'GET_VERSION') {
+    const replyPort = event.ports && event.ports[0];
+    if (replyPort) {
+      replyPort.postMessage({ version: CACHE_VERSION });
+    }
     return;
   }
 

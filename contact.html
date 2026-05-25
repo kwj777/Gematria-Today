@@ -187,6 +187,7 @@
               </div>
               <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
                 <button type="submit" class="btn btn-warning fw-semibold">Open in email app</button>
+                <span id="supportMemberBadge" class="badge text-bg-warning d-none" aria-live="polite">Priority &middot; member submission</span>
                 <span class="small text-muted">Review the draft before sending — nothing is submitted from this page.</span>
               </div>
             </div>
@@ -203,9 +204,20 @@
 
         let currentVersion = null;
 
+        function currentTier() {
+          const t = window.__gematriaAuthTier;
+          return (t === 'free' || t === 'premium' || t === 'lifetime') ? t : 'anon';
+        }
+
+        function isMember() {
+          const t = currentTier();
+          return t === 'premium' || t === 'lifetime';
+        }
+
         function collectDiagnostics() {
           return {
             version: currentVersion || 'unknown',
+            tier: currentTier(),
             url: window.location.href,
             userAgent: navigator.userAgent,
             language: navigator.language,
@@ -218,6 +230,7 @@
         function formatDiagnostics(diag) {
           return [
             'App version: ' + diag.version,
+            'Account tier: ' + diag.tier,
             'Page: ' + diag.url,
             'Browser: ' + diag.userAgent,
             'Language: ' + diag.language,
@@ -225,6 +238,11 @@
             'Installed app: ' + diag.standalone,
             'Reported at: ' + diag.timestamp
           ].join('\n');
+        }
+
+        const memberBadge = document.getElementById('supportMemberBadge');
+        if (memberBadge && isMember()) {
+          memberBadge.classList.remove('d-none');
         }
 
         function renderPreview() {
@@ -259,6 +277,7 @@
             return;
           }
 
+          const subject = (isMember() ? '[Member] ' : '') + topic;
           const body =
             (name ? 'From: ' + name + '\n\n' : '') +
             message +
@@ -266,7 +285,7 @@
             formatDiagnostics(collectDiagnostics());
 
           const href = 'mailto:support@lunarwebstudio.com'
-            + '?subject=' + encodeURIComponent(topic)
+            + '?subject=' + encodeURIComponent(subject)
             + '&body=' + encodeURIComponent(body);
 
           window.location.href = href;

@@ -418,6 +418,7 @@ const initializeHeroQuickCalc = () => {
       if (caption) caption.textContent = `Example — value of "${exampleWord}"`;
       deepLink.textContent = 'See it on the full calculator →';
       deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(exampleWord)}`);
+      deepLink.removeAttribute('aria-label');
       deepLink.setAttribute('aria-disabled', 'true');
       deepLink.setAttribute('tabindex', '-1');
       deepLink.removeAttribute('data-active');
@@ -428,8 +429,9 @@ const initializeHeroQuickCalc = () => {
     valueNode.textContent = total.toLocaleString();
     valueNode.removeAttribute('data-example');
     if (caption) caption.textContent = defaultCaption;
-    deepLink.textContent = 'See it on the full calculator →';
+    deepLink.innerHTML = 'See it on the full calculator <span aria-hidden="true">&rarr;</span> <kbd class="hero-quick-calc__deep-link-kbd" aria-hidden="true">Enter</kbd>';
     deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
+    deepLink.setAttribute('aria-label', `See "${raw}" on the full calculator (press Enter)`);
     deepLink.setAttribute('aria-disabled', 'false');
     deepLink.removeAttribute('tabindex');
     deepLink.setAttribute('data-active', 'true');

@@ -23,39 +23,19 @@
         const strengthBar = document.getElementById('lzRegPasswordStrengthBar');
         const strengthLabel = document.getElementById('lzRegPasswordStrengthLabel');
 
-        function scorePassword(value) {
-          if (!value) return 0;
-          let score = 0;
-          if (value.length >= 8) score += 1;
-          if (value.length >= 12) score += 1;
-          if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
-          if (/\d/.test(value)) score += 1;
-          if (/[^A-Za-z0-9]/.test(value)) score += 1;
-          return Math.min(score, 4);
-        }
-
-        const STRENGTH_STYLES = [
-          { width: '0%', cls: 'bg-secondary', label: '' },
-          { width: '25%', cls: 'bg-danger', label: 'Weak password' },
-          { width: '50%', cls: 'bg-warning', label: 'Fair password' },
-          { width: '75%', cls: 'bg-info', label: 'Good password' },
-          { width: '100%', cls: 'bg-success', label: 'Strong password' },
-        ];
-
-        const PASSWORD_HINT = 'Must be at least 8 characters.';
+        const passwordStrength = window.GematriaPasswordStrength;
 
         function updateStrength() {
-          if (!passwordInput || !strengthBar || !strengthLabel || !strengthWrap) return;
+          if (!passwordInput || !strengthBar || !strengthLabel || !strengthWrap || !passwordStrength) return;
           const value = passwordInput.value;
           if (!value) {
-            const empty = STRENGTH_STYLES[0];
+            const empty = passwordStrength.STRENGTH_STYLES[0];
             strengthBar.className = 'progress-bar ' + empty.cls;
             strengthBar.style.width = empty.width;
-            strengthLabel.textContent = PASSWORD_HINT;
+            strengthLabel.textContent = passwordStrength.HINT;
             return;
           }
-          const idx = scorePassword(value);
-          const style = STRENGTH_STYLES[idx];
+          const style = passwordStrength.styleFor(value);
           strengthBar.className = 'progress-bar ' + style.cls;
           strengthBar.style.width = style.width;
           strengthLabel.textContent = style.label;

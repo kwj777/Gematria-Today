@@ -375,7 +375,7 @@
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item dropdown nav-mega">
-              <a class="nav-link dropdown-toggle" href="/tools.html" id="navTools" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tools</a>
+              <button type="button" class="nav-link dropdown-toggle" id="navTools" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tools</button>
               <div class="dropdown-menu dropdown-menu-end nav-mega-menu" aria-labelledby="navTools">
                 <div class="nav-mega-grid">
                   <a class="nav-mega-item" href="/calculator.html">
@@ -480,11 +480,12 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="save-history-note-modal-title">Save calculation</h5>
+            <h5 class="modal-title" id="save-history-note-modal-title">Save this calculation</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p class="small text-muted mb-2">Add an optional private note to keep with this saved calculation. You can edit it later from your dashboard.</p>
+            <p class="small text-muted mb-2">Saves this one gematria result to your dashboard. To save the whole conversation instead, close this and use <strong>Save chat to dashboard</strong>.</p>
+            <p class="small text-muted mb-2">Add an optional private note. You can edit it later from your dashboard.</p>
             <label class="form-label" for="save-history-note-input">Notes (optional)</label>
             <textarea id="save-history-note-input" class="form-control" rows="5" placeholder="Add private notes about this saved calculation..."></textarea>
           </div>

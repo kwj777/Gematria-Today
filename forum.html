@@ -171,7 +171,7 @@
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item dropdown nav-mega">
-              <a class="nav-link dropdown-toggle" href="/tools.html" id="navTools" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tools</a>
+              <button type="button" class="nav-link dropdown-toggle" id="navTools" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tools</button>
               <div class="dropdown-menu dropdown-menu-end nav-mega-menu" aria-labelledby="navTools">
                 <div class="nav-mega-grid">
                   <a class="nav-mega-item" href="/calculator.html">
@@ -229,7 +229,8 @@
       <header class="content-panel p-4 p-lg-5 mb-4">
         <p class="section-kicker mb-2">Community Forum</p>
         <h1 class="h2 mb-3">Join the community: free member area + premium member area</h1>
-        <p class="text-muted mb-0">All signed-in members can post in the free area. Premium subscribers (and admins) also unlock premium-only discussions.</p>
+        <p class="text-muted mb-2">All signed-in members can post in the free area. Premium subscribers (and admins) also unlock premium-only discussions.</p>
+        <p class="mb-0 small"><a href="/forum-reputation-scale.html">Reputation explained &rarr;</a> &middot; see how forum points map to rep tiers and what each tier unlocks.</p>
       </header>
 
       <section class="content-panel p-4 mb-4" id="forumRules" aria-labelledby="forumRulesHeading">
@@ -351,10 +352,13 @@
         <section id="threadDetail" class="content-panel p-4 d-none forum-thread-detail">
           <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
             <h2 id="threadDetailTitle" class="h4 mb-0 forum-title"></h2>
-            <div class="d-flex gap-2">
-              <button id="reportThreadButton" class="btn btn-outline-warning btn-sm" type="button">Report thread</button>
-              <button id="lockThreadButton" class="btn btn-outline-secondary btn-sm d-none" type="button">Lock</button>
-              <button id="deleteThreadButton" class="btn btn-outline-danger btn-sm d-none" type="button">Delete</button>
+            <div class="d-flex gap-2 align-items-center forum-thread-actions">
+              <button id="reportThreadButton" class="btn btn-outline-warning btn-sm" type="button" title="Report this thread to the moderation team" aria-label="Report this thread to the moderation team">Report thread</button>
+              <span id="threadModToolbar" class="forum-mod-toolbar d-none" role="group" aria-label="Moderator actions" hidden>
+                <span class="forum-mod-toolbar__label badge text-bg-secondary" aria-hidden="true">Mod</span>
+                <button id="lockThreadButton" class="btn btn-outline-secondary btn-sm" type="button" title="Lock or unlock this thread (moderator only)" aria-label="Lock this thread (moderator only)">Lock</button>
+                <button id="deleteThreadButton" class="btn btn-outline-danger btn-sm" type="button" title="Delete this thread permanently (moderator only)" aria-label="Delete this thread permanently (moderator only)">Delete</button>
+              </span>
             </div>
           </div>
           <p id="threadDetailMeta" class="small text-muted forum-meta"></p>

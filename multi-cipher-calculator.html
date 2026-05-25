@@ -62,7 +62,7 @@
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
             <li class="nav-item dropdown nav-mega">
-              <a class="nav-link dropdown-toggle" href="/tools.html" id="navTools" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tools</a>
+              <button type="button" class="nav-link dropdown-toggle" id="navTools" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tools</button>
               <div class="dropdown-menu dropdown-menu-end nav-mega-menu" aria-labelledby="navTools">
                 <div class="nav-mega-grid">
                   <a class="nav-mega-item" href="/calculator.html">
@@ -118,7 +118,7 @@
           </div>
         </noscript>
         <section class="hero-panel p-4 p-lg-5 mb-5">
-          <p class="section-kicker mb-3">Multi-Cipher Calculator</p>
+          <p class="section-kicker mb-3"><a href="/tools.html" class="text-decoration-none">&larr; All tools</a> · Multi-Cipher Calculator</p>
           <div class="row g-4 align-items-center">
             <div class="col-lg-8">
               <h1 class="display-5 fw-bold mb-3">Multi-Cipher Gematria Calculator</h1>
@@ -153,7 +153,7 @@
           <form id="multi-cipher-form" class="row g-3">
             <div class="col-12">
               <label class="form-label fw-semibold" for="multi-cipher-input">Word or phrase <span class="form-label-suffix text-muted fw-normal">(A–Z only)</span></label>
-              <input id="multi-cipher-input" name="query" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required aria-describedby="multi-cipher-input-hint multi-cipher-input-error" />
+              <input id="multi-cipher-input" name="query" type="text" inputmode="text" autocomplete="on" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required aria-describedby="multi-cipher-input-hint multi-cipher-input-error" />
               <p id="multi-cipher-input-hint" class="form-text mb-0">Only A–Z letters are counted. Numbers, spaces, and punctuation are ignored.</p>
               <p id="multi-cipher-input-error" class="form-text text-danger mt-1 mb-0" role="alert" hidden></p>
             </div>
@@ -198,6 +198,7 @@
             <li><a href="/blog.html?post=english-gematria-cipher-atlas-english-sumerian#english-gematria-cipher-atlas-english-sumerian"><strong>Reverse Sumerian</strong></a> — reverse ordinal × 6. (Shares a post with English Sumerian.)</li>
             <li><a href="/blog.html?post=english-gematria-cipher-atlas-jewish-latin#english-gematria-cipher-atlas-jewish-latin"><strong>Jewish / Latin</strong></a> — A–I = 1..9, J–R = 10..90, S–Z = 100..800.</li>
           </ul>
+          <p class="small text-muted mt-3 mb-0 border-top pt-3">Methodology: <a href="/gematria-basics.html">basics</a> &middot; <a href="/why-english-gematria.html">why this cipher</a> &middot; <a href="/definitions.html">glossary</a>. Last updated <time datetime="2026-05-24">May 24, 2026</time>.</p>
         </section>
       </div>
       <script type="module" src="/page-scripts/multi-cipher-calculator-1.js"></script>
@@ -223,8 +224,40 @@
     </main>
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">
+        <div class="row site-footer-grid g-4 mb-2">
+          <div class="col-12 col-sm-6 col-lg-4">
+            <h2 class="site-footer-heading">Learn</h2>
+            <ul class="site-footer-list">
+              <li><a href="/gematria-basics.html">Gematria Basics</a></li>
+              <li><a href="/gematria-guide.html">Gematria Guide</a></li>
+              <li><a href="/definitions.html">Glossary</a></li>
+              <li><a href="/faq.html">FAQ</a></li>
+              <li><a href="/blog.html">Blog</a></li>
+            </ul>
+          </div>
+          <div class="col-12 col-sm-6 col-lg-4">
+            <h2 class="site-footer-heading">Tools</h2>
+            <ul class="site-footer-list">
+              <li><a href="/calculator.html">Calculator</a></li>
+              <li><a href="/multi-cipher-calculator.html">Multi-Cipher Calculator</a></li>
+              <li><a href="/name-calculator.html">Name Calculator</a></li>
+              <li><a href="/ai-agent.html">GemaBot</a></li>
+              <li><a href="/searchbot.html">SiteSeeker</a></li>
+              <li><a href="/tools.html">Compare all tools</a></li>
+            </ul>
+          </div>
+          <div class="col-12 col-lg-4">
+            <h2 class="site-footer-heading">Community</h2>
+            <ul class="site-footer-list">
+              <li><a href="/forum.html">Forum</a></li>
+              <li><a href="/forum-reputation-scale.html">Reputation scale</a></li>
+              <li><a href="/member.html">Membership</a></li>
+              <li><a href="/contact.html">Contact</a></li>
+            </ul>
+          </div>
+        </div>
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
-          <span>Gematria.Today — a suite of research tools.</span>
+          <span>Gematria.Today — research tools and calculators.</span>
         </div>
         <div class="d-flex flex-wrap gap-3 site-legal-links">
           <a href="/privacy.html">Privacy Policy</a>

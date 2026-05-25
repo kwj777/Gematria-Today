@@ -114,7 +114,7 @@
 
     const instructions = document.createElement('p');
     instructions.className = 'pwa-ios-popup__instructions';
-    instructions.innerHTML = 'Tap <strong>Share</strong> (􀈂), then choose <strong>Add to Home Screen</strong>.';
+    instructions.innerHTML = 'Tap <strong>Share</strong> (<span aria-hidden="true" style="font-family:-apple-system,BlinkMacSystemFont,sans-serif">􀈂</span>), then choose <strong>Add to Home Screen</strong>.';
 
     const actions = document.createElement('div');
     actions.className = 'pwa-ios-popup__actions';
@@ -132,11 +132,20 @@
 
     function dismissPopup() {
       window.localStorage.setItem(IOS_INSTALL_DISMISSED_KEY, 'true');
+      document.removeEventListener('keydown', handleKeydown);
       removeIosInstallPopup();
+    }
+
+    function handleKeydown(event) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        dismissPopup();
+      }
     }
 
     gotItButton.addEventListener('click', dismissPopup);
     closeButton.addEventListener('click', dismissPopup);
+    document.addEventListener('keydown', handleKeydown);
 
     actions.append(gotItButton);
     popup.append(closeButton, title, instructions, actions);
@@ -193,10 +202,20 @@
     dismiss.setAttribute('aria-label', 'Dismiss install prompt');
     dismiss.textContent = '×';
 
-    dismiss.addEventListener('click', () => {
+    function dismissCta() {
       incrementInstallCtaDismissCount();
+      document.removeEventListener('keydown', handleKeydown);
       removeInstallCta();
-    });
+    }
+
+    function handleKeydown(event) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        dismissCta();
+      }
+    }
+
+    dismiss.addEventListener('click', dismissCta);
 
     button.addEventListener('click', async () => {
       if (!deferredInstallPrompt) {
@@ -215,9 +234,12 @@
         }
       } finally {
         deferredInstallPrompt = null;
+        document.removeEventListener('keydown', handleKeydown);
         removeInstallCta();
       }
     });
+
+    document.addEventListener('keydown', handleKeydown);
 
     cta.append(text, button, dismiss);
     document.body.appendChild(cta);
@@ -271,13 +293,27 @@
     dismissButton.setAttribute('aria-label', 'Dismiss update notice');
     dismissButton.textContent = '×';
 
+    function dismissToast() {
+      document.removeEventListener('keydown', handleKeydown);
+      removeUpdateToast();
+    }
+
+    function handleKeydown(event) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        dismissToast();
+      }
+    }
+
     refreshButton.addEventListener('click', () => {
       refreshButton.disabled = true;
       refreshButton.textContent = 'Refreshing…';
+      document.removeEventListener('keydown', handleKeydown);
       waitingWorker.postMessage({ type: 'SKIP_WAITING' });
     });
 
-    dismissButton.addEventListener('click', removeUpdateToast);
+    dismissButton.addEventListener('click', dismissToast);
+    document.addEventListener('keydown', handleKeydown);
 
     toast.append(text, refreshButton, dismissButton);
     document.body.appendChild(toast);

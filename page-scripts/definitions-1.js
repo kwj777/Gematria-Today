@@ -615,4 +615,13 @@
             setTimeout(function () { flashCard(initialCard); }, 250);
           }
         }
+
+        // ---------- Print glossary button ----------
+        // Triggers the browser's print dialog. The existing @media print
+        // rules in theme-deferred.css already strip nav/footer and reset
+        // surfaces to white, so the printed/PDF-saved output reads cleanly.
+        var printButton = document.getElementById('printGlossaryButton');
+        if (printButton && typeof window.print === 'function') {
+          printButton.addEventListener('click', function () { window.print(); });
+        }
       })();

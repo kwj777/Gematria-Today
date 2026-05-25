@@ -705,9 +705,11 @@
       function addMessage(role, contentHtml, options = {}) {
         const pinToTop = Boolean(options.pinToTop);
         const wrapper = document.createElement('article');
-        wrapper.dataset.role = role === 'assistant' ? 'assistant' : 'user';
-        wrapper.className = `p-3 rounded-3 border ${role === 'assistant' ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
-        wrapper.innerHTML = `<p class="small text-muted mb-2">${role === 'assistant' ? 'GemaBot' : 'You'}</p><div data-message-content>${contentHtml}</div>`;
+        const isAssistant = role === 'assistant';
+        wrapper.dataset.role = isAssistant ? 'assistant' : 'user';
+        wrapper.setAttribute('aria-label', isAssistant ? 'GemaBot reply' : 'Your message');
+        wrapper.className = `p-3 rounded-3 border ${isAssistant ? 'bg-light border-secondary-subtle' : 'bg-white'}`;
+        wrapper.innerHTML = `<p class="small text-muted mb-2">${isAssistant ? 'GemaBot' : 'You'}</p><div data-message-content>${contentHtml}</div>`;
         chatLog.append(wrapper);
         refreshExamplePromptsVisibility();
         if (pinToTop) {
@@ -2067,6 +2069,10 @@ View results: ${shareUrl}`.trim(),
       });
 
       clearConversationButton.addEventListener('click', () => {
+        const hasTurns = chatLog.querySelector('article[data-role]');
+        if (hasTurns && !window.confirm('Clear this conversation? Saved chats on your dashboard are not affected.')) {
+          return;
+        }
         chatLog.innerHTML = '';
         pendingRelatedWordsSuggestionTopic = '';
         lastCalculationContext = null;

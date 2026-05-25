@@ -3,7 +3,15 @@
   // embedded in the calculator and results pages. Looks for the element
   // with id="learningPathNudge"; quietly does nothing if absent so it's
   // safe to include unconditionally.
+  //
+  // Two-tier suppression so users don't see the nudge over and over:
+  //   * dismiss → 30 days of localStorage suppression (cross-session)
+  //   * first view → sessionStorage flag suppresses on later pages in
+  //     the same visit, so the nudge only anchors once per session
+  //     (audit's Pol2 -- avoids banner fatigue across home/calculator/
+  //     results within a single browse).
   const DISMISS_KEY = 'learningPathNudgeDismissedAt';
+  const SESSION_SHOWN_KEY = 'learningPathNudgeShownThisSession';
   const HIDE_FOR_MS = 30 * 24 * 60 * 60 * 1000;
 
   function init() {
@@ -12,6 +20,10 @@
     let dismissedAt = 0;
     try { dismissedAt = Number(window.localStorage.getItem(DISMISS_KEY) || 0); } catch {}
     if (dismissedAt && Date.now() - dismissedAt < HIDE_FOR_MS) return;
+    let shownThisSession = false;
+    try { shownThisSession = window.sessionStorage.getItem(SESSION_SHOWN_KEY) === '1'; } catch {}
+    if (shownThisSession) return;
+    try { window.sessionStorage.setItem(SESSION_SHOWN_KEY, '1'); } catch {}
     const source = nudge.dataset.nudgeSource || 'unknown';
     nudge.classList.remove('d-none');
     window.gematriaTracking?.track?.('beginner_path_nudge_view', { source });

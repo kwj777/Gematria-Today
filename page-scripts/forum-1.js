@@ -190,9 +190,9 @@
           <article class="forum-reply-card p-3 mb-3" data-reply-id="${reply.id}">
             <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
               <p class="small text-muted mb-0 forum-meta">${renderAuthorInline(reply)} · ${formatDate(reply.createdAt)}</p>
-              <div class="d-flex gap-2">
-                <button class="btn btn-outline-warning btn-sm" type="button" data-report-reply="${reply.id}">Report</button>
-                <button class="btn btn-outline-danger btn-sm ${isAdmin ? '' : 'd-none'}" type="button" data-delete-reply="${reply.id}">Delete</button>
+              <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-outline-warning btn-sm" type="button" data-report-reply="${reply.id}" title="Report this reply to the moderation team" aria-label="Report this reply to the moderation team">Report</button>
+                ${isAdmin ? `<span class="badge text-bg-secondary forum-mod-inline-label" aria-hidden="true">Mod</span><button class="btn btn-outline-danger btn-sm" type="button" data-delete-reply="${reply.id}" title="Delete this reply permanently (moderator only)" aria-label="Delete this reply permanently (moderator only)">Delete</button>` : ''}
               </div>
             </div>
             <p class="mb-0 forum-body">${reply.body}</p>
@@ -252,19 +252,22 @@
       }
 
       function updateModeratorButtons(thread) {
+        const modToolbar = document.getElementById('threadModToolbar');
         const lockButton = document.getElementById('lockThreadButton');
-        const deleteButton = document.getElementById('deleteThreadButton');
         const replySubmitButton = document.getElementById('replySubmitButton');
         const replyBox = document.getElementById('newReplyBody');
 
         if (isAdmin) {
-          lockButton.classList.remove('d-none');
-          deleteButton.classList.remove('d-none');
-          lockButton.textContent = thread.isLocked ? 'Unlock' : 'Lock';
-          lockButton.dataset.mode = thread.isLocked ? 'unlock_thread' : 'lock_thread';
+          modToolbar.classList.remove('d-none');
+          modToolbar.hidden = false;
+          const locking = thread.isLocked;
+          lockButton.textContent = locking ? 'Unlock' : 'Lock';
+          lockButton.dataset.mode = locking ? 'unlock_thread' : 'lock_thread';
+          lockButton.setAttribute('aria-label', locking ? 'Unlock this thread (moderator only)' : 'Lock this thread (moderator only)');
+          lockButton.setAttribute('title', locking ? 'Unlock this thread (moderator only)' : 'Lock or unlock this thread (moderator only)');
         } else {
-          lockButton.classList.add('d-none');
-          deleteButton.classList.add('d-none');
+          modToolbar.classList.add('d-none');
+          modToolbar.hidden = true;
         }
 
         const locked = Boolean(thread.isLocked);

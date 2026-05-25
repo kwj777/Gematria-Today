@@ -253,66 +253,273 @@ to mirror the homepage meta.
 
 ## 💡 Polish (low-priority, high-quality wins)
 
-- **Pol1.** `index.html:249` — beginner-path promo heading is
-  `<h2 class="h6">`. The semantic level is correct (it's a section
-  heading) but visually styled as h6 inside an aside while the next
-  section uses `<h3 class="feature-card-icon__title">`. The visual
-  hierarchy reads "small → bigger → bigger", which inverts the
-  semantic order. Either downstyle the feature cards or upstyle the
-  promo heading; pick one rhythm.
+- **Pol1.** ✅ shipped — beginner-path promo `<h2>` on the home page
+  now uses `.h5` instead of `.h6` so it visually outranks the
+  `.feature-card-icon__title` h3s (1.25rem vs 1.15rem), matching
+  the semantic order.
 
-- **Pol2.** `manifest.webmanifest` — no `categories`, no
-  `screenshots`, no `shortcuts`. Adding
-  `"shortcuts": [{name:"Calculator", url:"/calculator.html"}, …]`
-  unlocks long-press menu actions on Android installs at near-zero
-  cost.
+- **Pol2.** ✅ mostly shipped — `categories` and `shortcuts` already
+  landed alongside N4 (see Sprint completion table above). `screenshots`
+  is deliberately deferred: the field requires real PNG/JPEG/WebP
+  captures for install-picker previews, and adding placeholder SVGs
+  would mislead the picker. Track as a future pass once we generate
+  real captures via `npm run screenshot`.
 
-- **Pol3.** `forum-theme.css` still declares its own
-  `--forum-space-*` token ladder rather than aliasing the main
-  `theme.css` tokens. Audit's D2 explicitly flagged this; the file
-  hasn't converged. Convert each forum token to
-  `--forum-space-1: var(--spacing-1, 0.25rem);` etc., or drop the
-  shadowed declarations entirely.
+- **Pol3.** ✅ shipped — added a generic `--space-1`..`--space-6`
+  ladder to `theme.css` (matching the existing forum values), then
+  rewrote `forum-theme.css` so every `--forum-space-N` aliases to
+  `var(--space-N)`. Forum spacing is now in lockstep with the main
+  scale; a future change in `theme.css` propagates automatically.
+  Closes original audit's D2.
 
-- **Pol4.** `accessibility.html` lists known limitations but does
-  not link to the live `accessibility-audit.md` doc that backs the
-  WCAG 2.5.5 work. Two clicks from "Read our methodology" → the audit
-  file would make the public commitment auditable.
+- **Pol4.** ✅ shipped — `accessibility.html` now ends "What we've
+  audited" with a methodology line linking to
+  `/accessibility-audit.md` (the WCAG 2.5.5 / Target Size audit
+  report). Public commitments now point at the per-pattern fixes.
 
-- **Pol5.** `pwa-register.js:113-117` — iOS install instructions use
-  the literal `􀈂` glyph for the Share icon. On any device that
-  isn't iOS, this renders as a tofu box (and on some macOS Safari
-  versions too). Wrap it with `font-family: -apple-system` so other
-  devices that hit the rule still render gracefully — or just hide
-  the icon char entirely when not on iOS.
+- **Pol5.** ✅ shipped — `pwa-register.js:117` wraps the Apple-PUA
+  Share glyph in `<span aria-hidden="true" style="font-family:-apple-system,…">`
+  so even if iOS gating is bypassed on a non-Apple device, the
+  glyph degrades to the system font instead of rendering as a tofu
+  box. The popup itself remains gated to iOS Safari via
+  `shouldShowIosInstallPopup`.
 
-- **Pol6.** Footer copy on all pages: "Gematria.Today — a suite of
-  research tools." is identical across 40+ pages. Consider adding a
-  one-line context per top-level area (Tools / Members / Legal) so
-  the footer doubles as a wayfinding cue.
+- **Pol6.** ✅ shipped — footer one-liner now varies by top-level
+  area instead of repeating "a suite of research tools" everywhere:
+  Tools/calculators get "research tools and calculators."; member +
+  admin surfaces get "your member workspace."; Privacy / Terms /
+  Disclaimer / Accessibility / Contact get "policies, disclosures,
+  and support."; learning pages (Basics, Guide, Why English,
+  Definitions, FAQ, Blog) get "gematria, explained from the basics
+  up." The home page and `404.html` keep the umbrella original.
 
-- **Pol7.** `member.html` and `gematria-account-setup.html` both
-  have password strength meters; the labels arrays are defined
-  separately in each file
-  (`STRENGTH_LABELS = ['Too short','Weak','Fair','Good','Strong']`).
-  Extract to a shared helper to avoid drift when copy changes.
+- **Pol7.** ✅ shipped — `page-scripts/password-strength-helpers.js`
+  now owns the shared `STRENGTH_STYLES`, `HINT`, and `score`/`styleFor`
+  for both register flows. `member-1.js` and `gematria-account-setup-1.js`
+  drop their local copies and read through `window.GematriaPasswordStrength`;
+  both pages load the helper before the page script. Account-recovery
+  uses a stricter scoring formula and is left untouched.
 
-- **Pol8.** `theme-deferred.css` — print stylesheet hides
-  `.skip-link` and nav (good), but doesn't normalize background
-  colors. Long-form pages (`gematria-guide.html`,
-  `why-english-gematria.html`) still print with the parchment
-  `--brand-surface` tint, wasting ink. Add
-  `@media print { body, main, .content-panel { background: #fff !important; color: #000; } }`.
+- **Pol8.** ✅ shipped — `theme-deferred.css` print block now also
+  normalizes `main`, `.content-panel`, `.card`, `.feature-card`,
+  `.faq-card`, `.hero-panel`, `.legal-copy`, and `.stat-card` to
+  white-on-black. Long-form pages (Guide, Why English, Definitions)
+  no longer print with the parchment `--brand-surface` tint.
 
-- **Pol9.** `tools.html` and `gematria-guide.html` link to the
-  individual calculators, but the calculators don't link back. Add a
-  small "← Back to all tools" affordance in the calculator hero so
-  the journey is two-way.
+- **Pol9.** ✅ shipped — all three calculator heroes now lead with
+  "← All tools · {kicker}" linking back to `/tools.html`, making
+  the journey from `tools.html`/`gematria-guide.html` round-trip.
+  Lives in the existing `.section-kicker` so the link inherits the
+  amber treatment and stays inline with the eyebrow.
 
-- **Pol10.** `definitions.html` mobile sidebar toggle still labels
-  itself "Sections" without a `▾` chevron — audit's L6 wasn't
-  addressed in any sprint. The affordance reads as a static heading
-  on mobile, not a toggle.
+- **Pol10.** ✅ already shipped — `definitions.html:429-430` adds
+  `▾` / `▴` via `.glossary-toc-toggle::after` for the mobile
+  Sections toggle (originally L6). False positive in this audit;
+  recording here so future sweeps don't re-flag.
+
+---
+
+## Sprint shipped 2026-05-24 (follow-up quick wins)
+
+Round 1:
+- **M8** (original audit) — GemaBot's "Save calculation" modal title
+  is now "Save this calculation" and the body explicitly distinguishes
+  one-result saves from the full chat save (`ai-agent.html:483-487`).
+- **P3** (original audit) — `autocomplete="off"` removed from
+  `calculator.html` and `multi-cipher-calculator.html` lookup inputs;
+  name-calculator already used proper `given-name`/`additional-name`/
+  `family-name`.
+- **Pol4** — accessibility methodology link added (above).
+- **Pol6** — area-specific footer copy across 23 pages (above).
+- **Pol9** — "← All tools" back-link in calculator heroes (above).
+- **Pol10** — verified already shipped.
+
+Round 2:
+- **P7** (original audit) — each calculator now ends with a small
+  methodology + last-updated line: `calculator.html` and
+  `name-calculator.html` cite the Base-6 cipher and link to
+  basics / why-english-gematria / definitions; `multi-cipher-calculator.html`
+  appends the same to its "About the seven ciphers" panel.
+- **Pol1** — home beginner-path promo heading promoted from `.h6`
+  to `.h5` to outrank feature cards visually (above).
+- **Pol5** — Apple-PUA share glyph wrapped in `-apple-system` span
+  so it degrades gracefully outside iOS Safari (above).
+- **Pol7** — password strength meter scoring + styles extracted to
+  `page-scripts/password-strength-helpers.js`, consumed by both
+  register flows via `window.GematriaPasswordStrength` (above).
+- **Pol8** — print stylesheet now normalizes panel backgrounds to
+  white-on-black so long-form prints don't waste ink on the
+  parchment tint (above).
+
+Round 3:
+- **Pol2** — `categories` + `shortcuts` were already shipped with
+  N4; `screenshots` deferred as a real-capture-only field (above).
+- **Pol3** — `--space-1..6` added to `theme.css`; `forum-theme.css`
+  rewrites `--forum-space-N` to alias `--space-N`. Closes
+  original audit's D2 (forum-theme token convergence).
+- **A6** (original audit) — PWA prompts are now keyboard-dismissable
+  via Escape: iOS install popup, native install CTA, and the
+  "new version" update toast each register/remove their own
+  `keydown` handler that wires Escape to the same dismiss path as
+  the close button. Mouse-only paths still work unchanged.
+
+Round 4 (nav cluster from the original audit):
+- **N1** — Tools mega-menu toggle is now a pure `<button type="button">`
+  with `data-bs-toggle="dropdown"` and `aria-haspopup="true"`, no href.
+  Click can only open the dropdown; the "Compare tools →" footer link
+  carries the direct path to `/tools.html`. `scripts/sync-nav.mjs`
+  regex extended to allow `nav-mega-footer` to receive the active
+  state on `/tools.html`. Propagated via `npm run sync-nav` to all
+  29 nav-bearing pages.
+- **N2** — added a defensive `:focus-visible` rule in `theme.css` for
+  raw `input` / `textarea` / `select` that don't carry the
+  `.form-control` / `.form-select` / `.form-check-input` classes,
+  closing the gap where a third-party widget could leak the native
+  or Bootstrap-blue focus ring.
+- **N3** — verified the search pill is already inside the mobile
+  drawer (not the visible navbar header). Added a ≤400px media
+  query that hides the "Ask SiteSeeker" text label and tightens the
+  pill padding so the four-pill action row clears 360px containers.
+  The `aria-label="Ask SiteSeeker (press /)"` keeps the announcement
+  intact for screen readers.
+
+Round 5 (design-token cleanup from the original audit):
+- **D1** — disabled `.btn-warning` / `.btn-amber` palette inverted to
+  pale cream `#efe5d4` behind deep amber `#6b3a06` (new
+  `--brand-amber-disabled-fg` token). `--bs-btn-disabled-opacity`
+  dropped from 0.75 → 1; the old multiplier was crushing the white-
+  on-tan combo to ~1.9:1 against the page. New pair clears WCAG AAA
+  at 7.5:1 and visually reads as clearly "off" next to the active CTA.
+- **D4** — added semantic `--color-text: #35414f` and
+  `--color-text-rgb: 53, 65, 79` to `theme.css`. Existing
+  `rgba(53, 65, 79, …)` declarations can now route through the
+  RGB token in future passes without changing the value.
+
+Round 6 (public-page mobile fixes from the original audit):
+- **P1** — `index.html` no longer sets `.hero-panel--compact .lead
+  { display: none; }` at ≤575.98px. The elevator pitch stays visible
+  on phones at `font-size: 0.95rem; line-height: 1.35; color:
+  rgba(255,255,255,0.85)` and a reduced `margin-bottom: 0.5rem` so
+  the above-fold layout (incl. the iPhone tightening from 71fcc62)
+  still holds.
+- **P2** — verified computed `font-size >= 16px` across calculator
+  inputs (hero `1.125rem` → `1rem` at ≤575.98px, main calculators
+  `.form-control-lg` ≈ `1.25rem`, no `html` font-size override).
+  Added an inline comment at the mobile rule locking the floor at
+  `1rem` so future edits don't drop into the iOS-zoom trap.
+
+Round 7 (forum moderator UX + premium-area gating):
+- **M5** — Lock/Delete on the thread detail header now sit inside a
+  `#threadModToolbar` `role="group" aria-label="Moderator actions"`
+  cluster with a small "Mod" badge label and a left border, so the
+  affordance reads as a distinct moderator toolbar rather than
+  extra-confusing user controls. Each button carries an explicit
+  `aria-label` / `title` (the Lock label swaps to "Unlock…" while
+  locked). The per-reply Delete button is no longer pre-rendered
+  with `.d-none` for non-admins — it's not rendered at all,
+  closing the DOM-inspection leak vector. Server enforcement at
+  `assertAdmin` still backstops every moderation action with a 403.
+  Also repaired a pre-existing truncated `a.forum-badge--primary`
+  rule at the tail of `forum-theme.css` (duplicate of the complete
+  rule earlier in the file).
+- **M6** — verified Premium-area gating is server-side. Every
+  read and write that touches `access_tier = 'premium'` calls
+  `assertPremiumAreaAccess` in `member-forum.mjs`, and the category
+  access tier is constrained at the DB layer
+  (`CHECK (access_tier IN ('free', 'premium'))`). A non-premium
+  user tampering with the client-side `<select>` to `premium`
+  reaches a 403 server response; the client catches it and shows
+  "Premium area requires a premium membership. Switched back to
+  free member area." No security/UX disconnect.
+
+Round 8 (responsive overflow + dark-mode contrast):
+- **A2** — static audit of the three 320px suspects clears:
+  Tools mega-menu's `min-width: 480px` is scoped inside
+  `@media (min-width: 992px)` (mobile collapses to single column);
+  `.hero-panel` already sets `overflow: hidden`; definitions sidebar
+  uses Bootstrap `.col-lg-3` (collapses to full width on mobile).
+  Belt-and-suspenders: `body` in `theme.css` now sets
+  `overflow-x: hidden; overflow-x: clip;` as a defensive safety net,
+  with `clip` (blocks programmatic scrolling too) gracefully
+  degrading to `hidden` on older browsers.
+- **A3** — `accessibility-audit.md` gained a "Dark-mode contrast
+  ratios" section documenting body, surface, `.text-muted`,
+  `.section-kicker` amber, brand-amber CTA, breadcrumb (active /
+  link / hover-focus), and membership-comparison table (thead,
+  premium thead, odd-row stripe). Computed with the 2.4-gamma sRGB
+  formula against the gradient-midpoint dark page bg. Everything
+  clears AA; body/surface/muted/kicker/breadcrumb/table-cells clear
+  AAA. Two AA-only entries are documented as deliberate design
+  accepts (active `--brand-amber` CTA and the premium thead's
+  warm-gold label hue, paired with AAA cell labels).
+  Also picked up D3 incidentally: `body` and `h1–h6` already carry
+  `font-size-adjust: 0.52` / `0.47` (theme.css:203, 208) — D3 was
+  already shipped before this audit, noted now in the original
+  audit doc.
+
+Round 9 (M7 verification + SR enhancement):
+- **M7** was already shipped in Sprint 2 (commit d980b05): the chat
+  log already differentiates user vs assistant turns visually
+  (warm-cream/amber for assistant; cool-blue/navy for user) in both
+  light and dark modes, with avatar dots and a 4px colored left
+  border. Follow-on accessibility tweak: each `<article>` in
+  `addMessage` (`page-scripts/ai-agent-1.mjs`) now also carries
+  `aria-label="GemaBot reply"` / `aria-label="Your message"` so the
+  per-turn landmarks announce the role independently of reading the
+  visible role label. Cross-marked in the original audit doc.
+
+Round 10 (sweep of remaining original-audit Pol items):
+- **Pol1** — hero "See it on the full calculator →" now pulses briefly
+  on activation, ends with a styled `<kbd>Enter</kbd>` chip, and
+  swaps to a descriptive `aria-label` so the keyboard affordance
+  reads to SR users too. Pulse honors `prefers-reduced-motion`.
+- **Pol2** — `learning-path-nudge.js` adds a `sessionStorage` flag on
+  first view, so the nudge only anchors once per session across
+  home / calculator / results. Existing 30-day localStorage
+  dismissal still owns cross-session suppression.
+- **Pol3** — SiteSeeker example questions moved off `.btn .btn-sm
+  .btn-outline-primary` to a new `.example-question-chip` (pill
+  geometry, neutral fill, masked-SVG pencil glyph). Hover/focus
+  shifts to brand-amber so "click to prefill" reads differently
+  from form-submit buttons in light + dark mode.
+- **Pol4** — every `tools.html` card gains a "Preview" line under
+  the existing "Try:" examples showing the actual response shape
+  (numeric values for the three calculators; one-liner for
+  SiteSeeker / GemaBot). New `.tool-card-preview` styles live in
+  the page's inline `<style>`.
+- **Pol6** — `definitions.html` adds a "Print or save as PDF"
+  `<button>` in the glossary hero (`.d-print-none`, printer icon,
+  click → `window.print()` wired in `definitions-1.js`). The
+  existing print stylesheet + Pol8 panel-bg reset deliver a clean
+  printable / PDF-saved layout.
+- **Pol7** — GemaBot's `clearConversationButton` now bails via
+  `window.confirm` if there are any chat turns; confirm copy notes
+  that saved chats on the dashboard aren't affected.
+- **Pol10** — `disclaimer.html` AI-output paragraph re-framed from
+  alarmist "fabricated (hallucinated)" language to constructive
+  "produced automatically … on occasion they can invent details
+  that look plausible but aren't supported by the underlying
+  sources". Follow-up verification sentence preserved.
+- **Pol11** — `offline.html` no longer drops chrome entirely. New
+  warm-charcoal header carries the Gematria.Today wordmark + an
+  "Offline" status badge, footer line credits the PWA cache. Card
+  still centers vertically via flex-column layout.
+- **Pol12** — `unsupported-browser.html` adds a hidden `<p>` filled
+  in by `page-scripts/unsupported-browser-1.js`. The script tries
+  `navigator.userAgentData.brands` first, falls back to UA-string
+  matching, and silently no-ops if nothing matches. ES5 so it
+  runs on the very browsers being told to upgrade.
+- **Pol13** — `forum.html` header now ends with a small "Reputation
+  explained →" link, in addition to the existing button inside the
+  Forum rules block. Two entry points cover both header-skimmers
+  and rules-readers.
+- **Pol14** — every site footer (25 pages) now carries a 3-column
+  wayfinding grid (Learn / Tools / Community) above the existing
+  legal-links strip and copyright. Migration ran as a one-shot Node
+  script then removed; new `.site-footer-grid` / `-heading` /
+  `-list` styles live in `theme.css` with a print-time hide.
+- **Pol5** deferred — definition cross-links need a per-card editorial
+  pass to enumerate sibling terms; scoped out of this sprint.
 
 ---
 

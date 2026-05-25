@@ -2298,34 +2298,17 @@
       window.addEventListener('DOMContentLoaded', () => {
         const registerStrengthBar = document.getElementById('registerPasswordStrengthBar');
         const registerStrengthLabel = document.getElementById('registerPasswordStrengthLabel');
-        const REGISTER_STRENGTH_STYLES = [
-          { width: '0%', cls: 'bg-secondary', label: 'Must be at least 8 characters.' },
-          { width: '25%', cls: 'bg-danger', label: 'Weak password' },
-          { width: '50%', cls: 'bg-warning', label: 'Fair password' },
-          { width: '75%', cls: 'bg-info', label: 'Good password' },
-          { width: '100%', cls: 'bg-success', label: 'Strong password' },
-        ];
-        const REGISTER_STRENGTH_HINT = 'Must be at least 8 characters.';
-        function scoreRegisterPassword(value) {
-          if (!value) return 0;
-          let score = 0;
-          if (value.length >= 8) score += 1;
-          if (value.length >= 12) score += 1;
-          if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
-          if (/\d/.test(value)) score += 1;
-          if (/[^A-Za-z0-9]/.test(value)) score += 1;
-          return Math.min(score, 4);
-        }
+        const passwordStrength = window.GematriaPasswordStrength;
         function updateRegisterStrength() {
-          if (!registerPasswordInput || !registerStrengthBar || !registerStrengthLabel) return;
+          if (!registerPasswordInput || !registerStrengthBar || !registerStrengthLabel || !passwordStrength) return;
           const value = registerPasswordInput.value;
           if (!value) {
             registerStrengthBar.className = 'progress-bar bg-secondary';
             registerStrengthBar.style.width = '0%';
-            registerStrengthLabel.textContent = REGISTER_STRENGTH_HINT;
+            registerStrengthLabel.textContent = passwordStrength.HINT;
             return;
           }
-          const style = REGISTER_STRENGTH_STYLES[scoreRegisterPassword(value)];
+          const style = passwordStrength.styleFor(value);
           registerStrengthBar.className = 'progress-bar ' + style.cls;
           registerStrengthBar.style.width = style.width;
           registerStrengthLabel.textContent = style.label;

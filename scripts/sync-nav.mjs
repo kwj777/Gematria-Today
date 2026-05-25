@@ -48,9 +48,12 @@ function applyActiveState(nav, activeHref) {
   let result = nav;
 
   // Mark the matching <a> as active. Supports nav-link (top-level),
-  // dropdown-item (Bootstrap dropdowns), and nav-mega-item (Tools mega-menu).
+  // dropdown-item (Bootstrap dropdowns), nav-mega-item (Tools mega-menu),
+  // and nav-mega-footer (Tools "Compare tools →" footer link, used to carry
+  // the active state on /tools.html since the dropdown toggle is now a
+  // <button> with no href).
   const escapedHref = activeHref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const linkRegex = new RegExp(`(<a class="(?:nav-link|dropdown-item|nav-mega-item)(?!\\s+active)[^"]*)("(?:[^>]*?\\s)?href="${escapedHref}")`);
+  const linkRegex = new RegExp(`(<a class="(?:nav-link|dropdown-item|nav-mega-item|nav-mega-footer)(?!\\s+active)[^"]*)("(?:[^>]*?\\s)?href="${escapedHref}")`);
   const matched = result.replace(linkRegex, (_, classOpen, hrefPart) => `${classOpen} active${hrefPart} aria-current="page"`);
   if (matched === result) {
     throw new Error(`Could not find link with href="${activeHref}" to mark active`);

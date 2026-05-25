@@ -1296,6 +1296,31 @@
         }
       })();
 
+      const loadRemainingPublishedPosts = async () => {
+        const hasRequestedPost = Boolean(getRequestedPostSlug() || getRequestedPostId());
+        if (hasRequestedPost) {
+          return;
+        }
+        while (hasMorePublishedPosts && !loadingMorePosts) {
+          loadingMorePosts = true;
+          updateLoadMoreControl();
+          try {
+            const payload = await fetchPublishedPosts({ offset: paginationOffset });
+            const publishedItems = Array.isArray(payload?.items) ? payload.items : [];
+            const previousLength = loadedPublishedPosts.length;
+            loadedPublishedPosts = mergeUniquePosts([...loadedPublishedPosts, ...publishedItems]);
+            paginationOffset = loadedPublishedPosts.length;
+            hasMorePublishedPosts = Boolean(payload?.hasMore) && loadedPublishedPosts.length > previousLength;
+            renderPosts(loadedPublishedPosts);
+          } catch (_) {
+            hasMorePublishedPosts = false;
+          } finally {
+            loadingMorePosts = false;
+            updateLoadMoreControl();
+          }
+        }
+      };
+
       const renderPostsPromise = Promise.all([
         checkAdminSession(),
         fetchPublishedPosts({ offset: 0 })
@@ -1314,6 +1339,7 @@
           const fallbackSet = previewModeActive || hasRequestedPost ? [] : fallbackPosts;
           renderPosts(loadedPublishedPosts.length ? loadedPublishedPosts : fallbackSet);
           updateLoadMoreControl();
+          loadRemainingPublishedPosts();
         })
         .catch(() => {
           previewModeActive = false;

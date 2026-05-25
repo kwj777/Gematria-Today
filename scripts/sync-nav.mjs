@@ -20,6 +20,7 @@ const EXCLUDED_PREFIXES = ['admin'];
 // the nav, so we mark the Tools link active when the user is on one of them.
 const ACTIVE_LINK_BY_FILE = {
   'blog.html': '/blog.html',
+  'contact.html': '/contact.html',
   'faq.html': '/faq.html',
   'definitions.html': '/definitions.html',
   'gematria-basics.html': '/gematria-basics.html',

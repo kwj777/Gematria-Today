@@ -237,6 +237,36 @@
       }
       :root[data-bs-theme="dark"] .tool-card-examples { color: #94a3b8; }
       :root[data-bs-theme="dark"] .tool-card-examples__label { color: #cbd5e1; }
+      .tool-card-preview {
+        margin: -0.5rem 0 1rem 0;
+        font-size: 0.8rem;
+        color: #6b7280;
+        line-height: 1.4;
+      }
+      .tool-card-preview__label {
+        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        display: block;
+        margin-bottom: 0.1rem;
+      }
+      .tool-card-preview code {
+        background: rgba(180, 83, 9, 0.08);
+        border: 1px solid rgba(180, 83, 9, 0.18);
+        color: #b45309;
+        padding: 0.05rem 0.4rem;
+        border-radius: 0.3rem;
+        font-size: 0.85em;
+      }
+      :root[data-bs-theme="dark"] .tool-card-preview { color: #94a3b8; }
+      :root[data-bs-theme="dark"] .tool-card-preview__label { color: #cbd5e1; }
+      :root[data-bs-theme="dark"] .tool-card-preview code {
+        background: rgba(180, 83, 9, 0.20);
+        border-color: rgba(251, 191, 36, 0.35);
+        color: #fde68a;
+      }
 
       .tool-card-badge {
         font-size: 0.7rem;
@@ -502,6 +532,7 @@
               </p>
               <p class="mb-1">Calculate the English (Base-6) gematria value of any word or phrase, then explore related matches and shared patterns side by side.</p>
               <p class="tool-card-examples"><span class="tool-card-examples__label">Try:</span>love, truth, as above so below</p>
+              <p class="tool-card-preview"><span class="tool-card-preview__label">Preview</span><code>light</code> = 336 &middot; <code>truth</code> = 522</p>
               <div class="mt-auto">
                 <a class="btn btn-warning fw-semibold w-100" href="/calculator.html" aria-label="Open Calculator">Open Calculator</a>
               </div>
@@ -522,6 +553,7 @@
               </p>
               <p class="mb-1">Calculate a word or phrase across all seven canonical English gematria ciphers at once, or pick a single cipher of your choice.</p>
               <p class="tool-card-examples"><span class="tool-card-examples__label">Try:</span>light, wisdom, as above so below</p>
+              <p class="tool-card-preview"><span class="tool-card-preview__label">Preview</span><code>light</code> &rarr; Ordinal 56 &middot; Reverse 106 &middot; Sumerian 336</p>
               <div class="mt-auto">
                 <a class="btn btn-warning fw-semibold w-100" href="/multi-cipher-calculator.html" aria-label="Open Multi-Cipher Calculator">Open Multi-Cipher Calculator</a>
               </div>
@@ -542,6 +574,7 @@
               </p>
               <p class="mb-1">Analyze personal names — first, last, and full — with gematria breakdowns tuned for name-based research.</p>
               <p class="tool-card-examples"><span class="tool-card-examples__label">Try:</span>John Smith, Mary Magdalene, Isaac Newton</p>
+              <p class="tool-card-preview"><span class="tool-card-preview__label">Preview</span><code>John Smith</code> = 696 &middot; <code>Mary Magdalene</code> = 714</p>
               <div class="mt-auto">
                 <a class="btn btn-warning fw-semibold w-100" href="/name-calculator.html" aria-label="Open Name Calculator">Open Name Calculator</a>
               </div>
@@ -562,6 +595,7 @@
               </p>
               <p class="mb-1">Ask a question and SiteSeeker answers from published FAQs, blog posts, and static page content — no account required.</p>
               <p class="tool-card-examples"><span class="tool-card-examples__label">Try:</span>How is gematria calculated? · What does the calculator do? · How do I save my research?</p>
+              <p class="tool-card-preview"><span class="tool-card-preview__label">Preview</span>Returns a short answer with citations linking back to the FAQ, blog, or guide pages.</p>
               <div class="mt-auto">
                 <a class="btn btn-warning fw-semibold w-100" href="/searchbot.html" aria-label="Open SiteSeeker">Open SiteSeeker</a>
               </div>
@@ -582,6 +616,7 @@
               </p>
               <p class="mb-1">Ask questions in plain language. GemaBot looks up gematria matches and explains its reasoning as it goes.</p>
               <p class="tool-card-examples"><span class="tool-card-examples__label">Try:</span>Why is 137 important? · What shares the value of &ldquo;wisdom&rdquo;? · Compare &ldquo;light&rdquo; and &ldquo;love&rdquo;</p>
+              <p class="tool-card-preview"><span class="tool-card-preview__label">Preview</span>Returns the gematria value, related words, and a short conversational explainer per turn.</p>
               <p class="gemabot-premium-note" role="note">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 <span>Premium-only. <a class="gemabot-sample-link" href="#" data-bs-toggle="modal" data-bs-target="#gemabotSampleModal">See a sample answer</a></span>
@@ -712,6 +747,38 @@
 
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">
+        <div class="row site-footer-grid g-4 mb-2">
+          <div class="col-12 col-sm-6 col-lg-4">
+            <h2 class="site-footer-heading">Learn</h2>
+            <ul class="site-footer-list">
+              <li><a href="/gematria-basics.html">Gematria Basics</a></li>
+              <li><a href="/gematria-guide.html">Gematria Guide</a></li>
+              <li><a href="/definitions.html">Glossary</a></li>
+              <li><a href="/faq.html">FAQ</a></li>
+              <li><a href="/blog.html">Blog</a></li>
+            </ul>
+          </div>
+          <div class="col-12 col-sm-6 col-lg-4">
+            <h2 class="site-footer-heading">Tools</h2>
+            <ul class="site-footer-list">
+              <li><a href="/calculator.html">Calculator</a></li>
+              <li><a href="/multi-cipher-calculator.html">Multi-Cipher Calculator</a></li>
+              <li><a href="/name-calculator.html">Name Calculator</a></li>
+              <li><a href="/ai-agent.html">GemaBot</a></li>
+              <li><a href="/searchbot.html">SiteSeeker</a></li>
+              <li><a href="/tools.html">Compare all tools</a></li>
+            </ul>
+          </div>
+          <div class="col-12 col-lg-4">
+            <h2 class="site-footer-heading">Community</h2>
+            <ul class="site-footer-list">
+              <li><a href="/forum.html">Forum</a></li>
+              <li><a href="/forum-reputation-scale.html">Reputation scale</a></li>
+              <li><a href="/member.html">Membership</a></li>
+              <li><a href="/contact.html">Contact</a></li>
+            </ul>
+          </div>
+        </div>
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-2">
           <span>Gematria.Today — research tools and calculators.</span>
         </div>

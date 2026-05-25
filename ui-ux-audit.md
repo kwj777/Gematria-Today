@@ -149,20 +149,20 @@ Users want to know in 5 seconds: "Do you sell my data? Use cookies? Share with w
 
 ## 💡 Polish (low-priority, high-quality wins)
 
-- **Pol1.** Homepage hero "See related words →" link starts dim/inactive. Promote it to a stronger affordance once a value is entered (color change, micro-animation, or hint text "Press Enter to see matches").
-- **Pol2.** Learning-path nudges repeat across pages (home, results, member). Consider one anchor per visit (cookie-flagged) to avoid banner fatigue.
-- **Pol3.** SiteSeeker example questions presented as `.btn-outline-primary` (`searchbot.html`) — looks like form submits, but they prefill the textarea. Use a different visual (chips or pill links).
-- **Pol4.** Tool comparison cards (`tools.html`) lack mini-previews. A small inline result example would shorten the gap between "describe" and "try."
-- **Pol5.** Definition cards have no "Related: X, Y" cross-links between entries.
-- **Pol6.** Add a "Print glossary" / "Export PDF" button on `definitions.html` for offline study.
-- **Pol7.** "Clear conversation" in GemaBot should confirm before destroying history.
+- **Pol1.** ✅ shipped — when the hero quick-calc has user input, the "See it on the full calculator →" link is now opaque + brand-amber, pulses briefly via a `box-shadow` keyframe on activation (suppressed under `prefers-reduced-motion: reduce`), and ends with a styled `<kbd>Enter</kbd>` hint chip. `aria-label` switches to `See "<input>" on the full calculator (press Enter)` for screen readers.
+- **Pol2.** ✅ shipped — `learning-path-nudge.js` now also writes a `sessionStorage` flag on first view and suppresses the nudge for the rest of the session on every page that hosts it (home/calculator/results). The existing 30-day `localStorage` dismissal still owns the cross-session suppression.
+- **Pol3.** ✅ shipped — SiteSeeker example questions ditched `.btn .btn-sm .btn-outline-primary` for a new `.example-question-chip` (pill geometry, neutral fill, pencil glyph prefix via CSS masked SVG). The chip's hover/focus state shifts to brand-amber so the "click to prefill the textarea" affordance reads differently from form-submit buttons in both light and dark mode.
+- **Pol4.** ✅ shipped — every tool card on `tools.html` now also carries a "Preview" line under the "Try:" examples that shows what the tool actually returns (e.g. Calculator → `light` = 336, Multi-Cipher → Ordinal/Reverse/Sumerian breakdown for `light`, Name Calculator → `John Smith` = 696, SiteSeeker / GemaBot → one-liner describing the response shape). New `.tool-card-preview` + `.tool-card-preview code` styles live in the page's inline `<style>` so the snippet reads as fenced code.
+- **Pol5.** ⏭ deferred — adding cross-entry "Related: X, Y" links per definition needs an editorial pass over each card (the right siblings differ per term). Scoped out of this sprint.
+- **Pol6.** ✅ shipped — `definitions.html` gains a "Print or save as PDF" `<button>` in the glossary hero (with a printer SVG icon). It's `.d-print-none` so it never appears in the printed output, wires up in `definitions-1.js` via a click → `window.print()` handler, and the existing `theme-deferred.css` print rules + Pol8 panel-bg reset deliver a clean printable / PDF-saved layout.
+- **Pol7.** ✅ shipped — `clearConversationButton` in `ai-agent-1.mjs` now bails out via `window.confirm` if the chat log has any `article[data-role]` turns. Confirm copy clarifies that saved chats on the dashboard are not affected.
 - **Pol8.** Badge page (`badge.html`) has no timeout state if API hangs. Add a 10s fallback "Couldn't load this badge — try again."
-- **Pol9.** Theme toggle button has no `aria-pressed` label change between light/dark — screen readers don't hear the new state.
-- **Pol10.** Disclaimer's AI-output language ("fabricated, hallucinated, not reviewed by a human") is accurate but alarmist. Reframe constructively: "AI outputs are generated automatically; please verify against primary sources before acting on them."
-- **Pol11.** Offline page (`offline.html`) drops navbar/footer entirely; consider keeping the logo + a minimal "you're offline" badge for continuity.
-- **Pol12.** Unsupported-browser page (`unsupported-browser.html`) doesn't name the user's current browser — adding `navigator.userAgentData.brand` (with fallback) would clarify what to upgrade.
-- **Pol13.** Forum reputation scale (`forum-reputation-scale.html`) is excellent but unreachable from forum nav. Add a "Reputation explained" link in the forum header.
-- **Pol14.** Footer is minimal across all pages — no email signup, no social, no quick-link grid. A modest expansion (3 columns: Learn, Tools, Legal) would aid orientation.
+- **Pol9.** ✅ shipped per follow-up audit verification (`public-theme.js:34-37` updates `aria-pressed` and `aria-label` on toggle).
+- **Pol10.** ✅ shipped — disclaimer's AI-output paragraph (`disclaimer.html:148`) re-written from the alarmist "fabricated (hallucinated)" framing to a constructive "produced automatically … on occasion they can invent details that look plausible but aren't supported by the underlying sources" version. The verification follow-up sentence ("Treat AI outputs as a starting point…") was already in place and is preserved.
+- **Pol11.** ✅ shipped — `offline.html` no longer drops the chrome entirely. It now renders a minimal warm-charcoal header with the Gematria.Today wordmark + an "Offline" status badge, the existing card content as the main, and a small footer line crediting the PWA cache. Layout is flex-column so the card still centers vertically when the viewport allows it.
+- **Pol12.** ✅ shipped — `unsupported-browser.html` adds an empty `<p id="unsupportedBrowserDetected" hidden>` that the new `/page-scripts/unsupported-browser-1.js` populates with a best-effort name + version. Tries `navigator.userAgentData.brands` first (Chrome / Edge), falls back to UA-string regex for Firefox / Safari / Opera / IE, and silently no-ops if nothing matches. ES5-only so it runs on the very browsers being told to upgrade.
+- **Pol13.** ✅ shipped — `forum.html` header now ends with a small "Reputation explained →" link beneath the existing description, in addition to the existing "View public reputation scale" button inside the Forum rules block. Two entry points so users in the header skim and users skimming rules both get there.
+- **Pol14.** ✅ shipped — every site footer (25 pages) now carries a 3-column wayfinding grid (Learn / Tools / Community) above the existing legal-links strip and copyright. Migration ran as a one-shot Node script; new `.site-footer-grid` / `.site-footer-heading` / `.site-footer-list` styles in `theme.css` plus a print-time hide.
 
 ---
 

@@ -468,6 +468,59 @@ Round 9 (M7 verification + SR enhancement):
   per-turn landmarks announce the role independently of reading the
   visible role label. Cross-marked in the original audit doc.
 
+Round 10 (sweep of remaining original-audit Pol items):
+- **Pol1** — hero "See it on the full calculator →" now pulses briefly
+  on activation, ends with a styled `<kbd>Enter</kbd>` chip, and
+  swaps to a descriptive `aria-label` so the keyboard affordance
+  reads to SR users too. Pulse honors `prefers-reduced-motion`.
+- **Pol2** — `learning-path-nudge.js` adds a `sessionStorage` flag on
+  first view, so the nudge only anchors once per session across
+  home / calculator / results. Existing 30-day localStorage
+  dismissal still owns cross-session suppression.
+- **Pol3** — SiteSeeker example questions moved off `.btn .btn-sm
+  .btn-outline-primary` to a new `.example-question-chip` (pill
+  geometry, neutral fill, masked-SVG pencil glyph). Hover/focus
+  shifts to brand-amber so "click to prefill" reads differently
+  from form-submit buttons in light + dark mode.
+- **Pol4** — every `tools.html` card gains a "Preview" line under
+  the existing "Try:" examples showing the actual response shape
+  (numeric values for the three calculators; one-liner for
+  SiteSeeker / GemaBot). New `.tool-card-preview` styles live in
+  the page's inline `<style>`.
+- **Pol6** — `definitions.html` adds a "Print or save as PDF"
+  `<button>` in the glossary hero (`.d-print-none`, printer icon,
+  click → `window.print()` wired in `definitions-1.js`). The
+  existing print stylesheet + Pol8 panel-bg reset deliver a clean
+  printable / PDF-saved layout.
+- **Pol7** — GemaBot's `clearConversationButton` now bails via
+  `window.confirm` if there are any chat turns; confirm copy notes
+  that saved chats on the dashboard aren't affected.
+- **Pol10** — `disclaimer.html` AI-output paragraph re-framed from
+  alarmist "fabricated (hallucinated)" language to constructive
+  "produced automatically … on occasion they can invent details
+  that look plausible but aren't supported by the underlying
+  sources". Follow-up verification sentence preserved.
+- **Pol11** — `offline.html` no longer drops chrome entirely. New
+  warm-charcoal header carries the Gematria.Today wordmark + an
+  "Offline" status badge, footer line credits the PWA cache. Card
+  still centers vertically via flex-column layout.
+- **Pol12** — `unsupported-browser.html` adds a hidden `<p>` filled
+  in by `page-scripts/unsupported-browser-1.js`. The script tries
+  `navigator.userAgentData.brands` first, falls back to UA-string
+  matching, and silently no-ops if nothing matches. ES5 so it
+  runs on the very browsers being told to upgrade.
+- **Pol13** — `forum.html` header now ends with a small "Reputation
+  explained →" link, in addition to the existing button inside the
+  Forum rules block. Two entry points cover both header-skimmers
+  and rules-readers.
+- **Pol14** — every site footer (25 pages) now carries a 3-column
+  wayfinding grid (Learn / Tools / Community) above the existing
+  legal-links strip and copyright. Migration ran as a one-shot Node
+  script then removed; new `.site-footer-grid` / `-heading` /
+  `-list` styles live in `theme.css` with a print-time hide.
+- **Pol5** deferred — definition cross-links need a per-card editorial
+  pass to enumerate sibling terms; scoped out of this sprint.
+
 ---
 
 ## Cross-cutting themes (refresh)

@@ -2069,6 +2069,10 @@ View results: ${shareUrl}`.trim(),
       });
 
       clearConversationButton.addEventListener('click', () => {
+        const hasTurns = chatLog.querySelector('article[data-role]');
+        if (hasTurns && !window.confirm('Clear this conversation? Saved chats on your dashboard are not affected.')) {
+          return;
+        }
         chatLog.innerHTML = '';
         pendingRelatedWordsSuggestionTopic = '';
         lastCalculationContext = null;

@@ -789,6 +789,29 @@
       }
     });
 
+    // Close the open mobile menu when the user taps anywhere outside the
+    // navbar. Bootstrap doesn't auto-close on outside tap, so the panel
+    // otherwise lingers until the user finds the hamburger again. Using
+    // pointerdown fires before the outside click reaches page content,
+    // so the tap collapses the menu without also activating whatever
+    // was underneath. Desktop is unaffected.
+    const navbar = collapse.closest('.navbar');
+    document.addEventListener('pointerdown', (event) => {
+      if (window.innerWidth >= LG_BREAKPOINT) {
+        return;
+      }
+      if (!collapse.classList.contains('show')) {
+        return;
+      }
+      if (navbar && navbar.contains(event.target)) {
+        return;
+      }
+      const toggler = document.querySelector('.navbar .navbar-toggler');
+      if (toggler) {
+        toggler.click();
+      }
+    });
+
     // pageshow fires when the user navigates back via bfcache. Strip any
     // lingering .is-tapping so a back-button return doesn't show a stale
     // pressed item.

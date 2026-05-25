@@ -338,6 +338,26 @@
         }
       });
     });
+
+    const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+    let lastUpdateCheck = Date.now();
+
+    function checkForUpdates() {
+      lastUpdateCheck = Date.now();
+      registration.update().catch(() => {});
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkForUpdates();
+      }
+    });
+
+    window.setInterval(() => {
+      if (Date.now() - lastUpdateCheck >= EIGHT_HOURS_MS) {
+        checkForUpdates();
+      }
+    }, EIGHT_HOURS_MS);
   }
 
   // Only reload when the user opted in via the "Refresh to update" toast.

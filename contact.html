@@ -155,8 +155,48 @@
             </div>
           </div>
         </section>
+
+        <section class="content-panel p-4 p-lg-5 legal-copy mt-4" aria-labelledby="supportFormHeading">
+          <h2 id="supportFormHeading" class="h4">Send us a message</h2>
+          <p class="text-muted">Drafts an email in your mail app to <a href="mailto:support@lunarwebstudio.com">support@lunarwebstudio.com</a>. Your app version and browser details are attached automatically so we can help you faster.</p>
+          <form id="supportForm" novalidate>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="supportTopic" class="form-label">Topic</label>
+                <select id="supportTopic" class="form-select" required>
+                  <option value="General question">General question</option>
+                  <option value="Bug report">Bug report</option>
+                  <option value="Accessibility feedback">Accessibility feedback</option>
+                  <option value="Privacy request">Privacy request</option>
+                  <option value="Copyright notice">Copyright notice</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="supportName" class="form-label">Your name <span class="text-muted small">(optional)</span></label>
+                <input type="text" id="supportName" class="form-control" autocomplete="name" />
+              </div>
+              <div class="col-12">
+                <label for="supportMessage" class="form-label">Message</label>
+                <textarea id="supportMessage" class="form-control" rows="5" required placeholder="Describe what happened, what you expected, and any steps to reproduce."></textarea>
+              </div>
+              <div class="col-12">
+                <details class="small">
+                  <summary>What we'll include automatically</summary>
+                  <pre id="supportDiagnostics" class="bg-body-tertiary p-2 mt-2 mb-0 small" style="white-space:pre-wrap;word-break:break-word;"></pre>
+                </details>
+              </div>
+              <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+                <button type="submit" class="btn btn-warning fw-semibold">Open in email app</button>
+                <span id="supportMemberBadge" class="badge text-bg-warning d-none" aria-live="polite">Priority &middot; member submission</span>
+                <span class="small text-muted">Review the draft before sending — nothing is submitted from this page.</span>
+              </div>
+            </div>
+          </form>
+        </section>
       </div>
     </main>
+
+    <script src="/page-scripts/contact-1.js" defer></script>
 
     <footer class="site-footer py-4 mt-5">
       <div class="container d-flex flex-column gap-3 small text-muted">

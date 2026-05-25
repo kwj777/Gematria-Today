@@ -338,6 +338,115 @@
         }
       });
     });
+
+    const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+    let lastUpdateCheck = Date.now();
+
+    function checkForUpdates() {
+      lastUpdateCheck = Date.now();
+      registration.update().catch(() => {});
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkForUpdates();
+      }
+    });
+
+    window.setInterval(() => {
+      if (Date.now() - lastUpdateCheck >= EIGHT_HOURS_MS) {
+        checkForUpdates();
+      }
+    }, EIGHT_HOURS_MS);
+
+    renderFooterVersionStamp(registration);
+  }
+
+  window.gematriaSupport = window.gematriaSupport || {};
+  window.gematriaSupport.getServiceWorkerVersion = getActiveServiceWorkerVersion;
+
+  function getActiveServiceWorkerVersion() {
+    return new Promise((resolve) => {
+      const worker = navigator.serviceWorker.controller;
+      if (!worker) {
+        resolve(null);
+        return;
+      }
+      const channel = new MessageChannel();
+      const timer = window.setTimeout(() => resolve(null), 1500);
+      channel.port1.onmessage = (event) => {
+        window.clearTimeout(timer);
+        resolve((event.data && event.data.version) || null);
+      };
+      try {
+        worker.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+      } catch (_) {
+        window.clearTimeout(timer);
+        resolve(null);
+      }
+    });
+  }
+
+  function renderFooterVersionStamp(registration) {
+    const credit = document.querySelector('.site-credit');
+    if (!credit || document.querySelector('[data-pwa-version-stamp]')) {
+      return;
+    }
+
+    const stamp = document.createElement('div');
+    stamp.className = 'site-version text-center text-lg-start mt-1 small';
+    stamp.setAttribute('data-pwa-version-stamp', 'true');
+
+    const versionText = document.createElement('span');
+    versionText.className = 'site-version__label';
+    versionText.textContent = 'Version: …';
+
+    const sep = document.createTextNode(' · ');
+
+    const checkButton = document.createElement('button');
+    checkButton.type = 'button';
+    checkButton.className = 'btn btn-link btn-sm p-0 align-baseline site-version__button';
+    checkButton.textContent = 'Check for updates';
+
+    const status = document.createElement('span');
+    status.className = 'site-version__status ms-2';
+    status.setAttribute('aria-live', 'polite');
+
+    let busy = false;
+    checkButton.addEventListener('click', async () => {
+      if (busy) return;
+      busy = true;
+      checkButton.disabled = true;
+      checkButton.textContent = 'Checking…';
+      status.textContent = '';
+
+      try {
+        await registration.update();
+      } catch (_) {
+        // Network/SW errors are non-fatal — fall through to status reset.
+      }
+
+      window.setTimeout(() => {
+        busy = false;
+        checkButton.disabled = false;
+        checkButton.textContent = 'Check for updates';
+        const updateInFlight = document.querySelector('[data-pwa-update-toast]')
+          || registration.installing
+          || registration.waiting;
+        if (!updateInFlight) {
+          status.textContent = "You're up to date.";
+          window.setTimeout(() => { status.textContent = ''; }, 4000);
+        }
+      }, 1500);
+    });
+
+    stamp.append(versionText, sep, checkButton, status);
+    credit.after(stamp);
+
+    getActiveServiceWorkerVersion().then((version) => {
+      versionText.textContent = version ? `Version: ${version}` : 'Version: —';
+      stamp.setAttribute('data-pwa-version', version || '');
+    });
   }
 
   // Only reload when the user opted in via the "Refresh to update" toast.

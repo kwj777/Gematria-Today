@@ -15,7 +15,7 @@ import {
 import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
 import { ensureMemberProfile, ensureMemberSchema, formatMemberUser } from './_member.mjs';
 import { sendRecoveryEmail } from './_email.mjs';
-import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
+import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
@@ -39,6 +39,11 @@ export async function handler(event) {
     const body = parseBody(event);
     const action = String(body.action || '').trim();
     const clientIp = getClientIp(event);
+
+    await assertHoneypotEmpty(sql, event, body, {
+      route: 'member-account-recovery',
+      auditMetadata: { action },
+    });
 
     await applyRateLimit(sql, event, {
       scope: 'member-recovery-ip',

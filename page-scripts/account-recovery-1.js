@@ -108,7 +108,11 @@
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ action, email }),
+          body: JSON.stringify({
+            action,
+            email,
+            ...(window.GematriaAntiBot?.honeypotPayload?.(requestForm) || {}),
+          }),
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
@@ -257,7 +261,12 @@
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ action: 'reset-password', recoveryCode, newPassword }),
+            body: JSON.stringify({
+              action: 'reset-password',
+              recoveryCode,
+              newPassword,
+              ...(window.GematriaAntiBot?.honeypotPayload?.(resetForm) || {}),
+            }),
           });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok) {

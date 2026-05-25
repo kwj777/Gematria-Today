@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
 import { getEarnedBadgeNamesForUserIds } from './_badges.mjs';
+import { assertHoneypotEmpty } from './_security.mjs';
 
 const DEFAULT_CATEGORIES = [
   { slug: 'member-lounge', name: 'Member Lounge', description: 'General discussion area for all signed-in members.', sortOrder: 1, accessTier: 'free' },
@@ -773,7 +774,14 @@ export async function handler(event) {
       throw Object.assign(new Error('Unsupported action. Use one of: threads, thread, reports'), { statusCode: 400 });
     }
 
-    const action = String(parseBody(event).action || '').trim().toLowerCase();
+    const body = parseBody(event);
+    const action = String(body.action || '').trim().toLowerCase();
+    if (action === 'create_thread' || action === 'create_reply' || action === 'report_thread' || action === 'report_reply') {
+      await assertHoneypotEmpty(sql, event, body, {
+        route: 'member-forum',
+        auditMetadata: { action, memberId: member.id },
+      });
+    }
     if (action === 'create_thread') return jsonResponse(201, await createThread(sql, member, user, event));
     if (action === 'create_reply') return jsonResponse(201, await createReply(sql, member, user, event));
     if (action === 'report_thread' || action === 'report_reply') return jsonResponse(201, await reportContent(sql, member, user, event));

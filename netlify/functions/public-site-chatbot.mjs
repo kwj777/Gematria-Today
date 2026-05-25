@@ -6,7 +6,7 @@ import {
   syncBootstrapAdminUser,
 } from './_admin.mjs';
 import { getOptionalAuthenticatedSession, getOrCreateVisitorSession } from './_auth.mjs';
-import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
+import { applyRateLimit, assertEndpointEnabled, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
 const MAX_QUERY_LENGTH = 400;
 const MAX_RESULTS = 5;
@@ -247,6 +247,7 @@ export async function handler(event) {
 
     const { visitorSessionId, isNew: isNewVisitor, visitorCookie } = getOrCreateVisitorSession(event);
     const body = parseBody(event);
+    await assertHoneypotEmpty(sql, event, body, { route: 'public-site-chatbot' });
     const rawQuery = String(body?.query || '').trim().slice(0, MAX_QUERY_LENGTH);
     const query = stripConversationalPrefix(rawQuery);
 

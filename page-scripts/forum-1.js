@@ -570,7 +570,10 @@
         });
       }
 
-      document.getElementById('createThreadForm').addEventListener('submit', async (event) => {
+      const createThreadFormEl = document.getElementById('createThreadForm');
+      const createReplyFormEl = document.getElementById('createReplyForm');
+
+      createThreadFormEl.addEventListener('submit', async (event) => {
         event.preventDefault();
         try {
           clearAlert();
@@ -579,8 +582,9 @@
             categorySlug: categoryCreateEl.value,
             title: document.getElementById('newThreadTitle').value,
             body: document.getElementById('newThreadBody').value,
+            ...(window.GematriaAntiBot?.honeypotPayload?.(createThreadFormEl) || {}),
           });
-          document.getElementById('createThreadForm').reset();
+          createThreadFormEl.reset();
           refreshComposerCounts();
           await loadThreads();
           showAlert('Thread posted.', 'success');
@@ -589,12 +593,17 @@
         }
       });
 
-      document.getElementById('createReplyForm').addEventListener('submit', async (event) => {
+      createReplyFormEl.addEventListener('submit', async (event) => {
         event.preventDefault();
         try {
           clearAlert();
           const threadId = document.getElementById('replyThreadId').value;
-          await apiPost({ action: 'create_reply', threadId, body: document.getElementById('newReplyBody').value });
+          await apiPost({
+            action: 'create_reply',
+            threadId,
+            body: document.getElementById('newReplyBody').value,
+            ...(window.GematriaAntiBot?.honeypotPayload?.(createReplyFormEl) || {}),
+          });
           document.getElementById('newReplyBody').value = '';
           refreshComposerCounts();
           await loadThread(threadId);

@@ -10,7 +10,7 @@ import {
   registerMember,
 } from './_member.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
-import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
+import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -22,6 +22,10 @@ export async function handler(event) {
     const body = parseBody(event);
     const normalizedUsername = String(body.username || '').trim().toLowerCase();
     const normalizedEmail = String(body.email || '').trim().toLowerCase();
+    await assertHoneypotEmpty(sql, event, body, {
+      route: 'member-register',
+      auditMetadata: { username: normalizedUsername, email: normalizedEmail },
+    });
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
 
     if (!user) {

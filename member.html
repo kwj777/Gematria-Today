@@ -259,7 +259,7 @@
           <div id="resendVerificationPanel" class="content-panel content-panel--inset p-3 mb-4 d-none">
             <h3 class="h6 mb-2">Need a fresh verification link?</h3>
             <p class="small text-muted mb-3">Verification links expire 24 hours after signup. Enter the username or email you registered with and we'll send a new one.</p>
-            <form id="resendVerificationForm" class="row g-2 align-items-end">
+            <form id="resendVerificationForm" class="row g-2 align-items-end" data-anti-bot="1">
               <div class="col-12 col-md">
                 <label class="form-label" for="resendVerificationIdentifier">Username or email</label>
                 <input id="resendVerificationIdentifier" class="form-control" autocomplete="username" required />
@@ -282,7 +282,7 @@
               </ul>
               <p class="small mb-0"><a id="registerBenefitsPreviewLink" class="link-primary text-decoration-none" href="#comparisonSection">Compare free vs premium →</a></p>
             </div>
-            <form id="registerForm" class="row g-3">
+            <form id="registerForm" class="row g-3" data-anti-bot="1">
               <div class="col-md-6"><label class="form-label" for="registerUsername">Username <span class="text-danger" aria-hidden="true">*</span></label><input id="registerUsername" class="form-control" autocomplete="username" required /></div>
               <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" autocomplete="nickname" /></div>
               <div class="col-12"><label class="form-label" for="registerEmail">Email <span class="text-danger" aria-hidden="true">*</span></label><input id="registerEmail" class="form-control" type="email" autocomplete="email" required /></div>
@@ -319,7 +319,7 @@
           </div>
           <div id="authPanelLogin" data-auth-panel="login" class="d-none">
             <p class="section-kicker mb-3">Returning Member</p>
-            <form id="loginForm" class="row g-3">
+            <form id="loginForm" class="row g-3" data-anti-bot="1">
               <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" autocomplete="username" required /></div>
               <div class="col-12"><label class="form-label" for="loginPassword">Password</label><div class="input-group"><input id="loginPassword" class="form-control" type="password" autocomplete="current-password" required /><button class="btn btn-outline-secondary" type="button" data-password-toggle="loginPassword" aria-label="Show password" aria-pressed="false">Show</button></div></div>
               <div class="col-12 d-grid"><button id="loginSubmitButton" class="btn btn-outline-primary" type="submit">Sign in</button></div>

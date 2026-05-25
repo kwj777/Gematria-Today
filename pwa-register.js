@@ -309,6 +309,7 @@
       refreshButton.disabled = true;
       refreshButton.textContent = 'Refreshing…';
       document.removeEventListener('keydown', handleKeydown);
+      userTriggeredUpdate = true;
       waitingWorker.postMessage({ type: 'SKIP_WAITING' });
     });
 
@@ -339,10 +340,14 @@
     });
   }
 
-  let reloadingFromUpdate = false;
+  // Only reload when the user opted in via the "Refresh to update" toast.
+  // The first SW install on a clean profile also fires controllerchange
+  // (the new worker claims the page via clients.claim()), and reloading
+  // there caused an unintended re-navigation every Lighthouse run, which
+  // tanked both the Performance and Best Practices scores.
+  let userTriggeredUpdate = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloadingFromUpdate) return;
-    reloadingFromUpdate = true;
+    if (!userTriggeredUpdate) return;
     window.location.reload();
   });
 

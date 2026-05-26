@@ -55,6 +55,27 @@
         alertEl.classList.remove('d-none');
       }
 
+      function showAuthRequiredAlert() {
+        alertEl.className = 'alert alert-warning';
+        alertEl.textContent = '';
+        const message = document.createElement('p');
+        message.className = 'mb-3';
+        message.textContent = 'Please sign in with your member account to access the forum. New here? Create a free account in seconds.';
+        const actions = document.createElement('div');
+        actions.className = 'd-flex flex-wrap gap-2';
+        const signInLink = document.createElement('a');
+        signInLink.className = 'btn btn-warning fw-semibold';
+        signInLink.href = '/member.html?auth=login#authSection';
+        signInLink.textContent = 'Sign in';
+        const signUpLink = document.createElement('a');
+        signUpLink.className = 'btn btn-outline-warning fw-semibold';
+        signUpLink.href = '/member.html?auth=register#authSection';
+        signUpLink.textContent = 'Create free account';
+        actions.append(signInLink, signUpLink);
+        alertEl.append(message, actions);
+        alertEl.classList.remove('d-none');
+      }
+
       function clearAlert() {
         alertEl.classList.add('d-none');
       }
@@ -662,7 +683,7 @@
           forumAppEl.classList.remove('d-none');
         } catch (error) {
           if (error.message.toLowerCase().includes('unauthorized')) {
-            showAlert('Please sign in with your member account to access the forum.', 'warning');
+            showAuthRequiredAlert();
           } else {
             showAlert(error.message);
           }

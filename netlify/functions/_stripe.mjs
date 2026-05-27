@@ -117,7 +117,9 @@ export async function createMembershipCheckoutSession(event, member, sql = null)
     'customer_email': member.email,
     'client_reference_id': member.id,
     'allow_promotion_codes': 'false',
-    'billing_address_collection': 'auto',
+    'billing_address_collection': 'required',
+    'automatic_tax[enabled]': 'true',
+    'tax_id_collection[enabled]': 'true',
   });
 
   return stripeRequest('/checkout/sessions', { sql, method: 'POST', body: params });

@@ -1319,25 +1319,52 @@ View results: ${shareUrl}`.trim(),
           .trim();
       }
 
+      // Session-scoped cache for /api/searchByGematria. The endpoint returns
+      // { count, words } in one payload, so a single request serves both the
+      // match-count and reverse-lookup paths. The cached value is the in-flight
+      // promise, so concurrent callers for the same total dedupe automatically.
+      // Only successful responses are kept; failures are dropped so retries can
+      // recover (rate-limit, transient network/server errors).
+      const gematriaArchiveCache = new Map();
+
+      async function fetchGematriaArchive(total) {
+        const key = String(total);
+        const cached = gematriaArchiveCache.get(key);
+        if (cached) return cached;
+
+        const request = (async () => {
+          let response;
+          try {
+            response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(key)}`);
+          } catch {
+            return { ok: false, error: 'network' };
+          }
+          if (!response.ok) {
+            if (response.status === 429) return { ok: false, error: 'rate-limit' };
+            if (response.status >= 500) return { ok: false, error: 'server' };
+            return { ok: false, error: 'unknown' };
+          }
+          try {
+            const payload = await response.json();
+            return { ok: true, payload };
+          } catch {
+            return { ok: false, error: 'unknown' };
+          }
+        })();
+
+        gematriaArchiveCache.set(key, request);
+        const result = await request;
+        if (!result.ok) {
+          gematriaArchiveCache.delete(key);
+        }
+        return result;
+      }
+
       async function fetchMatchCount(total) {
-        let response;
-        try {
-          response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(total))}`);
-        } catch {
-          return 'network';
-        }
-        if (!response.ok) {
-          if (response.status === 429) return 'rate-limit';
-          if (response.status >= 500) return 'server';
-          return 'unknown';
-        }
-        try {
-          const payload = await response.json();
-          const count = Number(payload?.count);
-          return Number.isFinite(count) ? count : 'unknown';
-        } catch {
-          return 'unknown';
-        }
+        const result = await fetchGematriaArchive(total);
+        if (!result.ok) return result.error;
+        const count = Number(result.payload?.count);
+        return Number.isFinite(count) ? count : 'unknown';
       }
 
       async function fetchSpellingVariantHits(topic) {
@@ -1369,14 +1396,9 @@ View results: ${shareUrl}`.trim(),
       }
 
       async function fetchWordsByGematriaValue(gematriaValue) {
-        try {
-          const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(gematriaValue))}`);
-          if (!response.ok) return [];
-          const payload = await response.json();
-          return Array.isArray(payload?.words) ? payload.words : [];
-        } catch {
-          return [];
-        }
+        const result = await fetchGematriaArchive(gematriaValue);
+        if (!result.ok) return [];
+        return Array.isArray(result.payload?.words) ? result.payload.words : [];
       }
 
       async function fetchWordDatabaseStats() {

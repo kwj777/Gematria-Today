@@ -20,6 +20,7 @@
         extractReverseGematriaValue,
         buildGematriaRangeValues,
         extractRangeReverseLookup,
+        classifyGeneralChatTopic,
         extractRecallTarget,
         extractHypothesisIntent,
         extractQuotedTargets,
@@ -654,10 +655,51 @@
         `;
       }
 
+      function buildGeneralChatTopicAnswer(topic) {
+        switch (topic) {
+          case 'what-is-gematria':
+            return `
+              <p class="mb-2"><strong>Gematria</strong> assigns a number to each letter and sums them, so words and phrases become totals you can compare. This site uses <strong>English gematria</strong>: A=6, B=12 … Z=156 (each letter's position in the alphabet × 6).</p>
+              <p class="mb-2">Start with <a href="/gematria-basics.html">Gematria basics</a>, or read the fuller <a href="/gematria-guide.html">gematria guide</a>. Then try <code>calculate new jerusalem</code> and I'll show the breakdown.</p>
+            `;
+          case 'how-it-works':
+            return `
+              <p class="mb-2">English gematria here is base-6 ordinal: <strong>A=6, B=12, C=18 … Z=156</strong>. A word's total is the sum of its letters; spaces, digits, and punctuation are ignored.</p>
+              <p class="mb-2">Try <code>calculate jerusalem</code> for a per-letter breakdown, or read <a href="/why-english-gematria.html">why this site uses English gematria</a>.</p>
+            `;
+          case 'base-root':
+            return `
+              <p class="mb-2">A <strong>base-root</strong> total is one where <code>(total − 6) ÷ 54</code> is a whole number — the resonant series 6, 60, 114, 168, 222, 276 … Ask <code>is mercy a base-root?</code> and I'll check any word for you.</p>
+            `;
+          case 'digital-root':
+            return `
+              <p class="mb-2">A <strong>digital root</strong> reduces a number to a single digit by repeatedly summing its digits — e.g. 144 → 1+4+4 = <strong>9</strong>. I show the digital root on every calculation.</p>
+            `;
+          case 'reverse-help':
+            return `
+              <p class="mb-2">A <strong>reverse lookup</strong> finds archived words that share a gematria total. Try <code>reverse gematria 144</code>, a range like <code>words between 120 and 150</code>, or <code>words near 144</code>.</p>
+            `;
+          case 'capabilities':
+            return `
+              <p class="mb-2">I'm <strong>GemaBot</strong>. I can:</p>
+              <ul class="mb-2">
+                <li>Calculate gematria — <code>calculate new jerusalem</code></li>
+                <li>Compare words — <code>compare pilot and process</code></li>
+                <li>Run reverse lookups — <code>reverse gematria 144</code> or <code>words between 120 and 150</code></li>
+                <li>Check patterns — <code>is mercy a base-root?</code></li>
+                <li>Pull synonyms &amp; definitions for a word</li>
+              </ul>
+            `;
+          default:
+            return '';
+        }
+      }
+
       async function buildGeneralChatReply(normalizedPrompt, learnedResponse) {
         const learnedCue = learnedResponse
           ? `<span class="d-none" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"></span>`
           : '';
+        const topicAnswer = buildGeneralChatTopicAnswer(classifyGeneralChatTopic(normalizedPrompt));
         const relatedLookupWord = /\b(?:synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context|related words?)\b/i.test(normalizedPrompt)
           ? extractWordnikLookupWord(normalizedPrompt)
           : '';
@@ -682,13 +724,21 @@
           `
           : '';
 
+        // Only fall back to the generic "how to phrase it" guidance when we have
+        // nothing more specific to say (no routed topic and no synonym results).
+        const fallbackGuidance = (topicAnswer || synonymResponseBlock)
+          ? ''
+          : `
+            <p class="mb-2">I couldn't spot a word or number to work with. Ask me to <code>calculate &lt;word&gt;</code>, <code>compare A and B</code>, or <code>reverse gematria &lt;number&gt;</code> — or ask things like "what is gematria?" or "what's a base-root?".</p>
+            <p class="mb-0">For site-wide search, try <strong>SiteSeeker</strong> in the top menu.</p>
+          `;
+
         return `
           ${learnedCue}
-          <p class="mb-2">I switched to general chat mode because I could not identify a clear calculation target.</p>
-          <p class="mb-2">For gematria math, ask naturally (example: <code>calculate new jerusalem</code> or <code>calculate pilot and process</code>). Quotes still work if you prefer them.</p>
-          ${buildMemberAccessLinks(normalizedPrompt)}
+          ${topicAnswer}
           ${synonymResponseBlock}
-          <p class="mb-0">General response: ${escapeHtml(normalizedPrompt || 'Share a question and I can help.')}</p>
+          ${buildMemberAccessLinks(normalizedPrompt)}
+          ${fallbackGuidance}
         `;
       }
 
@@ -1269,25 +1319,52 @@ View results: ${shareUrl}`.trim(),
           .trim();
       }
 
+      // Session-scoped cache for /api/searchByGematria. The endpoint returns
+      // { count, words } in one payload, so a single request serves both the
+      // match-count and reverse-lookup paths. The cached value is the in-flight
+      // promise, so concurrent callers for the same total dedupe automatically.
+      // Only successful responses are kept; failures are dropped so retries can
+      // recover (rate-limit, transient network/server errors).
+      const gematriaArchiveCache = new Map();
+
+      async function fetchGematriaArchive(total) {
+        const key = String(total);
+        const cached = gematriaArchiveCache.get(key);
+        if (cached) return cached;
+
+        const request = (async () => {
+          let response;
+          try {
+            response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(key)}`);
+          } catch {
+            return { ok: false, error: 'network' };
+          }
+          if (!response.ok) {
+            if (response.status === 429) return { ok: false, error: 'rate-limit' };
+            if (response.status >= 500) return { ok: false, error: 'server' };
+            return { ok: false, error: 'unknown' };
+          }
+          try {
+            const payload = await response.json();
+            return { ok: true, payload };
+          } catch {
+            return { ok: false, error: 'unknown' };
+          }
+        })();
+
+        gematriaArchiveCache.set(key, request);
+        const result = await request;
+        if (!result.ok) {
+          gematriaArchiveCache.delete(key);
+        }
+        return result;
+      }
+
       async function fetchMatchCount(total) {
-        let response;
-        try {
-          response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(total))}`);
-        } catch {
-          return 'network';
-        }
-        if (!response.ok) {
-          if (response.status === 429) return 'rate-limit';
-          if (response.status >= 500) return 'server';
-          return 'unknown';
-        }
-        try {
-          const payload = await response.json();
-          const count = Number(payload?.count);
-          return Number.isFinite(count) ? count : 'unknown';
-        } catch {
-          return 'unknown';
-        }
+        const result = await fetchGematriaArchive(total);
+        if (!result.ok) return result.error;
+        const count = Number(result.payload?.count);
+        return Number.isFinite(count) ? count : 'unknown';
       }
 
       async function fetchSpellingVariantHits(topic) {
@@ -1319,14 +1396,9 @@ View results: ${shareUrl}`.trim(),
       }
 
       async function fetchWordsByGematriaValue(gematriaValue) {
-        try {
-          const response = await fetch(`/api/searchByGematria?gematria=${encodeURIComponent(String(gematriaValue))}`);
-          if (!response.ok) return [];
-          const payload = await response.json();
-          return Array.isArray(payload?.words) ? payload.words : [];
-        } catch {
-          return [];
-        }
+        const result = await fetchGematriaArchive(gematriaValue);
+        if (!result.ok) return [];
+        return Array.isArray(result.payload?.words) ? result.payload.words : [];
       }
 
       async function fetchWordDatabaseStats() {
@@ -1545,7 +1617,10 @@ View results: ${shareUrl}`.trim(),
 
         const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
-        const reverseRange = extractRangeReverseLookup(normalizedPrompt);
+        // Numeric normalization can merge spelled-number range operands across
+        // the connecting "and", so retry on the raw prompt where the words survive.
+        const reverseRange = extractRangeReverseLookup(normalizedPrompt)
+          || extractRangeReverseLookup(rawNormalized);
         const reverseGematriaValue = reverseRange ? null : extractReverseGematriaValue(normalizedPrompt);
         const relationshipType = extractWordnikRelationshipType(normalizedPrompt);
         const explicitRelatedWordsTarget = extractRelatedWordsCalculationTarget(normalizedPrompt);
@@ -1712,7 +1787,7 @@ View results: ${shareUrl}`.trim(),
             const strayValue = Number(strayNumberMatch[1]);
             return `<p class="mb-0">Did not see a word or phrase to calculate. To run a reverse gematria lookup for <strong>${strayValue}</strong>, try <code>reverse gematria ${strayValue}</code> or <code>what words equal ${strayValue}</code>.</p>`;
           }
-          return '<p class="mb-0">Did not see a word or phrase to calculate. Maybe you want to try SiteSeeker? (on top menu)</p>';
+          return buildGeneralChatReply(normalizedPrompt, learnedResponse);
         }
 
         const calculationTargets = rawCalculationTargets.filter((target) => gematriaLetterBreakdown(target).length > 0);

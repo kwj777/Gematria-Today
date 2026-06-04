@@ -24,6 +24,7 @@ import {
   extractReverseGematriaValue,
   buildGematriaRangeValues,
   extractRangeReverseLookup,
+  classifyGeneralChatTopic,
   extractRecallTarget,
   extractHypothesisIntent,
   extractQuotedTargets,
@@ -408,6 +409,55 @@ test('extractRangeReverseLookup picks up "N ± span"', () => {
 
 test('extractRangeReverseLookup returns null without trigger keywords', () => {
   assert.equal(extractRangeReverseLookup('between meetings'), null);
+});
+
+test('extractRangeReverseLookup parses spelled "between X and Y"', () => {
+  const r = extractRangeReverseLookup('show words between one hundred and two hundred');
+  assert.equal(r.min, 102);
+  assert.equal(r.max, 198);
+});
+
+test('extractRangeReverseLookup parses spelled "near N"', () => {
+  const r = extractRangeReverseLookup('find words near one hundred forty four');
+  assert.equal(r.min, 126);
+  assert.equal(r.max, 162);
+});
+
+test('extractRangeReverseLookup parses spelled "N plus or minus span"', () => {
+  const r = extractRangeReverseLookup('list words one hundred forty four plus or minus twelve');
+  assert.equal(r.min, 132);
+  assert.equal(r.max, 156);
+});
+
+test('extractRangeReverseLookup ignores spelled ranges without trigger keywords', () => {
+  assert.equal(extractRangeReverseLookup('somewhere between one hundred and two hundred miles'), null);
+});
+
+test('extractRangeReverseLookup falls through when spelled operands are not numbers', () => {
+  assert.equal(extractRangeReverseLookup('show words between cats and dogs'), null);
+});
+
+// ---------- classifyGeneralChatTopic ----------
+
+test('classifyGeneralChatTopic routes conceptual questions', () => {
+  assert.equal(classifyGeneralChatTopic('what is gematria?'), 'what-is-gematria');
+  assert.equal(classifyGeneralChatTopic('explain gematria to me'), 'what-is-gematria');
+  assert.equal(classifyGeneralChatTopic('is mercy a base-root'), 'base-root');
+  assert.equal(classifyGeneralChatTopic('what does digital root mean'), 'digital-root');
+  assert.equal(classifyGeneralChatTopic('how does this work'), 'how-it-works');
+  assert.equal(classifyGeneralChatTopic('which cipher do you use'), 'how-it-works');
+  assert.equal(classifyGeneralChatTopic('why english gematria'), 'how-it-works');
+  assert.equal(classifyGeneralChatTopic('what can you do?'), 'capabilities');
+  assert.equal(classifyGeneralChatTopic('help'), 'capabilities');
+});
+
+test('classifyGeneralChatTopic prefers base-root over generic gematria', () => {
+  assert.equal(classifyGeneralChatTopic('what is a base root in gematria'), 'base-root');
+});
+
+test('classifyGeneralChatTopic returns empty when nothing matches', () => {
+  assert.equal(classifyGeneralChatTopic('the weather is nice today'), '');
+  assert.equal(classifyGeneralChatTopic(''), '');
 });
 
 // ---------- extractRecallTarget ----------

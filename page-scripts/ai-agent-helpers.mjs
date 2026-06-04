@@ -1,9 +1,8 @@
 /**
- * Pure helpers for the GemaBot agent UI. Mirrors the inline definitions in
- * page-scripts/ai-agent-1.js — this module is the canonical source and is
- * exercised by tests/ai-agent-helpers.test.mjs. The page script still
- * inlines these for now; migrate it to `import` from this file when
- * convenient.
+ * Pure helpers for the GemaBot agent UI. This module is the canonical source:
+ * page-scripts/ai-agent-1.mjs imports these functions directly (see the import
+ * block at the top of that file) and tests/ai-agent-helpers.test.mjs exercises
+ * them. Keep new pure/parsing logic here so it stays unit-testable.
  */
 
 export function escapeHtml(value) {
@@ -150,6 +149,12 @@ export const NUMBER_WORD_VALUES = {
 };
 export const NUMBER_WORD_PATTERN = /\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)(?:[\s-]+(?:and[\s-]+)?(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand))+\b/gi;
 
+// Matches a single spelled-out number phrase (one or more number words, e.g.
+// "twelve", "one hundred forty four"). Unlike NUMBER_WORD_PATTERN it allows a
+// lone word, so it can capture range operands like the span in "144 ± twelve".
+const SPELLED_NUMBER_WORDS = Object.keys(NUMBER_WORD_VALUES).join('|');
+export const SPELLED_NUMBER_SOURCE = `(?:${SPELLED_NUMBER_WORDS})(?:[\\s-]+(?:and[\\s-]+)?(?:${SPELLED_NUMBER_WORDS}))*`;
+
 export function parseSpelledNumber(text) {
   const tokens = String(text || '').toLowerCase().split(/[\s-]+/).filter((token) => token && token !== 'and');
   if (!tokens.length) return null;
@@ -260,6 +265,44 @@ export function extractRangeReverseLookup(prompt) {
     const center = Number(nearMatch[1]);
     const defaultSpan = 18;
     return buildGematriaRangeValues(center - defaultSpan, center + defaultSpan);
+  }
+
+  // Spelled-out operands ("between one hundred and two hundred", "near one
+  // hundred forty four", "one hundred ± twelve"). The numeric normalizer can
+  // mangle spelled ranges (its greedy match merges across the "and"), so the
+  // caller also retries this on the raw prompt. Each operand is parsed with
+  // parseSpelledNumber; if any side isn't a positive number we fall through.
+  const parsePositiveSpelled = (raw) => {
+    const value = parseSpelledNumber(normalizeCandidate(raw).toLowerCase());
+    return Number.isFinite(value) && value > 0 ? value : null;
+  };
+
+  if (triggered) {
+    const spelledBetween = normalized.match(
+      new RegExp(`\\b(?:between|from)\\s+(${SPELLED_NUMBER_SOURCE})\\s+(?:to|and|through|thru)\\s+(${SPELLED_NUMBER_SOURCE})\\b`, 'i'),
+    );
+    if (spelledBetween) {
+      const lo = parsePositiveSpelled(spelledBetween[1]);
+      const hi = parsePositiveSpelled(spelledBetween[2]);
+      if (lo !== null && hi !== null) return buildGematriaRangeValues(lo, hi);
+    }
+
+    const spelledPlusMinus = normalized.match(
+      new RegExp(`\\b(${SPELLED_NUMBER_SOURCE})\\s*(?:±|\\+\\/?-|plus\\s+or\\s+minus)\\s*(${SPELLED_NUMBER_SOURCE})\\b`, 'i'),
+    );
+    if (spelledPlusMinus) {
+      const center = parsePositiveSpelled(spelledPlusMinus[1]);
+      const span = parsePositiveSpelled(spelledPlusMinus[2]);
+      if (center !== null && span !== null) return buildGematriaRangeValues(center - span, center + span);
+    }
+
+    const spelledNear = normalized.match(
+      new RegExp(`\\b(?:near|around|close\\s+to|approximately|approx\\.?|about|circa)\\s+(${SPELLED_NUMBER_SOURCE})\\b`, 'i'),
+    );
+    if (spelledNear) {
+      const center = parsePositiveSpelled(spelledNear[1]);
+      if (center !== null) return buildGematriaRangeValues(center - 18, center + 18);
+    }
   }
 
   return null;
@@ -490,4 +533,47 @@ export function formatComparisonText(reports) {
     ? `Exact gematria match at ${totals[0]}.`
     : `Range ${Math.min(...totals)}–${Math.max(...totals)} (span ${span}).`;
   return `Gematria comparison\n${lines.join('\n')}\n${summary}`;
+}
+
+/**
+ * Lightweight intent classifier for the general-chat fallback. When GemaBot
+ * can't find a calculation target, this routes common conceptual questions
+ * ("what is gematria?", "what's a base-root?") to a canned answer instead of
+ * echoing the prompt. Returns a topic key, or '' when nothing matches.
+ * Order matters — more specific concepts are tested before the generic
+ * "what is gematria" catch.
+ */
+export function classifyGeneralChatTopic(prompt) {
+  const normalized = normalizeCandidate(prompt).toLowerCase();
+  if (!normalized) return '';
+
+  if (/\bbase[\s-]?root\b/.test(normalized)) return 'base-root';
+  if (/\bdigital[\s-]?root\b/.test(normalized)) return 'digital-root';
+
+  if (/\b(?:who\s+are\s+you|what\s+are\s+you|what\s+can\s+you\s+do|what\s+do\s+you\s+do|how\s+do\s+i\s+use\s+(?:you|this|gemabot))\b/.test(normalized)
+    || /^\s*help\b/.test(normalized)) {
+    return 'capabilities';
+  }
+
+  if (/\breverse\b/.test(normalized)
+    && /\b(?:lookup|look\s*up|search|how|work|find\s+words?|what\s+words?)\b/.test(normalized)) {
+    return 'reverse-help';
+  }
+
+  if (/\b(?:how)\b/.test(normalized) && /\b(?:work|works|calculat|comput|add\s+up|figure)/.test(normalized)) {
+    return 'how-it-works';
+  }
+  if (/\b(?:what|which)\b/.test(normalized) && /\b(?:cipher|system|method|scale)\b/.test(normalized)) {
+    return 'how-it-works';
+  }
+  if (/\bwhy\b/.test(normalized) && /\benglish\b/.test(normalized)) {
+    return 'how-it-works';
+  }
+
+  if (/\bgematria\b/.test(normalized)
+    && /\b(?:what(?:'s| is| are)?|explain|define|definition|mean(?:s|ing)?|tell\s+me\s+about)\b/.test(normalized)) {
+    return 'what-is-gematria';
+  }
+
+  return '';
 }

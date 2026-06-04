@@ -152,6 +152,28 @@ const lookupForm = document.querySelector('#lookup-form');
         return `Look at what I found on Gematria.Today :) Searched: "${word}" | Result: ${result}`;
       }
 
+      function formatResultClipboardText(searchGematria) {
+        const word = String(searchGematria?.word || '').trim();
+        const total = searchGematria?.gematria?.total;
+        const digitalRoot = searchGematria?.gematria?.digitalRoot;
+        const parts = [`"${word}" = ${total ?? ''}`];
+        if (digitalRoot !== null && digitalRoot !== undefined && digitalRoot !== '') {
+          parts.push(`Digital Root ${digitalRoot}`);
+        }
+        parts.push('Base-6 English Gematria');
+        return `${parts.join(' · ')} — Gematria.Today`;
+      }
+
+      async function copyResultSummary(searchGematria) {
+        const text = formatResultClipboardText(searchGematria);
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+          setShareStatus('Result copied to your clipboard.');
+          return;
+        }
+        window.prompt('Copy this result:', text);
+      }
+
       function getCanonicalShareOrigin() {
         const host = window.location.hostname.toLowerCase();
         if (host === 'localhost' || host === '127.0.0.1') {
@@ -1276,6 +1298,19 @@ View results: ${shareUrl}`.trim(),
           });
         });
         shareButton.classList.remove('mt-2');
+        const copyResultButton = document.createElement('button');
+        copyResultButton.type = 'button';
+        copyResultButton.className = 'btn btn-outline-secondary btn-sm fw-semibold share-action-button';
+        copyResultButton.textContent = 'Copy result';
+        copyResultButton.addEventListener('click', async () => {
+          reportButtonEvent('copy_result', { source: 'calculator_lookup' });
+          try {
+            await copyResultSummary(searchGematria);
+          } catch (error) {
+            setShareStatus(error?.message || 'Unable to copy right now.');
+          }
+        });
+
         const downloadImageButton = document.createElement('button');
         downloadImageButton.type = 'button';
         downloadImageButton.className = 'btn btn-outline-secondary btn-sm fw-semibold share-action-button';
@@ -1317,7 +1352,7 @@ View results: ${shareUrl}`.trim(),
 
         const shareActions = document.createElement('div');
         shareActions.className = 'd-flex flex-column flex-sm-row gap-2 mt-3';
-        shareActions.append(shareButton, downloadImageButton);
+        shareActions.append(shareButton, copyResultButton, downloadImageButton);
 
         gematriaResult.append(
           promptLine,

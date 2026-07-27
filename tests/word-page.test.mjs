@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
-import { parseRoute, renderWordPage, renderValuePage, isBaseRootValue, escapeHtml } from '../netlify/functions/word-page.mjs';
+import { parseRoute, renderWordPage, renderValuePage, isBaseRootValue, isIndexableWord, escapeHtml } from '../netlify/functions/word-page.mjs';
 import { buildSitemapIndex, buildUrlSet, pageLocs, escapeXml } from '../netlify/functions/sitemap-words-xml.mjs';
 
 test('parseRoute reads the original request path', () => {
@@ -155,4 +155,36 @@ test('calculator results link out to the indexable word and value pages', async 
   assert.match(source, /createValuePermalink/);
   assert.match(source, /`\/w\/\$\{encodeURIComponent/);
   assert.match(source, /`\/v\/\$\{encodeURIComponent/);
+});
+
+test('junk rows from the words table are not offered to search engines', () => {
+  // Real entries observed in /sitemap-words/2 before filtering.
+  const junk = ['*', '0', '45', '276', '-ol', '2 5 0 62 4', '<er>annoy</er>', '', '   '];
+  for (const value of junk) {
+    assert.equal(isIndexableWord(value), false, `${JSON.stringify(value)} should not be indexable`);
+  }
+});
+
+test('real words, including phrases and punctuation, stay indexable', () => {
+  const real = ['light', 'A per se', 'A-one', 'Abyssinian cat', 'Academy Award', 'ALGOL', "O'Brien"];
+  for (const value of real) {
+    assert.equal(isIndexableWord(value), true, `${JSON.stringify(value)} should be indexable`);
+  }
+});
+
+test('word pages 404 for junk instead of serving a thin page', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/word-page.mjs', import.meta.url), 'utf8');
+  assert.match(source, /!isIndexableWord\(route\.key\)/);
+  const sitemap = await fs.readFile(new URL('../netlify/functions/sitemap-words-xml.mjs', import.meta.url), 'utf8');
+  assert.match(sitemap, /\.filter\(isIndexableWord\)/);
+});
+
+test('unverified accounts outlive their verification link', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/_member.mjs', import.meta.url), 'utf8');
+
+  // Both were 24 hours, so the link expired exactly when the account was
+  // deleted and member-resend-verification had nothing left to act on.
+  assert.match(source, /EMAIL_VERIFICATION_TTL_MS = 7 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(source, /UNVERIFIED_RETENTION = '30 days'/);
+  assert.ok(!/INTERVAL '24 hours'/.test(source), 'no 24-hour prune windows should remain');
 });

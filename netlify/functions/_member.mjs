@@ -141,6 +141,8 @@ export async function ensureMemberSchema(sql) {
     consumed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+    await sql`ALTER TABLE member_email_verification_requests
+    ADD COLUMN IF NOT EXISTS email_delivered BOOLEAN NOT NULL DEFAULT FALSE`;
     await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_user_idx
     ON member_email_verification_requests (user_id, created_at DESC)`;
     await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_expires_idx
@@ -379,6 +381,31 @@ export async function finalizeMemberEmailVerification(sql, token) {
   return rows.length ? formatMemberUser(rows[0]) : null;
 }
 
+// Records whether the verification email for a member's newest request was
+// actually delivered. deleteExpiredUnverifiedMembers reads this so we never
+// prune an account for failing to act on an email that never arrived.
+export async function markVerificationEmailDelivered(sql, userId, delivered) {
+  await ensureMemberSchema(sql);
+  if (!userId) return;
+  await sql`
+    UPDATE member_email_verification_requests
+    SET email_delivered = ${Boolean(delivered)}
+    WHERE user_id = ${userId}
+      AND consumed_at IS NULL
+  `;
+}
+
+export async function countUndeliveredVerifications(sql) {
+  await ensureMemberSchema(sql);
+  const rows = await sql`
+    SELECT COUNT(*)::int AS total
+    FROM member_email_verification_requests
+    WHERE consumed_at IS NULL
+      AND email_delivered = FALSE
+  `;
+  return Number(rows[0]?.total || 0);
+}
+
 export async function deleteExpiredUnverifiedMembers(sql) {
   await ensureMemberSchema(sql);
 
@@ -388,6 +415,14 @@ export async function deleteExpiredUnverifiedMembers(sql) {
       AND status = 'pending'
       AND email_verified = FALSE
       AND created_at <= NOW() - INTERVAL '24 hours'
+      -- Only prune when we actually delivered the verification email. If
+      -- delivery failed the member never had a chance to act, and deleting
+      -- them destroys a signup and the evidence of the outage at once.
+      AND EXISTS (
+        SELECT 1 FROM member_email_verification_requests r
+        WHERE r.user_id = users.id
+          AND r.email_delivered = TRUE
+      )
     RETURNING id
   `;
 

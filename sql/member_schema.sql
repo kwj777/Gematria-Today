@@ -123,8 +123,16 @@ CREATE TABLE IF NOT EXISTS member_email_verification_requests (
   token_hash TEXT UNIQUE NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL,
   consumed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- Whether the verification email actually left the building. Unverified
+  -- accounts are pruned after 24h, which is only fair when we managed to send
+  -- the email; deleting someone because our own delivery failed loses a member
+  -- and hides the failure.
+  email_delivered BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+ALTER TABLE member_email_verification_requests
+  ADD COLUMN IF NOT EXISTS email_delivered BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE INDEX IF NOT EXISTS member_email_verification_requests_user_idx
   ON member_email_verification_requests (user_id, created_at DESC);

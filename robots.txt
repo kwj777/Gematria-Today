@@ -10,3 +10,4 @@ Disallow: /api/
 Disallow: /.netlify/functions/
 
 Sitemap: https://gematria.today/sitemap.xml
+Sitemap: https://gematria.today/sitemap-words.xml

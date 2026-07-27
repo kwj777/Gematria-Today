@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
-import { parseRoute, renderWordPage, renderValuePage, isBaseRootValue, isIndexableWord, escapeHtml } from '../netlify/functions/word-page.mjs';
+import { parseRoute, renderWordPage, renderValuePage, isBaseRootValue, isIndexableWord, letterBreakdown, escapeHtml } from '../netlify/functions/word-page.mjs';
 import { buildSitemapIndex, buildUrlSet, pageLocs, escapeXml } from '../netlify/functions/sitemap-words-xml.mjs';
 
 test('parseRoute reads the original request path', () => {
@@ -176,7 +176,9 @@ test('word pages 404 for junk instead of serving a thin page', async () => {
   const source = await fs.readFile(new URL('../netlify/functions/word-page.mjs', import.meta.url), 'utf8');
   assert.match(source, /!isIndexableWord\(route\.key\)/);
   const sitemap = await fs.readFile(new URL('../netlify/functions/sitemap-words-xml.mjs', import.meta.url), 'utf8');
-  assert.match(sitemap, /\.filter\(isIndexableWord\)/);
+  // Publishing is stricter than indexing: it also excludes slurs and rows with
+  // no search history.
+  assert.match(sitemap, /filter\(isPublishableWord\)|filter\(isPublishableRow\)/);
 });
 
 test('unverified accounts outlive their verification link', async () => {
@@ -240,4 +242,58 @@ test('the words audit reports before it deletes', async () => {
   assert.match(source, /--delete/);
   assert.match(source, /Report only/);
   assert.match(source, /isIndexableWord/, 'the audit must use the same rule as the sitemap');
+});
+
+test('generated pages render inside the real site chrome', () => {
+  const html = renderWordPage('ALA', 84, [{ word: 'aid', search_count: 2 }]);
+
+  // Without nav and footer these were chrome-less dead ends: a visitor arriving
+  // from search had no branding and no route into the site.
+  assert.match(html, /navbar navbar-expand-lg/, 'must include the site nav');
+  assert.match(html, /site-footer/, 'must include the site footer');
+  assert.match(html, /Open the calculator/, 'must offer a way back into the site');
+  assert.match(html, /theme\.css/);
+});
+
+test('word pages show the letter breakdown that makes them non-thin', () => {
+  assert.deepEqual(letterBreakdown('ALA'), [
+    { letter: 'A', value: 6 },
+    { letter: 'L', value: 72 },
+    { letter: 'A', value: 6 },
+  ]);
+  assert.deepEqual(letterBreakdown('a-b'), [{ letter: 'A', value: 6 }, { letter: 'B', value: 12 }]);
+
+  const html = renderWordPage('ALA', 84, []);
+  assert.match(html, /letter-value-grid/);
+  assert.match(html, /= <strong>84<\/strong>/);
+});
+
+test('slurs are never published, though the calculator still returns them', async () => {
+  const { isPublishableWord, isIndexableWord: indexable } = await import('../netlify/functions/_words.mjs');
+
+  assert.equal(isPublishableWord('fag'), false);
+  assert.equal(isPublishableWord('Retard'), false);
+  assert.equal(isPublishableWord('light'), true);
+
+  // Storage and calculation are unaffected -- only publishing is gated.
+  assert.equal(indexable('fag'), true);
+
+  const html = renderWordPage('ALA', 84, [{ word: 'fag', search_count: 9 }, { word: 'aid', search_count: 1 }]);
+  assert.ok(!/>fag</.test(html), 'a slur must not appear in a published list');
+  assert.match(html, /\/w\/aid/);
+});
+
+test('only words with a search count are offered to search engines', async () => {
+  const { isPublishableRow } = await import('../netlify/functions/_words.mjs');
+
+  assert.equal(isPublishableRow({ word: 'light', search_count: 1 }), true);
+  assert.equal(isPublishableRow({ word: 'light', search_count: 0 }), false, 'bulk-imported rows stay out');
+  assert.equal(isPublishableRow({ word: 'fag', search_count: 99 }), false);
+
+  // Pages still render for unsearched words; they just are not indexed.
+  assert.match(renderWordPage('light', 336, [], { noindex: true }), /content="noindex,follow"/);
+  assert.match(renderWordPage('light', 336, []), /content="index,follow"/);
+
+  const sitemap = await fs.readFile(new URL('../netlify/functions/sitemap-words-xml.mjs', import.meta.url), 'utf8');
+  assert.match(sitemap, /search_count > 0/);
 });

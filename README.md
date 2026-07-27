@@ -63,9 +63,11 @@ The site includes a lightweight module toggle system in `site-modules.js`.
 
 ## Lines of Code
 
-The repository contains approximately **6,350 lines of source code** across HTML, CSS, JavaScript/MJS, SQL, TOML, and JSON files.
+As of July 2026 the repository contains approximately **71,400 lines** across HTML, CSS, JavaScript/MJS, SQL, TOML, and JSON files.
 
-To recount at any time, run:
+That is the raw figure `npm run count-lines` reports, so it counts the generated `site-bundle.js`, `package-lock.json`, and the minified files under `assets/vendor/`. Excluding those, hand-written source is roughly 68,800 lines.
+
+This number is a point-in-time snapshot and nothing enforces it — recount rather than trusting it:
 
 ```bash
 npm run count-lines

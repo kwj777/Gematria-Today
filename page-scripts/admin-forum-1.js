@@ -110,7 +110,18 @@
         topReportersEl.innerHTML = reporters.length ? `<ul class="mb-0">${reporters.map((row) => `<li>${esc(row.username)}: ${row.total}</li>`).join('')}</ul>` : '<p class="text-muted mb-0">No reporter concentration.</p>';
       }
 
-      function reportActionButtons(reportId) {
+      // Eight look-alike buttons sit in one row, and the outcomes on the right
+      // half land on a member. Anything that penalizes content or a person
+      // confirms first and names the target, the way category delete does.
+      const CONFIRM_PROMPT_BY_ACTION = {
+        remove_post: (target) => `Remove the reported post in ${target}?\n\nThis records a removal against the report and is logged in the audit trail.`,
+        hide_thread: (target) => `Hide the thread ${target} from the forum?\n\nMembers will no longer see it in listings.`,
+        warn_user: (target) => `Warn the member who posted in ${target}?\n\nThis records a warning against their account.`,
+        suspend_user: (target) => `Suspend the member who posted in ${target}?\n\nThis is the strongest action available and is logged in the audit trail.`,
+      };
+
+      function reportActionButtons(report) {
+        const target = `"${report.threadTitle || report.threadId || 'this thread'}"`;
         return [
           ['In review', 'in_review', 'none', 'btn-outline-secondary'],
           ['Resolve', 'resolved', 'resolve', 'btn-outline-success'],
@@ -120,7 +131,11 @@
           ['Warn user', 'actioned', 'warn_user', 'btn-outline-warning'],
           ['Suspend', 'actioned', 'suspend_user', 'btn-outline-danger'],
           ['Escalate', 'in_review', 'escalate', 'btn-outline-warning'],
-        ].map(([label, status, action, variant]) => `<button class="btn ${variant} btn-sm" data-report-action="${reportId}" data-status="${status}" data-action="${action}" type="button">${label}</button>`).join('');
+        ].map(([label, status, action, variant]) => {
+          const prompt = CONFIRM_PROMPT_BY_ACTION[action];
+          const confirmAttr = prompt ? ` data-confirm="${esc(prompt(target))}"` : '';
+          return `<button class="btn ${variant} btn-sm" data-report-action="${report.id}" data-status="${status}" data-action="${action}"${confirmAttr} type="button">${label}</button>`;
+        }).join('');
       }
 
       async function updateReports(payload, successMessage) {
@@ -153,7 +168,7 @@
                   <div class="col-md-6 col-lg-3"><input class="form-control form-control-sm" placeholder="Moderator note" aria-label="Moderator note (visible to reporter)" data-moderator-note="${report.id}" value="${esc(report.moderatorNote || '')}" /></div>
                   <div class="col-md-6 col-lg-3"><input class="form-control form-control-sm" placeholder="Internal note" aria-label="Internal note (moderators only)" data-internal-note="${report.id}" value="${esc(report.internalNote || '')}" /></div>
                 </div>
-                <div class="d-flex flex-wrap gap-2">${reportActionButtons(report.id)}</div>
+                <div class="d-flex flex-wrap gap-2">${reportActionButtons(report)}</div>
               </div>
             </div>
           </article>
@@ -178,6 +193,7 @@
 
         reportsListEl.querySelectorAll('[data-report-action]').forEach((button) => {
           button.addEventListener('click', async () => {
+            if (button.dataset.confirm && !window.confirm(button.dataset.confirm)) return;
             try {
               hideAlert();
               const reportId = button.dataset.reportAction;
@@ -301,6 +317,8 @@
       });
       document.getElementById('bulkResolveButton').addEventListener('click', async () => {
         if (!selectedReports.size) return showAlert('Select reports first.', 'warning');
+        const count = selectedReports.size;
+        if (!window.confirm(`Resolve ${count} selected report${count === 1 ? '' : 's'}?\n\nThey will be closed and drop out of the open-reports filter.`)) return;
         try { hideAlert(); await updateReports({ ids: [...selectedReports], status: 'resolved', actionTaken: 'resolve' }, 'Selected reports resolved.'); selectedReports = new Set(); }
         catch (error) { showAlert(error.message); }
       });

@@ -1632,7 +1632,7 @@
           const successfulCount = Array.isArray(item.resultPayload?.results)
             ? item.resultPayload.results.filter((result) => !result?.error && result?.gematria).length
             : 0;
-          return `Names: ${names.join(', ') || '—'} · Successful results: ${successfulCount}`;
+          return `Names: ${escapeHtml(names.join(', ')) || '—'} · Successful results: ${successfulCount}`;
         }
 
         const digitalRootValue = item.digitalRoot ?? '—';
@@ -1824,8 +1824,8 @@
                   title="${favorited ? 'Favorited search' : 'Favorite this search'}"
                 >★</button>
                 <div>
-                  <h4 class="h6 mb-1">${item.queryText}</h4>
-                  <p class="small text-muted mb-1">${item.calculatorSource} · ${item.queryType} · Saved ${new Date(item.createdAt).toLocaleString()}</p>
+                  <h4 class="h6 mb-1">${escapeHtml(item.queryText)}</h4>
+                  <p class="small text-muted mb-1">${escapeHtml(item.calculatorSource)} · ${escapeHtml(item.queryType)} · Saved ${new Date(item.createdAt).toLocaleString()}</p>
                   <p class="small mb-0">${formatHistorySummary(item)}</p>
                 </div>
               </div>

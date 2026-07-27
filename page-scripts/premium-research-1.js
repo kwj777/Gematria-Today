@@ -70,8 +70,8 @@
         }
 
         wordnikResults.innerHTML = `
-          <p class="mb-2"><strong>${payload.count}</strong> ${payload.relationshipType} results for <strong>${payload.word}</strong>:</p>
-          <div class="d-flex flex-wrap gap-2">${words.map((word) => `<a class="badge text-bg-light border text-decoration-none" href="/calculator.html?query=${encodeURIComponent(word)}" aria-label="Open calculator for ${word}">${word}</a>`).join('')}</div>
+          <p class="mb-2"><strong>${escapeHtml(payload.count)}</strong> ${escapeHtml(payload.relationshipType)} results for <strong>${escapeHtml(payload.word)}</strong>:</p>
+          <div class="d-flex flex-wrap gap-2">${words.map((word) => `<a class="badge text-bg-light border text-decoration-none" href="/calculator.html?query=${encodeURIComponent(word)}" aria-label="Open calculator for ${escapeHtml(word)}">${escapeHtml(word)}</a>`).join('')}</div>
         `;
       }
 
@@ -86,7 +86,7 @@
 
       function renderGematria(payload) {
         if (!Array.isArray(payload.words) || !payload.words.length) {
-          gematriaResults.innerHTML = `<p class="mb-0">No entries currently match gematria value <strong>${payload.gematria}</strong>.</p>`;
+          gematriaResults.innerHTML = `<p class="mb-0">No entries currently match gematria value <strong>${escapeHtml(payload.gematria)}</strong>.</p>`;
           return;
         }
 
@@ -126,7 +126,7 @@
 
         gematriaResults.innerHTML = `
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <p class="mb-0"><strong>${payload.count}</strong> words found for gematria <strong>${payload.gematria}</strong>.</p>
+            <p class="mb-0"><strong>${escapeHtml(payload.count)}</strong> words found for gematria <strong>${escapeHtml(payload.gematria)}</strong>.</p>
           </div>
           <div id="${resultId}" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">${cards}</div>
           <div class="d-flex gap-2 flex-wrap mt-3">

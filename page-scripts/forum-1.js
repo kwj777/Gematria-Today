@@ -166,14 +166,14 @@
           <article class="forum-thread-card" data-thread-id="${thread.id}" role="button" tabindex="0" aria-label="Open thread: ${esc(thread.title)}">
             <div class="d-flex justify-content-between align-items-start gap-3">
               <div class="forum-thread-card-main">
-                <h3 class="h6 mb-1 forum-subtitle">${thread.title} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
+                <h3 class="h6 mb-1 forum-subtitle">${esc(thread.title)} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
                 <p class="small text-muted mb-1 forum-meta">
                   <span class="forum-meta-item">${renderCategoryChip(thread)}</span>
                   <span class="forum-meta-item">By ${renderAuthorInline(thread)}</span>
                   <span class="forum-meta-item">${thread.replyCount} replies</span>
                   <span class="forum-meta-item">${thread.viewCount} views</span>
                 </p>
-                <p class="small mb-0 forum-body">${thread.body.slice(0, 180)}</p>
+                <p class="small mb-0 forum-body">${esc(thread.body.slice(0, 180))}</p>
               </div>
               <span class="badge text-bg-secondary forum-thread-score">${thread.popularityScore}</span>
             </div>
@@ -216,7 +216,7 @@
                 ${isAdmin ? `<span class="badge text-bg-secondary forum-mod-inline-label" aria-hidden="true">Mod</span><button class="btn btn-outline-danger btn-sm" type="button" data-delete-reply="${reply.id}" title="Delete this reply permanently (moderator only)" aria-label="Delete this reply permanently (moderator only)">Delete</button>` : ''}
               </div>
             </div>
-            <p class="mb-0 forum-body">${reply.body}</p>
+            <p class="mb-0 forum-body">${esc(reply.body)}</p>
           </article>
         `).join('');
 
@@ -243,7 +243,7 @@
         trendingThreadListEl.innerHTML = trending.map((thread, index) => `
           <button type="button" class="forum-trending-card" data-trending-thread-id="${thread.id}">
             <p class="small text-muted mb-1">#${index + 1} · Score ${Number(thread.popularityScore || 0)}</p>
-            <h3 class="h6 mb-2 forum-subtitle">${thread.title}</h3>
+            <h3 class="h6 mb-2 forum-subtitle">${esc(thread.title)}</h3>
             <p class="small text-muted mb-0">${thread.replyCount} replies · ${thread.viewCount} views</p>
           </button>
         `).join('');
@@ -548,9 +548,9 @@
 
         moderationListEl.innerHTML = reports.map((report) => `
           <article class="border rounded p-3 mb-3">
-            <p class="mb-1"><strong>${report.reason}</strong> · by ${report.reporterUsername} · ${formatDate(report.createdAt)}</p>
-            <p class="small text-muted mb-1">Thread: ${report.threadId || 'n/a'} · Reply: ${report.postId || 'n/a'}</p>
-            <p class="mb-0">${report.details || 'No additional details.'}</p>
+            <p class="mb-1"><strong>${esc(report.reason)}</strong> · by ${esc(report.reporterUsername)} · ${formatDate(report.createdAt)}</p>
+            <p class="small text-muted mb-1">Thread: ${esc(report.threadId || 'n/a')} · Reply: ${esc(report.postId || 'n/a')}</p>
+            <p class="mb-0">${esc(report.details || 'No additional details.')}</p>
           </article>
         `).join('');
       }

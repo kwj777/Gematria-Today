@@ -10,7 +10,7 @@
 // multi-megabyte JSON cache entry, which timed out and returned 502 to Search
 // Console. Each chunk now touches PAGE_SIZE rows with LIMIT/OFFSET.
 import { getSqlClient } from './_auth.mjs';
-import { assertEndpointEnabled, buildCacheKey, withCachedJson } from './_security.mjs';
+import { assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, withCachedJson } from './_security.mjs';
 import { isPublishableWord, isPublishableRow } from './_words.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
@@ -58,10 +58,11 @@ export function pageLocs({ page, values, words }) {
 function xmlResponse(status, body) {
   return new Response(body, {
     status,
-    headers: {
+    // netlify.toml's [[headers]] block never reaches a function response.
+    headers: documentSecurityHeaders({
       'content-type': 'application/xml; charset=UTF-8',
       'cache-control': 'public, max-age=21600',
-    },
+    }),
   });
 }
 
@@ -121,7 +122,7 @@ export default async function onRequest(request) {
     console.error('sitemap-words-xml failed', error);
     return new Response('Failed to build words sitemap', {
       status: 500,
-      headers: { 'content-type': 'text/plain; charset=utf-8' },
+      headers: documentSecurityHeaders({ 'content-type': 'text/plain; charset=utf-8' }),
     });
   }
 }

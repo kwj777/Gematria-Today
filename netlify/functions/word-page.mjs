@@ -9,7 +9,7 @@
 //   /w/:word   -> one word: value, digital root, base-root, words that match it
 //   /v/:value  -> every word with that gematria value
 import { getSqlClient } from './_auth.mjs';
-import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
+import { applyRateLimit, assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 import { englishGematria, digitalRoot } from './englishGematria.mjs';
 import { isIndexableWord, isPublishableWord, isPublishableRow } from './_words.mjs';
 import { readFileSync } from 'node:fs';
@@ -228,10 +228,12 @@ ${callToAction()}`;
 function htmlResponse(status, body) {
   return new Response(body, {
     status,
-    headers: {
+    // netlify.toml's [[headers]] block never reaches a function response, so
+    // these pages carry the site security headers themselves.
+    headers: documentSecurityHeaders({
       'content-type': 'text/html; charset=UTF-8',
       'cache-control': 'public, max-age=600, stale-while-revalidate=86400',
-    },
+    }),
   });
 }
 
@@ -317,7 +319,10 @@ export default async function onRequest(request) {
     if (error?.statusCode && error.statusCode !== 500) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: error.statusCode,
-        headers: { 'content-type': 'application/json; charset=utf-8', ...(error.headers || {}) },
+        headers: documentSecurityHeaders({
+          'content-type': 'application/json; charset=utf-8',
+          ...(error.headers || {}),
+        }),
       });
     }
     console.error('word-page failed', error);

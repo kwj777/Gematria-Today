@@ -1,6 +1,7 @@
 import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 import { recordWordSearchActivity } from './_badges.mjs';
+import { isStorableWord } from './_words.mjs';
 
 export function englishGematria(input) {
   if (typeof input !== 'string') throw new TypeError('englishGematria expects a string input');
@@ -53,6 +54,32 @@ async function processWord(sql, word) {
       const digitalRootValue = Number(gematria.digitalRoot);
       const gematriaTotal = Number(gematria.total);
       const isBaseRoot = isBaseRootValue(gematriaTotal);
+
+      // Every lookup used to be written to the words table, so anything a caller
+      // sent was persisted forever -- which is how numbers, punctuation and raw
+      // Wordnik markup got in, and later into the sitemap. The value is still
+      // calculated and returned for any input; only storage is gated.
+      const storable = isStorableWord(trimmedWord);
+
+      if (!storable) {
+        const existing = await sql`
+          UPDATE words
+          SET search_count = search_count + 1
+          WHERE LOWER(word) = ${normalizedWord}
+          RETURNING word, gematria_value, digital_root, is_base_root, search_count
+        `;
+        const row = existing[0];
+        return {
+          word: row ? row.word : trimmedWord,
+          gematria: {
+            total: String(row ? row.gematria_value : gematriaTotal),
+            digitalRoot: Number(row ? row.digital_root : digitalRootValue),
+          },
+          isBaseRoot: isBaseRootValue(row ? row.gematria_value : gematriaTotal),
+          searchCount: Number(row ? row.search_count : 0),
+          source: row ? 'database' : 'calculated',
+        };
+      }
 
       const result = await sql`
         WITH updated AS (

@@ -11,7 +11,7 @@
 // Console. Each chunk now touches PAGE_SIZE rows with LIMIT/OFFSET.
 import { getSqlClient } from './_auth.mjs';
 import { assertEndpointEnabled, buildCacheKey, withCachedJson } from './_security.mjs';
-import { isIndexableWord } from './word-page.mjs';
+import { isIndexableWord } from './_words.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const PAGE_SIZE = 5000;

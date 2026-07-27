@@ -209,3 +209,35 @@ test('the sitemap cache key is versioned so filtering changes take effect at onc
   assert.match(source, /const CACHE_VERSION = \d+/);
   assert.match(source, /v: CACHE_VERSION/);
 });
+
+test('the storage rule and the indexing rule are the same definition', async () => {
+  // Storage, rendering and the sitemap must agree, or the table refills with
+  // entries the sitemap then has to filter out again.
+  const { isIndexableWord: shared, isStorableWord } = await import('../netlify/functions/_words.mjs');
+  assert.equal(isStorableWord, shared);
+  assert.equal(shared, isIndexableWord, 'word-page must re-export the shared rule');
+
+  const gematria = await fs.readFile(new URL('../netlify/functions/englishGematria.mjs', import.meta.url), 'utf8');
+  assert.match(gematria, /from '\.\/_words\.mjs'/);
+});
+
+test('unstorable lookups are never inserted into the words table', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/englishGematria.mjs', import.meta.url), 'utf8');
+
+  const storableGate = source.indexOf('const storable = isStorableWord(trimmedWord)');
+  const insert = source.indexOf('INSERT INTO words');
+  assert.ok(storableGate !== -1, 'storability must be checked');
+  assert.ok(storableGate < insert, 'the check must come before the insert');
+
+  // The early return must not contain an INSERT.
+  const earlyReturn = source.slice(storableGate, insert);
+  assert.ok(!/INSERT INTO words/.test(earlyReturn));
+  assert.match(earlyReturn, /UPDATE words/, 'an existing row should still count the search');
+});
+
+test('the words audit reports before it deletes', async () => {
+  const source = await fs.readFile(new URL('../scripts/audit-words-table.mjs', import.meta.url), 'utf8');
+  assert.match(source, /--delete/);
+  assert.match(source, /Report only/);
+  assert.match(source, /isIndexableWord/, 'the audit must use the same rule as the sitemap');
+});

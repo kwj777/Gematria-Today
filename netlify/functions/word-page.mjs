@@ -11,6 +11,9 @@
 import { getSqlClient } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 import { englishGematria, digitalRoot } from './englishGematria.mjs';
+import { isIndexableWord } from './_words.mjs';
+
+export { isIndexableWord };
 
 const SITE_ORIGIN = 'https://gematria.today';
 const MAX_RELATED = 200;
@@ -63,24 +66,6 @@ export function parseRoute(input) {
   if (kind === 'word') return { kind: 'word', key };
   if (kind === 'value') return /^\d+$/.test(key) ? { kind: 'value', key } : null;
   return null;
-}
-
-// The words table is populated from lookups and contains entries that should
-// never be offered to a search engine: bare numbers (0, 45, 276), punctuation
-// (*), fragments (-ol), digit strings ("2 5 0 62 4"), and Wordnik markup that
-// was stored raw (<er>annoy</er>). Publishing tens of thousands of URLs where
-// a slice are junk pages is an active ranking risk, not just untidy.
-const MARKUP_OR_WILDCARD = /[<>{}|*\\/\[\]^~`"]/;
-
-export function isIndexableWord(word) {
-  const value = String(word ?? '').trim();
-  if (!value || value.length > 64) return false;
-  // Must read as a word: begins with a letter, not a digit or punctuation.
-  if (!/^[A-Za-z]/.test(value)) return false;
-  if (MARKUP_OR_WILDCARD.test(value)) return false;
-  // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001f]/.test(value)) return false;
-  return true;
 }
 
 export function isBaseRootValue(total) {

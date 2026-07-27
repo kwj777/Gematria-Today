@@ -23,7 +23,8 @@
     "check:sitemap": "node scripts/update-sitemap-lastmod.mjs --check",
     "build": "eleventy",
     "sync:redirects": "node scripts/sync-page-redirects.mjs --write",
-    "check:redirects": "node scripts/sync-page-redirects.mjs --check"
+    "check:redirects": "node scripts/sync-page-redirects.mjs --check",
+    "audit:words": "node scripts/audit-words-table.mjs"
   },
   "dependencies": {
     "@11ty/eleventy": "^3.1.6",

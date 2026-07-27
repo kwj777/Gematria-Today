@@ -1789,6 +1789,10 @@
       if (event.key !== '/') return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (isTypingTarget(event.target)) return;
+      // A page with its own "/" search box (blog) handles the key first and
+      // calls preventDefault. Without this check both handlers ran: the page
+      // focused its input, then this one navigated away from it.
+      if (event.defaultPrevented) return;
       event.preventDefault();
       if (window.location.pathname === SEARCH_PATH) {
         focusSearchInput();

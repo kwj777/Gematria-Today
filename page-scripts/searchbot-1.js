@@ -304,6 +304,17 @@
       });
       submitFeedbackButton?.addEventListener('click', () => submitFeedback(false));
 
+      // The 404 page sends the visitor's search here as ?q=. Without this it
+      // was thrown away and they had to retype it into an empty box.
+      (function prefillFromQuery() {
+        if (!chatQuestion) return;
+        const requested = new URLSearchParams(window.location.search).get('q');
+        const question = String(requested || '').trim();
+        if (!question) return;
+        chatQuestion.value = question.slice(0, Number(chatQuestion.getAttribute('maxlength')) || 400);
+        runSearch(chatQuestion.value);
+      })();
+
       document.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof Element)) return;

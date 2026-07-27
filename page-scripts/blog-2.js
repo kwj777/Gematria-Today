@@ -1015,7 +1015,21 @@
             ? `<a class="btn btn-sm btn-outline-primary fw-semibold" href="${escapeHtml(getPostEditUrl(post))}">Edit</a>`
             : '';
           const copyLinkButtonMarkup = `<button type="button" class="btn btn-sm btn-outline-secondary fw-semibold blog-copy-link-button" data-copy-link="${escapeHtml(post.slug)}">Copy link</button>`;
-          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}${copyLinkButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
+          // Cards used to render tags, image and summary but never the title,
+          // so the list was untitled and a post page had no heading at all
+          // (detail view hides the landing hero, which owns the only <h1>).
+          const postTitle = String(post.title || '').trim();
+          // Only the post actually being viewed gets the <h1>. An unknown
+          // ?post= slug leaves detail mode on while rendering every post, so
+          // keying off detailViewActive alone would emit one <h1> per card.
+          const isDetailTarget = Boolean(requestedTargetPost)
+            && String(post.slug || '').toLowerCase() === String(requestedTargetPost.slug || '').toLowerCase();
+          const titleMarkup = postTitle
+            ? (isDetailTarget
+              ? `<h1 class="blog-post-title h2 mb-3">${escapeHtml(postTitle)}</h1>`
+              : `<h2 class="blog-post-title h4 mb-3"><a class="blog-post-title-link" href="${escapeHtml(readMoreHref)}">${escapeHtml(postTitle)}</a></h2>`)
+            : '';
+          return `<article id="${escapeHtml(post.slug)}" class="content-panel p-4 p-lg-5 blog-post-card"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><span class="d-flex flex-wrap gap-2">${tagMarkup}</span><span class="text-muted small">${escapeHtml(post.readTime || '')}</span></div>${titleMarkup}${coverImageMarkup}<div class="blog-post-body d-grid gap-3">${bodyHtml}</div><div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4"><div class="d-flex flex-wrap gap-2">${adminEditButtonMarkup}${copyLinkButtonMarkup}<button type="button" class="btn btn-sm btn-warning fw-semibold share-action-button" data-share-post="${escapeHtml(post.slug)}">Share</button></div></div></article>`;
         });
         const postsContainer = document.getElementById('blogPosts');
         const showSeriesPromo = !detailViewActive && !searchQuery.trim() && !selectedTag;

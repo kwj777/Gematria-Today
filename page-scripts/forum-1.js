@@ -55,6 +55,32 @@
         alertEl.classList.remove('d-none');
       }
 
+      // Failures used to leave the page with a bare message and no way
+      // forward: #forumApp stays hidden, so the alert was the whole page.
+      function showRetryableAlert(message, retry) {
+        alertEl.className = 'alert alert-danger';
+        alertEl.textContent = '';
+        const heading = document.createElement('p');
+        heading.className = 'fw-semibold mb-1';
+        heading.textContent = 'Something went wrong';
+        const detail = document.createElement('p');
+        detail.className = 'mb-3';
+        detail.textContent = message;
+        const retryButton = document.createElement('button');
+        retryButton.className = 'btn btn-outline-danger';
+        retryButton.type = 'button';
+        retryButton.textContent = 'Try again';
+        retryButton.addEventListener('click', () => {
+          retryButton.disabled = true;
+          retryButton.textContent = 'Retrying…';
+          Promise.resolve()
+            .then(retry)
+            .catch((error) => showRetryableAlert(error.message, retry));
+        });
+        alertEl.append(heading, detail, retryButton);
+        alertEl.classList.remove('d-none');
+      }
+
       function showAuthRequiredAlert() {
         alertEl.className = 'alert alert-warning';
         alertEl.textContent = '';
@@ -80,23 +106,47 @@
         alertEl.classList.add('d-none');
       }
 
-      async function apiGet(url) {
-        const response = await fetch(url, { credentials: 'include' });
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error || 'Request failed');
+      // A maintenance page, proxy error or 502 comes back as HTML, so
+      // response.json() throws a SyntaxError whose message ("Unexpected token
+      // '<'...") used to be printed straight into the page. Anything that
+      // isn't a real server-authored message becomes friendly copy here.
+      const UNREACHABLE_MESSAGE = 'We couldn’t reach the forum. Check your connection and try again.';
+      const UNAVAILABLE_MESSAGE = 'The forum is temporarily unavailable. Please try again in a moment.';
+
+      async function readJsonResponse(response) {
+        let payload;
+        try {
+          payload = await response.json();
+        } catch {
+          throw new Error(UNAVAILABLE_MESSAGE);
+        }
+        if (!response.ok) throw new Error(payload.error || UNAVAILABLE_MESSAGE);
         return payload;
       }
 
+      async function apiGet(url) {
+        let response;
+        try {
+          response = await fetch(url, { credentials: 'include' });
+        } catch {
+          throw new Error(UNREACHABLE_MESSAGE);
+        }
+        return readJsonResponse(response);
+      }
+
       async function apiPost(body) {
-        const response = await fetch('/api/member-forum', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error || 'Request failed');
-        return payload;
+        let response;
+        try {
+          response = await fetch('/api/member-forum', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+        } catch {
+          throw new Error(UNREACHABLE_MESSAGE);
+        }
+        return readJsonResponse(response);
       }
 
       function formatDate(value) {
@@ -183,13 +233,13 @@
         threadListEl.querySelectorAll('[data-thread-id]').forEach((card) => {
           card.addEventListener('click', (event) => {
             if (event.target.closest('.forum-author-trigger, .forum-profile-popover')) return;
-            loadThread(card.dataset.threadId);
+            loadThread(card.dataset.threadId).catch((error) => showAlert(error.message));
           });
           card.addEventListener('keydown', (event) => {
             if (event.target !== card) return;
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
-              loadThread(card.dataset.threadId);
+              loadThread(card.dataset.threadId).catch((error) => showAlert(error.message));
             }
           });
         });
@@ -221,11 +271,11 @@
         `).join('');
 
         replyListEl.querySelectorAll('[data-report-reply]').forEach((button) => {
-          button.addEventListener('click', () => reportReply(button.dataset.reportReply));
+          button.addEventListener('click', () => reportReply(button.dataset.reportReply).catch((error) => showAlert(error.message)));
         });
 
         replyListEl.querySelectorAll('[data-delete-reply]').forEach((button) => {
-          button.addEventListener('click', () => deleteReply(button.dataset.deleteReply));
+          button.addEventListener('click', () => deleteReply(button.dataset.deleteReply).catch((error) => showAlert(error.message)));
         });
         bindAuthorPopovers(replyListEl);
       }
@@ -249,7 +299,7 @@
         `).join('');
 
         trendingThreadListEl.querySelectorAll('[data-trending-thread-id]').forEach((button) => {
-          button.addEventListener('click', () => loadThread(button.dataset.trendingThreadId));
+          button.addEventListener('click', () => loadThread(button.dataset.trendingThreadId).catch((error) => showAlert(error.message)));
         });
       }
 
@@ -685,7 +735,7 @@
           if (error.message.toLowerCase().includes('unauthorized')) {
             showAuthRequiredAlert();
           } else {
-            showAlert(error.message);
+            showRetryableAlert(error.message, init);
           }
         }
       }

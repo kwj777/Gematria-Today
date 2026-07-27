@@ -2405,6 +2405,19 @@ button.definition-link:focus-visible {
   background: var(--color-surface-highlight-soft, rgba(15, 23, 42, 0.03));
 }
 
+/* The card title reads as a heading first and a link second: the whole card
+   is not clickable, so the title carries the affordance on hover/focus. */
+.blog-post-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-post-title-link:hover,
+.blog-post-title-link:focus-visible {
+  color: var(--bs-link-color, #0d6efd);
+  text-decoration: underline;
+}
+
 html.blog-detail-view .blog-post-image-frame {
   max-height: 22rem;
   overflow: hidden;

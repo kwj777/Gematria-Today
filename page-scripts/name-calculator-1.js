@@ -320,7 +320,10 @@ const form = document.querySelector('#name-form');
       function createGematriaButton(total) {
         const link = document.createElement('a');
         link.className = 'inline-button';
-        const destination = new URL('/', window.location.origin);
+        // The home page ignores ?gematria=, so these links used to dump the
+        // user on the homepage with their query silently dropped. The results
+        // page is what actually reads gematria + returnTo.
+        const destination = new URL('/gematria-results.html', window.location.origin);
         destination.searchParams.set('gematria', String(total));
         destination.searchParams.set('returnTo', `${window.location.pathname}${window.location.search}${window.location.hash}`);
         link.href = `${destination.pathname}${destination.search}`;

@@ -187,6 +187,14 @@
       function showAlert(message, tone = 'danger') {
         memberAlert.textContent = message;
         memberAlert.className = `alert alert-${tone}`;
+        // The alert sits at the top of the page, so a member acting on a
+        // control further down would never see the outcome scroll into view.
+        if (!isElementInViewport(memberAlert)) {
+          memberAlert.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+            block: 'nearest',
+          });
+        }
         if (memberAlertDismissTimer) {
           window.clearTimeout(memberAlertDismissTimer);
           memberAlertDismissTimer = null;
@@ -196,6 +204,11 @@
             clearAlert();
           }, 6000);
         }
+      }
+
+      function isElementInViewport(element) {
+        const rect = element.getBoundingClientRect();
+        return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
       }
 
       function clearAlert() {
@@ -675,6 +688,16 @@
         membershipHero.classList.toggle('d-none', (isLoggedIn && isPremiumMember) || isFreeMember);
 
         if (loginOnlyMode) {
+          // Signup routes here with ?auth=login, but a user who just created an
+          // account has never been here before and hasn't verified yet.
+          if (justRegistered) {
+            membershipHeroKicker.textContent = 'Member Access';
+            membershipHeroTitle.textContent = 'Almost there — verify your email.';
+            membershipHeroLead.textContent = 'We sent you a verification link. Open it, then sign in below to reach your dashboard.';
+            membershipHeroCta.textContent = 'Sign in';
+            membershipHeroCta.setAttribute('href', '#authSection');
+            return;
+          }
           membershipHeroKicker.textContent = 'Premium Member Access';
           membershipHeroTitle.textContent = 'Welcome back! Sign in below.';
           membershipHeroLead.textContent = justVerifiedEmail
@@ -1404,10 +1427,39 @@
         }, 300);
       }
 
-      function revealResendVerificationPanel() {
+      // Set for the rest of the page's life after a successful signup, so the
+      // hero doesn't greet a brand-new unverified user with "Welcome back!".
+      let justRegistered = false;
+
+      function showRegisterSuccessPanel(email) {
+        const panel = document.getElementById('registerSuccessPanel');
+        if (!panel) return;
+        const emailNode = document.getElementById('registerSuccessEmail');
+        if (emailNode) {
+          emailNode.textContent = maskEmailForResendNotice(email) || 'your inbox';
+        }
+        panel.classList.remove('d-none');
+        // The resend form is the recovery path when the mail never lands, so
+        // surface it now rather than waiting for a failed sign-in attempt.
+        revealResendVerificationPanel({ focus: false });
+        // setAuthView syncs the hero before it rewrites the URL, so the
+        // just-registered copy needs a second pass once ?auth=login is set.
+        syncMembershipHero();
+        panel.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+
+      function hideRegisterSuccessPanel() {
+        document.getElementById('registerSuccessPanel')?.classList.add('d-none');
+      }
+
+      function revealResendVerificationPanel({ focus = true } = {}) {
         const panel = document.getElementById('resendVerificationPanel');
         if (!panel) return;
         panel.classList.remove('d-none');
+        if (!focus) return;
         window.setTimeout(() => {
           document.getElementById('resendVerificationIdentifier')?.focus({ preventScroll: true });
         }, 50);
@@ -2337,14 +2389,17 @@
             favoriteHistoryIds = new Set();
             flushPendingHistoryNoteSaves();
             setLoggedIn(false);
-            showAlert('Membership account created. Please check your email and verify your account before signing in.', 'success');
             historyItems = [];
             renderHistory();
             ctx.form.reset();
             if (shouldSubscribeToBlog) {
               rememberFollowItSubscriptionIntent(registerEmail);
             }
+            justRegistered = true;
             setAuthView('login', { updateUrl: true });
+            // Persistent panel instead of a 6s alert: this is the only place
+            // that tells the user their signup isn't finished yet.
+            showRegisterSuccessPanel(registerEmail);
           },
           onError: (error) => {
             showAlert(error.message || 'Unable to create membership account.');
@@ -2354,6 +2409,9 @@
 
       authTabRegister.addEventListener('click', () => {
         window.gematriaTracking?.track('sign_up_start', { source: 'member_auth_tab' });
+        // Starting a new signup makes the previous one's confirmation stale.
+        justRegistered = false;
+        hideRegisterSuccessPanel();
         setAuthView('register', { updateUrl: true });
       });
 

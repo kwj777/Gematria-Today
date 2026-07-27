@@ -8,7 +8,7 @@
 //
 //   /w/:word   -> one word: value, digital root, base-root, words that match it
 //   /v/:value  -> every word with that gematria value
-import { getSqlClient, jsonResponse } from './_auth.mjs';
+import { getSqlClient } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 import { englishGematria, digitalRoot } from './englishGematria.mjs';
 
@@ -126,15 +126,17 @@ export function renderValuePage(value, words) {
   return layout({ title, description, canonical, bodyHtml });
 }
 
-function htmlResponse(statusCode, body) {
-  return {
-    statusCode,
+// Netlify v2 functions (export default) must return a Response; returning a
+// {statusCode, headers, body} object crashes with NetlifyUserError. Every
+// other export-default function in this directory already does this.
+function htmlResponse(status, body) {
+  return new Response(body, {
+    status,
     headers: {
       'content-type': 'text/html; charset=UTF-8',
       'cache-control': 'public, max-age=600, stale-while-revalidate=86400',
     },
-    body,
-  };
+  });
 }
 
 export default async function onRequest(request) {
@@ -194,7 +196,10 @@ export default async function onRequest(request) {
     return htmlResponse(200, html);
   } catch (error) {
     if (error?.statusCode && error.statusCode !== 500) {
-      return jsonResponse(error.statusCode, { error: error.message }, error.headers || {});
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: error.statusCode,
+        headers: { 'content-type': 'application/json; charset=utf-8', ...(error.headers || {}) },
+      });
     }
     console.error('word-page failed', error);
     return htmlResponse(500, layout({

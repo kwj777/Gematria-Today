@@ -47,15 +47,15 @@ export function pageLocs({ page, values, words }) {
   return words.map((word) => `/w/${encodeURIComponent(String(word))}`);
 }
 
-function xmlResponse(statusCode, body) {
-  return {
-    statusCode,
+// Netlify v2 functions must return a Response, not a {statusCode, body} object.
+function xmlResponse(status, body) {
+  return new Response(body, {
+    status,
     headers: {
       'content-type': 'application/xml; charset=UTF-8',
       'cache-control': 'public, max-age=21600',
     },
-    body,
-  };
+  });
 }
 
 export default async function onRequest(request) {
@@ -105,10 +105,9 @@ export default async function onRequest(request) {
     return xmlResponse(200, buildUrlSet(pageLocs({ page, values: data.values || [], words: data.words || [] })));
   } catch (error) {
     console.error('sitemap-words-xml failed', error);
-    return {
-      statusCode: 500,
+    return new Response('Failed to build words sitemap', {
+      status: 500,
       headers: { 'content-type': 'text/plain; charset=utf-8' },
-      body: 'Failed to build words sitemap',
-    };
+    });
   }
 }

@@ -99,3 +99,30 @@ test('netlify.toml routes /w/, /v/ and the words sitemap', async () => {
   // "w" or "v" could shadow them.
   assert.ok(toml.indexOf('from = "/w/:word"') < toml.indexOf('# BEGIN generated page redirects'));
 });
+
+test('every export-default function returns a Response, not a {statusCode} object', async () => {
+  // Netlify v2 functions (export default) must return a Response. Returning
+  // { statusCode, headers, body } crashes at runtime with
+  // "NetlifyUserError - Function returned an unsupported value" -- which is a
+  // 500 the deploy is otherwise happy about, so nothing catches it before
+  // users do.
+  const dir = new URL('../netlify/functions/', import.meta.url);
+  const files = (await fs.readdir(dir)).filter((name) => name.endsWith('.mjs') && !name.startsWith('_'));
+
+  const offenders = [];
+  for (const name of files) {
+    const source = await fs.readFile(new URL(name, dir), 'utf8');
+    if (!/export default async/.test(source)) continue;
+
+    // Look only at the v2 entry point, not any legacy `handler` export below it.
+    const v2 = source.slice(source.indexOf('export default async'));
+    const end = v2.indexOf('\nexport async function handler');
+    const body = end === -1 ? v2 : v2.slice(0, end);
+
+    if (/return\s*\{\s*\n?\s*statusCode/.test(body) || /return\s+jsonResponse\(/.test(body)) {
+      offenders.push(name);
+    }
+  }
+
+  assert.deepEqual(offenders, [], `these export-default functions return a non-Response value: ${offenders.join(', ')}`);
+});

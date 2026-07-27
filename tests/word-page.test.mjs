@@ -5,7 +5,20 @@ import fs from 'node:fs/promises';
 import { parseRoute, renderWordPage, renderValuePage, isBaseRootValue, escapeHtml } from '../netlify/functions/word-page.mjs';
 import { buildSitemapIndex, buildUrlSet, pageLocs, escapeXml } from '../netlify/functions/sitemap-words-xml.mjs';
 
-test('parseRoute reads the kind and key the rewrite supplies', () => {
+test('parseRoute reads the original request path', () => {
+  // Netlify v2 functions receive the original URL, not the rewrite target, so
+  // redirect-injected query params never arrive. Reading only the query made
+  // /sitemap-words/2 fall through to index mode and return the index instead
+  // of a urlset.
+  assert.deepEqual(parseRoute('https://gematria.today/w/light'), { kind: 'word', key: 'light' });
+  assert.deepEqual(parseRoute('https://gematria.today/v/336'), { kind: 'value', key: '336' });
+  assert.deepEqual(parseRoute('https://gematria.today/w/as%20above'), { kind: 'word', key: 'as above' });
+  assert.deepEqual(parseRoute('/w/light'), { kind: 'word', key: 'light' });
+  assert.equal(parseRoute('https://gematria.today/v/abc'), null);
+  assert.equal(parseRoute('https://gematria.today/calculator.html'), null);
+});
+
+test('parseRoute still accepts the rewrite query as a fallback', () => {
   // The rewrite passes these as query params. A path suffix is not reliable
   // after a rewrite, and /w/ and /v/ would arrive indistinguishable.
   assert.deepEqual(parseRoute(new URLSearchParams('kind=word&key=light')), { kind: 'word', key: 'light' });
@@ -125,4 +138,21 @@ test('every export-default function returns a Response, not a {statusCode} objec
   }
 
   assert.deepEqual(offenders, [], `these export-default functions return a non-Response value: ${offenders.join(', ')}`);
+});
+
+test('the words sitemap reads its page number from the path', async () => {
+  // /sitemap-words/2 previously returned the sitemap index, because the page
+  // number was only ever read from a query parameter the runtime never passed.
+  const source = await fs.readFile(new URL('../netlify/functions/sitemap-words-xml.mjs', import.meta.url), 'utf8');
+  assert.match(source, /pathname\.match\(/, 'page number must come from the request path');
+  assert.match(source, /sitemap-words\\\/\(\\d\+\)/);
+});
+
+test('calculator results link out to the indexable word and value pages', async () => {
+  // Without these the generated pages are reachable only from the sitemap.
+  const source = await fs.readFile(new URL('../page-scripts/calculator-1.js', import.meta.url), 'utf8');
+  assert.match(source, /createWordPermalink/);
+  assert.match(source, /createValuePermalink/);
+  assert.match(source, /`\/w\/\$\{encodeURIComponent/);
+  assert.match(source, /`\/v\/\$\{encodeURIComponent/);
 });

@@ -678,6 +678,28 @@ View results: ${shareUrl}`.trim(),
         return requestJson('/.netlify/functions/searchByGematria', searchParams);
       }
 
+      // Real anchors to the indexable /w/ and /v/ pages. The word buttons in
+      // result cards re-run the search in place, which is good UX but leaves the
+      // generated pages reachable only from the sitemap. These give crawlers --
+      // and readers who want a shareable URL -- a path in from the calculator.
+      function createWordPermalink(word, { label = 'Permalink' } = {}) {
+        const link = document.createElement('a');
+        link.className = 'word-permalink definition-pill';
+        link.href = `/w/${encodeURIComponent(String(word))}`;
+        link.textContent = label;
+        link.title = `Permanent page for “${word}”`;
+        return link;
+      }
+
+      function createValuePermalink(value, { label = 'Permalink' } = {}) {
+        const link = document.createElement('a');
+        link.className = 'value-permalink definition-pill';
+        link.href = `/v/${encodeURIComponent(String(value))}`;
+        link.textContent = label;
+        link.title = `Permanent page for gematria value ${value}`;
+        return link;
+      }
+
       function createDefinitionLink(word, { trailingSeparator = '' } = {}) {
         const wrapper = document.createElement('span');
         wrapper.hidden = true;
@@ -922,6 +944,14 @@ View results: ${shareUrl}`.trim(),
           disclaimer.textContent = '*  Gematria value matches are limited to the words currently in our database. Words sharing the same root form are grouped together below.';
           wrapper.appendChild(disclaimer);
 
+          const permalinkLine = document.createElement('p');
+          permalinkLine.className = 'small text-muted';
+          permalinkLine.append(
+            'Shareable page for this value: ',
+            createValuePermalink(payload.gematria, { label: `/v/${payload.gematria}` }),
+          );
+          wrapper.appendChild(permalinkLine);
+
           if (payload.count > 0) {
             const sharedDigitalRoot = computeDigitalRoot(Number(payload.gematria));
             const sharedIsBaseRoot = (Number(payload.gematria) - 6) % 54 === 0;
@@ -1023,7 +1053,7 @@ View results: ${shareUrl}`.trim(),
           runSearch(wordResult.word, { refreshPage: true });
         });
 
-        header.append(wordLabel, createDefinitionLink(wordResult.word));
+        header.append(wordLabel, createDefinitionLink(wordResult.word), createWordPermalink(wordResult.word));
         card.appendChild(header);
 
         if (wordResult.gematria) {
@@ -1334,6 +1364,8 @@ View results: ${shareUrl}`.trim(),
         promptLine.append(
           `Base-6 English Gematria for "${searchGematria.word}" `,
           createDefinitionLink(searchGematria.word),
+          createWordPermalink(searchGematria.word, { label: 'Word page' }),
+          createValuePermalink(searchGematria.gematria.total, { label: `All words = ${searchGematria.gematria.total}` }),
         );
 
         const totalLine = document.createElement('div');

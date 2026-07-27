@@ -17,6 +17,9 @@ const SITE_ORIGIN = 'https://gematria.today';
 const PAGE_SIZE = 5000;
 // Sitemaps are capped at 50,000 URLs each by the protocol; stay well under.
 const MAX_PAGES = 40;
+// Bump when the shape or filtering of cached payloads changes, so existing
+// entries are not served until their TTL lapses.
+const CACHE_VERSION = 2;
 
 export function escapeXml(value = '') {
   return String(value)
@@ -43,9 +46,12 @@ export function buildUrlSet(locs, origin = SITE_ORIGIN) {
 
 // Page 1 carries the value pages (there are relatively few distinct values);
 // the remaining pages carry words, PAGE_SIZE at a time.
+// Filtering here, not only in the compute step, matters: cached payloads live
+// for six hours, so a filter applied only on cache miss keeps serving junk
+// that was cached before the filter existed.
 export function pageLocs({ page, values, words }) {
   if (page === 1) return values.map((value) => `/v/${encodeURIComponent(String(value))}`);
-  return words.map((word) => `/w/${encodeURIComponent(String(word))}`);
+  return words.filter(isIndexableWord).map((word) => `/w/${encodeURIComponent(String(word))}`);
 }
 
 // Netlify v2 functions must return a Response, not a {statusCode, body} object.
@@ -73,7 +79,7 @@ export default async function onRequest(request) {
 
     if (wantsIndex) {
       const cached = await withCachedJson(sql, {
-        cacheKey: buildCacheKey({ route: 'sitemap-words-xml', part: 'index' }),
+        cacheKey: buildCacheKey({ route: 'sitemap-words-xml', v: CACHE_VERSION, part: 'index' }),
         route: 'sitemap-words-xml',
         ttlSeconds: 21600,
         compute: async () => {
@@ -89,7 +95,7 @@ export default async function onRequest(request) {
     const page = Math.max(1, Math.min(Number.parseInt(pageParam, 10) || 1, MAX_PAGES));
 
     const cached = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'sitemap-words-xml', part: String(page) }),
+      cacheKey: buildCacheKey({ route: 'sitemap-words-xml', v: CACHE_VERSION, part: String(page) }),
       route: 'sitemap-words-xml',
       ttlSeconds: 21600,
       compute: async () => {

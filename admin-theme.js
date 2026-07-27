@@ -170,6 +170,52 @@
     }
   });
 
+  // Session expiry used to be handled differently on every admin page: some
+  // hard-redirected and lost the page you were on, others printed "Visit Admin
+  // to sign in" with no link at all. None passed ?next=, even though
+  // admin.html already implements a safe next-redirect consumer.
+  function adminSignInUrl() {
+    var here = window.location.pathname + window.location.search + window.location.hash;
+    return '/admin.html?next=' + encodeURIComponent(here);
+  }
+
+  function isAuthError(error) {
+    var status = error && error.status;
+    if (status === 401 || status === 403) return true;
+    var message = String((error && error.message) || error || '').toLowerCase();
+    return message.indexOf('unauthorized') !== -1
+      || message.indexOf('authentication') !== -1
+      || message.indexOf('not signed in') !== -1;
+  }
+
+  // Returns true when it handled the error, so callers can `if (...) return;`.
+  function handleAuthError(error, options) {
+    if (!isAuthError(error)) return false;
+    var settings = options || {};
+    if (settings.redirect === false) {
+      var target = settings.target;
+      if (target) {
+        target.innerHTML = '';
+        var message = document.createElement('span');
+        message.textContent = 'Your admin session has expired. ';
+        var link = document.createElement('a');
+        link.href = adminSignInUrl();
+        link.textContent = 'Sign in and return to this page';
+        target.appendChild(message);
+        target.appendChild(link);
+      }
+      return true;
+    }
+    window.location.assign(adminSignInUrl());
+    return true;
+  }
+
+  window.adminSession = {
+    signInUrl: adminSignInUrl,
+    isAuthError: isAuthError,
+    handleAuthError: handleAuthError,
+  };
+
   // Expose what admin.html's inline script needs for its super-admin global theme controls.
   window.adminTheme = {
     normalizeBootswatchTheme: normalizeBootswatchTheme,

@@ -182,7 +182,7 @@
         try {
           const payload = await request('/api/admin-session', { method: 'GET' });
           if (!payload?.authenticated || payload?.user?.role !== 'super_admin') {
-            window.location.assign('/admin.html');
+            window.location.assign(window.adminSession?.signInUrl?.() || '/admin.html');
             return;
           }
           state.user = payload.user;

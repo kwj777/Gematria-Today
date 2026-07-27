@@ -433,7 +433,12 @@
           state.user = reports.user;
           renderReports(reports);
         } catch (error) {
-          showError(`${error.message}. Visit Admin to sign in, then return here.`);
+          const errorTarget = document.getElementById('errorMessage');
+          if (window.adminSession?.handleAuthError?.(error, { redirect: false, target: errorTarget })) {
+            errorTarget.classList.remove('d-none');
+          } else {
+            showError(`${error.message}. Visit Admin to sign in, then return here.`);
+          }
           document.getElementById('metaLine').textContent = 'Not authenticated or unable to load report data.';
         } finally {
           if (!reportsBootstrapped) {

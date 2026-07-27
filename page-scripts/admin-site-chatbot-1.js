@@ -106,13 +106,13 @@
         try {
           const response = await fetch('/.netlify/functions/admin-session', { credentials: 'same-origin' });
           if (!response.ok) {
-            window.location.assign('/admin.html');
+            window.location.assign(window.adminSession?.signInUrl?.() || '/admin.html');
             return;
           }
 
           const payload = await response.json();
           if (!payload?.authenticated) {
-            window.location.assign('/admin.html');
+            window.location.assign(window.adminSession?.signInUrl?.() || '/admin.html');
             return;
           }
 
@@ -125,10 +125,25 @@
         }
       }
 
+      // The submit button was never disabled, so repeat clicks fired concurrent
+      // searches whose responses raced -- the same class of bug already fixed
+      // for GemaBot and SiteSeeker.
+      let chatSearchInFlight = false;
+      const chatSubmitButton = chatForm?.querySelector('button[type="submit"]');
+
       chatForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
         const query = chatQuestion.value.trim();
         if (!query) return;
+        if (chatSearchInFlight) return;
+
+        chatSearchInFlight = true;
+        chatForm.setAttribute('aria-busy', 'true');
+        if (chatSubmitButton) {
+          chatSubmitButton.dataset.defaultLabel = chatSubmitButton.dataset.defaultLabel || chatSubmitButton.textContent;
+          chatSubmitButton.textContent = 'Searching…';
+          chatSubmitButton.disabled = true;
+        }
 
         statusMessage.className = 'alert alert-info';
         statusMessage.textContent = 'Searching published site content…';
@@ -163,6 +178,15 @@
         } catch (error) {
           statusMessage.className = 'alert alert-danger';
           statusMessage.textContent = error.message || 'Unable to search site content right now.';
+        } finally {
+          chatSearchInFlight = false;
+          chatForm.setAttribute('aria-busy', 'false');
+          if (chatSubmitButton) {
+            chatSubmitButton.disabled = false;
+            if (chatSubmitButton.dataset.defaultLabel) {
+              chatSubmitButton.textContent = chatSubmitButton.dataset.defaultLabel;
+            }
+          }
         }
       });
 

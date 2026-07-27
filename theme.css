@@ -957,6 +957,16 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   box-shadow: 0 1rem 2rem rgba(3, 7, 12, 0.45);
 }
 
+/* Bootstrap's .bg-white utility stays white in dark mode while the site flips
+   body text light, so any element carrying it renders light-on-white. That hit
+   the admin moderation queue; this closes the whole class of bug rather than
+   the one instance. */
+:root[data-bs-theme="dark"] .bg-white {
+  background-color: var(--color-surface-dark) !important;
+  border-color: var(--color-border-dark);
+  color: #f1f5f9;
+}
+
 :root[data-bs-theme="dark"] #resultFeedbackPanel.bg-light {
   background-color: var(--color-surface-dark) !important;
   border-color: var(--color-border-dark) !important;

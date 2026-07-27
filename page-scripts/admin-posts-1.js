@@ -11,6 +11,7 @@
       const previewCreatePostButton = document.getElementById('previewCreatePostButton');
       const createPostPreviewSection = document.getElementById('createPostPreviewSection');
       const filterStatus = document.getElementById('filterStatus');
+      const filterTitle = document.getElementById('filterTitle');
       const filterDateField = document.getElementById('filterDateField');
       const filterDateFrom = document.getElementById('filterDateFrom');
       const filterDateTo = document.getElementById('filterDateTo');
@@ -18,7 +19,7 @@
       const state = {
         posts: [],
         editingPostId: null,
-        filters: { status: 'all', dateField: 'publishedAt', dateFrom: '', dateTo: '' }
+        filters: { status: 'all', dateField: 'publishedAt', dateFrom: '', dateTo: '', title: '' }
       };
 
       const escapeHtml = (value = '') => String(value)
@@ -491,9 +492,15 @@
       function getFilteredPosts() {
         const startTime = getDateFilterTimestamp(state.filters.dateFrom, false);
         const endTime = getDateFilterTimestamp(state.filters.dateTo, true);
+        const titleTerm = String(state.filters.title || '').trim().toLowerCase();
         return state.posts.filter((post) => {
           const status = getComputedPostStatus(post);
           if (state.filters.status !== 'all' && status !== state.filters.status) {
+            return false;
+          }
+          // With no title search the only way to find a post among hundreds was
+          // to scroll the whole list.
+          if (titleTerm && !String(post.title || '').toLowerCase().includes(titleTerm)) {
             return false;
           }
           if (!startTime && !endTime) {
@@ -507,9 +514,21 @@
         });
       }
 
+      // Every post rendered its full body HTML, an eight-button toolbar and a
+      // complete edit form, unpaginated. At a few hundred posts that is an
+      // enormous DOM and an endless scroll.
+      const POSTS_PAGE_SIZE = 20;
+      let postsShown = POSTS_PAGE_SIZE;
+
       function renderPosts() {
-        const filteredPosts = getFilteredPosts();
-        postCount.textContent = `${filteredPosts.length}/${state.posts.length}`;
+        const allFiltered = getFilteredPosts();
+        postCount.textContent = `${allFiltered.length}/${state.posts.length}`;
+        // Keep an open editor on screen even if it sits past the cut-off.
+        const editingIndex = state.editingPostId
+          ? allFiltered.findIndex((post) => post.id === state.editingPostId)
+          : -1;
+        const visibleCount = Math.max(postsShown, editingIndex + 1);
+        const filteredPosts = allFiltered.slice(0, visibleCount);
         postList.innerHTML = filteredPosts.length ? filteredPosts.map((post) => {
           const isEditing = state.editingPostId === post.id;
           const computedStatus = getComputedPostStatus(post);
@@ -546,7 +565,7 @@
                   <div class="col-md-6"><label class="form-label" for="editScheduledPublishAt-${post.id}">Schedule publish date/time (optional)</label><input id="editScheduledPublishAt-${post.id}" class="form-control" type="datetime-local" value="${escapeHtml(isoToLocalDateTimeInput(post.scheduledPublishAt || ''))}" /></div>
                   <div class="col-12"><label class="form-label" for="editSummary-${post.id}">Summary</label><textarea id="editSummary-${post.id}" class="form-control" rows="2" required>${escapeHtml(post.summary || '')}</textarea></div>
                   <div class="col-12">
-                    <label class="form-label" for="editBody-${post.id}">Body</label>
+                    <label class="form-label" id="editBodyLabel-${post.id}" for="editBody-${post.id}">Body</label>
                     <div class="d-flex flex-wrap gap-2 mb-2 admin-editor-toolbar" role="toolbar" aria-label="Edit post editor toolbar">
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="bold" data-editor-target="editBody-${post.id}"><strong>B</strong></button>
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="italic" data-editor-target="editBody-${post.id}"><em>I</em></button>
@@ -557,7 +576,7 @@
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="quote" data-editor-target="editBody-${post.id}">Quote</button>
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="code" data-editor-target="editBody-${post.id}">Code</button>
                     </div>
-                    <div id="editBody-${post.id}" class="form-control admin-wysiwyg-editor" role="textbox" aria-multiline="true" contenteditable="true">${normalizePostBodyHtml(post.body || '')}</div>
+                    <div id="editBody-${post.id}" class="form-control admin-wysiwyg-editor" role="textbox" aria-multiline="true" aria-labelledby="editBodyLabel-${post.id}" contenteditable="true">${normalizePostBodyHtml(post.body || '')}</div>
                   </div>
                   <div class="col-12"><label class="form-label" for="editImageUrl-${post.id}">Hero image URL</label><input id="editImageUrl-${post.id}" class="form-control" value="${escapeHtml(getPostHeroImageUrl(post))}" /></div>
                   <div class="col-12"><label class="form-label" for="editSliderImageUrl-${post.id}">Homepage slider image URL</label><input id="editSliderImageUrl-${post.id}" class="form-control" value="${escapeHtml(post.sliderImageUrl || '')}" /></div>
@@ -582,6 +601,19 @@
               </div>
             </details>`;
         }).join('') : '<p class="text-muted small mb-0">No blog posts match the selected filters.</p>';
+
+        if (allFiltered.length > filteredPosts.length) {
+          const remaining = allFiltered.length - filteredPosts.length;
+          const more = document.createElement('button');
+          more.type = 'button';
+          more.className = 'btn btn-outline-secondary w-100 mt-3';
+          more.textContent = `Show ${Math.min(POSTS_PAGE_SIZE, remaining)} more (${remaining} remaining)`;
+          more.addEventListener('click', () => {
+            postsShown += POSTS_PAGE_SIZE;
+            renderPosts();
+          });
+          postList.appendChild(more);
+        }
       }
 
       async function loadSession() {
@@ -589,7 +621,8 @@
           const session = await request('/api/admin-session');
           sessionMeta.textContent = `Signed in as ${session.user?.username || 'admin'}.`;
         } catch (error) {
-          window.location.href = '/admin.html';
+          // Preserves the page you were on so signing in returns you here.
+          window.location.href = window.adminSession?.signInUrl?.() || '/admin.html';
         }
       }
 
@@ -684,6 +717,9 @@
       });
 
       function syncFiltersFromInputs() {
+        // Any filter change starts the list over from the first page.
+        postsShown = POSTS_PAGE_SIZE;
+        state.filters.title = filterTitle ? filterTitle.value : '';
         state.filters.status = filterStatus.value;
         state.filters.dateField = filterDateField.value;
         state.filters.dateFrom = filterDateFrom.value;
@@ -695,7 +731,14 @@
         control.addEventListener('change', syncFiltersFromInputs);
       });
 
+      let titleFilterDebounce = null;
+      filterTitle?.addEventListener('input', () => {
+        if (titleFilterDebounce) window.clearTimeout(titleFilterDebounce);
+        titleFilterDebounce = window.setTimeout(syncFiltersFromInputs, 200);
+      });
+
       clearPostFiltersButton.addEventListener('click', () => {
+        if (filterTitle) filterTitle.value = '';
         filterStatus.value = 'all';
         filterDateField.value = 'publishedAt';
         filterDateFrom.value = '';
@@ -705,6 +748,28 @@
 
       previewCreatePostButton.addEventListener('click', () => {
         renderCreatePostPreview();
+      });
+
+      // A long draft could be destroyed by the un-confirmed Reset button, by
+      // navigating away, or by the session-expiry redirect, with no warning.
+      function createPostFormIsDirty() {
+        const title = document.getElementById('createPostTitle')?.value.trim();
+        const summary = document.getElementById('createPostSummary')?.value.trim();
+        const body = document.getElementById('createPostBody')?.textContent.trim();
+        return Boolean(title || summary || body);
+      }
+
+      createPostForm.addEventListener('reset', (event) => {
+        if (!createPostFormIsDirty()) return;
+        if (!window.confirm('Clear this draft?\n\nThe title, summary and body you have typed will be lost.')) {
+          event.preventDefault();
+        }
+      });
+
+      window.addEventListener('beforeunload', (event) => {
+        if (!createPostFormIsDirty()) return;
+        event.preventDefault();
+        event.returnValue = '';
       });
 
       document.getElementById('createPostScheduledPublishAt').addEventListener('change', () => {

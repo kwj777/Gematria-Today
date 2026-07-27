@@ -24,11 +24,14 @@ descriptions, canonicals, OG/Twitter tags, and JSON-LD — and is not duplicatio
 
 ## Why this is worth addressing
 
-**What is enforced stays consistent; what is not, drifts.** The nav has `sync-nav.mjs`, so
-all 29 public pages carrying it are generated from `partials/nav.html` and verified by
-`npm run check-nav` — drift is impossible without failing lint. (The 11 admin pages have
-their own nav and are deliberately excluded.) The footer has no equivalent, and it has
+**What is enforced stays consistent; what is not, drifts.** The nav had `sync-nav.mjs`, so
+all 29 public pages carrying it were generated from `partials/nav.html`. (The 11 admin pages
+have their own nav and are deliberately excluded.) The footer had no equivalent, and it had
 fragmented into **8 distinct variants across 25 pages**.
+
+Worth noting how partial that enforcement was: `check-nav` existed but was **never wired
+into `npm run lint`**, so CI never ran it. The nav held its shape because contributors
+happened to run the syncer, not because anything stopped them not doing so.
 
 That divergence is mostly *intentional* — each site section has its own tagline:
 
@@ -80,21 +83,41 @@ These are the things that make this more than "add Eleventy":
 There is already precedent for build-time generation in the repo:
 `sync-site-adaptation-guides.mjs` generates 10 HTML files from markdown and commits them.
 
-## Option A — extend the existing sync-script pattern (small)
+## Option A — extend the existing sync-script pattern (small) — **shipped**
 
-Generalise `sync-nav.mjs` into a partials syncer that also owns the footer and the head
-boilerplate, driven by `partials/*.html` with simple named slots (tagline, quick-links,
-page `<style>`, page-specific meta).
+`sync-nav.mjs` has been generalised into `scripts/sync-partials.mjs`, which now owns both
+the nav and the footer. Partials live in `partials/nav.html` and `partials/footer.html`;
+the footer takes three slots, configured per page in the script:
 
-**What it costs:** roughly 1 day. `sync-nav.mjs` is 127 lines and already does the hard part
-— locating a block by regex, preserving indentation, and offering `--write` / `--check`.
+- `{{TAGLINE}}` — one of five per-section taglines, mapped via `FOOTER_SECTION_BY_FILE`
+- `{{QUICK_LINKS}}` — the home page's extra quick-links row
+- `{{EXTRA_LEGAL_LINKS}}` — account-recovery's extra Dashboard link
 
-**What it buys:** the footer stops drifting, and shared markup is edited in one place.
-Every constraint above is untouched: no build step, `publish` stays `.`, no config or test
-changes, and the lint suite keeps working exactly as it does now.
+`npm run check:partials` is now part of `npm run lint`, closing the gap noted above.
+`sync-nav` / `check-nav` remain as aliases.
 
-**What it does not fix:** the pages still physically contain the boilerplate, so a nav
-change still produces a 31-file diff. The *edit* cost goes away; the *review* cost does not.
+**What it buys:** the footer can no longer drift, and shared chrome is edited in one place.
+No build step, `publish` stays `.`, and no Netlify config or test changes were needed.
+
+**What it does not fix (unchanged by this work):** the pages still physically contain the
+boilerplate, so a footer change still produces a ~24-file diff. The *edit* cost is gone; the
+*review* cost is not. That is what Option B buys.
+
+### The head boilerplate was deliberately left out
+
+The original plan included the head. Measurement showed it is not safely extractable with
+block replacement:
+
+- the longest **identical contiguous** run at the top of `<head>` is **4 lines**
+  (`<head>`, charset, viewport, `early-bootstrap.js`), and the only common suffix is `</head>`
+- the shared lines (theme.css, preloads, `noscript` fallbacks) are **interleaved** with
+  page-specific title/meta/OG/JSON-LD in an order that varies per page
+- the stylesheet/preload cluster has **6 distinct shapes** across the 29 pages
+
+Extracting it would mean reordering the head on at least 8 pages. Preload and stylesheet
+order is LCP-sensitive, so that is a performance change, not a refactor, and it needs a
+deliberate decision about a canonical head order first. Left for Option B, where a layout
+imposes that order once.
 
 ## Option B — a real templating layer (larger)
 
@@ -113,7 +136,7 @@ little here, since there are no interactive components to island-ify.
 5. Repoint `update-sitemap-lastmod.mjs` at source templates (constraint 3).
 6. Repoint `check-no-inline-scripts.mjs`, `check-google-analytics.mjs`, and
    `netlify-redirects.test.mjs` at build output.
-7. Retire `sync-nav.mjs` (127 lines) — the layout replaces it.
+7. Retire `sync-partials.mjs` — the layout replaces it.
 
 **What it costs:** roughly a week, most of it in steps 3–6 rather than step 2. The migration
 is mechanical but wide, and it is hard to land incrementally: `publish` flips for all pages
@@ -127,10 +150,10 @@ than a copy-paste. Roughly 3,485 lines of repeated markup stop existing.
 
 ## Recommendation
 
-**Do Option A now; treat Option B as a separate, deliberate project.**
+**Option A is done; treat Option B as a separate, deliberate project.**
 
-The footer is actively fragmented today and nothing detects it — that is a real problem with
-a one-day fix that carries no migration risk. Option B is the better end state, but its cost
+The footer was actively fragmented and nothing detected it — a real problem with a one-day
+fix and no migration risk. Option B is the better end state, but its cost
 is dominated by re-homing build paths and repointing five checks, not by the templating
 itself, and it is worth doing when the page count or the pace of shared-markup changes
 justifies a week and a `publish` flip.

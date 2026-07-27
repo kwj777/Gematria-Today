@@ -188,3 +188,24 @@ test('unverified accounts outlive their verification link', async () => {
   assert.match(source, /UNVERIFIED_RETENTION = '30 days'/);
   assert.ok(!/INTERVAL '24 hours'/.test(source), 'no 24-hour prune windows should remain');
 });
+
+test('a stale cached payload still cannot leak junk into the sitemap', () => {
+  // The filter used to run only inside the compute step, so entries cached
+  // before it existed kept being served for the six-hour TTL. Filtering at the
+  // output boundary makes the cache irrelevant to correctness.
+  const stale = ['*', '-ol', '0', '2 5 0 62 4', '276', '45', '<er>annoy</er>', 'A per se', 'ALGOL'];
+  const locs = pageLocs({ page: 2, values: [], words: stale });
+
+  assert.deepEqual(locs, ['/w/A%20per%20se', '/w/ALGOL']);
+
+  const xml = buildUrlSet(locs);
+  for (const junk of ['/w/*', '/w/0', '/w/276', '/w/45', '/w/-ol', '%3Cer%3E']) {
+    assert.ok(!xml.includes(junk), `${junk} must not appear in the sitemap`);
+  }
+});
+
+test('the sitemap cache key is versioned so filtering changes take effect at once', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/sitemap-words-xml.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const CACHE_VERSION = \d+/);
+  assert.match(source, /v: CACHE_VERSION/);
+});

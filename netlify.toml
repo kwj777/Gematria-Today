@@ -32,10 +32,17 @@
   to = "/:splat-site-adaptation-guide.html"
   status = 301
 
+# force = true is load-bearing, not cosmetic. The guide HTML files physically
+# exist under secure/site-adaptation-guides/, and publish = "." serves the whole
+# repository, so without force a request for this path is answered by the static
+# file and never reaches super-admin-static-page -- the only thing that checks
+# authentication. Forcing the redirect sends every request through the root guide
+# URL, which is itself force-redirected to the auth-checking function.
 [[redirects]]
   from = "/secure/site-adaptation-guides/*-site-adaptation-guide.html"
   to = "/:splat-site-adaptation-guide.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/*-site-adaptation-guide.html.html"

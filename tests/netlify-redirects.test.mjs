@@ -43,12 +43,27 @@ test('secure guide folder paths are canonicalized to root guide URLs', async () 
     '  from = "/secure/site-adaptation-guides/*-site-adaptation-guide.html"',
     '  to = "/:splat-site-adaptation-guide.html"',
     '  status = 301',
+    '  force = true',
   ].join('\n');
 
   assert.match(
     netlifyToml,
     new RegExp(secureGuideRedirectBlock.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
   );
+});
+
+test('secure guide redirect is forced so static files cannot shadow the auth gate', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+
+  // The guide HTML files exist on disk and publish = "." serves them, so a
+  // non-forced redirect would be shadowed by the static file and skip
+  // super-admin-static-page entirely.
+  const secureGuideRule = netlifyToml
+    .split('[[redirects]]')
+    .find((block) => block.includes('from = "/secure/site-adaptation-guides/'));
+
+  assert.ok(secureGuideRule, 'expected a redirect rule for the secure guide folder');
+  assert.match(secureGuideRule, /force = true/);
 });
 
 

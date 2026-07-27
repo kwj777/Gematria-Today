@@ -1,7 +1,13 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
-const ROOT = process.cwd();
+// Checks run against the build output -- that is what actually ships.
+// Run `npm run build` first (npm run lint does).
+const ROOT = join(process.cwd(), '_site');
+if (!existsSync(ROOT)) {
+  console.error('_site/ not found. Run \`npm run build\` first.');
+  process.exit(1);
+}
 const GA_MEASUREMENT_ID = 'G-E611H84D6Y';
 const BOOTSTRAP_SRCS = ['analytics-bootstrap.js', 'site-bundle.js'];
 const EXCLUDED_DIRS = new Set(['.git', 'node_modules', 'secure', 'tests', 'docs', 'sql']);

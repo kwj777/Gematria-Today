@@ -4,7 +4,8 @@ import { spawnSync } from 'node:child_process';
 
 const ROOT = process.cwd();
 const INCLUDE_EXTENSIONS = new Set(['.js', '.mjs']);
-const EXCLUDE_DIRS = new Set(['.git', 'node_modules']);
+// _site is build output -- scanning it would double-report every source file.
+const EXCLUDE_DIRS = new Set(['.git', 'node_modules', '_site']);
 const checks = [
   { label: 'eval usage', pattern: /\beval\s*\(/ },
   { label: 'Function constructor usage', pattern: /\bnew\s+Function\s*\(/ }

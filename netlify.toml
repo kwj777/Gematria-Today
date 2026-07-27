@@ -1,6 +1,7 @@
 [build]
+  command = "npm run build"
   functions = "netlify/functions"
-  publish = "."
+  publish = "_site"
 
 [[redirects]]
   from = "/robots.txt"
@@ -33,8 +34,8 @@
   status = 301
 
 # force = true is load-bearing, not cosmetic. The guide HTML files physically
-# exist under secure/site-adaptation-guides/, and publish = "." serves the whole
-# repository, so without force a request for this path is answered by the static
+# exist under secure/site-adaptation-guides/ and are passed through to _site, so
+# without force a request for this path is answered by the static
 # file and never reaches super-admin-static-page -- the only thing that checks
 # authentication. Forcing the redirect sends every request through the root guide
 # URL, which is itself force-redirected to the auth-checking function.
@@ -220,7 +221,9 @@
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
 
 [functions."admin-click-tracking"]
-  included_files = ["*.html"]
+  # Public page sources live in src/ since the Eleventy migration; the root glob
+  # still covers admin pages and the standalone fallbacks.
+  included_files = ["src/*.html", "*.html"]
 
 [functions."super-admin-static-page"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]

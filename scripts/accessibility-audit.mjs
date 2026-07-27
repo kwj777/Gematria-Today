@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 
 // Marker written into every generated report. The script refuses to overwrite
 // any existing file that lacks it, so a stray --out can never clobber a
@@ -24,7 +24,13 @@ if (existsSync(outputPath) && !readFileSync(outputPath, 'utf8').includes(GENERAT
   process.exit(1);
 }
 
-const HTML_FILES = readdirSync('.').filter((name) => name.endsWith('.html')).sort();
+// Audit the built site: that is what users actually receive.
+const SITE_DIR = '_site';
+if (!existsSync(SITE_DIR)) {
+  console.error('_site/ not found. Run `npm run build` first.');
+  process.exit(1);
+}
+const HTML_FILES = readdirSync(SITE_DIR).filter((name) => name.endsWith('.html')).sort();
 
 const issues = [];
 
@@ -33,7 +39,7 @@ function pushIssue(file, severity, rule, details) {
 }
 
 for (const file of HTML_FILES) {
-  const source = readFileSync(file, 'utf8');
+  const source = readFileSync(join(SITE_DIR, file), 'utf8');
 
   if (!/\<html[^>]*\blang\s*=\s*"[^"]+"/i.test(source)) {
     pushIssue(file, 'high', 'html-lang', 'Missing `lang` on the `<html>` element.');

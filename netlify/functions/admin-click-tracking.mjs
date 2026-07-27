@@ -53,9 +53,13 @@ export function stripHtml(rawText) {
 }
 
 async function collectTrackableElements() {
-  const candidates = SITE_PUBLIC_DIR ? [SITE_PUBLIC_DIR] : [];
+  // Public pages are authored in src/ and built into _site/ by Eleventy, so the
+  // page sources bundled with this function live under src/. The bare roots are
+  // kept as fallbacks for netlify dev and for any page still at the top level.
+  const roots = SITE_PUBLIC_DIR ? [SITE_PUBLIC_DIR] : [];
   const cwdRoot = path.resolve(process.cwd());
-  if (SITE_PUBLIC_DIR !== cwdRoot) candidates.push(cwdRoot);
+  if (SITE_PUBLIC_DIR !== cwdRoot) roots.push(cwdRoot);
+  const candidates = [...roots.map((dir) => path.join(dir, 'src')), ...roots];
 
   let files = null;
   let resolvedDir = null;

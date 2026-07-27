@@ -89,19 +89,33 @@
 # Indexable pages for the words table. /w/:word and /v/:value give every word
 # and every gematria value a real URL; they cross-link, so the whole set is
 # crawlable once any one page is reached.
+# Params go through as query string, matching /b/:username. Passing them as a
+# path suffix is not reliable after a rewrite, and both routes would have
+# collapsed to the same function path, losing which kind of page was requested.
 [[redirects]]
   from = "/w/:word"
-  to = "/.netlify/functions/word-page/:word"
+  to = "/.netlify/functions/word-page?kind=word&key=:word"
   status = 200
 
 [[redirects]]
   from = "/v/:value"
-  to = "/.netlify/functions/word-page/:value"
+  to = "/.netlify/functions/word-page?kind=value&key=:value"
   status = 200
 
+# Sitemap index plus fixed-size chunks. A single sitemap over 30k+ words meant
+# one request sorting every row and writing a multi-megabyte cache entry, which
+# is what returned 502.
 [[redirects]]
   from = "/sitemap-words.xml"
-  to = "/.netlify/functions/sitemap-words-xml"
+  to = "/.netlify/functions/sitemap-words-xml?index=1"
+  status = 200
+
+# Full-segment placeholder, like /blog/:slug and /b/:username. A placeholder in
+# the middle of a filename (sitemap-words-:page.xml) is not a pattern this repo
+# has ever proven works.
+[[redirects]]
+  from = "/sitemap-words/:page"
+  to = "/.netlify/functions/sitemap-words-xml?page=:page"
   status = 200
 
 [[redirects]]

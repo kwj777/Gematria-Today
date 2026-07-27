@@ -24,16 +24,20 @@ export function escapeHtml(value = '') {
     .replace(/'/g, '&#39;');
 }
 
-// /w/light -> {kind:'word', key:'light'}; /v/336 -> {kind:'value', key:'336'}
-export function parseRoute(pathname = '') {
-  const clean = String(pathname).split('?')[0].split('#')[0];
-  const wordMatch = clean.match(/\/w\/([^/]+)\/?$/);
-  if (wordMatch) {
-    const key = decodeURIComponent(wordMatch[1]).trim();
-    return key ? { kind: 'word', key } : null;
-  }
-  const valueMatch = clean.match(/\/v\/(\d+)\/?$/);
-  if (valueMatch) return { kind: 'value', key: valueMatch[1] };
+// The rewrite supplies kind and key as query params (see netlify.toml). Path
+// suffixes are not reliable after a rewrite, and /w/ and /v/ would otherwise
+// arrive at the same function path indistinguishably.
+export function parseRoute(searchParams) {
+  const params = searchParams instanceof URLSearchParams
+    ? searchParams
+    : new URLSearchParams(String(searchParams || ''));
+
+  const kind = String(params.get('kind') || '').trim();
+  const key = String(params.get('key') || '').trim();
+  if (!key) return null;
+
+  if (kind === 'word') return { kind: 'word', key };
+  if (kind === 'value') return /^\d+$/.test(key) ? { kind: 'value', key } : null;
   return null;
 }
 
@@ -147,7 +151,7 @@ export default async function onRequest(request) {
       message: 'Too many word page requests.',
     });
 
-    const route = parseRoute(new URL(request.url).pathname);
+    const route = parseRoute(new URL(request.url).searchParams);
     if (!route) return htmlResponse(404, layout({
       title: 'Not found | Gematria.Today',
       description: 'That page could not be found.',
@@ -174,7 +178,7 @@ export default async function onRequest(request) {
       },
     });
 
-    const words = cached.value?.words || cached.words || [];
+    const words = cached.payload?.words || [];
 
     await logRequestAudit(sql, request, {
       route: 'word-page',

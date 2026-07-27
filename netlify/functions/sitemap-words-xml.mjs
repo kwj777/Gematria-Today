@@ -11,6 +11,7 @@
 // Console. Each chunk now touches PAGE_SIZE rows with LIMIT/OFFSET.
 import { getSqlClient } from './_auth.mjs';
 import { assertEndpointEnabled, buildCacheKey, withCachedJson } from './_security.mjs';
+import { isIndexableWord } from './word-page.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const PAGE_SIZE = 5000;
@@ -102,7 +103,7 @@ export default async function onRequest(request) {
         const rows = await sql`
           SELECT word FROM words ORDER BY word ASC LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `;
-        return { values: [], words: rows.map((row) => row.word) };
+        return { values: [], words: rows.map((row) => row.word).filter(isIndexableWord) };
       },
     });
 

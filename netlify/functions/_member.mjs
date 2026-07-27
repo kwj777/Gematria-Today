@@ -19,7 +19,13 @@ import { ensureSecuritySchema } from './_security.mjs';
 import { ensureAdminSchema } from './_admin.mjs';
 
 export { AUTH_COOKIES, clearMemberTierCookie, clearSessionCookie, createMemberTierCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, getSqlClient, hashPassword, jsonResponse, parseBody };
-const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
+// The verification link used to expire after 24 hours and unverified accounts
+// were deleted after 24 hours, so someone who opened the email the next
+// morning found an expired link AND a deleted account, with no way to resend.
+// The link now lasts a week and the account survives a month, which leaves
+// member-resend-verification something to act on.
+const EMAIL_VERIFICATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const UNVERIFIED_RETENTION = '30 days';
 let memberSchemaReadyPromise = null;
 
 export async function ensureMemberSchema(sql) {
@@ -414,7 +420,7 @@ export async function deleteExpiredUnverifiedMembers(sql) {
     WHERE role = 'member'
       AND status = 'pending'
       AND email_verified = FALSE
-      AND created_at <= NOW() - INTERVAL '24 hours'
+      AND created_at <= NOW() - ${UNVERIFIED_RETENTION}::interval
       -- Only prune when we actually delivered the verification email. If
       -- delivery failed the member never had a chance to act, and deleting
       -- them destroys a signup and the evidence of the outage at once.
@@ -445,7 +451,7 @@ export async function deleteExpiredUnverifiedMemberByIdentifier(sql, identifier 
     WHERE role = 'member'
       AND status = 'pending'
       AND email_verified = FALSE
-      AND created_at <= NOW() - INTERVAL '24 hours'
+      AND created_at <= NOW() - ${UNVERIFIED_RETENTION}::interval
       AND (
         username = ${normalizedIdentifier}
         OR LOWER(email) = ${normalizedEmail}

@@ -65,6 +65,24 @@ export function parseRoute(input) {
   return null;
 }
 
+// The words table is populated from lookups and contains entries that should
+// never be offered to a search engine: bare numbers (0, 45, 276), punctuation
+// (*), fragments (-ol), digit strings ("2 5 0 62 4"), and Wordnik markup that
+// was stored raw (<er>annoy</er>). Publishing tens of thousands of URLs where
+// a slice are junk pages is an active ranking risk, not just untidy.
+const MARKUP_OR_WILDCARD = /[<>{}|*\\/\[\]^~`"]/;
+
+export function isIndexableWord(word) {
+  const value = String(word ?? '').trim();
+  if (!value || value.length > 64) return false;
+  // Must read as a word: begins with a letter, not a digit or punctuation.
+  if (!/^[A-Za-z]/.test(value)) return false;
+  if (MARKUP_OR_WILDCARD.test(value)) return false;
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f]/.test(value)) return false;
+  return true;
+}
+
 export function isBaseRootValue(total) {
   return (Number(total) - 6) % 54 === 0;
 }
@@ -102,7 +120,9 @@ ${bodyHtml}
 }
 
 function relatedList(words, currentWord) {
-  const others = words.filter((row) => String(row.word).toLowerCase() !== String(currentWord || '').toLowerCase());
+  const others = words
+    .filter((row) => isIndexableWord(row.word))
+    .filter((row) => String(row.word).toLowerCase() !== String(currentWord || '').toLowerCase());
   if (others.length === 0) {
     return '<p class="mb-0">No other words in the database share this value yet.</p>';
   }
@@ -184,6 +204,17 @@ export default async function onRequest(request) {
       canonical: `${SITE_ORIGIN}/`,
       bodyHtml: '        <h1 class="display-6">Not found</h1>\n        <p><a href="/calculator.html">Go to the calculator</a></p>',
     }));
+
+    // Junk rows exist in the words table; serve them a 404 rather than a thin
+    // page, so anything already crawled drops out of the index.
+    if (route.kind === 'word' && !isIndexableWord(route.key)) {
+      return htmlResponse(404, layout({
+        title: 'Not found | Gematria.Today',
+        description: 'That page could not be found.',
+        canonical: `${SITE_ORIGIN}/`,
+        bodyHtml: '        <h1 class="display-6">Not found</h1>\n        <p><a href="/calculator.html">Go to the calculator</a></p>',
+      }));
+    }
 
     const value = route.kind === 'word'
       ? Number(englishGematria(route.key))

@@ -28,10 +28,15 @@
   to = "/architect-site-adaptation-guide.html"
   status = 301
 
+# Forced for the same reason as the /secure/ rule below: the markdown sources of
+# the guides are tracked at the repository root, so if they are ever published a
+# direct request would be answered by the file and skip super-admin-static-page.
+# The Eleventy config no longer copies them into _site; this is the second lock.
 [[redirects]]
   from = "/*-site-adaptation-guide.md"
   to = "/:splat-site-adaptation-guide.html"
   status = 301
+  force = true
 
 # force = true is load-bearing, not cosmetic. The guide HTML files physically
 # exist under secure/site-adaptation-guides/ and are passed through to _site, so

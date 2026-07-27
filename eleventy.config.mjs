@@ -1,23 +1,48 @@
 // Eleventy builds the public pages from src/ into _site/. Netlify's publish
 // directory points at _site (see netlify.toml).
 //
-// Scope note: this migration deliberately preserves what the site serves today.
-// publish = "." previously published the whole repository, so everything that is
-// not the build input or a local tool directory is passed through unchanged --
-// including sql/, scripts/, tests/ and netlify/. Narrowing that is a separate,
-// intentional change: remove entries from PASSTHROUGH_EXCLUDE below.
+// Only site content is published. publish = "." used to serve the entire
+// repository -- database schemas, tests, build scripts and serverless function
+// source included. Everything below is excluded deliberately; if you add a
+// directory the browser genuinely needs, allow it explicitly rather than
+// loosening the list.
 import { readdirSync } from 'node:fs';
 import { loadPartials, renderNav, renderFooter } from './scripts/lib/page-chrome.mjs';
 
-// Not content: the build input, the build output, VCS and tooling directories.
 const PASSTHROUGH_EXCLUDE = new Set([
+  // Build input, build output, VCS and local tooling.
   '.git',
+  '.github',
   '.claude',
+  '.gitignore',
   'node_modules',
   '_site',
   'src',
   'artifacts',
+
+  // Server-side and repo tooling. Netlify reads functions from the repository
+  // (build.functions), not from the publish directory, so excluding these does
+  // not affect deploys.
+  'netlify',
+  'scripts',
+  'sql',
+  'tests',
+  'docs',
+  'package.json',
+  'package-lock.json',
+  'netlify.toml',
+  'eleventy.config.mjs',
+  'LICENSE',
+
+  // Gated content. The guides are readable only through
+  // super-admin-static-page, which bundles them via included_files. Publishing
+  // them here would let a direct request bypass that check.
+  'secure',
 ]);
+
+// Root markdown is internal documentation and is not published -- except where
+// a page actually links to it. accessibility.html links to the audit report.
+const PUBLISHED_MARKDOWN = new Set(['accessibility-audit.md']);
 
 const partials = await loadPartials(process.cwd());
 
@@ -38,9 +63,10 @@ export default function (eleventyConfig) {
     return renderFooter(partials.footer, pageFileName(this.page));
   });
 
-  // Everything the old publish = "." served, minus the build input/output.
+  // Site content only -- see PASSTHROUGH_EXCLUDE above.
   for (const entry of readdirSync(process.cwd(), { withFileTypes: true })) {
     if (PASSTHROUGH_EXCLUDE.has(entry.name)) continue;
+    if (entry.isFile() && entry.name.endsWith('.md') && !PUBLISHED_MARKDOWN.has(entry.name)) continue;
     eleventyConfig.addPassthroughCopy(entry.name);
   }
 

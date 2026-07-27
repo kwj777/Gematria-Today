@@ -428,7 +428,9 @@ const initializeHeroQuickCalc = () => {
     const total = computeEnglishGematria(raw);
     valueNode.textContent = total.toLocaleString();
     valueNode.removeAttribute('data-example');
-    if (caption) caption.textContent = defaultCaption;
+    // Digits and emoji score 0, which reads as a broken calculator unless we
+    // say why. The full calculators explain this in their hint text.
+    if (caption) caption.textContent = total === 0 ? 'Only A–Z letters count toward the value.' : defaultCaption;
     deepLink.innerHTML = 'See it on the full calculator <span aria-hidden="true">&rarr;</span> <kbd class="hero-quick-calc__deep-link-kbd" aria-hidden="true">Enter</kbd>';
     deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
     deepLink.setAttribute('aria-label', `See "${raw}" on the full calculator (press Enter)`);

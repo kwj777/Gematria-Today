@@ -63,7 +63,10 @@
 
   window.document.addEventListener('click', reportSitewideElementClick, { capture: true });
 
-  const workingOverlayAllowedPages = new Set(['/calculator.html', '/namecalculator.html']);
+  // The page is name-calculator.html; the hyphen-less spelling never matched,
+  // so name-calculator-1.js called a stubbed no-op and slow submits there
+  // showed no "Working…" state at all.
+  const workingOverlayAllowedPages = new Set(['/calculator.html', '/name-calculator.html']);
   const currentPath = (window.location && window.location.pathname ? window.location.pathname : '').toLowerCase();
   const isWorkingOverlayPage = workingOverlayAllowedPages.has(currentPath);
 

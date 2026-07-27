@@ -313,6 +313,11 @@ function handleSubmit(event) {
     } else {
       renderAllCiphers(query);
     }
+    // #multi-cipher-status was only ever cleared, never written to, so nothing
+    // told a screen-reader user that results had appeared below the form.
+    status.textContent = currentMode() === 'single'
+      ? `Results ready for "${query}".`
+      : `Results ready for "${query}" across all ciphers.`;
   } catch (error) {
     showInputError(`Could not calculate: ${error.message}`);
   }

@@ -68,6 +68,13 @@
             form.classList.add('d-none');
             successPanel?.classList.remove('d-none');
             successPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // The role="status" region already holds its text when unhidden,
+            // which most screen readers do not announce. Moving focus to the
+            // panel is what account-recovery does, and it reads reliably.
+            if (successPanel) {
+              successPanel.setAttribute('tabindex', '-1');
+              successPanel.focus({ preventScroll: true });
+            }
           },
         });
 
@@ -99,9 +106,29 @@
           } catch (error) {
             setResendAlert((error && error.message) || 'Unable to resend the verification email right now. Please try again in a few minutes.', 'danger');
           } finally {
-            resendButton.disabled = false;
             resendButton.removeAttribute('aria-busy');
             resendButton.innerHTML = originalLabel;
+            // Both other resend flows enforce 30s; without it here a fast
+            // clicker could hammer the endpoint.
+            startResendCooldown(30);
           }
         });
+
+        function startResendCooldown(seconds) {
+          if (!resendButton) return;
+          let remaining = seconds;
+          const defaultLabel = resendButton.innerHTML;
+          resendButton.disabled = true;
+          resendButton.textContent = `Wait ${remaining}s before resending`;
+          const timer = window.setInterval(() => {
+            remaining -= 1;
+            if (remaining <= 0) {
+              window.clearInterval(timer);
+              resendButton.disabled = false;
+              resendButton.innerHTML = defaultLabel;
+              return;
+            }
+            resendButton.textContent = `Wait ${remaining}s before resending`;
+          }, 1000);
+        }
       });

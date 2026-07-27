@@ -130,7 +130,9 @@
     hideBanner(banner);
   }
 
-  function showBanner() {
+  // `existingPrefs` is set when the banner is reopened from Cookie settings, so
+  // the checkboxes show what the visitor chose last time instead of resetting.
+  function showBanner(existingPrefs) {
     var banner = document.createElement('div');
     banner.id = 'cookieConsentBanner';
     banner.setAttribute('role', 'dialog');
@@ -174,6 +176,20 @@
       });
     });
 
+    // The banner is appended at the end of <body>, so a keyboard user would
+    // not reach it until the very end of the tab order. Focus the container
+    // (not a button, so no option is pre-selected) without trapping focus.
+    banner.setAttribute('tabindex', '-1');
+    try { banner.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+
+    // Escape dismisses without recording a decision, so the banner returns on
+    // the next page rather than silently counting as a "no".
+    banner.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      hideBanner(banner);
+    });
+
     var acceptBtn = document.getElementById('cookieConsentAccept');
     var declineBtn = document.getElementById('cookieConsentDecline');
     var customizeBtn = document.getElementById('cookieConsentCustomize');
@@ -181,6 +197,15 @@
     var optionsPanel = document.getElementById('cookieConsentOptions');
     var analyticsBox = document.getElementById('cookieConsentAnalytics');
     var advertisingBox = document.getElementById('cookieConsentAdvertising');
+
+    if (existingPrefs) {
+      analyticsBox.checked = !!existingPrefs.analytics;
+      advertisingBox.checked = !!existingPrefs.advertising;
+      // Reopening is an explicit request to change something, so start on the
+      // detailed view rather than making the user find Customize again.
+      customizeBtn.setAttribute('aria-expanded', 'true');
+      optionsPanel.hidden = false;
+    }
 
     acceptBtn.addEventListener('click', function () {
       persistAndApply(banner, { analytics: true, advertising: true });
@@ -211,12 +236,33 @@
     });
   }
 
-  // Expose a minimal read-only API for other scripts.
+  // Expose a minimal API for other scripts. `reopen` exists because consent
+  // has to be as easy to withdraw as it was to give: the banner never returned
+  // once a choice was stored, and privacy.html promises "the controls on the
+  // Site". The footer's Cookie settings link calls this.
   window.gematriaCookieConsent = Object.freeze({
     getConsent: getConsent,
     getConsentPreferences: function () { return parseConsent(getConsent()); },
     CONSENT_KEY: CONSENT_KEY,
     consentModeRegions: CONSENT_MODE_REGIONS.slice(),
+    reopen: function reopen() {
+      var existing = document.getElementById('cookieConsentBanner');
+      if (existing) {
+        try { existing.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+        return;
+      }
+      showBanner(parseConsent(getConsent()));
+    },
+  });
+
+  // Wired here rather than per-page so every page with the footer gets it.
+  document.addEventListener('click', function (event) {
+    var trigger = event.target && event.target.closest
+      ? event.target.closest('[data-cookie-settings]')
+      : null;
+    if (!trigger) return;
+    event.preventDefault();
+    window.gematriaCookieConsent.reopen();
   });
 
   var savedConsent = getConsent();

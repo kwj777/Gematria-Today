@@ -66,6 +66,11 @@
         tip.addEventListener('mouseenter', cancelHide);
         tip.addEventListener('mouseleave', scheduleHide);
       }
+      // The tip contains a "Join free" link. Blur on the button scheduled the
+      // hide, so a keyboard user tabbing toward that link dismissed the
+      // popover before they could ever reach it (WCAG 1.4.13).
+      tip.addEventListener('focusin', cancelHide);
+      tip.addEventListener('focusout', scheduleHide);
     }
 
     function resetTipListenersFlag() {

@@ -3159,6 +3159,36 @@ body.page-render-pending footer {
   }
 }
 
+/* Words sharing a gematria value, on the generated /w/ and /v/ pages. These
+   lists run to 200 entries, so they wrap into columns instead of one very tall
+   single-file column, and each link gets a comfortable tap target. */
+.related-word-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.15rem 1rem;
+}
+
+.related-word-list a {
+  display: block;
+  padding: 0.4rem 0.25rem;
+  border-radius: var(--radius-sm, 0.25rem);
+  text-decoration: none;
+}
+
+.related-word-list a:hover,
+.related-word-list a:focus-visible {
+  background: var(--color-surface-highlight-soft, rgba(15, 23, 42, 0.05));
+  text-decoration: underline;
+}
+
+:root[data-bs-theme="dark"] .related-word-list a:hover,
+:root[data-bs-theme="dark"] .related-word-list a:focus-visible {
+  background: rgba(148, 163, 184, 0.12);
+}
+
 /* English Ordinal letter-value chart shown on why-english-gematria.html.
    Auto-fits a responsive grid of 26 letter/value cells. Each cell pairs a
    bold serif letter with its numeric value. */

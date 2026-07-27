@@ -23,3 +23,30 @@ export function isIndexableWord(word) {
 // Storage uses the same rule as indexing. A word we would never show a search
 // engine is a word we have no reason to keep.
 export const isStorableWord = isIndexableWord;
+
+// Words the dictionary contains that should not appear on a page published
+// under the site's name. The calculator still returns them on demand; this
+// governs generated pages and the sitemap only.
+const BLOCKED = new Set([
+  'fag', 'fags', 'faggot', 'faggots',
+  'nigger', 'niggers', 'nigga', 'niggas',
+  'kike', 'kikes', 'spic', 'spics', 'wop', 'wops',
+  'chink', 'chinks', 'gook', 'gooks', 'coon', 'coons',
+  'tranny', 'trannies', 'retard', 'retards', 'retarded',
+  'cunt', 'cunts', 'whore', 'whores', 'slut', 'sluts',
+]);
+
+export function isPublishableWord(word) {
+  if (!isIndexableWord(word)) return false;
+  return !BLOCKED.has(String(word).trim().toLowerCase());
+}
+
+// Only words somebody has actually looked up get published. The table carries
+// tens of thousands of bulk-imported rows with no search history; a smaller set
+// of pages people actually wanted beats a large set of thin ones, which is what
+// thin-content and doorway heuristics penalise.
+export function isPublishableRow(row) {
+  if (!row) return false;
+  if (!isPublishableWord(row.word)) return false;
+  return Number(row.search_count || 0) > 0;
+}

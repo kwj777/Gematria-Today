@@ -89,9 +89,9 @@
 # Indexable pages for the words table. /w/:word and /v/:value give every word
 # and every gematria value a real URL; they cross-link, so the whole set is
 # crawlable once any one page is reached.
-# Params go through as query string, matching /b/:username. Passing them as a
-# path suffix is not reliable after a rewrite, and both routes would have
-# collapsed to the same function path, losing which kind of page was requested.
+# The query string here is a fallback only. Netlify v2 functions receive the
+# ORIGINAL request URL, not this rewrite target, so word-page parses /w/ and /v/
+# out of the path itself. Keep both routes distinct regardless.
 [[redirects]]
   from = "/w/:word"
   to = "/.netlify/functions/word-page?kind=word&key=:word"
@@ -478,6 +478,11 @@
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"
+
+# word-page renders inside the real site chrome, so it needs the nav and footer
+# partials at runtime.
+[functions."word-page"]
+  included_files = ["src/_includes/*.html"]
 
 [functions."admin-hub"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]

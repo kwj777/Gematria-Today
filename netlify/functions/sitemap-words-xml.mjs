@@ -11,7 +11,7 @@
 // Console. Each chunk now touches PAGE_SIZE rows with LIMIT/OFFSET.
 import { getSqlClient } from './_auth.mjs';
 import { assertEndpointEnabled, buildCacheKey, withCachedJson } from './_security.mjs';
-import { isIndexableWord } from './_words.mjs';
+import { isPublishableWord, isPublishableRow } from './_words.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const PAGE_SIZE = 5000;
@@ -19,7 +19,7 @@ const PAGE_SIZE = 5000;
 const MAX_PAGES = 40;
 // Bump when the shape or filtering of cached payloads changes, so existing
 // entries are not served until their TTL lapses.
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 export function escapeXml(value = '') {
   return String(value)
@@ -51,7 +51,7 @@ export function buildUrlSet(locs, origin = SITE_ORIGIN) {
 // that was cached before the filter existed.
 export function pageLocs({ page, values, words }) {
   if (page === 1) return values.map((value) => `/v/${encodeURIComponent(String(value))}`);
-  return words.filter(isIndexableWord).map((word) => `/w/${encodeURIComponent(String(word))}`);
+  return words.filter(isPublishableWord).map((word) => `/w/${encodeURIComponent(String(word))}`);
 }
 
 // Netlify v2 functions must return a Response, not a {statusCode, body} object.
@@ -83,7 +83,7 @@ export default async function onRequest(request) {
         route: 'sitemap-words-xml',
         ttlSeconds: 21600,
         compute: async () => {
-          const rows = await sql`SELECT COUNT(*)::int AS total FROM words`;
+          const rows = await sql`SELECT COUNT(*)::int AS total FROM words WHERE search_count > 0`;
           const total = Number(rows[0]?.total || 0);
           // +1 for the value-pages sitemap on page 1.
           return { pages: Math.min(MAX_PAGES, 1 + Math.ceil(total / PAGE_SIZE)) };
@@ -101,15 +101,17 @@ export default async function onRequest(request) {
       compute: async () => {
         if (page === 1) {
           const rows = await sql`
-            SELECT DISTINCT gematria_value FROM words ORDER BY gematria_value ASC LIMIT ${PAGE_SIZE}
+            SELECT DISTINCT gematria_value FROM words WHERE search_count > 0 ORDER BY gematria_value ASC LIMIT ${PAGE_SIZE}
           `;
           return { values: rows.map((row) => Number(row.gematria_value)), words: [] };
         }
         const offset = (page - 2) * PAGE_SIZE;
         const rows = await sql`
-          SELECT word FROM words ORDER BY word ASC LIMIT ${PAGE_SIZE} OFFSET ${offset}
+          SELECT word, search_count FROM words
+          WHERE search_count > 0
+          ORDER BY word ASC LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `;
-        return { values: [], words: rows.map((row) => row.word).filter(isIndexableWord) };
+        return { values: [], words: rows.filter(isPublishableRow).map((row) => row.word) };
       },
     });
 

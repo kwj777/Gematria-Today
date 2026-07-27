@@ -36,7 +36,7 @@ export function buildRobotsTxt({ siteOrigin, modules }) {
     .map((path) => `Disallow: ${path}`)
     .join('\n');
 
-  return `User-agent: *\nAllow: /\n${disallowLines}\n\nSitemap: ${siteOrigin}/sitemap.xml\n`;
+  return `User-agent: *\nAllow: /\n${disallowLines}\n\nSitemap: ${siteOrigin}/sitemap.xml\nSitemap: ${siteOrigin}/sitemap-words.xml\n`;
 }
 
 export async function handler(event) {

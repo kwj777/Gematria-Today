@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 
 import {
   buildRobotsTxt,
@@ -79,4 +80,12 @@ test('buildRobotsTxt selectively disallows only the modules that are disabled', 
 test('buildRobotsTxt ends with a trailing newline', () => {
   const txt = buildRobotsTxt({ siteOrigin: 'https://example.com', modules: ALL_MODULES_ON });
   assert.ok(txt.endsWith('\n'));
+});
+
+test('the static robots.txt advertises the words sitemap', async () => {
+  // /robots.txt is a non-forced rewrite and the static file exists, so the
+  // static file is what crawlers actually receive. Both it and the function
+  // must list the words sitemap or the generated pages go undiscovered.
+  const staticRobots = await fs.readFile(new URL('../robots.txt', import.meta.url), 'utf8');
+  assert.match(staticRobots, /Sitemap: https:\/\/gematria\.today\/sitemap-words\.xml/);
 });

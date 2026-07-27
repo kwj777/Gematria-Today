@@ -86,6 +86,24 @@
   to = "/.netlify/functions/blog-post-share/:slug"
   status = 200
 
+# Indexable pages for the words table. /w/:word and /v/:value give every word
+# and every gematria value a real URL; they cross-link, so the whole set is
+# crawlable once any one page is reached.
+[[redirects]]
+  from = "/w/:word"
+  to = "/.netlify/functions/word-page/:word"
+  status = 200
+
+[[redirects]]
+  from = "/v/:value"
+  to = "/.netlify/functions/word-page/:value"
+  status = 200
+
+[[redirects]]
+  from = "/sitemap-words.xml"
+  to = "/.netlify/functions/sitemap-words-xml"
+  status = 200
+
 [[redirects]]
   from = "/b/:username"
   to = "/.netlify/functions/badge-share?user=:username"

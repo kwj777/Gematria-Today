@@ -742,14 +742,21 @@
         `;
       }
 
+      // forum-1.js honours this for its scrolls; the chat did not.
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      function scrollBehavior() {
+        return prefersReducedMotion.matches ? 'auto' : 'smooth';
+      }
+
       function scrollChatToBottom() {
-        chatLog.scrollTop = chatLog.scrollHeight;
-        chatLog.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        // #chatLog is not a scroll container -- the page scrolls -- so the old
+        // scrollTop assignment here did nothing at all.
+        chatLog.lastElementChild?.scrollIntoView({ behavior: scrollBehavior(), block: 'end' });
       }
 
       function scrollMessageToTop(messageElement) {
         if (!messageElement) return;
-        messageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        messageElement.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
       }
 
       function addMessage(role, contentHtml, options = {}) {
@@ -1294,6 +1301,13 @@ View results: ${shareUrl}`.trim(),
           premiumGate.innerHTML = 'GemaBot is a <strong>premium member feature</strong>. Please <a href="/member.html" class="alert-link">log in or upgrade your membership</a> to use GemaBot analysis and sharing.';
           form.querySelectorAll('textarea, select, button[type=\"submit\"]').forEach((field) => {
             field.disabled = true;
+          });
+          // The example chips live outside the form, so the gate never touched
+          // them. They called form.requestSubmit(), which the submit handler
+          // silently drops when gated -- a click that did nothing at all.
+          document.querySelectorAll('.agent-example-prompt').forEach((chip) => {
+            chip.disabled = true;
+            chip.title = 'GemaBot is a premium member feature.';
           });
           return;
         }
@@ -2075,6 +2089,15 @@ View results: ${shareUrl}`.trim(),
         const isStreaming = reply && typeof reply === 'object' && 'initialHtml' in reply;
         const initialHtml = isStreaming ? reply.initialHtml : reply;
         const assistantMessage = addMessage('assistant', initialHtml);
+        // finalize() fetches definitions and related words, which can take
+        // seconds. If the reader scrolled during that time, scrolling them back
+        // to the bottom afterwards yanks the page out from under them.
+        let readerScrolled = false;
+        const noteScroll = () => { readerScrolled = true; };
+        window.addEventListener('wheel', noteScroll, { passive: true, once: true });
+        window.addEventListener('touchmove', noteScroll, { passive: true, once: true });
+        window.addEventListener('keydown', noteScroll, { once: true });
+
         if (isStreaming && typeof reply.finalize === 'function') {
           try {
             await reply.finalize(assistantMessage);
@@ -2085,7 +2108,13 @@ View results: ${shareUrl}`.trim(),
         const contentNode = assistantMessage.querySelector('[data-message-content]');
         const finalAnswerHtml = contentNode ? contentNode.innerHTML : initialHtml;
         attachResultFeedbackUi(assistantMessage, prompt, finalAnswerHtml);
-        scrollChatToBottom();
+
+        window.removeEventListener('wheel', noteScroll);
+        window.removeEventListener('touchmove', noteScroll);
+        window.removeEventListener('keydown', noteScroll);
+        if (!readerScrolled) {
+          scrollChatToBottom();
+        }
         return assistantMessage;
       }
 
@@ -2182,9 +2211,12 @@ View results: ${shareUrl}`.trim(),
         saveConversationButton.textContent = 'Saving...';
         try {
           const message = await saveChatSessionToDashboard();
-          window.alert(message);
+          // A blocking native dialog for a routine save, on a site that has a
+          // toast primitive everything else uses.
+          window.showToast?.(message, 'success') ?? window.alert(message);
         } catch (error) {
-          window.alert(error.message || 'Unable to save chat session.');
+          const failure = error.message || 'Unable to save chat session.';
+          window.showToast?.(failure, 'danger') ?? window.alert(failure);
         } finally {
           saveConversationButton.disabled = false;
           saveConversationButton.textContent = originalText;

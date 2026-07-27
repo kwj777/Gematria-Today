@@ -606,7 +606,11 @@
       let paginationOffset = 0;
       let hasMorePublishedPosts = false;
       let loadingMorePosts = false;
-      const BLOG_LIST_PAGE_LIMIT = 2;
+      // A page size of 2 meant the archive arrived in N/2 sequential requests,
+      // each triggering a full re-render that reflowed the list under anyone
+      // already reading it. The auto-loader below still walks the rest, it just
+      // does so in far fewer, larger steps.
+      const BLOG_LIST_PAGE_LIMIT = 12;
       const updateTagFilterOverflowState = () => {
         const tagFiltersEl = document.getElementById('blogTagFilters');
         const toggleEl = document.getElementById('blogTagFiltersToggle');

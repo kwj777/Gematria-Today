@@ -103,7 +103,23 @@ const titleNode = document.querySelector('#page-title');
         return item;
       }
 
-      async function hasDefinition(word) {
+      // One lookup per word, ever. Every rendered card fires one of these, and
+      // the filter re-renders the whole list on each keystroke -- so a value
+      // with 200 matches cost 200 requests on load and 200 more per character
+      // typed. The cache holds the in-flight promise, so duplicate cards for
+      // the same word share a single request too.
+      const definitionCache = new Map();
+
+      function hasDefinition(word) {
+        const normalizedWord = String(word || '').trim().toLowerCase();
+        if (!normalizedWord) return Promise.resolve(false);
+        if (!definitionCache.has(normalizedWord)) {
+          definitionCache.set(normalizedWord, fetchHasDefinition(normalizedWord));
+        }
+        return definitionCache.get(normalizedWord);
+      }
+
+      async function fetchHasDefinition(word) {
         const normalizedWord = String(word || '').trim();
         if (!normalizedWord) return false;
         try {
@@ -226,7 +242,16 @@ const titleNode = document.querySelector('#page-title');
         }
       }
 
-      searchNode.addEventListener('input', applySearch);
+      // Re-rendering the full list on every keystroke made typing in the filter
+      // rebuild hundreds of DOM nodes per character.
+      let searchDebounceHandle = null;
+      searchNode.addEventListener('input', () => {
+        if (searchDebounceHandle) window.clearTimeout(searchDebounceHandle);
+        searchDebounceHandle = window.setTimeout(() => {
+          searchDebounceHandle = null;
+          applySearch();
+        }, 150);
+      });
       clearSearchButtons.forEach((button) => button.addEventListener('click', clearSearch));
       collapseButtons.forEach((button) => button.addEventListener('click', toggleCollapseResults));
       window.addEventListener('DOMContentLoaded', init);

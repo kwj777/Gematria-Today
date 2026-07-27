@@ -75,8 +75,11 @@
     }
 
     try {
+      // Without a timeout a hung request left the loading shell spinning
+      // forever, with no error path ever reached.
       const response = await fetch(`/api/public-badge?user=${encodeURIComponent(username)}`, {
         headers: { accept: 'application/json' },
+        signal: AbortSignal.timeout(10000),
       });
       if (response.status === 404) {
         showError(`We couldn't find a Beginner Path Graduate badge for "${username}".`);

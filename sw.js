@@ -50,9 +50,17 @@ async function navigationFallback(request) {
     return directMatch;
   }
 
-  const appShell = await caches.match('/index.html');
-  if (appShell) {
-    return appShell;
+  // The app shell only stands in for the home page. Serving it for every
+  // failed navigation meant an offline tap on /blog.html silently rendered the
+  // home page at the blog's URL, with nothing to say the request had failed --
+  // and offline.html, which exists to explain exactly that, was unreachable
+  // because index.html is always precached.
+  const url = new URL(request.url);
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    const appShell = await caches.match('/index.html');
+    if (appShell) {
+      return appShell;
+    }
   }
 
   const offlinePage = await caches.match('/offline.html');

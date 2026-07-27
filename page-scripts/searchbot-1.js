@@ -197,9 +197,29 @@
         }
       }
 
+      // Without this, repeat submits fired concurrent requests whose responses
+      // raced -- the last to arrive won, possibly answering a stale question.
+      let searchInFlight = false;
+      const submitButton = chatForm?.querySelector('button[type="submit"]');
+
+      function setSearchBusy(busy) {
+        searchInFlight = busy;
+        chatForm?.setAttribute('aria-busy', busy ? 'true' : 'false');
+        if (!submitButton) return;
+        if (busy) {
+          submitButton.dataset.defaultLabel = submitButton.dataset.defaultLabel || submitButton.textContent;
+          submitButton.textContent = 'Searching…';
+        } else if (submitButton.dataset.defaultLabel) {
+          submitButton.textContent = submitButton.dataset.defaultLabel;
+        }
+        submitButton.disabled = busy;
+      }
+
       async function runSearch(userQuery) {
         const trimmed = String(userQuery || '').trim();
         if (!trimmed) return;
+        if (searchInFlight) return;
+        setSearchBusy(true);
 
         exampleQuestionsPanel?.classList.add('d-none');
         emptyStatePanel?.classList.add('d-none');
@@ -251,6 +271,8 @@
         } catch (error) {
           statusMessage.className = 'alert alert-danger';
           statusMessage.textContent = error.message || 'Unable to search site content right now.';
+        } finally {
+          setSearchBusy(false);
         }
       }
 

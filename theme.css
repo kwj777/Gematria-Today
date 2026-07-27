@@ -3141,6 +3141,24 @@ body.page-render-pending footer {
   text-decoration: underline;
 }
 
+/* Cookie settings reopens the consent banner, so it is a button rather than a
+   link. It sits in the legal strip and must read as one of its siblings. */
+.site-legal-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--bs-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.site-legal-link-button:hover,
+.site-legal-link-button:focus-visible {
+  color: #21496f;
+  text-decoration: underline;
+}
+
 .legal-copy h2 {
   margin-bottom: 0.9rem;
 }
@@ -4629,7 +4647,10 @@ select:not(.form-select):focus-visible {
    sensitive users don't see infinite spinners or slide-ins. */
 @media (prefers-reduced-motion: reduce) {
   .global-loading-overlay__spinner,
-  .pwa-install-cta__icon-spinner {
+  .pwa-install-cta__icon-spinner,
+  /* Installed-app users saw this one spin on every launch: it was the only
+     infinite animation the catch-all missed. */
+  .pwa-launch-overlay__spinner {
     animation: none;
     border-top-color: rgba(255, 255, 255, 0.6);
   }

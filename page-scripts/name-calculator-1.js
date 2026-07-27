@@ -650,6 +650,9 @@ View results: ${shareUrl}`.trim(),
       function openFullRelatedWordsWindow(name, result, relationships) {
         const popup = window.open('', '_blank');
         if (!popup) {
+          // Swallowing this made the link look broken: under a popup blocker
+          // nothing opened and nothing was said.
+          statusNode.textContent = 'Your browser blocked the new window. Allow pop-ups for this site to see the full list.';
           return;
         }
 
@@ -752,8 +755,11 @@ View results: ${shareUrl}`.trim(),
           relatedSection.appendChild(createRelatedWordsMembershipNotice(name));
         } else if (!relationships.length) {
           const empty = document.createElement('p');
-          empty.className = 'empty';
-          empty.textContent = 'No related words found.';
+          const lookupFailed = Boolean(result.related?.error);
+          empty.className = lookupFailed ? 'empty text-danger' : 'empty';
+          empty.textContent = lookupFailed
+            ? 'Couldn’t load related words — try calculating again.'
+            : 'No related words found.';
           relatedSection.appendChild(empty);
         } else {
           relationships.forEach((entry) => {
@@ -799,9 +805,11 @@ View results: ${shareUrl}`.trim(),
             const related = await requestRelatedWords(name.toLowerCase(), getFullRelatedWordLimit());
             return { gematria, related };
           } catch (error) {
+            // An empty payload rendered as "No related words found.", telling
+            // the user the data doesn't exist when the request actually failed.
             return {
               gematria,
-              related: { data: [] },
+              related: { data: [], error: error.message || 'Related words could not be loaded.' },
             };
           }
         } catch (error) {

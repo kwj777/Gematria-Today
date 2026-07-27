@@ -66,6 +66,7 @@ const FOOTER_TAGLINES = {
   learn: 'gematria, explained from the basics up.',
   legal: 'policies, disclosures, and support.',
   member: 'your member workspace.',
+  community: 'discussion, reputation, and community.',
 };
 
 const FOOTER_SECTION_BY_FILE = {
@@ -90,9 +91,13 @@ const FOOTER_SECTION_BY_FILE = {
   'disclaimer.html': 'legal',
   'privacy.html': 'legal',
   'terms.html': 'legal',
+  'searchbot.html': 'tools',
   'account-recovery.html': 'member',
   'gematria-account-setup.html': 'member',
   'member.html': 'member',
+  'premium-research.html': 'member',
+  'forum.html': 'community',
+  'forum-reputation-scale.html': 'community',
 };
 
 // The home page carries an extra quick-links row; account-recovery carries an

@@ -145,3 +145,39 @@ test('exact-double .html dedup rule appears before the trailing-wildcard dedup r
     'exact-double rule must appear before the trailing-wildcard rule so it is evaluated first',
   );
 });
+
+test('no single-placeholder catch-all redirect exists', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+
+  // `from = "/:page"` matches any single path segment, including one that
+  // already contains a dot. Because such a rule is only ever terminated by a
+  // file existing at the target, any path with no file behind it redirects to
+  // itself + ".html" forever. Explicit per-page rules replace it.
+  const catchAll = netlifyToml
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('#'))
+    .find((line) => /^\s*from = "\/:[A-Za-z_]+"\s*$/.test(line));
+
+  assert.equal(catchAll, undefined, `single-placeholder catch-all would loop: ${catchAll}`);
+});
+
+test('every published page has an extensionless redirect', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+  assert.match(netlifyToml, /# BEGIN generated page redirects/);
+  assert.match(netlifyToml, /# END generated page redirects/);
+
+  for (const page of ['calculator', 'blog', 'tools', 'member', 'admin']) {
+    assert.match(
+      netlifyToml,
+      new RegExp(`from = "/${page}"\\n  to = "/${page}\\.html"`),
+      `missing extensionless redirect for /${page}`,
+    );
+  }
+});
+
+test('favicon.ico resolves instead of falling through to a redirect chain', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+  const rule = redirectRuleFor(netlifyToml, 'from = "/favicon.ico"');
+  assert.ok(rule, 'expected an explicit /favicon.ico rule');
+  assert.match(rule, /pwa-icon/);
+});

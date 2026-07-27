@@ -62,8 +62,13 @@ export default async function onRequest(request) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'sitemap-words-xml' });
     const sql = getSqlClient();
-    const params = new URL(request.url).searchParams;
-    const wantsIndex = params.get('index') === '1' || !params.get('page');
+    // v2 functions get the original request URL, not the rewrite target, so
+    // ?page= never arrives. Read the path first; keep the query as a fallback.
+    const requested = new URL(request.url);
+    const params = requested.searchParams;
+    const pageFromPath = requested.pathname.match(/\/sitemap-words\/(\d+)\/?$/);
+    const pageParam = pageFromPath ? pageFromPath[1] : params.get('page');
+    const wantsIndex = !pageParam;
 
     if (wantsIndex) {
       const cached = await withCachedJson(sql, {
@@ -80,7 +85,7 @@ export default async function onRequest(request) {
       return xmlResponse(200, buildSitemapIndex(cached.payload?.pages || 1));
     }
 
-    const page = Math.max(1, Math.min(Number.parseInt(params.get('page'), 10) || 1, MAX_PAGES));
+    const page = Math.max(1, Math.min(Number.parseInt(pageParam, 10) || 1, MAX_PAGES));
 
     const cached = await withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'sitemap-words-xml', part: String(page) }),

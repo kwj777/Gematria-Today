@@ -24,18 +24,42 @@ export function escapeHtml(value = '') {
     .replace(/'/g, '&#39;');
 }
 
-// The rewrite supplies kind and key as query params (see netlify.toml). Path
-// suffixes are not reliable after a rewrite, and /w/ and /v/ would otherwise
-// arrive at the same function path indistinguishably.
-export function parseRoute(searchParams) {
-  const params = searchParams instanceof URLSearchParams
-    ? searchParams
-    : new URLSearchParams(String(searchParams || ''));
+// Netlify v2 functions receive the ORIGINAL request URL, not the rewrite
+// target, so query parameters injected by a redirect (?kind=...&key=...) never
+// arrive. /b/:username works that way only because badge-share is a v1
+// `handler`, which does see the rewritten URL. Parse the real path first and
+// treat the query as a fallback so this works under either runtime.
+export function parseRoute(input) {
+  let pathname = '';
+  let params = new URLSearchParams();
+
+  if (input instanceof URLSearchParams) {
+    params = input;
+  } else if (input instanceof URL) {
+    pathname = input.pathname;
+    params = input.searchParams;
+  } else if (typeof input === 'string') {
+    try {
+      const url = new URL(input, 'https://gematria.today');
+      pathname = url.pathname;
+      params = url.searchParams;
+    } catch {
+      pathname = input.split('?')[0];
+    }
+  }
+
+  const wordMatch = pathname.match(/\/w\/([^/]+)\/?$/);
+  if (wordMatch) {
+    const key = decodeURIComponent(wordMatch[1]).trim();
+    if (key) return { kind: 'word', key };
+  }
+
+  const valueMatch = pathname.match(/\/v\/(\d+)\/?$/);
+  if (valueMatch) return { kind: 'value', key: valueMatch[1] };
 
   const kind = String(params.get('kind') || '').trim();
   const key = String(params.get('key') || '').trim();
   if (!key) return null;
-
   if (kind === 'word') return { kind: 'word', key };
   if (kind === 'value') return /^\d+$/.test(key) ? { kind: 'value', key } : null;
   return null;
@@ -153,7 +177,7 @@ export default async function onRequest(request) {
       message: 'Too many word page requests.',
     });
 
-    const route = parseRoute(new URL(request.url).searchParams);
+    const route = parseRoute(request.url);
     if (!route) return htmlResponse(404, layout({
       title: 'Not found | Gematria.Today',
       description: 'That page could not be found.',

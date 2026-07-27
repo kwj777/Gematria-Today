@@ -8,11 +8,11 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  // `headerIds` and `mangle` were dropped in marked v7 and are no longer
+  // accepted options, so only the two that still exist are set here.
   marked.setOptions({
     gfm: true,
     breaks: false,
-    headerIds: true,
-    mangle: false,
   });
   guideContent.innerHTML = marked.parse(markdown);
 });

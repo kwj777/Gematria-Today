@@ -91,10 +91,235 @@
   to = "/.netlify/functions/badge-share?user=:username"
   status = 200
 
+# A `/:page` -> `/:page.html` wildcard used to live here. It matched any single
+# path segment -- including one that already had a dot -- and was terminated
+# only by a file existing at the target, so every path with no file behind it
+# looped: /favicon.ico -> /favicon.ico.html -> /favicon.ico.html.html -> ...
+# The rules below are generated per published page and cannot loop.
+# BEGIN generated page redirects -- run `npm run sync:redirects`
+# Extensionless URLs for every published page. Generated -- do not hand-edit.
+
 [[redirects]]
-  from = "/:page"
-  to = "/:page.html"
+  from = "/404"
+  to = "/404.html"
   status = 301
+
+[[redirects]]
+  from = "/accessibility"
+  to = "/accessibility.html"
+  status = 301
+
+[[redirects]]
+  from = "/account-recovery"
+  to = "/account-recovery.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-chatbot-feedback"
+  to = "/admin-chatbot-feedback.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-click-tracking"
+  to = "/admin-click-tracking.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-editorial"
+  to = "/admin-editorial.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-forum"
+  to = "/admin-forum.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-forum-reputation-scale"
+  to = "/admin-forum-reputation-scale.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-hub"
+  to = "/admin-hub.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-posts"
+  to = "/admin-posts.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-reports"
+  to = "/admin-reports.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-site-chatbot"
+  to = "/admin-site-chatbot.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin-super-admin"
+  to = "/admin-super-admin.html"
+  status = 301
+
+[[redirects]]
+  from = "/ai-agent"
+  to = "/ai-agent.html"
+  status = 301
+
+[[redirects]]
+  from = "/badge"
+  to = "/badge.html"
+  status = 301
+
+[[redirects]]
+  from = "/blog"
+  to = "/blog.html"
+  status = 301
+
+[[redirects]]
+  from = "/calculator"
+  to = "/calculator.html"
+  status = 301
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 301
+
+[[redirects]]
+  from = "/definitions"
+  to = "/definitions.html"
+  status = 301
+
+[[redirects]]
+  from = "/disclaimer"
+  to = "/disclaimer.html"
+  status = 301
+
+[[redirects]]
+  from = "/faq"
+  to = "/faq.html"
+  status = 301
+
+[[redirects]]
+  from = "/follow.it-verification-code"
+  to = "/follow.it-verification-code.html"
+  status = 301
+
+[[redirects]]
+  from = "/forum"
+  to = "/forum.html"
+  status = 301
+
+[[redirects]]
+  from = "/forum-reputation-scale"
+  to = "/forum-reputation-scale.html"
+  status = 301
+
+[[redirects]]
+  from = "/gematria-account-setup"
+  to = "/gematria-account-setup.html"
+  status = 301
+
+[[redirects]]
+  from = "/gematria-basics"
+  to = "/gematria-basics.html"
+  status = 301
+
+[[redirects]]
+  from = "/gematria-guide"
+  to = "/gematria-guide.html"
+  status = 301
+
+[[redirects]]
+  from = "/gematria-name-analysis"
+  to = "/gematria-name-analysis.html"
+  status = 301
+
+[[redirects]]
+  from = "/gematria-pattern-grouping"
+  to = "/gematria-pattern-grouping.html"
+  status = 301
+
+[[redirects]]
+  from = "/gematria-results"
+  to = "/gematria-results.html"
+  status = 301
+
+[[redirects]]
+  from = "/index"
+  to = "/index.html"
+  status = 301
+
+[[redirects]]
+  from = "/member"
+  to = "/member.html"
+  status = 301
+
+[[redirects]]
+  from = "/multi-cipher-calculator"
+  to = "/multi-cipher-calculator.html"
+  status = 301
+
+[[redirects]]
+  from = "/name-calculator"
+  to = "/name-calculator.html"
+  status = 301
+
+[[redirects]]
+  from = "/offline"
+  to = "/offline.html"
+  status = 301
+
+[[redirects]]
+  from = "/premium-research"
+  to = "/premium-research.html"
+  status = 301
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 301
+
+[[redirects]]
+  from = "/searchbot"
+  to = "/searchbot.html"
+  status = 301
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms.html"
+  status = 301
+
+[[redirects]]
+  from = "/tools"
+  to = "/tools.html"
+  status = 301
+
+[[redirects]]
+  from = "/unsupported-browser"
+  to = "/unsupported-browser.html"
+  status = 301
+
+[[redirects]]
+  from = "/why-english-gematria"
+  to = "/why-english-gematria.html"
+  status = 301
+
+# END generated page redirects
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/.netlify/functions/pwa-icon?size=180&variant=default"
+  status = 200
 
 [[redirects]]
   from = "/apple-touch-icon.png"

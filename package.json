@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "lint": "npm run build && npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs && node scripts/check-google-analytics.mjs && node scripts/check-no-inline-scripts.mjs && node scripts/check-partials.mjs && node scripts/build-site-bundle.mjs --check && node scripts/update-sitemap-lastmod.mjs --check",
+    "lint": "npm run build && npm run check:site-adaptation-guides && node scripts/check-static-analysis.mjs && node scripts/check-google-analytics.mjs && node scripts/check-no-inline-scripts.mjs && node scripts/check-partials.mjs && node scripts/sync-page-redirects.mjs --check && node scripts/build-site-bundle.mjs --check && node scripts/update-sitemap-lastmod.mjs --check",
     "build:bundle": "node scripts/build-site-bundle.mjs",
     "check:google-analytics": "node scripts/check-google-analytics.mjs",
     "format:check": "node scripts/check-formatting.mjs",
@@ -21,7 +21,9 @@
     "audit:redirects": "node scripts/audit-sitemap-redirects.mjs",
     "sync:sitemap": "node scripts/update-sitemap-lastmod.mjs --write",
     "check:sitemap": "node scripts/update-sitemap-lastmod.mjs --check",
-    "build": "eleventy"
+    "build": "eleventy",
+    "sync:redirects": "node scripts/sync-page-redirects.mjs --write",
+    "check:redirects": "node scripts/sync-page-redirects.mjs --check"
   },
   "dependencies": {
     "@11ty/eleventy": "^3.1.6",

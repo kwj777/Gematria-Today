@@ -297,3 +297,108 @@ test('only words with a search count are offered to search engines', async () =>
   const sitemap = await fs.readFile(new URL('../netlify/functions/sitemap-words-xml.mjs', import.meta.url), 'utf8');
   assert.match(sitemap, /search_count > 0/);
 });
+
+// --- Parity with the hand-authored pages (audit sprint 3) -------------------
+// These pages are the site's cold-search entry point, so anything the real
+// pages do for a first-time visitor they have to do too.
+
+test('generated pages load Bootstrap JS so the nav actually works', () => {
+  // site-bundle.js does not carry Bootstrap's Collapse/Dropdown plugins, so
+  // without this the mobile hamburger and the Tools/Learn menus were inert --
+  // on exactly the pages built to receive visitors who have never been here.
+  const html = renderWordPage('light', 336, [{ word: 'light', search_count: 1 }]);
+  assert.match(html, /assets\/vendor\/bootstrap\/js\/bootstrap\.bundle\.min\.js/);
+  assert.match(html, /data-bs-toggle="collapse"/, 'the nav relies on Bootstrap behaviour');
+});
+
+test('generated pages pick up admin theme customisations', () => {
+  const html = renderWordPage('light', 336, []);
+  assert.match(html, /rel="preload" as="style" href="\/api\/public-theme-css"/);
+  assert.match(html, /<noscript><link rel="stylesheet" href="\/api\/public-theme-css" \/><\/noscript>/);
+});
+
+test('mixed-case URLs canonicalise to one form instead of competing', () => {
+  const words = [{ word: 'Light', search_count: 4 }];
+  for (const requested of ['light', 'Light', 'LIGHT']) {
+    assert.match(
+      renderWordPage(requested, 336, words),
+      /<link rel="canonical" href="https:\/\/gematria\.today\/w\/Light" \/>/,
+      `${requested} must canonicalise to the stored casing`,
+    );
+  }
+  // With no stored row to copy casing from, lowercase is the canonical form.
+  assert.match(renderWordPage('LIGHT', 336, []), /canonical" href="https:\/\/gematria\.today\/w\/light"/);
+});
+
+test('the related-word list is styled and the cap has a way out', () => {
+  const many = Array.from({ length: 260 }, (_, i) => ({ word: `word${i}`, search_count: 1 }));
+  const html = renderValuePage(336, many);
+  assert.match(html, /<ul class="related-word-list">/);
+  // The footer's own link stacks legitimately use site-footer-list, so only the
+  // related list itself is checked for the borrowed styling.
+  const listMarkup = html.match(/<ul class="[^"]*related-word-list[^"]*">/)[0];
+  assert.ok(!/site-footer-list/.test(listMarkup), 'must not borrow the footer link-stack styling');
+  assert.match(html, /Showing the first 200 of 260/);
+  assert.match(html, /\/calculator\.html\?query=336/, 'the words past the cap need somewhere to go');
+});
+
+test('value pages count the words they actually list', () => {
+  // 'fag' is filtered from the list, so counting it in the lead produced
+  // "3 words share this value" above a list of two.
+  const html = renderValuePage(84, [
+    { word: 'aid', search_count: 1 },
+    { word: 'fag', search_count: 9 },
+    { word: 'ala', search_count: 2 },
+  ]);
+  assert.match(html, /2 words share this value/);
+  assert.match(html, /^.*2 words? in the Gematria\.Today database/m);
+  assert.ok(!/3 words/.test(html));
+});
+
+test('an empty value page does not talk about "other" words', () => {
+  const html = renderValuePage(336, []);
+  assert.ok(!/No other words/.test(html), 'a value page has no "current" word to be other than');
+  assert.match(html, /No words in the database have this value yet/);
+});
+
+test('generated pages carry breadcrumb structured data like the real pages', () => {
+  const html = renderWordPage('light', 336, [{ word: 'light', search_count: 1 }]);
+  const match = html.match(/<script type="application\/ld\+json">\n([\s\S]*?)\n {4}<\/script>/);
+  assert.ok(match, 'must emit JSON-LD');
+  const data = JSON.parse(match[1]);
+  assert.equal(data['@type'], 'BreadcrumbList');
+  assert.deepEqual(data.itemListElement.map((entry) => entry.name), ['Home', 'Calculator', 'light']);
+  assert.deepEqual(data.itemListElement.map((entry) => entry.position), [1, 2, 3]);
+});
+
+test('JSON-LD cannot be broken out of by a hostile word', () => {
+  const html = renderWordPage('</script><script>alert(1)</script>', 6, []);
+  assert.ok(!/<\/script><script>alert/.test(html), 'the payload must not close the JSON-LD block');
+  assert.match(html, /\\u003c/, 'angle brackets are escaped inside JSON-LD');
+});
+
+test('shared links get an image card and mobile bookmarks get an icon', () => {
+  const html = renderWordPage('light', 336, []);
+  assert.match(html, /property="og:image" content="https:\/\/gematria\.today\/assets\/calculator-hero-constellation\.svg"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /rel="apple-touch-icon"/);
+  assert.match(html, /name="theme-color"/);
+});
+
+test('the call to action prefills the calculator with the word', () => {
+  // The calculator reads ?query=; ?word= was silently ignored, so every CTA
+  // opened an empty calculator.
+  const html = renderWordPage('light', 336, []);
+  assert.match(html, /\/calculator\.html\?query=light/);
+  assert.ok(!/calculator\.html\?word=/.test(html));
+});
+
+test('the generated footer tagline matches the built tools pages', async () => {
+  const built = await fs.readFile(new URL('../_site/calculator.html', import.meta.url), 'utf8').catch(() => '');
+  const html = renderWordPage('light', 336, []);
+  assert.match(html, /research tools and calculators\./);
+  assert.ok(!/a suite of research tools\./.test(html), 'that is the home page tagline');
+  if (built) {
+    assert.match(built, /research tools and calculators\./, 'built tools pages should still use this tagline');
+  }
+});

@@ -3,7 +3,8 @@ import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 const INCLUDED_EXTENSIONS = new Set(['.js', '.mjs', '.json', '.md', '.yml', '.yaml', '.toml', '.sql', '.css', '.html']);
-const EXCLUDED_DIRS = new Set(['.git', 'node_modules']);
+// _site is build output; checking it would double-report every source file.
+const EXCLUDED_DIRS = new Set(['.git', 'node_modules', '_site']);
 const EXCLUDED_PATH_PREFIXES = ['assets/vendor/'];
 
 function walk(dir, acc = []) {

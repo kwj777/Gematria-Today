@@ -101,7 +101,7 @@
             <div class="col-md-6"><label class="form-label" for="createPostReadTime">Read time</label><input id="createPostReadTime" class="form-control" placeholder="5 minute read" /></div>
             <div class="col-12"><label class="form-label" for="createPostSummary">Summary</label><textarea id="createPostSummary" class="form-control" rows="2" required></textarea></div>
             <div class="col-12">
-              <label class="form-label" for="createPostBody">Body</label>
+              <label class="form-label" id="createPostBodyLabel" for="createPostBody">Body</label>
               <p class="small text-muted mb-2">WYSIWYG editor: use the toolbar or type directly in the editor.</p>
               <div class="d-flex flex-wrap gap-2 mb-2 admin-editor-toolbar" role="toolbar" aria-label="Create post editor toolbar">
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="bold" data-editor-target="createPostBody"><strong>B</strong></button>
@@ -113,7 +113,7 @@
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="quote" data-editor-target="createPostBody">Quote</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-editor-action="code" data-editor-target="createPostBody">Code</button>
               </div>
-              <div id="createPostBody" class="form-control admin-wysiwyg-editor" role="textbox" aria-multiline="true" contenteditable="true"></div>
+              <div id="createPostBody" class="form-control admin-wysiwyg-editor" role="textbox" aria-multiline="true" aria-labelledby="createPostBodyLabel" contenteditable="true"></div>
             </div>
             <div class="col-12"><label class="form-label" for="createPostImageUrl">Hero image URL</label><input id="createPostImageUrl" class="form-control" /></div>
             <div class="col-12"><label class="form-label" for="createPostSliderImageUrl">Homepage slider image URL</label><input id="createPostSliderImageUrl" class="form-control" /></div>
@@ -124,7 +124,7 @@
               <button class="btn btn-primary" type="submit">Create post</button>
               <button id="saveDraftButton" class="btn btn-outline-secondary" type="submit">Save Draft</button>
               <button id="importMdFileButton" class="btn btn-outline-dark" type="button">Import MD file</button>
-              <input id="importMdFileInput" class="d-none" type="file" accept=".md,text/markdown" />
+              <label class="visually-hidden" for="importMdFileInput">Markdown file to import</label><input id="importMdFileInput" class="d-none" type="file" accept=".md,text/markdown" />
               <button id="generateHeroImageButton" class="btn btn-outline-success" type="button">Create hero image</button>
               <button id="removeHeroImageButton" class="btn btn-outline-warning" type="button">Remove hero image</button>
               <button id="previewCreatePostButton" class="btn btn-outline-primary" type="button">Preview/Refresh</button>
@@ -153,6 +153,10 @@
             <span id="postCount" class="badge text-bg-secondary">0</span>
           </div>
           <div class="row g-2 mb-3">
+            <div class="col-md-12">
+              <label class="form-label" for="filterTitle">Find by title</label>
+              <input id="filterTitle" class="form-control" type="search" placeholder="Type part of a post title…" autocomplete="off" />
+            </div>
             <div class="col-md-3">
               <label class="form-label" for="filterStatus">Status</label>
               <select id="filterStatus" class="form-select">

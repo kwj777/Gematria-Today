@@ -71,6 +71,14 @@
                 <button class="btn btn-sm btn-danger" type="button" data-delete-proposal="${escapeHtml(proposal.id)}">Delete submission</button>
               </div>
             </div>
+            <div class="mt-3 d-none" data-reject-panel="${escapeHtml(proposal.id)}">
+              <label class="form-label small fw-semibold" for="rejectReason-${escapeHtml(proposal.id)}">Rejection explanation (shown to the member)</label>
+              <textarea id="rejectReason-${escapeHtml(proposal.id)}" class="form-control mb-2" rows="3" data-reject-reason="${escapeHtml(proposal.id)}" placeholder="Explain what would need to change for this to be accepted."></textarea>
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-danger" type="button" data-confirm-reject="${escapeHtml(proposal.id)}">Send rejection</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-cancel-reject="${escapeHtml(proposal.id)}">Cancel</button>
+              </div>
+            </div>
             ${proposal.status === 'rejected' && proposal.rejectionExplanation ? `
               <div class="alert alert-warning small mt-3 mb-0">
                 <strong>Rejection explanation:</strong> ${escapeHtml(proposal.rejectionExplanation)}
@@ -94,9 +102,38 @@
           await request('/api/admin-session');
           await refreshProposals();
         } catch (error) {
-          window.location.href = '/admin.html';
+          window.location.href = window.adminSession?.signInUrl?.() || '/admin.html';
         }
       }
+
+      // Cancel / send for the inline rejection panel.
+      document.addEventListener('click', (event) => {
+        const cancelId = event.target.dataset.cancelReject;
+        if (!cancelId) return;
+        const panel = document.querySelector(`[data-reject-panel="${cancelId}"]`);
+        panel?.classList.add('d-none');
+      });
+
+      document.addEventListener('click', async (event) => {
+        const confirmId = event.target.dataset.confirmReject;
+        if (!confirmId) return;
+        const reason = document.querySelector(`[data-reject-reason="${confirmId}"]`)?.value.trim();
+        if (!reason) {
+          showMessage(errorMessage, 'Rejection explanation is required.');
+          return;
+        }
+        clearMessage(errorMessage);
+        try {
+          await request('/api/admin-blog-proposals', {
+            method: 'PATCH',
+            body: JSON.stringify({ id: confirmId, status: 'rejected', rejectionExplanation: reason }),
+          });
+          showMessage(saveMessage, 'Proposal rejected and the explanation sent to the member.');
+          await refreshProposals();
+        } catch (error) {
+          showMessage(errorMessage, error.message);
+        }
+      });
 
       document.addEventListener('click', async (event) => {
         const proposalId = event.target.dataset.markProposalAccepted
@@ -130,11 +167,13 @@
               : 'rejected';
         let rejectionExplanation = null;
         if (nextStatus === 'rejected') {
-          const entered = window.prompt('Please provide a rejection explanation that will be shown on the member dashboard:');
-          if (entered === null) return;
-          rejectionExplanation = entered.trim();
-          if (!rejectionExplanation) {
-            showMessage(errorMessage, 'Rejection explanation is required.');
+          // A single-line window.prompt is a poor place to compose a message
+          // that goes to a member: no multi-line editing, no review, and
+          // Cancel silently discarded the draft.
+          const panel = document.querySelector(`[data-reject-panel="${proposalId}"]`);
+          if (panel) {
+            panel.classList.remove('d-none');
+            panel.querySelector('[data-reject-reason]')?.focus();
             return;
           }
         }

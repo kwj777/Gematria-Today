@@ -175,8 +175,12 @@
           { key: 'visitor', label: 'Non-members' },
         ];
 
+        // The other tables on this page cap at 200 and 100; this one rendered
+        // every event, and the window selector offers up to 365 days.
+        const DETAIL_ROW_CAP = 200;
         const groupRows = groups.map((group, groupIndex) => {
-          const groupItems = filtered.filter((row) => normalizeAudienceType(row.audienceType) === group.key);
+          const allGroupItems = filtered.filter((row) => normalizeAudienceType(row.audienceType) === group.key);
+          const groupItems = allGroupItems.slice(0, DETAIL_ROW_CAP);
           const groupId = `group-${group.key}`;
           const groupContent = groupItems.map((row) => {
             const time = row.createdAt ? new Date(row.createdAt).toLocaleString() : '—';
@@ -195,14 +199,23 @@
               + '</tr>';
           }).join('');
 
+          // Say what was dropped rather than letting a truncated table read as
+          // the complete picture.
+          const truncatedNote = allGroupItems.length > groupItems.length
+            ? '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed">'
+              + '<td colspan="8" class="small text-muted">Showing the newest ' + formatNumber(groupItems.length)
+              + ' of ' + formatNumber(allGroupItems.length) + ' events. Narrow the timeframe or filter to see the rest.</td></tr>'
+            : '';
+
           return '<tr class="table-secondary">'
             + '<td colspan="8">'
             + '<button type="button" class="group-toggle" data-group-toggle="' + groupId + '" aria-expanded="false">'
-            + '▸ ' + escapeHtml(group.label) + ' (' + formatNumber(groupItems.length) + ')'
+            + '▸ ' + escapeHtml(group.label) + ' (' + formatNumber(allGroupItems.length) + ')'
             + '</button>'
             + '</td>'
             + '</tr>'
-            + (groupContent || '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed"><td colspan="8" class="small text-muted">No events in this group.</td></tr>');
+            + (groupContent || '<tr class="click-group-row click-group-' + group.key + ' click-group-collapsed"><td colspan="8" class="small text-muted">No events in this group.</td></tr>')
+            + truncatedNote;
         }).join('');
 
         tableBody.innerHTML = groupRows || '<tr><td colspan="8" class="small text-muted">No click tracking data available for this timeframe.</td></tr>';
@@ -254,7 +267,11 @@
           document.getElementById('metaLine').textContent = `Signed in as ${payload.user.username}. Window: ${payload.windowLabel}. Last refresh: ${new Date(payload.generatedAt).toLocaleString()}.`;
           renderGroupedRows();
         } catch (error) {
-          errorMessage.textContent = `${error.message}. Visit Admin to sign in, then return here.`;
+          if (window.adminSession?.handleAuthError?.(error, { redirect: false, target: errorMessage })) {
+            errorMessage.classList.remove('d-none');
+          } else {
+            errorMessage.textContent = `${error.message}. Visit Admin to sign in, then return here.`;
+          }
           errorMessage.classList.remove('d-none');
           document.getElementById('metaLine').textContent = 'Not authenticated or unable to load click tracking data.';
           tableBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No click tracking data loaded.</td></tr>';
@@ -268,7 +285,15 @@
 
       document.getElementById('refreshButton').addEventListener('click', loadClickTracking);
       document.getElementById('windowSelect').addEventListener('change', loadClickTracking);
-      filterInput.addEventListener('input', renderGroupedRows);
+      // Every keystroke re-rendered all four tables.
+      let filterDebounceHandle = null;
+      filterInput.addEventListener('input', () => {
+        if (filterDebounceHandle) window.clearTimeout(filterDebounceHandle);
+        filterDebounceHandle = window.setTimeout(() => {
+          filterDebounceHandle = null;
+          renderGroupedRows();
+        }, 200);
+      });
       sortSelect.addEventListener('change', renderGroupedRows);
       mostClickedAudienceFilter.addEventListener('change', () => renderMostClickedTable(getSearchFilteredRows()));
       mostClickedActionFilter.addEventListener('change', () => renderMostClickedTable(getSearchFilteredRows()));

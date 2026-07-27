@@ -213,6 +213,11 @@
       }
       const messageTimeouts = new WeakMap();
 
+      function isElementInViewport(element) {
+        const rect = element.getBoundingClientRect();
+        return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+      }
+
       function showMessage(target, message, options = {}) {
         const timeoutMs = Number(options.timeoutMs);
         const existingTimeout = messageTimeouts.get(target);
@@ -222,6 +227,16 @@
         }
         target.textContent = message;
         target.classList.remove('d-none');
+        // Alerts are pinned above the fold, so submitting a form near the
+        // bottom of a long admin page produced feedback nobody could see.
+        if (!isElementInViewport(target)) {
+          target.setAttribute('tabindex', '-1');
+          target.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+            block: 'nearest',
+          });
+          target.focus({ preventScroll: true });
+        }
         if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
           const timeoutHandle = window.setTimeout(() => {
             if (target.textContent === message) {
@@ -721,7 +736,7 @@
                 </div>
                 ${task.notes ? `<p class="small mb-0">${escapeHtml(task.notes)}</p>` : ''}
               </div>
-              <button class="btn btn-sm btn-outline-danger" type="button" data-delete-task="${task.id}">Done</button>
+              <button class="btn btn-sm btn-outline-success" type="button" data-delete-task="${task.id}">Done</button>
             </div>
           </article>`).join('') : '<p class="text-muted small mb-0">No open admin tasks right now.</p>';
       }
@@ -889,10 +904,19 @@
             window.location.href = redirectTarget.pathname + redirectTarget.search + redirectTarget.hash;
             return;
           }
-          await refreshDashboard();
-          const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
-          if (loadProposalFromQuery) {
-            await loadProposalIntoEditor(loadProposalFromQuery);
+          // Dashboard data is fetched separately from the session check. When
+          // both shared one try/catch, a single 500 from any of the five
+          // parallel dashboard requests landed in the catch below and showed
+          // the login form -- with no error -- to an admin whose session was
+          // perfectly valid.
+          try {
+            await refreshDashboard();
+            const loadProposalFromQuery = new URLSearchParams(window.location.search).get('loadProposal');
+            if (loadProposalFromQuery) {
+              await loadProposalIntoEditor(loadProposalFromQuery);
+            }
+          } catch (dashboardError) {
+            showMessage(errorMessage, `${dashboardError.message || 'Could not load dashboard data.'} Your session is still active — retry from the controls above.`);
           }
         } catch (error) {
           state.user = null;
@@ -928,7 +952,9 @@
             window.location.href = redirectTarget.pathname + redirectTarget.search + redirectTarget.hash;
             return;
           }
-          window.location.href = '/member.html';
+          // "Unlock admin dashboard" used to redirect to /member.html, so the
+          // admin landed on the member dashboard and had to navigate back.
+          await loadSession();
         } catch (error) {
           showMessage(authMessage, error.message);
         }
@@ -1373,6 +1399,14 @@
         if (!proposal) {
           return false;
         }
+        // The publishing module on this page is hidden (d-none + hidden +
+        // display:none), so this used to fill invisible fields, scroll to
+        // nothing, and report success. admin-posts.html implements the same
+        // ?loadProposal= flow against a form the admin can actually see.
+        if (!document.getElementById('postTitle')) {
+          window.location.href = `/admin-posts.html?loadProposal=${encodeURIComponent(proposalId)}`;
+          return true;
+        }
         document.getElementById('postTitle').value = proposal.title || '';
         document.getElementById('postTag').value = proposal.suggestedTags || '';
         document.getElementById('postSummary').value = proposal.summary || '';
@@ -1503,7 +1537,10 @@
             showMessage(saveMessage, 'Blog post removed.');
           }
           if (deleteFaq) {
-            const confirmedFaqDelete = window.confirm('Delete this FAQ entry? This action cannot be undone.');
+            // Mirrors the post-delete confirm above, which names its target.
+            const faqToDelete = (state.faqs || []).find((faq) => String(faq.id) === String(deleteFaq));
+            const faqQuestion = faqToDelete?.question ? `"${faqToDelete.question}"` : 'this FAQ entry';
+            const confirmedFaqDelete = window.confirm(`Delete the FAQ entry ${faqQuestion}?\n\nThis action cannot be undone.`);
             if (!confirmedFaqDelete) {
               return;
             }

@@ -51,7 +51,14 @@
         color: #4a5970;
         font-size: 1.25rem;
         line-height: 1;
-        padding: 0;
+        /* The visible glyph is ~20px, below the 24px minimum target size, and
+           padding was 0. This brings it to a comfortable 44px. */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem;
       }
       .detail-toggle {
         border: 0;
@@ -70,6 +77,26 @@
       }
       .detail-report-item + .detail-report-item {
         border-top: 1px dashed rgba(74, 89, 112, 0.2);
+      }
+      /* Without these the panel kept a light background while dark mode turned
+         its text light, and both toggles sat at roughly 2:1 contrast on a dark
+         panel. */
+      :root[data-bs-theme="dark"] .detail-report {
+        background: rgba(148, 163, 184, 0.08);
+        border-color: rgba(148, 163, 184, 0.28);
+      }
+      :root[data-bs-theme="dark"] .detail-report-item + .detail-report-item {
+        border-top-color: rgba(148, 163, 184, 0.24);
+      }
+      :root[data-bs-theme="dark"] .detail-toggle {
+        color: #8ab4f8;
+      }
+      :root[data-bs-theme="dark"] .detail-toggle:hover,
+      :root[data-bs-theme="dark"] .detail-toggle:focus-visible {
+        color: #b3cffb;
+      }
+      :root[data-bs-theme="dark"] .section-collapse-toggle {
+        color: #cbd5e1;
       }
     </style>
       <script src="/pwa-register.js" defer></script>

@@ -144,11 +144,29 @@
         showAlert(successMessage, 'success');
       }
 
-      function renderReports(reports) {
-        if (!reports.length) { reportsListEl.innerHTML = '<p class="text-muted mb-0">No reports match this filter.</p>'; return; }
+      // The API returns up to 300 reports and each card carries four inputs and
+      // eight buttons, so rendering them all built a very heavy DOM with no
+      // indication of how many there were.
+      const REPORTS_PAGE_SIZE = 25;
+      let reportsShown = REPORTS_PAGE_SIZE;
+      let allReports = [];
 
-        reportsListEl.innerHTML = reports.map((report) => `
-          <article class="report-card border rounded p-3 mb-3 bg-white" data-report-id="${report.id}">
+      function renderReports(reports) {
+        // A fresh load resets paging; "Show more" re-renders the same list.
+        if (reports !== allReports) {
+          allReports = reports;
+          reportsShown = REPORTS_PAGE_SIZE;
+        }
+        if (!allReports.length) { reportsListEl.innerHTML = '<p class="text-muted mb-0">No reports match this filter.</p>'; return; }
+
+        const visible = allReports.slice(0, reportsShown);
+        const countLine = `<p class="small text-muted mb-3">Showing ${visible.length} of ${allReports.length} report${allReports.length === 1 ? '' : 's'}.</p>`;
+        const showMore = allReports.length > visible.length
+          ? `<div class="d-grid"><button type="button" class="btn btn-outline-secondary" id="reportsShowMore">Show ${Math.min(REPORTS_PAGE_SIZE, allReports.length - visible.length)} more</button></div>`
+          : '';
+
+        reportsListEl.innerHTML = countLine + visible.map((report) => `
+          <article class="report-card border rounded p-3 mb-3" data-report-id="${report.id}">
             <div class="d-flex justify-content-between align-items-start gap-3">
               <div class="w-100">
                 <div class="d-flex gap-2 align-items-center mb-1">
@@ -172,7 +190,12 @@
               </div>
             </div>
           </article>
-        `).join('');
+        `).join('') + showMore;
+
+        document.getElementById('reportsShowMore')?.addEventListener('click', () => {
+          reportsShown += REPORTS_PAGE_SIZE;
+          renderReports(allReports);
+        });
 
         reportsListEl.querySelectorAll('[data-select-report]').forEach((check) => {
           check.addEventListener('change', () => {
@@ -226,7 +249,7 @@
                 <label class="form-label small">Color badge</label>
                 <div class="input-group" data-color-pair>
                   <input class="form-control" name="colorBadge" data-color-text value="${esc(category.colorBadge || '')}" />
-                  <input class="form-control form-control-color" type="color" data-color-picker value="${esc(sanitizeColor(category.colorBadge || ''))}" title="Pick badge color" />
+                  <input class="form-control form-control-color" type="color" data-color-picker value="${esc(sanitizeColor(category.colorBadge || ''))}" aria-label="Pick badge color" title="Pick badge color" />
                 </div>
               </div>
               <div class="col-md-2"><label class="form-label small">Icon</label><select class="form-select" name="iconName">${iconOptionsMarkup(category.iconName || '')}</select></div>
@@ -353,6 +376,15 @@
 
       load().catch((error) => {
         const message = String(error?.message || '').toLowerCase();
-        if (message.includes('unauthorized') || message.includes('authentication')) return showAlert('Sign in to the admin dashboard first.', 'warning');
+        if (message.includes('unauthorized') || message.includes('authentication')) {
+          alertEl.className = 'alert alert-warning';
+          alertEl.textContent = 'Your admin session has expired. ';
+          const link = document.createElement('a');
+          link.href = window.adminSession?.signInUrl?.() || '/admin.html';
+          link.textContent = 'Sign in and return to this page';
+          alertEl.appendChild(link);
+          alertEl.classList.remove('d-none');
+          return;
+        }
         showAlert(error.message);
       });

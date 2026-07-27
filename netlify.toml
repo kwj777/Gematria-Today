@@ -117,7 +117,7 @@
     Cross-Origin-Resource-Policy = "same-site"
     # NOTE: Cross-Origin-Embedder-Policy is deliberately NOT set. Enabling
     # COEP would block cross-origin sub-resources that lack CORP/CORS
-    # (e.g. Follow.It embeds, jsdelivr fonts/styles) and unlock
+    # (e.g. Follow.It embeds, jsdelivr Bootswatch styles) and unlock
     # crossOriginIsolated APIs (SharedArrayBuffer, high-res timers) we
     # don't currently need. Revisit if GemaBot or another client adds
     # heavy in-browser compute.
@@ -128,7 +128,15 @@
     # theme.css or page-scripts/<page>.css bundles. script-src is
     # already free of 'unsafe-inline' and enforced by
     # scripts/check-no-inline-scripts.mjs — keep it that way.
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://api.follow.it https://follow.it; script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://bootswatch.com https://www.google-analytics.com https://region1.google-analytics.com https://ingesteer.services-prod.nsvcs.net; frame-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests"
+    # NOTE: cdn.jsdelivr.net is allowed in style-src ONLY. admin-theme.js
+    # loads Bootswatch theme stylesheets from it on admin pages; the
+    # public theme endpoint strips those @imports (see
+    # netlify/functions/public-theme-css.mjs and its tests). It is
+    # deliberately absent from script-src: marked.js is vendored at
+    # /assets/vendor/marked/, so no third-party origin can execute
+    # script on any page. Do not re-add it to script-src — vendor the
+    # library instead, the way Bootstrap and marked already are.
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://api.follow.it https://follow.it; script-src 'self' https://www.googletagmanager.com; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://bootswatch.com https://www.google-analytics.com https://region1.google-analytics.com https://ingesteer.services-prod.nsvcs.net; frame-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests"
 
 # Explicit Content-Type for HTML responses so Lighthouse's "Properly defines
 # charset" Best Practices audit passes on the deploy-preview CDN even when

@@ -486,7 +486,7 @@
               </div>
             </li>
             <li class="nav-item dropdown nav-learn">
-              <a class="nav-link dropdown-toggle" href="#" id="navLearn" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Learn</a>
+              <button type="button" class="nav-link dropdown-toggle" id="navLearn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-haspopup="true">Learn</button>
               <ul class="dropdown-menu nav-learn-menu" aria-labelledby="navLearn">
                 <li><a class="dropdown-item" href="/gematria-basics.html">Gematria Basics</a></li>
                 <li><a class="dropdown-item" href="/gematria-guide.html">Gematria Guide</a></li>
@@ -498,7 +498,7 @@
             </li>
             <li class="nav-item nav-auth nav-auth--anon nav-login-mobile d-lg-none"><a class="nav-link" href="https://gematria.today/member?auth=login#authSection">Log in</a></li>
             <li class="nav-item nav-auth nav-auth--member" data-module="membership"><a class="nav-link" href="/member.html">Dashboard</a></li>
-            <li class="nav-item nav-auth nav-auth--member"><a class="nav-link" href="#" data-nav-logout>Log out</a></li>
+            <li class="nav-item nav-auth nav-auth--member"><button type="button" class="nav-link" data-nav-logout>Log out</button></li>
             <li class="nav-actions-divider d-lg-none" role="presentation" aria-hidden="true"></li>
             <li class="nav-item nav-search"><a class="nav-link nav-search-link" href="/searchbot.html" aria-label="Ask SiteSeeker (press /)" title="Ask SiteSeeker — press / to search"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><span class="nav-search-link__label">Ask SiteSeeker</span><kbd class="nav-search-link__kbd" aria-hidden="true">/</kbd></a></li>
             <li class="nav-item nav-theme d-flex align-items-center"><button type="button" class="nav-theme-toggle nav-theme-toggle--desktop" data-theme-toggle aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="icon nav-theme-toggle__moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg><svg class="icon nav-theme-toggle__sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m4.93 19.07 1.41-1.41"></path><path d="m17.66 6.34 1.41-1.41"></path></svg></button></li>
@@ -621,7 +621,7 @@
               <p class="tool-card-preview"><span class="tool-card-preview__label">Preview</span>Returns the gematria value, related words, and a short conversational explainer per turn.</p>
               <p class="gemabot-premium-note" role="note">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                <span>Premium-only. <a class="gemabot-sample-link" href="#" data-bs-toggle="modal" data-bs-target="#gemabotSampleModal">See a sample answer</a></span>
+                <span>Premium-only. <button type="button" class="gemabot-sample-link btn btn-link p-0 align-baseline" data-bs-toggle="modal" data-bs-target="#gemabotSampleModal">See a sample answer</button></span>
               </p>
               <div class="mt-auto">
                 <a class="btn btn-warning fw-semibold w-100 gemabot-cta--premium" href="/ai-agent.html" aria-label="Open GemaBot">Open GemaBot</a>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+        <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+<title>Account Recovery</title>
+    <meta name="description" content="Recover your Gematria.Today member account with a one-time recovery code and secure password reset flow." />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <link rel="canonical" href="https://gematria.today/account-recovery.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Account Recovery | Gematria.Today" />
+    <meta property="og:description" content="Recover your Gematria.Today member account with a one-time recovery code and secure password reset flow." />
+    <meta property="og:url" content="https://gematria.today/account-recovery.html" />
+    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Account Recovery | Gematria.Today" />
+    <meta name="twitter:description" content="Recover your Gematria.Today member account with a one-time recovery code and secure password reset flow." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <style>
+      .recovery-stepper { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0 0 1.5rem; padding: 0; list-style: none; }
+      .recovery-stepper > li { list-style: none; }
+      .recovery-stepper > li::marker { content: ''; }
+      .recovery-stepper .step { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.85rem; border-radius: 999px; background: rgba(148,163,184,0.15); color: var(--bs-secondary-color, #64748b); font-size: 0.875rem; font-weight: 500; }
+      .recovery-stepper .step.is-active { background: var(--bs-primary, #0d6efd); color: #fff; }
+      .recovery-stepper .step.is-done { background: rgba(25,135,84,0.18); color: #198754; }
+      .recovery-stepper .step-num { display: inline-flex; width: 1.4rem; height: 1.4rem; border-radius: 50%; background: rgba(255,255,255,0.25); align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+      .recovery-stepper .step:not(.is-active) .step-num { background: rgba(148,163,184,0.25); }
+      .recovery-stepper .step-divider { flex: 0 0 1.25rem; height: 2px; background: rgba(148,163,184,0.3); border-radius: 1px; }
+      .recovery-radio-card { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--bs-border-color, #dee2e6); border-radius: 0.5rem; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+      .recovery-radio-card:hover { border-color: var(--bs-primary, #0d6efd); }
+      .recovery-radio-card input[type="radio"] { margin-top: 0.2rem; }
+      .recovery-radio-card input[type="radio"]:checked ~ .recovery-radio-body { color: var(--bs-body-color); }
+      .recovery-radio-card:has(input:checked) { border-color: var(--bs-primary, #0d6efd); background: rgba(13,110,253,0.06); }
+      .recovery-radio-body strong { display: block; }
+      .recovery-radio-body small { display: block; color: var(--bs-secondary-color, #64748b); }
+      .pwd-strength { height: 6px; border-radius: 3px; background: rgba(148,163,184,0.25); overflow: hidden; margin-top: 0.4rem; }
+      .pwd-strength-bar { height: 100%; width: 0%; background: #dc3545; transition: width 0.2s, background 0.2s; }
+      .pwd-strength-bar.s-1 { width: 25%; background: #dc3545; }
+      .pwd-strength-bar.s-2 { width: 50%; background: #fd7e14; }
+      .pwd-strength-bar.s-3 { width: 75%; background: #ffc107; }
+      .pwd-strength-bar.s-4 { width: 100%; background: #198754; }
+      .pwd-strength-label { font-size: 0.8rem; color: var(--bs-secondary-color, #64748b); margin-top: 0.25rem; }
+      .pwd-match-msg { font-size: 0.85rem; margin-top: 0.3rem; }
+      .pwd-match-msg.is-ok { color: #198754; }
+      .pwd-match-msg.is-bad { color: #dc3545; }
+      .sent-panel { border: 1px solid rgba(25,135,84,0.35); background: rgba(25,135,84,0.08); border-radius: 0.5rem; padding: 1rem 1.25rem; }
+      .sent-panel .sent-email { font-weight: 600; }
+      .support-link { font-size: 0.9rem; }
+    </style>
+      <script src="/pwa-register.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <section class="hero-panel p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-2">Member Access</p>
+          <h1 class="display-6 fw-bold mb-3">Account recovery</h1>
+          <p id="recoveryHeroLead" class="lead mb-0">Tell us what you need help with and we'll send a recovery email. If you're resetting your password, you'll use the one-time code from that email below.</p>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5 mx-auto mb-4" style="max-width: 720px;" id="recoveryRequestSection">
+          <ol class="recovery-stepper" aria-label="Recovery progress">
+            <li class="step is-active" id="step1"><span class="step-num">1</span><span>Request</span></li>
+            <li class="step-divider" aria-hidden="true"></li>
+            <li class="step" id="step2"><span class="step-num">2</span><span>Check email</span></li>
+            <li class="step-divider" aria-hidden="true"></li>
+            <li class="step" id="step3"><span class="step-num">3</span><span>Reset</span></li>
+          </ol>
+
+          <div id="recoveryRequestAlert" class="alert d-none d-flex align-items-start gap-2" role="alert">
+            <span class="recovery-alert-icon" aria-hidden="true"></span>
+            <span class="flex-grow-1"></span>
+          </div>
+
+          <form id="recoveryRequestForm" class="row g-3" data-anti-bot="1">
+            <div class="col-12">
+              <label class="form-label" for="recoveryEmail">Account email</label>
+              <input id="recoveryEmail" class="form-control" type="email" autocomplete="email" required />
+            </div>
+            <fieldset class="col-12">
+              <legend class="form-label mb-2">I need help with</legend>
+              <div class="d-flex flex-column gap-2">
+                <label class="recovery-radio-card">
+                  <input type="radio" name="recoveryRequestType" value="forgot-password" checked />
+                  <span class="recovery-radio-body"><strong>Reset my password</strong><small>We'll email a one-time code to set a new password.</small></span>
+                </label>
+                <label class="recovery-radio-card">
+                  <input type="radio" name="recoveryRequestType" value="forgot-userid" />
+                  <span class="recovery-radio-body"><strong>Remind me of my username</strong><small>We'll email your username — no code or reset needed.</small></span>
+                </label>
+                <label class="recovery-radio-card">
+                  <input type="radio" name="recoveryRequestType" value="forgot-both" />
+                  <span class="recovery-radio-body"><strong>Send my username and a password reset link</strong><small>You'll get both in one email.</small></span>
+                </label>
+              </div>
+            </fieldset>
+            <div class="col-12 d-grid d-sm-flex gap-2 justify-content-sm-end">
+              <a class="btn btn-outline-secondary" href="/member.html">Back to sign in</a>
+              <button class="btn btn-primary" type="submit">Send recovery email</button>
+            </div>
+          </form>
+
+          <div id="recoverySentPanel" class="sent-panel mt-3 d-none" role="status" aria-live="polite" tabindex="-1">
+            <h2 id="recoverySentHeading" class="h5 mb-2">Recovery email on the way</h2>
+            <p class="mb-2">We sent a recovery email to <span class="sent-email" id="sentEmailDisplay"></span>. Check your inbox (and spam folder).</p>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <button id="resendButton" class="btn btn-sm btn-outline-success" type="button">Resend email</button>
+              <span id="resendCountdown" class="text-muted small d-none"></span>
+              <button id="changeEmailButton" class="btn btn-sm btn-link" type="button">Use a different email</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5 mx-auto mb-4 d-none" style="max-width: 720px;" id="recoveryResetSection">
+          <p class="section-kicker mb-2">Step 3 — Reset Password</p>
+          <h2 class="h4 mb-3">Use your recovery code</h2>
+
+          <div id="recoveryResetAlert" class="alert d-none d-flex align-items-start gap-2" role="alert">
+            <span class="recovery-alert-icon" aria-hidden="true"></span>
+            <span class="flex-grow-1"></span>
+          </div>
+
+          <form id="recoveryResetForm" class="row g-3" data-anti-bot="1">
+            <div class="col-12">
+              <label class="form-label fw-semibold" for="recoveryCode">Recovery code</label>
+              <div class="input-group">
+                <input id="recoveryCode" class="form-control font-monospace" autocomplete="one-time-code" inputmode="text" autocapitalize="characters" autocorrect="off" spellcheck="false" pattern="[A-Za-z0-9\-]{6,64}" maxlength="64" placeholder="e.g. ABC123-XYZ789" aria-describedby="recoveryCodeHelp" required />
+                <button id="pasteCodeButton" class="btn btn-outline-secondary" type="button" aria-label="Paste recovery code from clipboard">Paste</button>
+              </div>
+              <div id="recoveryCodeHelp" class="form-text">Paste the code from the recovery email exactly as shown.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="newPassword">New password</label>
+              <div class="input-group">
+                <input id="newPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" aria-describedby="pwdStrengthLabel" required />
+                <button class="btn btn-outline-secondary" type="button" data-password-toggle="newPassword" aria-label="Show password" aria-pressed="false">Show</button>
+              </div>
+              <div class="pwd-strength" aria-hidden="true"><div id="pwdStrengthBar" class="pwd-strength-bar"></div></div>
+              <div id="pwdStrengthLabel" class="pwd-strength-label" aria-live="polite">Use at least 8 characters with a mix of letters, numbers, and symbols.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="confirmNewPassword">Confirm new password</label>
+              <div class="input-group">
+                <input id="confirmNewPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" aria-describedby="pwdMatchMsg" required />
+                <button class="btn btn-outline-secondary" type="button" data-password-toggle="confirmNewPassword" aria-label="Show password" aria-pressed="false">Show</button>
+              </div>
+              <div id="pwdMatchMsg" class="pwd-match-msg" aria-live="polite"></div>
+            </div>
+            <div class="col-12 d-grid d-sm-flex gap-2 justify-content-sm-end">
+              <button id="resetSubmitButton" class="btn btn-success" type="submit">Reset password and sign in</button>
+            </div>
+          </form>
+
+          <div id="resetSuccessPanel" class="d-none mt-3">
+            <a id="continueButton" class="btn btn-success" href="/member.html">Continue to dashboard</a>
+          </div>
+        </section>
+
+        <p class="text-center support-link text-muted">Still locked out? <a href="/contact.html">Contact support</a>.</p>
+      </div>
+    </main>
+
+{% footer %}
+
+    <script src="/page-scripts/account-recovery-1.js"></script>
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

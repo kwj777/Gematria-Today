@@ -13,10 +13,16 @@
  *  - <script type="application/ld+json">...</script> (data, not JS)
  *  - <script type="application/json">...</script>
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const ROOT = process.cwd();
+// Checks run against the build output -- that is what actually ships.
+// Run `npm run build` first (npm run lint does).
+const ROOT = join(process.cwd(), '_site');
+if (!existsSync(ROOT)) {
+  console.error('_site/ not found. Run \`npm run build\` first.');
+  process.exit(1);
+}
 const EXCLUDE_DIRS = new Set(['.git', 'node_modules']);
 
 function walkHtml(dir, acc = []) {

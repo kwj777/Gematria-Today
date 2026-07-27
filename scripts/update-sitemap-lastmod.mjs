@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
@@ -10,18 +10,28 @@ const rootDir = process.cwd();
 const sitemapPath = join(rootDir, 'sitemap.xml');
 const SITE_ORIGIN = 'https://gematria.today';
 
+// lastmod comes from git history, so it must point at the tracked SOURCE of a
+// page, not at build output. Public pages now live in src/; everything else
+// (admin pages, docs) is still tracked at the repository root. Resolving to a
+// path with no git history makes lastCommitDate throw, which is the failure
+// this lookup exists to avoid.
 function urlToFile(loc) {
   if (!loc.startsWith(SITE_ORIGIN)) {
     throw new Error(`Sitemap entry is outside ${SITE_ORIGIN}: ${loc}`);
   }
   let path = loc.slice(SITE_ORIGIN.length);
-  if (path === '' || path === '/') return 'index.html';
+  if (path === '' || path === '/') path = 'index.html';
   if (path.startsWith('/')) path = path.slice(1);
+
+  const sourcePath = join('src', path);
+  if (existsSync(join(rootDir, sourcePath))) return sourcePath;
   return path;
 }
 
 function lastCommitDate(file) {
-  const output = execFileSync('git', ['log', '-1', '--format=%ct', 'HEAD', '--', file], {
+  // --follow traverses renames, so moving the pages into src/ does not reset
+  // every lastmod to the date of the move.
+  const output = execFileSync('git', ['log', '-1', '--follow', '--format=%ct', 'HEAD', '--', file], {
     cwd: rootDir,
     encoding: 'utf8',
   }).trim();

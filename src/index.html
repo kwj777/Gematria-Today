@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/fraunces-700-latin.woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+<title id="pageSeoTitle">Gematria.Today | Gematria Calculator, Name Meaning & Blog</title>
+    <meta id="pageMetaDescription" name="description" content="Use Gematria.Today to calculate English gematria values, compare names, explore related words, and read curated blog insights in one place." />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://gematria.today/" />
+    <link rel="alternate" type="application/rss+xml" title="Gematria.Today Blog" href="https://gematria.today/blog.xml" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Gematria.Today | Gematria Calculator, Name Meaning & Blog" />
+    <meta property="og:description" content="Use Gematria.Today to calculate English gematria values, compare names, explore related words, and read curated blog insights in one place." />
+    <meta property="og:url" content="https://gematria.today/" />
+    <meta property="og:image" content="https://gematria.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
+    <meta property="og:image:alt" content="Backdrop illustration of English gematria letters paired with their numeric values." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gematria.Today | Gematria Calculator, Name Meaning & Blog" />
+    <meta name="twitter:description" content="Use Gematria.Today to calculate English gematria values, compare names, explore related words, and read curated blog insights in one place." />
+    <meta name="twitter:image" content="https://gematria.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
+    <meta name="twitter:image:alt" content="Backdrop illustration of English gematria letters paired with their numeric values." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <style>
+      :root { color-scheme: light; --brand-amber: #b45309; }
+      body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #fcfbf8 0%, #f2efe8 100%); color: #35414f; font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+      :root[data-bs-theme="dark"] body { background: linear-gradient(180deg, #161c24 0%, #10151d 100%); color: #e6ebf2; }
+      .skip-link { position: absolute; left: -9999px; }
+      .skip-link:focus { left: 1rem; top: 1rem; z-index: 2000; }
+      .site-logo { max-width: 240px; height: auto; }
+      .hero-panel { position: relative; overflow: hidden; background: linear-gradient(160deg, #0d1a30 0%, #1d3358 100%); color: #fff; border-radius: var(--radius-2xl); }
+      .hero-panel--compact { padding: 1.5rem; border-radius: var(--radius-2xl); }
+      @media (min-width: 992px) { .hero-panel--compact { padding: 2.25rem; } }
+      .hero-panel h1 { font-family: "Fraunces", "Source Serif Pro", Georgia, "Times New Roman", serif; line-height: 1.1; color: #fff; }
+      .hero-quick-calc { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: var(--radius-2xl, 1rem); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
+      @media (min-width: 992px) { .hero-quick-calc { padding: 1.5rem; } }
+      .hero-quick-calc__label { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.92); margin: 0; }
+      .hero-quick-calc__input { width: 100%; padding: 0.7rem 0.95rem; font-size: 1.125rem; font-family: inherit; border-radius: 0.65rem; border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.96); color: #0d1a30; }
+      .hero-quick-calc__input::placeholder { color: #6b7280; }
+      .hero-quick-calc__input:focus { outline: none; box-shadow: 0 0 0 3px rgba(180,83,9,0.5); border-color: #b45309; }
+      .hero-quick-calc__result { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
+      .hero-quick-calc__value { font-family: "Fraunces","Source Serif Pro",Georgia,"Times New Roman",serif; font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1; transition: opacity 0.15s ease; }
+      .hero-quick-calc__value[data-example="true"] { opacity: 0.55; }
+      .hero-quick-calc__caption { font-size: 0.82rem; color: rgba(255,255,255,0.9); margin-top: 0.4rem; letter-spacing: 0.04em; }
+      .hero-quick-calc__deep-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; color: #fbbf24; text-decoration: none; padding: 0.45rem 0.85rem; border: 1px solid rgba(251,191,36,0.55); border-radius: 0.55rem; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease; }
+      .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; animation: heroQuickCalcDeepLinkPulse 0.6s ease-out; }
+      .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: none; background: rgba(251,191,36,0.12); border-color: #fbbf24; }
+      .hero-quick-calc__deep-link-kbd { font: inherit; font-size: 0.7rem; font-weight: 600; padding: 0.05rem 0.4rem; border-radius: 0.3rem; background: rgba(251,191,36,0.18); border: 1px solid rgba(251,191,36,0.55); color: #fde68a; line-height: 1.4; }
+      @keyframes heroQuickCalcDeepLinkPulse {
+        0% { box-shadow: 0 0 0 0 rgba(251,191,36,0.55); }
+        70% { box-shadow: 0 0 0 6px rgba(251,191,36,0); }
+        100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .hero-quick-calc__deep-link[data-active="true"] { animation: none; }
+      }
+      @media (max-width: 575.98px) {
+        .hero-panel--compact.mb-5 { margin-bottom: 1.25rem !important; }
+        .hero-panel--compact { padding-top: 1rem !important; padding-bottom: 0.9rem !important; padding-left: 1rem; padding-right: 1rem; }
+        .hero-panel--compact > .row { --bs-gutter-y: 0.85rem; }
+        .hero-panel--compact h1.display-5 { font-size: 1.85rem; line-height: 1.15; margin-bottom: 0.6rem !important; }
+        /* Keep the elevator pitch on phones, just smaller -- the old rule
+           hid it entirely, which dropped the "what is this site?" cue on
+           the audience least likely to scroll. */
+        .hero-panel--compact .lead { font-size: 0.95rem; line-height: 1.35; margin-bottom: 0.5rem !important; color: rgba(255, 255, 255, 0.85); }
+        .hero-quick-calc { padding: 0.9rem; gap: 0.65rem; }
+        .hero-quick-calc[data-state="empty"] { padding-bottom: 0.7rem; }
+        .hero-quick-calc__label { font-size: 0.72rem; }
+        /* 1rem = 16px floor on iOS Safari -- anything smaller and the
+           browser auto-zooms on focus. Do not drop below 1rem here. */
+        .hero-quick-calc__input { font-size: 1rem; padding: 0.6rem 0.85rem; }
+        .hero-quick-calc[data-state="empty"] .hero-quick-calc__result,
+        .hero-quick-calc[data-state="empty"] .hero-quick-calc__deep-link { display: none; }
+      }
+      .word-of-day-spotlight[aria-busy="true"] .wotd-stats,
+      .word-of-day-spotlight[aria-busy="true"] .wotd-breakdown { visibility: hidden; }
+    </style>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet fetchpriority="low" />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet fetchpriority="low" />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <link rel="modulepreload" href="/home-page.js" />
+    <script defer src="/site-modules.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://gematria.today/#organization",
+            "name": "Gematria.Today",
+            "url": "https://gematria.today/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://gematria.today/apple-touch-icon.png",
+              "width": 180,
+              "height": 180
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://gematria.today/#website",
+            "name": "Gematria.Today",
+            "url": "https://gematria.today/",
+            "publisher": { "@id": "https://gematria.today/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://gematria.today/calculator.html",
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
+      }
+    </script>
+      <script src="/pwa-register.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+    <main id="mainContent" class="py-5" aria-busy="false">
+      <div class="container">
+        <noscript>
+          <div class="alert alert-warning" role="alert">
+            <strong>JavaScript is disabled.</strong> The quick calculator, word-of-the-day, and featured posts on this page all need JavaScript to load. The site links above still work, so you can browse to the <a href="/calculator.html" class="alert-link">calculator</a>, <a href="/blog.html" class="alert-link">blog</a>, or <a href="/faq.html" class="alert-link">FAQ</a> directly.
+          </div>
+        </noscript>
+        <section class="hero-panel hero-panel--compact p-4 p-lg-4 mb-5" aria-label="Homepage highlight">
+          <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+              <span class="section-kicker d-block mb-2">Quick Calculator</span>
+              <h1 id="homeHeroTitle" class="display-5 fw-bold mb-3">Every word has a number.</h1>
+              <p id="homeHeroLead" class="lead mb-0">Calculate any word's gematria value, then explore the words and patterns it connects to.</p>
+            </div>
+            <div class="col-lg-6">
+              <div class="hero-quick-calc" role="group" aria-labelledby="heroQuickCalcLabel" data-state="empty">
+                <label class="hero-quick-calc__label" id="heroQuickCalcLabel" for="heroQuickCalcInput">Try it — type a word or name</label>
+                <input
+                  id="heroQuickCalcInput"
+                  class="hero-quick-calc__input"
+                  type="text"
+                  inputmode="text"
+                  autocomplete="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  maxlength="60"
+                  placeholder="e.g. light"
+                  enterkeyhint="go"
+                  aria-describedby="heroQuickCalcCaption"
+                />
+                <div class="hero-quick-calc__result">
+                  <span class="hero-quick-calc__value" id="heroQuickCalcValue" aria-live="polite" aria-atomic="true">—</span>
+                  <span class="hero-quick-calc__caption" id="heroQuickCalcCaption">English gematria value</span>
+                </div>
+                <a class="hero-quick-calc__deep-link" id="heroQuickCalcDeepLink" href="/calculator.html?query=light" aria-disabled="true" tabindex="-1">See related words →</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="content-panel learning-path-promo learning-path-promo--slim px-3 px-md-4 py-3 mb-5" aria-labelledby="learningPathPromoTitle">
+          <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+            <div class="learning-path-achievement-badge learning-path-achievement-badge--sm flex-shrink-0" role="img" aria-label="Beginner learning path achievement badge">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 120" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="lpPromoRibbonLeft" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#16a34a"/>
+                    <stop offset="100%" stop-color="#065f46"/>
+                  </linearGradient>
+                  <linearGradient id="lpPromoRibbonRight" x1="1" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#16a34a"/>
+                    <stop offset="100%" stop-color="#065f46"/>
+                  </linearGradient>
+                  <radialGradient id="lpPromoMedalCore" cx="50%" cy="40%" r="60%">
+                    <stop offset="0%" stop-color="#fff7d6"/>
+                    <stop offset="55%" stop-color="#fcd34d"/>
+                    <stop offset="100%" stop-color="#b45309"/>
+                  </radialGradient>
+                  <linearGradient id="lpPromoMedalRing" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#fde68a"/>
+                    <stop offset="55%" stop-color="#fbbf24"/>
+                    <stop offset="100%" stop-color="#92400e"/>
+                  </linearGradient>
+                </defs>
+                <path d="M22 60 L10 110 L34 100 L42 80 Z" fill="url(#lpPromoRibbonLeft)"/>
+                <path d="M74 60 L86 110 L62 100 L54 80 Z" fill="url(#lpPromoRibbonRight)"/>
+                <circle cx="48" cy="52" r="34" fill="url(#lpPromoMedalRing)"/>
+                <circle cx="48" cy="52" r="27" fill="url(#lpPromoMedalCore)"/>
+                <path d="M48 34 L52.6 47.2 L66.5 47.7 L55.4 56.1 L59.4 69.4 L48 61.6 L36.6 69.4 L40.6 56.1 L29.5 47.7 L43.4 47.2 Z" fill="#7c2d12" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="flex-grow-1">
+              <h2 id="learningPathPromoTitle" class="h5 mb-1 fw-bold">New here? Take the free beginner path.</h2>
+              <p class="mb-0 small">Basics → pattern grouping → name analysis → research checklist. Earn a badge with a <span class="text-warning"><a class="text-warning" href="/gematria-account-setup.html?return=/gematria-basics.html">free account</a>.</span></p>
+            </div>
+            <div class="d-flex flex-wrap gap-3 align-items-center flex-shrink-0">
+              <a id="learningPathPromoCta" class="btn btn-light btn-sm fw-bold text-dark" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+            </div>
+          </div>
+        </aside>
+
+        <section class="row g-4 mb-5" aria-label="What you can do here">
+          <div class="col-md-4">
+            <div class="feature-card-icon">
+              <span class="feature-card-icon__icon" aria-hidden="true">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              </span>
+              <h3 class="feature-card-icon__title">Research words</h3>
+              <p class="feature-card-icon__body">Use the calculator to inspect related terms, roots, and definitions.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-card-icon">
+              <span class="feature-card-icon__icon" aria-hidden="true">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+              </span>
+              <h3 class="feature-card-icon__title">Compare names</h3>
+              <p class="feature-card-icon__body">Test multiple names in parallel and follow links to matching result pages.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-card-icon">
+              <span class="feature-card-icon__icon" aria-hidden="true">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              </span>
+              <h3 class="feature-card-icon__title">Share insights</h3>
+              <p class="feature-card-icon__body">Share findings with clear, linkable result pages that make patterns and takeaways easy to revisit.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5 mb-5 d-none" data-module="blog_home_slider">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+              <span class="section-kicker d-block mb-2">Featured</span>
+              <h2 class="mb-1">Featured insights from the blog</h2>
+              <p class="text-muted mb-0">Use the slider to preview key posts, then open the full blog page to keep reading.</p>
+            </div>
+            <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
+          </div>
+
+          <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-ride="carousel">
+            <div id="blogPostsCarouselIndicators" class="carousel-indicators blog-carousel-indicators position-static mb-4"></div>
+            <div id="blogPostsCarouselInner" class="carousel-inner async-content-shell async-content-shell--md" aria-live="polite" aria-busy="true">
+              <div class="carousel-item active">
+                <article class="blog-slide-card p-4 p-lg-5">
+                  <span class="badge text-bg-secondary mb-3">From the blog</span>
+                  <h3 class="mb-3">Read the latest gematria research</h3>
+                  <p class="text-muted mb-4">Deep dives on ciphers, patterns, and what the numbers say about names, words, and phrases. New posts land regularly.</p>
+                  <a class="btn btn-warning fw-semibold" href="/blog.html" rel="bookmark">Browse all blog posts</a>
+                </article>
+              </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#blogPostsCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#blogPostsCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+        </section>
+        <noscript>
+          <section class="content-panel p-4 p-lg-5 mb-5">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+              <div>
+                <span class="section-kicker d-block mb-2">Featured</span>
+                <h2 class="mb-1">From the blog</h2>
+                <p class="text-muted mb-0">Deep dives on ciphers, patterns, and what the numbers say about names and phrases.</p>
+              </div>
+              <a class="btn btn-warning fw-semibold" href="/blog.html" rel="bookmark">Browse all blog posts</a>
+            </div>
+          </section>
+        </noscript>
+
+        <section class="word-of-day-spotlight p-4 p-lg-5 mb-5" data-module="wordnik_wotd_slider" aria-busy="true">
+          <header class="mb-4">
+            <span class="section-kicker d-block mb-2">Wordnik Word of the Day</span>
+            <h2 id="homeWordnikWotdTitle" class="h2 fw-bold mb-2 placeholder-glow">
+              <span class="visually-hidden">Daily word is loading.</span>
+              <span class="placeholder async-shell-line async-shell-line--lg col-5" aria-hidden="true"></span>
+            </h2>
+            <p id="homeWordnikWotdDefinition" class="mb-0 lead placeholder-glow">
+              <span class="visually-hidden">Fetching today's Wordnik word.</span>
+              <span class="placeholder async-shell-line col-11" aria-hidden="true"></span>
+              <span class="placeholder async-shell-line col-9 mt-1" aria-hidden="true"></span>
+            </p>
+          </header>
+
+          <dl class="wotd-stats mb-4" aria-live="polite">
+            <div class="wotd-stat">
+              <dt class="wotd-stat__label">Total</dt>
+              <dd id="homeWordnikWotdTotal" class="wotd-stat__value">—</dd>
+            </div>
+            <div class="wotd-stat">
+              <dt class="wotd-stat__label">Digital root</dt>
+              <dd id="homeWordnikWotdRoot" class="wotd-stat__value">—</dd>
+            </div>
+          </dl>
+
+          <div class="wotd-breakdown mb-4">
+            <p class="wotd-breakdown__label mb-2">Letter breakdown</p>
+            <p id="homeWordnikWotdBreakdown" class="wotd-breakdown__values mb-0 placeholder-glow" aria-live="polite">
+              <span class="placeholder async-shell-line col-9" aria-hidden="true"></span>
+            </p>
+          </div>
+
+          <div class="d-flex flex-column flex-sm-row flex-wrap gap-3 align-items-sm-center">
+            <a id="homeWordnikWotdCalculatorCta" class="btn btn-warning touch-target-lg" href="/calculator.html">Open in calculator</a>
+            <a id="homeWordnikWotdDefinitionCta" class="wotd-link" href="/definition" hidden>Read full definition <span aria-hidden="true">→</span></a>
+          </div>
+        </section>
+
+        <section class="home-section mb-5" data-module="blog_home_featured_grid">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 pb-3 home-section__header">
+            <div>
+              <span class="section-kicker d-block mb-2">From the Blog</span>
+              <h2 class="mb-1">Latest analysis and deep dives</h2>
+              <p class="text-muted mb-0">Hand-picked posts on gematria methodology, pattern checks, and case studies.</p>
+            </div>
+            <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
+          </div>
+          <div id="homeFeaturedPostsGrid" class="row g-4 async-content-shell async-content-shell--md" aria-live="polite" aria-busy="true">
+            <div class="col-12" aria-hidden="true">
+              <article class="blog-home-featured-card h-100 p-3 p-lg-4 async-shell-card">
+                <p class="placeholder-glow mb-2"><span class="placeholder async-shell-line async-shell-line--lg col-6"></span></p>
+                <p class="placeholder-glow mb-0"><span class="placeholder async-shell-line col-9"></span></p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+{% footer %}
+    <script type="module" src="/home-page.js"></script>
+    <script defer src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

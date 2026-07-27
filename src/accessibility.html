@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+        <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+<title>Accessibility | Gematria.Today</title>
+    <meta name="description" content="Review Gematria.Today accessibility commitments and the steps taken to improve inclusive site navigation." />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://gematria.today/accessibility.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Accessibility | Gematria.Today" />
+    <meta property="og:description" content="Review Gematria.Today accessibility commitments and the steps taken to improve inclusive site navigation." />
+    <meta property="og:url" content="https://gematria.today/accessibility.html" />
+    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Accessibility | Gematria.Today" />
+    <meta name="twitter:description" content="Review Gematria.Today accessibility commitments and the steps taken to improve inclusive site navigation." />
+    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+      <script src="/pwa-register.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
+          <p class="section-kicker mb-2">Accessibility</p>
+          <h1 class="mb-3">Accessibility Statement</h1>
+          <p class="lead text-muted mb-2">Last updated <time datetime="2026-05-24">May 24, 2026</time></p>
+          <p class="mb-0">Gematria.Today aims to be usable by the broadest possible audience, including people using assistive technology. This statement records what we test, what we know is not yet conformant, and how to report a barrier you hit.</p>
+        </section>
+
+        <nav class="legal-related-strip small mb-4" aria-label="Related policies">
+          <span class="legal-related-strip__label text-uppercase text-muted">Related</span>
+          <a href="/privacy.html">Privacy Policy</a>
+          <a href="/terms.html">Terms of Use</a>
+          <a href="/disclaimer.html">Disclaimer</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+
+        <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
+          <h2>Standard we target</h2>
+          <p class="mb-0">We target <strong>WCAG 2.1 Level AA</strong> as our minimum conformance level, with selected Level AAA enhancements (such as a 70-character line-length cap on long-form prose and a 24×24 CSS-pixel minimum on touch targets, going beyond WCAG 2.5.5 Target Size).</p>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
+          <h2>What we&rsquo;ve audited</h2>
+          <p>The following pages have been reviewed against WCAG 2.1 AA and the team&rsquo;s touch-target audit:</p>
+          <ul>
+            <li>Home (<a href="/">/</a>) and primary navigation</li>
+            <li>Calculators: <a href="/calculator.html">Calculator</a>, <a href="/multi-cipher-calculator.html">Multi-Cipher</a>, <a href="/name-calculator.html">Name Calculator</a></li>
+            <li>Learning content: <a href="/gematria-basics.html">Basics</a>, <a href="/gematria-guide.html">Guide</a>, <a href="/why-english-gematria.html">Why English</a>, <a href="/definitions.html">Definitions</a></li>
+            <li>Reference: <a href="/faq.html">FAQ</a>, <a href="/blog.html">Blog</a> index</li>
+            <li>Account and member flows: <a href="/gematria-account-setup.html">Account setup</a>, <a href="/member.html">Member dashboard</a>, <a href="/account-recovery.html">Account recovery</a></li>
+            <li>Legal: <a href="/privacy.html">Privacy</a>, <a href="/terms.html">Terms</a>, <a href="/disclaimer.html">Disclaimer</a>, this statement</li>
+          </ul>
+          <p class="mb-2">Auditing is a static-code review by the editorial team. We have not yet completed a runtime screen-reader pass with NVDA or VoiceOver on the full set; that work is tracked as ongoing.</p>
+          <p class="mb-0"><strong>Methodology:</strong> our most recent WCAG 2.5.5 (Target Size) audit and the per-pattern fixes are recorded in the <a href="/accessibility-audit.md">accessibility audit report</a>.</p>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
+          <h2>Known gaps</h2>
+          <p>We are openly tracking these areas as not-yet-conformant:</p>
+          <ul>
+            <li><strong>Calculator dynamic results.</strong> Result regions announce updates, but error and validation messaging is being expanded with inline help and <code>aria-invalid</code> coverage.</li>
+            <li><strong>Forum.</strong> Empty states, character counters on compose/reply, and skeleton loaders are in progress; today the thread list paints blank during initial fetch.</li>
+            <li><strong>Admin tooling.</strong> The admin dashboard and editorial tools are role-gated and have not been audited to AA. They are not part of the public conformance claim.</li>
+            <li><strong>Member dashboard first paint.</strong> Auth state is now set before first paint via a synchronous bootstrap script, but full skeleton loaders for member content are still rolling out.</li>
+            <li><strong>Cookie consent banner.</strong> Equal-weight Accept/Decline is implemented; granular per-category controls are not yet exposed.</li>
+          </ul>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
+          <h2>Compatibility</h2>
+          <ul class="mb-0">
+            <li>Current major versions of Chrome, Edge, Firefox, and Safari on desktop and mobile.</li>
+            <li>iOS VoiceOver and Android TalkBack on touch devices.</li>
+            <li>NVDA and JAWS with Chrome or Firefox on Windows.</li>
+            <li>Keyboard-only navigation throughout the public site.</li>
+          </ul>
+        </section>
+
+        <section class="content-panel p-4 p-lg-5 legal-copy" id="response-times">
+          <h2>Reporting a barrier</h2>
+          <p>If you encounter an accessibility barrier, please contact us through <a href="/contact.html">the contact page</a> with:</p>
+          <ul>
+            <li>The page URL where the barrier occurred.</li>
+            <li>A description of what you tried to do and what happened.</li>
+            <li>The assistive technology, browser, and operating system you used.</li>
+          </ul>
+          <p class="mb-0">We aim to acknowledge accessibility reports within <strong>5 business days</strong> and to provide a remediation plan (or a documented workaround) within <strong>20 business days</strong>. We will follow up in writing through your preferred contact channel.</p>
+        </section>
+      </div>
+    </main>
+
+{% footer %}
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

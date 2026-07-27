@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+        <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <meta name="theme-color" content="#2d547c" />
+<title id="pageSeoTitle">English Gematria Calculator | Gematria.Today</title>
+    <meta name="description" content="Calculate English gematria values for words and phrases, then explore related matches and shared number patterns." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://gematria.today/calculator.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="English Gematria Calculator | Gematria.Today" />
+    <meta property="og:description" content="Calculate English gematria values for words and phrases, then explore related matches and shared number patterns." />
+    <meta property="og:url" content="https://gematria.today/calculator.html" />
+    <meta property="og:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
+    <meta property="og:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="English Gematria Calculator | Gematria.Today" />
+    <meta name="twitter:description" content="Calculate English gematria values for words and phrases, then explore related matches and shared number patterns." />
+    <meta name="twitter:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
+    <meta name="twitter:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script defer src="/members-only-save-popover.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://gematria.today/" },
+          { "@type": "ListItem", "position": 2, "name": "Tools", "item": "https://gematria.today/tools.html" },
+          { "@type": "ListItem", "position": 3, "name": "Calculator", "item": "https://gematria.today/calculator.html" }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <noscript>
+          <div class="alert alert-warning" role="alert">
+            <strong>JavaScript is disabled.</strong> The calculator needs JavaScript to compute gematria values and look up related words. You can still browse the <a href="/faq.html" class="alert-link">FAQ</a>, the <a href="/blog.html" class="alert-link">blog</a>, or the <a href="/gematria-guide.html" class="alert-link">learning path</a>.
+          </div>
+        </noscript>
+        <section class="hero-panel p-4 p-lg-5 mb-5">
+          <p class="section-kicker mb-3"><a href="/tools.html" class="text-decoration-none">&larr; All tools</a> · Calculator</p>
+          <div class="row g-4 align-items-center">
+            <div class="col-lg-8">
+              <h1 class="display-5 fw-bold mb-3">English Gematria Calculator (Base-6)</h1>
+              <p class="lead mb-0">Look up a word or phrase, inspect its gematria value, and browse related matches using a consistent site form layout.</p>
+            </div>
+            <div class="col-lg-4">
+              <figure class="content-panel hero-media-panel hero-image-frame h-100 mb-0 overflow-hidden news-hero-figure">
+                <img
+                  class="blog-hero-image"
+                  src="/assets/calculator-hero-constellation.svg"
+                  alt="Abstract constellation artwork representing words and numbers connected by glowing lines."
+                  width="1600"
+                  height="1200"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+            </div>
+          </div>
+        </section>
+        <section class="content-panel form-shell p-4 p-lg-5">
+          <div id="learningPathNudge" class="learning-path-nudge mb-3 d-none" role="complementary" aria-label="Learning path invitation" data-nudge-source="calculator_page">
+  <span class="learning-path-nudge__icon" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 120" focusable="false">
+      <defs>
+        <linearGradient id="lpCalcRibL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#065f46"/></linearGradient>
+        <linearGradient id="lpCalcRibR" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#065f46"/></linearGradient>
+        <radialGradient id="lpCalcCore" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#fff7d6"/><stop offset="55%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#b45309"/></radialGradient>
+        <linearGradient id="lpCalcRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="55%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#92400e"/></linearGradient>
+      </defs>
+      <path d="M22 60 L10 110 L34 100 L42 80 Z" fill="url(#lpCalcRibL)"/>
+      <path d="M74 60 L86 110 L62 100 L54 80 Z" fill="url(#lpCalcRibR)"/>
+      <circle cx="48" cy="52" r="34" fill="url(#lpCalcRing)"/>
+      <circle cx="48" cy="52" r="27" fill="url(#lpCalcCore)"/>
+      <path d="M48 34 L52.6 47.2 L66.5 47.7 L55.4 56.1 L59.4 69.4 L48 61.6 L36.6 69.4 L40.6 56.1 L29.5 47.7 L43.4 47.2 Z" fill="#7c2d12" opacity="0.9"/>
+    </svg>
+  </span>
+  <div class="learning-path-nudge__body">
+    <p class="learning-path-nudge__title">New to gematria? Take the 4-level path.</p>
+    <p class="learning-path-nudge__lead">Free guided introduction. Earn the Beginner Path Graduate badge on your profile.</p>
+  </div>
+  <a id="learningPathNudgeCta" class="btn btn-warning btn-sm fw-semibold" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+  <button id="learningPathNudgeDismiss" type="button" class="btn-close" aria-label="Dismiss learning path invitation"></button>
+</div>
+<div id="member-save-shell" class="alert alert-secondary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><strong>Member history</strong><div id="member-save-meta" class="small text-muted">Join free to save searches and see related words.</div></div><div class="d-flex flex-wrap gap-2"><a id="member-link" class="btn btn-primary btn-sm" href="/member.html#registerForm">Join free</a></div></div><h2 class="h4 mb-3">Gematria Lookup + Related Words</h2><form id="lookup-form" class="row g-3" novalidate><div class="col-12"><label class="form-label fw-semibold" for="lookup-input">Research Word/Phrase or Gematria Value <span class="form-label-suffix text-muted fw-normal">(numbers must be multiples of 6)</span></label><input id="lookup-input" name="query" type="text" inputmode="text" autocomplete="on" autocapitalize="none" autocorrect="off" spellcheck="false" class="form-control form-control-lg" required aria-describedby="lookup-input-hint lookup-input-error" /><p id="lookup-input-hint" class="form-text mb-0">Enter a word/phrase to calculate its gematria, or enter a number (must be a multiple of 6) to list words in our database with that gematria value.</p><p id="lookup-input-error" class="form-text text-danger mt-1 mb-0" role="alert" hidden></p></div><div class="col-12 d-flex flex-wrap gap-2"><button id="lookup-submit-button" type="submit" class="btn btn-warning btn-lg fw-bold"><span class="spinner-border spinner-border-sm me-2 d-none" data-lookup-submit-spinner aria-hidden="true"></span><span data-lookup-submit-label>Calculate</span></button><button id="clear-search-button" class="btn btn-outline-secondary" type="button">Clear</button><button id="save-history-button" class="btn btn-outline-primary" type="button" disabled aria-describedby="save-history-hint">Save result</button></div><div class="col-12" id="save-history-hint-row"><p id="save-history-hint" class="form-text mb-0">Calculate a value first to enable saving.</p></div></form><p id="lookup-status" class="small text-muted mt-3 mb-2"></p><div id="calculator-error" class="alert alert-danger mt-3" role="alert" hidden><strong>Something went wrong</strong><p id="calculator-error-message" class="mb-1 mt-1"></p><button id="calculator-retry-button" type="button" class="btn btn-sm btn-outline-danger">Try again</button></div><div id="learning-path-return-sticky" class="learning-path-return-sticky mb-3" hidden><a id="learning-path-return-sticky-link" class="btn btn-outline-success btn-lg w-100" href="/gematria-basics.html">Nice! Back to Level 1</a></div><div id="gematria-result" class="gematria-result mb-3" role="status"></div><div id="related-words-result" class="result-list"></div>
+          <p class="small text-muted mt-4 mb-0 border-top pt-3">Uses the English Base-6 cipher (A=6, B=12 &hellip; Z=156). Background: <a href="/gematria-basics.html">basics</a> &middot; <a href="/why-english-gematria.html">why this cipher</a> &middot; <a href="/definitions.html">glossary</a>. Last updated <time datetime="2026-05-24">May 24, 2026</time>.</p>
+        </section>
+      </div>
+      <script src="/page-scripts/learning-path-helpers.js"></script>
+      <script src="/page-scripts/calculator-1.js"></script>
+      <script src="/page-scripts/learning-path-nudge.js" defer></script>
+      <div class="modal fade" id="save-history-note-modal" tabindex="-1" aria-labelledby="save-history-note-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="save-history-note-modal-title">Save search</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="small text-muted mb-2">Add an optional private note to keep with this saved search. You can edit it later from your dashboard.</p>
+              <label class="form-label" for="save-history-note-input">Notes (optional)</label>
+              <textarea id="save-history-note-input" class="form-control" rows="5" placeholder="Add private notes about this saved search..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="save-history-note-confirm">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+{% footer %}
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

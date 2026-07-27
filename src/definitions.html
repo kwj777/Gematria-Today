@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <title>Gematria Definitions: Glossary of Terms for New Users | Gematria.Today</title>
+    <meta name="description" content="Plain-language glossary of gematria terms — the English (Base-6) cipher used here, letter values, clusters, matches, and research vocabulary used across Gematria.Today." />
+    <link rel="canonical" href="https://gematria.today/definitions.html" />
+    <meta name="robots" content="index,follow" />
+    <meta name="last-updated" content="2026-05-18" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Gematria Definitions: Glossary of Terms for New Users" />
+    <meta property="og:description" content="A beginner-friendly glossary explaining the gematria vocabulary used across this site." />
+    <meta property="og:url" content="https://gematria.today/definitions.html" />
+    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gematria Definitions: Glossary of Terms for New Users" />
+    <meta name="twitter:description" content="A beginner-friendly glossary explaining the gematria vocabulary used across this site." />
+    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script src="/pwa-register.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "DefinedTermSet",
+            "@id": "https://gematria.today/definitions.html#glossary",
+            "name": "Gematria.Today Glossary",
+            "description": "Definitions of gematria-related terms used across Gematria.Today, written for new users.",
+            "url": "https://gematria.today/definitions.html"
+          },
+          { "@type": "DefinedTerm", "name": "Gematria", "termCode": "gematria", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-gematria", "description": "A practice that assigns a number to every letter, so any word or phrase can be added up to a single value." },
+          { "@type": "DefinedTerm", "name": "Letter value", "termCode": "letter-value", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-letter-value", "description": "The number assigned to one letter under a particular cipher." },
+          { "@type": "DefinedTerm", "name": "Word value", "termCode": "word-value-gematria-value", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-word-value-gematria-value", "description": "The total you get by adding up the letter values for every letter in a word or phrase." },
+          { "@type": "DefinedTerm", "name": "Phrase", "termCode": "phrase", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-phrase", "description": "Any string of one or more words entered into the calculator." },
+          { "@type": "DefinedTerm", "name": "Cipher", "termCode": "cipher", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-cipher", "description": "A specific rule set for converting letters into numbers." },
+          { "@type": "DefinedTerm", "name": "English Ordinal", "termCode": "english-ordinal-simple-english-gematria", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-english-ordinal-simple-english-gematria", "description": "A = 1, B = 2 ... Z = 26. Letters count in their natural alphabet order." },
+          { "@type": "DefinedTerm", "name": "Reverse Ordinal", "termCode": "reverse-ordinal", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-reverse-ordinal", "description": "Counted backwards: A = 26, B = 25 ... Z = 1." },
+          { "@type": "DefinedTerm", "name": "Reduction (Pythagorean)", "termCode": "reduction-pythagorean", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-reduction-pythagorean", "description": "Letters reduced to single digits 1 through 9." },
+          { "@type": "DefinedTerm", "name": "Reverse Reduction", "termCode": "reverse-reduction", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-reverse-reduction", "description": "Reduction applied to the reversed alphabet." },
+          { "@type": "DefinedTerm", "name": "English Gematria (multiples of six)", "termCode": "english-gematria-multiples-of-six", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-english-gematria-multiples-of-six", "description": "A = 6, B = 12 ... Z = 156. English Ordinal multiplied by six." },
+          { "@type": "DefinedTerm", "name": "Hebrew Gematria", "termCode": "hebrew-gematria", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-hebrew-gematria", "description": "The original Hebrew system, where each Hebrew letter has a traditional value." },
+          { "@type": "DefinedTerm", "name": "Isopsephy", "termCode": "isopsephy-greek-gematria", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-isopsephy-greek-gematria", "description": "The Greek equivalent of gematria, using values assigned to Greek letters." },
+          { "@type": "DefinedTerm", "name": "Calculator", "termCode": "calculator", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-calculator", "description": "The input tool where you type text and receive a gematria value back." },
+          { "@type": "DefinedTerm", "name": "Query", "termCode": "query", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-query", "description": "The exact text you entered into the calculator." },
+          { "@type": "DefinedTerm", "name": "Lookup", "termCode": "lookup", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-lookup", "description": "A single calculator run for one query." },
+          { "@type": "DefinedTerm", "name": "Baseline", "termCode": "baseline", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-baseline", "description": "The first value you record for a term, used as an anchor for later comparisons." },
+          { "@type": "DefinedTerm", "name": "Digit sum / Root reduction", "termCode": "digit-sum-root-reduction", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-digit-sum-root-reduction", "description": "Adding the digits of a number until you get a single digit." },
+          { "@type": "DefinedTerm", "name": "Database match list", "termCode": "database-match-list", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-database-match-list", "description": "Other words and phrases from the database that share the same value as your lookup." },
+          { "@type": "DefinedTerm", "name": "Match", "termCode": "match", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-match", "description": "Two or more words/phrases that produce the same gematria value under the same cipher." },
+          { "@type": "DefinedTerm", "name": "Cluster", "termCode": "cluster", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-cluster", "description": "A group of thematically related terms that all share the same value or a small set of values." },
+          { "@type": "DefinedTerm", "name": "Pattern grouping", "termCode": "pattern-grouping", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-pattern-grouping", "description": "Sorting matches into themed buckets so cluster behavior is visible." },
+          { "@type": "DefinedTerm", "name": "Non-match", "termCode": "non-match", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-non-match", "description": "A related term you expected to share a value but that did not." },
+          { "@type": "DefinedTerm", "name": "Overfitting", "termCode": "overfitting", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-overfitting", "description": "Choosing words after the fact so they fit a desired total." },
+          { "@type": "DefinedTerm", "name": "Coincidence floor", "termCode": "coincidence-floor", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-coincidence-floor", "description": "The reminder that some matches will always occur by chance." },
+          { "@type": "DefinedTerm", "name": "Cherry-picking", "termCode": "cherry-picking", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-cherry-picking", "description": "Selecting only the terms that support a conclusion while ignoring those that don't." },
+          { "@type": "DefinedTerm", "name": "Cross-validation", "termCode": "cross-validation", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-cross-validation", "description": "Testing a pattern against new words or unrelated phrase sets to confirm it isn't an artifact." },
+          { "@type": "DefinedTerm", "name": "Sample size", "termCode": "sample-size", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-sample-size", "description": "How many independently related terms you compared." },
+          { "@type": "DefinedTerm", "name": "Confidence level", "termCode": "confidence-level", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-confidence-level", "description": "A plain-language note (low / medium / high) about how strongly your data supports your interpretation." },
+          { "@type": "DefinedTerm", "name": "Editorial policy", "termCode": "editorial-policy", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-editorial-policy", "description": "The standards Gematria.Today applies to interpretive content." },
+          { "@type": "DefinedTerm", "name": "Learning path", "termCode": "learning-path", "inDefinedTermSet": "https://gematria.today/definitions.html#glossary", "url": "https://gematria.today/definitions.html#defn-learning-path", "description": "The numbered lesson sequence (Levels 0–4) under the main guide." }
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://gematria.today/" },
+          { "@type": "ListItem", "position": 2, "name": "Definitions", "item": "https://gematria.today/definitions.html" }
+        ]
+      }
+    </script>
+    <style>
+      .defn-term {
+        background: none;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: help;
+        border-bottom: 1px dotted currentColor;
+        text-decoration: none;
+        line-height: inherit;
+      }
+      .defn-term:hover,
+      .defn-term:focus-visible {
+        outline: none;
+        border-bottom-style: solid;
+        color: #0d6efd;
+      }
+      .defn-popup {
+        position: absolute;
+        z-index: 1080;
+        max-width: 320px;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35);
+        font-size: 0.875rem;
+        line-height: 1.45;
+      }
+      .defn-popup[hidden] { display: none; }
+      .defn-popup__title { font-weight: 600; margin-bottom: 0.25rem; }
+      .defn-popup__body { margin: 0 0 0.5rem; color: #e2e8f0; }
+      .defn-popup__link { color: #93c5fd; font-size: 0.8125rem; text-decoration: underline; }
+      .defn-popup__link:hover,
+      .defn-popup__link:focus-visible { color: #bfdbfe; }
+
+      /* Hero — tighter than the default compact panel */
+      .glossary-hero { padding: 2rem 1.5rem; }
+      .glossary-hero h1 { font-size: clamp(1.75rem, 2.4vw + 1rem, 2.5rem); margin-bottom: 0.5rem; }
+      .glossary-hero .lead { font-size: 1rem; margin-bottom: 0; max-width: 60ch; }
+
+      /* Two-column layout */
+      .glossary-layout { align-items: flex-start; }
+      .glossary-sidebar { position: relative; }
+      @media (min-width: 992px) {
+        .glossary-toc-wrap { position: sticky; top: 90px; }
+      }
+      .glossary-toc {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.625rem;
+        padding: 1rem 1.1rem;
+      }
+      .glossary-toc h2 {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        margin: 0 0 0.625rem;
+      }
+      .glossary-toc ol { list-style: none; padding-left: 0; margin: 0; counter-reset: toc; }
+      .glossary-toc li { counter-increment: toc; }
+      .glossary-toc a {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        padding: 0.375rem 0.5rem;
+        border-radius: 0.375rem;
+        color: #334155;
+        text-decoration: none;
+        font-size: 0.875rem;
+        line-height: 1.3;
+      }
+      .glossary-toc a::before {
+        content: counter(toc, decimal-leading-zero);
+        color: #94a3b8;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.75rem;
+      }
+      .glossary-toc a:hover,
+      .glossary-toc a.is-active {
+        background: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
+      }
+      .glossary-toc a.is-active::before { color: #0d6efd; }
+
+      /* Controls: search + A–Z */
+      .glossary-controls {
+        position: sticky;
+        top: 64px;
+        z-index: 5;
+        background: var(--gt-controls-bg, rgba(248, 250, 252, 0.96));
+        backdrop-filter: saturate(160%) blur(6px);
+        -webkit-backdrop-filter: saturate(160%) blur(6px);
+        padding: 0.75rem 0;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid transparent;
+      }
+      .glossary-controls.is-stuck { border-bottom-color: #e2e8f0; }
+      .glossary-search { position: relative; }
+      .glossary-search__icon {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        pointer-events: none;
+      }
+      .glossary-search input {
+        width: 100%;
+        padding: 0.65rem 2.6rem 0.65rem 2.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        background: #fff;
+        font-size: 1rem;
+        line-height: 1.3;
+        color: #0f172a;
+      }
+      .glossary-search input:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.18);
+      }
+      .glossary-search__clear {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: 0;
+        color: #94a3b8;
+        padding: 0.25rem 0.45rem;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+      }
+      .glossary-search__clear:hover,
+      .glossary-search__clear:focus-visible { color: #0f172a; background: #f1f5f9; }
+      .glossary-search__clear[hidden] { display: none; }
+      .glossary-search__count {
+        margin-top: 0.4rem;
+        font-size: 0.8125rem;
+        color: #64748b;
+      }
+      .glossary-az {
+        margin-top: 0.65rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+      .glossary-az a,
+      .glossary-az span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.75rem;
+        height: 1.75rem;
+        padding: 0 0.4rem;
+        border-radius: 0.375rem;
+        background: #f1f5f9;
+        color: #475569;
+        text-decoration: none;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .glossary-az a:hover,
+      .glossary-az a:focus-visible {
+        background: #0d6efd;
+        color: #fff;
+        outline: none;
+      }
+      .glossary-az span.is-disabled,
+      .glossary-az a.is-disabled {
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      /* Card grid */
+      .defn-section { scroll-margin-top: 140px; }
+      .defn-section.is-empty { display: none; }
+      .defn-section__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .defn-section__count {
+        font-size: 0.8125rem;
+        color: #64748b;
+        font-variant-numeric: tabular-nums;
+      }
+      .defn-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+        margin: 0;
+        padding: 0;
+      }
+      @media (min-width: 768px) {
+        .defn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      .defn-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.95rem 1.05rem 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.625rem;
+        scroll-margin-top: 150px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .defn-card:hover { border-color: #cbd5e1; }
+      .defn-card.is-flash,
+      .defn-card:target {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.14);
+      }
+      .defn-card[hidden] { display: none !important; }
+      .defn-card__head {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .defn-card dt {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.0625rem;
+        color: #0f172a;
+        line-height: 1.3;
+      }
+      .defn-card dd {
+        margin: 0;
+        color: #334155;
+        font-size: 0.9375rem;
+        line-height: 1.55;
+      }
+      .defn-anchor {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.6rem;
+        height: 1.6rem;
+        border-radius: 0.375rem;
+        background: transparent;
+        border: 0;
+        color: #94a3b8;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+      }
+      .defn-card:hover .defn-anchor,
+      .defn-anchor:focus-visible { opacity: 1; }
+      .defn-anchor:hover,
+      .defn-anchor:focus-visible {
+        color: #0d6efd;
+        background: rgba(13, 110, 253, 0.08);
+        outline: none;
+      }
+      .defn-anchor.is-copied { color: #16a34a; opacity: 1; }
+      .defn-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .defn-badge--beginner { background: #dcfce7; color: #166534; }
+      .defn-badge--intermediate { background: #fef3c7; color: #92400e; }
+      .defn-badge--advanced { background: #fee2e2; color: #991b1b; }
+      .defn-example {
+        display: inline-block;
+        margin-top: 0.4rem;
+        padding: 0.3rem 0.55rem;
+        background: #f1f5f9;
+        border-radius: 0.375rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.8125rem;
+        color: #0f172a;
+        line-height: 1.4;
+      }
+
+      /* No results message */
+      .defn-no-results {
+        display: none;
+        padding: 1.5rem;
+        text-align: center;
+        color: #64748b;
+        background: #fff;
+        border: 1px dashed #cbd5e1;
+        border-radius: 0.625rem;
+      }
+      .defn-no-results.is-visible { display: block; }
+
+      /* Search highlight */
+      .defn-card mark.defn-hl {
+        background: #fef08a;
+        color: inherit;
+        padding: 0 0.05em;
+        border-radius: 0.125rem;
+      }
+
+      /* Mobile TOC: collapsible */
+      .glossary-toc-toggle {
+        display: none;
+        width: 100%;
+        text-align: left;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #0f172a;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.55rem 0.85rem;
+        margin-bottom: 0.5rem;
+      }
+      @media (max-width: 991.98px) {
+        .glossary-toc-toggle { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+        .glossary-toc-toggle::after { content: "▾"; color: #94a3b8; }
+        .glossary-toc-toggle[aria-expanded="true"]::after { content: "▴"; }
+        .glossary-toc-wrap { display: none; }
+        .glossary-toc-wrap.is-open { display: block; }
+      }
+
+      /* Dark mode */
+      :root[data-bs-theme="dark"] .glossary-toc {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+      }
+      :root[data-bs-theme="dark"] .glossary-toc h2 { color: rgba(230, 235, 242, 0.65); }
+      :root[data-bs-theme="dark"] .glossary-toc a { color: rgba(230, 235, 242, 0.82); }
+      :root[data-bs-theme="dark"] .glossary-toc a::before { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .glossary-toc a:hover,
+      :root[data-bs-theme="dark"] .glossary-toc a.is-active {
+        background: rgba(96, 165, 250, 0.16);
+        color: #93c5fd;
+      }
+      :root[data-bs-theme="dark"] .glossary-toc a.is-active::before { color: #93c5fd; }
+
+      :root[data-bs-theme="dark"] .glossary-controls {
+        background: var(--gt-controls-bg-dark, rgba(11, 16, 24, 0.85));
+      }
+      :root[data-bs-theme="dark"] .glossary-controls.is-stuck {
+        border-bottom-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+      }
+      :root[data-bs-theme="dark"] .glossary-search input {
+        background: rgba(17, 24, 34, 0.94);
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.12));
+        color: #e6ebf2;
+      }
+      :root[data-bs-theme="dark"] .glossary-search input::placeholder { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .glossary-search input:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.22);
+      }
+      :root[data-bs-theme="dark"] .glossary-search__icon { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .glossary-search__clear { color: rgba(230, 235, 242, 0.55); }
+      :root[data-bs-theme="dark"] .glossary-search__clear:hover,
+      :root[data-bs-theme="dark"] .glossary-search__clear:focus-visible {
+        color: #e6ebf2;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      :root[data-bs-theme="dark"] .glossary-search__count { color: rgba(230, 235, 242, 0.6); }
+
+      :root[data-bs-theme="dark"] .glossary-az a,
+      :root[data-bs-theme="dark"] .glossary-az span {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(230, 235, 242, 0.78);
+      }
+      :root[data-bs-theme="dark"] .glossary-az a:hover,
+      :root[data-bs-theme="dark"] .glossary-az a:focus-visible {
+        background: #60a5fa;
+        color: #0b1018;
+      }
+
+      :root[data-bs-theme="dark"] .defn-section__count { color: rgba(230, 235, 242, 0.6); }
+
+      :root[data-bs-theme="dark"] .defn-card {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+      }
+      :root[data-bs-theme="dark"] .defn-card:hover {
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+      :root[data-bs-theme="dark"] .defn-card.is-flash,
+      :root[data-bs-theme="dark"] .defn-card:target {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
+      }
+      :root[data-bs-theme="dark"] .defn-card dt { color: #f1f5f9; }
+      :root[data-bs-theme="dark"] .defn-card dd { color: rgba(230, 235, 242, 0.78); }
+      :root[data-bs-theme="dark"] .defn-anchor { color: rgba(230, 235, 242, 0.45); }
+      :root[data-bs-theme="dark"] .defn-anchor:hover,
+      :root[data-bs-theme="dark"] .defn-anchor:focus-visible {
+        color: #93c5fd;
+        background: rgba(96, 165, 250, 0.14);
+      }
+      :root[data-bs-theme="dark"] .defn-example {
+        background: rgba(255, 255, 255, 0.06);
+        color: #e6ebf2;
+      }
+      :root[data-bs-theme="dark"] .defn-badge--beginner { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+      :root[data-bs-theme="dark"] .defn-badge--intermediate { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+      :root[data-bs-theme="dark"] .defn-badge--advanced { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+      :root[data-bs-theme="dark"] .defn-card mark.defn-hl {
+        background: rgba(250, 204, 21, 0.28);
+        color: inherit;
+      }
+
+      :root[data-bs-theme="dark"] .defn-no-results {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.12));
+        color: rgba(230, 235, 242, 0.65);
+      }
+
+      :root[data-bs-theme="dark"] .glossary-toc-toggle {
+        background: var(--color-surface-dark, rgba(17, 24, 34, 0.94));
+        border-color: var(--color-border-dark, rgba(255, 255, 255, 0.08));
+        color: #e6ebf2;
+      }
+      :root[data-bs-theme="dark"] .glossary-toc-toggle::after { color: rgba(230, 235, 242, 0.55); }
+
+      /* Print */
+      @media print {
+        .navbar,
+        .site-footer,
+        .breadcrumb,
+        .glossary-hero,
+        .glossary-sidebar,
+        .glossary-controls,
+        .glossary-keep-learning,
+        .defn-anchor { display: none !important; }
+        .defn-grid { grid-template-columns: 1fr !important; gap: 0.4rem !important; }
+        .defn-card {
+          border: 1px solid #999 !important;
+          box-shadow: none !important;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .defn-section { break-inside: auto; }
+        body { background: #fff !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+
+    <main id="mainContent" class="py-4 py-lg-5">
+      <div class="container">
+        <nav aria-label="Breadcrumb" class="mb-3">
+          <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="/index.html">Home</a></li>
+            <li class="breadcrumb-item"><a href="/gematria-guide.html">Learning Path</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Definitions</li>
+          </ol>
+        </nav>
+
+        <section class="hero-panel hero-panel--compact glossary-hero mb-4">
+          <p class="section-kicker mb-2">Reference · Glossary</p>
+          <h1 class="fw-bold">Gematria definitions for new users</h1>
+          <address class="small text-muted mb-2 fst-normal">By the <a href="/disclaimer.html">Gematria.Today Editorial Team</a> · Updated <time datetime="2026-05-24">May 24, 2026</time></address>
+          <p class="lead mb-3">A plain-language glossary of the vocabulary used across Gematria.Today. Search by term, jump to a letter, or skim by topic.</p>
+          <button id="printGlossaryButton" type="button" class="btn btn-outline-light btn-sm d-print-none" aria-label="Print or save this glossary as PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true" focusable="false" style="vertical-align:-3px;margin-right:0.35rem;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print or save as PDF
+          </button>
+        </section>
+
+        <div class="glossary-layout row g-4">
+          <aside class="glossary-sidebar col-lg-3" aria-label="Glossary sections">
+            <button type="button" class="glossary-toc-toggle" aria-expanded="false" aria-controls="glossaryTocWrap">
+              <span>Sections</span>
+            </button>
+            <div class="glossary-toc-wrap" id="glossaryTocWrap">
+              <nav class="glossary-toc" aria-label="On this page">
+                <h2>On this page</h2>
+                <ol id="glossaryTocList">
+                  <li><a href="#core-concepts">Core concepts</a></li>
+                  <li><a href="#ciphers-and-methods">Cipher &amp; methods</a></li>
+                  <li><a href="#calculator-terms">Calculator terms</a></li>
+                  <li><a href="#results-and-patterns">Results &amp; patterns</a></li>
+                  <li><a href="#research-vocabulary">Research vocabulary</a></li>
+                </ol>
+              </nav>
+            </div>
+          </aside>
+
+          <div class="glossary-main col-lg-9">
+            <div class="glossary-controls" id="glossaryControls">
+              <div class="glossary-search">
+                <span class="glossary-search__icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                </span>
+                <label class="visually-hidden" for="glossarySearchInput">Filter glossary terms</label>
+                <input
+                  id="glossarySearchInput"
+                  type="search"
+                  placeholder="Filter terms — e.g. cluster, ordinal, match"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button type="button" class="glossary-search__clear" id="glossarySearchClear" aria-label="Clear search" hidden>×</button>
+                <p class="glossary-search__count" id="glossarySearchCount" aria-live="polite" hidden></p>
+              </div>
+              <nav class="glossary-az" id="glossaryAz" aria-label="Jump to letter"></nav>
+            </div>
+
+            <p class="defn-no-results" id="glossaryNoResults" role="status">No definitions match that filter. Try a shorter word or a different spelling.</p>
+
+            <section id="core-concepts" class="defn-section content-panel p-4 mb-4" data-section-title="Core concepts">
+              <div class="defn-section__head">
+                <h2 class="h4 mb-0">Core concepts</h2>
+                <span class="defn-section__count" data-section-count></span>
+              </div>
+              <dl class="defn-grid">
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-gematria">Gematria</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-gematria" aria-label="Copy link to Gematria">#</a>
+                  </div>
+                  <dd>A practice that assigns a number to every letter, so any word or phrase can be added up to a single value. It is most often discussed alongside Hebrew scripture, but the same idea works for English, Greek, and other alphabets.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-letter-value">Letter value</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-letter-value" aria-label="Copy link to Letter value">#</a>
+                  </div>
+                  <dd>The number assigned to one letter under a particular cipher. This site uses the English (Base-6) cipher: A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12, and so on to Z&nbsp;=&nbsp;156.<br><span class="defn-example">A = 6 · B = 12 · … · Z = 156</span></dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-word-value-gematria-value">Word value (gematria value)</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-word-value-gematria-value" aria-label="Copy link to Word value">#</a>
+                  </div>
+                  <dd>The total you get by adding up the letter values for every letter in a word or phrase. Two different phrases that share the same total are sometimes called a match.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-phrase">Phrase</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-phrase" aria-label="Copy link to Phrase">#</a>
+                  </div>
+                  <dd>Any string of one or more words entered into the calculator. Spelling, spacing, and punctuation must be kept consistent so totals stay repeatable.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-cipher">Cipher</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-cipher" aria-label="Copy link to Cipher">#</a>
+                  </div>
+                  <dd>A specific rule set for converting letters into numbers. Gematria.Today uses one — English (Base-6), where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 … Z&nbsp;=&nbsp;156. Other ciphers exist (and are listed below for reference) and can produce different totals for the same word.</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section id="ciphers-and-methods" class="defn-section content-panel p-4 mb-4" data-section-title="Cipher &amp; methods">
+              <div class="defn-section__head">
+                <h2 class="h4 mb-0">Cipher and methods</h2>
+                <span class="defn-section__count" data-section-count></span>
+              </div>
+              <p class="small text-muted mb-3">Gematria.Today calculates values using one cipher only: <strong>English Gematria (multiples of six)</strong>, where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 … Z&nbsp;=&nbsp;156. The other cipher entries below are included as a reference glossary so readers recognize the terms when they encounter them elsewhere — they are not used on this site.</p>
+              <dl class="defn-grid">
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-english-ordinal-simple-english-gematria">English Ordinal (Simple English Gematria)</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-english-ordinal-simple-english-gematria" aria-label="Copy link to English Ordinal">#</a>
+                  </div>
+                  <dd>The most common starting point: A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2 ... Z&nbsp;=&nbsp;26. Letters count in their natural alphabet order.<br><span class="defn-example">A=1 · B=2 · C=3 · … · Z=26</span></dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-reverse-ordinal">Reverse Ordinal</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-reverse-ordinal" aria-label="Copy link to Reverse Ordinal">#</a>
+                  </div>
+                  <dd>The same idea, counted backwards: A&nbsp;=&nbsp;26, B&nbsp;=&nbsp;25 ... Z&nbsp;=&nbsp;1.<br><span class="defn-example">A=26 · B=25 · … · Z=1</span></dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-reduction-pythagorean">Reduction (Pythagorean)</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-reduction-pythagorean" aria-label="Copy link to Reduction">#</a>
+                  </div>
+                  <dd>Letters are reduced to single digits so the alphabet only uses 1 through 9 (A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2 ... I&nbsp;=&nbsp;9, then J&nbsp;=&nbsp;1 again). Often called Pythagorean gematria.<br><span class="defn-example">A=1 · I=9 · J=1 · R=9 · S=1</span></dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-reverse-reduction">Reverse Reduction</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-reverse-reduction" aria-label="Copy link to Reverse Reduction">#</a>
+                  </div>
+                  <dd>Reduction applied to the reversed alphabet, so A&nbsp;=&nbsp;8 (because Z would be 1 in reverse, Y would be 2, and so on, reduced to single digits).</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-english-gematria-multiples-of-six">English Gematria (multiples of six)</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-english-gematria-multiples-of-six" aria-label="Copy link to English Gematria">#</a>
+                  </div>
+                  <dd>A variant where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 ... Z&nbsp;=&nbsp;156. It is the English Ordinal value multiplied by six.<br><span class="defn-example">A=6 · B=12 · … · Z=156</span></dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="advanced">
+                  <div class="defn-card__head">
+                    <dt id="defn-hebrew-gematria">Hebrew Gematria</dt>
+                    <span class="defn-badge defn-badge--advanced">Advanced</span>
+                    <a class="defn-anchor" href="#defn-hebrew-gematria" aria-label="Copy link to Hebrew Gematria">#</a>
+                  </div>
+                  <dd>The original Hebrew system, where each letter of the Hebrew alphabet has a traditional value (Aleph&nbsp;=&nbsp;1, Bet&nbsp;=&nbsp;2, Yod&nbsp;=&nbsp;10, and so on).</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="advanced">
+                  <div class="defn-card__head">
+                    <dt id="defn-isopsephy-greek-gematria">Isopsephy (Greek gematria)</dt>
+                    <span class="defn-badge defn-badge--advanced">Advanced</span>
+                    <a class="defn-anchor" href="#defn-isopsephy-greek-gematria" aria-label="Copy link to Isopsephy">#</a>
+                  </div>
+                  <dd>The Greek equivalent of gematria, using values assigned to Greek letters. It is the system referenced by the number 666 in Revelation 13:18.</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section id="calculator-terms" class="defn-section content-panel p-4 mb-4" data-section-title="Calculator terms">
+              <div class="defn-section__head">
+                <h2 class="h4 mb-0">Calculator terms</h2>
+                <span class="defn-section__count" data-section-count></span>
+              </div>
+              <dl class="defn-grid">
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-calculator">Calculator</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-calculator" aria-label="Copy link to Calculator">#</a>
+                  </div>
+                  <dd>The input tool on the <a href="/calculator.html">word/phrase</a> and <a href="/name-calculator.html">name</a> pages where you type text and receive a gematria value back.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-query">Query</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-query" aria-label="Copy link to Query">#</a>
+                  </div>
+                  <dd>The exact text you entered into the calculator. The same query should always return the same value under the same cipher.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-lookup">Lookup</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-lookup" aria-label="Copy link to Lookup">#</a>
+                  </div>
+                  <dd>A single calculator run for one query. Looking up several related terms and comparing them is more useful than relying on one lookup alone.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-baseline">Baseline</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-baseline" aria-label="Copy link to Baseline">#</a>
+                  </div>
+                  <dd>The first value you record for a term. You compare later results against this baseline to check consistency and to anchor your interpretations.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-digit-sum-root-reduction">Digit sum / Root reduction</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-digit-sum-root-reduction" aria-label="Copy link to Digit sum">#</a>
+                  </div>
+                  <dd>Adding the digits of a number until you get a single digit. Some research methods compare these reduced "roots."<br><span class="defn-example">276 → 2+7+6 = 15 → 1+5 = 6</span></dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-database-match-list">Database match list</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-database-match-list" aria-label="Copy link to Database match list">#</a>
+                  </div>
+                  <dd>After a lookup, the results page lists other words and phrases from our database that share the same value. Coverage is limited to words currently stored — your own custom phrases may not appear yet.</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section id="results-and-patterns" class="defn-section content-panel p-4 mb-4" data-section-title="Results &amp; patterns">
+              <div class="defn-section__head">
+                <h2 class="h4 mb-0">Results and patterns</h2>
+                <span class="defn-section__count" data-section-count></span>
+              </div>
+              <dl class="defn-grid">
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-match">Match</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-match" aria-label="Copy link to Match">#</a>
+                  </div>
+                  <dd>Two or more words/phrases that produce the same gematria value under the same cipher. A single match by itself is not evidence — it becomes interesting only when several related terms line up.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-cluster">Cluster</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-cluster" aria-label="Copy link to Cluster">#</a>
+                  </div>
+                  <dd>A group of thematically related terms that all share the same value (or a small set of values). Clusters are stronger signals than isolated matches because they show repeating structure.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-pattern-grouping">Pattern grouping</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-pattern-grouping" aria-label="Copy link to Pattern grouping">#</a>
+                  </div>
+                  <dd>The practice of sorting your matches into themed buckets so the cluster behavior is visible. See the <a href="/gematria-pattern-grouping.html">Level&nbsp;2 lesson</a>.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-non-match">Non-match</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-non-match" aria-label="Copy link to Non-match">#</a>
+                  </div>
+                  <dd>A related term you expected to share a value but that did not. Including non-matches keeps interpretation honest and prevents cherry-picking.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="advanced">
+                  <div class="defn-card__head">
+                    <dt id="defn-overfitting">Overfitting</dt>
+                    <span class="defn-badge defn-badge--advanced">Advanced</span>
+                    <a class="defn-anchor" href="#defn-overfitting" aria-label="Copy link to Overfitting">#</a>
+                  </div>
+                  <dd>Choosing words after the fact so they fit a desired total. An overfit cluster looks convincing but only because the misses were hidden.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="advanced">
+                  <div class="defn-card__head">
+                    <dt id="defn-coincidence-floor">Coincidence floor</dt>
+                    <span class="defn-badge defn-badge--advanced">Advanced</span>
+                    <a class="defn-anchor" href="#defn-coincidence-floor" aria-label="Copy link to Coincidence floor">#</a>
+                  </div>
+                  <dd>The reminder that some matches will always occur by chance. The goal of clustering and non-matches is to rise above this floor — not to pretend it isn't there.</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section id="research-vocabulary" class="defn-section content-panel p-4 mb-4" data-section-title="Research vocabulary">
+              <div class="defn-section__head">
+                <h2 class="h4 mb-0">Research vocabulary</h2>
+                <span class="defn-section__count" data-section-count></span>
+              </div>
+              <dl class="defn-grid">
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-cherry-picking">Cherry-picking</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-cherry-picking" aria-label="Copy link to Cherry-picking">#</a>
+                  </div>
+                  <dd>Selecting only the terms that support a conclusion while ignoring those that don't. The site's checklist actively pushes against this.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-cross-validation">Cross-validation</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-cross-validation" aria-label="Copy link to Cross-validation">#</a>
+                  </div>
+                  <dd>Testing a pattern against new words or unrelated phrase sets to confirm it isn't an artifact of one chosen list.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-sample-size">Sample size</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-sample-size" aria-label="Copy link to Sample size">#</a>
+                  </div>
+                  <dd>How many independently related terms you compared. Larger, more diverse samples make a cluster more credible.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="intermediate">
+                  <div class="defn-card__head">
+                    <dt id="defn-confidence-level">Confidence level</dt>
+                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
+                    <a class="defn-anchor" href="#defn-confidence-level" aria-label="Copy link to Confidence level">#</a>
+                  </div>
+                  <dd>A plain-language note (low / medium / high) about how strongly your data supports your interpretation. Always state this before publishing.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="advanced">
+                  <div class="defn-card__head">
+                    <dt id="defn-editorial-policy">Editorial policy</dt>
+                    <span class="defn-badge defn-badge--advanced">Advanced</span>
+                    <a class="defn-anchor" href="#defn-editorial-policy" aria-label="Copy link to Editorial policy">#</a>
+                  </div>
+                  <dd>The standards Gematria.Today applies to interpretive content. See the <a href="/disclaimer.html">disclaimer page</a> for the full text.</dd>
+                </div>
+
+                <div class="defn-card" data-difficulty="beginner">
+                  <div class="defn-card__head">
+                    <dt id="defn-learning-path">Learning path</dt>
+                    <span class="defn-badge defn-badge--beginner">Beginner</span>
+                    <a class="defn-anchor" href="#defn-learning-path" aria-label="Copy link to Learning path">#</a>
+                  </div>
+                  <dd>The numbered lesson sequence (Levels 0&ndash;4) under the <a href="/gematria-guide.html">main guide</a>. Each level introduces a new layer of vocabulary used here.</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="content-panel glossary-keep-learning p-4 mb-4">
+              <h2 class="h4 mb-3">Keep learning</h2>
+              <p class="mb-3">Definitions are easier to remember once you've used them in the calculator. Start at Level&nbsp;1 if you're new, or jump to the FAQ for common follow-up questions.</p>
+              <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+                <a class="btn btn-outline-primary" href="/calculator.html">Open the calculator</a>
+                <a class="btn btn-outline-secondary" href="/faq.html">Read the FAQ</a>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+
+{% footer %}
+
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/page-scripts/definitions-1.js"></script>
+  </body>
+</html>

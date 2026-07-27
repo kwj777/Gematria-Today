@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+        <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <meta name="theme-color" content="#2d547c" />
+<title>Membership Dashboard | Gematria.Today</title>
+    <meta name="description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://gematria.today/member.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Membership Dashboard | Gematria.Today" />
+    <meta property="og:description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
+    <meta property="og:url" content="https://gematria.today/member.html" />
+    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Membership Dashboard | Gematria.Today" />
+    <meta name="twitter:description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
+    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script defer src="/site-modules.js"></script>
+    <script defer src="/register-form.js"></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://gematria.today/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Dashboard",
+                "item": "https://gematria.today/member.html"
+              }
+            ]
+          },
+          {
+            "@type": "WebApplication",
+            "name": "Gematria.Today Membership Dashboard",
+            "url": "https://gematria.today/member.html",
+            "applicationCategory": "LifestyleApplication",
+            "operatingSystem": "Web browser"
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+
+    <main id="mainContent" class="py-5">
+      <noscript>
+        <div class="container">
+          <div class="alert alert-warning" role="alert">
+            <strong>JavaScript is disabled.</strong> The membership dashboard, sign-in, and registration forms all need JavaScript to load. Please enable JavaScript, or read the <a href="/faq.html" class="alert-link">FAQ</a> or <a href="/contact.html" class="alert-link">contact us</a> directly.
+          </div>
+        </div>
+      </noscript>
+      <div id="membershipPageContent" class="container">
+        <section id="membershipHero" class="hero-panel p-4 p-lg-5 mb-5 d-none">
+          <div class="row g-4 align-items-center">
+            <div class="col-12 col-lg-9">
+              <p id="membershipHeroKicker" class="section-kicker mb-3">Member Access</p>
+              <h1 id="membershipHeroTitle" class="display-5 fw-bold mb-3">Start free. Save searches. Unlock related words.</h1>
+              <p id="membershipHeroLead" class="lead mb-0">Create a free account to save searches and look up related words. Upgrade to premium to unlock GemaBot, Premium Research, premium forum access, and the message-center inbox.</p>
+            </div>
+            <div class="col-12 col-lg-3 text-lg-end">
+              <a id="membershipHeroCta" class="btn btn-primary btn-lg" href="#authSection">Create free account</a>
+            </div>
+          </div>
+        </section>
+
+
+        <section id="comparisonSection" class="content-panel p-4 p-lg-5 mb-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Plan Comparison</p>
+              <h2 class="mb-2">Join free first, then upgrade only if you need more.</h2>
+              <p class="text-muted mb-0">Visitors can browse and calculate instantly, free members can save searches and explore related words, and premium members unlock deeper research limits.</p>
+              <p id="comparisonCurrentLevel" class="small fw-semibold text-primary mb-0 mt-2">Current level: Visitor</p>
+            </div>
+            <a id="comparisonCreateAccountButton" class="btn btn-outline-primary" href="#authSection">Create free account</a>
+          </div>
+
+          <div class="table-responsive membership-comparison-wrap">
+            <table class="table membership-comparison-table align-middle mb-0" aria-label="Membership tier feature comparison">
+              <thead>
+                <tr>
+                  <th scope="col" aria-label="Feature">Feature</th>
+                  <th scope="col" class="comparison-col comparison-col--visitor" aria-label="Visitor tier">Visitor <span id="comparisonVisitorCurrent" class="comparison-current-badge d-none">Current</span></th>
+                  <th scope="col" class="comparison-col comparison-col--member" aria-label="Member tier">Member <span id="comparisonMemberCurrent" class="comparison-current-badge d-none">Current</span></th>
+                  <th scope="col" class="comparison-col comparison-col--premium" aria-label="Premium Member tier">Premium Member <span id="comparisonPremiumCurrent" class="comparison-current-badge d-none">Current</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Access calculators, blog, and FAQ</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Create account and sign in dashboard</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included">Included</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Saved gematria history</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="No saved history">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Save up to 7 calculations</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Unlimited saved calculations</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Related word search depth</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Up to 9 related words</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Up to 250 related words</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Premium Research (Wordnik deep related-word explorer with clickable drill-down)</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">GemaBot AI assistant</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Premium forum categories</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Read &amp; post</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Submit proposed blog posts</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Message Center inbox (admin replies)</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Priority support (faster response on contact form)</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--neutral">Standard email</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">Standard email</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Priority email support</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Price</th>
+                  <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
+                  <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium"><span>$19 intro / year</span><small>regularly $29</small></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="authSection" class="content-panel p-4 p-lg-5 mb-5">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Member Access</p>
+              <h2 class="h3 mb-0">Create account or sign in</h2>
+            </div>
+          </div>
+          <ul class="nav nav-tabs mb-4" role="tablist" aria-label="Membership authentication options">
+            <li class="nav-item" role="presentation">
+              <button id="authTabRegister" class="nav-link active" type="button" data-auth-view="register" role="tab" aria-selected="true" aria-controls="authPanelRegister">Create account</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button id="authTabLogin" class="nav-link" type="button" data-auth-view="login" role="tab" aria-selected="false" aria-controls="authPanelLogin">Sign in</button>
+            </li>
+          </ul>
+          <div id="memberAlert" class="alert d-none mb-4" role="alert"></div>
+          <div id="resendVerificationPanel" class="content-panel content-panel--inset p-3 mb-4 d-none">
+            <h3 class="h6 mb-2">Need a fresh verification link?</h3>
+            <p class="small text-muted mb-3">Verification links expire 24 hours after signup. Enter the username or email you registered with and we'll send a new one.</p>
+            <form id="resendVerificationForm" class="row g-2 align-items-end" data-anti-bot="1">
+              <div class="col-12 col-md">
+                <label class="form-label" for="resendVerificationIdentifier">Username or email</label>
+                <input id="resendVerificationIdentifier" class="form-control" autocomplete="username" required />
+              </div>
+              <div class="col-12 col-md-auto">
+                <button id="resendVerificationSubmit" class="btn btn-outline-primary" type="submit">Send a fresh link</button>
+              </div>
+            </form>
+            <div id="resendVerificationAlert" class="alert d-none mt-3 mb-0" role="status" aria-live="polite"></div>
+          </div>
+          <div id="authPanelRegister" data-auth-panel="register">
+            <p class="section-kicker mb-3">New Member</p>
+            <div class="register-perk-strip mb-3" aria-label="What a free account unlocks">
+              <p class="small fw-semibold mb-2">A free account unlocks:</p>
+              <ul class="list-unstyled small mb-2 d-flex flex-wrap gap-2">
+                <li><span class="badge text-bg-light border">✓ Save up to 7 calculations</span></li>
+                <li><span class="badge text-bg-light border">✓ Up to 9 related words</span></li>
+                <li><span class="badge text-bg-light border">✓ Free-area forum posting</span></li>
+                <li><span class="badge text-bg-light border">✓ Beginner learning-path badge</span></li>
+              </ul>
+              <p class="small mb-0"><a id="registerBenefitsPreviewLink" class="link-primary text-decoration-none" href="#comparisonSection">Compare free vs premium →</a></p>
+            </div>
+            <form id="registerForm" class="row g-3" data-anti-bot="1">
+              <div class="col-md-6"><label class="form-label" for="registerUsername">Username <span class="text-danger" aria-hidden="true">*</span></label><input id="registerUsername" class="form-control" autocomplete="username" required /></div>
+              <div class="col-md-6"><label class="form-label" for="registerDisplayName">Display name</label><input id="registerDisplayName" class="form-control" autocomplete="nickname" /></div>
+              <div class="col-12"><label class="form-label" for="registerEmail">Email <span class="text-danger" aria-hidden="true">*</span></label><input id="registerEmail" class="form-control" type="email" autocomplete="email" required /></div>
+              <div class="col-12">
+                <label class="form-label" for="registerPassword">Password <span class="text-danger" aria-hidden="true">*</span></label>
+                <div class="input-group">
+                  <input id="registerPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerPasswordStrengthLabel" />
+                  <button class="btn btn-outline-secondary" type="button" data-password-toggle="registerPassword" aria-label="Show password" aria-pressed="false">Show</button>
+                </div>
+                <div id="registerPasswordStrength" class="password-strength mt-2" aria-hidden="true">
+                  <div class="progress" style="height: 6px;">
+                    <div id="registerPasswordStrengthBar" class="progress-bar bg-secondary" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div id="registerPasswordStrengthLabel" class="form-text mt-1" aria-live="polite">Must be at least 8 characters.</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="registerConfirmPassword">Confirm password <span class="text-danger" aria-hidden="true">*</span></label>
+                <div class="input-group">
+                  <input id="registerConfirmPassword" class="form-control" type="password" minlength="8" autocomplete="new-password" required aria-describedby="registerConfirmPasswordHint registerConfirmPasswordMismatch" />
+                  <button class="btn btn-outline-secondary" type="button" data-password-toggle="registerConfirmPassword" aria-label="Show password" aria-pressed="false">Show</button>
+                </div>
+                <div id="registerConfirmPasswordHint" class="form-text">Re-enter the password to confirm.</div>
+                <div id="registerConfirmPasswordMismatch" class="form-text text-danger" aria-live="polite" data-always-on="true"></div>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input id="registerBlogSubscribe" class="form-check-input" type="checkbox" />
+                  <label class="form-check-label" for="registerBlogSubscribe">Subscribe to blog updates (opens follow.it in a new tab)</label>
+                </div>
+              </div>
+              <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create membership</button></div>
+            </form>
+          </div>
+          <div id="authPanelLogin" data-auth-panel="login" class="d-none">
+            <p class="section-kicker mb-3">Returning Member</p>
+            <form id="loginForm" class="row g-3" data-anti-bot="1">
+              <div class="col-12"><label class="form-label" for="loginIdentifier">Username or email</label><input id="loginIdentifier" class="form-control" autocomplete="username" required /></div>
+              <div class="col-12"><label class="form-label" for="loginPassword">Password</label><div class="input-group"><input id="loginPassword" class="form-control" type="password" autocomplete="current-password" required /><button class="btn btn-outline-secondary" type="button" data-password-toggle="loginPassword" aria-label="Show password" aria-pressed="false">Show</button></div></div>
+              <div class="col-12 d-grid"><button id="loginSubmitButton" class="btn btn-outline-primary" type="submit">Sign in</button></div>
+              <div class="col-12 text-center">
+                <a class="link-primary text-decoration-none" href="/account-recovery.html">Forgot username/password</a>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section id="dashboardSection" class="d-none">
+          <section id="learningPathStep1Section" class="content-panel learning-path-step1-panel p-4 mb-4 d-none" aria-live="polite">
+            <p class="section-kicker mb-2">Learning Path</p>
+            <h3 class="h4 mb-2">You’re ready for Level 1</h3>
+            <p class="mb-3">Account created and verified? Continue your learning path now.</p>
+            <a
+              id="goToLearningPathStep1Button"
+              class="btn btn-warning btn-lg fw-bold px-4 py-3"
+              href="/gematria-basics.html"
+            >Go to Learning Path Step 1</a>
+          </section>
+
+          <section id="learningPathCompletedSection" class="content-panel learning-path-completion-banner p-4 mb-4 d-none" aria-live="polite">
+            <button id="learningPathCompletedDismiss" type="button" class="btn-close learning-path-completion-banner__dismiss" aria-label="Dismiss completion banner"></button>
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-2 pe-5">
+              <div class="learning-path-achievement-badge" role="img" aria-label="Beginner learning path achievement badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 120" aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient id="achRibbonLeft" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#16a34a"/>
+                      <stop offset="100%" stop-color="#065f46"/>
+                    </linearGradient>
+                    <linearGradient id="achRibbonRight" x1="1" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#16a34a"/>
+                      <stop offset="100%" stop-color="#065f46"/>
+                    </linearGradient>
+                    <radialGradient id="achMedalCore" cx="50%" cy="40%" r="60%">
+                      <stop offset="0%" stop-color="#fff7d6"/>
+                      <stop offset="55%" stop-color="#fcd34d"/>
+                      <stop offset="100%" stop-color="#b45309"/>
+                    </radialGradient>
+                    <linearGradient id="achMedalRing" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#fde68a"/>
+                      <stop offset="55%" stop-color="#fbbf24"/>
+                      <stop offset="100%" stop-color="#92400e"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M22 60 L10 110 L34 100 L42 80 Z" fill="url(#achRibbonLeft)"/>
+                  <path d="M74 60 L86 110 L62 100 L54 80 Z" fill="url(#achRibbonRight)"/>
+                  <circle cx="48" cy="52" r="34" fill="url(#achMedalRing)"/>
+                  <circle cx="48" cy="52" r="27" fill="url(#achMedalCore)"/>
+                  <path d="M48 34 L52.6 47.2 L66.5 47.7 L55.4 56.1 L59.4 69.4 L48 61.6 L36.6 69.4 L40.6 56.1 L29.5 47.7 L43.4 47.2 Z" fill="#7c2d12" opacity="0.9"/>
+                </svg>
+              </div>
+              <div class="flex-grow-1">
+                <span class="learning-path-complete-badge mb-2"><span aria-hidden="true">🎉</span> Path complete</span>
+                <h3 class="h4 mt-2 mb-1">You finished the beginner learning path</h3>
+                <p id="learningPathCompletedAtText" class="mb-0 small text-muted"></p>
+              </div>
+            </div>
+            <div class="learning-path-share mt-3" aria-label="Share your badge">
+              <span class="learning-path-share__label">Share</span>
+              <a id="learningPathShareLink" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">View public page</a>
+              <button id="learningPathShareNative" type="button" class="btn btn-sm btn-warning fw-semibold d-none">Share…</button>
+              <a id="learningPathShareTwitter" class="btn btn-sm btn-outline-dark" target="_blank" rel="noopener">X / Twitter</a>
+              <a id="learningPathShareFacebook" class="btn btn-sm btn-outline-dark" target="_blank" rel="noopener">Facebook</a>
+              <a id="learningPathShareLinkedIn" class="btn btn-sm btn-outline-dark" target="_blank" rel="noopener">LinkedIn</a>
+              <button id="learningPathShareCopy" type="button" class="btn btn-sm btn-outline-secondary">Copy link</button>
+              <span id="learningPathShareCopied" class="small text-success d-none" role="status">Copied!</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <a class="btn btn-warning fw-semibold" href="/calculator.html">Start a new search</a>
+              <a class="btn btn-outline-primary" href="/blog.html">Browse research posts</a>
+            </div>
+          </section>
+
+          <section id="learningPathAspireSection" class="content-panel learning-path-aspire p-4 mb-4 d-none" aria-live="polite">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <div class="learning-path-achievement-badge learning-path-achievement-badge--sm learning-path-achievement-badge--muted" role="img" aria-label="Locked beginner learning path badge preview">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 120" aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient id="lpAspireRibL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9ca3af"/><stop offset="100%" stop-color="#4b5563"/></linearGradient>
+                    <linearGradient id="lpAspireRibR" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9ca3af"/><stop offset="100%" stop-color="#4b5563"/></linearGradient>
+                    <radialGradient id="lpAspireCore" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#f3f4f6"/><stop offset="55%" stop-color="#d1d5db"/><stop offset="100%" stop-color="#6b7280"/></radialGradient>
+                    <linearGradient id="lpAspireRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e5e7eb"/><stop offset="55%" stop-color="#9ca3af"/><stop offset="100%" stop-color="#4b5563"/></linearGradient>
+                  </defs>
+                  <path d="M22 60 L10 110 L34 100 L42 80 Z" fill="url(#lpAspireRibL)"/>
+                  <path d="M74 60 L86 110 L62 100 L54 80 Z" fill="url(#lpAspireRibR)"/>
+                  <circle cx="48" cy="52" r="34" fill="url(#lpAspireRing)"/>
+                  <circle cx="48" cy="52" r="27" fill="url(#lpAspireCore)"/>
+                  <path d="M48 34 L52.6 47.2 L66.5 47.7 L55.4 56.1 L59.4 69.4 L48 61.6 L36.6 69.4 L40.6 56.1 L29.5 47.7 L43.4 47.2 Z" fill="#374151" opacity="0.85"/>
+                </svg>
+              </div>
+              <div class="flex-grow-1">
+                <p class="section-kicker mb-1">Learning path</p>
+                <h3 class="h5 mb-1">Earn your Beginner Path Graduate badge</h3>
+                <p id="learningPathAspireProgress" class="mb-2 small text-muted">Four short levels. Free for all members. The badge lands on your dashboard and forum profile when you finish.</p>
+                <div class="d-flex flex-wrap gap-2">
+                  <a id="learningPathAspireCta" class="btn btn-warning btn-sm fw-bold" href="/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+                  <a class="btn btn-link btn-sm p-0 ms-2 fw-semibold" href="/gematria-guide.html">See the path overview →</a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="membershipUpgradeSection" class="content-panel membership-upgrade-panel--compact p-3 p-lg-4 mb-4 d-none">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+              <div>
+                <p class="section-kicker mb-1">Membership Upgrade</p>
+                <h3 id="membershipUpgradeSectionTitle" class="h5 mb-0">Unlock premium research tools</h3>
+              </div>
+              <button
+                id="membershipUpgradeToggleButton"
+                class="btn membership-upgrade-cta d-inline-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#membershipUpgradeContent"
+                aria-expanded="false"
+                aria-controls="membershipUpgradeContent"
+              >
+                <span id="membershipUpgradeToggleLabel">Upgrade to Premium</span>
+                <span id="membershipUpgradeToggleArrow" aria-hidden="true">▼</span>
+              </button>
+            </div>
+            <div id="membershipUpgradeContent" class="collapse" role="region" aria-labelledby="membershipUpgradeSectionTitle">
+              <div class="mb-4">
+                <p class="section-kicker mb-2">What you unlock</p>
+                <h4 class="h5 mb-3">Premium benefits at a glance</h4>
+                <div class="table-responsive membership-comparison-wrap">
+                  <table class="table membership-comparison-table align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th scope="col">Feature</th>
+                        <th scope="col" class="comparison-col comparison-col--member">Free Member <span class="comparison-current-badge">Current</span></th>
+                        <th scope="col" class="comparison-col comparison-col--premium">Premium Member</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Saved gematria history</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Save up to 7 calculations</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Unlimited saved calculations</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Related word search depth</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--limited">Up to 9 related words</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Up to 250 related words</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Premium Research (Wordnik deep related-word explorer with clickable drill-down)</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">GemaBot AI assistant</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Premium forum categories</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Read &amp; post</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Submit proposed blog posts</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Message Center inbox (admin replies)</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--unavailable" aria-label="Not included">&mdash;</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Included</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Priority support (faster response on contact form)</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">Standard email</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--included comparison-pill--highlight">Priority email support</span></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Price</th>
+                        <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium"><span>$19 intro / year</span><small>regularly $29</small></span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+                <div>
+                  <h4 class="h5 mb-2">Pay with Stripe</h4>
+                  <p class="text-muted mb-2">Upgrade to a one-year premium membership for <strong>$29 per year</strong>, with a <strong>limited-time introductory price of $19</strong>. Lifetime memberships are not offered yet.</p>
+                  <ul class="small text-muted mb-0 ps-3">
+                    <li>Annual subscription — billed once today at the introductory rate.</li>
+                    <li>Auto-renews each year at the then-current price ($29/year as of today) unless you cancel.</li>
+                    <li>Applicable sales tax is calculated and added at checkout based on your billing address.</li>
+                    <li>Cancel anytime from <strong>Manage subscription</strong> on this dashboard; access continues through the paid period.</li>
+                  </ul>
+                </div>
+                <div class="membership-price-badge"><span class="text-decoration-line-through opacity-75 me-2">$29</span>$19 / year intro</div>
+              </div>
+              <form id="paymentForm" class="membership-payment-form row g-3 align-items-end">
+                <div class="col-md-7">
+                  <label class="form-label" for="paymentPlan">Membership plan <span class="text-muted small">(USD)</span></label>
+                  <select id="paymentPlan" class="form-select" disabled>
+                    <option value="yearly" selected>One year membership — US$19 introductory price (regularly US$29/year)</option>
+                  </select>
+                  <div class="form-text">All prices are billed in US dollars and exclude sales tax, which is calculated at checkout based on your billing address. Your card issuer may convert and apply a foreign-transaction fee outside the US.</div>
+                </div>
+                <div class="col-md-5 d-grid">
+                  <button id="paymentButton" class="btn btn-primary btn-lg d-inline-flex align-items-center justify-content-center gap-2" type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="11" width="16" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+                    <span data-payment-button-label>Continue to secure Stripe checkout</span>
+                  </button>
+                </div>
+                <div class="col-12">
+                  <div class="membership-upgrade-note">You'll be redirected to Stripe's PCI-compliant hosted checkout to complete payment. Card details never touch Gematria.Today; once payment clears, your dashboard refreshes automatically.</div>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+            <div>
+              <p class="section-kicker mb-2">Member Dashboard</p>
+              <h2 class="h3 mb-0">Your account</h2>
+              <p id="memberMeta" class="text-muted small mb-0"></p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button id="premiumResearchLink" class="btn btn-outline-secondary premium-research-button" type="button" data-href="/premium-research.html">Premium research</button>
+              <button id="messageCenterOpenButton" class="btn btn-outline-dark d-none" type="button">Message Center</button>
+              <button id="manageSubscriptionButton" class="btn btn-outline-dark d-none" type="button">Manage subscription</button>
+              <div id="adminMenuWrap" class="dropdown d-none">
+                <button id="adminMenuToggle" class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenuToggle">
+                  <li><a id="adminPageButton" class="dropdown-item d-none" href="/admin.html">Admin page</a></li>
+                  <li><a id="superAdminPageButton" class="dropdown-item d-none" href="/admin-super-admin.html">Super Admin</a></li>
+                  <li><a id="siteHubPageButton" class="dropdown-item d-none" href="/admin-hub.html">Site Hub</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <section id="messageCenterSection" class="content-panel p-4 p-lg-5 mb-4 d-none">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+              <div>
+                <p class="section-kicker mb-2">Premium Message Center</p>
+                <h3 class="h4 mb-1">Admin messaging hub</h3>
+                <p class="text-muted mb-0">Review everything you have sent to admin and keep track of replies in your inbox.</p>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <button id="messageCenterArchiveToggleButton" class="btn btn-outline-secondary" type="button">Open Archive</button>
+                <button id="messageCenterCloseButton" class="btn btn-outline-secondary" type="button">Close message center</button>
+              </div>
+            </div>
+            <div class="row g-4">
+              <div class="col-xl-6">
+                <h4 class="h5 mb-3">Sent to admin</h4>
+                <div id="messageCenterSentList" class="admin-list"></div>
+              </div>
+              <div class="col-xl-6">
+                <h4 id="messageCenterInboxHeading" class="h5 mb-3">Inbox (until archived)</h4>
+                <div id="messageCenterInboxList" class="admin-list"></div>
+              </div>
+            </div>
+          </section>
+
+          <div id="dashboardMainContent">
+          <div class="row g-4 mb-4">
+            <div class="col-md-4"><div class="stat-card p-4 h-100"><div class="section-kicker mb-2">Membership</div><div id="membershipLevel" class="metric-value text-primary">free</div><p id="membershipPlanMeta" class="mb-0 text-muted">Current membership tier.</p></div></div>
+            <div class="col-md-4" data-module="forum">
+              <div class="stat-card p-4 h-100">
+                <div class="section-kicker mb-2">Forum Notifications</div>
+                <div id="forumNotificationCountTop" class="metric-value text-info">0</div>
+                <p id="forumNotificationCountMetaTop" class="mb-3 text-muted">Sign in to view your latest forum notification highlights.</p>
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                  <button id="forumNotificationQuickViewButton" class="btn btn-outline-primary btn-sm" type="button">See Notifications</button>
+                  <a id="forumNotificationTopLink" class="btn btn-primary btn-sm" href="/forum.html">Open Forum</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div id="messageInboxCard" class="stat-card p-4 h-100 w-100">
+                <div class="section-kicker mb-2">Inbox Messages</div>
+                <div id="messageInboxCount" class="metric-value text-info">0</div>
+                <p id="messageInboxMeta" class="mb-3 text-muted">Admin replies waiting in your message center inbox.</p>
+                <button id="messageInboxOpenButton" class="btn btn-primary btn-sm" type="button">Open Message Center</button>
+              </div>
+            </div>
+          </div>
+
+          <section id="achievementsSection" class="content-panel p-4 mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+              <div>
+                <p class="section-kicker mb-2">Achievements</p>
+                <h3 id="achievementsSectionTitle" class="h4 mb-1">Your badges</h3>
+                <p id="achievementsSummary" class="text-muted mb-0">Search words and explore gematria values to earn badges.</p>
+              </div>
+              <button
+                id="achievementsToggleButton"
+                class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#achievementsContent"
+                aria-expanded="true"
+                aria-controls="achievementsContent"
+              >
+                <span id="achievementsToggleLabel">Collapse</span>
+                <span id="achievementsToggleArrow" aria-hidden="true">▲</span>
+              </button>
+            </div>
+            <div id="achievementsContent" class="collapse show" role="region" aria-labelledby="achievementsSectionTitle">
+              <div class="row g-3 mb-3" id="achievementsStatsRow"></div>
+              <h4 class="h6 mt-3 mb-2">Earned badges</h4>
+              <div id="achievementsEarnedList" class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted small">No badges earned yet.</span>
+              </div>
+              <h4 class="h6 mb-2">Progress toward next badges</h4>
+              <div id="achievementsProgressList" class="d-flex flex-column gap-2"></div>
+            </div>
+          </section>
+
+          <section id="forumNotificationSection" class="content-panel p-4 mb-4" data-module="forum">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+              <div>
+                <p class="section-kicker mb-2">Forum Notifications</p>
+                <h3 id="forumNotificationSectionTitle" class="h4 mb-1">Don’t miss what’s happening in the forum</h3>
+                <p id="forumNotificationSummary" class="text-muted mb-0">Sign in to view your latest forum updates and responses.</p>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <button
+                  id="forumNotificationToggleButton"
+                  class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#forumNotificationContent"
+                  aria-expanded="false"
+                  aria-controls="forumNotificationContent"
+                >
+                  <span id="forumNotificationToggleLabel">Expand</span>
+                  <span id="forumNotificationToggleArrow" aria-hidden="true">▼</span>
+                </button>
+                <a id="forumNotificationLink" class="btn btn-primary" href="/forum.html">Open Forum</a>
+              </div>
+            </div>
+            <div id="forumNotificationContent" class="collapse" role="region" aria-labelledby="forumNotificationSectionTitle">
+              <div id="forumNotificationList" class="admin-list"></div>
+            </div>
+          </section>
+
+
+          <section id="blogSubscriptionSection" class="content-panel p-4 h-100 d-none mb-4">
+            <p class="section-kicker mb-2">Blog Updates</p>
+            <h3 class="h4 mb-2">Subscribe with your membership email</h3>
+            <p class="text-muted mb-3">Get notified when new blog posts are published.</p>
+            <form id="blogSubscriptionForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label" for="blogSubscriptionEmail">Membership email</label>
+                <input id="blogSubscriptionEmail" class="form-control" type="email" readonly aria-describedby="blogSubscriptionEmailHint" />
+                <div id="blogSubscriptionEmailHint" class="form-text">Subscriptions are tied to your membership email. To use a different address, update your account email first.</div>
+              </div>
+              <div class="col-12 d-grid">
+                <button id="blogSubscriptionButton" class="btn btn-outline-primary" type="submit">Subscribe to blog updates</button>
+              </div>
+            </form>
+          </section>
+
+          <div class="row g-4 row-cols-1 row-cols-xl-2 align-items-stretch">
+            <div class="col d-flex">
+              <section class="content-panel p-4 h-100 w-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <h3 id="historySectionTitle" class="h4 mb-0">Saved calculations (0)</h3>
+                  </div>
+                  <button
+                    id="historySectionToggleButton"
+                    class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#historySectionContent"
+                    aria-expanded="true"
+                    aria-controls="historySectionContent"
+                  >
+                    <span id="historySectionToggleLabel">Collapse</span>
+                    <span id="historySectionToggleArrow" aria-hidden="true">▲</span>
+                  </button>
+                </div>
+                <div id="historySectionContent" class="collapse show" role="region" aria-labelledby="historySectionTitle">
+                  <div id="historyList" class="admin-list"></div>
+                  <div id="historyListToggleWrap" class="mt-3 d-none">
+                    <button id="historyListToggleButton" class="btn btn-outline-primary btn-sm" type="button">View all saved calculations</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <div class="col d-flex" data-module="gemabot">
+              <section class="content-panel p-4 h-100 w-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <h3 id="chatSessionSectionTitle" class="h4 mb-0">Saved chat sessions (0)</h3>
+                  </div>
+                  <button
+                    id="chatSessionSectionToggleButton"
+                    class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#chatSessionSectionContent"
+                    aria-expanded="false"
+                    aria-controls="chatSessionSectionContent"
+                  >
+                    <span id="chatSessionSectionToggleLabel">Expand</span>
+                    <span id="chatSessionSectionToggleArrow" aria-hidden="true">▼</span>
+                  </button>
+                </div>
+                <div id="chatSessionSectionContent" class="collapse" role="region" aria-labelledby="chatSessionSectionTitle">
+                  <div id="chatSessionList" class="admin-list"></div>
+                </div>
+              </section>
+            </div>
+            <div class="col d-flex">
+              <section id="premiumBlogProposalSection" class="content-panel p-4 h-100 w-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Premium Blog Contributions</p>
+                    <h3 id="premiumBlogProposalSectionTitle" class="h4 mb-0">Propose a blog post</h3>
+                  </div>
+                  <button
+                    id="premiumBlogProposalToggleButton"
+                    class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#premiumBlogProposalContent"
+                    aria-expanded="false"
+                    aria-controls="premiumBlogProposalContent"
+                  >
+                    <span id="premiumBlogProposalToggleLabel">Expand</span>
+                    <span id="premiumBlogProposalToggleArrow" aria-hidden="true">▼</span>
+                  </button>
+                </div>
+                <div id="premiumBlogProposalContent" class="collapse" role="region" aria-labelledby="premiumBlogProposalSectionTitle">
+                <div id="premiumBlogProposalSuccessMessage" class="alert alert-success mb-3 d-none" role="status">Submission was successful.</div>
+                <div id="memberProposalFeedbackList" class="admin-list mb-3 d-none"></div>
+                <form id="premiumBlogProposalForm" class="row g-3 d-none">
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalTitle">Proposed title <span class="text-danger" aria-hidden="true">*</span></label>
+                    <input id="blogProposalTitle" class="form-control" minlength="8" maxlength="140" required />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalSummary">Post summary <span class="text-danger" aria-hidden="true">*</span></label>
+                    <textarea id="blogProposalSummary" class="form-control" rows="3" minlength="40" maxlength="500" required placeholder="Share the main thesis and why it matters for readers."></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalBody">Draft content <span class="text-danger" aria-hidden="true">*</span></label>
+                    <textarea id="blogProposalBody" class="form-control" rows="6" minlength="120" required placeholder="Paste your full draft or detailed outline."></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalTags">Suggested tags <span class="text-danger" aria-hidden="true">*</span></label>
+                    <input id="blogProposalTags" class="form-control" placeholder="gematria, digital roots, numerology" aria-describedby="blogProposalTagsHelp" required />
+                    <div id="blogProposalTagsHelp" class="form-text">Use commas to separate each tag.</div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalImageUrl">Suggested image URL (optional)</label>
+                    <input id="blogProposalImageUrl" class="form-control" type="url" placeholder="https://example.com/proposed-cover.jpg" />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="blogProposalAttribution">Username attribution</label>
+                    <input id="blogProposalAttribution" class="form-control" readonly />
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input id="blogProposalPolicyAgreement" class="form-check-input" type="checkbox" required />
+                      <label class="form-check-label" for="blogProposalPolicyAgreement">I have read the <a href="/disclaimer.html" target="_blank" rel="noopener">Editorial Policy</a> and agree to it.</label>
+                    </div>
+                  </div>
+                  <div class="col-12 d-grid">
+                    <button class="btn btn-success" type="submit">Send proposal</button>
+                  </div>
+                </form>
+                <div id="premiumBlogProposalLockedMessage" class="alert alert-warning mb-0 d-none" role="alert">This form is available to premium members only. Upgrade your membership to submit proposed blog posts.</div>
+                </div>
+              </section>
+            </div>
+            <div class="col d-flex">
+              <section class="content-panel p-4 h-100 w-100">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <p class="section-kicker mb-2">Profile</p>
+                    <h3 id="profileSectionTitle" class="h4 mb-0">Preferences</h3>
+                  </div>
+                  <button
+                    id="profileSectionToggleButton"
+                    class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#profileSectionContent"
+                    aria-expanded="false"
+                    aria-controls="profileSectionContent"
+                  >
+                    <span id="profileSectionToggleLabel">Expand</span>
+                    <span id="profileSectionToggleArrow" aria-hidden="true">▼</span>
+                  </button>
+                </div>
+                <div id="profileSectionContent" class="collapse" role="region" aria-labelledby="profileSectionTitle">
+                  <form id="profileForm" class="row g-3">
+                    <div class="col-12"><label class="form-label" for="profileDisplayName">Display name</label><input id="profileDisplayName" class="form-control" /></div>
+                    <div class="col-12"><label class="form-label" for="profileNotes">Research notes</label><textarea id="profileNotes" class="form-control" rows="4" placeholder="Store a few personal preferences in your profile."></textarea></div>
+                    <div class="col-12 d-grid"><button id="profileSaveButton" class="btn btn-primary" type="submit">Save profile</button></div>
+                  </form>
+                  <hr class="my-4" />
+                  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                    <div>
+                      <p class="mb-1 fw-semibold">Sign out of this device</p>
+                      <p class="small text-muted mb-0">Ends your session on this browser. Your saved data stays on your account.</p>
+                    </div>
+                    <button id="logoutButton" class="btn btn-outline-secondary" type="button">Sign out</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <section id="memberSupportSection" class="content-panel p-4 mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+              <div>
+                <p class="section-kicker mb-2">Need help?</p>
+                <h3 class="h4 mb-1">Contact support</h3>
+                <p class="text-muted mb-0">Questions about billing, your account, or a bug? We reply by email — premium members get priority response.</p>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-primary" href="/contact.html">Contact us</a>
+                <a class="btn btn-outline-secondary" href="/faq.html">Browse FAQ</a>
+              </div>
+            </div>
+          </section>
+          </div>
+
+        </section>
+      </div>
+    </main>
+
+{% footer %}
+
+    <script defer src="/page-scripts/password-strength-helpers.js"></script>
+    <script defer src="/page-scripts/member-1.js"></script>
+    <script defer src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

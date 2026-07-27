@@ -52,15 +52,43 @@ test('secure guide folder paths are canonicalized to root guide URLs', async () 
   );
 });
 
+// Splitting on [[redirects]] sweeps the *following* rule's leading comment into
+// the previous block, and those comments discuss `force = true` by name. Strip
+// comments so these assertions test the rules rather than the prose around them.
+function redirectRuleFor(netlifyToml, fromLine) {
+  return netlifyToml
+    .split('[[redirects]]')
+    .map((block) => block.split('\n').filter((line) => !line.trim().startsWith('#')).join('\n'))
+    .find((block) => block.includes(fromLine));
+}
+
+test('markdown guide redirect is forced so the guide sources cannot be read directly', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+
+  const markdownGuideRule = redirectRuleFor(netlifyToml, 'from = "/*-site-adaptation-guide.md"');
+
+  assert.ok(markdownGuideRule, 'expected a redirect rule for markdown guide URLs');
+  assert.match(markdownGuideRule, /force = true/);
+});
+
+test('guide sources and server-side directories are excluded from the published site', async () => {
+  const config = await fs.readFile(new URL('../eleventy.config.mjs', import.meta.url), 'utf8');
+
+  for (const excluded of ['secure', 'sql', 'tests', 'scripts', 'netlify']) {
+    assert.match(
+      config,
+      new RegExp(`'${excluded}',`),
+      `${excluded} should be excluded from passthrough copy`,
+    );
+  }
+});
+
 test('secure guide redirect is forced so static files cannot shadow the auth gate', async () => {
   const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
 
-  // The guide HTML files exist on disk and publish = "." serves them, so a
-  // non-forced redirect would be shadowed by the static file and skip
-  // super-admin-static-page entirely.
-  const secureGuideRule = netlifyToml
-    .split('[[redirects]]')
-    .find((block) => block.includes('from = "/secure/site-adaptation-guides/'));
+  // A non-forced redirect would be shadowed by the static file if the guides
+  // were ever published, skipping super-admin-static-page entirely.
+  const secureGuideRule = redirectRuleFor(netlifyToml, 'from = "/secure/site-adaptation-guides/');
 
   assert.ok(secureGuideRule, 'expected a redirect rule for the secure guide folder');
   assert.match(secureGuideRule, /force = true/);

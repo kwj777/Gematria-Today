@@ -304,6 +304,30 @@ export function securityHeaders(extraHeaders = {}) {
   };
 }
 
+// Netlify's [[headers]] rules in netlify.toml apply to files served from the
+// publish directory, not to responses proxied from a function. Server-rendered
+// documents (/w/:word, /v/:value, the words sitemap) therefore have to send the
+// site header set themselves, or they ship with no CSP at all.
+//
+// These values mirror the `for = "/*"` block in netlify.toml; the trade-offs
+// documented there (style-src keeps 'unsafe-inline', COEP deliberately unset)
+// apply here too. tests/document-security-headers.test.mjs fails if the two
+// drift apart, so change them together.
+export const DOCUMENT_SECURITY_HEADERS = Object.freeze({
+  'x-frame-options': 'SAMEORIGIN',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'same-origin',
+  'strict-transport-security': 'max-age=63072000; includeSubDomains; preload',
+  'cross-origin-opener-policy': 'same-origin',
+  'cross-origin-resource-policy': 'same-site',
+  'permissions-policy': 'accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(self), xr-spatial-tracking=()',
+  'content-security-policy': "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://api.follow.it https://follow.it; script-src 'self' https://www.googletagmanager.com; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://bootswatch.com https://www.google-analytics.com https://region1.google-analytics.com https://ingesteer.services-prod.nsvcs.net; frame-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests",
+});
+
+export function documentSecurityHeaders(extraHeaders = {}) {
+  return { ...DOCUMENT_SECURITY_HEADERS, ...extraHeaders };
+}
+
 export function jsonResponse(statusCode, payload, extraHeaders = {}) {
   const setCookie = extraHeaders['set-cookie'];
   if (Array.isArray(setCookie)) {

@@ -1199,12 +1199,23 @@
 
       document.getElementById('membershipGrantForm').addEventListener('submit', async (event) => {
         event.preventDefault();
+        const grantEmail = (document.getElementById('memberGrantEmail').value || '').trim();
+        // Same blast-radius guard as the promotion form below: a typo or an
+        // autocomplete misfire hands a stranger a year of paid membership.
+        const confirmed = window.confirm(
+          'Grant a free one-year premium membership to ' + (grantEmail || 'this member') + '?\n\n' +
+          'The premium term starts immediately and unlocks GemaBot, Premium ' +
+          'Research, and premium forum access.'
+        );
+        if (!confirmed) {
+          return;
+        }
         clearMessage(errorMessage);
         try {
           const payload = await request('/api/admin-memberships', {
             method: 'POST',
             body: JSON.stringify({
-              email: document.getElementById('memberGrantEmail').value
+              email: grantEmail
             })
           });
           state.latestGrantedMember = payload.member || null;

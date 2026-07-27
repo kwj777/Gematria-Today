@@ -8,6 +8,7 @@ import {
   jsonResponse,
   parseBody,
   registerMember,
+  markVerificationEmailDelivered,
 } from './_member.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
@@ -61,11 +62,20 @@ export async function handler(event) {
       },
     });
 
+    // Registration used to report success identically whether or not the
+    // verification email sent. When delivery fails the member is told to check
+    // an inbox nothing was sent to, and the account is pruned 24h later -- so
+    // the signup and the evidence both disappear. Say what actually happened.
+    await markVerificationEmailDelivered(sql, registration.member.id, delivery.delivered);
+
     return jsonResponse(201, {
       authenticated: false,
       member: registration.member,
       profile: registration.profile,
-      message: 'Membership account created. Check your email to verify your account before signing in.',
+      message: delivery.delivered
+        ? 'Membership account created. Check your email to verify your account before signing in.'
+        : 'Membership account created, but we could not send your verification email. Use the verification link below, or contact support.',
+      emailDelivered: Boolean(delivery.delivered),
       verification: {
         required: true,
         expiresAt: verification.expiresAt.toISOString(),

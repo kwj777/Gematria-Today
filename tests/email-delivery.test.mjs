@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 
 import {
   getEmailDeliveryConfig,
@@ -189,4 +190,29 @@ test('sendMemberVerificationEmail returns onscreen-preview when recipient is emp
   });
   assert.equal(result.delivered, false);
   assert.equal(result.reason, 'missing-recipient-email');
+});
+
+test('unverified members are only pruned when the verification email was delivered', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/_member.mjs', import.meta.url), 'utf8');
+
+  // Deleting an account because our own email failed destroys the signup and
+  // the evidence of the outage at the same time.
+  const pruneQuery = source.slice(source.indexOf('deleteExpiredUnverifiedMembers'));
+  assert.match(pruneQuery, /email_delivered = TRUE/);
+});
+
+test('registration does not claim an email was sent when delivery failed', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/member-register.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /delivery\.delivered\s*\n?\s*\?/, 'message should branch on delivery success');
+  assert.match(source, /could not send your verification email/);
+  assert.match(source, /markVerificationEmailDelivered/);
+});
+
+test('admin reports expose verification email delivery health', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/admin-reports.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /verificationDelivery/);
+  assert.match(source, /verificationEmail: \{/);
+  assert.match(source, /undelivered/);
 });

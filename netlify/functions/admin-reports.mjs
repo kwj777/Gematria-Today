@@ -125,7 +125,19 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows] = await Promise.all([
+    const [verificationDeliveryRows, membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows] = await Promise.all([
+      // Verification-email delivery. member-register already logs this on every
+      // signup; without surfacing it a SendGrid outage is invisible while
+      // registrations silently fail and are pruned 24h later.
+      sql`SELECT COALESCE(metadata->>'verificationDelivery', 'unknown') AS delivery,
+                 COUNT(*)::int AS total
+          FROM request_audit_log
+          WHERE route = 'member-register'
+            AND action = 'register'
+            AND outcome = 'success'
+            AND created_at >= NOW() - ${windowInterval}::interval
+          GROUP BY COALESCE(metadata->>'verificationDelivery', 'unknown')
+          ORDER BY total DESC`,
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
           FROM users
           WHERE role = 'member'
@@ -549,6 +561,17 @@ export async function handler(event) {
       priorWindowCount: Number(trafficSpikeMap.get(config.route)?.prior_window_count || 0),
     }));
 
+    // Verification-email delivery health. 'email' means SendGrid accepted it;
+    // 'onscreen-preview' means it was never sent (SendGrid unconfigured or no
+    // recipient), which silently costs signups.
+    const verificationDelivery = verificationDeliveryRows.reduce((acc, row) => {
+      acc[row.delivery] = Number(row.total || 0);
+      return acc;
+    }, {});
+    const verificationAttempted = Object.values(verificationDelivery).reduce((a, b) => a + b, 0);
+    const verificationSent = Number(verificationDelivery.email || 0);
+    const verificationUndelivered = verificationAttempted - verificationSent;
+
     const conversionFunnel = conversionFunnelRows[0] || {};
     const uniqueVisitors = Number(conversionFunnel.unique_visitors || 0);
     const freeMemberships = Number(conversionFunnel.free_memberships || 0);
@@ -561,6 +584,15 @@ export async function handler(event) {
       days: days || null,
       hours: hours || null,
       user,
+      verificationEmail: {
+        attempted: verificationAttempted,
+        sent: verificationSent,
+        undelivered: verificationUndelivered,
+        deliveryRate: verificationAttempted > 0
+          ? Number(((verificationSent / verificationAttempted) * 100).toFixed(2))
+          : null,
+        byOutcome: verificationDelivery,
+      },
       overview: {
         newMembers: Number(overview.new_members || 0),
         activePremiumMembers: Number(overview.active_premium_members || 0),

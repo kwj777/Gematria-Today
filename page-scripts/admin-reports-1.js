@@ -306,6 +306,35 @@
         });
       }
 
+      function renderVerificationEmailHealth(stats) {
+        const target = document.getElementById('verificationEmailHealth');
+        if (!target) return;
+        if (!stats || !Number(stats.attempted)) {
+          target.innerHTML = '<p class="on-light-muted small mb-0">No registration attempts in this window.</p>';
+          return;
+        }
+
+        const attempted = Number(stats.attempted || 0);
+        const sent = Number(stats.sent || 0);
+        const undelivered = Number(stats.undelivered || 0);
+        const rate = stats.deliveryRate === null ? null : Number(stats.deliveryRate);
+        const healthy = undelivered === 0;
+
+        const rows = Object.entries(stats.byOutcome || {})
+          .map(([outcome, total]) => `<li><code>${escapeHtml(outcome)}</code>: ${Number(total)}</li>`)
+          .join('');
+
+        target.innerHTML = `
+          <div class="alert ${healthy ? 'alert-success' : 'alert-danger'} mb-0" role="status">
+            <strong>${sent} of ${attempted}</strong> verification email(s) sent${rate === null ? '' : ` (${rate}%)`}.
+            ${healthy
+              ? 'Delivery is healthy.'
+              : `<strong>${undelivered} registration(s) never received a verification email</strong> and will be deleted 24 hours after signup unless delivery is fixed. Check the SendGrid API key and sender address in admin settings.`}
+          </div>
+          <ul class="small mb-0">${rows}</ul>
+        `;
+      }
+
       function renderConversionFunnel(funnel) {
         const target = document.getElementById('conversionFunnel');
         if (!funnel) {
@@ -369,6 +398,7 @@
         renderBars('signupTrend', reports.memberSignupsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
         renderBars('postTrend', reports.publishedPostsTrend.map((row) => ({ ...row, day: row.day.slice(0, 10) })), 'total', 'day');
         renderConversionFunnel(reports.conversionFunnel);
+        renderVerificationEmailHealth(reports.verificationEmail);
         renderPublicPageViews(reports.publicPageViews, reports.publicTrafficSummary);
         renderButtonStats(reports.buttonStats);
         renderSecurityEvents(reports.securityEvents);

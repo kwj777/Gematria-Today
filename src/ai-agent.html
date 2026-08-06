@@ -274,6 +274,14 @@
         padding: 0.15rem 0;
       }
 
+      /* --color-link is never defined anywhere in the repo, so the #2d547c
+         fallback always wins -- 2.11:1 on the dark panel these sit in, for the
+         page's only in-form prompt guidance and its disclosure toggle. */
+      :root[data-bs-theme="dark"] .agent-form-help > summary,
+      :root[data-bs-theme="dark"] .agent-disclosure > summary {
+        color: #93c5fd;
+      }
+
       .agent-form-help > summary::-webkit-details-marker {
         display: none;
       }

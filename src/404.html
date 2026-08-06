@@ -75,6 +75,14 @@
         text-decoration: none;
         transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
       }
+      /* --color-surface is defined in :root only, so in dark mode these cards
+         stayed near-white while `color: inherit` made the text light -- 1.11:1,
+         six invisible link titles on the page people land on when a link
+         breaks. --color-surface-dark and --color-border-dark already exist. */
+      :root[data-bs-theme="dark"] .not-found-quicklinks a {
+        background: var(--color-surface-dark);
+        border-color: var(--color-border-dark);
+      }
       .not-found-quicklinks a:hover,
       .not-found-quicklinks a:focus-visible {
         border-color: #f59e0b;

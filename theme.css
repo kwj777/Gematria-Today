@@ -1566,7 +1566,10 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
 .comparison-pill--unavailable {
   display: inline-block;
   padding: 0.35rem 0.5rem;
-  color: #adb5bd;
+  /* #adb5bd is 2.07:1 on white. Dark mode already had an override; light did
+     not, so the "not included" column of the plan comparison was the one part
+     of the table you could not read. */
+  color: #6c757d;
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.2;
@@ -5105,4 +5108,60 @@ select:not(.form-select):focus-visible {
     opacity: 0.75;
     font-size: 0.85em;
   }
+}
+
+/* ------------------------------------------------------------------
+   Contrast corrections
+   ------------------------------------------------------------------
+   Each rule below replaces a colour measured under 4.5:1 against the
+   surface it actually renders on. Ratios in the comments were computed
+   against the composited background, not the token's nominal value.
+   ------------------------------------------------------------------ */
+
+/* --bs-primary (#0d6efd) is never redefined in this repo, and Bootstrap's
+   dark block only retints --bs-primary-text-emphasis, so these three land at
+   3.9:1, 3.1:1 and 3.7:1 on the dark footer and panels. The footer's anchors
+   already switch to #93c5fd (9.8:1) -- but "Cookie settings" is a <button>,
+   so it missed that rule and sat visibly bluer than the five links beside it
+   on every page. */
+:root[data-bs-theme="dark"] .site-legal-link-button,
+:root[data-bs-theme="dark"] .legal-related-strip a,
+:root[data-bs-theme="dark"] .news-inline-link {
+  color: #93c5fd;
+}
+
+/* Bootstrap's outline buttons keep their light-mode colour inside tinted
+   alerts: #0d6efd on .alert-secondary is 3.50:1 and #dc3545 on .alert-danger
+   is 3.39:1. Both patterns are used for real controls -- "Go to My Dashboard"
+   in the member-save shell, and the "Try again" button in every retryable
+   error panel. Scoped to light; the dark overrides above already handle it. */
+:root:not([data-bs-theme="dark"]) .alert-secondary .btn-outline-primary {
+  --bs-btn-color: #0a58ca; /* 5.01:1 on #e2e3e5 */
+  --bs-btn-border-color: #0a58ca;
+  --bs-btn-hover-bg: #0a58ca;
+  --bs-btn-hover-border-color: #0a58ca;
+  --bs-btn-active-bg: #0a58ca;
+  --bs-btn-active-border-color: #0a58ca;
+}
+
+:root:not([data-bs-theme="dark"]) .alert-danger .btn-outline-danger {
+  --bs-btn-color: #b02a37; /* 4.86:1 on #f8d7da */
+  --bs-btn-border-color: #b02a37;
+  --bs-btn-hover-bg: #b02a37;
+  --bs-btn-hover-border-color: #b02a37;
+  --bs-btn-active-bg: #b02a37;
+  --bs-btn-active-border-color: #b02a37;
+}
+
+/* .link-primary resolves through --bs-primary-rgb, which stays #0d6efd in both
+   themes, while the amber register callout flips with the theme: 4.31:1 light
+   and 2.74:1 dark. The register tab is the default view on member.html. */
+#registerBenefitsPreviewLink,
+#comparisonCurrentLevel {
+  color: #0a58ca; /* 6.17:1 on the light amber panel */
+}
+
+:root[data-bs-theme="dark"] #registerBenefitsPreviewLink,
+:root[data-bs-theme="dark"] #comparisonCurrentLevel {
+  color: #93c5fd; /* 6.84:1 on the dark amber panel */
 }

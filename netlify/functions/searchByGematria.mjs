@@ -19,11 +19,16 @@ async function searchByGematria(sql, gematriaValue) {
     route: 'searchByGematria',
     ttlSeconds: 300,
     compute: async () => {
+      // Unbounded: a popular value returns every matching row, and the results
+      // page renders a card for each one. 500 is well past any real value's
+      // match count and keeps a pathological row set from becoming a
+      // pathological page.
       const words = await sql`
         SELECT word, gematria_value, digital_root, is_base_root, search_count
         FROM words
         WHERE gematria_value = ${Number(normalizedValue)}
         ORDER BY LOWER(word) ASC
+        LIMIT 500
       `;
 
       return {

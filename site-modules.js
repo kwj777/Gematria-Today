@@ -293,10 +293,30 @@
     }
   };
 
+  // The answer to "is this a super admin?" is only ever used for two things:
+  // honouring a module override, and rendering the toggle panel. Asking anyway
+  // meant every anonymous visitor to the home page, the membership page and
+  // account setup triggered /api/admin-session -- which runs the full admin
+  // schema bootstrap before it checks any credential. Skip the round trip when
+  // there is nothing an admin session could change.
+  const superAdminAnswerCouldMatter = () => {
+    if (document.querySelector('[data-super-admin-module-toggles-host]')) {
+      return true;
+    }
+    if (Object.keys(parseModulesFromQuery()).length > 0) {
+      return true;
+    }
+    try {
+      return Boolean(window.localStorage.getItem(STORAGE_KEY));
+    } catch {
+      return false;
+    }
+  };
+
   const applyModuleSettings = async () => {
     const [globalSettings, canOverride] = await Promise.all([
       fetchGlobalModules(),
-      isSuperAdminSession(),
+      superAdminAnswerCouldMatter() ? isSuperAdminSession() : Promise.resolve(false),
     ]);
     superAdminCanOverrideModules = canOverride;
 

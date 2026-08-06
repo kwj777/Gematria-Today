@@ -1,5 +1,6 @@
 import { ensureAdminSchema, jsonResponse } from './_admin.mjs';
 import { getAuthenticatedMember, parseBody } from './_member.mjs';
+import { applyRateLimit, logRequestAudit } from './_security.mjs';
 
 const SETTINGS_KEY = 'ai_agent_global_learnings_v1';
 const MAX_ENTRIES = 200;
@@ -82,6 +83,22 @@ export async function handler(event) {
         return jsonResponse(403, { error: 'Premium membership required' });
       }
 
+      const authorId = auth.user?.id || auth.member?.id;
+
+      // This row is a single site-wide record served unauthenticated to every
+      // visitor, and new entries push old ones off the end of a 200-entry list.
+      // Without a quota one premium account could overwrite the whole shared
+      // knowledge base in a single loop. Contributions are throttled per member
+      // and logged so an abusive run is both slow and attributable.
+      await applyRateLimit(sql, event, {
+        scope: 'ai-agent-learnings-member',
+        key: String(authorId || 'unknown'),
+        limit: 10,
+        windowMs: 60 * 60_000,
+        blockMs: 60 * 60_000,
+        message: 'You have added a lot of GemaBot learnings recently. Try again later.',
+      });
+
       const body = parseBody(event);
       const nextEntry = normalizeEntry(body);
       if (!nextEntry.prompt || !nextEntry.explanation) {
@@ -90,12 +107,22 @@ export async function handler(event) {
 
       const existing = await readGlobalLearnings(sql);
       const entries = normalizeEntries([nextEntry, ...existing]);
-      await writeGlobalLearnings(sql, auth.user?.id || auth.member?.id, entries);
+      await writeGlobalLearnings(sql, authorId, entries);
+      await logRequestAudit(sql, event, {
+        route: 'ai-agent-learnings',
+        action: 'save_learning',
+        outcome: 'success',
+        metadata: { memberId: authorId, prompt: nextEntry.prompt },
+      });
       return jsonResponse(200, { saved: true, entries });
     }
 
     return jsonResponse(405, { error: 'Method not allowed' });
   } catch (error) {
-    return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to process AI GemaBot learnings' });
+    return jsonResponse(
+      error.statusCode || 500,
+      { error: error.message || 'Unable to process AI GemaBot learnings' },
+      error.headers || {},
+    );
   }
 }

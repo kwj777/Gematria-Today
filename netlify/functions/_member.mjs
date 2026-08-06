@@ -175,6 +175,14 @@ function normalizeUsername(username) {
   return String(username ?? '').trim();
 }
 
+// Every badge route -- public-badge, badge-share, badge-share-image -- accepts
+// only this shape, and member.html builds share links as /b/<username>. Signup
+// accepted anything, so a member called "Kev Smith" earned badges they could
+// never share, and only found out at the dead link months later.
+export const MEMBER_USERNAME_PATTERN = /^[A-Za-z0-9._-]{3,40}$/;
+export const MEMBER_PASSWORD_MIN_LENGTH = 8;
+export const MEMBER_PASSWORD_MAX_LENGTH = 200;
+
 export function formatMemberUser(row) {
   return {
     id: row.id,
@@ -261,6 +269,26 @@ export async function registerMember(sql, { username, email, password, displayNa
 
   if (!normalizedUsername || !normalizedEmail || !password) {
     throw Object.assign(new Error('Username, email, and password are required'), { statusCode: 400 });
+  }
+
+  if (!MEMBER_USERNAME_PATTERN.test(normalizedUsername)) {
+    throw Object.assign(
+      new Error('Username must be 3-40 characters using letters, numbers, dots, dashes or underscores'),
+      { statusCode: 400 },
+    );
+  }
+
+  // The 8-character floor was only ever enforced by the markup. A direct POST --
+  // or the account-setup form, which shipped novalidate -- could create an
+  // account with a one-character password, and a non-string password reached
+  // hashPassword and came back as a 500 with the raw Node type error.
+  if (typeof password !== 'string'
+    || password.length < MEMBER_PASSWORD_MIN_LENGTH
+    || password.length > MEMBER_PASSWORD_MAX_LENGTH) {
+    throw Object.assign(
+      new Error(`Password must be between ${MEMBER_PASSWORD_MIN_LENGTH} and ${MEMBER_PASSWORD_MAX_LENGTH} characters`),
+      { statusCode: 400 },
+    );
   }
 
   const existing = await sql`

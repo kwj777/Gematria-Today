@@ -217,8 +217,20 @@ const titleNode = document.querySelector('#page-title');
         }
 
         if (!gematria) {
+          // The bare /gematria-results.html URL is the one in the sitemap and the
+          // page's own canonical, so this is the version search engines index --
+          // and it used to shimmer an aria-busy skeleton forever under a line of
+          // developer copy about a missing URL parameter.
+          const loadingShellNode = document.querySelector('#resultsLoadingShell');
+          if (loadingShellNode) {
+            loadingShellNode.remove();
+          }
           titleNode.textContent = 'Gematria matches';
-          statusNode.textContent = 'Missing gematria value in the page URL.';
+          setStatusMessage(
+            statusNode,
+            'Pick a value first — enter a word or a number in the calculator and open its matches from there.',
+          );
+          returnLink.textContent = '← Open the calculator';
           searchNode.disabled = true;
           return;
         }

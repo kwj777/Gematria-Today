@@ -29,53 +29,6 @@ const normalizePostImageUrl = (value) => {
   return `/${raw.replace(/^\.?\//, '')}`;
 };
 
-const HOME_HERO_IMAGE_WIDTH = 1200;
-const HOME_HERO_IMAGE_HEIGHT = 675;
-
-const optimizeHomeHeroImageUrl = (value) => {
-  const raw = String(value ?? '').trim();
-  if (!raw) {
-    return '';
-  }
-  if (raw.startsWith('data:')) {
-    return raw;
-  }
-
-  const normalized = normalizePostImageUrl(raw);
-  if (!normalized || /\.svg($|[?#])/i.test(normalized)) {
-    return normalized;
-  }
-
-  try {
-    const candidate = new URL(normalized, window.location.origin);
-    const sourcePath = `${candidate.pathname}${candidate.search}`;
-    const optimized = new URL('/.netlify/images', window.location.origin);
-    optimized.searchParams.set('url', sourcePath);
-    optimized.searchParams.set('w', String(HOME_HERO_IMAGE_WIDTH));
-    optimized.searchParams.set('h', String(HOME_HERO_IMAGE_HEIGHT));
-    optimized.searchParams.set('fit', 'cover');
-    optimized.searchParams.set('fm', 'webp');
-    optimized.searchParams.set('q', '75');
-    return `${optimized.pathname}${optimized.search}`;
-  } catch (_error) {
-    return normalized;
-  }
-};
-
-const applyHomeHeroImageOptimization = (scope = document) => {
-  const images = Array.from(scope.querySelectorAll('#homeHeroCarousel img.hero-selling-points-image'));
-  images.forEach((img, index) => {
-    const optimizedSrc = optimizeHomeHeroImageUrl(img.getAttribute('src') || img.src || '');
-    if (optimizedSrc) {
-      img.setAttribute('src', optimizedSrc);
-    }
-    img.setAttribute('width', String(HOME_HERO_IMAGE_WIDTH));
-    img.setAttribute('height', String(HOME_HERO_IMAGE_HEIGHT));
-    img.setAttribute('decoding', 'async');
-    img.setAttribute('loading', index === 0 ? 'eager' : 'lazy');
-  });
-};
-
 function renderHomepageFeaturedGrid(posts, state = 'data') {
   const spots = posts.slice(0, 6);
   const grid = document.getElementById('homeFeaturedPostsGrid');
@@ -225,21 +178,6 @@ const buildLetterBreakdown = (word) => {
   return letters.map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`).join(' · ');
 };
 
-function renderHomeHeroIndicators() {
-  const carousel = document.getElementById('homeHeroCarousel');
-  const indicators = document.getElementById('homeHeroCarouselIndicators');
-  if (!carousel || !indicators) {
-    return;
-  }
-
-  const visibleSlides = Array.from(carousel.querySelectorAll('.carousel-inner > .carousel-item')).filter((slide) => !slide.classList.contains('d-none'));
-  indicators.innerHTML = visibleSlides.map((_, index) => `<button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="${index}" class="${index === 0 ? 'active' : ''}" ${index === 0 ? 'aria-current="true"' : ''} aria-label="Highlight slide ${index + 1}"></button>`).join('');
-
-  visibleSlides.forEach((slide, index) => {
-    slide.classList.toggle('active', index === 0);
-  });
-}
-
 async function loadWordnikWordOfDayHero() {
   const controller = typeof AbortController === 'function' ? new AbortController() : null;
   const timeoutId = controller ? window.setTimeout(() => controller.abort(), 8000) : null;
@@ -292,6 +230,11 @@ async function loadWordnikWordOfDayHero() {
     const rootEl = document.getElementById('homeWordnikWotdRoot');
     const breakdownEl = document.getElementById('homeWordnikWotdBreakdown');
     const definitionCta = document.getElementById('homeWordnikWotdDefinitionCta');
+    // The success branch points this at the word's calculator page. In the error
+    // branch there is no word, so it was a primary CTA opening an empty
+    // calculator from inside a panel explaining that nothing loaded.
+    const calculatorCta = document.getElementById('homeWordnikWotdCalculatorCta');
+    if (calculatorCta) calculatorCta.hidden = true;
     if (title) title.textContent = 'Word of the day is unavailable';
     if (definition) definition.textContent = 'We couldn’t load today’s Wordnik selection. You can still explore the calculator below.';
     if (totalEl) totalEl.textContent = '—';
@@ -468,8 +411,6 @@ const initializeHeroQuickCalc = () => {
 };
 
 const initializeHomePage = () => {
-  renderHomeHeroIndicators();
-  applyHomeHeroImageOptimization();
   resetHomeReadMoreButtons();
   setHomeReadMoreWorkingState();
 
@@ -485,8 +426,6 @@ const initializeHomePage = () => {
   runAfterFirstPaint(() => {
     loadWordnikWordOfDayHero().finally(() => {
       window.GematriaModules?.applyModuleVisibility?.();
-      renderHomeHeroIndicators();
-      applyHomeHeroImageOptimization();
     });
 
     Promise.all([

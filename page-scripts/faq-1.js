@@ -298,6 +298,11 @@
               // Defer scroll so layout settles after content swap.
               window.setTimeout(() => {
                 card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // The panel id is created in JS, so native fragment focus never
+                // applies -- arriving from a ?id= link (the site chatbot emits
+                // exactly these) left focus on <body>, so the next Tab started
+                // over from the top of the page.
+                button?.focus({ preventScroll: true });
               }, 60);
             }
           }

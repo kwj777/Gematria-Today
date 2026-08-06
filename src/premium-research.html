@@ -105,8 +105,26 @@
         </section>
         <div id="premiumAlert" class="alert d-none" role="alert"></div>
 
+        <section id="premiumLockedPanel" class="content-panel p-4 p-lg-5 mb-4 d-none" tabindex="-1" aria-labelledby="premiumLockedHeading">
+          <p class="section-kicker mb-2">Premium feature</p>
+          <h2 id="premiumLockedHeading" class="h4 mb-3">Premium research is included with membership</h2>
+          <p class="mb-3">The relationship explorer, the shared-value search and the live site stats on this page need a premium or lifetime membership. Everything else on Gematria.Today stays free.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-warning fw-semibold" href="/member.html#membershipUpgradeSection">See membership options</a>
+            <a class="btn btn-ghost" href="/calculator.html">Use the free calculator</a>
+          </div>
+        </section>
 
-        <section class="content-panel p-4 mb-4">
+        <section id="premiumErrorPanel" class="content-panel p-4 p-lg-5 mb-4 d-none" tabindex="-1" aria-labelledby="premiumErrorHeading">
+          <h2 id="premiumErrorHeading" class="h4 mb-3">We couldn't load your premium tools</h2>
+          <p id="premiumErrorMessage" class="mb-3">Something went wrong reaching the membership service.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <button id="premiumErrorRetry" class="btn btn-warning fw-semibold" type="button">Try again</button>
+            <a class="btn btn-ghost" href="/member.html">Go to your dashboard</a>
+          </div>
+        </section>
+
+        <section class="content-panel p-4 mb-4" data-premium-tools>
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
               <p class="section-kicker mb-1">Premium Data Intelligence</p>
@@ -117,7 +135,7 @@
           <div id="statsCards" class="row g-3"></div>
         </section>
 
-        <section class="row g-4">
+        <section class="row g-4" data-premium-tools>
           <div class="col-xl-6">
             <article class="content-panel p-4 h-100">
               <p class="section-kicker mb-2">Wordnik Deep Search</p>

@@ -239,6 +239,10 @@ export async function handler(event) {
         }
 
         const user = rows[0];
+        // A reset is how you take an account back. Leaving the old sessions
+        // alive left whoever you were locking out still signed in. Revoke
+        // before minting the new session, or we sign the owner straight out.
+        await sql`DELETE FROM sessions WHERE user_id = ${user.id}`;
         const { token, expiresAt } = await createSession(sql, user.id);
         await logRequestAudit(sql, event, {
           route: 'member-account-recovery',
@@ -271,6 +275,7 @@ export async function handler(event) {
 
       const member = formatMemberUser(rows[0]);
       const profile = await ensureMemberProfile(sql, member.id, {});
+      await sql`DELETE FROM sessions WHERE user_id = ${member.id}`;
       const { token, expiresAt } = await createSession(sql, member.id);
 
       await logRequestAudit(sql, event, {

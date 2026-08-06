@@ -591,14 +591,31 @@ View results: ${shareUrl}`.trim(),
 
       function updateMemberSaveState() {
         if (!memberSession?.authenticated) {
+          // The shell holds the "Join free" call to action, and this branch used
+          // to hide it -- from guests, the only people it is addressed to. It
+          // also shipped visible and vanished once the session check resolved,
+          // so the one audience that saw it saw it flash. The shell now starts
+          // hidden in the markup and stays up for guests, matching the
+          // multi-cipher calculator: the Save button is live and explains
+          // itself through the members-only popover instead of disappearing.
           if (memberSaveShell) {
-            memberSaveShell.classList.add('d-none');
+            memberSaveShell.classList.remove('d-none');
           }
-          saveHistoryButton.classList.add('d-none');
-          if (saveHistoryHintRow) {
-            saveHistoryHintRow.hidden = true;
+          saveHistoryButton.classList.remove('d-none');
+          saveHistoryButton.disabled = false;
+          saveHistoryButton.textContent = 'Save result';
+          saveHistoryButton.classList.add('member-save-button--guest');
+          if (memberLink) {
+            memberLink.href = '/member.html#registerForm';
+            memberLink.textContent = 'Join free';
+            memberLink.classList.add('btn-primary');
+            memberLink.classList.remove('btn-outline-primary');
           }
-          destroyMembersOnlyPopover();
+          if (memberSaveMeta) {
+            memberSaveMeta.textContent = 'Join free to save searches and see related words.';
+          }
+          createMembersOnlyPopover();
+          syncSaveHistoryHint();
           if (lookupSubmitLabelNode) lookupSubmitLabelNode.textContent = 'Calculate';
           updateNextStepsState();
           return;
@@ -1654,6 +1671,7 @@ View results: ${shareUrl}`.trim(),
         saveHistoryButton.addEventListener(eventName, () => {
           if (!memberSession?.authenticated) {
             showMembersOnlySaveMessage();
+            createMembersOnlyPopover();
             saveHistoryPopover?.show();
           }
         });
@@ -1698,6 +1716,7 @@ View results: ${shareUrl}`.trim(),
         if (!memberSession?.authenticated) {
           event.preventDefault();
           showMembersOnlySaveMessage();
+          createMembersOnlyPopover();
           saveHistoryPopover?.show();
           window.gematriaTracking?.track('sign_up_start', { source: 'calculator_save_button' });
           return;

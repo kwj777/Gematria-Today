@@ -1,4 +1,8 @@
-const CACHE_VERSION = 'v5';
+// Bump on any change to a precached or long-cached asset. This lagged behind
+// theme.css and site-bundle.js, and because static assets were served
+// cache-first with no revalidation, returning visitors ran new HTML against
+// whichever CSS and JS they happened to cache first -- indefinitely.
+const CACHE_VERSION = 'v6';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGE_CACHE = `pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;
@@ -68,17 +72,6 @@ async function navigationFallback(request) {
 }
 
 
-async function refreshRuntimeCaches() {
-  await Promise.all([
-    caches.delete(PAGE_CACHE),
-    caches.delete(ASSET_CACHE),
-    caches.delete(STATIC_CACHE)
-  ]);
-
-  const staticCache = await caches.open(STATIC_CACHE);
-  await staticCache.addAll(PRECACHE_URLS).catch(() => Promise.resolve());
-}
-
 self.addEventListener('message', (event) => {
   const data = event.data || {};
 
@@ -98,24 +91,9 @@ self.addEventListener('message', (event) => {
     return;
   }
 
-  if (data.type !== 'REFRESH_CACHE') {
-    return;
-  }
-
-  const replyPort = event.ports && event.ports[0];
-
-  event.waitUntil((async () => {
-    try {
-      await refreshRuntimeCaches();
-      if (replyPort) {
-        replyPort.postMessage({ ok: true });
-      }
-    } catch (error) {
-      if (replyPort) {
-        replyPort.postMessage({ ok: false, error: error instanceof Error ? error.message : 'Cache refresh failed.' });
-      }
-    }
-  })());
+  // Only SKIP_WAITING and GET_VERSION are ever posted (pwa-register.js:313,
+  // :382). A REFRESH_CACHE branch used to sit here with nothing in the repo
+  // sending it; stale assets are handled by revalidation in the fetch handler.
 });
 
 self.addEventListener('install', (event) => {
@@ -175,16 +153,30 @@ self.addEventListener('fetch', (event) => {
   if (isStaticAsset) {
     event.respondWith((async () => {
       const cached = await caches.match(request);
+
+      // Stale-while-revalidate. Cache-first with no revalidation meant a cached
+      // stylesheet or script was never replaced within a cache generation, so a
+      // deploy that did not also bump CACHE_VERSION left returning visitors on
+      // old CSS against new markup with no way back.
+      const networkUpdate = fetch(request)
+        .then(async (networkResponse) => {
+          if (shouldCacheResponse(networkResponse)) {
+            const cache = await caches.open(ASSET_CACHE);
+            await cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        })
+        .catch(() => null);
+
       if (cached) {
+        // Swallow the background failure so being offline still serves the
+        // cached copy rather than an unhandled rejection.
+        event.waitUntil(networkUpdate);
         return cached;
       }
 
-      const networkResponse = await fetch(request);
-      if (shouldCacheResponse(networkResponse)) {
-        const cache = await caches.open(ASSET_CACHE);
-        cache.put(request, networkResponse.clone());
-      }
-      return networkResponse;
+      const networkResponse = await networkUpdate;
+      return networkResponse || Response.error();
     })());
     return;
   }

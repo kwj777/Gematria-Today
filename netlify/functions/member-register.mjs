@@ -3,7 +3,6 @@ import {
   clearMemberTierCookie,
   clearSessionCookie,
   createMemberEmailVerificationRequest,
-  getOptionalAuthenticatedSession,
   getSqlClient,
   jsonResponse,
   parseBody,
@@ -27,19 +26,17 @@ export async function handler(event) {
       route: 'member-register',
       auditMetadata: { username: normalizedUsername, email: normalizedEmail },
     });
-    const { user } = await getOptionalAuthenticatedSession(event, { sql });
-
-    if (!user) {
-      await applyRateLimit(sql, event, {
-        scope: 'member-register-ip',
-        key: getClientIp(event),
-        limit: 4,
-        windowMs: 10 * 60_000,
-        blockMs: 60 * 60_000,
-        message: 'Too many registration attempts from this IP address.',
-        auditMetadata: { username: normalizedUsername, email: normalizedEmail },
-      });
-    }
+    // Signing up once used to exempt the caller from this limit for as long as
+    // the session cookie lasted, which is the opposite of what it is for.
+    await applyRateLimit(sql, event, {
+      scope: 'member-register-ip',
+      key: getClientIp(event),
+      limit: 4,
+      windowMs: 10 * 60_000,
+      blockMs: 60 * 60_000,
+      message: 'Too many registration attempts from this IP address.',
+      auditMetadata: { username: normalizedUsername, email: normalizedEmail },
+    });
 
     const registration = await registerMember(sql, body);
     const verification = await createMemberEmailVerificationRequest(sql, registration.member.id);

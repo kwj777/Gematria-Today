@@ -58,9 +58,40 @@
         const session = await request('/api/member-session');
         const level = session?.member?.membershipLevel;
         if (!(level === 'premium' || level === 'lifetime')) {
-          throw new Error('This page is for premium members only. Upgrade in the membership dashboard to unlock access.');
+          // Flagged so the caller can tell "you don't have premium" apart from
+          // "we couldn't ask". Both used to end in the same 1.8s bounce.
+          throw Object.assign(new Error('This page is for premium members only.'), { premiumRequired: true });
         }
       }
+
+      const lockedPanel = document.getElementById('premiumLockedPanel');
+      const errorPanel = document.getElementById('premiumErrorPanel');
+      const errorMessage = document.getElementById('premiumErrorMessage');
+
+      function hidePremiumTools() {
+        document.querySelectorAll('[data-premium-tools]').forEach((node) => {
+          node.classList.add('d-none');
+        });
+      }
+
+      function showPremiumLocked() {
+        hidePremiumTools();
+        clearAlert();
+        lockedPanel?.classList.remove('d-none');
+        lockedPanel?.focus();
+      }
+
+      function showPremiumError(message) {
+        hidePremiumTools();
+        clearAlert();
+        if (errorMessage) errorMessage.textContent = message;
+        errorPanel?.classList.remove('d-none');
+        errorPanel?.focus();
+      }
+
+      document.getElementById('premiumErrorRetry')?.addEventListener('click', () => {
+        window.location.reload();
+      });
 
       function renderWordnik(payload) {
         const words = Array.isArray(payload.results) ? payload.results : [];
@@ -236,10 +267,15 @@
           await ensurePremiumSession();
           await loadStats();
         } catch (error) {
-          showAlert(error.message || 'Premium access check failed.', 'warning');
-          window.setTimeout(() => {
-            window.location.assign('/member.html');
-          }, 1800);
+          // This used to flash a warning and hard-redirect to /member.html after
+          // 1.8 seconds, with nothing at the destination saying why. Worse, any
+          // failed request landed here too, so a 500 on the session check
+          // evicted paying members from a page they had access to.
+          if (error?.premiumRequired) {
+            showPremiumLocked();
+          } else {
+            showPremiumError(error?.message || 'Something went wrong reaching the membership service.');
+          }
         } finally {
           hideStartupOverlay();
         }

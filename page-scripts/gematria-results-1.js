@@ -97,10 +97,85 @@ const titleNode = document.querySelector('#page-title');
           <a class="definition-link" href="${definitionHref}" hidden>(def)</a>
         `;
         const definitionLinkNode = item.querySelector('.definition-link');
-        hasDefinition(entry.word).then((exists) => {
-          if (exists && definitionLinkNode) definitionLinkNode.hidden = false;
-        });
+        observeForDefinitionProbe(item, entry.word, definitionLinkNode);
         return item;
+      }
+
+      // Probing every rendered word was self-defeating: wordnikDefinition rate
+      // limits anonymous callers at 20/min and then blocks them for ten
+      // minutes, so a value with more than twenty matches locked the visitor
+      // out of the very lookups the probe exists to advertise -- and burned one
+      // function invocation per word per page view. Only cards that actually
+      // reach the viewport are probed, at a pace that stays under the server's
+      // limit. A word that is never probed simply keeps its "(def)" link
+      // hidden, which is the same outcome a failed probe already produced.
+      const PROBE_MAX_CONCURRENT = 4;
+      const PROBE_MAX_PER_MINUTE = 15;
+      const probeQueue = [];
+      const probeTimestamps = [];
+      let probesInFlight = 0;
+      let probeDrainHandle = null;
+
+      function drainProbeQueue() {
+        const now = Date.now();
+        while (probeTimestamps.length && now - probeTimestamps[0] > 60_000) {
+          probeTimestamps.shift();
+        }
+
+        while (
+          probeQueue.length
+          && probesInFlight < PROBE_MAX_CONCURRENT
+          && probeTimestamps.length < PROBE_MAX_PER_MINUTE
+        ) {
+          const job = probeQueue.shift();
+          probesInFlight += 1;
+          probeTimestamps.push(Date.now());
+          job().finally(() => {
+            probesInFlight -= 1;
+            scheduleProbeDrain(0);
+          });
+        }
+
+        if (probeQueue.length && probeTimestamps.length >= PROBE_MAX_PER_MINUTE) {
+          // Wait until the oldest request ages out of the rolling window.
+          scheduleProbeDrain(Math.max(250, 60_000 - (Date.now() - probeTimestamps[0])));
+        }
+      }
+
+      function scheduleProbeDrain(delay) {
+        if (probeDrainHandle) return;
+        probeDrainHandle = window.setTimeout(() => {
+          probeDrainHandle = null;
+          drainProbeQueue();
+        }, delay);
+      }
+
+      function queueDefinitionProbe(word, linkNode) {
+        probeQueue.push(() => hasDefinition(word).then((exists) => {
+          if (exists && linkNode) linkNode.hidden = false;
+        }));
+        scheduleProbeDrain(0);
+      }
+
+      const definitionObserver = typeof IntersectionObserver === 'function'
+        ? new IntersectionObserver((entries, observer) => {
+          entries.forEach((observed) => {
+            if (!observed.isIntersecting) return;
+            observer.unobserve(observed.target);
+            const { probeWord } = observed.target.dataset;
+            const linkNode = observed.target.querySelector('.definition-link');
+            if (probeWord) queueDefinitionProbe(probeWord, linkNode);
+          });
+        }, { rootMargin: '200px 0px' })
+        : null;
+
+      function observeForDefinitionProbe(item, word, linkNode) {
+        if (!definitionObserver) {
+          queueDefinitionProbe(word, linkNode);
+          return;
+        }
+        item.dataset.probeWord = word;
+        definitionObserver.observe(item);
       }
 
       // One lookup per word, ever. Every rendered card fires one of these, and
@@ -148,6 +223,9 @@ const titleNode = document.querySelector('#page-title');
           loadingShellNode.remove();
         }
         visibleCount = words.length;
+        // Filtering rebuilds the list, so stop watching the nodes about to be
+        // discarded before their replacements are observed.
+        definitionObserver?.disconnect();
         listNode.innerHTML = '';
 
         if (!words.length) {
@@ -217,8 +295,20 @@ const titleNode = document.querySelector('#page-title');
         }
 
         if (!gematria) {
+          // The bare /gematria-results.html URL is the one in the sitemap and the
+          // page's own canonical, so this is the version search engines index --
+          // and it used to shimmer an aria-busy skeleton forever under a line of
+          // developer copy about a missing URL parameter.
+          const loadingShellNode = document.querySelector('#resultsLoadingShell');
+          if (loadingShellNode) {
+            loadingShellNode.remove();
+          }
           titleNode.textContent = 'Gematria matches';
-          statusNode.textContent = 'Missing gematria value in the page URL.';
+          setStatusMessage(
+            statusNode,
+            'Pick a value first — enter a word or a number in the calculator and open its matches from there.',
+          );
+          returnLink.textContent = '← Open the calculator';
           searchNode.disabled = true;
           return;
         }

@@ -87,6 +87,15 @@
     button.addEventListener('hidden.bs.popover', resetTipListenersFlag);
 
     const handle = {
+      // Both calculators call handle.show() from their guest save handlers.
+      // The handle only ever exposed dispose(), so those calls either threw a
+      // TypeError or silently did nothing depending on whether Bootstrap's
+      // Popover had loaded -- either way the guest never saw the tip.
+      show: showNow,
+      hide() {
+        cancelHide();
+        popover.hide();
+      },
       dispose() {
         cancelHide();
         if (HAS_HOVER) {

@@ -399,9 +399,13 @@
 
     const versionText = document.createElement('span');
     versionText.className = 'site-version__label';
-    versionText.textContent = 'Version: …';
+    // Hidden until a version actually resolves. getActiveServiceWorkerVersion
+    // returns null whenever the page has no controller -- which is every first
+    // visit, since the worker only claims clients during activate -- so the
+    // footer used to read a bare "Version: — · Check for updates".
+    versionText.hidden = true;
 
-    const sep = document.createTextNode(' · ');
+    const sep = document.createTextNode('');
 
     const checkButton = document.createElement('button');
     checkButton.type = 'button';
@@ -444,7 +448,11 @@
     credit.after(stamp);
 
     getActiveServiceWorkerVersion().then((version) => {
-      versionText.textContent = version ? `Version: ${version}` : 'Version: —';
+      if (version) {
+        versionText.textContent = `Version: ${version}`;
+        versionText.hidden = false;
+        sep.textContent = ' · ';
+      }
       stamp.setAttribute('data-pwa-version', version || '');
     });
   }

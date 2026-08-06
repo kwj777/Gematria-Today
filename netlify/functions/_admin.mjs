@@ -88,7 +88,29 @@ const SEEDED_POSTS = [
 
 export { clearSessionCookie, createSession, createSessionCookie, deleteSession, getSqlClient, jsonResponse, parseBody };
 
+// The admin schema bootstrap runs 58 sequential statements, including two
+// table-wide UPDATEs on `users`. It was re-run on every single call --
+// getAuthenticatedUser invokes it before checking any credential -- so a warm
+// lambda paid the whole thing again on each request. Memoized per instance the
+// way ensureMemberSchema already is; the promise is cleared on failure so a
+// transient error does not poison the instance.
+let adminSchemaReadyPromise = null;
+let bootstrapAdminUserPromise = null;
+
 export async function ensureAdminSchema(sql) {
+  if (adminSchemaReadyPromise) {
+    return adminSchemaReadyPromise;
+  }
+
+  adminSchemaReadyPromise = ensureAdminSchemaUncached(sql).catch((error) => {
+    adminSchemaReadyPromise = null;
+    throw error;
+  });
+
+  return adminSchemaReadyPromise;
+}
+
+async function ensureAdminSchemaUncached(sql) {
   await ensureSecuritySchema(sql);
   await sql`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -391,6 +413,19 @@ export function slugify(value) {
 }
 
 export async function syncBootstrapAdminUser(sql) {
+  if (bootstrapAdminUserPromise) {
+    return bootstrapAdminUserPromise;
+  }
+
+  bootstrapAdminUserPromise = syncBootstrapAdminUserUncached(sql).catch((error) => {
+    bootstrapAdminUserPromise = null;
+    throw error;
+  });
+
+  return bootstrapAdminUserPromise;
+}
+
+async function syncBootstrapAdminUserUncached(sql) {
   const defaultSuperAdminUsernames = ['KevAdmin'];
   const configuredSuperAdminUsernames = String(process.env.SUPER_ADMIN_USERNAMES || '')
     .split(',')

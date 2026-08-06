@@ -379,7 +379,10 @@ test('JSON-LD cannot be broken out of by a hostile word', () => {
 
 test('shared links get an image card and mobile bookmarks get an icon', () => {
   const html = renderWordPage('light', 336, []);
-  assert.match(html, /property="og:image" content="https:\/\/gematria\.today\/assets\/calculator-hero-constellation\.svg"/);
+  // Rasterized through the image CDN like every other share surface on the
+  // site -- an SVG og:image renders as nothing on every social platform.
+  assert.match(html, /property="og:image" content="https:\/\/gematria\.today\/\.netlify\/images\?url=[^"]+&amp;w=1200&amp;fm=jpg"/);
+  assert.doesNotMatch(html, /property="og:image" content="[^"]*\.svg"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.match(html, /rel="apple-touch-icon"/);
   assert.match(html, /name="theme-color"/);

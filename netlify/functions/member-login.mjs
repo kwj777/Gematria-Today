@@ -8,7 +8,6 @@ import {
   createSessionCookie,
   ensureMemberProfile,
   formatMemberUser,
-  getOptionalAuthenticatedSession,
   getSqlClient,
   jsonResponse,
   parseBody,
@@ -33,29 +32,29 @@ export async function handler(event) {
       auditMetadata: { identifier: normalizedIdentifier },
     });
     const clientIp = getClientIp(event);
-    const { user } = await getOptionalAuthenticatedSession(event, { sql });
 
-    if (!user) {
+    // Holding any session used to skip these limits, and a session is one free
+    // signup away, so password guessing against member accounts was unthrottled
+    // for anyone who bothered to register first. Always rate limit.
+    await applyRateLimit(sql, event, {
+      scope: 'member-login-ip',
+      key: clientIp,
+      limit: 8,
+      windowMs: 60_000,
+      blockMs: 15 * 60_000,
+      message: 'Too many member login attempts from this IP address.',
+      auditMetadata: { identifier: normalizedIdentifier },
+    });
+
+    if (normalizedIdentifier) {
       await applyRateLimit(sql, event, {
-        scope: 'member-login-ip',
-        key: clientIp,
-        limit: 8,
-        windowMs: 60_000,
-        blockMs: 15 * 60_000,
-        message: 'Too many member login attempts from this IP address.',
-        auditMetadata: { identifier: normalizedIdentifier },
+        scope: 'member-login-identifier',
+        key: normalizedIdentifier,
+        limit: 5,
+        windowMs: 10 * 60_000,
+        blockMs: 30 * 60_000,
+        message: 'Too many login attempts for this account identifier.',
       });
-
-      if (normalizedIdentifier) {
-        await applyRateLimit(sql, event, {
-          scope: 'member-login-identifier',
-          key: normalizedIdentifier,
-          limit: 5,
-          windowMs: 10 * 60_000,
-          blockMs: 30 * 60_000,
-          message: 'Too many login attempts for this account identifier.',
-        });
-      }
     }
 
     const member = await authenticateMemberCredentials(sql, identifier, password);

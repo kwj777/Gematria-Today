@@ -103,16 +103,16 @@
             <fieldset class="col-12">
               <legend class="form-label mb-2">I need help with</legend>
               <div class="d-flex flex-column gap-2">
-                <label class="recovery-radio-card">
-                  <input type="radio" name="recoveryRequestType" value="forgot-password" checked />
+                <label class="recovery-radio-card" for="recoveryRequestTypePassword">
+                  <input id="recoveryRequestTypePassword" type="radio" name="recoveryRequestType" value="forgot-password" checked />
                   <span class="recovery-radio-body"><strong>Reset my password</strong><small>We'll email a one-time code to set a new password.</small></span>
                 </label>
-                <label class="recovery-radio-card">
-                  <input type="radio" name="recoveryRequestType" value="forgot-userid" />
+                <label class="recovery-radio-card" for="recoveryRequestTypeUserid">
+                  <input id="recoveryRequestTypeUserid" type="radio" name="recoveryRequestType" value="forgot-userid" />
                   <span class="recovery-radio-body"><strong>Remind me of my username</strong><small>We'll email your username — no code or reset needed.</small></span>
                 </label>
-                <label class="recovery-radio-card">
-                  <input type="radio" name="recoveryRequestType" value="forgot-both" />
+                <label class="recovery-radio-card" for="recoveryRequestTypeBoth">
+                  <input id="recoveryRequestTypeBoth" type="radio" name="recoveryRequestType" value="forgot-both" />
                   <span class="recovery-radio-body"><strong>Send my username and a password reset link</strong><small>You'll get both in one email.</small></span>
                 </label>
               </div>

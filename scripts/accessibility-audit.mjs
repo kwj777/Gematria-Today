@@ -30,7 +30,15 @@ if (!existsSync(SITE_DIR)) {
   console.error('_site/ not found. Run `npm run build` first.');
   process.exit(1);
 }
-const HTML_FILES = readdirSync(SITE_DIR).filter((name) => name.endsWith('.html')).sort();
+// Third-party ownership-verification stubs are a single token in a file that
+// happens to end in .html. They are never navigated to, and flagging them for a
+// missing <main>, <h1>, lang and skip link put four permanent findings in every
+// report -- which is how a baseline scan stops being read.
+const NOT_PAGES = new Set(['follow.it-verification-code.html']);
+
+const HTML_FILES = readdirSync(SITE_DIR)
+  .filter((name) => name.endsWith('.html') && !NOT_PAGES.has(name))
+  .sort();
 
 const issues = [];
 
@@ -53,7 +61,10 @@ for (const file of HTML_FILES) {
     pushIssue(file, 'medium', 'heading-h1', 'Missing page-level `<h1>`.');
   }
 
-  if (!/class="skip-link"/.test(source)) {
+  // WCAG 2.4.1 is about bypassing a repeated block of navigation. A page with
+  // no <nav> has nothing to bypass, and demanding a skip link there just adds
+  // an extra tab stop that jumps nowhere useful.
+  if (/<nav\b/i.test(source) && !/class="skip-link"/.test(source)) {
     pushIssue(file, 'low', 'skip-link', 'No explicit skip link found (`class="skip-link"`).');
   }
 

@@ -46,7 +46,13 @@ const FOOTER_HTML = loadPartial('footer.html')
   .replaceAll('{{QUICK_LINKS}}', '')
   .replaceAll('{{EXTRA_LEGAL_LINKS}}', '');
 
-const SHARE_IMAGE = `${SITE_ORIGIN}/assets/calculator-hero-constellation.svg`;
+// No social platform renders image/svg+xml in a share card, and these pages
+// exist to be shared. Every other share surface on the site -- badge-share,
+// blog-post-share, the three OG edge functions -- already rasterizes through
+// Netlify's image CDN; this one pointed straight at the SVG.
+const OGP_IMAGE_WIDTH = 1200;
+const OGP_IMAGE_FORMAT = 'jpg';
+const SHARE_IMAGE = `${SITE_ORIGIN}/.netlify/images?url=${encodeURIComponent(`${SITE_ORIGIN}/assets/calculator-hero-constellation.svg`)}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
 const SHARE_IMAGE_ALT = 'Constellation artwork representing linked words and numbers.';
 
 // A=6, L=72, A=6 -> 84. Unique to every word, and the one thing a gematria
@@ -166,12 +172,12 @@ ${canonical ? `    <link rel="canonical" href="${escapeHtml(canonical)}" />\n` :
     <meta property="og:type" content="website" />
     <meta property="og:title" content="${escapeHtml(title)}" />
     <meta property="og:description" content="${escapeHtml(description)}" />
-${canonical ? `    <meta property="og:url" content="${escapeHtml(canonical)}" />\n` : ''}    <meta property="og:image" content="${SHARE_IMAGE}" />
+${canonical ? `    <meta property="og:url" content="${escapeHtml(canonical)}" />\n` : ''}    <meta property="og:image" content="${escapeHtml(SHARE_IMAGE)}" />
     <meta property="og:image:alt" content="${SHARE_IMAGE_ALT}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(title)}" />
     <meta name="twitter:description" content="${escapeHtml(description)}" />
-    <meta name="twitter:image" content="${SHARE_IMAGE}" />
+    <meta name="twitter:image" content="${escapeHtml(SHARE_IMAGE)}" />
     <meta name="twitter:image:alt" content="${SHARE_IMAGE_ALT}" />
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />

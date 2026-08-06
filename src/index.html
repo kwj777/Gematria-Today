@@ -120,7 +120,10 @@
             "publisher": { "@id": "https://gematria.today/#organization" },
             "potentialAction": {
               "@type": "SearchAction",
-              "target": "https://gematria.today/calculator.html",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://gematria.today/calculator.html?query={search_term_string}"
+              },
               "query-input": "required name=search_term_string"
             }
           }

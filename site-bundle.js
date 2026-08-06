@@ -1271,10 +1271,14 @@
   var STYLES =
     '.defn-term{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:help;border-bottom:1px dotted currentColor;text-decoration:none;line-height:inherit;}' +
     '.defn-term:hover,.defn-term:focus-visible{outline:none;border-bottom-style:solid;color:#0d6efd;}' +
-    '.defn-popup{position:absolute;z-index:1080;max-width:320px;background:#0f172a;color:#f8fafc;padding:.75rem .9rem;border-radius:.5rem;box-shadow:0 10px 28px rgba(15,23,42,.35);font-size:.875rem;line-height:1.45;}' +
+    // Fixed rather than absolute: the popup now lives next to whichever term
+    // opened it (so the keyboard can reach the link inside it), and that parent
+    // could be anything. Viewport coordinates plus the correction in
+    // positionPopup keep placement independent of where it sits in the DOM.
+    '.defn-popup{position:fixed;display:block;z-index:1080;max-width:320px;background:#0f172a;color:#f8fafc;padding:.75rem .9rem;border-radius:.5rem;box-shadow:0 10px 28px rgba(15,23,42,.35);font-size:.875rem;line-height:1.45;text-align:left;font-weight:400;}' +
     '.defn-popup[hidden]{display:none;}' +
-    '.defn-popup__title{font-weight:600;margin-bottom:.25rem;}' +
-    '.defn-popup__body{margin:0 0 .5rem;color:#e2e8f0;}' +
+    '.defn-popup__title{display:block;font-weight:600;margin-bottom:.25rem;}' +
+    '.defn-popup__body{display:block;margin:0 0 .5rem;color:#e2e8f0;}' +
     '.defn-popup__link{color:#93c5fd;font-size:.8125rem;text-decoration:underline;}' +
     '.defn-popup__link:hover,.defn-popup__link:focus-visible{color:#bfdbfe;}';
 
@@ -1527,7 +1531,11 @@
         btn.type = 'button';
         btn.className = 'defn-term';
         btn.setAttribute('data-defn-slug', term.slug);
-        btn.setAttribute('aria-describedby', POPUP_ID);
+        // A disclosure, not a tooltip. The panel holds a link, which ARIA's
+        // tooltip pattern does not allow -- and aria-describedby pointed at an
+        // element that is `hidden` almost always, so it described nothing.
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-controls', POPUP_ID);
         btn.textContent = matched;
         frag.appendChild(btn);
         lastIdx = m.index + matched.length;
@@ -1551,6 +1559,9 @@
   var hideTimer = null;
   var indexRef = null;
   var suppressObserver = false;
+  // Guards for the ways hover, focus and click fight each other on one term.
+  var suppressFocusOpen = false;
+  var openedThisInteraction = false;
   // On touch-only devices iOS Safari interprets the first tap on a hoverable
   // element as a "hover preview" and withholds the click event until the
   // second tap. Gate all hover-triggered popup behavior to real pointers.
@@ -1558,10 +1569,12 @@
 
   function ensurePopup() {
     if (popup) return popup;
-    popup = document.createElement('div');
+    // A <span>, not a <div>: terms are substituted into text nodes, so the
+    // panel is inserted next to a button that is usually inside a <p>. A block
+    // element there is invalid nesting; phrasing content is not.
+    popup = document.createElement('span');
     popup.id = POPUP_ID;
     popup.className = 'defn-popup';
-    popup.setAttribute('role', 'tooltip');
     popup.hidden = true;
     document.body.appendChild(popup);
     if (HAS_HOVER) {
@@ -1573,10 +1586,10 @@
 
   function buildPopup(term) {
     popup.innerHTML = '';
-    var title = document.createElement('div');
+    var title = document.createElement('span');
     title.className = 'defn-popup__title';
     title.textContent = term.label;
-    var body = document.createElement('p');
+    var body = document.createElement('span');
     body.className = 'defn-popup__body';
     body.textContent = term.definition;
     var link = document.createElement('a');
@@ -1588,23 +1601,60 @@
     popup.appendChild(link);
   }
 
+  function focusIsInsidePopup() {
+    return !!(popup && document.activeElement && popup.contains(document.activeElement));
+  }
+
+  function hidePopup(restoreFocus) {
+    if (!popup) return;
+    var btn = activeBtn;
+    popup.hidden = true;
+    activeBtn = null;
+    openedThisInteraction = false;
+    if (!btn) return;
+    btn.setAttribute('aria-expanded', 'false');
+    if (!restoreFocus) return;
+    // Focus opens the panel, so handing focus back to the term reopened the
+    // thing we just closed -- Escape appeared to do nothing at all. Suppress
+    // the focus handler for the duration of this one synchronous call.
+    suppressFocusOpen = true;
+    try {
+      btn.focus();
+    } finally {
+      suppressFocusOpen = false;
+    }
+  }
+
   function positionPopup(btn) {
     popup.style.left = '0px';
     popup.style.top = '0px';
     var r = btn.getBoundingClientRect();
     var pr = popup.getBoundingClientRect();
     var docW = document.documentElement.clientWidth;
-    var top = window.scrollY + r.bottom + 8;
-    var left = window.scrollX + r.left + (r.width / 2) - (pr.width / 2);
-    var minLeft = window.scrollX + 8;
-    var maxLeft = window.scrollX + docW - pr.width - 8;
-    if (left < minLeft) left = minLeft;
-    if (left > maxLeft) left = maxLeft;
+    var top = r.bottom + 8;
+    var left = r.left + (r.width / 2) - (pr.width / 2);
+    if (left < 8) left = 8;
+    if (left > docW - pr.width - 8) left = docW - pr.width - 8;
     if (r.bottom + pr.height + 16 > document.documentElement.clientHeight && r.top > pr.height + 16) {
-      top = window.scrollY + r.top - pr.height - 8;
+      top = r.top - pr.height - 8;
     }
+
     popup.style.top = top + 'px';
     popup.style.left = left + 'px';
+
+    // `position: fixed` resolves against the viewport only while no ancestor
+    // creates a containing block -- a transform, filter or contain anywhere up
+    // the tree silently changes the origin. Now that the panel is parented to
+    // whichever term opened it, that ancestor chain is not knowable up front.
+    // Measure where it actually landed and correct by the difference, which is
+    // right for any containing block rather than for the ones we predicted.
+    var landed = popup.getBoundingClientRect();
+    var dx = left - landed.left;
+    var dy = top - landed.top;
+    if (dx || dy) {
+      popup.style.top = (top + dy) + 'px';
+      popup.style.left = (left + dx) + 'px';
+    }
   }
 
   function showFor(btn) {
@@ -1614,8 +1664,34 @@
     var slug = btn.getAttribute('data-defn-slug');
     var term = indexRef.bySlug[slug];
     if (!term) return;
+    if (activeBtn && activeBtn !== btn) activeBtn.setAttribute('aria-expanded', 'false');
+    // Whether this call is what put the panel on screen. The click handler
+    // reads it so that the pointer or focus event which opened the panel
+    // moments earlier is not immediately undone by the click that caused it:
+    // hovering a term opened the panel and clicking it closed it again, so a
+    // deliberate click made the definition flash and vanish.
+    // Only ever set here, never cleared: one interaction fires several of these
+    // (mouseover, then focusin from the same mousedown), and the later calls are
+    // no-ops on an already-open panel. Clearing the flag on those made the click
+    // look unprompted again. The click handler is what clears it.
+    if (!(popup && !popup.hidden && activeBtn === btn)) openedThisInteraction = true;
     activeBtn = btn;
     buildPopup(term);
+    // The panel used to live at the end of <body>, so Tab from a term never
+    // reached the "See full definition" link inside it -- and the blur handler
+    // hid the panel before a keyboard user could travel that far anyway
+    // (WCAG 1.4.13). Parenting it to the term puts the link at the very next
+    // tab stop. It is position:fixed, so this changes tab order without
+    // affecting layout.
+    if (btn.nextSibling !== popup) {
+      suppressObserver = true;
+      try {
+        btn.insertAdjacentElement('afterend', popup);
+      } finally {
+        suppressObserver = false;
+      }
+    }
+    btn.setAttribute('aria-expanded', 'true');
     popup.hidden = false;
     positionPopup(btn);
   }
@@ -1625,9 +1701,12 @@
     hideTimer = setTimeout(function () {
       if (!popup) return;
       if (popup.matches(':hover')) return;
+      // Keeps the panel alive while the keyboard is inside it. Without this,
+      // moving the pointer away closed the panel under a user who had tabbed
+      // into the link.
+      if (focusIsInsidePopup()) return;
       if (activeBtn && (activeBtn.matches(':hover') || document.activeElement === activeBtn)) return;
-      popup.hidden = true;
-      activeBtn = null;
+      hidePopup(false);
     }, 150);
   }
 
@@ -1643,31 +1722,35 @@
     }
     document.addEventListener('focusin', function (e) {
       var btn = e.target.closest && e.target.closest('.defn-term');
-      if (btn) showFor(btn);
-      else if (popup && !e.target.closest('#' + POPUP_ID)) scheduleHide();
+      if (btn) {
+        if (suppressFocusOpen) return;
+        showFor(btn);
+      } else if (popup && !e.target.closest('#' + POPUP_ID)) {
+        scheduleHide();
+      }
     });
     document.addEventListener('click', function (e) {
       var btn = e.target.closest && e.target.closest('.defn-term');
       if (btn) {
         e.preventDefault();
-        if (activeBtn === btn && popup && !popup.hidden) {
-          popup.hidden = true;
-          activeBtn = null;
+        if (activeBtn === btn && popup && !popup.hidden && !openedThisInteraction) {
+          hidePopup(false);
         } else {
           showFor(btn);
         }
+        openedThisInteraction = false;
         return;
       }
       if (popup && !popup.hidden && !e.target.closest('#' + POPUP_ID)) {
-        popup.hidden = true;
-        activeBtn = null;
+        hidePopup(false);
       }
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && popup && !popup.hidden) {
-        popup.hidden = true;
-        if (activeBtn) activeBtn.focus();
-        activeBtn = null;
+        // Return focus to the term, including when Escape is pressed from
+        // inside the panel -- otherwise closing it strands focus on a
+        // detached node and the next Tab restarts at the top of the page.
+        hidePopup(true);
       }
     });
     window.addEventListener('resize', function () {

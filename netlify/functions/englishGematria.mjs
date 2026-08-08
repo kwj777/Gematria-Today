@@ -37,7 +37,31 @@ function extractWordFromEvent(event) {
   return null;
 }
 
-async function processWord(sql, word) {
+// `search_count` is the gate that decides whether a word gets an indexable /w/
+// page (see _words.mjs), so what increments it decides what the site publishes.
+// Two callers were incrementing it without anybody having searched anything:
+//
+//   1. /calculator.html?query=WORD runs the lookup on page load. The home page
+//      builds exactly that link for the Wordnik word of the day, so every
+//      crawl of the home page registered a "search" for an archaic word --
+//      dull-pated, filamentule, gauping -- and published a page for it.
+//   2. One search fans out to a gematria lookup for every Wordnik related
+//      word, registering ten more "searches" the visitor never made.
+//
+// Callers pass intent=view for both. The value is still calculated and
+// returned; only the demand signal is withheld.
+export function extractIntentFromEvent(event) {
+  if (!event || typeof event !== 'object') return null;
+  if ('queryStringParameters' in event) return event.queryStringParameters?.intent ?? null;
+  if ('rawUrl' in event && typeof event.rawUrl === 'string') return new URL(event.rawUrl).searchParams.get('intent');
+  return null;
+}
+
+export function countsAsSearch(intent) {
+  return String(intent ?? '').trim().toLowerCase() !== 'view';
+}
+
+async function processWord(sql, word, { countAsSearch = true } = {}) {
   if (word === null || word === undefined || typeof word !== 'string') {
     throw Object.assign(new Error('Missing required query parameter: word'), { statusCode: 400 });
   }
@@ -46,7 +70,10 @@ async function processWord(sql, word) {
   if (!trimmedWord) throw Object.assign(new Error('Missing required query parameter: word'), { statusCode: 400 });
 
   const cacheResult = await withCachedJson(sql, {
-    cacheKey: buildCacheKey({ route: 'englishGematria', word: normalizedWord }),
+    // Counting and non-counting lookups cache separately. Sharing one entry
+    // would let a page-load lookup park a payload in the cache and swallow the
+    // increment for a real search of the same word within the TTL.
+    cacheKey: buildCacheKey({ route: 'englishGematria', word: normalizedWord, intent: countAsSearch ? 'search' : 'view' }),
     route: 'englishGematria',
     ttlSeconds: 120,
     compute: async () => {
@@ -54,6 +81,26 @@ async function processWord(sql, word) {
       const digitalRootValue = Number(gematria.digitalRoot);
       const gematriaTotal = Number(gematria.total);
       const isBaseRoot = isBaseRootValue(gematriaTotal);
+
+      // Nobody searched for this, so it neither creates a row nor moves an
+      // existing one closer to being published.
+      if (!countAsSearch) {
+        const existing = await sql`
+          SELECT word, gematria_value, digital_root, is_base_root, search_count
+          FROM words WHERE LOWER(word) = ${normalizedWord} LIMIT 1
+        `;
+        const row = existing[0];
+        return {
+          word: row ? row.word : trimmedWord,
+          gematria: {
+            total: String(row ? row.gematria_value : gematriaTotal),
+            digitalRoot: Number(row ? row.digital_root : digitalRootValue),
+          },
+          isBaseRoot: isBaseRootValue(row ? row.gematria_value : gematriaTotal),
+          searchCount: Number(row ? row.search_count : 0),
+          source: row ? 'database' : 'calculated',
+        };
+      }
 
       // Every lookup used to be written to the words table, so anything a caller
       // sent was persisted forever -- which is how numbers, punctuation and raw
@@ -121,7 +168,9 @@ async function processWord(sql, word) {
 }
 
 export default async function onRequest(request) {
-  const word = new URL(request.url).searchParams.get('word');
+  const requestUrl = new URL(request.url);
+  const word = requestUrl.searchParams.get('word');
+  const countAsSearch = countsAsSearch(requestUrl.searchParams.get('intent'));
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'englishGematria' });
     const sql = getSqlClient();
@@ -136,9 +185,12 @@ export default async function onRequest(request) {
         message: 'Too many calculator requests.',
       });
     }
-    const cacheResult = await processWord(sql, word);
+    const cacheResult = await processWord(sql, word, { countAsSearch });
     let badgeAward = null;
-    if (user?.id && !cacheResult.cached) {
+    // A lookup nobody performed is not activity to award a badge for, and in
+    // the intent=view branch `source: 'calculated'` only means the word has no
+    // row yet -- it does not mean this request created one.
+    if (user?.id && countAsSearch && !cacheResult.cached) {
       badgeAward = await recordWordSearchActivity(sql, user.id, {
         wasNewWord: cacheResult.payload?.source === 'calculated',
         isBaseRoot: Boolean(cacheResult.payload?.isBaseRoot),
@@ -146,7 +198,7 @@ export default async function onRequest(request) {
     }
     await logRequestAudit(sql, request, {
       route: 'englishGematria',
-      action: 'lookup',
+      action: countAsSearch ? 'lookup' : 'view',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
       metadata: { word: String(word || '').trim().toLowerCase() },
     });
@@ -171,6 +223,7 @@ export default async function onRequest(request) {
 
 export async function handler(event) {
   const word = extractWordFromEvent(event);
+  const countAsSearch = countsAsSearch(extractIntentFromEvent(event));
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'englishGematria' });
     const sql = getSqlClient();
@@ -185,9 +238,9 @@ export async function handler(event) {
         message: 'Too many calculator requests.',
       });
     }
-    const cacheResult = await processWord(sql, word);
+    const cacheResult = await processWord(sql, word, { countAsSearch });
     let badgeAward = null;
-    if (user?.id && !cacheResult.cached) {
+    if (user?.id && countAsSearch && !cacheResult.cached) {
       badgeAward = await recordWordSearchActivity(sql, user.id, {
         wasNewWord: cacheResult.payload?.source === 'calculated',
         isBaseRoot: Boolean(cacheResult.payload?.isBaseRoot),
@@ -195,7 +248,7 @@ export async function handler(event) {
     }
     await logRequestAudit(sql, event, {
       route: 'englishGematria',
-      action: 'lookup',
+      action: countAsSearch ? 'lookup' : 'view',
       outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
       metadata: { word: String(word || '').trim().toLowerCase() },
     });

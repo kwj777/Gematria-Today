@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://gematria.today/</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://gematria.today/accessibility.html</loc>
@@ -18,7 +18,7 @@
   </url>
   <url>
     <loc>https://gematria.today/calculator.html</loc>
-    <lastmod>2026-08-06</lastmod>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://gematria.today/multi-cipher-calculator.html</loc>
@@ -50,7 +50,7 @@
   </url>
   <url>
     <loc>https://gematria.today/gematria-basics.html</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://gematria.today/gematria-account-setup.html</loc>
@@ -58,7 +58,7 @@
   </url>
   <url>
     <loc>https://gematria.today/gematria-guide.html</loc>
-    <lastmod>2026-07-27</lastmod>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://gematria.today/gematria-pattern-grouping.html</loc>
@@ -71,6 +71,10 @@
   <url>
     <loc>https://gematria.today/gematria-results.html</loc>
     <lastmod>2026-07-27</lastmod>
+  </url>
+  <url>
+    <loc>https://gematria.today/how-to-use-gematria.html</loc>
+    <lastmod>2026-08-08</lastmod>
   </url>
   <url>
     <loc>https://gematria.today/name-calculator.html</loc>

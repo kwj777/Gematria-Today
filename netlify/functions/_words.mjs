@@ -41,12 +41,42 @@ export function isPublishableWord(word) {
   return !BLOCKED.has(String(word).trim().toLowerCase());
 }
 
-// Only words somebody has actually looked up get published. The table carries
-// tens of thousands of bulk-imported rows with no search history; a smaller set
-// of pages people actually wanted beats a large set of thin ones, which is what
-// thin-content and doorway heuristics penalise.
-export function isPublishableRow(row) {
-  if (!row) return false;
-  if (!isPublishableWord(row.word)) return false;
-  return Number(row.search_count || 0) > 0;
+// How much demand and how much substance a generated page needs before it is
+// offered to a search engine.
+//
+// `search_count > 0` was the original gate, and it did not hold. One lookup --
+// from anyone, including a crawler following a link the site itself renders --
+// was enough to mint an indexable URL and a sitemap entry. Search Console for
+// the quarter to 2026-08-06 shows the result: the top eight queries by
+// impressions were archaic dictionary words (dull-pated, filamentule, gauping,
+// well-affectedness, chronogrammatic) with zero clicks between them, arriving
+// on pages nobody wrote.
+//
+// Two conditions now, because thinness has two causes:
+//   demand   -- one stray lookup is not evidence anyone wants the page
+//   substance -- a word whose value nothing else shares has nothing on its page
+//                but its own letter sum, which is thin by any reading
+export const MIN_SEARCHES_FOR_INDEX = 3;
+export const MIN_SHARED_VALUE_WORDS = 5;
+
+// Words are only worth indexing if people keep coming back to them. The table
+// carries tens of thousands of bulk-imported rows with no search history; a
+// smaller set of pages people actually wanted beats a large set of thin ones,
+// which is what thin-content and doorway heuristics penalise.
+export function hasEnoughSearches(row) {
+  return Number(row?.search_count || 0) >= MIN_SEARCHES_FOR_INDEX;
 }
+
+// A /w/ or /v/ page is a list of words sharing a gematria value. Below a
+// handful of entries there is no list, and the page is a letter sum with
+// nothing around it.
+export function hasEnoughSharedWords(count) {
+  return Number(count || 0) >= MIN_SHARED_VALUE_WORDS;
+}
+
+// Deliberately not exported as a single isPublishableRow(row) helper. A row on
+// its own cannot answer the question: how many other words share its value is
+// a property of the whole table, and a helper that took only the row would
+// look like the full gate while checking half of it. Callers compose
+// isPublishableWord + hasEnoughSearches + hasEnoughSharedWords, so the missing
+// half is visible at every call site.

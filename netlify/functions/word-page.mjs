@@ -11,7 +11,7 @@
 import { getSqlClient } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 import { englishGematria, digitalRoot } from './englishGematria.mjs';
-import { isIndexableWord, isPublishableWord, isPublishableRow } from './_words.mjs';
+import { isIndexableWord, isPublishableWord, hasEnoughSearches, hasEnoughSharedWords } from './_words.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -413,11 +413,20 @@ export default async function onRequest(request) {
       return notFoundPage();
     }
 
-    // Only pages for words somebody has actually searched are offered to
-    // search engines. The rest still render for anyone who follows a link.
+    // Only pages that clear both halves of the gate in _words.mjs -- repeated
+    // demand for the word, and enough sibling words to make the page more than
+    // its own letter sum -- are offered to search engines. Everything else
+    // still renders in full for anyone who follows a link; the page is fine,
+    // it just isn't something to put in front of a search engine.
+    const sharedWordCount = publishableRelated(words, null).length;
     const noindex = route.kind === 'word'
-      ? !isPublishableRow({ word: route.key, search_count: cached.payload?.searchCount || 0 })
-      : !words.some(isPublishableRow);
+      ? !(isPublishableWord(route.key)
+        && hasEnoughSearches({ search_count: cached.payload?.searchCount || 0 })
+        && hasEnoughSharedWords(sharedWordCount))
+      // A value page is a genuine aggregation -- every word in the database
+      // worth 336 -- so it earns indexing on the size of that list alone,
+      // without needing any one of those words to have been searched.
+      : !hasEnoughSharedWords(sharedWordCount);
 
     await logRequestAudit(sql, request, {
       route: 'word-page',

@@ -283,19 +283,26 @@ test('slurs are never published, though the calculator still returns them', asyn
   assert.match(html, /\/w\/aid/);
 });
 
-test('only words with a search count are offered to search engines', async () => {
-  const { isPublishableRow } = await import('../netlify/functions/_words.mjs');
+test('one lookup is no longer enough to publish a word page', async () => {
+  const { hasEnoughSearches, isPublishableWord, MIN_SEARCHES_FOR_INDEX } = await import('../netlify/functions/_words.mjs');
 
-  assert.equal(isPublishableRow({ word: 'light', search_count: 1 }), true);
-  assert.equal(isPublishableRow({ word: 'light', search_count: 0 }), false, 'bulk-imported rows stay out');
-  assert.equal(isPublishableRow({ word: 'fag', search_count: 99 }), false);
+  // `search_count > 0` was the old rule and it did not hold: the site's own
+  // word-of-the-day link ran a calculator lookup on every crawl of the home
+  // page, which was enough to publish a page for whatever archaic word Wordnik
+  // had picked that day.
+  assert.ok(MIN_SEARCHES_FOR_INDEX > 1, 'a single lookup must not qualify a word');
+  assert.equal(hasEnoughSearches({ search_count: 1 }), false);
+  assert.equal(hasEnoughSearches({ search_count: MIN_SEARCHES_FOR_INDEX }), true);
+  assert.equal(hasEnoughSearches({ search_count: 0 }), false, 'bulk-imported rows stay out');
+  assert.equal(isPublishableWord('fag'), false, 'slurs stay out at any search count');
 
   // Pages still render for unsearched words; they just are not indexed.
   assert.match(renderWordPage('light', 336, [], { noindex: true }), /content="noindex,follow"/);
   assert.match(renderWordPage('light', 336, []), /content="index,follow"/);
 
   const sitemap = await fs.readFile(new URL('../netlify/functions/sitemap-words-xml.mjs', import.meta.url), 'utf8');
-  assert.match(sitemap, /search_count > 0/);
+  assert.match(sitemap, /search_count >= \$\{MIN_SEARCHES_FOR_INDEX\}/);
+  assert.ok(!/search_count > 0/.test(sitemap), 'the old one-lookup gate must be gone from the sitemap queries');
 });
 
 // --- Parity with the hand-authored pages (audit sprint 3) -------------------

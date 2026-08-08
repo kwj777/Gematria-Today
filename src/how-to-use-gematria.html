@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <title>How to Use Gematria: A Practical Guide to the Calculator | Gematria.Today</title>
+    <meta name="description" content="How to use a gematria calculator step by step: the A=6 to Z=156 letter values, what the total, digital root and base root mean, and how to tell a real pattern from arithmetic that had to happen." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://gematria.today/how-to-use-gematria.html" />
+    <meta name="author" content="Gematria.Today Editorial Team" />
+    <meta name="last-updated" content="2026-08-08" />
+    <meta name="editorial-policy" content="https://gematria.today/disclaimer.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="How to Use Gematria: A Practical Guide to the Calculator" />
+    <meta property="og:description" content="The letter values, the four numbers a calculator gives you, and the arithmetic that tells you which matches mean nothing." />
+    <meta property="og:url" content="https://gematria.today/how-to-use-gematria.html" />
+    <meta property="og:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
+    <meta property="og:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How to Use Gematria: A Practical Guide to the Calculator" />
+    <meta name="twitter:description" content="The letter values, the four numbers a calculator gives you, and the arithmetic that tells you which matches mean nothing." />
+    <meta name="twitter:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
+    <meta name="twitter:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script src="/pwa-register.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://gematria.today/"},
+          {"@type": "ListItem", "position": 2, "name": "How to Use Gematria", "item": "https://gematria.today/how-to-use-gematria.html"}
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to use a gematria calculator",
+        "description": "Convert a word to a number, read the four values a calculator returns, and check whether a match means anything.",
+        "totalTime": "PT10M",
+        "step": [
+          {"@type": "HowToStep", "position": 1, "name": "Learn the letter values", "url": "https://gematria.today/how-to-use-gematria.html#letter-values"},
+          {"@type": "HowToStep", "position": 2, "name": "Run your first calculation", "url": "https://gematria.today/how-to-use-gematria.html#first-calculation"},
+          {"@type": "HowToStep", "position": 3, "name": "Read the four numbers", "url": "https://gematria.today/how-to-use-gematria.html#read-the-numbers"},
+          {"@type": "HowToStep", "position": 4, "name": "Test whether the match means anything", "url": "https://gematria.today/how-to-use-gematria.html#test-the-match"},
+          {"@type": "HowToStep", "position": 5, "name": "Write down what you found", "url": "https://gematria.today/how-to-use-gematria.html#write-it-down"}
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What letter values does this site use?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A=6, B=12, C=18 and so on up to Z=156. It is the alphabet position multiplied by six, a cipher usually called English Gematria or Sumerian. Other ciphers assign different values, so a value is only meaningful next to the name of the cipher that produced it."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do numbers, spaces and punctuation count?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Only the letters A to Z are counted. Digits, spaces, hyphens and apostrophes are skipped, so \"St. John\" and \"stjohn\" produce the same total. Because spacing is ignored, a phrase and the same phrase written as one word always match."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is a digital root?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Add the digits of the total together, and keep going until one digit is left. 336 becomes 3+3+6=12, then 1+2=3. There are only nine possible digital roots, so roughly one pair of unrelated words in nine shares one by chance. Treat a shared digital root as almost no evidence on its own."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Two words I care about have the same value. Does that mean something?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Usually not by itself. Every letter in this cipher is a multiple of six, so every total is too, which cuts the space of possible values to a sixth of what it looks like. A five-letter word has only 126 values available to it. Matches are common, so the question is whether a match is more common among related words than among unrelated ones."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why do anagrams always match?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Addition does not care about order. EARTH and HEART both total 312 because they contain the same letters. Every anagram pair in every additive cipher matches, so an anagram match is arithmetic, not a finding."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is gematria a way to predict things?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No, and this site does not present it as one. Gematria is a centuries-old interpretive and literary practice. The calculators here are for exploring correspondences in text; nothing on this site is a claim about future events, and none of it is advice."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <nav aria-label="Breadcrumb" class="mb-3">
+          <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="/index.html">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">How to Use Gematria</li>
+          </ol>
+        </nav>
+
+        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-3">Start here</p>
+          <h1 class="display-5 fw-bold mb-3">How to use gematria: a practical guide to the calculator</h1>
+          <address class="small text-muted mb-3 fst-normal">By the <a href="/disclaimer.html">Gematria.Today Editorial Team</a> &middot; Updated <time datetime="2026-08-08">August 8, 2026</time> &middot; ~10 min read</address>
+          <p class="lead mb-0">Gematria turns a word into a number by adding up its letters. That part takes ten seconds. The part worth learning is which of the matches you get back mean something and which ones had to happen &mdash; so this guide covers both, in order.</p>
+        </section>
+
+        <section class="content-panel p-4 mb-5 guide-toc-panel" aria-labelledby="howToTocHeading">
+          <h2 id="howToTocHeading" class="h6 text-uppercase text-muted mb-3" style="letter-spacing:.08em;">On this page</h2>
+          <ol class="row g-2 list-unstyled mb-0 small">
+            <li class="col-md-6 col-lg-4"><a href="#letter-values">1. The letter values</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#first-calculation">2. Your first calculation</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#read-the-numbers">3. Reading the four numbers</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#test-the-match">4. Does the match mean anything?</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#write-it-down">5. Writing down what you found</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#mistakes">Five common mistakes</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#faq">Quick answers</a></li>
+          </ol>
+          <hr class="my-3">
+          <div class="d-flex flex-wrap gap-3 small">
+            <a href="/calculator.html">Open the calculator</a>
+            <a href="/definitions.html">Glossary</a>
+            <a href="/gematria-guide.html">The full research workflow</a>
+          </div>
+        </section>
+
+        <section id="letter-values" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">1. The letter values</h2>
+          <p>A gematria cipher is just a table saying what each letter is worth. This site uses <strong>English Gematria</strong>, also called Sumerian: take the letter&rsquo;s position in the alphabet and multiply by six. A is 1st, so A&nbsp;=&nbsp;6. Z is 26th, so Z&nbsp;=&nbsp;156.</p>
+          <dl class="letter-value-grid mb-3">
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">A</dt><dd class="letter-value-grid__value mb-0">6</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">B</dt><dd class="letter-value-grid__value mb-0">12</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">C</dt><dd class="letter-value-grid__value mb-0">18</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">D</dt><dd class="letter-value-grid__value mb-0">24</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">E</dt><dd class="letter-value-grid__value mb-0">30</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">F</dt><dd class="letter-value-grid__value mb-0">36</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">G</dt><dd class="letter-value-grid__value mb-0">42</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">H</dt><dd class="letter-value-grid__value mb-0">48</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">I</dt><dd class="letter-value-grid__value mb-0">54</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">J</dt><dd class="letter-value-grid__value mb-0">60</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">K</dt><dd class="letter-value-grid__value mb-0">66</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">L</dt><dd class="letter-value-grid__value mb-0">72</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">M</dt><dd class="letter-value-grid__value mb-0">78</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">N</dt><dd class="letter-value-grid__value mb-0">84</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">O</dt><dd class="letter-value-grid__value mb-0">90</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">P</dt><dd class="letter-value-grid__value mb-0">96</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">Q</dt><dd class="letter-value-grid__value mb-0">102</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">R</dt><dd class="letter-value-grid__value mb-0">108</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">S</dt><dd class="letter-value-grid__value mb-0">114</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">T</dt><dd class="letter-value-grid__value mb-0">120</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">U</dt><dd class="letter-value-grid__value mb-0">126</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">V</dt><dd class="letter-value-grid__value mb-0">132</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">W</dt><dd class="letter-value-grid__value mb-0">138</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">X</dt><dd class="letter-value-grid__value mb-0">144</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">Y</dt><dd class="letter-value-grid__value mb-0">150</dd></div>
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">Z</dt><dd class="letter-value-grid__value mb-0">156</dd></div>
+          </dl>
+          <p class="small text-muted mb-0">Every value is a multiple of six. That single fact does more work than anything else on this page &mdash; come back to it in <a href="#test-the-match">step 4</a>. Other ciphers use other tables; the <a href="/multi-cipher-calculator.html">multi-cipher calculator</a> runs the same word through seven of them at once, and the <a href="/definitions.html#defn-cipher">glossary</a> defines each one.</p>
+        </section>
+
+        <section id="first-calculation" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">2. Your first calculation</h2>
+          <p class="mb-3">Take the word <strong>LIGHT</strong>. Look each letter up in the table above and add:</p>
+          <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle mb-0">
+              <caption class="small text-muted">The letters of LIGHT and their values in English Gematria.</caption>
+              <thead>
+                <tr><th scope="col">Letter</th><th scope="col">Position</th><th scope="col" class="text-end">Value</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">L</th><td>12th</td><td class="text-end">72</td></tr>
+                <tr><th scope="row">I</th><td>9th</td><td class="text-end">54</td></tr>
+                <tr><th scope="row">G</th><td>7th</td><td class="text-end">42</td></tr>
+                <tr><th scope="row">H</th><td>8th</td><td class="text-end">48</td></tr>
+                <tr><th scope="row">T</th><td>20th</td><td class="text-end">120</td></tr>
+              </tbody>
+              <tfoot>
+                <tr><th scope="row" colspan="2">Total</th><td class="text-end fw-bold">336</td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <p><code>L 72 + I 54 + G 42 + H 48 + T 120 = 336</code>. That is the whole method. The calculator does the addition and then does the part you cannot do by hand: it searches the database for every other word that also comes to 336.</p>
+          <h3 class="h6 mt-4 mb-2">What the calculator ignores</h3>
+          <p class="mb-2">Only the letters A&ndash;Z are counted. Everything else is skipped, which has consequences worth knowing before you start comparing things:</p>
+          <ul class="mb-3">
+            <li><strong>Spaces are ignored</strong>, so a phrase and the same phrase run together always match. That is not a discovery.</li>
+            <li><strong>Punctuation is ignored</strong>, so <code>St. John</code>, <code>St John</code> and <code>stjohn</code> are one input as far as the arithmetic is concerned.</li>
+            <li><strong>Digits are ignored.</strong> Typing <code>2026</code> contributes nothing. If you want the number itself, search for the value instead of the text.</li>
+            <li><strong>Case is ignored.</strong> <code>LIGHT</code>, <code>Light</code> and <code>light</code> are the same word.</li>
+          </ul>
+          <p class="small text-muted mb-3">The one rule you have to impose yourself is spelling. Pick a form of a name &mdash; with or without a middle initial, English or transliterated &mdash; and keep it for the whole session. Changing spelling halfway through is the fastest way to produce a match you cannot reproduce tomorrow.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-warning fw-semibold" href="/calculator.html?query=light">Try it: calculate LIGHT</a>
+            <a class="btn btn-outline-secondary" href="/name-calculator.html">Calculate a name instead</a>
+          </div>
+        </section>
+
+        <section id="read-the-numbers" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">3. Reading the four numbers</h2>
+          <p class="mb-3">A result gives you four things. Only the first is a fact about your word; the rest are ways of grouping it with others.</p>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="h-100 border rounded-3 p-3">
+                <h3 class="h6 mb-2">Total &mdash; <span class="fw-normal text-muted">336</span></h3>
+                <p class="small text-muted mb-0">The sum of the letters. Reproducible, and the only number here that is purely a property of the text you typed.</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="h-100 border rounded-3 p-3">
+                <h3 class="h6 mb-2">Digital root &mdash; <span class="fw-normal text-muted">3</span></h3>
+                <p class="small text-muted mb-0">Add the digits until one is left: 336 &rarr; 3+3+6 = 12 &rarr; 1+2 = 3. It sorts every word in existence into nine buckets, so use it to group, never as evidence.</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="h-100 border rounded-3 p-3">
+                <h3 class="h6 mb-2">Base root &mdash; <span class="fw-normal text-muted">yes or no</span></h3>
+                <p class="small text-muted mb-0">A total sitting on this cipher&rsquo;s 54-step ladder: 6, 60, 114, 168, 222 and so on. <code>AIR</code> = 168 is one. LIGHT is not. It is a structural label, not a verdict.</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="h-100 border rounded-3 p-3">
+                <h3 class="h6 mb-2">Words sharing the value</h3>
+                <p class="small text-muted mb-0">Everything else in the database totalling 336 &mdash; <em>alter</em>, <em>later</em> and the rest. This is the list you actually came for, and <a href="#test-the-match">step 4</a> is about reading it honestly.</p>
+              </div>
+            </div>
+          </div>
+          <p class="small text-muted mb-0">Every value has its own page listing all of its words, so <a href="/v/336">/v/336</a> is the permanent address for that list. Bookmark or share it rather than re-running the search.</p>
+        </section>
+        <section id="test-the-match" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">4. Does the match mean anything?</h2>
+          <p class="mb-3">This is the step most gematria guides skip, and it is the only one that separates research from pattern-matching. Before reading anything into two words sharing a value, rule out the three ways that match was going to happen regardless.</p>
+
+          <h3 class="h6 mt-4 mb-2">a. The value space is smaller than it looks</h3>
+          <p class="mb-2">Every letter in this cipher is a multiple of six, so every total is too. 337 is not a gematria value and never will be. That immediately removes five out of every six numbers from play.</p>
+          <p class="mb-3">Narrow it further to one word length and the space collapses. A five-letter word must land between 30 (AAAAA) and 780 (ZZZZZ), in steps of six &mdash; <strong>126 possible totals, and no others</strong>. English has far more than 126 five-letter words, so some of them <em>must</em> collide. Shared values are not rare events; they are the normal state of affairs.</p>
+
+          <h3 class="h6 mt-4 mb-2">b. Anagrams always match</h3>
+          <p class="mb-3">Addition ignores order. <code>EARTH</code> and <code>HEART</code> both total 312 because they are the same five letters in a different arrangement. So do <code>ALTER</code> and <code>LATER</code>, at 336. Every anagram pair in every additive cipher matches, every time. If your two words are anagrams, you have found a property of the alphabet, not a correspondence.</p>
+
+          <h3 class="h6 mt-4 mb-2">c. Digital roots are nine buckets</h3>
+          <p class="mb-3">There are nine possible digital roots, so two unrelated words share one about one time in nine. A shared digital root, on its own, is close to no evidence at all. It is a useful way to sort a long list; it is not a finding.</p>
+
+          <h3 class="h6 mt-4 mb-2">The test that actually works: run controls</h3>
+          <p class="mb-2">A match only carries information if it happens more often among related words than among unrelated ones. So check both.</p>
+          <ol class="mb-3">
+            <li class="mb-2"><strong>Write down the claim before you test it.</strong> &ldquo;Words about light cluster at 336&rdquo; is testable. &ldquo;Something interesting is going on with 336&rdquo; is not.</li>
+            <li class="mb-2"><strong>Build the related set.</strong> Five to ten words you would have chosen before you saw any totals. Choosing them afterwards is <a href="/definitions.html#defn-cherry-picking">cherry-picking</a>, and it will always succeed.</li>
+            <li class="mb-2"><strong>Build a control set of the same size.</strong> Words with nothing to do with your theme &mdash; open a book and take the first ten nouns. Run them the same way.</li>
+            <li class="mb-2"><strong>Compare the hit rates.</strong> If three of ten themed words match and three of ten random words match, you have measured the <a href="/definitions.html#defn-coincidence-floor">coincidence floor</a>, not a pattern.</li>
+            <li class="mb-0"><strong>Keep the misses.</strong> Words you expected to match and that didn&rsquo;t are evidence. A note that records only the hits is a note that cannot be wrong, which makes it worthless.</li>
+          </ol>
+          <div class="alert alert-warning small mb-0" role="note">
+            <strong>A worked non-example.</strong> <code>FAITH</code> and <code>HOPE</code> both come to 264. Two thematically linked words, different lengths, exact same total &mdash; it looks like a find. Then run the controls: 264 is one of a few hundred reachable values, both words are short, and the database holds plenty of unrelated words at 264 too. The honest write-up is &ldquo;faith and hope share 264, at a rate consistent with chance&rdquo; &mdash; which is still worth recording, just not worth building on.
+          </div>
+        </section>
+
+        <section id="write-it-down" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">5. Writing down what you found</h2>
+          <p class="mb-3">A gematria note that someone else can check is worth more than a longer one they cannot. Record five things:</p>
+          <ul class="mb-3">
+            <li><strong>The cipher.</strong> A bare number means nothing without it &mdash; <code>light</code> is 336 here and 56 in English Ordinal.</li>
+            <li><strong>The exact input.</strong> Spelling, spacing and any title you included or dropped.</li>
+            <li><strong>The full set you tested</strong>, related and control, as chosen up front.</li>
+            <li><strong>The misses</strong>, by name.</li>
+            <li><strong>Your confidence</strong>, in a word: coincidence, worth another look, or reproducible.</li>
+          </ul>
+          <p class="mb-3">Two people following that format on the same phrase should get the same numbers. That is the whole bar, and most published gematria does not clear it.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary" href="/gematria-guide.html">The full five-step research workflow</a>
+            <a class="btn btn-outline-secondary" href="/gematria-pattern-grouping.html">Grouping results into clusters</a>
+          </div>
+        </section>
+
+        <section id="mistakes" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Five common mistakes</h2>
+          <ol class="mb-0">
+            <li class="mb-2"><strong>Changing spelling until something matches.</strong> Adding a middle name, dropping a title, switching transliterations &mdash; try enough spellings and any target value becomes reachable. Fix the spelling first.</li>
+            <li class="mb-2"><strong>Switching ciphers until something matches.</strong> Same problem, seven times over. Pick the cipher before the word.</li>
+            <li class="mb-2"><strong>Reading a shared digital root as a match.</strong> One in nine. See <a href="#test-the-match">step 4c</a>.</li>
+            <li class="mb-2"><strong>Comparing a phrase to a single word.</strong> Longer inputs reach higher totals, so a long phrase and a short word matching is a different kind of event from two words of the same length matching. Compare like with like.</li>
+            <li class="mb-0"><strong>Testing one pair.</strong> A single coincidence has no denominator. The question is never &ldquo;do these two match&rdquo; but &ldquo;how often do things like these match&rdquo;.</li>
+          </ol>
+        </section>
+
+        <section id="faq" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Quick answers</h2>
+          <dl class="mb-0">
+            <dt class="h6 mt-3">What letter values does this site use?</dt>
+            <dd>A=6, B=12, C=18 &hellip; Z=156 &mdash; alphabet position times six, usually called English Gematria or Sumerian. A value only means something alongside the name of the cipher that produced it.</dd>
+
+            <dt class="h6 mt-3">Do numbers, spaces and punctuation count?</dt>
+            <dd>No. Only A&ndash;Z. Because spacing is ignored, a phrase and the same phrase written as one word always match.</dd>
+
+            <dt class="h6 mt-3">What is a digital root?</dt>
+            <dd>The digits of the total added until one remains: 336 &rarr; 12 &rarr; 3. Nine possible values, so roughly one unrelated pair in nine shares one. <a href="/definitions.html#defn-digit-sum-root-reduction">Full definition</a>.</dd>
+
+            <dt class="h6 mt-3">Two words I care about share a value. Does that mean something?</dt>
+            <dd>Usually not on its own. Every total is a multiple of six, and a five-letter word has only 126 totals available to it. Matches are the norm. What carries information is whether related words match more often than unrelated ones &mdash; which is what <a href="#test-the-match">step 4</a> measures.</dd>
+
+            <dt class="h6 mt-3">Why do anagrams always match?</dt>
+            <dd>Addition ignores order, so EARTH and HEART both total 312. An anagram match is arithmetic, not a finding.</dd>
+
+            <dt class="h6 mt-3">Is gematria a way to predict things?</dt>
+            <dd>No, and this site does not present it as one. Gematria is a centuries-old interpretive and literary practice. The calculators here are for exploring correspondences in text. Nothing on this site is a prediction or advice &mdash; see the <a href="/disclaimer.html">disclaimer</a>.</dd>
+          </dl>
+        </section>
+
+        <section class="content-panel p-4">
+          <h2 class="h4 mb-3">Where to go next</h2>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/calculator.html">Open the calculator</a>
+              <p class="small text-muted mb-0">Run a word or phrase and see its total, digital root and every word that shares the value.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/gematria-basics.html">Level 1 of the learning path</a>
+              <p class="small text-muted mb-0">The same ground as a guided lesson, with progress you can save across four levels.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/multi-cipher-calculator.html">Compare seven ciphers</a>
+              <p class="small text-muted mb-0">See how much a total moves when the letter table changes &mdash; the fastest cure for over-reading one number.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/why-english-gematria.html">Why this site uses English gematria</a>
+              <p class="small text-muted mb-0">The reasoning behind the cipher choice, and what it does and doesn&rsquo;t let you claim.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+{% footer %}
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

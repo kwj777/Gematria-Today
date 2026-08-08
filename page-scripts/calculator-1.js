@@ -679,8 +679,14 @@ View results: ${shareUrl}`.trim(),
         return memberSession?.authenticated ? AUTHENTICATED_RELATED_WORD_LIMIT : DEFAULT_RELATED_WORD_LIMIT;
       }
 
-      async function requestGematria(word) {
+      // countAsSearch: false sends intent=view, which returns the value without
+      // recording demand for the word. Use it for anything the page decided to
+      // look up on its own -- a ?query= prefill, or the related-word fan-out --
+      // because search_count is what decides whether a word gets published as
+      // an indexable /w/ page, and only a person typing a word should move it.
+      async function requestGematria(word, { countAsSearch = true } = {}) {
         const searchParams = new URLSearchParams({ word });
+        if (!countAsSearch) searchParams.set('intent', 'view');
         return requestJson('/.netlify/functions/englishGematria', searchParams);
       }
 
@@ -769,7 +775,10 @@ View results: ${shareUrl}`.trim(),
             const wordsWithGematria = await Promise.all(
               words.map(async (word) => {
                 try {
-                  const gematria = await requestGematria(word);
+                  // The visitor searched one word; these came back from
+                  // Wordnik. Counting them registers a dozen searches nobody
+                  // made and publishes a page for each.
+                  const gematria = await requestGematria(word, { countAsSearch: false });
                   return { word, gematria };
                 } catch (error) {
           window.gematriaTracking?.track('calculator_usage_error', {
@@ -808,8 +817,15 @@ View results: ${shareUrl}`.trim(),
         );
       }
 
-      function runSearch(term, { refreshPage = false } = {}) {
+      // Set for the one search the page runs itself from ?query= on load, and
+      // read back by the submit handler on entry. runSearch cannot pass this
+      // through directly: it hands off via requestSubmit(), so the value has to
+      // survive the hop and then be cleared so a later real search counts.
+      let pendingSearchIsPagePrefill = false;
+
+      function runSearch(term, { refreshPage = false, pagePrefill = false } = {}) {
         const normalizedTerm = String(term || '').trim();
+        pendingSearchIsPagePrefill = pagePrefill;
 
         if (refreshPage) {
           const searchParams = new URLSearchParams();
@@ -1519,6 +1535,11 @@ View results: ${shareUrl}`.trim(),
       lookupForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        // Read and clear synchronously, before the first await, so exactly one
+        // search consumes the flag.
+        const isPagePrefill = pendingSearchIsPagePrefill;
+        pendingSearchIsPagePrefill = false;
+
         const term = lookupInput.value.trim();
         lastSearchTerm = term;
         hideCalculatorError();
@@ -1574,7 +1595,7 @@ View results: ${shareUrl}`.trim(),
         updateMemberSaveState();
 
         try {
-          const searchGematria = await requestGematria(term);
+          const searchGematria = await requestGematria(term, { countAsSearch: !isPagePrefill });
           window.gematriaTracking?.track('calculator_usage_complete', {
             source: 'calculator_lookup_form',
             gematriaTotal: searchGematria?.gematria?.total ?? null,
@@ -1760,7 +1781,11 @@ View results: ${shareUrl}`.trim(),
           const searchParams = new URLSearchParams(window.location.search);
           const query = searchParams.get('query') || '';
           if (query) {
-            await runSearch(query);
+            // Nobody typed this. The home page builds /calculator.html?query=
+            // links for the Wordnik word of the day, and definition pages build
+            // one for every long word in the definition body, so counting this
+            // as a search let a crawl publish a page for each of them.
+            await runSearch(query, { pagePrefill: true });
           }
         } finally {
           hideCalculatorLoadingOverlay();

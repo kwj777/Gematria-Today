@@ -287,6 +287,11 @@
   status = 301
 
 [[redirects]]
+  from = "/how-to-use-gematria"
+  to = "/how-to-use-gematria.html"
+  status = 301
+
+[[redirects]]
   from = "/index"
   to = "/index.html"
   status = 301

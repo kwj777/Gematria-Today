@@ -257,8 +257,14 @@ const form = document.querySelector('#name-form');
         return payload;
       }
 
-      function requestGematria(word) {
-        return requestJson('/.netlify/functions/englishGematria', new URLSearchParams({ word }));
+      // intent=view returns the value without recording demand for the name.
+      // See the same helper in calculator-1.js: search_count decides what gets
+      // an indexable /w/ page, so a name the page filled in from ?name1= must
+      // not move it.
+      function requestGematria(word, { countAsSearch = true } = {}) {
+        const searchParams = new URLSearchParams({ word });
+        if (!countAsSearch) searchParams.set('intent', 'view');
+        return requestJson('/.netlify/functions/englishGematria', searchParams);
       }
 
       function requestRelatedWords(word, limit = getFullRelatedWordLimit()) {
@@ -793,9 +799,9 @@ View results: ${shareUrl}`.trim(),
         return article;
       }
 
-      async function fetchNameResult(name) {
+      async function fetchNameResult(name, { countAsSearch = true } = {}) {
         try {
-          const gematria = await requestGematria(name);
+          const gematria = await requestGematria(name, { countAsSearch });
 
           if (!memberSession?.authenticated) {
             return { gematria, related: null, relatedLocked: true };
@@ -856,14 +862,14 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
-      async function renderResults(names) {
+      async function renderResults(names, { countAsSearch = true } = {}) {
         statusNode.textContent = 'Calculating names...';
         resultsShell.hidden = false;
         resultsGrid.innerHTML = '';
         currentSearchPayload = null;
         updateMemberSaveState();
 
-        const results = await Promise.all(names.map((name) => fetchNameResult(name)));
+        const results = await Promise.all(names.map((name) => fetchNameResult(name, { countAsSearch })));
         resultsActions.innerHTML = '';
         if (names.length) {
           const successfulTotals = results
@@ -1038,7 +1044,9 @@ View results: ${shareUrl}`.trim(),
 
           const namesFromQuery = populateNamesFromSearchParams();
           if (namesFromQuery.length) {
-            await renderResults(namesFromQuery);
+            // Filled in from ?name1=/?name2=/?name3=, not typed by anyone, so
+            // it renders the values without registering demand for the names.
+            await renderResults(namesFromQuery, { countAsSearch: false });
           }
         } finally {
           hideCalculatorLoadingOverlay();

@@ -11,7 +11,7 @@
 // Console. Each chunk now touches PAGE_SIZE rows with LIMIT/OFFSET.
 import { getSqlClient } from './_auth.mjs';
 import { assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, withCachedJson } from './_security.mjs';
-import { isPublishableWord, isPublishableRow } from './_words.mjs';
+import { isPublishableWord, MIN_SEARCHES_FOR_INDEX, MIN_SHARED_VALUE_WORDS } from './_words.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const PAGE_SIZE = 5000;
@@ -19,7 +19,16 @@ const PAGE_SIZE = 5000;
 const MAX_PAGES = 40;
 // Bump when the shape or filtering of cached payloads changes, so existing
 // entries are not served until their TTL lapses.
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
+
+// isPublishableWord is JavaScript and cannot run inside the query, so the SQL
+// below pre-filters on the one rule that removes almost all of the junk: a real
+// word starts with a letter, which bare numbers ("276"), punctuation ("*"),
+// fragments ("-ol") and raw markup ("<er>annoy</er>") all fail. It is
+// deliberately *looser* than the JS rule, never tighter -- over-counting a
+// value group by a blocked word is harmless, under-counting would drop pages
+// the word-page route considers indexable and put the two out of step.
+const LOOKS_LIKE_A_WORD = '^[A-Za-z]';
 
 export function escapeXml(value = '') {
   return String(value)
@@ -84,7 +93,17 @@ export default async function onRequest(request) {
         route: 'sitemap-words-xml',
         ttlSeconds: 21600,
         compute: async () => {
-          const rows = await sql`SELECT COUNT(*)::int AS total FROM words WHERE search_count > 0`;
+          const rows = await sql`
+            WITH candidates AS (
+              SELECT word, search_count, gematria_value,
+                     COUNT(*) OVER (PARTITION BY gematria_value) AS value_word_count
+              FROM words
+              WHERE word ~ ${LOOKS_LIKE_A_WORD}
+            )
+            SELECT COUNT(*)::int AS total FROM candidates
+            WHERE search_count >= ${MIN_SEARCHES_FOR_INDEX}
+              AND value_word_count >= ${MIN_SHARED_VALUE_WORDS}
+          `;
           const total = Number(rows[0]?.total || 0);
           // +1 for the value-pages sitemap on page 1.
           return { pages: Math.min(MAX_PAGES, 1 + Math.ceil(total / PAGE_SIZE)) };
@@ -101,18 +120,31 @@ export default async function onRequest(request) {
       ttlSeconds: 21600,
       compute: async () => {
         if (page === 1) {
+          // Value pages earn their place on the size of the list they render,
+          // matching the /v/ branch of word-page.mjs.
           const rows = await sql`
-            SELECT DISTINCT gematria_value FROM words WHERE search_count > 0 ORDER BY gematria_value ASC LIMIT ${PAGE_SIZE}
+            SELECT gematria_value FROM words
+            WHERE word ~ ${LOOKS_LIKE_A_WORD}
+            GROUP BY gematria_value
+            HAVING COUNT(*) >= ${MIN_SHARED_VALUE_WORDS}
+            ORDER BY gematria_value ASC LIMIT ${PAGE_SIZE}
           `;
           return { values: rows.map((row) => Number(row.gematria_value)), words: [] };
         }
         const offset = (page - 2) * PAGE_SIZE;
         const rows = await sql`
-          SELECT word, search_count FROM words
-          WHERE search_count > 0
+          WITH candidates AS (
+            SELECT word, search_count, gematria_value,
+                   COUNT(*) OVER (PARTITION BY gematria_value) AS value_word_count
+            FROM words
+            WHERE word ~ ${LOOKS_LIKE_A_WORD}
+          )
+          SELECT word FROM candidates
+          WHERE search_count >= ${MIN_SEARCHES_FOR_INDEX}
+            AND value_word_count >= ${MIN_SHARED_VALUE_WORDS}
           ORDER BY word ASC LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `;
-        return { values: [], words: rows.filter(isPublishableRow).map((row) => row.word) };
+        return { values: [], words: rows.map((row) => row.word) };
       },
     });
 

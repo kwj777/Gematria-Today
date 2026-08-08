@@ -24,7 +24,8 @@
     "build": "eleventy",
     "sync:redirects": "node scripts/sync-page-redirects.mjs --write",
     "check:redirects": "node scripts/sync-page-redirects.mjs --check",
-    "audit:words": "node scripts/audit-words-table.mjs"
+    "audit:words": "node scripts/audit-words-table.mjs",
+    "audit:index-coverage": "node scripts/audit-index-coverage.mjs"
   },
   "dependencies": {
     "@11ty/eleventy": "^3.1.6",

@@ -1,10 +1,17 @@
 import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse as secureJsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
+// netlify.toml's [[headers]] blocks never reach a function response, so the
+// noindex has to be set here. It is sent alongside the meta tag rather than
+// instead of it: the header covers the error branches, which render bare HTML
+// with no <head> for a meta tag to sit in.
+const NOINDEX_HTML_HEADERS = Object.freeze({ 'x-robots-tag': 'noindex, nofollow' });
+
 function toResponse(statusCode, payload, contentType = "application/json; charset=utf-8") {
-  const body = contentType.startsWith("application/json") ? JSON.stringify(payload) : payload;
+  const isJson = contentType.startsWith("application/json");
+  const body = isJson ? JSON.stringify(payload) : payload;
   return new Response(body, {
     status: statusCode,
-    headers: { 'content-type': contentType },
+    headers: { 'content-type': contentType, ...(isJson ? {} : NOINDEX_HTML_HEADERS) },
   });
 }
 
@@ -221,7 +228,23 @@ function renderDefinitionPage(payload, { returnPath = '/' } = {}) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Definition: ${escapeHtml(payload.word)}</title>
-    <link rel="canonical" href="${canonicalPath}" />
+    <!--
+      This page is a reading aid for visitors who click a word on our own
+      pages. Its body is Wordnik's definition text verbatim, so it is not ours
+      to publish: republished as an indexable page it is somebody else's
+      dictionary entry under our name, competing for the definition queries
+      that dictionary owns. It used to be indexable and self-canonical, with
+      the home page linking one every day for the Wordnik word of the day.
+
+      noindex, not a robots.txt Disallow: Google has to be able to fetch the
+      page to see this tag. Blocking the path would freeze the URLs already
+      indexed exactly as they are.
+
+      nofollow because linkifySearchWords turns every long word in the
+      definition body into a /calculator.html?query= link, and those links are
+      how a crawl walked into the words table in the first place.
+    -->
+    <meta name="robots" content="noindex,nofollow" />
     <script>
       if (window.location.pathname.startsWith('/.netlify/functions/wordnikDefinition')) {
         window.history.replaceState({}, '', ${JSON.stringify(canonicalPath)});

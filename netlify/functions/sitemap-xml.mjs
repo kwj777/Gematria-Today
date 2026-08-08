@@ -16,6 +16,7 @@ export const STATIC_PATHS = Object.freeze([
   '/gematria-pattern-grouping.html',
   '/gematria-name-analysis.html',
   '/gematria-results.html',
+  '/how-to-use-gematria.html',
   '/multi-cipher-calculator.html',
   '/name-calculator.html',
   '/privacy.html',

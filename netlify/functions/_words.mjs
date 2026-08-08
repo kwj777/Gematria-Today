@@ -74,8 +74,9 @@ export function hasEnoughSharedWords(count) {
   return Number(count || 0) >= MIN_SHARED_VALUE_WORDS;
 }
 
-export function isPublishableRow(row) {
-  if (!row) return false;
-  if (!isPublishableWord(row.word)) return false;
-  return hasEnoughSearches(row);
-}
+// Deliberately not exported as a single isPublishableRow(row) helper. A row on
+// its own cannot answer the question: how many other words share its value is
+// a property of the whole table, and a helper that took only the row would
+// look like the full gate while checking half of it. Callers compose
+// isPublishableWord + hasEnoughSearches + hasEnoughSharedWords, so the missing
+// half is visible at every call site.

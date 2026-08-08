@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import * as words from '../netlify/functions/_words.mjs';
 import {
   hasEnoughSearches,
   hasEnoughSharedWords,
-  isPublishableRow,
   isPublishableWord,
   MIN_SEARCHES_FOR_INDEX,
   MIN_SHARED_VALUE_WORDS,
@@ -45,9 +45,16 @@ test('a word needs company before its page is more than its own letter sum', () 
 });
 
 test('the junk and slur filters still apply on top of the thresholds', () => {
-  assert.equal(isPublishableRow({ word: '-ol', search_count: 500 }), false);
-  assert.equal(isPublishableRow({ word: 'fag', search_count: 500 }), false);
+  assert.equal(isPublishableWord('-ol'), false);
+  assert.equal(isPublishableWord('fag'), false);
   assert.equal(isPublishableWord('filamentule'), true, 'the word itself is fine; the demand for it is what was missing');
+});
+
+test('there is no single-row helper that looks like the whole gate', () => {
+  // A helper taking only a row cannot see how many words share its value, so
+  // it would report "publishable" while checking half the rule -- which is how
+  // the one-lookup gate survived as long as it did.
+  assert.equal(words.isPublishableRow, undefined, 'compose the three checks at the call site instead');
 });
 
 test('word pages require demand AND substance, value pages require substance', () => {

@@ -26,7 +26,7 @@ export function englishGematriaWithDigitalRoot(input) {
   return { total: total.toString(), digitalRoot: digitalRoot(total) };
 }
 
-function isBaseRootValue(gematriaTotal) {
+export function isBaseRootValue(gematriaTotal) {
   return Number(gematriaTotal - 6) % 54 === 0;
 }
 

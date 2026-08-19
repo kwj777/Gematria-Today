@@ -4,6 +4,12 @@ const form = document.querySelector('#name-form');
       const resultsShell = document.querySelector('#results-shell');
       const resultsGrid = document.querySelector('#results-grid');
       const resultsActions = document.querySelector('#results-actions');
+      const nameChartShell = document.querySelector('#name-chart-shell');
+      const nameChartPreview = document.querySelector('#name-chart-preview');
+      const nameChartStatus = document.querySelector('#name-chart-status');
+      // Bumped on every render so a slow word lookup from a previous submit
+      // cannot paint a stale chart over the current one.
+      let nameChartRequestId = 0;
       const clearNamesButton = document.querySelector('#clear-names');
       const saveHistoryButton = document.querySelector('#save-history-button');
       const memberSaveMeta = document.querySelector('#member-save-meta');
@@ -239,8 +245,8 @@ const form = document.querySelector('#name-form');
         syncSaveHistoryHint();
       }
 
-      async function requestJson(endpoint, searchParams) {
-        const response = await fetch(`${endpoint}?${searchParams.toString()}`, { globalLoading: true });
+      async function requestJson(endpoint, searchParams, { globalLoading = true } = {}) {
+        const response = await fetch(`${endpoint}?${searchParams.toString()}`, { globalLoading });
         const rawBody = await response.text();
 
         let payload;
@@ -271,8 +277,12 @@ const form = document.querySelector('#name-form');
         return requestJson('/.netlify/functions/wordnikRelatedWords', new URLSearchParams({ word, limit: String(limit) }));
       }
 
-      function requestWordsByGematria(total) {
-        return requestJson('/.netlify/functions/searchByGematria', new URLSearchParams({ gematria: String(total) }));
+      function requestWordsByGematria(total, { globalLoading = true } = {}) {
+        return requestJson(
+          '/.netlify/functions/searchByGematria',
+          new URLSearchParams({ gematria: String(total) }),
+          { globalLoading }
+        );
       }
 
       function createTextNode(text) {
@@ -310,6 +320,7 @@ const form = document.querySelector('#name-form');
         resultsGrid.innerHTML = '';
         resultsActions.innerHTML = '';
         resultsShell.hidden = true;
+        hideNameChartPreview();
         currentSearchPayload = null;
         updateMemberSaveState();
       }
@@ -506,6 +517,84 @@ const form = document.querySelector('#name-form');
         return `${getCanonicalShareOrigin()}/.netlify/images?url=${encoded}&w=1200&fm=jpg`;
       }
 
+
+      // Mirrors computeChart() in netlify/functions/name-chart-image.mjs. The
+      // chart endpoint recomputes every total from the names it is given, so
+      // this value is only used to look up the matching words -- it is never
+      // sent as the total to print.
+      function computeFullNameTotal(names) {
+        return names.reduce(
+          (sum, name) => sum + getPerLetterValues(name).reduce((rowSum, { value }) => rowSum + value, 0),
+          0
+        );
+      }
+
+      function createNameChartPreviewUrl(names = [], matches = []) {
+        const url = new URL('/api/name-chart-image', window.location.origin);
+        names.filter(Boolean).slice(0, 3).forEach((name, index) => {
+          url.searchParams.set(`name${index + 1}`, String(name).trim());
+        });
+        url.searchParams.set('preview', '1');
+        if (matches.length) {
+          url.searchParams.set('matches', matches.join(','));
+        }
+        return `${url.pathname}${url.search}`;
+      }
+
+      function hideNameChartPreview() {
+        nameChartRequestId += 1;
+        if (!nameChartShell) {
+          return;
+        }
+        nameChartShell.hidden = true;
+        if (nameChartPreview) {
+          nameChartPreview.hidden = true;
+          nameChartPreview.removeAttribute('src');
+          nameChartPreview.alt = '';
+        }
+        if (nameChartStatus) {
+          nameChartStatus.textContent = '';
+        }
+      }
+
+      // The chart names the words that share the full-name total, so the panel
+      // waits on that lookup. A failed lookup still renders a chart -- it just
+      // prints the "no catalogued words" line rather than blocking the preview.
+      async function renderNameChartPreview(names) {
+        if (!nameChartShell || !nameChartPreview || !names.length) {
+          return;
+        }
+
+        nameChartRequestId += 1;
+        const requestId = nameChartRequestId;
+        nameChartShell.hidden = false;
+        nameChartPreview.hidden = true;
+        if (nameChartStatus) {
+          nameChartStatus.textContent = 'Building your chart preview...';
+        }
+
+        let matches = [];
+        try {
+          const payload = await requestWordsByGematria(computeFullNameTotal(names), { globalLoading: false });
+          matches = (payload?.words || [])
+            .map((entry) => String(entry?.word || '').trim())
+            .filter(Boolean)
+            .slice(0, 6);
+        } catch (_error) {
+          matches = [];
+        }
+
+        if (requestId !== nameChartRequestId) {
+          return;
+        }
+
+        nameChartPreview.alt = `Watermarked preview of the printable gematria chart for ${names.join(' ')}.`;
+        nameChartPreview.src = createNameChartPreviewUrl(names, matches);
+        nameChartPreview.hidden = false;
+        if (nameChartStatus) {
+          nameChartStatus.textContent = 'Preview only — the printable chart is unmarked and print resolution.';
+        }
+      }
 
       function reportButtonEvent(action, metadata = {}) {
         const normalizedAction = String(action || '').trim().toLowerCase();
@@ -866,6 +955,7 @@ View results: ${shareUrl}`.trim(),
         statusNode.textContent = 'Calculating names...';
         resultsShell.hidden = false;
         resultsGrid.innerHTML = '';
+        hideNameChartPreview();
         currentSearchPayload = null;
         updateMemberSaveState();
 
@@ -932,6 +1022,15 @@ View results: ${shareUrl}`.trim(),
 
         statusNode.textContent = '';
         updateMemberSaveState();
+
+        // Deliberately not awaited: the chart panel needs a second round trip
+        // for its word matches, and blocking on it would leave the results the
+        // visitor already has waiting behind it.
+        if (successfulResults.length) {
+          renderNameChartPreview(names).catch(() => {
+            hideNameChartPreview();
+          });
+        }
       }
 
       form.addEventListener('submit', async (event) => {

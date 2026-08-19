@@ -340,11 +340,31 @@ const computeEnglishGematria = (input) => {
   return total;
 };
 
+// The name calculator has three fields, so only the first three words travel.
+const NAME_CALCULATOR_FIELDS = 3;
+
+const takeNameParts = (raw) => String(raw || '')
+  .trim()
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, NAME_CALCULATOR_FIELDS);
+
+// The name calculator fills its fields from name1/name2/name3 and renders
+// straight away, so splitting what was typed here means the visitor lands on
+// finished results rather than an empty form.
+const buildNameCalculatorHref = (parts) => {
+  if (!parts.length) return '/name-calculator.html';
+  const searchParams = new URLSearchParams();
+  parts.forEach((part, index) => searchParams.set(`name${index + 1}`, part));
+  return `/name-calculator.html?${searchParams.toString()}`;
+};
+
 const initializeHeroQuickCalc = () => {
   const input = document.getElementById('heroQuickCalcInput');
   const valueNode = document.getElementById('heroQuickCalcValue');
   const caption = document.getElementById('heroQuickCalcCaption');
   const deepLink = document.getElementById('heroQuickCalcDeepLink');
+  const nameLink = document.getElementById('heroQuickCalcNameLink');
   if (!input || !valueNode || !deepLink) return;
 
   const container = input.closest('.hero-quick-calc');
@@ -365,6 +385,13 @@ const initializeHeroQuickCalc = () => {
       deepLink.setAttribute('aria-disabled', 'true');
       deepLink.setAttribute('tabindex', '-1');
       deepLink.removeAttribute('data-active');
+      if (nameLink) {
+        nameLink.setAttribute('href', '/name-calculator.html');
+        nameLink.removeAttribute('aria-label');
+        nameLink.setAttribute('aria-disabled', 'true');
+        nameLink.setAttribute('tabindex', '-1');
+        nameLink.removeAttribute('data-active');
+      }
       if (container) container.setAttribute('data-state', 'empty');
       return;
     }
@@ -380,6 +407,16 @@ const initializeHeroQuickCalc = () => {
     deepLink.setAttribute('aria-disabled', 'false');
     deepLink.removeAttribute('tabindex');
     deepLink.setAttribute('data-active', 'true');
+    if (nameLink) {
+      const nameParts = takeNameParts(raw);
+      nameLink.setAttribute('href', buildNameCalculatorHref(nameParts));
+      // Announce what actually travels, not what was typed: a fourth word is
+      // dropped, and claiming otherwise in the label would be a lie.
+      nameLink.setAttribute('aria-label', `Compare "${nameParts.join(' ')}" on the name calculator`);
+      nameLink.setAttribute('aria-disabled', 'false');
+      nameLink.removeAttribute('tabindex');
+      nameLink.setAttribute('data-active', 'true');
+    }
     if (container) container.setAttribute('data-state', 'filled');
     if (!trackedThisSession) {
       trackedThisSession = true;

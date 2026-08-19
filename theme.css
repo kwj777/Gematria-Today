@@ -2108,6 +2108,23 @@ button.definition-link:focus-visible {
   .results-grid { grid-template-columns: 1fr; }
 }
 
+/* Watermarked preview of the printable name chart. The source PNG is portrait
+   8x10 rendered at screen resolution, so it is capped rather than stretched --
+   at full container width it would tower over the results grid above it. */
+.name-chart-preview {
+  display: block;
+  width: 100%;
+  max-width: min(100%, 30rem);
+  height: auto;
+  margin-inline: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.75rem 2rem rgba(11, 27, 48, 0.35);
+}
+
+.name-chart-figure {
+  margin-bottom: 0;
+}
+
 .blog-carousel .carousel-control-prev,
 .blog-carousel .carousel-control-next {
   width: 3rem;
@@ -3896,6 +3913,58 @@ a.badge,
 .feature-card-icon:hover {
   transform: translateY(-2px);
   border-color: rgba(var(--brand-amber-rgb), 0.55);
+}
+
+/* The homepage cards are anchors: they describe a tool and now lead to it.
+   Without this they would render as underlined link-blue blocks. */
+a.feature-card-icon,
+a.feature-card-icon:hover,
+a.feature-card-icon:focus-visible {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.feature-card-icon:focus-visible {
+  border-color: rgba(var(--brand-amber-rgb), 0.55);
+  outline: 2px solid var(--brand-amber);
+  outline-offset: 3px;
+}
+
+/* Without an arrow these read as the same inert panels they used to be, and a
+   card nobody knows to click is no better than the dead <div> it replaced.
+   Scoped to the anchor so a non-linked card would not advertise a click. */
+a.feature-card-icon .feature-card-icon__title::after {
+  content: " \2192";
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  color: var(--brand-amber);
+  transition: transform 0.18s ease;
+}
+
+a.feature-card-icon:hover .feature-card-icon__title::after,
+a.feature-card-icon:focus-visible .feature-card-icon__title::after {
+  transform: translateX(0.2rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a.feature-card-icon .feature-card-icon__title::after {
+    transition: none;
+  }
+
+  a.feature-card-icon:hover .feature-card-icon__title::after,
+  a.feature-card-icon:focus-visible .feature-card-icon__title::after {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-card-icon {
+    transition: border-color 0.18s ease;
+  }
+
+  .feature-card-icon:hover {
+    transform: none;
+  }
 }
 
 .feature-card-icon__icon {

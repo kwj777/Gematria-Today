@@ -59,6 +59,13 @@
       .hero-quick-calc__deep-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; color: #fbbf24; text-decoration: none; padding: 0.45rem 0.85rem; border: 1px solid rgba(251,191,36,0.55); border-radius: 0.55rem; opacity: 0.5; pointer-events: none; transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease; }
       .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; animation: heroQuickCalcDeepLinkPulse 0.6s ease-out; }
       .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: none; background: rgba(251,191,36,0.12); border-color: #fbbf24; }
+      .hero-quick-calc__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; }
+      /* The name route is deliberately quieter than the gold primary: the word
+         calculator is the proven path, this one just stops the hero promising
+         "or name" and then not offering it. */
+      .hero-quick-calc__deep-link--name { color: rgba(255,255,255,0.94); border-color: rgba(255,255,255,0.38); }
+      .hero-quick-calc__deep-link--name:hover, .hero-quick-calc__deep-link--name:focus-visible { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.75); }
+      .hero-quick-calc__deep-link--name[data-active="true"] { animation: none; }
       .hero-quick-calc__deep-link-kbd { font: inherit; font-size: 0.7rem; font-weight: 600; padding: 0.05rem 0.4rem; border-radius: 0.3rem; background: rgba(251,191,36,0.18); border: 1px solid rgba(251,191,36,0.55); color: #fde68a; line-height: 1.4; }
       @keyframes heroQuickCalcDeepLinkPulse {
         0% { box-shadow: 0 0 0 0 rgba(251,191,36,0.55); }
@@ -84,7 +91,7 @@
            browser auto-zooms on focus. Do not drop below 1rem here. */
         .hero-quick-calc__input { font-size: 1rem; padding: 0.6rem 0.85rem; }
         .hero-quick-calc[data-state="empty"] .hero-quick-calc__result,
-        .hero-quick-calc[data-state="empty"] .hero-quick-calc__deep-link { display: none; }
+        .hero-quick-calc[data-state="empty"] .hero-quick-calc__actions { display: none; }
       }
       .word-of-day-spotlight[aria-busy="true"] .wotd-stats,
       .word-of-day-spotlight[aria-busy="true"] .wotd-breakdown { visibility: hidden; }
@@ -169,7 +176,10 @@
                   <span class="hero-quick-calc__value" id="heroQuickCalcValue" aria-live="polite" aria-atomic="true">—</span>
                   <span class="hero-quick-calc__caption" id="heroQuickCalcCaption">English gematria value</span>
                 </div>
-                <a class="hero-quick-calc__deep-link" id="heroQuickCalcDeepLink" href="/calculator.html?query=light" aria-disabled="true" tabindex="-1">See it on the full calculator →</a>
+                <div class="hero-quick-calc__actions">
+                  <a class="hero-quick-calc__deep-link" id="heroQuickCalcDeepLink" href="/calculator.html?query=light" aria-disabled="true" tabindex="-1">See it on the full calculator &rarr;</a>
+                  <a class="hero-quick-calc__deep-link hero-quick-calc__deep-link--name" id="heroQuickCalcNameLink" href="/name-calculator.html" aria-disabled="true" tabindex="-1" data-track-action="home_hero_quick_calc_name_link_click" data-track-source="home_hero_quick_calc">Compare as a name &rarr;</a>
+                </div>
               </div>
             </div>
           </div>
@@ -218,31 +228,31 @@
 
         <section class="row g-4 mb-5" aria-label="What you can do here">
           <div class="col-md-4">
-            <div class="feature-card-icon">
+            <a class="feature-card-icon" href="/calculator.html" data-track-action="home_feature_card_click" data-track-source="home_feature_card_research_words">
               <span class="feature-card-icon__icon" aria-hidden="true">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
               </span>
               <h3 class="feature-card-icon__title">Research words</h3>
               <p class="feature-card-icon__body">Use the calculator to inspect related terms, roots, and definitions.</p>
-            </div>
+            </a>
           </div>
           <div class="col-md-4">
-            <div class="feature-card-icon">
+            <a class="feature-card-icon" href="/name-calculator.html" data-track-action="home_feature_card_click" data-track-source="home_feature_card_compare_names">
               <span class="feature-card-icon__icon" aria-hidden="true">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
               </span>
               <h3 class="feature-card-icon__title">Compare names</h3>
               <p class="feature-card-icon__body">Test multiple names in parallel and follow links to matching result pages.</p>
-            </div>
+            </a>
           </div>
           <div class="col-md-4">
-            <div class="feature-card-icon">
+            <a class="feature-card-icon" href="/tools.html" data-track-action="home_feature_card_click" data-track-source="home_feature_card_share_insights">
               <span class="feature-card-icon__icon" aria-hidden="true">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
               </span>
               <h3 class="feature-card-icon__title">Share insights</h3>
               <p class="feature-card-icon__body">Share findings with clear, linkable result pages that make patterns and takeaways easy to revisit.</p>
-            </div>
+            </a>
           </div>
         </section>
 

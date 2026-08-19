@@ -60,12 +60,12 @@
       .hero-quick-calc__deep-link[data-active="true"] { opacity: 1; pointer-events: auto; animation: heroQuickCalcDeepLinkPulse 0.6s ease-out; }
       .hero-quick-calc__deep-link:hover, .hero-quick-calc__deep-link:focus-visible { text-decoration: none; background: rgba(251,191,36,0.12); border-color: #fbbf24; }
       .hero-quick-calc__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; }
-      /* The name route is deliberately quieter than the gold primary: the word
-         calculator is the proven path, this one just stops the hero promising
-         "or name" and then not offering it. */
-      .hero-quick-calc__deep-link--name { color: rgba(255,255,255,0.94); border-color: rgba(255,255,255,0.38); }
+      /* Quieter than the gold primary -- the word calculator is the proven path.
+         Unlike that one it never goes inert: the word calculator needs a query
+         to be worth opening, whereas /name-calculator.html is useful on its own,
+         so this link stays clickable with no JavaScript involved at all. */
+      .hero-quick-calc__deep-link--name { opacity: 1; pointer-events: auto; color: rgba(255,255,255,0.94); border-color: rgba(255,255,255,0.38); }
       .hero-quick-calc__deep-link--name:hover, .hero-quick-calc__deep-link--name:focus-visible { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.75); }
-      .hero-quick-calc__deep-link--name[data-active="true"] { animation: none; }
       .hero-quick-calc__deep-link-kbd { font: inherit; font-size: 0.7rem; font-weight: 600; padding: 0.05rem 0.4rem; border-radius: 0.3rem; background: rgba(251,191,36,0.18); border: 1px solid rgba(251,191,36,0.55); color: #fde68a; line-height: 1.4; }
       @keyframes heroQuickCalcDeepLinkPulse {
         0% { box-shadow: 0 0 0 0 rgba(251,191,36,0.55); }
@@ -178,7 +178,7 @@
                 </div>
                 <div class="hero-quick-calc__actions">
                   <a class="hero-quick-calc__deep-link" id="heroQuickCalcDeepLink" href="/calculator.html?query=light" aria-disabled="true" tabindex="-1">See it on the full calculator &rarr;</a>
-                  <a class="hero-quick-calc__deep-link hero-quick-calc__deep-link--name" id="heroQuickCalcNameLink" href="/name-calculator.html" aria-disabled="true" tabindex="-1" data-track-action="home_hero_quick_calc_name_link_click" data-track-source="home_hero_quick_calc">Compare as a name &rarr;</a>
+                  <a class="hero-quick-calc__deep-link hero-quick-calc__deep-link--name" id="heroQuickCalcNameLink" href="/name-calculator.html" data-track-action="home_hero_quick_calc_name_link_click" data-track-source="home_hero_quick_calc">Compare as a name &rarr;</a>
                 </div>
               </div>
             </div>

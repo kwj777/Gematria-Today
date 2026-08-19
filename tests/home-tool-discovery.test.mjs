@@ -69,12 +69,47 @@ test('the hero label promising "a word or name" is backed by both routes', () =>
   assert.ok(HOME.includes('Compare as a name'));
 });
 
-test('both hero routes start inert, so neither fires on an empty box', () => {
-  for (const id of ['heroQuickCalcDeepLink', 'heroQuickCalcNameLink']) {
-    const tag = HOME.match(new RegExp(`<a[^>]*id="${id}"[^>]*>`))?.[0] || '';
-    assert.match(tag, /aria-disabled="true"/, `${id} does not start disabled`);
-    assert.match(tag, /tabindex="-1"/, `${id} is reachable by keyboard while inert`);
-  }
+test('the word calculator route starts inert, having nothing to show yet', () => {
+  const tag = HOME.match(/<a[^>]*id="heroQuickCalcDeepLink"[^>]*>/)?.[0] || '';
+  assert.match(tag, /aria-disabled="true"/);
+  assert.match(tag, /tabindex="-1"/);
+});
+
+test('the name route works with no JavaScript at all', () => {
+  // It shipped inert-until-typed, copying the word calculator, and in
+  // production it rendered but never activated -- a link to a page that exists
+  // should not depend on a script running for the click to work. The word
+  // calculator still needs its query; /name-calculator.html does not.
+  const tag = HOME.match(/<a[^>]*id="heroQuickCalcNameLink"[^>]*>/)?.[0] || '';
+  assert.ok(tag, 'the name route is missing');
+  assert.ok(!tag.includes('aria-disabled="true"'), 'the name route still ships disabled');
+  assert.ok(!tag.includes('tabindex="-1"'), 'the name route is unreachable by keyboard');
+  assert.match(tag, /href="\/name-calculator\.html"/, 'the name route has no working static href');
+});
+
+test('the name route is not left inert by the shared link styling', () => {
+  // .hero-quick-calc__deep-link sets opacity 0.5 / pointer-events none and
+  // relies on JS to add data-active. The variant has to opt out of both or the
+  // static href above is unclickable anyway.
+  assert.match(
+    HOME,
+    /\.hero-quick-calc__deep-link--name \{[^}]*pointer-events: auto[^}]*\}/,
+    'the name variant never re-enables pointer events',
+  );
+});
+
+test('the script only enhances the name route, never disables it', () => {
+  // Any of these reintroduces the production failure: a stale or failed script
+  // would leave the link permanently unclickable.
+  const heroBlock = HOME_SCRIPT.slice(HOME_SCRIPT.indexOf('initializeHeroQuickCalc'));
+  assert.ok(
+    !/nameLink\.setAttribute\('aria-disabled'/.test(heroBlock),
+    'the script disables the name route',
+  );
+  assert.ok(
+    !/nameLink\.setAttribute\('tabindex'/.test(heroBlock),
+    'the script removes the name route from the tab order',
+  );
 });
 
 test('the phone empty-state rule hides the whole action row', () => {

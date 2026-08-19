@@ -2,7 +2,7 @@
 // theme.css and site-bundle.js, and because static assets were served
 // cache-first with no revalidation, returning visitors ran new HTML against
 // whichever CSS and JS they happened to cache first -- indefinitely.
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGE_CACHE = `pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;

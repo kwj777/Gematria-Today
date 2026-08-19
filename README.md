@@ -160,6 +160,68 @@ Stripe-backed membership upgrades now use recurring yearly Checkout sessions via
 
 Member and admin account recovery now sends transactional emails through SendGrid only. Recovery requests require outbound email to be configured; recovery codes and username reminders are no longer shown on screen. SendGrid sender details/API credentials can now be saved from the admin back-office via `admin-settings`, with environment variables still supported as a fallback.
 
+## Social sign-in (OAuth)
+
+Members can create an account or sign in with Google instead of a password. The flow is the standard
+authorization-code exchange across three endpoints:
+
+- `/api/member-oauth-providers` — lists the providers whose credentials are configured. The sign-in
+  buttons stay hidden until this reports one, so an unconfigured deploy never shows a button that
+  dead-ends in an error.
+- `/api/member-oauth-start?provider=google` — signs a `state` value, stores it in a short-lived
+  `HttpOnly` cookie, and redirects to the provider.
+- `/api/member-oauth-callback` — the provider's redirect target. Verifies `state` against the cookie,
+  exchanges the code with the PKCE verifier, validates the `id_token` claims (`iss`, `aud`, `exp`,
+  `nonce` — all required), then creates or links the membership and issues the normal member session
+  cookie.
+
+PKCE (RFC 7636, S256) is used even though this is a confidential client: the verifier is generated at
+start, kept in the `HttpOnly` state cookie, and never placed in the `state` parameter, which travels
+through the provider. An OIDC provider that returns no `id_token` is refused rather than read from the
+userinfo endpoint, because a userinfo response carries no audience, issuer or nonce to check.
+
+Accounts created this way have no password: `users.password_hash` holds a sentinel that can never
+verify. A member who wants one sets it through the existing account-recovery flow.
+
+### Account linking
+
+When a provider profile matches an existing account by email, the provider identity is linked to that
+account — but only when the provider asserts the email is verified. An unverified provider email is
+refused with `link_requires_password`, because linking on an unverified claim is the account-takeover
+path. Emails matching a staff account are refused outright; staff sign in through the admin form, and
+that check runs on the stored-identity path too, so a member promoted to admin after linking cannot
+sign in with Google either.
+
+Linking also reads the **local** row's provenance, not just the provider's. Anyone can register any
+address by password; that account sits `pending` and its password is inert only because pending rows
+cannot sign in. Linking activates the row, which would quietly arm that password against an account
+the member now believes is theirs — so when the local row was never verified, its password is replaced
+with the OAuth-only sentinel and its sessions are revoked before the row is adopted. The member is
+told this happened and pointed at account recovery to set a new password.
+
+A new account whose provider email is unverified is created as `pending` and receives the usual
+verification email; no session is issued until that link is used. Retrying later re-sends the link
+rather than dead-ending.
+
+Usernames are the public badge slug (`/b/<username>`), so signups get one generated from the provider
+**display name** — never the email address, which would permanently publish a guess at the member's
+address on every badge and forum post — and checked against `MEMBER_USERNAME_PATTERN` before insert.
+
+### Setup
+
+1. In the Google Cloud console, create an OAuth 2.0 Client ID of type **Web application**.
+2. Add `https://<your-domain>/api/member-oauth-callback` as an **Authorized redirect URI** — once per
+   domain that serves the site, deploy previews included.
+3. Set `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` in Netlify. Both are required; a
+   half-configured provider is treated as unconfigured.
+4. Make sure `PUBLIC_SITE_URL` (or Netlify's `URL`) matches the domain in step 2. The redirect URI must
+   be byte-identical between the authorize call and the token exchange, or Google rejects it.
+
+### New database table
+
+`member_oauth_identities` — one row per (provider, provider account), created by both
+`sql/member_schema.sql` and the runtime `ensureOAuthSchema` migration.
+
 ## DDoS and abuse protection
 
 The serverless layer now includes:
@@ -201,6 +263,8 @@ Set these in Netlify to tune protection behavior:
 - `SENDGRID_FROM_NAME="Gematria.Today"` optional sender display name shown in recovery emails
 - `SENDGRID_REPLY_TO_EMAIL=...` optional reply-to address for recovery emails
 - `PUBLIC_SITE_URL=https://example.com` optional canonical site URL used in recovery email links
+- `GOOGLE_OAUTH_CLIENT_ID=...` and `GOOGLE_OAUTH_CLIENT_SECRET=...` to enable Google sign-in; leave unset to hide the buttons
+- `OAUTH_STATE_SECRET=...` optional dedicated key for signing the OAuth `state` parameter (falls back to `CSRF_SECRET`)
 ### Dashboards, alerts, and high alert operations
 
 - `admin-reports` now includes a `trafficAlerts` dashboard payload that highlights spike conditions for `/api/member-login`, `/api/member-register`, and expensive public endpoints.

@@ -7,6 +7,9 @@ import { handler as memberSessionHandler } from '../netlify/functions/member-ses
 import { handler as memberLogoutHandler } from '../netlify/functions/member-logout.mjs';
 import { handler as memberLoginHandler } from '../netlify/functions/member-login.mjs';
 import { handler as memberRegisterHandler } from '../netlify/functions/member-register.mjs';
+import { handler as memberOauthProvidersHandler } from '../netlify/functions/member-oauth-providers.mjs';
+import { handler as memberOauthStartHandler } from '../netlify/functions/member-oauth-start.mjs';
+import { handler as memberOauthCallbackHandler } from '../netlify/functions/member-oauth-callback.mjs';
 import { handler as memberLearningPathConsumeHandler } from '../netlify/functions/member-learning-path-consume.mjs';
 import { handler as memberLearningPathCompleteHandler } from '../netlify/functions/member-learning-path-complete.mjs';
 import { handler as memberBadgesHandler } from '../netlify/functions/member-badges.mjs';
@@ -49,6 +52,9 @@ const methodGuardCases = [
   { name: 'member-logout', handler: memberLogoutHandler, allowedMethod: 'POST' },
   { name: 'member-login', handler: memberLoginHandler, allowedMethod: 'POST' },
   { name: 'member-register', handler: memberRegisterHandler, allowedMethod: 'POST' },
+  { name: 'member-oauth-providers', handler: memberOauthProvidersHandler, allowedMethod: 'GET' },
+  { name: 'member-oauth-start', handler: memberOauthStartHandler, allowedMethod: 'GET' },
+  { name: 'member-oauth-callback', handler: memberOauthCallbackHandler, allowedMethod: 'GET' },
   { name: 'member-learning-path-consume', handler: memberLearningPathConsumeHandler, allowedMethod: 'POST' },
   { name: 'member-learning-path-complete', handler: memberLearningPathCompleteHandler, allowedMethod: 'POST' },
   { name: 'member-badges', handler: memberBadgesHandler, allowedMethod: 'GET' },

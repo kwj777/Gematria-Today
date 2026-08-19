@@ -163,6 +163,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS member_badges_user_slug_idx
 CREATE INDEX IF NOT EXISTS member_badges_user_earned_idx
   ON member_badges (user_id, earned_at DESC);
 
+-- Social sign-in. One row per (provider, provider account); the unique index on
+-- (user_id, provider) keeps a member from ending up with two Google identities
+-- pointing at the same account.
+CREATE TABLE IF NOT EXISTS member_oauth_identities (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  provider_user_id TEXT NOT NULL,
+  email TEXT,
+  email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  display_name TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS member_oauth_identities_provider_subject_idx
+  ON member_oauth_identities (provider, provider_user_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS member_oauth_identities_user_provider_idx
+  ON member_oauth_identities (user_id, provider);
+
 DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles;
 DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history;
 DROP FUNCTION IF EXISTS set_updated_at_timestamp();

@@ -109,6 +109,17 @@ export async function consumeAccountRecoveryRequest(sql, {
   return rows[0] || null;
 }
 
+// Every auth cookie this codebase sets needs the same Secure decision, and it
+// used to be copy-pasted into each builder. _oauth.mjs sets a fifth cookie, so
+// the rule lives in one place now.
+export function cookieSecureDirective() {
+  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
+  const shouldUseSecureCookie = explicitSecureSetting
+    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
+    : process.env.CONTEXT !== 'dev';
+  return shouldUseSecureCookie ? '; Secure' : '';
+}
+
 export const AUTH_COOKIES = {
   admin: 'gematria_admin_session',
   member: 'gematria_member_session',
@@ -129,11 +140,7 @@ export function createVisitorSessionToken() {
 
 export function createVisitorSessionCookie(token) {
   const expiresAt = new Date(Date.now() + VISITOR_SESSION_TTL_MS);
-  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
-  const shouldUseSecureCookie = explicitSecureSetting
-    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
-    : process.env.CONTEXT !== 'dev';
-  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  const secureDirective = cookieSecureDirective();
   return `${AUTH_COOKIES.visitor}=${encodeURIComponent(token)}; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
 
@@ -235,20 +242,12 @@ async function findAuthenticatedSession(event, sql, cookieName) {
 }
 
 export function createSessionCookie(token, expiresAt, cookieName = AUTH_COOKIES.admin) {
-  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
-  const shouldUseSecureCookie = explicitSecureSetting
-    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
-    : process.env.CONTEXT !== 'dev';
-  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  const secureDirective = cookieSecureDirective();
   return `${cookieName}=${encodeURIComponent(token)}; Path=/; HttpOnly${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
 
 function buildSessionClearHeader(cookieName, { httpOnly = true } = {}) {
-  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
-  const shouldUseSecureCookie = explicitSecureSetting
-    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
-    : process.env.CONTEXT !== 'dev';
-  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  const secureDirective = cookieSecureDirective();
   const httpOnlyDirective = httpOnly ? '; HttpOnly' : '';
   return `${cookieName}=; Path=/${httpOnlyDirective}${secureDirective}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
@@ -264,11 +263,7 @@ const ALLOWED_MEMBER_TIERS = new Set(['free', 'premium', 'lifetime']);
 // getAuthenticatedMember / formatMemberUser.
 export function createMemberTierCookie(level, expiresAt) {
   const normalized = ALLOWED_MEMBER_TIERS.has(level) ? level : 'free';
-  const explicitSecureSetting = String(process.env.AUTH_COOKIE_SECURE || '').trim().toLowerCase();
-  const shouldUseSecureCookie = explicitSecureSetting
-    ? !['0', 'false', 'no', 'off'].includes(explicitSecureSetting)
-    : process.env.CONTEXT !== 'dev';
-  const secureDirective = shouldUseSecureCookie ? '; Secure' : '';
+  const secureDirective = cookieSecureDirective();
   return `${AUTH_COOKIES.memberTier}=${normalized}; Path=/${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
 

@@ -385,12 +385,12 @@ const initializeHeroQuickCalc = () => {
       deepLink.setAttribute('aria-disabled', 'true');
       deepLink.setAttribute('tabindex', '-1');
       deepLink.removeAttribute('data-active');
+      // Never disabled: the name calculator is worth opening with or without a
+      // name to carry into it, so this route degrades to a plain link rather
+      // than going inert the way the word calculator has to.
       if (nameLink) {
         nameLink.setAttribute('href', '/name-calculator.html');
         nameLink.removeAttribute('aria-label');
-        nameLink.setAttribute('aria-disabled', 'true');
-        nameLink.setAttribute('tabindex', '-1');
-        nameLink.removeAttribute('data-active');
       }
       if (container) container.setAttribute('data-state', 'empty');
       return;
@@ -413,9 +413,6 @@ const initializeHeroQuickCalc = () => {
       // Announce what actually travels, not what was typed: a fourth word is
       // dropped, and claiming otherwise in the label would be a lie.
       nameLink.setAttribute('aria-label', `Compare "${nameParts.join(' ')}" on the name calculator`);
-      nameLink.setAttribute('aria-disabled', 'false');
-      nameLink.removeAttribute('tabindex');
-      nameLink.setAttribute('data-active', 'true');
     }
     if (container) container.setAttribute('data-state', 'filled');
     if (!trackedThisSession) {

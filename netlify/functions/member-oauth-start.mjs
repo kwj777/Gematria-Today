@@ -57,12 +57,13 @@ export async function handler(event) {
       });
     }
 
-    const { state, nonce } = createOAuthState({ provider: provider.id, returnTo });
+    const { state, nonce, codeChallenge, cookieValue } = createOAuthState({ provider: provider.id, returnTo });
     const authorizationUrl = buildAuthorizationUrl(provider, {
       clientId,
       redirectUri: resolveOAuthRedirectUri(event),
       state,
       nonce,
+      codeChallenge,
     });
 
     if (sql) {
@@ -74,7 +75,7 @@ export async function handler(event) {
       });
     }
 
-    return redirectResponse(authorizationUrl, { cookies: [createOAuthStateCookie(state)] });
+    return redirectResponse(authorizationUrl, { cookies: [createOAuthStateCookie(cookieValue)] });
   } catch (error) {
     if (error.statusCode === 429) {
       return failureRedirect(returnTo, 'rate_limited');

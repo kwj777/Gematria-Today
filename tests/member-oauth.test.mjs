@@ -14,8 +14,11 @@ import {
   buildReturnUrl,
   buildUsernameCandidate,
   buildUsernameSeed,
+  OAUTH_ONLY_PASSWORD_HASH,
+  allocateUsername,
   createOAuthState,
   decodeIdTokenClaims,
+  fetchOAuthProfile,
   findOrCreateMemberFromOAuth,
   getOAuthProvider,
   listConfiguredOAuthProviders,
@@ -246,11 +249,19 @@ test('normalizeOAuthProfile only trusts an explicit verified flag', () => {
 
 // ---------- username allocation ----------
 
-test('buildUsernameSeed produces a badge-safe slug from provider profiles', () => {
-  assert.equal(buildUsernameSeed({ email: 'Kev.Smith@example.com' }), 'kev.smith');
-  assert.equal(buildUsernameSeed({ email: '', displayName: 'Renée Ó Súilleabháin' }), 'renee-o-suilleabhain');
-  assert.match(buildUsernameSeed({ email: 'a@example.com' }), /^member-[0-9a-f]{8}$/);
+test('buildUsernameSeed produces a badge-safe slug from the display name', () => {
+  assert.equal(buildUsernameSeed({ displayName: 'Renée Ó Súilleabháin' }), 'renee-o-suilleabhain');
+  assert.match(buildUsernameSeed({ displayName: 'Al' }), /^member-[0-9a-f]{8}$/);
   assert.match(buildUsernameSeed({}), /^member-[0-9a-f]{8}$/);
+});
+
+test('the public badge slug is never derived from the email address', () => {
+  // /b/<username> is public and there is no rename endpoint, so an email-derived
+  // slug would permanently publish a guess at the member's address.
+  const seed = buildUsernameSeed({ email: 'john.smith@example.com', displayName: '' });
+  assert.ok(!seed.includes('john'), `seed ${JSON.stringify(seed)} leaks the email local part`);
+  assert.match(seed, /^member-[0-9a-f]{8}$/);
+  assert.equal(buildUsernameSeed({ email: 'john.smith@example.com', displayName: 'John S' }), 'john-s');
 });
 
 test('every generated username satisfies the badge-link username pattern', () => {
@@ -309,6 +320,7 @@ function createMockSql({
   userByEmailRows = [],
   memberRow = MEMBER_ROW,
   usernameTaken = false,
+  rotatedIdentityRows = [],
 } = {}) {
   const calls = [];
 
@@ -316,10 +328,13 @@ function createMockSql({
     const query = strings.join('?');
     calls.push({ query, values });
 
-    if (/SELECT user_id\s+FROM member_oauth_identities/i.test(query)) {
+    if (/FROM member_oauth_identities AS identities/i.test(query)) {
       return Promise.resolve(identityRows);
     }
-    if (/SELECT id, role, status\s+FROM users/i.test(query)) {
+    if (/UPDATE member_oauth_identities/i.test(query)) {
+      return Promise.resolve(rotatedIdentityRows);
+    }
+    if (/SELECT id, role, status, email_verified\s+FROM users/i.test(query)) {
       return Promise.resolve(userByEmailRows);
     }
     if (/SELECT 1 FROM users WHERE username/i.test(query)) {
@@ -346,6 +361,19 @@ function createMockSql({
 
   return { sql, calls };
 }
+
+// Guards the mock itself. Routing by regex over query text fails open -- a query
+// this mock stops recognising falls through to [] and can make a test pass for
+// the wrong reason -- so assert the branches actually fire.
+test('the mock sql routes every query the account helpers issue', async () => {
+  const { sql, calls } = createMockSql({ identityRows: [{ user_id: 'user-1', role: 'member', status: 'active', email_verified: true }] });
+  await findOrCreateMemberFromOAuth(sql, verifiedProfile());
+  const matched = (pattern) => calls.some(({ query }) => pattern.test(query));
+  assert.ok(matched(/FROM member_oauth_identities AS identities/i), 'identity lookup route is live');
+  assert.ok(matched(/UPDATE member_oauth_identities/i), 'rotation route is live');
+  assert.ok(matched(/FROM users\s+WHERE id =/i), 'loadMemberRow route is live');
+  assert.ok(matched(/INSERT INTO member_profiles/i), 'profile route is live');
+});
 
 function verifiedProfile(overrides = {}) {
   return {
@@ -410,12 +438,12 @@ test('findOrCreateMemberFromOAuth refuses a suspended account', async () => {
 });
 
 test('findOrCreateMemberFromOAuth signs a returning member in through their stored identity', async () => {
-  const { sql, calls } = createMockSql({ identityRows: [{ user_id: 'user-1' }] });
+  const { sql, calls } = createMockSql({ identityRows: [{ user_id: 'user-1', role: 'member', status: 'active', email_verified: true }] });
   const result = await findOrCreateMemberFromOAuth(sql, verifiedProfile());
   assert.equal(result.created, false);
   assert.equal(result.linked, false);
   assert.equal(result.member.id, 'user-1');
-  assert.ok(!calls.some(({ query }) => /SELECT id, role, status\s+FROM users/i.test(query)), 'a known identity should not fall through to the email lookup');
+  assert.ok(!calls.some(({ query }) => /SELECT id, role, status, email_verified\s+FROM users/i.test(query)), 'a known identity should not fall through to the email lookup');
 });
 
 test('findOrCreateMemberFromOAuth needs an email address to create a membership', async () => {
@@ -493,8 +521,16 @@ test('member-oauth-start redirects to the provider with a state cookie', async (
   // provider, which is the one request that needs it.
   assert.ok(cookies[0].includes('SameSite=Lax'));
 
-  const cookieState = decodeURIComponent(cookies[0].split(';')[0].split('=')[1]);
+  const [cookieState, codeVerifier] = decodeURIComponent(cookies[0].split(';')[0].split('=')[1]).split('~');
   assert.equal(cookieState, location.searchParams.get('state'));
+
+  // PKCE: the challenge goes to the provider, the verifier stays in the cookie.
+  assert.equal(location.searchParams.get('code_challenge_method'), 'S256');
+  const challenge = location.searchParams.get('code_challenge');
+  assert.ok(challenge, 'authorize URL must carry a code_challenge');
+  assert.equal(challenge, crypto.createHash('sha256').update(codeVerifier).digest('base64url'));
+  // The verifier must never travel through the provider.
+  assert.ok(!location.search.includes(codeVerifier), 'code_verifier must not appear in the authorize URL');
 });
 
 test('member-oauth-start sends an unconfigured provider back to the page instead of an error document', async () => {
@@ -573,4 +609,196 @@ test('member-oauth-callback requires an authorization code', async () => {
     queryStringParameters: { state },
   });
   assert.equal(response.headers.location, '/member.html?auth=login&oauth_error=missing_code');
+});
+
+// ---------- regressions for the audit findings ----------
+// Each test below fails against the pre-audit implementation.
+
+test('linking retires the password of a local account that was never verified', async () => {
+  // Account pre-hijacking: anyone can register any address by password, leaving a
+  // pending row whose password is inert only because pending rows cannot sign in.
+  // Linking activates that row, so the stale credential must not survive it.
+  const { sql, calls } = createMockSql({
+    userByEmailRows: [{ id: 'user-1', role: 'member', status: 'pending', email_verified: false }],
+  });
+  const result = await findOrCreateMemberFromOAuth(sql, verifiedProfile());
+
+  assert.equal(result.linked, true);
+  assert.equal(result.passwordRetired, true);
+
+  const retire = calls.find(({ query }) => /UPDATE users\s+SET password_hash/i.test(query));
+  assert.ok(retire, 'the unverified account password must be retired before the row is activated');
+  assert.ok(retire.values.includes(OAUTH_ONLY_PASSWORD_HASH));
+  assert.ok(
+    calls.some(({ query }) => /DELETE FROM sessions/i.test(query)),
+    'any session opened against the pre-registered row must be revoked',
+  );
+
+  // Ordering matters: activating first would arm the password, however briefly.
+  const retireAt = calls.findIndex(({ query }) => /UPDATE users\s+SET password_hash/i.test(query));
+  const activateAt = calls.findIndex(({ query }) => /SET email_verified = TRUE/i.test(query));
+  assert.ok(retireAt < activateAt, 'the password must be retired before the account is activated');
+});
+
+test('linking leaves a genuinely verified account password alone', async () => {
+  const { sql, calls } = createMockSql({
+    userByEmailRows: [{ id: 'user-1', role: 'member', status: 'active', email_verified: true }],
+  });
+  const result = await findOrCreateMemberFromOAuth(sql, verifiedProfile());
+
+  assert.equal(result.linked, true);
+  assert.equal(result.passwordRetired, false);
+  assert.ok(!calls.some(({ query }) => /UPDATE users\s+SET password_hash/i.test(query)));
+  assert.ok(!calls.some(({ query }) => /DELETE FROM sessions/i.test(query)));
+});
+
+test('a linked identity whose user was promoted to admin is refused', async () => {
+  // The staff refusal on the email branch only covers the first sign-in. Once an
+  // identity row exists, a later promotion would otherwise hand out a member
+  // cookie for an admin user -- which admin-session upgrades to an admin cookie.
+  const { sql } = createMockSql({
+    identityRows: [{ user_id: 'admin-1', role: 'admin', status: 'active', email_verified: true }],
+  });
+  await assert.rejects(
+    findOrCreateMemberFromOAuth(sql, verifiedProfile()),
+    (error) => error.code === 'staff_account_conflict',
+  );
+});
+
+test('a linked identity on a suspended account is refused', async () => {
+  const { sql } = createMockSql({
+    identityRows: [{ user_id: 'user-1', role: 'member', status: 'suspended', email_verified: true }],
+  });
+  await assert.rejects(
+    findOrCreateMemberFromOAuth(sql, verifiedProfile()),
+    (error) => error.code === 'account_not_active',
+  );
+});
+
+test('retrying on a still-pending account resends verification instead of dead-ending', async () => {
+  const pendingRow = { ...MEMBER_ROW, status: 'pending', email_verified: false };
+  const { sql } = createMockSql({
+    identityRows: [{ user_id: 'user-1', role: 'member', status: 'pending', email_verified: false }],
+    memberRow: pendingRow,
+  });
+  const result = await findOrCreateMemberFromOAuth(sql, verifiedProfile({ emailVerified: false }));
+  assert.equal(result.requiresEmailVerification, true);
+  assert.equal(result.member.status, 'pending');
+});
+
+test('a re-keyed provider account rotates its subject instead of colliding', async () => {
+  // Two unique indexes cover member_oauth_identities but a statement gets one
+  // arbiter, so a new sub for an existing (user, provider) pair used to raise
+  // 23505 and break that member's sign-in permanently.
+  const { sql, calls } = createMockSql({
+    userByEmailRows: [{ id: 'user-1', role: 'member', status: 'active', email_verified: true }],
+    rotatedIdentityRows: [{ id: 'identity-1' }],
+  });
+  await findOrCreateMemberFromOAuth(sql, verifiedProfile({ providerUserId: 'google-sub-2' }));
+
+  const rotate = calls.find(({ query }) => /UPDATE member_oauth_identities/i.test(query));
+  assert.ok(rotate, 'an existing (user, provider) row must be updated in place');
+  assert.ok(rotate.values.includes('google-sub-2'));
+  assert.ok(
+    !calls.some(({ query }) => /INSERT INTO member_oauth_identities/i.test(query)),
+    'a successful rotation must not also attempt the insert',
+  );
+});
+
+test('a fresh identity still inserts when there is nothing to rotate', async () => {
+  const { sql, calls } = createMockSql({ rotatedIdentityRows: [] });
+  await findOrCreateMemberFromOAuth(sql, verifiedProfile());
+  assert.ok(calls.some(({ query }) => /INSERT INTO member_oauth_identities/i.test(query)));
+});
+
+test('allocateUsername keeps trying until it finds a free handle', async () => {
+  const seen = [];
+  function sql(strings, ...values) {
+    const query = strings.join('?');
+    if (/SELECT 1 FROM users WHERE username/i.test(query)) {
+      seen.push(values[0]);
+      // First two candidates are taken; the third is free.
+      return Promise.resolve(seen.length < 3 ? [{ '?column?': 1 }] : []);
+    }
+    return Promise.resolve([]);
+  }
+  const username = await allocateUsername(sql, { displayName: 'Kev Smith' });
+  assert.equal(seen.length, 3);
+  assert.equal(username, seen[2]);
+  assert.equal(new Set(seen).size, 3, 'each attempt must propose a different handle');
+  for (const candidate of seen) {
+    assert.ok(MEMBER_USERNAME_PATTERN.test(candidate), `${candidate} is not a valid username`);
+  }
+});
+
+test('sanitizeReturnPath strips the URL characters browsers ignore', () => {
+  // A browser removes ASCII tab, LF and CR before parsing a URL, so '/<tab>/host'
+  // resolves to //host. Prefix-matching '//' never saw it coming.
+  assert.equal(sanitizeReturnPath('/\t/evil.example'), '/member.html');
+  assert.equal(sanitizeReturnPath('/\n/evil.example'), '/member.html');
+  assert.equal(sanitizeReturnPath('/\r/evil.example'), '/member.html');
+  assert.equal(sanitizeReturnPath('/\t\t//evil.example'), '/member.html');
+  assert.equal(sanitizeReturnPath('/\\/evil.example'), '/member.html');
+  assert.equal(sanitizeReturnPath('https:/\t/evil.example'), '/member.html');
+  // Legitimate paths still survive intact.
+  assert.equal(sanitizeReturnPath('/member.html?auth=login#authSection'), '/member.html?auth=login#authSection');
+});
+
+test('no sanitizeReturnPath output can leave the site', () => {
+  const hostile = [
+    '/\t/evil.example', '//evil.example', '/\\evil.example', 'https://evil.example',
+    '/\t\\evil.example', '/%09/evil.example', '/ /evil.example', '///evil.example',
+    'javascript:alert(1)', '/\r\n/evil.example',
+  ];
+  for (const candidate of hostile) {
+    const resolved = new URL(sanitizeReturnPath(candidate), 'https://gematria.today');
+    assert.equal(resolved.origin, 'https://gematria.today', `${JSON.stringify(candidate)} escaped the site`);
+  }
+});
+
+test('assertIdTokenClaims requires an expiry rather than skipping the check', () => {
+  const claims = { iss: 'accounts.google.com', aud: 'client-123', nonce: 'n' };
+  assert.throws(
+    () => assertIdTokenClaims(GOOGLE, claims, { clientId: 'client-123', nonce: 'n' }),
+    (error) => error.code === 'expired_id_token',
+  );
+});
+
+test('an OIDC provider that returns no id_token is refused, not read from userinfo', async () => {
+  // The userinfo response carries no audience, issuer or nonce, so accepting it
+  // would drop exactly the binding that stops a captured code being replayed.
+  await assert.rejects(
+    fetchOAuthProfile(GOOGLE, { access_token: 'token-without-id-token' }, { clientId: 'client-123', nonce: 'n' }),
+    (error) => error.code === 'missing_id_token',
+  );
+});
+
+test('createOAuthState keeps the PKCE verifier out of the state parameter', () => {
+  const { state, codeVerifier, codeChallenge, cookieValue } = createOAuthState({ provider: 'google' });
+  assert.ok(codeVerifier && codeChallenge);
+  assert.ok(!state.includes(codeVerifier), 'the verifier must never travel to the provider');
+  assert.equal(codeChallenge, crypto.createHash('sha256').update(codeVerifier).digest('base64url'));
+  assert.equal(cookieValue, `${state}~${codeVerifier}`);
+});
+
+test('verifyOAuthState returns the verifier the cookie carried', () => {
+  const { state, codeVerifier, cookieValue } = createOAuthState({ provider: 'google' });
+  const payload = verifyOAuthState({ stateFromQuery: state, stateFromCookie: cookieValue });
+  assert.equal(payload.codeVerifier, codeVerifier);
+  assert.equal(payload.p, 'google');
+  // A cookie carrying a different state still fails, verifier or not.
+  const other = createOAuthState({ provider: 'google' });
+  assert.equal(verifyOAuthState({ stateFromQuery: state, stateFromCookie: other.cookieValue }), null);
+});
+
+test('member-oauth-start will not emit a Location that leaves the site', async () => {
+  const response = await withEnv(
+    { GOOGLE_OAUTH_CLIENT_ID: undefined, GOOGLE_OAUTH_CLIENT_SECRET: undefined, DATABASE_URL: undefined },
+    () => startHandler({
+      httpMethod: 'GET',
+      headers: {},
+      queryStringParameters: { provider: 'google', return_to: '/\t/evil.example' },
+    }),
+  );
+  assert.equal(new URL(response.headers.location, 'https://gematria.today').origin, 'https://gematria.today');
 });

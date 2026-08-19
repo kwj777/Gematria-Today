@@ -99,6 +99,7 @@ export async function handler(event) {
       redirectUri: resolveOAuthRedirectUri(event),
       clientId,
       clientSecret,
+      codeVerifier: statePayload.codeVerifier,
     });
     const oauthProfile = await fetchOAuthProfile(provider, tokens, { clientId, nonce: statePayload.n });
     const result = await findOrCreateMemberFromOAuth(sql, oauthProfile);
@@ -106,15 +107,23 @@ export async function handler(event) {
     // No session until the address is confirmed. Signing them in here would
     // make our own verification email pointless.
     if (result.requiresEmailVerification) {
-      const verification = await createMemberEmailVerificationRequest(sql, result.member.id);
-      const delivery = await sendMemberVerificationEmail({
-        sql,
-        toEmail: result.member.email,
-        username: result.member.username,
-        verificationToken: verification.token,
-        expiresAt: verification.expiresAt,
-      });
-      await markVerificationEmailDelivered(sql, result.member.id, delivery.delivered);
+      // The account row is already committed by this point. If the send throws,
+      // reporting a generic sign-in failure would be a lie -- the account exists
+      // and the member needs to be told the link is not coming.
+      let delivery = { delivered: false };
+      try {
+        const verification = await createMemberEmailVerificationRequest(sql, result.member.id);
+        delivery = await sendMemberVerificationEmail({
+          sql,
+          toEmail: result.member.email,
+          username: result.member.username,
+          verificationToken: verification.token,
+          expiresAt: verification.expiresAt,
+        });
+        await markVerificationEmailDelivered(sql, result.member.id, delivery.delivered);
+      } catch (deliveryError) {
+        console.error('[member-oauth-callback] verification email failed:', deliveryError.message);
+      }
       await logRequestAudit(sql, event, {
         route: 'member-oauth-callback',
         action: 'authenticate',
@@ -146,6 +155,7 @@ export async function handler(event) {
         oauth_provider: provider.id,
         ...(result.created ? { oauth_new: '1' } : {}),
         ...(result.linked ? { oauth_linked: '1' } : {}),
+        ...(result.passwordRetired ? { oauth_password_retired: '1' } : {}),
       }, { remove: ['auth'] }),
       {
         cookies: [
@@ -159,6 +169,17 @@ export async function handler(event) {
     if (error.statusCode === 429) {
       return failureRedirect(returnTo, 'rate_limited');
     }
+    // Best-effort: a logging failure must never turn a handled error into an
+    // unhandled one, and sql may not exist if getSqlClient is what threw.
+    try {
+      const auditSql = getSqlClient();
+      await logRequestAudit(auditSql, event, {
+        route: 'member-oauth-callback',
+        action: 'authenticate',
+        outcome: 'failure',
+        metadata: { code: error.code || 'unknown', statusCode: error.statusCode || 500 },
+      });
+    } catch { /* logging is not worth failing the response over */ }
     // Codes the member can act on are passed through by name so the page can
     // show the matching instruction; anything else collapses to a generic code.
     const actionableCodes = new Set([

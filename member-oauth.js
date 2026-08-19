@@ -24,9 +24,16 @@
   };
   const GENERIC_ERROR = 'We could not complete that sign-in. Please try again, or use the form below.';
 
+  function lookup(table, key, fallback) {
+    // Object.hasOwn, not a bracket read: '?oauth_error=constructor' otherwise
+    // resolves through Object.prototype and skips the fallback entirely.
+    const name = String(key || '');
+    return Object.hasOwn(table, name) ? table[name] : fallback;
+  }
+
   function providerLabel(id) {
     const known = { google: 'Google' };
-    return known[String(id || '').toLowerCase()] || 'your provider';
+    return lookup(known, String(id || '').toLowerCase(), 'your provider');
   }
 
   function describeSuccess(params) {
@@ -44,6 +51,12 @@
       return { tone: 'success', message: `Welcome aboard — your membership was created with ${label}.` };
     }
     if (params.get('oauth_linked') === '1') {
+      if (params.get('oauth_password_retired') === '1') {
+        return {
+          tone: 'warning',
+          message: `Signed in with ${label} and linked it to the account already using that email. That account had a password that was never confirmed by email, so it has been removed — use ${label} to sign in, or set a new password from the account recovery page.`,
+        };
+      }
       return { tone: 'success', message: `Signed in with ${label} and linked it to your existing membership.` };
     }
     return { tone: 'success', message: `Signed in with ${label}.` };
@@ -66,12 +79,12 @@
     }
 
     const outcome = errorCode
-      ? { ok: false, code: errorCode, tone: 'danger', message: ERROR_MESSAGES[errorCode] || GENERIC_ERROR }
+      ? { ok: false, code: errorCode, tone: 'danger', message: lookup(ERROR_MESSAGES, errorCode, GENERIC_ERROR) }
       : { ok: status !== 'verify', code: status, ...describeSuccess(params) };
     outcome.provider = params.get('oauth_provider') || '';
     outcome.signedIn = Boolean(status === 'success');
 
-    for (const key of ['oauth', 'oauth_error', 'oauth_provider', 'oauth_new', 'oauth_linked', 'oauth_email_sent']) {
+    for (const key of ['oauth', 'oauth_error', 'oauth_provider', 'oauth_new', 'oauth_linked', 'oauth_email_sent', 'oauth_password_retired']) {
       params.delete(key);
     }
     const query = params.toString();

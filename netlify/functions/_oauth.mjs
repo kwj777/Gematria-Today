@@ -147,13 +147,35 @@ function signStatePayload(encodedPayload) {
 // Only same-site paths are honoured as a post-sign-in destination. An open
 // redirect here would let an attacker send the member (and their brand new
 // session cookie) anywhere.
+//
+// Prefix-matching '//' and '/\\' is not enough. Browsers strip ASCII tab, LF and
+// CR out of a URL before parsing it, so '/<tab>/evil.com' passes a prefix test
+// and then resolves to //evil.com -- an off-site redirect on the very response
+// that sets the session cookie. Strip those bytes first, then resolve against a
+// placeholder origin and keep the result only if it stayed on that origin. That
+// also catches the backslash and encoded-scheme variants for free.
+const RETURN_PATH_ORIGIN = 'https://return-path.invalid';
+
 export function sanitizeReturnPath(value) {
-  const raw = String(value || '').trim();
-  if (!raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) {
+  const cleaned = String(value || '').replace(/[\t\n\r]/g, '').trim();
+  if (!cleaned.startsWith('/')) {
     return OAUTH_RETURN_PATH;
   }
-  return raw;
+  let resolved;
+  try {
+    resolved = new URL(cleaned, RETURN_PATH_ORIGIN);
+  } catch {
+    return OAUTH_RETURN_PATH;
+  }
+  if (resolved.origin !== RETURN_PATH_ORIGIN) {
+    return OAUTH_RETURN_PATH;
+  }
+  return `${resolved.pathname}${resolved.search}${resolved.hash}`;
 }
+
+// Separator between the state and the PKCE verifier inside the cookie. Both
+// halves are base64url, so this byte can never occur inside either.
+const OAUTH_COOKIE_SEPARATOR = '~';
 
 export function createOAuthState({ provider, returnTo = OAUTH_RETURN_PATH } = {}) {
   const nonce = crypto.randomBytes(16).toString('hex');
@@ -165,7 +187,21 @@ export function createOAuthState({ provider, returnTo = OAUTH_RETURN_PATH } = {}
   };
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
   const state = `${encodedPayload}.${signStatePayload(encodedPayload)}`;
-  return { state, nonce, payload };
+
+  // PKCE (RFC 7636). The verifier stays in the HttpOnly cookie and is never put
+  // in the state, because the state travels to the provider as a query
+  // parameter -- sending the verifier there would defeat the whole mechanism.
+  const codeVerifier = crypto.randomBytes(32).toString('base64url');
+  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+
+  return {
+    state,
+    nonce,
+    payload,
+    codeVerifier,
+    codeChallenge,
+    cookieValue: `${state}${OAUTH_COOKIE_SEPARATOR}${codeVerifier}`,
+  };
 }
 
 export function parseOAuthState(state) {
@@ -202,31 +238,33 @@ export function parseOAuthState(state) {
 // Signature plus TTL proves we minted the state; the cookie comparison proves it
 // came back in the same browser that started the flow. Both are required -- a
 // signed state on its own can be replayed into a victim's session (login CSRF).
+// Returns the decoded payload plus the PKCE verifier the cookie carried.
 export function verifyOAuthState({ stateFromQuery, stateFromCookie } = {}) {
   const queryState = String(stateFromQuery || '');
-  const cookieState = String(stateFromCookie || '');
+  const [cookieState = '', codeVerifier = ''] = String(stateFromCookie || '').split(OAUTH_COOKIE_SEPARATOR);
   if (!queryState || !cookieState || queryState.length !== cookieState.length) {
     return null;
   }
   if (!crypto.timingSafeEqual(Buffer.from(queryState, 'utf8'), Buffer.from(cookieState, 'utf8'))) {
     return null;
   }
-  return parseOAuthState(queryState);
+  const payload = parseOAuthState(queryState);
+  return payload ? { ...payload, codeVerifier } : null;
 }
 
-export function createOAuthStateCookie(state) {
+export function createOAuthStateCookie(cookieValue) {
   const expiresAt = new Date(Date.now() + OAUTH_STATE_TTL_MS);
   // SameSite=Lax, not Strict: the callback arrives as a top-level GET navigation
   // from accounts.google.com, and Strict would withhold the cookie on exactly
   // that request, breaking every sign-in.
-  return `${OAUTH_STATE_COOKIE}=${encodeURIComponent(state)}; Path=/; HttpOnly${cookieSecureDirective()}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+  return `${OAUTH_STATE_COOKIE}=${encodeURIComponent(cookieValue)}; Path=/; HttpOnly${cookieSecureDirective()}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
 }
 
 export function clearOAuthStateCookie() {
   return `${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly${cookieSecureDirective()}; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
-export function buildAuthorizationUrl(provider, { clientId, redirectUri, state, nonce }) {
+export function buildAuthorizationUrl(provider, { clientId, redirectUri, state, nonce, codeChallenge }) {
   const url = new URL(provider.authorizeUrl);
   url.searchParams.set('client_id', clientId);
   url.searchParams.set('redirect_uri', redirectUri);
@@ -236,13 +274,17 @@ export function buildAuthorizationUrl(provider, { clientId, redirectUri, state, 
   if (nonce) {
     url.searchParams.set('nonce', nonce);
   }
+  if (codeChallenge) {
+    url.searchParams.set('code_challenge', codeChallenge);
+    url.searchParams.set('code_challenge_method', 'S256');
+  }
   for (const [key, value] of Object.entries(provider.authorizeParams || {})) {
     url.searchParams.set(key, value);
   }
   return url.toString();
 }
 
-export async function exchangeOAuthCode(provider, { code, redirectUri, clientId, clientSecret }) {
+export async function exchangeOAuthCode(provider, { code, redirectUri, clientId, clientSecret, codeVerifier }) {
   const response = await fetchWithTimeout(provider.tokenUrl, {
     method: 'POST',
     headers: {
@@ -255,6 +297,7 @@ export async function exchangeOAuthCode(provider, { code, redirectUri, clientId,
       client_secret: clientSecret,
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
+      ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
     }).toString(),
   }, OAUTH_FETCH_TIMEOUT_MS);
 
@@ -321,8 +364,11 @@ export function assertIdTokenClaims(provider, claims, { clientId, nonce } = {}) 
       code: 'invalid_id_token_audience',
     });
   }
-  if (Number.isFinite(Number(claims.exp)) && Number(claims.exp) * 1000 <= Date.now()) {
-    throw Object.assign(new Error('Sign-in provider identity token has expired'), {
+  // exp is required, not merely checked when present: a token that simply omits
+  // the claim used to sail through this branch and never expire.
+  const expiresAt = Number(claims.exp);
+  if (!Number.isFinite(expiresAt) || expiresAt * 1000 <= Date.now()) {
+    throw Object.assign(new Error('Sign-in provider identity token is missing an expiry or has expired'), {
       statusCode: 502,
       code: 'expired_id_token',
     });
@@ -359,7 +405,12 @@ export async function fetchOAuthProfile(provider, tokens, { clientId, nonce } = 
     return normalizeOAuthProfile(provider, claims);
   }
 
-  if (!provider.userInfoUrl) {
+  // An OIDC provider (one we know the issuers of) always returns an id_token for
+  // the openid scope. Falling back to userinfo when it does not would accept a
+  // profile with no audience, issuer or nonce checked at all -- which is exactly
+  // the binding that stops a captured code being replayed into another flow.
+  // Refuse instead; the userinfo path stays available for plain-OAuth providers.
+  if (provider.issuers?.length || !provider.userInfoUrl) {
     throw Object.assign(new Error('Sign-in provider did not return an identity token'), {
       statusCode: 502,
       code: 'missing_id_token',
@@ -425,10 +476,16 @@ export async function ensureOAuthSchema(sql) {
 // has to end up with one that matches MEMBER_USERNAME_PATTERN. Providers hand us
 // display names full of spaces and accents, so build a candidate rather than
 // trusting whatever came back.
+//
+// Seeded from the display name only. The email local part is NOT a candidate:
+// the slug is published on /b/<username>, on forum posts and on badge shares,
+// there is no rename endpoint anywhere in the repo, and a member who signs up
+// with Google never types it -- so deriving it from john.smith@example.com would
+// publish a high-confidence guess at their address, permanently, without them
+// ever seeing it happen. A password signup never leaks this because the member
+// chooses their own username.
 export function buildUsernameSeed(profile) {
-  const fromEmail = String(profile?.email || '').split('@')[0] || '';
-  const fromName = String(profile?.displayName || '');
-  const raw = fromEmail || fromName;
+  const raw = String(profile?.displayName || '');
   const slug = raw
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -477,6 +534,28 @@ async function loadMemberRow(sql, userId) {
 }
 
 async function upsertOAuthIdentity(sql, userId, profile) {
+  // Two unique indexes cover this table -- (provider, provider_user_id) and
+  // (user_id, provider) -- but Postgres takes its arbiter from the single stated
+  // conflict target. A provider that re-keys an account (a deleted and recreated
+  // Workspace user gets a new sub at the same address) collides on the second
+  // index, which no ON CONFLICT clause covers, so the INSERT raised 23505 and
+  // broke that member's sign-in permanently. Rotate the subject in place first.
+  const rotated = await sql`
+    UPDATE member_oauth_identities
+    SET provider_user_id = ${profile.providerUserId},
+        email = ${profile.email || null},
+        email_verified = ${Boolean(profile.emailVerified)},
+        display_name = ${profile.displayName || null},
+        avatar_url = ${profile.avatarUrl || null},
+        last_login_at = NOW()
+    WHERE user_id = ${userId}
+      AND provider = ${profile.provider}
+    RETURNING id
+  `;
+  if (rotated.length) {
+    return;
+  }
+
   await sql`
     INSERT INTO member_oauth_identities (
       id, user_id, provider, provider_user_id, email, email_verified, display_name, avatar_url
@@ -531,16 +610,33 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
     });
   }
 
+  // The role has to come back with the identity. Refusing staff on the
+  // email-lookup branch alone only covers the FIRST sign-in: a member who linked
+  // Google and was promoted later keeps their identity row, and admin-session
+  // upgrades any session cookie whose user row says role='admin' into a real
+  // admin cookie -- so an unchecked role here is a password-free path to admin.
+  // loadMemberRow cannot carry it; formatMemberUser has no role key.
   const existingIdentity = await sql`
-    SELECT user_id
-    FROM member_oauth_identities
-    WHERE provider = ${oauthProfile.provider}
-      AND provider_user_id = ${oauthProfile.providerUserId}
+    SELECT identities.user_id, users.role, users.status, users.email_verified
+    FROM member_oauth_identities AS identities
+    JOIN users ON users.id = identities.user_id
+    WHERE identities.provider = ${oauthProfile.provider}
+      AND identities.provider_user_id = ${oauthProfile.providerUserId}
     LIMIT 1
   `;
 
   if (existingIdentity.length) {
-    const userId = existingIdentity[0].user_id;
+    const identity = existingIdentity[0];
+    const userId = identity.user_id;
+    if (identity.role !== 'member') {
+      throw Object.assign(new Error('That email belongs to a staff account. Please sign in with your username and password.'), {
+        statusCode: 409,
+        code: 'staff_account_conflict',
+      });
+    }
+    if (identity.status === 'suspended' || identity.status === 'deleted') {
+      throw Object.assign(new Error(`This membership account is ${identity.status}`), { statusCode: 403, code: 'account_not_active' });
+    }
     if (oauthProfile.emailVerified) {
       await markEmailVerifiedAndActivate(sql, userId);
     }
@@ -549,15 +645,19 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
     if (!member) {
       throw Object.assign(new Error('That membership account no longer exists'), { statusCode: 404, code: 'member_missing' });
     }
-    if (member.status !== 'active') {
-      throw Object.assign(new Error(`This membership account is ${member.status}`), { statusCode: 403, code: 'account_not_active' });
-    }
     const memberProfile = await ensureMemberProfile(sql, userId, {});
+    // Still pending means the provider has never asserted this address. Sending
+    // them a fresh verification link is the only way out; the old code threw
+    // account_not_active, which is a dead end with no resend affordance on the
+    // page and no way for the member to guess what to do next.
+    if (member.status !== 'active') {
+      return { member, profile: memberProfile, created: false, linked: false, requiresEmailVerification: true };
+    }
     return { member, profile: memberProfile, created: false, linked: false, requiresEmailVerification: false };
   }
 
   const existingByEmail = await sql`
-    SELECT id, role, status
+    SELECT id, role, status, email_verified
     FROM users
     WHERE LOWER(email) = ${oauthProfile.email}
     LIMIT 1
@@ -587,11 +687,39 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
       throw Object.assign(new Error(`This membership account is ${existing.status}`), { statusCode: 403, code: 'account_not_active' });
     }
 
+    // Account pre-hijacking. Checking only the PROVIDER's email_verified leaves
+    // the other half of the comparison unread: whether this local row was ever
+    // proven to belong to anyone. Anyone can register any address by password --
+    // the account sits pending, and its password is inert only because
+    // authenticateMemberCredentials refuses to sign in a pending row. Linking
+    // flips it to active, which quietly arms that password against an account
+    // the victim now believes is theirs. So when the local row was never
+    // verified, retire the credential it was created with before adopting it.
+    if (!existing.email_verified) {
+      await sql`
+        UPDATE users
+        SET password_hash = ${OAUTH_ONLY_PASSWORD_HASH},
+            updated_at = NOW()
+        WHERE id = ${existing.id}
+          AND email_verified = FALSE
+      `;
+      await sql`DELETE FROM sessions WHERE user_id = ${existing.id}`;
+    }
+
     await markEmailVerifiedAndActivate(sql, existing.id);
     await upsertOAuthIdentity(sql, existing.id, oauthProfile);
     const member = await loadMemberRow(sql, existing.id);
     const memberProfile = await ensureMemberProfile(sql, existing.id, {});
-    return { member, profile: memberProfile, created: false, linked: true, requiresEmailVerification: false };
+    return {
+      member,
+      profile: memberProfile,
+      created: false,
+      linked: true,
+      requiresEmailVerification: false,
+      // Surfaced so the page can tell a member whose password was retired why
+      // it stopped working, instead of leaving them to discover it later.
+      passwordRetired: !existing.email_verified,
+    };
   }
 
   const username = await allocateUsername(sql, oauthProfile);

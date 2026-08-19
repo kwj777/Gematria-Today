@@ -171,8 +171,14 @@ authorization-code exchange across three endpoints:
 - `/api/member-oauth-start?provider=google` — signs a `state` value, stores it in a short-lived
   `HttpOnly` cookie, and redirects to the provider.
 - `/api/member-oauth-callback` — the provider's redirect target. Verifies `state` against the cookie,
-  exchanges the code, validates the `id_token` claims (`iss`, `aud`, `exp`, `nonce`), then creates or
-  links the membership and issues the normal member session cookie.
+  exchanges the code with the PKCE verifier, validates the `id_token` claims (`iss`, `aud`, `exp`,
+  `nonce` — all required), then creates or links the membership and issues the normal member session
+  cookie.
+
+PKCE (RFC 7636, S256) is used even though this is a confidential client: the verifier is generated at
+start, kept in the `HttpOnly` state cookie, and never placed in the `state` parameter, which travels
+through the provider. An OIDC provider that returns no `id_token` is refused rather than read from the
+userinfo endpoint, because a userinfo response carries no audience, issuer or nonce to check.
 
 Accounts created this way have no password: `users.password_hash` holds a sentinel that can never
 verify. A member who wants one sets it through the existing account-recovery flow.
@@ -182,13 +188,24 @@ verify. A member who wants one sets it through the existing account-recovery flo
 When a provider profile matches an existing account by email, the provider identity is linked to that
 account — but only when the provider asserts the email is verified. An unverified provider email is
 refused with `link_requires_password`, because linking on an unverified claim is the account-takeover
-path. Emails matching a staff account are refused outright; staff sign in through the admin form.
+path. Emails matching a staff account are refused outright; staff sign in through the admin form, and
+that check runs on the stored-identity path too, so a member promoted to admin after linking cannot
+sign in with Google either.
+
+Linking also reads the **local** row's provenance, not just the provider's. Anyone can register any
+address by password; that account sits `pending` and its password is inert only because pending rows
+cannot sign in. Linking activates the row, which would quietly arm that password against an account
+the member now believes is theirs — so when the local row was never verified, its password is replaced
+with the OAuth-only sentinel and its sessions are revoked before the row is adopted. The member is
+told this happened and pointed at account recovery to set a new password.
 
 A new account whose provider email is unverified is created as `pending` and receives the usual
-verification email; no session is issued until that link is used.
+verification email; no session is issued until that link is used. Retrying later re-sends the link
+rather than dead-ending.
 
 Usernames are the public badge slug (`/b/<username>`), so signups get one generated from the provider
-profile and checked against `MEMBER_USERNAME_PATTERN` before insert.
+**display name** — never the email address, which would permanently publish a guess at the member's
+address on every badge and forum post — and checked against `MEMBER_USERNAME_PATTERN` before insert.
 
 ### Setup
 

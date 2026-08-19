@@ -2108,6 +2108,23 @@ button.definition-link:focus-visible {
   .results-grid { grid-template-columns: 1fr; }
 }
 
+/* Watermarked preview of the printable name chart. The source PNG is portrait
+   8x10 rendered at screen resolution, so it is capped rather than stretched --
+   at full container width it would tower over the results grid above it. */
+.name-chart-preview {
+  display: block;
+  width: 100%;
+  max-width: min(100%, 30rem);
+  height: auto;
+  margin-inline: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.75rem 2rem rgba(11, 27, 48, 0.35);
+}
+
+.name-chart-figure {
+  margin-bottom: 0;
+}
+
 .blog-carousel .carousel-control-prev,
 .blog-carousel .carousel-control-next {
   width: 3rem;

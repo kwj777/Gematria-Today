@@ -460,6 +460,11 @@
     Cache-Control = "public, max-age=300"
 
 [[headers]]
+  for = "/api/name-chart-image"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
   for = "/api/public-button-report"
   [headers.values]
     Cache-Control = "no-store"
@@ -502,6 +507,12 @@
 
 [functions."super-admin-guide-index"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
+
+# resvg cannot read the woff2 cuts the site serves to browsers, so the chart
+# renderer needs TTF/OTF alongside it to print in the brand faces rather than
+# the host's default serif.
+[functions."name-chart-image"]
+  included_files = ["assets/fonts/*.ttf", "assets/fonts/*.otf"]
 
 [functions."member-prune-unverified"]
   schedule = "0 0 * * *"

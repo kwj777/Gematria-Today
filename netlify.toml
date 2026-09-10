@@ -489,6 +489,31 @@
   [headers.values]
     Cache-Control = "no-store"
 
+# Shared helpers live alongside the endpoints as netlify/functions/_*.mjs. They
+# are imported with plain relative specifiers ('./_badges.mjs'), so whether they
+# reach the deployed bundle depends entirely on how the build packages a
+# function -- and that is not something this repo controls.
+#
+# When the packager inlines dependencies, the import disappears and the helper
+# travels inside the entry file. When it copies sources verbatim instead, the
+# entry file keeps a live `import ... from './_badges.mjs'` and the helper has to
+# exist next to it at runtime. In that second mode the helpers were being left
+# out, and every endpoint importing one crashed on cold start with
+#   Cannot find module '/var/task/netlify/functions/_badges.mjs'
+#     imported from /var/task/netlify/functions/englishGematria.mjs
+# which took out the calculator, the search endpoint and the badge routes.
+#
+# included_files is an explicit copy that runs regardless of packaging mode, and
+# it preserves repository-relative paths -- so the helpers land at exactly the
+# /var/task/netlify/functions/_*.mjs paths the resolver looks for. If the
+# packager also inlines them, the extra copies are inert and cost a few KB.
+#
+# This is deliberately a global [functions] rule rather than a per-endpoint one:
+# 70 of the 75 endpoints import at least one helper. Globs listed here are merged
+# with, not replaced by, the per-function included_files below.
+[functions]
+  included_files = ["netlify/functions/_*.mjs"]
+
 # word-page renders inside the real site chrome, so it needs the nav and footer
 # partials at runtime.
 [functions."word-page"]

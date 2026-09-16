@@ -334,3 +334,49 @@ test('buildTestEmailContent escapes the requesting username in the html', () => 
   assert.doesNotMatch(html, /<img/);
   assert.match(html, /&lt;img/);
 });
+
+// ---------- a save must not blank what it does not mention ----------
+
+test('normalizeSettings leaves out fields the request never mentioned', () => {
+  const result = normalizeSettings({ siteModules: { blog: true } });
+
+  // undefined means "keep what is stored" -- '' would mean "clear it".
+  assert.equal(result.stripeAccountId, undefined);
+  assert.equal(result.stripePublishableKey, undefined);
+  assert.equal(result.sendgridFromEmail, undefined);
+  assert.equal(result.sendgridFromName, undefined);
+  assert.equal(result.sendgridReplyToEmail, undefined);
+  assert.equal(result.publicSiteUrl, undefined);
+  assert.equal(result.googleAnalyticsMeasurementId, undefined);
+});
+
+test('normalizeSettings still clears a field that is sent empty on purpose', () => {
+  // The email settings form always sends all of its inputs, so blanking the
+  // reply-to box has to keep working.
+  const result = normalizeSettings({ sendgridReplyToEmail: '', sendgridFromEmail: 'no-reply@example.com' });
+  assert.equal(result.sendgridReplyToEmail, '');
+  assert.equal(result.sendgridFromEmail, 'no-reply@example.com');
+});
+
+test('saving site modules or a theme does not carry email or Stripe settings', async () => {
+  // These forms used to resubmit the whole settings blob from page state. When
+  // the settings GET had failed, that state was empty and the save wiped the
+  // stored sender address, reply-to and public site URL.
+  for (const file of ['../page-scripts/admin-1.js', '../page-scripts/admin-super-admin-1.js']) {
+    const source = await fs.readFile(new URL(file, import.meta.url), 'utf8');
+    const saves = source.split("method: 'PUT'").slice(1);
+    for (const save of saves) {
+      const body = save.slice(0, save.indexOf('})'));
+      if (body.includes('siteModules:') || body.includes('themeCatalog:')) {
+        assert.doesNotMatch(body, /sendgrid/i, `${file}: a module/theme save still sends sendgrid fields`);
+        assert.doesNotMatch(body, /stripe/i, `${file}: a module/theme save still sends stripe fields`);
+        assert.doesNotMatch(body, /publicSiteUrl/, `${file}: a module/theme save still sends publicSiteUrl`);
+      }
+    }
+  }
+});
+
+test('a failed settings load is reported instead of showing empty fields', async () => {
+  const source = await fs.readFile(new URL('../page-scripts/admin-1.js', import.meta.url), 'utf8');
+  assert.match(source, /Could not load email delivery settings/);
+});

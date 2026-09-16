@@ -844,6 +844,13 @@
             renderEmailTemplates();
             renderSiteModules();
             renderGlobalThemeSettings();
+          } else {
+            // Without this the panel is indistinguishable from "nothing is
+            // configured": empty inputs and the placeholder meta line, with the
+            // failure only in the console.
+            const reason = settingsResult.reason?.message || 'Request failed.';
+            document.getElementById('emailSettingsMeta').textContent = `Could not load email delivery settings: ${reason} The fields below are empty because the settings did not load, not because they are unset. Reload before saving.`;
+            document.getElementById('stripeSettingsMeta').textContent = `Could not load Stripe settings: ${reason} Reload before saving.`;
           }
 
           if (schemaFaqEntriesResult.status === 'fulfilled') {
@@ -1150,15 +1157,6 @@
           const payload = await request('/api/admin-settings', {
             method: 'PUT',
             body: JSON.stringify({
-              stripeAccountId: state.stripeSettings?.stripeAccountId || '',
-              stripePublishableKey: state.stripeSettings?.stripePublishableKey || '',
-              sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
-              sendgridFromName: state.emailSettings?.sendgridFromName || '',
-              sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
-              publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
-              replaceStripeSecretKey: false,
-              replaceStripeWebhookSigningSecret: false,
-              replaceSendgridApiKey: false,
               siteModules: nextModules,
             })
           });
@@ -1183,15 +1181,6 @@
           const payload = await request('/api/admin-settings', {
             method: 'PUT',
             body: JSON.stringify({
-              stripeAccountId: state.stripeSettings?.stripeAccountId || '',
-              stripePublishableKey: state.stripeSettings?.stripePublishableKey || '',
-              sendgridFromEmail: state.emailSettings?.sendgridFromEmail || '',
-              sendgridFromName: state.emailSettings?.sendgridFromName || '',
-              sendgridReplyToEmail: state.emailSettings?.sendgridReplyToEmail || '',
-              publicSiteUrl: state.emailSettings?.publicSiteUrl || '',
-              replaceStripeSecretKey: false,
-              replaceStripeWebhookSigningSecret: false,
-              replaceSendgridApiKey: false,
               themeCatalog: buildThemeCatalogForBootswatch(selectedTheme),
             }),
           });

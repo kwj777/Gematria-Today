@@ -53,25 +53,38 @@ function normalizeSiteModules(rawValue = null) {
   }, {});
 }
 
+// A field the request does not mention comes back undefined, and the handler
+// keeps whatever is stored. Every value here used to be replaced on every save,
+// so a form that only meant to flip a site module or a theme -- and sent the
+// email and Stripe fields from whatever the page happened to have in memory --
+// could blank the sender address, reply-to and public site URL. The API keys
+// were never exposed to that: they have their own replace* flags.
+function normalizeIfPresent(body, key, transform) {
+  return Object.hasOwn(body, key) ? transform(String(body[key] ?? '')) : undefined;
+}
+
 export function normalizeSettings(body = {}) {
   const hasThemeCatalog = Object.hasOwn(body, 'themeCatalog');
   const hasPrivateThemeCatalog = Object.hasOwn(body, 'privateThemeCatalog');
-  const hasGoogleAnalyticsMeasurementId = Object.hasOwn(body, 'googleAnalyticsMeasurementId');
+  const trimmed = (value) => value.trim();
+  const trimmedLower = (value) => value.trim().toLowerCase();
   return {
-    stripeAccountId: String(body.stripeAccountId ?? '').trim(),
-    stripePublishableKey: String(body.stripePublishableKey ?? '').trim(),
+    stripeAccountId: normalizeIfPresent(body, 'stripeAccountId', trimmed),
+    stripePublishableKey: normalizeIfPresent(body, 'stripePublishableKey', trimmed),
     stripeSecretKey: String(body.stripeSecretKey ?? '').trim(),
     stripeWebhookSigningSecret: String(body.stripeWebhookSigningSecret ?? '').trim(),
     replaceStripeSecretKey: Boolean(body.replaceStripeSecretKey),
     replaceStripeWebhookSigningSecret: Boolean(body.replaceStripeWebhookSigningSecret),
-    sendgridFromEmail: String(body.sendgridFromEmail ?? '').trim().toLowerCase(),
-    sendgridFromName: String(body.sendgridFromName ?? '').trim(),
-    sendgridReplyToEmail: String(body.sendgridReplyToEmail ?? '').trim().toLowerCase(),
+    sendgridFromEmail: normalizeIfPresent(body, 'sendgridFromEmail', trimmedLower),
+    sendgridFromName: normalizeIfPresent(body, 'sendgridFromName', trimmed),
+    sendgridReplyToEmail: normalizeIfPresent(body, 'sendgridReplyToEmail', trimmedLower),
     sendgridApiKey: String(body.sendgridApiKey ?? '').trim(),
-    publicSiteUrl: String(body.publicSiteUrl ?? '').trim().replace(/\/$/, ''),
-    googleAnalyticsMeasurementId: hasGoogleAnalyticsMeasurementId
-      ? String(body.googleAnalyticsMeasurementId ?? '').trim().toUpperCase().slice(0, 32)
-      : undefined,
+    publicSiteUrl: normalizeIfPresent(body, 'publicSiteUrl', (value) => value.trim().replace(/\/$/, '')),
+    googleAnalyticsMeasurementId: normalizeIfPresent(
+      body,
+      'googleAnalyticsMeasurementId',
+      (value) => value.trim().toUpperCase().slice(0, 32),
+    ),
     replaceSendgridApiKey: Boolean(body.replaceSendgridApiKey),
     siteModules: normalizeSiteModules(body.siteModules),
     themeCatalog: hasThemeCatalog ? normalizeThemeCatalog(body.themeCatalog) : undefined,
@@ -395,21 +408,23 @@ export async function handler(event) {
       const existingRows = await getSettingsRows(sql);
       const { settings: existingSettings } = mapSettingsFromRows(existingRows);
 
+      const keepExisting = (next, existing) => (next === undefined ? existing : next);
       const nextSettings = {
-        stripeAccountId: settings.stripeAccountId,
-        stripePublishableKey: settings.stripePublishableKey,
+        stripeAccountId: keepExisting(settings.stripeAccountId, existingSettings.stripeAccountId),
+        stripePublishableKey: keepExisting(settings.stripePublishableKey, existingSettings.stripePublishableKey),
         stripeSecretKey: settings.replaceStripeSecretKey ? settings.stripeSecretKey : existingSettings.stripeSecretKey,
         stripeWebhookSigningSecret: settings.replaceStripeWebhookSigningSecret
           ? settings.stripeWebhookSigningSecret
           : existingSettings.stripeWebhookSigningSecret,
-        sendgridFromEmail: settings.sendgridFromEmail,
-        sendgridFromName: settings.sendgridFromName,
-        sendgridReplyToEmail: settings.sendgridReplyToEmail,
+        sendgridFromEmail: keepExisting(settings.sendgridFromEmail, existingSettings.sendgridFromEmail),
+        sendgridFromName: keepExisting(settings.sendgridFromName, existingSettings.sendgridFromName),
+        sendgridReplyToEmail: keepExisting(settings.sendgridReplyToEmail, existingSettings.sendgridReplyToEmail),
         sendgridApiKey: settings.replaceSendgridApiKey ? settings.sendgridApiKey : existingSettings.sendgridApiKey,
-        publicSiteUrl: settings.publicSiteUrl,
-        googleAnalyticsMeasurementId: settings.googleAnalyticsMeasurementId === undefined
-          ? existingSettings.googleAnalyticsMeasurementId
-          : settings.googleAnalyticsMeasurementId,
+        publicSiteUrl: keepExisting(settings.publicSiteUrl, existingSettings.publicSiteUrl),
+        googleAnalyticsMeasurementId: keepExisting(
+          settings.googleAnalyticsMeasurementId,
+          existingSettings.googleAnalyticsMeasurementId,
+        ),
         siteModules: settings.siteModules === null ? existingSettings.siteModules : {
           ...DEFAULT_SITE_MODULES,
           ...settings.siteModules,

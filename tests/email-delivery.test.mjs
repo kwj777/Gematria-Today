@@ -10,6 +10,7 @@ import {
   sendTransactionalEmail,
 } from '../netlify/functions/_email.mjs';
 import { buildRegistrationMessage } from '../netlify/functions/member-register.mjs';
+import { releaseUnverifiedMemberClaim } from '../netlify/functions/_member.mjs';
 
 // Pin a clean env so SendGrid stays "not configured" for every test in this
 // file. The helpers each accept sql=null which bypasses the DB lookup, so we
@@ -377,4 +378,68 @@ test('admin reports surface the most recent delivery failure reason', async () =
 
   assert.match(source, /verificationDeliveryError/);
   assert.match(source, /lastFailure:/);
+});
+
+// ---------- a signup that never got its email can start over ----------
+
+function createSqlStub(deleteResult = []) {
+  const calls = [];
+  const sql = (strings, ...values) => {
+    const text = strings.join('?');
+    calls.push({ text, values });
+    return Promise.resolve(text.includes('DELETE FROM users') ? deleteResult : []);
+  };
+  return { sql, calls, userDeletes: () => calls.filter((call) => call.text.includes('DELETE FROM users')) };
+}
+
+test('releaseUnverifiedMemberClaim frees a pending account with no live verification link', async () => {
+  const stub = createSqlStub([{ id: 'u-1' }]);
+  const released = await releaseUnverifiedMemberClaim(stub.sql, { username: ' kev ', email: '  KEV@Example.COM ' });
+
+  assert.equal(released, 1);
+  const [del] = stub.userDeletes();
+  // Only pending, unverified members, and only once their link is dead.
+  assert.match(del.text, /status = 'pending'/);
+  assert.match(del.text, /email_verified = FALSE/);
+  assert.match(del.text, /NOT EXISTS/);
+  assert.match(del.text, /expires_at > NOW\(\)/);
+  // Identifiers are normalized the same way registerMember normalizes them.
+  // A missing identifier is passed as NULL rather than '', so it matches
+  // nothing instead of matching a row with an empty column.
+  assert.deepEqual(del.values, ['kev', 'kev@example.com']);
+});
+
+test('releaseUnverifiedMemberClaim deletes nothing when given no identifiers', async () => {
+  const stub = createSqlStub([{ id: 'u-1' }]);
+  assert.equal(await releaseUnverifiedMemberClaim(stub.sql, {}), 0);
+  assert.equal(stub.userDeletes().length, 0);
+});
+
+test('registration releases a stale claim before it tries to create the account', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/member-register.mjs', import.meta.url), 'utf8');
+  const release = source.indexOf('releaseUnverifiedMemberClaim(sql');
+  const register = source.indexOf('registerMember(sql');
+
+  assert.ok(release > 0, 'member-register must release a stale unverified claim');
+  assert.ok(release < register, 'the claim has to be released before the insert that would collide with it');
+});
+
+test('the delivery record outlives the link, so the prune can actually reach an account', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/_member.mjs', import.meta.url), 'utf8');
+  const cleanup = source.slice(source.indexOf('DELETE FROM member_email_verification_requests r'));
+
+  // email_delivered lives on these rows and the prune 23 days later reads it.
+  // Deleting them at link expiry left that check with nothing to find.
+  assert.match(cleanup.slice(0, 600), /NOT EXISTS/);
+  assert.match(cleanup.slice(0, 600), /u\.status = 'pending'/);
+});
+
+test('the pages tell members how long a verification link actually lasts', async () => {
+  for (const file of ['../src/member.html', '../src/gematria-account-setup.html']) {
+    const source = await fs.readFile(new URL(file, import.meta.url), 'utf8');
+    // EMAIL_VERIFICATION_TTL_MS is 7 days; the copy used to say 24 hours, so
+    // anyone who came back on day two was told a working link was dead.
+    assert.doesNotMatch(source, /expires? (in )?24 hours/i, `${file} still promises a 24-hour link`);
+    assert.match(source, /good for 7 days/);
+  }
 });

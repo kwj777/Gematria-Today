@@ -3,3 +3,9 @@
 node_modules
 artifacts/
 _site
+
+# Local environment variables. `netlify env:pull` writes real credentials --
+# database URL, SendGrid and Stripe keys -- into .env, and a committed copy
+# would hand them to anyone who can read the repository or the built site.
+.env
+.env.*

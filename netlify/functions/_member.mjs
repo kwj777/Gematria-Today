@@ -460,10 +460,61 @@ export async function deleteExpiredUnverifiedMembers(sql) {
     RETURNING id
   `;
 
-  await sql`DELETE FROM member_email_verification_requests
-    WHERE consumed_at IS NOT NULL
-       OR expires_at <= NOW()`;
+  // email_delivered above is the only record of whether we ever reached the
+  // member, and it lives on these rows. Deleting them the moment the link
+  // expires -- at 7 days, three weeks before the account is old enough to
+  // prune -- left the EXISTS check with nothing to find, so the prune above
+  // could never delete anybody. Expired rows now survive as long as the
+  // pending account they explain; the row goes with the user on cascade.
+  await sql`DELETE FROM member_email_verification_requests r
+    WHERE r.consumed_at IS NOT NULL
+       OR (
+         r.expires_at <= NOW()
+         AND NOT EXISTS (
+           SELECT 1 FROM users u
+           WHERE u.id = r.user_id
+             AND u.role = 'member'
+             AND u.status = 'pending'
+             AND u.email_verified = FALSE
+         )
+       )`;
 
+  return rows.length;
+}
+
+// A signup whose verification email never arrived leaves a pending account that
+// nobody can use and nobody can replace: registering again is refused because
+// the username and email are taken, and the nightly prune cannot reach it
+// either. Once the verification link has expired the account is unrecoverable
+// by the person who created it, so the claim on that name and address is
+// released and they can sign up again. While a link is still live the account
+// is left alone, so a signup in progress cannot be taken out from under the
+// person who started it by anyone who knows their email.
+export async function releaseUnverifiedMemberClaim(sql, { username = '', email = '' } = {}) {
+  await ensureMemberSchema(sql);
+  const normalizedUsername = normalizeUsername(username);
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedUsername && !normalizedEmail) {
+    return 0;
+  }
+
+  const rows = await sql`
+    DELETE FROM users
+    WHERE role = 'member'
+      AND status = 'pending'
+      AND email_verified = FALSE
+      AND (
+        username = ${normalizedUsername || null}
+        OR LOWER(email) = ${normalizedEmail || null}
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM member_email_verification_requests r
+        WHERE r.user_id = users.id
+          AND r.consumed_at IS NULL
+          AND r.expires_at > NOW()
+      )
+    RETURNING id
+  `;
   return rows.length;
 }
 
@@ -632,7 +683,7 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
   }
 
   if (user.status === 'pending' && !user.email_verified) {
-    throw Object.assign(new Error('Please verify your email before signing in. Unverified accounts are deleted after 24 hours.'), { statusCode: 403 });
+    throw Object.assign(new Error('Please verify your email before signing in. Your verification link is good for 7 days -- request a fresh one from the sign-in page if it has run out.'), { statusCode: 403 });
   }
 
   if (user.status !== 'active') {

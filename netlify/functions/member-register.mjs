@@ -7,6 +7,7 @@ import {
   jsonResponse,
   parseBody,
   registerMember,
+  releaseUnverifiedMemberClaim,
   markVerificationEmailDelivered,
 } from './_member.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
@@ -50,6 +51,13 @@ export async function handler(event) {
       auditMetadata: { username: normalizedUsername, email: normalizedEmail },
     });
 
+    // Someone whose verification email never arrived is otherwise locked out
+    // for good: their own pending account makes the username and email taken.
+    const releasedStaleClaims = await releaseUnverifiedMemberClaim(sql, {
+      username: body.username,
+      email: body.email,
+    });
+
     const registration = await registerMember(sql, body);
     const verification = await createMemberEmailVerificationRequest(sql, registration.member.id);
     const delivery = await sendMemberVerificationEmail({
@@ -68,6 +76,7 @@ export async function handler(event) {
         username: normalizedUsername,
         email: normalizedEmail,
         verificationDelivery: delivery.delivery || 'unknown',
+        ...(releasedStaleClaims ? { releasedStaleClaims } : {}),
         // Why it did not send, for the delivery panel in admin reports. It
         // describes our own SendGrid configuration, so it stays out of the
         // response body below.

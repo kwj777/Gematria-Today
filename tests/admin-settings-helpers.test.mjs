@@ -1,10 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import fs from 'node:fs/promises';
+
 import {
+  buildTestEmailContent,
+  maskEmail,
   normalizeEmailTemplate,
   normalizeSettings,
   normalizeThemeCatalog,
+  resolveTestEmailRecipient,
   serializeSettings,
   toKebabCase,
 } from '../netlify/functions/admin-settings.mjs';
@@ -274,4 +279,58 @@ test('serializeSettings normalizes the embedded themeCatalog and privateThemeCat
   });
   assert.equal(result.themeCatalog.presets[0].slug, 'x'); // derived from name
   assert.equal(result.privateThemeCatalog.presets[0].slug, 'y');
+});
+
+// ---------- test email delivery ----------
+
+test('maskEmail keeps the domain and hides most of the local part', () => {
+  assert.equal(maskEmail('kevin@example.com'), 'ke***@example.com');
+  assert.equal(maskEmail('  Kevin@Example.COM '), 'ke***@example.com');
+  assert.equal(maskEmail('a@example.com'), 'a*@example.com');
+});
+
+test('maskEmail returns empty for anything that is not an address', () => {
+  assert.equal(maskEmail(''), '');
+  assert.equal(maskEmail('not-an-email'), '');
+  assert.equal(maskEmail('@example.com'), '');
+});
+
+test('resolveTestEmailRecipient prefers the admin account, then reply-to, then sender', () => {
+  assert.equal(
+    resolveTestEmailRecipient({ adminEmail: 'Admin@Example.com', replyTo: 'help@example.com', fromEmail: 'no-reply@example.com' }),
+    'admin@example.com',
+  );
+  assert.equal(
+    resolveTestEmailRecipient({ adminEmail: '', replyTo: 'help@example.com', fromEmail: 'no-reply@example.com' }),
+    'help@example.com',
+  );
+  assert.equal(
+    resolveTestEmailRecipient({ adminEmail: null, replyTo: '', fromEmail: 'no-reply@example.com' }),
+    'no-reply@example.com',
+  );
+  assert.equal(resolveTestEmailRecipient({}), '');
+});
+
+test('the test email never takes its recipient from the request', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/admin-settings.mjs', import.meta.url), 'utf8');
+  const action = source.slice(source.indexOf('async function sendTestEmail'), source.indexOf('export async function handler'));
+
+  // An authenticated session that can mail an arbitrary address is a relay.
+  // The recipient comes from the admin's own account and the saved settings.
+  assert.doesNotMatch(action, /parseBody/);
+  assert.match(action, /resolveTestEmailRecipient/);
+  assert.match(action, /applyRateLimit/);
+  assert.match(action, /validateCsrfRequest/);
+});
+
+test('buildTestEmailContent escapes the requesting username in the html', () => {
+  const { subject, text, html } = buildTestEmailContent({
+    username: '<img src=x onerror=alert(1)>',
+    sentAt: Date.UTC(2026, 8, 16, 12, 0, 0),
+  });
+
+  assert.match(subject, /delivery test/i);
+  assert.match(text, /Wed, 16 Sep 2026 12:00:00 GMT/);
+  assert.doesNotMatch(html, /<img/);
+  assert.match(html, /&lt;img/);
 });

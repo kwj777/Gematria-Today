@@ -6,6 +6,7 @@ import {
   ensureMemberSchema,
   getSqlClient,
   jsonResponse,
+  markVerificationEmailDelivered,
   normalizeEmail,
   parseBody,
 } from './_member.mjs';
@@ -67,6 +68,7 @@ export async function handler(event) {
 
     let outcome = 'no_match';
     let delivery = null;
+    let deliveryError = null;
     if (rows.length) {
       const candidate = rows[0];
       if (candidate.status === 'pending' && !candidate.email_verified) {
@@ -79,7 +81,12 @@ export async function handler(event) {
           expiresAt: verification.expiresAt,
         });
         delivery = result.delivery || 'unknown';
-        outcome = 'resent';
+        // A failed resend is the clearest signal that delivery is broken, and
+        // the only person who can act on it is the admin reading the audit log
+        // -- the caller gets the same generic reply either way.
+        deliveryError = result.delivered ? null : (result.reason || 'unknown');
+        await markVerificationEmailDelivered(sql, candidate.id, result.delivered);
+        outcome = result.delivered ? 'resent' : 'resend_undelivered';
       } else if (candidate.email_verified) {
         outcome = 'already_verified';
       } else {
@@ -91,7 +98,11 @@ export async function handler(event) {
       route: 'member-resend-verification',
       action: 'resend',
       outcome,
-      metadata: { identifier: normalizedIdentifier, delivery: delivery || 'none' },
+      metadata: {
+        identifier: normalizedIdentifier,
+        delivery: delivery || 'none',
+        ...(deliveryError ? { verificationDeliveryError: deliveryError } : {}),
+      },
     });
 
     return jsonResponse(200, {

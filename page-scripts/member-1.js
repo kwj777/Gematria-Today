@@ -693,7 +693,9 @@
           if (justRegistered) {
             membershipHeroKicker.textContent = 'Member Access';
             membershipHeroTitle.textContent = 'Almost there — verify your email.';
-            membershipHeroLead.textContent = 'We sent you a verification link. Open it, then sign in below to reach your dashboard.';
+            membershipHeroLead.textContent = registrationEmailDelivered
+              ? 'We sent you a verification link. Open it, then sign in below to reach your dashboard.'
+              : 'We could not send your verification email. Use the verification link above, then sign in below to reach your dashboard.';
             membershipHeroCta.textContent = 'Sign in';
             membershipHeroCta.setAttribute('href', '#authSection');
             return;
@@ -1431,13 +1433,37 @@
       // hero doesn't greet a brand-new unverified user with "Welcome back!".
       let justRegistered = false;
 
-      function showRegisterSuccessPanel(email) {
+      // member-register reports whether the verification email actually went
+      // out. Telling someone to check an inbox nothing was sent to is how a
+      // SendGrid outage turns into a signup that quietly never completes.
+      let registrationEmailDelivered = true;
+
+      function showRegisterSuccessPanel(email, registration = {}) {
         const panel = document.getElementById('registerSuccessPanel');
         if (!panel) return;
+        const delivered = registration?.emailDelivered !== false;
+        registrationEmailDelivered = delivered;
         const emailNode = document.getElementById('registerSuccessEmail');
         if (emailNode) {
           emailNode.textContent = maskEmailForResendNotice(email) || 'your inbox';
         }
+
+        const verificationUrl = String(registration?.verificationUrl || '');
+        const deliveredBlock = document.getElementById('registerSuccessDelivered');
+        const undeliveredBlock = document.getElementById('registerSuccessUndelivered');
+        const verifyLinkWrap = document.getElementById('registerSuccessVerifyLinkWrap');
+        const verifyLink = document.getElementById('registerSuccessVerifyLink');
+        const supportNote = document.getElementById('registerSuccessSupportNote');
+        deliveredBlock?.classList.toggle('d-none', !delivered);
+        undeliveredBlock?.classList.toggle('d-none', delivered);
+        // The spam-folder hint only makes sense for mail that was actually sent.
+        document.getElementById('registerSuccessSpamHint')?.classList.toggle('d-none', !delivered);
+        if (verifyLink && verificationUrl) {
+          verifyLink.setAttribute('href', verificationUrl);
+        }
+        verifyLinkWrap?.classList.toggle('d-none', !verificationUrl);
+        supportNote?.classList.toggle('d-none', Boolean(verificationUrl));
+
         panel.classList.remove('d-none');
         // The resend form is the recovery path when the mail never lands, so
         // surface it now rather than waiting for a failed sign-in attempt.
@@ -2382,7 +2408,7 @@
           alert: { show: showAlert, clear: clearAlert },
           source: 'member_register_form',
           request,
-          onSuccess: (_response, ctx) => {
+          onSuccess: (response, ctx) => {
             const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
             const registerEmail = document.getElementById('registerEmail').value.trim();
             session = null;
@@ -2399,7 +2425,7 @@
             setAuthView('login', { updateUrl: true });
             // Persistent panel instead of a 6s alert: this is the only place
             // that tells the user their signup isn't finished yet.
-            showRegisterSuccessPanel(registerEmail);
+            showRegisterSuccessPanel(registerEmail, response);
           },
           onError: (error) => {
             showAlert(error.message || 'Unable to create membership account.');
@@ -2411,6 +2437,7 @@
         window.gematriaTracking?.track('sign_up_start', { source: 'member_auth_tab' });
         // Starting a new signup makes the previous one's confirmation stale.
         justRegistered = false;
+        registrationEmailDelivered = true;
         hideRegisterSuccessPanel();
         setAuthView('register', { updateUrl: true });
       });

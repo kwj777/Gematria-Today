@@ -370,7 +370,12 @@
                     <div class="form-text text-muted">Hidden after save. Use Change only when replacing the stored SendGrid API key.</div>
                   </div>
                   <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save email delivery settings</button></div>
+                  <div class="col-12 d-grid">
+                    <button id="sendTestEmailButton" class="btn btn-outline-secondary" type="button">Send a test email</button>
+                    <div class="form-text text-muted">Sends through SendGrid to your admin account email, using the saved settings above. Save first if you just changed them.</div>
+                  </div>
                 </form>
+                <div id="emailTestAlert" class="alert d-none mt-3 mb-0" role="status" aria-live="polite"></div>
                 <div id="emailSettingsMeta" class="small text-muted mt-3">Recovery email delivery settings have not been loaded yet.</div>
                 </div>
               </section>

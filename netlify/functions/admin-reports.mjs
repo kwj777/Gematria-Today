@@ -125,7 +125,7 @@ export async function handler(event) {
 
     const monitoredRoutes = MONITORED_ROUTE_CONFIG.map((item) => item.route);
 
-    const [verificationDeliveryRows, membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows] = await Promise.all([
+    const [verificationDeliveryRows, membershipBreakdownRows, signupTrendRows, postTrendRows, taskStatusRows, faqRows, securityRows, tagRows, newMembersRows, activePremiumRows, expiringPremiumRows, publishedPostRows, totalWordRows, openTaskRows, overdueTaskRows, failedActionRows, trafficSpikeRows, conversionFunnelRows, publicPageViewRows, publicTrafficSummaryRows, buttonStatsRows, visitorJourneyRows, verificationDeliveryErrorRows] = await Promise.all([
       // Verification-email delivery. member-register already logs this on every
       // signup; without surfacing it a SendGrid outage is invisible while
       // registrations silently fail and are pruned 24h later.
@@ -548,6 +548,17 @@ export async function handler(event) {
         ORDER BY last_seen_at DESC
         LIMIT 50
       `,
+      // The most recent reason a verification email did not go out. The counts
+      // tell the admin that delivery is broken; this tells them what to fix.
+      sql`SELECT metadata->>'verificationDeliveryError' AS reason,
+                 route,
+                 created_at
+          FROM request_audit_log
+          WHERE route IN ('member-register', 'member-resend-verification', 'member-oauth-callback')
+            AND created_at >= NOW() - ${windowInterval}::interval
+            AND BTRIM(COALESCE(metadata->>'verificationDeliveryError', '')) <> ''
+          ORDER BY created_at DESC
+          LIMIT 1`,
     ]);
 
     const overview = overviewRows[0] || {};
@@ -571,6 +582,7 @@ export async function handler(event) {
     const verificationAttempted = Object.values(verificationDelivery).reduce((a, b) => a + b, 0);
     const verificationSent = Number(verificationDelivery.email || 0);
     const verificationUndelivered = verificationAttempted - verificationSent;
+    const lastVerificationFailure = verificationDeliveryErrorRows[0] || null;
 
     const conversionFunnel = conversionFunnelRows[0] || {};
     const uniqueVisitors = Number(conversionFunnel.unique_visitors || 0);
@@ -592,6 +604,13 @@ export async function handler(event) {
           ? Number(((verificationSent / verificationAttempted) * 100).toFixed(2))
           : null,
         byOutcome: verificationDelivery,
+        lastFailure: lastVerificationFailure
+          ? {
+            reason: String(lastVerificationFailure.reason || ''),
+            route: String(lastVerificationFailure.route || ''),
+            at: lastVerificationFailure.created_at,
+          }
+          : null,
       },
       overview: {
         newMembers: Number(overview.new_members || 0),

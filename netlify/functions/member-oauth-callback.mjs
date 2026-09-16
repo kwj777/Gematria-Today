@@ -123,12 +123,20 @@ export async function handler(event) {
         await markVerificationEmailDelivered(sql, result.member.id, delivery.delivered);
       } catch (deliveryError) {
         console.error('[member-oauth-callback] verification email failed:', deliveryError.message);
+        delivery = { delivered: false, delivery: 'send-failed', reason: deliveryError.message };
       }
       await logRequestAudit(sql, event, {
         route: 'member-oauth-callback',
         action: 'authenticate',
         outcome: 'pending_email_verification',
-        metadata: { provider: provider.id, memberId: result.member.id },
+        metadata: {
+          provider: provider.id,
+          memberId: result.member.id,
+          // Same delivery record the password signup writes, so an outage shows
+          // up in admin reports whichever door the member came through.
+          verificationDelivery: delivery.delivery || 'unknown',
+          ...(delivery.delivered ? {} : { verificationDeliveryError: delivery.reason || 'unknown' }),
+        },
       });
       return redirectResponse(
         buildReturnUrl(returnTo, {

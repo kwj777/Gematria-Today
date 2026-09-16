@@ -65,6 +65,22 @@
               emailEl.textContent = submittedEmail;
             }
             lastSubmittedIdentifier = submittedEmail || context?.payload?.username || '';
+
+            // member-register says whether the verification email actually
+            // sent. When it did not, the on-screen link is the only way to
+            // finish a signup the account has already committed to.
+            const delivered = response?.emailDelivered !== false;
+            const verificationUrl = String(response?.verificationUrl || '');
+            const verifyLink = document.getElementById('signUpSuccessVerifyLink');
+            if (verifyLink && verificationUrl) {
+              verifyLink.setAttribute('href', verificationUrl);
+            }
+            document.getElementById('signUpSuccessDelivered')?.classList.toggle('d-none', !delivered);
+            document.getElementById('signUpSuccessUndelivered')?.classList.toggle('d-none', delivered);
+            document.getElementById('signUpSuccessSpamHint')?.classList.toggle('d-none', !delivered);
+            document.getElementById('signUpSuccessVerifyLinkWrap')?.classList.toggle('d-none', !verificationUrl);
+            document.getElementById('signUpSuccessSupportNote')?.classList.toggle('d-none', Boolean(verificationUrl));
+
             form.classList.add('d-none');
             successPanel?.classList.remove('d-none');
             successPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });

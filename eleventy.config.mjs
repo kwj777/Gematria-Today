@@ -33,6 +33,7 @@ const PASSTHROUGH_EXCLUDE = new Set([
   'netlify.toml',
   'eleventy.config.mjs',
   'LICENSE',
+  '.nvmrc',
 
   // Gated content. The guides are readable only through
   // super-admin-static-page, which bundles them via included_files. Publishing
@@ -43,6 +44,12 @@ const PASSTHROUGH_EXCLUDE = new Set([
 // Root markdown is internal documentation and is not published -- except where
 // a page actually links to it. accessibility.html links to the audit report.
 const PUBLISHED_MARKDOWN = new Set(['accessibility-audit.md']);
+
+// .env, .env.local, .env.production: `netlify env:pull` writes the real
+// database URL and API keys into these. They are gitignored, so a Netlify
+// build never sees one -- but a local build would copy it into _site/, and
+// `netlify deploy --dir=_site` would then serve it at /.env.
+const isLocalEnvFile = (name) => name === '.env' || name.startsWith('.env.');
 
 const partials = await loadPartials(process.cwd());
 
@@ -66,6 +73,7 @@ export default function (eleventyConfig) {
   // Site content only -- see PASSTHROUGH_EXCLUDE above.
   for (const entry of readdirSync(process.cwd(), { withFileTypes: true })) {
     if (PASSTHROUGH_EXCLUDE.has(entry.name)) continue;
+    if (isLocalEnvFile(entry.name)) continue;
     if (entry.isFile() && entry.name.endsWith('.md') && !PUBLISHED_MARKDOWN.has(entry.name)) continue;
     eleventyConfig.addPassthroughCopy(entry.name);
   }

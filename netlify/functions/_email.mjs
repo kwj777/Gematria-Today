@@ -227,22 +227,36 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
   });
 }
 
+export function buildMemberVerificationUrl(appBaseUrl, verificationToken) {
+  const base = String(appBaseUrl || '').trim().replace(/\/$/, '');
+  if (!base || !verificationToken) {
+    return null;
+  }
+  return `${base}/member.html?verify_email_token=${encodeURIComponent(verificationToken)}&auth=login#authSection`;
+}
+
+// Never throws. Registration creates the account before the email goes out, so
+// a mail outage that throws out of here leaves a member who can neither verify
+// nor sign up again under the same name -- and, because the caller's audit log
+// runs after the send, leaves no record that delivery is broken. Every failure
+// is reported as an undelivered result carrying the link the member needs.
 export async function sendMemberVerificationEmail({ toEmail, username, verificationToken, expiresAt, sql = null }) {
   const config = await getEmailDeliveryConfig(sql);
+  const normalizedToEmail = normalizeEmail(toEmail);
+  // Composed before the early returns: when the email does not go out, this
+  // link is the only way to finish a signup the account already committed to.
+  const verificationUrl = buildMemberVerificationUrl(config.appBaseUrl, verificationToken);
+
   if (!config.enabled) {
-    return { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured' };
+    return { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured', verificationUrl };
   }
 
-  const normalizedToEmail = normalizeEmail(toEmail);
   if (!normalizedToEmail) {
-    return { delivered: false, delivery: 'onscreen-preview', reason: 'missing-recipient-email' };
+    return { delivered: false, delivery: 'onscreen-preview', reason: 'missing-recipient-email', verificationUrl };
   }
 
   const safeUsername = escapeHtml(username);
   const expiresText = new Date(expiresAt).toUTCString();
-  const verificationUrl = config.appBaseUrl
-    ? `${config.appBaseUrl}/member.html?verify_email_token=${encodeURIComponent(verificationToken)}&auth=login#authSection`
-    : null;
 
   const text = [
     'Welcome to Gematria.Today.',
@@ -260,16 +274,28 @@ export async function sendMemberVerificationEmail({ toEmail, username, verificat
     : `<p><strong>Verification token:</strong> <code>${escapeHtml(verificationToken)}</code></p>`}
   `;
 
-  const delivery = await sendTransactionalEmail({
-    toEmail: normalizedToEmail,
-    subject: 'Verify your Gematria.Today membership email',
-    text,
-    html,
-    sql,
-  });
+  try {
+    const delivery = await sendTransactionalEmail({
+      toEmail: normalizedToEmail,
+      subject: 'Verify your Gematria.Today membership email',
+      text,
+      html,
+      sql,
+    });
 
-  return {
-    ...delivery,
-    verificationUrl,
-  };
+    return {
+      ...delivery,
+      verificationUrl,
+    };
+  } catch (error) {
+    // A rejected key, an unverified sender, a rate limit or a timeout: the
+    // reason is worth recording for the admin, but it describes our own
+    // configuration, so callers keep it out of the visitor's response.
+    return {
+      delivered: false,
+      delivery: 'send-failed',
+      reason: error?.message || 'SendGrid request failed',
+      verificationUrl,
+    };
+  }
 }

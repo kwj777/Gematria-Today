@@ -324,12 +324,20 @@
           .map(([outcome, total]) => `<li><code>${escapeHtml(outcome)}</code>: ${Number(total)}</li>`)
           .join('');
 
+        // The counts say delivery is broken; the reason says what to fix. It is
+        // the interpreted SendGrid error -- unverified sender, rejected key,
+        // rate limit -- recorded at the moment the send failed.
+        const failure = stats.lastFailure && stats.lastFailure.reason
+          ? `<p class="small mb-0 mt-2">Most recent failure${stats.lastFailure.at ? ` (${escapeHtml(new Date(stats.lastFailure.at).toLocaleString())})` : ''}: ${escapeHtml(stats.lastFailure.reason)}</p>`
+          : '';
+
         target.innerHTML = `
           <div class="alert ${healthy ? 'alert-success' : 'alert-danger'} mb-0" role="status">
             <strong>${sent} of ${attempted}</strong> verification email(s) sent${rate === null ? '' : ` (${rate}%)`}.
             ${healthy
               ? 'Delivery is healthy.'
-              : `<strong>${undelivered} registration(s) never received a verification email</strong> and will be deleted 24 hours after signup unless delivery is fixed. Check the SendGrid API key and sender address in admin settings.`}
+              : `<strong>${undelivered} registration(s) never received a verification email</strong> and cannot sign in until delivery is fixed. Those accounts are kept, not pruned, so fixing the SendGrid API key and sender address in admin settings and resending still recovers them.`}
+            ${failure}
           </div>
           <ul class="small mb-0">${rows}</ul>
         `;

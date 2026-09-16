@@ -12,6 +12,18 @@ import {
 import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
+// The "link below" is only honest when one was composed, which needs a
+// configured site URL. Without it the member cannot self-serve and support is
+// the only route left.
+export function buildRegistrationMessage(delivery = {}) {
+  if (delivery.delivered) {
+    return 'Membership account created. Check your email to verify your account before signing in.';
+  }
+  return delivery.verificationUrl
+    ? 'Membership account created, but we could not send your verification email. Use the verification link below to finish activating your account.'
+    : 'Membership account created, but we could not send your verification email. Contact support to finish activating your account.';
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
     return jsonResponse(405, { error: 'Method not allowed' });
@@ -56,6 +68,10 @@ export async function handler(event) {
         username: normalizedUsername,
         email: normalizedEmail,
         verificationDelivery: delivery.delivery || 'unknown',
+        // Why it did not send, for the delivery panel in admin reports. It
+        // describes our own SendGrid configuration, so it stays out of the
+        // response body below.
+        ...(delivery.delivered ? {} : { verificationDeliveryError: delivery.reason || 'unknown' }),
       },
     });
 
@@ -69,9 +85,7 @@ export async function handler(event) {
       authenticated: false,
       member: registration.member,
       profile: registration.profile,
-      message: delivery.delivered
-        ? 'Membership account created. Check your email to verify your account before signing in.'
-        : 'Membership account created, but we could not send your verification email. Use the verification link below, or contact support.',
+      message: buildRegistrationMessage(delivery),
       emailDelivered: Boolean(delivery.delivered),
       verification: {
         required: true,

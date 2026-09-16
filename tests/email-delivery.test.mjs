@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
 import {
+  buildMemberVerificationUrl,
   getEmailDeliveryConfig,
   sendMemberVerificationEmail,
   sendRecoveryEmail,
   sendTransactionalEmail,
 } from '../netlify/functions/_email.mjs';
+import { buildRegistrationMessage } from '../netlify/functions/member-register.mjs';
 
 // Pin a clean env so SendGrid stays "not configured" for every test in this
 // file. The helpers each accept sql=null which bypasses the DB lookup, so we
@@ -203,10 +205,26 @@ test('unverified members are only pruned when the verification email was deliver
 
 test('registration does not claim an email was sent when delivery failed', async () => {
   const source = await fs.readFile(new URL('../netlify/functions/member-register.mjs', import.meta.url), 'utf8');
-
-  assert.match(source, /delivery\.delivered\s*\n?\s*\?/, 'message should branch on delivery success');
-  assert.match(source, /could not send your verification email/);
   assert.match(source, /markVerificationEmailDelivered/);
+
+  assert.match(
+    buildRegistrationMessage({ delivered: true }),
+    /Check your email/,
+  );
+  assert.match(
+    buildRegistrationMessage({ delivered: false, verificationUrl: 'https://gematria.today/member.html?verify_email_token=t' }),
+    /could not send your verification email/,
+  );
+});
+
+test('registration only points at a verification link when one exists', () => {
+  // The old copy said "use the verification link below" unconditionally, and
+  // no link was rendered anywhere -- least of all when no site URL was
+  // configured and the server never composed one.
+  const withoutLink = buildRegistrationMessage({ delivered: false, verificationUrl: null });
+  assert.match(withoutLink, /could not send your verification email/);
+  assert.doesNotMatch(withoutLink, /link below/);
+  assert.match(withoutLink, /[Cc]ontact support/);
 });
 
 test('admin reports expose verification email delivery health', async () => {
@@ -215,4 +233,148 @@ test('admin reports expose verification email delivery health', async () => {
   assert.match(source, /verificationDelivery/);
   assert.match(source, /verificationEmail: \{/);
   assert.match(source, /undelivered/);
+});
+
+// ---------- SendGrid rejecting the send ----------
+
+async function withStubbedFetch(response, run) {
+  const priorFetch = globalThis.fetch;
+  globalThis.fetch = async () => response();
+  try {
+    return await run();
+  } finally {
+    globalThis.fetch = priorFetch;
+  }
+}
+
+test('sendMemberVerificationEmail reports a SendGrid rejection instead of throwing', async () => {
+  clearEnv();
+  process.env.SENDGRID_API_KEY = 'SG.k';
+  process.env.SENDGRID_FROM_EMAIL = 'no-reply@example.com';
+  process.env.PUBLIC_SITE_URL = 'https://gematria.today';
+
+  // member-register creates the account before this call. A throw here used to
+  // 502 the whole registration: the member could neither verify nor sign up
+  // again, and the delivery outcome was never logged because the caller's
+  // audit write comes after the send.
+  const result = await withStubbedFetch(
+    () => new Response(
+      JSON.stringify({ errors: [{ message: 'The from address does not match a verified Sender Identity.' }] }),
+      { status: 403 },
+    ),
+    () => sendMemberVerificationEmail({
+      toEmail: 'kev@example.com',
+      username: 'kev',
+      verificationToken: 'tok-123',
+      expiresAt: new Date(Date.now() + 60_000),
+      sql: null,
+    }),
+  );
+
+  assert.equal(result.delivered, false);
+  assert.equal(result.delivery, 'send-failed');
+  assert.match(result.reason, /sender identity is not verified/);
+  assert.equal(result.verificationUrl, 'https://gematria.today/member.html?verify_email_token=tok-123&auth=login#authSection');
+});
+
+test('sendMemberVerificationEmail reports a SendGrid timeout instead of throwing', async () => {
+  clearEnv();
+  process.env.SENDGRID_API_KEY = 'SG.k';
+  process.env.SENDGRID_FROM_EMAIL = 'no-reply@example.com';
+
+  const result = await withStubbedFetch(
+    () => { throw new Error('Request timed out after 10000ms'); },
+    () => sendMemberVerificationEmail({
+      toEmail: 'kev@example.com',
+      username: 'kev',
+      verificationToken: 'tok-123',
+      expiresAt: new Date(Date.now() + 60_000),
+      sql: null,
+    }),
+  );
+
+  assert.equal(result.delivered, false);
+  assert.equal(result.delivery, 'send-failed');
+});
+
+test('sendMemberVerificationEmail still returns delivered on a SendGrid 202', async () => {
+  clearEnv();
+  process.env.SENDGRID_API_KEY = 'SG.k';
+  process.env.SENDGRID_FROM_EMAIL = 'no-reply@example.com';
+  process.env.PUBLIC_SITE_URL = 'https://gematria.today';
+
+  const result = await withStubbedFetch(
+    () => new Response('', { status: 202 }),
+    () => sendMemberVerificationEmail({
+      toEmail: 'kev@example.com',
+      username: 'kev',
+      verificationToken: 'tok-123',
+      expiresAt: new Date(Date.now() + 60_000),
+      sql: null,
+    }),
+  );
+
+  assert.deepEqual(result, {
+    delivered: true,
+    delivery: 'email',
+    verificationUrl: 'https://gematria.today/member.html?verify_email_token=tok-123&auth=login#authSection',
+  });
+});
+
+test('an undelivered verification still carries the link the member needs', async () => {
+  clearEnv();
+  // SendGrid unconfigured: the signup is still created, so the on-screen link
+  // is the only way to finish it. It used to be omitted from this path while
+  // the copy told the member to use "the verification link below".
+  process.env.PUBLIC_SITE_URL = 'https://gematria.today';
+  const result = await sendMemberVerificationEmail({
+    toEmail: 'kev@example.com',
+    username: 'kev',
+    verificationToken: 'tok-123',
+    expiresAt: new Date(Date.now() + 60_000),
+    sql: null,
+  });
+
+  assert.equal(result.delivered, false);
+  assert.equal(result.reason, 'sendgrid-not-configured');
+  assert.equal(result.verificationUrl, 'https://gematria.today/member.html?verify_email_token=tok-123&auth=login#authSection');
+});
+
+test('buildMemberVerificationUrl returns null without a site url or token', () => {
+  assert.equal(buildMemberVerificationUrl('', 'tok'), null);
+  assert.equal(buildMemberVerificationUrl('https://gematria.today', ''), null);
+  assert.equal(
+    buildMemberVerificationUrl('https://gematria.today/', 'a b'),
+    'https://gematria.today/member.html?verify_email_token=a%20b&auth=login#authSection',
+  );
+});
+
+// ---------- callers record the outcome ----------
+
+test('resend records the delivery outcome instead of failing the request', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/member-resend-verification.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /resend_undelivered/, 'a failed resend needs its own audit outcome');
+  assert.match(source, /markVerificationEmailDelivered/, 'a failed resend must not leave the account prunable');
+  assert.match(source, /verificationDeliveryError/);
+});
+
+test('registration records why a verification email did not send', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/member-register.mjs', import.meta.url), 'utf8');
+  assert.match(source, /verificationDeliveryError/);
+});
+
+test('the reason a send failed never reaches the visitor', async () => {
+  const register = await fs.readFile(new URL('../netlify/functions/member-register.mjs', import.meta.url), 'utf8');
+  const responseBody = register.slice(register.indexOf('return jsonResponse(201'));
+
+  // interpretSendGridError names our sender domain and API-key configuration.
+  assert.doesNotMatch(responseBody, /delivery\.reason/);
+});
+
+test('admin reports surface the most recent delivery failure reason', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/admin-reports.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /verificationDeliveryError/);
+  assert.match(source, /lastFailure:/);
 });

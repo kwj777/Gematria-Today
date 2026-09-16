@@ -218,15 +218,6 @@
           const payload = await request('/api/admin-settings', {
             method: 'PUT',
             body: JSON.stringify({
-              stripeAccountId: state.settings?.stripeAccountId || '',
-              stripePublishableKey: state.settings?.stripePublishableKey || '',
-              sendgridFromEmail: state.settings?.sendgridFromEmail || '',
-              sendgridFromName: state.settings?.sendgridFromName || '',
-              sendgridReplyToEmail: state.settings?.sendgridReplyToEmail || '',
-              publicSiteUrl: state.settings?.publicSiteUrl || '',
-              replaceStripeSecretKey: false,
-              replaceStripeWebhookSigningSecret: false,
-              replaceSendgridApiKey: false,
               siteModules: nextModules,
             }),
           });
@@ -255,15 +246,6 @@
           const payload = await request('/api/admin-settings', {
             method: 'PUT',
             body: JSON.stringify({
-              stripeAccountId: state.settings?.stripeAccountId || '',
-              stripePublishableKey: state.settings?.stripePublishableKey || '',
-              sendgridFromEmail: state.settings?.sendgridFromEmail || '',
-              sendgridFromName: state.settings?.sendgridFromName || '',
-              sendgridReplyToEmail: state.settings?.sendgridReplyToEmail || '',
-              publicSiteUrl: state.settings?.publicSiteUrl || '',
-              replaceStripeSecretKey: false,
-              replaceStripeWebhookSigningSecret: false,
-              replaceSendgridApiKey: false,
               themeCatalog: buildThemeCatalogForBootswatch(selectedTheme),
               privateThemeCatalog: state.privateThemeCatalog,
             }),
@@ -292,15 +274,6 @@
           const payload = await request('/api/admin-settings', {
             method: 'PUT',
             body: JSON.stringify({
-              stripeAccountId: state.settings?.stripeAccountId || '',
-              stripePublishableKey: state.settings?.stripePublishableKey || '',
-              sendgridFromEmail: state.settings?.sendgridFromEmail || '',
-              sendgridFromName: state.settings?.sendgridFromName || '',
-              sendgridReplyToEmail: state.settings?.sendgridReplyToEmail || '',
-              publicSiteUrl: state.settings?.publicSiteUrl || '',
-              replaceStripeSecretKey: false,
-              replaceStripeWebhookSigningSecret: false,
-              replaceSendgridApiKey: false,
               themeCatalog: state.themeCatalog,
               privateThemeCatalog: buildThemeCatalogForBootswatch(selectedTheme),
             }),

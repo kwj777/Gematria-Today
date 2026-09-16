@@ -1,5 +1,7 @@
 import { getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMethod, upsertSetting } from './_admin.mjs';
-import { clearCachedJson, logRequestAudit } from './_security.mjs';
+import { validateCsrfRequest } from './_auth.mjs';
+import { getEmailDeliveryConfig, sendTransactionalEmail } from './_email.mjs';
+import { applyRateLimit, clearCachedJson, logRequestAudit } from './_security.mjs';
 import { DEFAULT_SITE_MODULES } from './_site-modules.mjs';
 
 const DEFAULT_SETTINGS = {
@@ -233,9 +235,122 @@ function getSettingsRows(sql) {
   `;
 }
 
+export function maskEmail(value = '') {
+  const email = String(value || '').trim().toLowerCase();
+  const at = email.lastIndexOf('@');
+  if (at < 1) {
+    return '';
+  }
+  const local = email.slice(0, at);
+  const domain = email.slice(at);
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}${'*'.repeat(Math.max(local.length - visible.length, 1))}${domain}`;
+}
+
+// The test goes to the admin's own account email, falling back to the
+// addresses already configured for sending. There is deliberately no
+// recipient field: a signed-in session should not be able to mail anyone.
+export function resolveTestEmailRecipient({ adminEmail, replyTo, fromEmail } = {}) {
+  const candidates = [adminEmail, replyTo, fromEmail];
+  for (const candidate of candidates) {
+    const normalized = String(candidate || '').trim().toLowerCase();
+    if (normalized.includes('@')) {
+      return normalized;
+    }
+  }
+  return '';
+}
+
+export function buildTestEmailContent({ username, sentAt }) {
+  const stamp = new Date(sentAt).toUTCString();
+  const text = [
+    'This is a Gematria.Today email delivery test.',
+    `Requested from the admin dashboard by ${username} at ${stamp}.`,
+    'If this message arrived, SendGrid is accepting and delivering mail for this site -- verification and account-recovery emails use the same sender.',
+  ].join('\n');
+  const html = `
+    <p>This is a <strong>Gematria.Today</strong> email delivery test.</p>
+    <p>Requested from the admin dashboard by <strong>${escapeHtml(username)}</strong> at ${escapeHtml(stamp)}.</p>
+    <p>If this message arrived, SendGrid is accepting and delivering mail for this site — verification and account-recovery emails use the same sender.</p>
+  `;
+  return { subject: 'Gematria.Today email delivery test', text, html };
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+// Until this existed, the only way to find out whether SendGrid was working was
+// to watch a real signup fail. The reply carries the interpreted SendGrid error
+// so the admin can fix the key or sender address without reading logs.
+async function sendTestEmail({ sql, sessionToken, user, event }) {
+  if (!validateCsrfRequest(event, sessionToken)) {
+    return jsonResponse(403, { error: 'Request blocked. Reload the admin dashboard and try again.' });
+  }
+
+  await applyRateLimit(sql, event, {
+    scope: 'admin-settings-test-email',
+    key: user.id,
+    limit: 5,
+    windowMs: 15 * 60_000,
+    blockMs: 15 * 60_000,
+    message: 'Too many test emails. Wait a few minutes before sending another.',
+  });
+
+  const config = await getEmailDeliveryConfig(sql);
+  const adminRows = await sql`SELECT email FROM users WHERE id = ${user.id} LIMIT 1`;
+  const recipient = resolveTestEmailRecipient({
+    adminEmail: adminRows[0]?.email,
+    replyTo: config.replyTo,
+    fromEmail: config.fromEmail,
+  });
+
+  const respond = async (result) => {
+    await logRequestAudit(sql, event, {
+      route: 'admin-settings',
+      action: 'send_test_email',
+      outcome: result.sent ? 'success' : 'failed',
+      metadata: { userId: user.id, recipient: maskEmail(recipient), reason: result.reason || null },
+    });
+    return jsonResponse(200, { ...result, recipient: maskEmail(recipient) });
+  };
+
+  if (!config.enabled) {
+    return respond({
+      sent: false,
+      reason: config.apiKey
+        ? 'No From email is configured. Add a verified sender address and save before testing.'
+        : 'No SendGrid API key is stored. Add one and save before testing.',
+    });
+  }
+
+  if (!recipient) {
+    return respond({
+      sent: false,
+      reason: 'No address to send to. Add an email to your admin account, or set a reply-to address.',
+    });
+  }
+
+  const { subject, text, html } = buildTestEmailContent({ username: user.username, sentAt: Date.now() });
+
+  try {
+    const delivery = await sendTransactionalEmail({ toEmail: recipient, subject, text, html, sql });
+    return respond(delivery.delivered
+      ? { sent: true }
+      : { sent: false, reason: delivery.reason || 'The email was not sent.' });
+  } catch (error) {
+    return respond({ sent: false, reason: error.message || 'SendGrid rejected the request.' });
+  }
+}
+
 export async function handler(event) {
   try {
-    const { sql, user } = await getAuthenticatedUser(event);
+    const { sql, sessionToken, user } = await getAuthenticatedUser(event);
 
     const handlePutPatch = async () => {
       const body = parseBody(event);
@@ -349,6 +464,10 @@ export async function handler(event) {
 
       POST: async () => {
         const action = String(parseBody(event).action ?? event.queryStringParameters?.action ?? '').trim().toLowerCase();
+
+        if (action === 'send-test-email') {
+          return sendTestEmail({ sql, sessionToken, user, event });
+        }
 
         if (action !== 'clear-cache') {
           return jsonResponse(400, { error: 'Unsupported admin settings action' });

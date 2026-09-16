@@ -1313,6 +1313,42 @@
         }
       });
 
+      const sendTestEmailButton = document.getElementById('sendTestEmailButton');
+      sendTestEmailButton?.addEventListener('click', async () => {
+        const alertBox = document.getElementById('emailTestAlert');
+        const setAlert = (message, tone) => {
+          if (!alertBox) return;
+          alertBox.textContent = message;
+          alertBox.classList.remove('d-none', 'alert-success', 'alert-warning', 'alert-danger', 'alert-info');
+          alertBox.classList.add('alert-' + tone);
+        };
+
+        const originalLabel = sendTestEmailButton.innerHTML;
+        sendTestEmailButton.disabled = true;
+        sendTestEmailButton.setAttribute('aria-busy', 'true');
+        sendTestEmailButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending…';
+        setAlert('Sending a test email through SendGrid…', 'info');
+        try {
+          const payload = await request('/api/admin-settings', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'send-test-email' })
+          });
+          if (payload.sent) {
+            setAlert(`SendGrid accepted the message for ${payload.recipient || 'your admin email'}. If it does not arrive, check spam and the sender's domain authentication.`, 'success');
+          } else {
+            // The reason is the interpreted SendGrid error -- unverified
+            // sender, rejected key, quota -- which is what member signups hit.
+            setAlert(`Not sent: ${payload.reason || 'SendGrid did not accept the message.'}`, 'danger');
+          }
+        } catch (error) {
+          setAlert(error.message || 'Could not send the test email.', 'danger');
+        } finally {
+          sendTestEmailButton.disabled = false;
+          sendTestEmailButton.removeAttribute('aria-busy');
+          sendTestEmailButton.innerHTML = originalLabel;
+        }
+      });
+
       document.getElementById('stripeSettingsForm').addEventListener('submit', async (event) => {
         event.preventDefault();
         clearMessage(errorMessage);

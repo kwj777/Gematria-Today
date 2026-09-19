@@ -20,16 +20,37 @@
         target.classList.add('d-none');
       }
 
+      // The report query fans out across the database, so allow a slow window,
+      // but never an open-ended one: the loading overlay covers the page until
+      // a request settles, and a hung fetch left it there with no way out.
+      const REQUEST_TIMEOUT_MS = 20000;
+
+      function isTimeoutError(error) {
+        return error?.name === 'TimeoutError' || error?.name === 'AbortError';
+      }
+
       async function request(url) {
-        const response = await fetch(url, {
-          credentials: 'same-origin',
-          headers: { 'content-type': 'application/json' },
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload.error || 'Request failed');
+        // AbortController rather than AbortSignal.timeout: the browser gate in
+        // early-bootstrap.js admits anything with fetch, and Safari before 16
+        // has one but not the other.
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        const timeoutId = controller ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
+        try {
+          const response = await fetch(url, {
+            credentials: 'same-origin',
+            headers: { 'content-type': 'application/json' },
+            signal: controller ? controller.signal : undefined,
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.error || 'Request failed');
+          }
+          return payload;
+        } finally {
+          if (timeoutId !== null) {
+            window.clearTimeout(timeoutId);
+          }
         }
-        return payload;
       }
 
       function formatNumber(value) {
@@ -428,13 +449,13 @@
       }
 
       async function loadReports() {
-        clearError();
-        const select = document.getElementById('windowSelect');
-        const selectedWindow = parseWindowSelection(select.value);
-        state.windowQuery = selectedWindow.query;
-        state.windowLabel = selectedWindow.label;
-
         try {
+          clearError();
+          const select = document.getElementById('windowSelect');
+          const selectedWindow = parseWindowSelection(select.value);
+          state.windowQuery = selectedWindow.query;
+          state.windowLabel = selectedWindow.label;
+
           await request('/api/admin-session');
           const reports = await request(`/api/admin-reports?${selectedWindow.query}`);
           state.reports = reports;
@@ -444,11 +465,17 @@
           const errorTarget = document.getElementById('errorMessage');
           if (window.adminSession?.handleAuthError?.(error, { redirect: false, target: errorTarget })) {
             errorTarget.classList.remove('d-none');
+            document.getElementById('metaLine').textContent = 'Not authenticated or unable to load report data.';
+          } else if (isTimeoutError(error)) {
+            showError('Report data took too long to load. Check your connection, then use Refresh to try again.');
+            document.getElementById('metaLine').textContent = 'Report data timed out. Use Refresh to try again.';
           } else {
             showError(`${error.message}. Visit Admin to sign in, then return here.`);
+            document.getElementById('metaLine').textContent = 'Not authenticated or unable to load report data.';
           }
-          document.getElementById('metaLine').textContent = 'Not authenticated or unable to load report data.';
         } finally {
+          // Always release the overlay, including on an unexpected failure
+          // above: while it is up it covers the whole dashboard.
           if (!reportsBootstrapped) {
             hideAdminReportsLoadingOverlay();
             reportsBootstrapped = true;

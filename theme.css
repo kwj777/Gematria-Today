@@ -2990,25 +2990,49 @@ body.page-render-pending footer {
   visibility: hidden;
 }
 
-.page-render-overlay {
+/* The admin dashboards reuse this overlay while their first data request is
+   in flight. Without a rule for the admin class name the markup rendered as
+   an ordinary block, so the spinner and its label sat in the page flow above
+   the navbar instead of covering the half-built dashboard. */
+.page-render-overlay,
+.admin-render-overlay {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay-page);
   display: grid;
   place-items: center;
+  padding: 1.5rem;
   background: rgba(248, 250, 252, 0.9);
   backdrop-filter: blur(3px);
 }
 
-.page-render-overlay__card {
+.page-render-overlay__card,
+.admin-render-overlay__card {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  max-width: min(90vw, 22rem);
   border-radius: var(--radius-xl);
   padding: 0.9rem 1.1rem;
   background: rgba(255, 255, 255, 0.97);
+  color: var(--color-text);
   border: 1px solid var(--color-border-soft);
   box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.14);
+}
+
+/* Admin pages ship a dark mode, where the light card flashed white over the
+   dashboard it covers. */
+:root[data-bs-theme="dark"] .page-render-overlay,
+:root[data-bs-theme="dark"] .admin-render-overlay {
+  background: rgba(9, 12, 22, 0.82);
+}
+
+:root[data-bs-theme="dark"] .page-render-overlay__card,
+:root[data-bs-theme="dark"] .admin-render-overlay__card {
+  background: #1b2130;
+  color: #f3f6fb;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 1rem 2rem rgba(3, 6, 14, 0.5);
 }
 
 .admin-list {

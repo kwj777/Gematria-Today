@@ -235,6 +235,7 @@ body:has(.cookie-consent-banner--visible) .back-to-top-button {
   .pwa-update-toast,
   .pwa-launch-overlay,
   .page-render-overlay,
+  .admin-render-overlay,
   .global-loading-overlay,
   .calculator-loading-overlay,
   #feedStatusBanner,

@@ -239,22 +239,28 @@ export function buildMemberVerificationUrl(appBaseUrl, verificationToken) {
 // a mail outage that throws out of here leaves a member who can neither verify
 // nor sign up again under the same name -- and, because the caller's audit log
 // runs after the send, leaves no record that delivery is broken. Every failure
-// is reported as an undelivered result carrying the link the member needs.
+// is reported as an undelivered result instead.
+//
+// The verification link never leaves this function except inside the email.
+// It is a bearer credential: whoever opens it marks the address verified and
+// the account active. Every caller is an unauthenticated endpoint, and handing
+// it back to them -- even only when the send failed -- let anyone register
+// someone else's address and verify it themselves, which defeats the
+// pre-hijack guard in _oauth.mjs that trusts email_verified. An undelivered
+// account stays pending (and is not pruned) until a resend gets through.
 export async function sendMemberVerificationEmail({ toEmail, username, verificationToken, expiresAt, sql = null }) {
   const config = await getEmailDeliveryConfig(sql);
   const normalizedToEmail = normalizeEmail(toEmail);
-  // Composed before the early returns: when the email does not go out, this
-  // link is the only way to finish a signup the account already committed to.
-  const verificationUrl = buildMemberVerificationUrl(config.appBaseUrl, verificationToken);
 
   if (!config.enabled) {
-    return { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured', verificationUrl };
+    return { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured' };
   }
 
   if (!normalizedToEmail) {
-    return { delivered: false, delivery: 'onscreen-preview', reason: 'missing-recipient-email', verificationUrl };
+    return { delivered: false, delivery: 'onscreen-preview', reason: 'missing-recipient-email' };
   }
 
+  const verificationUrl = buildMemberVerificationUrl(config.appBaseUrl, verificationToken);
   const safeUsername = escapeHtml(username);
   const expiresText = new Date(expiresAt).toUTCString();
 
@@ -275,18 +281,13 @@ export async function sendMemberVerificationEmail({ toEmail, username, verificat
   `;
 
   try {
-    const delivery = await sendTransactionalEmail({
+    return await sendTransactionalEmail({
       toEmail: normalizedToEmail,
       subject: 'Verify your Gematria.Today membership email',
       text,
       html,
       sql,
     });
-
-    return {
-      ...delivery,
-      verificationUrl,
-    };
   } catch (error) {
     // A rejected key, an unverified sender, a rate limit or a timeout: the
     // reason is worth recording for the admin, but it describes our own
@@ -295,7 +296,6 @@ export async function sendMemberVerificationEmail({ toEmail, username, verificat
       delivered: false,
       delivery: 'send-failed',
       reason: error?.message || 'SendGrid request failed',
-      verificationUrl,
     };
   }
 }

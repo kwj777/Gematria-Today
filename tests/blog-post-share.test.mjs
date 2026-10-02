@@ -5,7 +5,9 @@ import {
   buildGoneHtml,
   buildShareHtml,
   escapeHtml,
+  extractPostSlug,
   getPostHeroImage,
+  handler,
   getShareDescription,
   stripHtml,
   toAbsoluteUrl,
@@ -220,4 +222,144 @@ test('buildGoneHtml emits a noindex/nofollow page with the post title escaped', 
 test('buildGoneHtml uses a sensible default title when post has no title', () => {
   const html = buildGoneHtml({});
   assert.ok(html.includes('<h1>Post no longer available</h1>'));
+});
+
+// ---------- extractPostSlug ----------
+
+// netlify.toml rewrites /blog/:slug to this v1 function. A v1 event has
+// path/rawUrl/queryStringParameters but no pathParameters, so reading only
+// pathParameters sent every permalink, RSS link and share link to the index.
+function v1Event(pathAndQuery, overrides = {}) {
+  const url = new URL(pathAndQuery, 'https://gematria.today');
+  return {
+    httpMethod: 'GET',
+    path: url.pathname,
+    rawUrl: url.href,
+    rawQuery: url.search.slice(1),
+    queryStringParameters: Object.fromEntries(url.searchParams),
+    multiValueQueryStringParameters: {},
+    headers: {},
+    multiValueHeaders: {},
+    body: null,
+    isBase64Encoded: false,
+    ...overrides,
+  };
+}
+
+test('extractPostSlug reads the slug from a /blog/<slug> v1 event path', () => {
+  assert.equal(extractPostSlug(v1Event('/blog/digital-roots-in-gematria')), 'digital-roots-in-gematria');
+  assert.equal(extractPostSlug(v1Event('/blog/digital-roots-in-gematria/')), 'digital-roots-in-gematria');
+  assert.equal(extractPostSlug(v1Event('/blog/Digital-Roots-In-Gematria')), 'digital-roots-in-gematria');
+});
+
+test('extractPostSlug accepts the rewritten function path and rawUrl', () => {
+  assert.equal(
+    extractPostSlug(v1Event('/.netlify/functions/blog-post-share/digital-roots-in-gematria')),
+    'digital-roots-in-gematria',
+  );
+  assert.equal(
+    extractPostSlug({ rawUrl: 'https://gematria.today/blog/digital-roots-in-gematria?post=x' }),
+    'digital-roots-in-gematria',
+  );
+});
+
+test('extractPostSlug decodes percent-encoded slugs and tolerates malformed escapes', () => {
+  assert.equal(extractPostSlug(v1Event('/blog/hello%20world')), 'hello world');
+  assert.equal(extractPostSlug({ path: '/blog/100%zz' }), '100%zz');
+});
+
+test('extractPostSlug prefers the path and falls back to ?post=', () => {
+  // Share links are /blog/<slug>?post=<slug>; the path wins when both exist.
+  assert.equal(extractPostSlug(v1Event('/blog/from-path?post=from-query')), 'from-path');
+  assert.equal(extractPostSlug(v1Event('/.netlify/functions/blog-post-share?post=From-Query')), 'from-query');
+});
+
+test('extractPostSlug returns "" when there is no slug', () => {
+  assert.equal(extractPostSlug(v1Event('/blog/')), '');
+  assert.equal(extractPostSlug(v1Event('/blog.html')), '');
+  assert.equal(extractPostSlug(v1Event('/.netlify/functions/blog-post-share')), '');
+  assert.equal(extractPostSlug(v1Event('/blog/a/b')), '');
+  assert.equal(extractPostSlug({}), '');
+  assert.equal(extractPostSlug(undefined), '');
+});
+
+// ---------- handler ----------
+
+// Stand-in for Neon's HTTP endpoint so the real handler runs end to end. Every
+// statement gets an empty result except the post lookup, which returns `post`
+// when the looked-up slug matches it.
+async function withFakeDatabase(post, run) {
+  const priorFetch = globalThis.fetch;
+  const priorUrl = process.env.DATABASE_URL;
+  const lookups = [];
+  const answer = (query) => {
+    if (!/WHERE LOWER\(COALESCE\(slug/.test(query.query)) return { fields: [], rows: [] };
+    lookups.push(query.params);
+    if (!post || query.params[0] !== post.slug) return { fields: [], rows: [] };
+    const names = Object.keys(post);
+    return {
+      fields: names.map((name) => ({ name, dataTypeID: 25 })),
+      rows: [names.map((name) => post[name])],
+    };
+  };
+  process.env.DATABASE_URL = 'postgres://user:pass@db.example.test/neondb';
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body);
+    const payload = Array.isArray(body.queries) ? { results: body.queries.map(answer) } : answer(body);
+    return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  try {
+    return { response: await run(), lookups };
+  } finally {
+    globalThis.fetch = priorFetch;
+    if (priorUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = priorUrl;
+    }
+  }
+}
+
+const PUBLISHED_POST = {
+  slug: 'digital-roots-in-gematria',
+  title: 'Digital Roots in Gematria',
+  summary: 'How digital roots work.',
+  status: 'published',
+  published_at: '2025-01-15T12:34:56Z',
+};
+
+test('handler serves the share page for a /blog/<slug> permalink (real v1 event shape)', async () => {
+  const { response, lookups } = await withFakeDatabase(PUBLISHED_POST, () =>
+    handler(v1Event('/blog/digital-roots-in-gematria?post=digital-roots-in-gematria')),
+  );
+  assert.deepEqual(lookups, [['digital-roots-in-gematria']]);
+  assert.equal(response.statusCode, 200);
+  assert.ok(response.body.includes('rel="canonical" href="https://gematria.today/blog/digital-roots-in-gematria"'));
+  assert.ok(response.body.includes('<title>Digital Roots in Gematria | Gematria.Today Blog</title>'));
+});
+
+test('handler looks up the slug from a plain /blog/<slug> path with no query', async () => {
+  const { response, lookups } = await withFakeDatabase(PUBLISHED_POST, () =>
+    handler(v1Event('/blog/Digital-Roots-In-Gematria')),
+  );
+  assert.deepEqual(lookups, [['digital-roots-in-gematria']]);
+  assert.equal(response.statusCode, 200);
+});
+
+test('handler redirects an unknown slug to the blog index after looking it up', async () => {
+  const { response, lookups } = await withFakeDatabase(PUBLISHED_POST, () =>
+    handler(v1Event('/blog/no-such-post')),
+  );
+  assert.deepEqual(lookups, [['no-such-post']]);
+  assert.equal(response.statusCode, 302);
+  assert.equal(response.headers.location, '/blog.html');
+});
+
+test('handler redirects to the blog index without a database lookup when no slug is present', async () => {
+  const { response, lookups } = await withFakeDatabase(PUBLISHED_POST, () =>
+    handler(v1Event('/.netlify/functions/blog-post-share')),
+  );
+  assert.deepEqual(lookups, []);
+  assert.equal(response.statusCode, 302);
+  assert.equal(response.headers.location, '/blog.html');
 });

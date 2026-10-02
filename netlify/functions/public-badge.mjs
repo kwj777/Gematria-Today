@@ -1,6 +1,6 @@
 import { getSqlClient, jsonResponse } from './_member.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp } from './_security.mjs';
-import { ensureBadgeSchema, getBadgeDefinition, LEARNING_PATH_BADGE_SLUG } from './_badges.mjs';
+import { ensureBadgeSchema, findBadgeHolderByUsername, getBadgeDefinition, LEARNING_PATH_BADGE_SLUG } from './_badges.mjs';
 
 const USERNAME_PATTERN = /^[A-Za-z0-9._-]{1,40}$/;
 
@@ -36,20 +36,12 @@ export async function handler(event) {
 
     await ensureBadgeSchema(sql);
 
-    const rows = await sql`
-      SELECT u.username, u.display_name, b.earned_at
-      FROM users u
-      JOIN member_badges b ON b.user_id = u.id
-      WHERE LOWER(u.username) = LOWER(${username})
-        AND b.badge_slug = ${slug}
-      LIMIT 1
-    `;
+    const row = await findBadgeHolderByUsername(sql, username, slug);
 
-    if (!rows.length) {
+    if (!row) {
       return jsonResponse(404, { error: 'Badge not found for that user' });
     }
 
-    const row = rows[0];
     return jsonResponse(200, {
       username: row.username,
       displayName: row.display_name || row.username,

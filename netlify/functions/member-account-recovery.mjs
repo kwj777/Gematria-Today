@@ -14,6 +14,7 @@ import {
 } from './_auth.mjs';
 import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
 import { ensureMemberProfile, ensureMemberSchema, formatMemberUser } from './_member.mjs';
+import { ensureOAuthSchema } from './_oauth.mjs';
 import { sendRecoveryEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -262,10 +263,48 @@ export async function handler(event) {
         });
       }
 
+      const accountRows = await sql`
+        SELECT status, email_verified
+        FROM users
+        WHERE id = ${recovery.user_id} AND role = 'member'
+        LIMIT 1
+      `;
+
+      if (!accountRows.length) {
+        return jsonResponse(404, { error: 'Member account not found' });
+      }
+
+      // Login refuses suspended and deleted accounts, so a reset code must not
+      // become the way around that.
+      const accountStatus = accountRows[0].status;
+      if (accountStatus !== 'active' && accountStatus !== 'pending') {
+        return jsonResponse(403, { error: `This membership account is ${accountStatus}` }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.member) });
+      }
+
+      // Account pre-hijacking, the mirror of the case _oauth.mjs guards. A
+      // provider account claiming an address it never verified can create a
+      // pending member here with its identity attached. Activating that row
+      // below would arm the identity against the owner who just proved the
+      // address, so retire whatever was linked before the proof arrived.
+      if (accountStatus === 'pending' && !accountRows[0].email_verified) {
+        await ensureOAuthSchema(sql);
+        await sql`DELETE FROM member_oauth_identities WHERE user_id = ${recovery.user_id}`;
+      }
+
+      // The code was emailed to this address and typed back, which proves the
+      // member controls it just as the verification link does. Leaving the row
+      // pending signed the member in to an account the unverified-signup
+      // cleanup still treated as abandoned, and deleted with everything they
+      // had paid for and posted.
       const rows = await sql`
         UPDATE users
-        SET password_hash = ${passwordHash}, updated_at = NOW()
-        WHERE id = ${recovery.user_id} AND role = 'member'
+        SET password_hash = ${passwordHash},
+            email_verified = TRUE,
+            status = CASE WHEN status = 'pending' THEN 'active' ELSE status END,
+            updated_at = NOW()
+        WHERE id = ${recovery.user_id}
+          AND role = 'member'
+          AND status IN ('active', 'pending')
         RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
       `;
 

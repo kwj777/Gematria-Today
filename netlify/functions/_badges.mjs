@@ -79,6 +79,34 @@ export function getBadgeDefinition(slug) {
   return BADGES_BY_SLUG.get(slug) || null;
 }
 
+// The public badge routes (public-badge, badge-share, badge-share-image) all
+// resolve /b/<username> through this. Share links carry the exact username, but
+// people retype them, so the lookup folds case. Usernames have only been unique
+// case-sensitively, though, and a case-folded match with LIMIT 1 and no ORDER BY
+// let a "Kevin" account answer for kevin's share page. An exact match wins; a
+// case-folded match counts only when no other account has that name in any
+// case. Otherwise there is no badge to show rather than someone else's.
+export async function findBadgeHolderByUsername(sql, username, slug) {
+  const rows = await sql`
+    SELECT u.username, u.display_name, b.earned_at
+    FROM users u
+    JOIN member_badges b ON b.user_id = u.id
+    WHERE LOWER(u.username) = LOWER(${username})
+      AND b.badge_slug = ${slug}
+      AND (
+        u.username = ${username}
+        OR NOT EXISTS (
+          SELECT 1
+          FROM users twin
+          WHERE LOWER(twin.username) = LOWER(${username})
+            AND twin.id <> u.id
+        )
+      )
+    LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
 function emptyStatsRow() {
   return {
     searches_total: 0,

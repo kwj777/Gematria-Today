@@ -2,11 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  MEMBERSHIP_RENEWAL_GRACE_MS,
+  authenticateMemberCredentials,
   formatCalculationHistory,
   formatMemberProfile,
   formatMemberUser,
+  getEffectiveMembershipLevel,
+  getYearlyMembershipTerm,
+  isPremiumSubscriptionStatus,
   normalizeEmail,
 } from '../netlify/functions/_member.mjs';
+import { hashPassword } from '../netlify/functions/_auth.mjs';
 
 // ---------- normalizeEmail ----------
 
@@ -144,4 +150,127 @@ test('formatCalculationHistory normalizes a null note to an empty string', () =>
 test('formatCalculationHistory normalizes a missing note column to an empty string', () => {
   const result = formatCalculationHistory({ id: 'c-1' });
   assert.equal(result.note, '');
+});
+
+// ---------- membership expiry ----------
+
+const NOW = new Date('2026-10-02T12:00:00Z');
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function premiumMember(overrides = {}) {
+  return {
+    membershipLevel: 'premium',
+    membershipExpiresAt: new Date(NOW.getTime() + 30 * DAY_MS),
+    stripeSubscriptionStatus: null,
+    ...overrides,
+  };
+}
+
+test('isPremiumSubscriptionStatus accepts only the Stripe states that still carry premium', () => {
+  for (const status of ['trialing', 'active', 'past_due', 'unpaid']) {
+    assert.equal(isPremiumSubscriptionStatus(status), true, status);
+  }
+  for (const status of ['canceled', 'incomplete', 'incomplete_expired', 'paused', '', null, undefined]) {
+    assert.equal(isPremiumSubscriptionStatus(status), false, String(status));
+  }
+});
+
+test('getEffectiveMembershipLevel keeps premium until membership_expires_at', () => {
+  assert.equal(getEffectiveMembershipLevel(premiumMember(), NOW), 'premium');
+});
+
+test('getEffectiveMembershipLevel drops an admin-granted premium year to free once it ends', () => {
+  // grant-premium writes a 365-day expiry and no Stripe subscription, so no
+  // webhook will ever lower the level; only the expiry date can.
+  const member = premiumMember({ membershipExpiresAt: '2025-09-30T00:00:00Z' });
+  assert.equal(getEffectiveMembershipLevel(member, NOW), 'free');
+});
+
+test('getEffectiveMembershipLevel treats a lapsed premium row with a cancelled subscription as free', () => {
+  const member = premiumMember({
+    membershipExpiresAt: new Date(NOW.getTime() - DAY_MS),
+    stripeSubscriptionStatus: 'canceled',
+  });
+  assert.equal(getEffectiveMembershipLevel(member, NOW), 'free');
+});
+
+test('getEffectiveMembershipLevel gives a live Stripe subscription a short renewal grace, and no more', () => {
+  const justPast = premiumMember({
+    membershipExpiresAt: new Date(NOW.getTime() - DAY_MS),
+    stripeSubscriptionStatus: 'active',
+  });
+  assert.equal(getEffectiveMembershipLevel(justPast, NOW), 'premium');
+
+  const pastGrace = premiumMember({
+    membershipExpiresAt: new Date(NOW.getTime() - MEMBERSHIP_RENEWAL_GRACE_MS - 1000),
+    stripeSubscriptionStatus: 'active',
+  });
+  assert.equal(getEffectiveMembershipLevel(pastGrace, NOW), 'free');
+
+  // Without a live subscription there is no renewal to wait for.
+  const noSubscription = premiumMember({ membershipExpiresAt: new Date(NOW.getTime() - 1000) });
+  assert.equal(getEffectiveMembershipLevel(noSubscription, NOW), 'free');
+});
+
+test('getEffectiveMembershipLevel leaves premium without an end date, lifetime and free untouched', () => {
+  assert.equal(getEffectiveMembershipLevel(premiumMember({ membershipExpiresAt: null }), NOW), 'premium');
+  assert.equal(getEffectiveMembershipLevel({ membershipLevel: 'lifetime', membershipExpiresAt: '2020-01-01T00:00:00Z' }, NOW), 'lifetime');
+  assert.equal(getEffectiveMembershipLevel({ membershipLevel: 'free', membershipExpiresAt: '2099-01-01T00:00:00Z' }, NOW), 'free');
+  assert.equal(getEffectiveMembershipLevel(null, NOW), undefined);
+});
+
+test('getYearlyMembershipTerm uses the subscription period end, or one year from purchase without one', () => {
+  const purchasedAt = new Date('2026-01-15T00:00:00Z');
+  const periodEnd = new Date('2027-01-15T00:00:00Z');
+  assert.equal(getYearlyMembershipTerm({ purchasedAt, subscriptionCurrentPeriodEnd: periodEnd }).expiresAt.getTime(), periodEnd.getTime());
+
+  const term = getYearlyMembershipTerm({ purchasedAt });
+  assert.equal(term.startedAt.getTime(), purchasedAt.getTime());
+  assert.equal(term.expiresAt.toISOString(), '2027-01-15T00:00:00.000Z');
+});
+
+function createLoginSql(userRow) {
+  return function sql(strings) {
+    const query = strings.join('?');
+    if (/password_hash[\s\S]*FROM users/i.test(query)) {
+      return Promise.resolve([userRow]);
+    }
+    return Promise.resolve([]);
+  };
+}
+
+async function memberLoginRow(overrides = {}) {
+  return {
+    id: 'u-1',
+    username: 'kev',
+    email: 'kev@example.com',
+    display_name: 'Kev',
+    membership_level: 'premium',
+    membership_started_at: '2024-09-01T00:00:00Z',
+    membership_expires_at: '2025-09-01T00:00:00Z',
+    stripe_customer_id: null,
+    stripe_last_checkout_session_id: null,
+    stripe_subscription_status: null,
+    status: 'active',
+    email_verified: true,
+    role: 'member',
+    password_hash: await hashPassword('correct horse battery'),
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+test('authenticateMemberCredentials signs in a lapsed premium member as free', async () => {
+  const sql = createLoginSql(await memberLoginRow());
+  const member = await authenticateMemberCredentials(sql, 'kev', 'correct horse battery');
+  assert.equal(member.membershipLevel, 'free');
+  // The stored term is still reported so the member page can say when it ended.
+  assert.equal(member.membershipExpiresAt, '2025-09-01T00:00:00Z');
+});
+
+test('authenticateMemberCredentials keeps a current premium member premium', async () => {
+  const sql = createLoginSql(await memberLoginRow({ membership_expires_at: '2099-01-01T00:00:00Z' }));
+  const member = await authenticateMemberCredentials(sql, 'kev', 'correct horse battery');
+  assert.equal(member.membershipLevel, 'premium');
 });

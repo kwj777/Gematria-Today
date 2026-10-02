@@ -46,7 +46,9 @@ export async function handler(event) {
           username: memberRows[0].username,
           email: memberRows[0].email,
           displayName: memberRows[0].display_name,
-          membershipLevel: memberRows[0].membership_level,
+          // This UPDATE never touches the level, so report the effective one
+          // getAuthenticatedMember worked out rather than the raw column.
+          membershipLevel: member.membershipLevel,
           membershipStartedAt: memberRows[0].membership_started_at,
           membershipExpiresAt: memberRows[0].membership_expires_at,
           stripeCustomerId: memberRows[0].stripe_customer_id,

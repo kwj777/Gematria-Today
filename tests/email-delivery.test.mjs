@@ -218,14 +218,43 @@ test('registration does not claim an email was sent when delivery failed', async
   );
 });
 
-test('registration only points at a verification link when one exists', () => {
-  // The old copy said "use the verification link below" unconditionally, and
-  // no link was rendered anywhere -- least of all when no site URL was
-  // configured and the server never composed one.
-  const withoutLink = buildRegistrationMessage({ delivered: false, verificationUrl: null });
-  assert.match(withoutLink, /could not send your verification email/);
-  assert.doesNotMatch(withoutLink, /link below/);
-  assert.match(withoutLink, /[Cc]ontact support/);
+test('registration never points at an on-screen verification link', () => {
+  // The link is a bearer credential for the address, so it only travels by
+  // email. The copy used to send the member to "the verification link below",
+  // which the response carried to whoever registered -- owner or not.
+  for (const delivery of [
+    { delivered: false, verificationUrl: null },
+    { delivered: false, verificationUrl: 'https://gematria.today/member.html?verify_email_token=t' },
+  ]) {
+    const message = buildRegistrationMessage(delivery);
+    assert.match(message, /could not send your verification email/);
+    assert.doesNotMatch(message, /link below/);
+    assert.match(message, /[Cc]ontact support/);
+  }
+});
+
+test('no page sends an undelivered signup to an on-screen verification link', async () => {
+  // member-register no longer returns one, and the "Verify my email now"
+  // anchors are gone. The member.html hero still said "Use the verification
+  // link above" after a failed send, so every outage signup was pointed at
+  // something that does not exist.
+  for (const file of [
+    '../page-scripts/member-1.js',
+    '../page-scripts/gematria-account-setup-1.js',
+    '../src/member.html',
+    '../src/gematria-account-setup.html',
+  ]) {
+    const source = await fs.readFile(new URL(file, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /verification link (above|below)/i, `${file} points at an on-screen link`);
+    assert.doesNotMatch(source, /Verify my email now|VerifyLink/, `${file} still renders an on-screen link`);
+  }
+
+  // The hero sends them to the resend form instead, by the label its button
+  // actually carries.
+  const script = await fs.readFile(new URL('../page-scripts/member-1.js', import.meta.url), 'utf8');
+  const page = await fs.readFile(new URL('../src/member.html', import.meta.url), 'utf8');
+  assert.match(script, /could not send your verification email\. Send a fresh link with the form below/);
+  assert.match(page, /id="resendVerificationSubmit"[^>]*>Send a fresh link</);
 });
 
 test('admin reports expose verification email delivery health', async () => {
@@ -240,7 +269,7 @@ test('admin reports expose verification email delivery health', async () => {
 
 async function withStubbedFetch(response, run) {
   const priorFetch = globalThis.fetch;
-  globalThis.fetch = async () => response();
+  globalThis.fetch = async (...args) => response(...args);
   try {
     return await run();
   } finally {
@@ -275,7 +304,9 @@ test('sendMemberVerificationEmail reports a SendGrid rejection instead of throwi
   assert.equal(result.delivered, false);
   assert.equal(result.delivery, 'send-failed');
   assert.match(result.reason, /sender identity is not verified/);
-  assert.equal(result.verificationUrl, 'https://gematria.today/member.html?verify_email_token=tok-123&auth=login#authSection');
+  // A failed send must not hand the link back for the caller to show instead.
+  assert.equal('verificationUrl' in result, false);
+  assert.doesNotMatch(JSON.stringify(result), /tok-123/);
 });
 
 test('sendMemberVerificationEmail reports a SendGrid timeout instead of throwing', async () => {
@@ -304,8 +335,12 @@ test('sendMemberVerificationEmail still returns delivered on a SendGrid 202', as
   process.env.SENDGRID_FROM_EMAIL = 'no-reply@example.com';
   process.env.PUBLIC_SITE_URL = 'https://gematria.today';
 
+  let sentPayload = null;
   const result = await withStubbedFetch(
-    () => new Response('', { status: 202 }),
+    (url, init) => {
+      sentPayload = JSON.parse(init.body);
+      return new Response('', { status: 202 });
+    },
     () => sendMemberVerificationEmail({
       toEmail: 'kev@example.com',
       username: 'kev',
@@ -315,18 +350,20 @@ test('sendMemberVerificationEmail still returns delivered on a SendGrid 202', as
     }),
   );
 
-  assert.deepEqual(result, {
-    delivered: true,
-    delivery: 'email',
-    verificationUrl: 'https://gematria.today/member.html?verify_email_token=tok-123&auth=login#authSection',
-  });
+  // The link goes in the email and nowhere else. It used to ride along on the
+  // result too, and member-register copied it into its public 201 response.
+  assert.deepEqual(result, { delivered: true, delivery: 'email' });
+  const verificationUrl = 'https://gematria.today/member.html?verify_email_token=tok-123&auth=login#authSection';
+  const [plain, html] = sentPayload.content.map((part) => part.value);
+  assert.ok(plain.includes(`Verify email: ${verificationUrl}`));
+  assert.ok(html.includes(`href="${verificationUrl.replace(/&/g, '&amp;')}"`));
 });
 
-test('an undelivered verification still carries the link the member needs', async () => {
+test('an undelivered verification never hands the link back to the caller', async () => {
   clearEnv();
-  // SendGrid unconfigured: the signup is still created, so the on-screen link
-  // is the only way to finish it. It used to be omitted from this path while
-  // the copy told the member to use "the verification link below".
+  // SendGrid unconfigured. The account stays pending and is not pruned, so a
+  // resend can finish it once delivery works. Returning the link here instead
+  // let anyone who registered someone else's address verify it themselves.
   process.env.PUBLIC_SITE_URL = 'https://gematria.today';
   const result = await sendMemberVerificationEmail({
     toEmail: 'kev@example.com',
@@ -336,9 +373,7 @@ test('an undelivered verification still carries the link the member needs', asyn
     sql: null,
   });
 
-  assert.equal(result.delivered, false);
-  assert.equal(result.reason, 'sendgrid-not-configured');
-  assert.equal(result.verificationUrl, 'https://gematria.today/member.html?verify_email_token=tok-123&auth=login#authSection');
+  assert.deepEqual(result, { delivered: false, delivery: 'onscreen-preview', reason: 'sendgrid-not-configured' });
 });
 
 test('buildMemberVerificationUrl returns null without a site url or token', () => {

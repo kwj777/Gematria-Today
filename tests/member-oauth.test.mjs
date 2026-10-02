@@ -337,7 +337,7 @@ function createMockSql({
     if (/SELECT id, role, status, email_verified\s+FROM users/i.test(query)) {
       return Promise.resolve(userByEmailRows);
     }
-    if (/SELECT 1 FROM users WHERE username/i.test(query)) {
+    if (/SELECT 1 FROM users WHERE LOWER\(username\)/i.test(query)) {
       return Promise.resolve(usernameTaken ? [{ '?column?': 1 }] : []);
     }
     if (/INSERT INTO users/i.test(query)) {
@@ -386,6 +386,17 @@ function verifiedProfile(overrides = {}) {
     ...overrides,
   };
 }
+
+test('findOrCreateMemberFromOAuth signs a lapsed premium member in as free', async () => {
+  // The tier cookie and the first render after an OAuth sign-in come from this
+  // member, so it has to agree with what getAuthenticatedMember will enforce.
+  const { sql } = createMockSql({
+    identityRows: [{ user_id: 'user-1', role: 'member', status: 'active', email_verified: true }],
+    memberRow: { ...MEMBER_ROW, membership_level: 'premium', membership_expires_at: '2025-01-01T00:00:00.000Z' },
+  });
+  const result = await findOrCreateMemberFromOAuth(sql, verifiedProfile());
+  assert.equal(result.member.membershipLevel, 'free');
+});
 
 test('findOrCreateMemberFromOAuth creates a membership when nothing matches', async () => {
   const { sql, calls } = createMockSql();
@@ -715,7 +726,7 @@ test('allocateUsername keeps trying until it finds a free handle', async () => {
   const seen = [];
   function sql(strings, ...values) {
     const query = strings.join('?');
-    if (/SELECT 1 FROM users WHERE username/i.test(query)) {
+    if (/SELECT 1 FROM users WHERE LOWER\(username\)/i.test(query)) {
       seen.push(values[0]);
       // First two candidates are taken; the third is free.
       return Promise.resolve(seen.length < 3 ? [{ '?column?': 1 }] : []);
@@ -728,6 +739,65 @@ test('allocateUsername keeps trying until it finds a free handle', async () => {
   assert.equal(new Set(seen).size, 3, 'each attempt must propose a different handle');
   for (const candidate of seen) {
     assert.ok(MEMBER_USERNAME_PATTERN.test(candidate), `${candidate} is not a valid username`);
+  }
+});
+
+// Answers the taken-check the way Postgres would for whichever comparison the
+// query asks for, so an exact-match lookup is caught letting a case twin through.
+function createUsernameTableSql(existingUsernames) {
+  const seen = [];
+  function sql(strings, ...values) {
+    const query = strings.join('?');
+    const lookup = /SELECT 1 FROM users WHERE (LOWER\(username\) = LOWER\(\?\)|username = \?)/i.exec(query);
+    if (!lookup) {
+      return Promise.resolve([]);
+    }
+    const candidate = String(values[0]);
+    seen.push(candidate);
+    const caseInsensitive = lookup[1].startsWith('LOWER');
+    const taken = existingUsernames.some((username) => (caseInsensitive
+      ? username.toLowerCase() === candidate.toLowerCase()
+      : username === candidate));
+    return Promise.resolve(taken ? [{ '?column?': 1 }] : []);
+  }
+  return { sql, seen };
+}
+
+test('allocateUsername treats a username taken in another letter case as taken', async () => {
+  // The seed is lowercased, so "JohnSmith" used to come back as "johnsmith"
+  // right beside the existing member, and /b/JohnSmith then resolved to either.
+  const { sql, seen } = createUsernameTableSql(['JohnSmith']);
+  const username = await allocateUsername(sql, { displayName: 'JohnSmith' });
+  assert.equal(seen[0], 'johnsmith');
+  assert.notEqual(username.toLowerCase(), 'johnsmith');
+  assert.match(username, /^johnsmith-[0-9a-f]{6}$/);
+});
+
+test('allocateUsername never hands out a staff username, whatever the case', async () => {
+  // A Google account named "KevAdmin" was allocated "kevadmin", which the
+  // bootstrap's case-folded promotion then made a super admin.
+  const { sql } = createUsernameTableSql([]);
+  const seeded = await allocateUsername(sql, { displayName: 'KevAdmin' });
+  assert.notEqual(seeded.toLowerCase(), 'kevadmin');
+
+  // withEnv restores synchronously, before an async body has finished.
+  const previous = { SUPER_ADMIN_USERNAMES: process.env.SUPER_ADMIN_USERNAMES, ADMIN_USERNAME: process.env.ADMIN_USERNAME };
+  process.env.SUPER_ADMIN_USERNAMES = 'Moderator';
+  process.env.ADMIN_USERNAME = 'SiteOps';
+  try {
+    for (const displayName of ['moderator', 'MODERATOR', 'siteops']) {
+      const username = await allocateUsername(sql, { displayName });
+      assert.notEqual(username.toLowerCase(), displayName.toLowerCase(), `${displayName} must not be allocated`);
+      assert.ok(MEMBER_USERNAME_PATTERN.test(username), `${username} is not a valid username`);
+    }
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
   }
 });
 

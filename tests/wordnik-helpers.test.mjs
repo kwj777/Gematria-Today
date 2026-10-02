@@ -7,10 +7,12 @@ import {
   PREMIUM_LIMIT_PER_RELATIONSHIP_TYPE,
   buildWordnikUrl,
   extractRequestOptionsFromEvent,
+  fetchRelatedWords,
   getErrorStatusCode,
   getTierLimit,
   parseLimit,
   parseRelationshipType,
+  toPublicRelatedWordsPayload,
 } from '../netlify/functions/wordnikRelatedWords.mjs';
 import {
   buildWordnikDefinitionUrl,
@@ -151,6 +153,122 @@ test('buildWordnikUrl URL-encodes the term path segment', () => {
   const url = buildWordnikUrl('hello world & friends', 10, 'synonym');
   // Path segment must be percent-encoded so spaces and "&" don't break the URL.
   assert.ok(url.pathname.includes('hello%20world%20%26%20friends'));
+});
+
+// ---------- related-words payload must never carry the Wordnik API key ----------
+
+const SECRET_WORDNIK_KEY = 'secret-wordnik-key-123';
+
+// Returns [] for every query, except the function_response_cache lookup, which
+// returns cachedRow when one is given (a cache hit).
+function createRelatedWordsMockSql({ cachedRow = null } = {}) {
+  const calls = [];
+  function sql(strings, ...values) {
+    const text = strings.join('?');
+    calls.push({ text, values });
+    if (cachedRow && /SELECT status_code, payload, expires_at\s+FROM function_response_cache/.test(text)) {
+      return Promise.resolve([cachedRow]);
+    }
+    return Promise.resolve([]);
+  }
+  return { sql, calls };
+}
+
+function useWordnikEnv() {
+  clearEnv();
+  process.env.WORDNIK_BASE_URL = 'https://api.wordnik.com/v4/word.json/';
+  process.env.WORDNIK_API_KEY = SECRET_WORDNIK_KEY;
+}
+
+const relatedWordsSource = new Request('https://gematria.test/api/wordnikRelatedWords?word=love');
+
+test('toPublicRelatedWordsPayload drops the upstream url without mutating the input', () => {
+  const stored = {
+    query: 'love',
+    relationshipType: 'synonym',
+    limit: 9,
+    url: `https://api.wordnik.com/v4/word.json/love/relatedWords?api_key=${SECRET_WORDNIK_KEY}`,
+    data: [{ relationshipType: 'synonym', words: ['adore'] }],
+    hasMore: false,
+  };
+  const publicPayload = toPublicRelatedWordsPayload(stored);
+  assert.equal('url' in publicPayload, false);
+  assert.deepEqual(publicPayload, {
+    query: 'love',
+    relationshipType: 'synonym',
+    limit: 9,
+    data: [{ relationshipType: 'synonym', words: ['adore'] }],
+    hasMore: false,
+  });
+  assert.ok(stored.url, 'input object must not be mutated');
+});
+
+test('toPublicRelatedWordsPayload passes non-object payloads through unchanged', () => {
+  assert.equal(toPublicRelatedWordsPayload(null), null);
+  assert.equal(toPublicRelatedWordsPayload(undefined), undefined);
+  assert.deepEqual(toPublicRelatedWordsPayload([1, 2]), [1, 2]);
+});
+
+test('fetchRelatedWords (origin hit) neither returns nor caches the Wordnik API key', async (t) => {
+  useWordnikEnv();
+  const fetchedUrls = [];
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    fetchedUrls.push(String(url));
+    return new Response(JSON.stringify([{ relationshipType: 'synonym', words: ['adore', 'cherish'] }]), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  });
+  const { sql, calls } = createRelatedWordsMockSql();
+
+  const result = await fetchRelatedWords(sql, relatedWordsSource, 'Love', '5', 'synonym', { membershipLevel: 'free' });
+
+  // The key is still sent upstream to Wordnik...
+  assert.equal(fetchedUrls.length, 1);
+  assert.equal(new URL(fetchedUrls[0]).searchParams.get('api_key'), SECRET_WORDNIK_KEY);
+  // ...but never comes back to the client.
+  assert.equal(result.cached, false);
+  assert.equal('url' in result.payload, false);
+  assert.ok(!JSON.stringify(result.payload).includes(SECRET_WORDNIK_KEY));
+  assert.deepEqual(result.payload, {
+    query: 'Love',
+    relationshipType: 'synonym',
+    limit: 5,
+    data: [{ relationshipType: 'synonym', words: ['adore', 'cherish'] }],
+    hasMore: false,
+  });
+
+  // ...and is never written to function_response_cache (or anywhere else).
+  const cacheWrite = calls.find((call) => /INSERT INTO function_response_cache/.test(call.text));
+  assert.ok(cacheWrite, 'origin hit should populate the response cache');
+  for (const call of calls) {
+    assert.ok(!JSON.stringify(call.values).includes(SECRET_WORDNIK_KEY), `secret leaked into SQL: ${call.text}`);
+  }
+});
+
+test('fetchRelatedWords (cache hit) strips the API key from rows cached before the fix', async (t) => {
+  useWordnikEnv();
+  t.mock.method(globalThis, 'fetch', async () => {
+    throw new Error('cache hit must not call Wordnik');
+  });
+  const legacyPayload = {
+    query: 'love',
+    relationshipType: 'synonym',
+    limit: 9,
+    url: `https://api.wordnik.com/v4/word.json/love/relatedWords?useCanonical=false&api_key=${SECRET_WORDNIK_KEY}`,
+    data: [{ relationshipType: 'synonym', words: ['adore'] }],
+    hasMore: false,
+  };
+  const { sql } = createRelatedWordsMockSql({
+    cachedRow: { status_code: 200, payload: legacyPayload, expires_at: new Date(Date.now() + 60_000).toISOString() },
+  });
+
+  const result = await fetchRelatedWords(sql, relatedWordsSource, 'love', null, 'synonym', { membershipLevel: 'free' });
+
+  assert.equal(result.cached, true);
+  assert.equal('url' in result.payload, false);
+  assert.ok(!JSON.stringify(result.payload).includes(SECRET_WORDNIK_KEY));
+  assert.deepEqual(result.payload.data, [{ relationshipType: 'synonym', words: ['adore'] }]);
 });
 
 // ---------- getErrorStatusCode (wordnikRelatedWords) ----------

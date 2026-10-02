@@ -98,3 +98,93 @@ test('MEMBER_USERNAME_PATTERN is a subset of what the badge endpoints accept', (
     );
   }
 });
+
+// ---------- username uniqueness ignores case ----------
+
+// Answers the duplicate check the way Postgres would for whichever comparison
+// the query asks for, so an exact-match lookup is caught letting a twin through.
+function createUsersTableStub(existingUsernames) {
+  const recordOnly = createSqlStub();
+  const sql = (strings, ...values) => {
+    const result = recordOnly(strings, ...values);
+    const lookup = /FROM users\s+WHERE (LOWER\(username\) = LOWER\(\?\)|username = \?)/i.exec(strings.join('?'));
+    if (!lookup) {
+      return result;
+    }
+    const candidate = String(values[0]);
+    const caseInsensitive = lookup[1].startsWith('LOWER');
+    const match = existingUsernames.find((username) => (caseInsensitive
+      ? username.toLowerCase() === candidate.toLowerCase()
+      : username === candidate));
+    return Promise.resolve(match ? [{ id: `id-${match}`, username: match, email: `${match}@example.com` }] : []);
+  };
+  sql.wrote = recordOnly.wrote;
+  return sql;
+}
+
+async function expectTaken(sql, username) {
+  await assert.rejects(
+    () => registerMember(sql, { ...VALID, username }),
+    (error) => {
+      assert.equal(error.statusCode, 409, `${username}: expected a 409, got ${error.statusCode} (${error.message})`);
+      assert.match(error.message, /already exists/);
+      return true;
+    },
+  );
+  assert.equal(sql.wrote(), false, `${username} must not insert a user row`);
+}
+
+async function withStaffEnv(overrides, run) {
+  const previous = {};
+  for (const [key, value] of Object.entries(overrides)) {
+    previous[key] = process.env[key];
+    process.env[key] = value;
+  }
+  try {
+    await run();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+test('registerMember refuses a username that differs from an existing one only in case', async () => {
+  // The badge routes resolve /b/<username> case-insensitively, so "johnsmith"
+  // beside "JohnSmith" made the original member's share page ambiguous.
+  for (const username of ['johnsmith', 'JOHNSMITH', 'johnSmith']) {
+    await expectTaken(createUsersTableStub(['JohnSmith']), username);
+  }
+});
+
+test('registerMember refuses the staff usernames in any letter case', async () => {
+  // Registering "kevadmin" used to succeed, and the bootstrap's case-folded
+  // promotion then made that account a super admin on the next cold start.
+  for (const username of ['KevAdmin', 'kevadmin', 'KEVADMIN']) {
+    await expectTaken(createUsersTableStub([]), username);
+  }
+
+  await withStaffEnv({ SUPER_ADMIN_USERNAMES: 'Moderator, Editor', ADMIN_USERNAME: 'SiteOps' }, async () => {
+    for (const username of ['moderator', 'EDITOR', 'siteops', 'SiteOps']) {
+      await expectTaken(createUsersTableStub([]), username);
+    }
+  });
+});
+
+test('registerMember still lets a genuinely new username past the duplicate check', async () => {
+  const sql = createUsersTableStub(['JohnSmith']);
+  // Nothing matches, so the stub's empty INSERT result fails later -- but not
+  // with the duplicate-username 409.
+  await assert.rejects(
+    () => registerMember(sql, { ...VALID, username: 'john.smith' }),
+    (error) => {
+      assert.notEqual(error.statusCode, 409);
+      return true;
+    },
+  );
+  assert.equal(sql.wrote(), true, 'a free username should reach the INSERT');
+});

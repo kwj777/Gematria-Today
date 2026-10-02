@@ -13,16 +13,14 @@ import {
 import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
-// The "link below" is only honest when one was composed, which needs a
-// configured site URL. Without it the member cannot self-serve and support is
-// the only route left.
+// There is no on-screen link to point at. The verification link proves the
+// caller owns the mailbox, so it only ever travels by email; a member whose
+// email did not send can resend once delivery recovers, or ask support.
 export function buildRegistrationMessage(delivery = {}) {
   if (delivery.delivered) {
     return 'Membership account created. Check your email to verify your account before signing in.';
   }
-  return delivery.verificationUrl
-    ? 'Membership account created, but we could not send your verification email. Use the verification link below to finish activating your account.'
-    : 'Membership account created, but we could not send your verification email. Contact support to finish activating your account.';
+  return 'Membership account created, but we could not send your verification email. Contact support to finish activating your account.';
 }
 
 export async function handler(event) {
@@ -101,7 +99,9 @@ export async function handler(event) {
         expiresAt: verification.expiresAt.toISOString(),
         delivery: delivery.delivery || 'unknown',
       },
-      ...(delivery.verificationUrl ? { verificationUrl: delivery.verificationUrl } : {}),
+      // Never the verification link or token, delivered or not. Anyone can POST
+      // here with someone else's address; returning the link let them verify
+      // it themselves and keep a working password on the victim's account.
     }, {
       'set-cookie': [...clearSessionCookie(AUTH_COOKIES.member), ...clearMemberTierCookie()],
     });

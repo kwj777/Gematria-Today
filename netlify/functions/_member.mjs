@@ -6,6 +6,7 @@ import {
   createMemberTierCookie,
   createSession,
   createSessionCookie,
+  ensureAccountRecoverySchema,
   getOptionalAuthenticatedSession,
   getAuthenticatedUser as getAuthenticatedUserShared,
   getSqlClient,
@@ -16,7 +17,7 @@ import {
   verifyPassword,
 } from './_auth.mjs';
 import { ensureSecuritySchema } from './_security.mjs';
-import { ensureAdminSchema } from './_admin.mjs';
+import { ensureAdminSchema, isReservedStaffUsername } from './_admin.mjs';
 
 export { AUTH_COOKIES, clearMemberTierCookie, clearSessionCookie, createMemberTierCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, getSqlClient, hashPassword, jsonResponse, parseBody };
 // The verification link used to expire after 24 hours and unverified accounts
@@ -154,6 +155,11 @@ export async function ensureMemberSchema(sql) {
     await sql`CREATE INDEX IF NOT EXISTS member_email_verification_requests_expires_idx
     ON member_email_verification_requests (expires_at DESC)`;
 
+    // The unverified-member deletes below read consumed password resets, so
+    // the table has to exist before the first of them runs, not only after
+    // someone has used account recovery.
+    await ensureAccountRecoverySchema(sql);
+
     await sql`DROP TRIGGER IF EXISTS set_member_profiles_updated_at ON member_profiles`;
     await sql`DROP TRIGGER IF EXISTS set_calculation_history_updated_at ON calculation_history`;
     await sql`DROP FUNCTION IF EXISTS set_updated_at_timestamp()`;
@@ -202,6 +208,42 @@ export function formatMemberUser(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+// Stripe subscription states that still carry premium. The webhook sync and the
+// checkout confirmation both read this, so neither can grant what the other
+// would take away.
+const PREMIUM_SUBSCRIPTION_STATUSES = new Set(['trialing', 'active', 'past_due', 'unpaid']);
+
+export function isPremiumSubscriptionStatus(status) {
+  return PREMIUM_SUBSCRIPTION_STATUSES.has(String(status || '').trim());
+}
+
+// Stripe renews a subscription at the end of its period and only then sends
+// customer.subscription.updated with the new end date. A member whose stored
+// subscription is still live keeps premium this long past membership_expires_at,
+// so a late or retried webhook does not lock a paying member out on renewal day.
+export const MEMBERSHIP_RENEWAL_GRACE_MS = 3 * 24 * 60 * 60 * 1000;
+
+// membership_level is only ever lowered by a Stripe subscription webhook, so a
+// premium term with nothing behind it -- an admin's one-year grant, a webhook
+// that never arrived -- used to stay premium for good, because no gate read
+// membership_expires_at. Anything that decides what a signed-in member may do
+// takes the level from here, which treats a premium term that has run out as
+// free. NULL expiry still means "no end date".
+export function getEffectiveMembershipLevel(member, now = new Date()) {
+  const level = member?.membershipLevel;
+  if (level !== 'premium' || !member.membershipExpiresAt) {
+    return level;
+  }
+
+  const expiresAtMs = new Date(member.membershipExpiresAt).getTime();
+  if (!Number.isFinite(expiresAtMs)) {
+    return level;
+  }
+
+  const graceMs = isPremiumSubscriptionStatus(member.stripeSubscriptionStatus) ? MEMBERSHIP_RENEWAL_GRACE_MS : 0;
+  return now.getTime() < expiresAtMs + graceMs ? 'premium' : 'free';
 }
 
 export function formatMemberProfile(row) {
@@ -291,13 +333,20 @@ export async function registerMember(sql, { username, email, password, displayNa
     );
   }
 
-  const existing = await sql`
-    SELECT id, username, email
-    FROM users
-    WHERE username = ${normalizedUsername}
-       OR LOWER(email) = ${normalizedEmail}
-    LIMIT 1
-  `;
+  // Usernames are compared without regard to case. The badge routes resolve
+  // /b/<username> case-insensitively and the bootstrap grants staff rights by
+  // name, so "kevadmin" beside "KevAdmin" is an impersonation, not a new member.
+  // The reserved staff names get the same answer as a taken one, so the reply
+  // does not reveal which names are configured.
+  const existing = isReservedStaffUsername(normalizedUsername)
+    ? [{ username: normalizedUsername }]
+    : await sql`
+      SELECT id, username, email
+      FROM users
+      WHERE LOWER(username) = LOWER(${normalizedUsername})
+         OR LOWER(email) = ${normalizedEmail}
+      LIMIT 1
+    `;
 
   if (existing.length) {
     throw Object.assign(new Error('A member with that username or email already exists'), { statusCode: 409 });
@@ -457,6 +506,20 @@ export async function deleteExpiredUnverifiedMembers(sql) {
         WHERE r.user_id = users.id
           AND r.email_delivered = TRUE
       )
+      -- Never an abandoned signup, whatever status still says: a member who
+      -- paid, or who proved the address by finishing a password reset. The
+      -- delete cascades through their history and forum threads (and other
+      -- members' replies in them) and leaves Stripe billing a missing account.
+      AND membership_level = 'free'
+      AND stripe_customer_id IS NULL
+      AND stripe_subscription_id IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM account_recovery_requests ar
+        WHERE ar.user_id = users.id
+          AND ar.role = 'member'
+          AND ar.recovery_type = 'forgot-password'
+          AND ar.consumed_at IS NOT NULL
+      )
     RETURNING id
   `;
 
@@ -513,6 +576,17 @@ export async function releaseUnverifiedMemberClaim(sql, { username = '', email =
           AND r.consumed_at IS NULL
           AND r.expires_at > NOW()
       )
+      -- Same exemption as deleteExpiredUnverifiedMembers: paid or reset-proven.
+      AND membership_level = 'free'
+      AND stripe_customer_id IS NULL
+      AND stripe_subscription_id IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM account_recovery_requests ar
+        WHERE ar.user_id = users.id
+          AND ar.role = 'member'
+          AND ar.recovery_type = 'forgot-password'
+          AND ar.consumed_at IS NOT NULL
+      )
     RETURNING id
   `;
   return rows.length;
@@ -535,11 +609,31 @@ export async function deleteExpiredUnverifiedMemberByIdentifier(sql, identifier 
         username = ${normalizedIdentifier}
         OR LOWER(email) = ${normalizedEmail}
       )
+      -- Same exemption as deleteExpiredUnverifiedMembers: paid or reset-proven.
+      AND membership_level = 'free'
+      AND stripe_customer_id IS NULL
+      AND stripe_subscription_id IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM account_recovery_requests ar
+        WHERE ar.user_id = users.id
+          AND ar.role = 'member'
+          AND ar.recovery_type = 'forgot-password'
+          AND ar.consumed_at IS NOT NULL
+      )
     RETURNING id
   `;
   return rows.length;
 }
 
+
+export function getYearlyMembershipTerm({ purchasedAt = new Date(), subscriptionCurrentPeriodEnd = null } = {}) {
+  const startedAt = new Date(purchasedAt);
+  const expiresAt = subscriptionCurrentPeriodEnd ? new Date(subscriptionCurrentPeriodEnd) : new Date(startedAt);
+  if (!subscriptionCurrentPeriodEnd) {
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 365);
+  }
+  return { startedAt, expiresAt };
+}
 
 export async function activateYearlyMembership(sql, memberId, {
   stripeCustomerId = null,
@@ -551,11 +645,7 @@ export async function activateYearlyMembership(sql, memberId, {
 } = {}) {
   await ensureMemberSchema(sql);
 
-  const startedAt = new Date(purchasedAt);
-  const expiresAt = subscriptionCurrentPeriodEnd ? new Date(subscriptionCurrentPeriodEnd) : new Date(startedAt);
-  if (!subscriptionCurrentPeriodEnd) {
-    expiresAt.setUTCDate(expiresAt.getUTCDate() + 365);
-  }
+  const { startedAt, expiresAt } = getYearlyMembershipTerm({ purchasedAt, subscriptionCurrentPeriodEnd });
 
   const rows = await sql`
     UPDATE users
@@ -599,7 +689,7 @@ export async function syncMembershipFromStripeSubscription(sql, {
 
   const periodStart = currentPeriodStart ? new Date(currentPeriodStart) : null;
   const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
-  const isActive = normalizedStatus ? ['trialing', 'active', 'past_due', 'unpaid'].includes(normalizedStatus) : false;
+  const isActive = isPremiumSubscriptionStatus(normalizedStatus);
   const nextMembershipLevel = isActive ? 'premium' : 'free';
 
   const rows = await sql`
@@ -661,7 +751,7 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
 
   const normalizedEmail = normalizeEmail(normalizedIdentifier);
   const rows = await sql`
-    SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, password_hash, role, created_at, updated_at
+    SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_status, status, email_verified, password_hash, role, created_at, updated_at
     FROM users
     WHERE username = ${normalizedIdentifier}
        OR LOWER(email) = ${normalizedEmail}
@@ -690,7 +780,9 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
     throw Object.assign(new Error(`This membership account is ${user.status}`), { statusCode: 403 });
   }
 
-  return formatMemberUser(user);
+  const member = formatMemberUser(user);
+  member.membershipLevel = getEffectiveMembershipLevel(member);
+  return member;
 }
 
 export async function getAuthenticatedMember(event, { requireAuth = true } = {}) {
@@ -721,7 +813,7 @@ export async function getAuthenticatedMember(event, { requireAuth = true } = {})
   }
 
   const memberRows = await sql`
-    SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, status, email_verified, created_at, updated_at
+    SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_status, status, email_verified, created_at, updated_at
     FROM users
     WHERE id = ${authResult.user.id}
     LIMIT 1
@@ -742,6 +834,7 @@ export async function getAuthenticatedMember(event, { requireAuth = true } = {})
   `;
 
   const member = formatMemberUser(memberRows[0]);
+  member.membershipLevel = getEffectiveMembershipLevel(member);
   const profile = profileRows.length ? formatMemberProfile(profileRows[0]) : await ensureMemberProfile(sql, authResult.user.id, {});
 
   // Admins and super admins should always be treated as lifetime members in the

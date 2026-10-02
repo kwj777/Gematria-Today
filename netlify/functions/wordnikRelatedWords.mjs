@@ -79,6 +79,16 @@ export function buildWordnikUrl(term, limit, relationshipType) {
   return wordnikUrl;
 }
 
+// The upstream Wordnik URL carries WORDNIK_API_KEY in its query string, so it
+// must never be part of what we cache or send back: any signed-in member can
+// read this payload. This also cleans rows cached before the URL was dropped.
+export function toPublicRelatedWordsPayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  const publicPayload = { ...payload };
+  delete publicPayload.url;
+  return publicPayload;
+}
+
 export function getErrorStatusCode(error) {
   if (error.message?.startsWith('Missing required query parameter: word')) return 400;
   if (error.message?.startsWith('Query parameter "limit"')) return 400;
@@ -88,7 +98,7 @@ export function getErrorStatusCode(error) {
   return 500;
 }
 
-async function fetchRelatedWords(sql, source, term, limit, relationshipType, { membershipLevel } = {}) {
+export async function fetchRelatedWords(sql, source, term, limit, relationshipType, { membershipLevel } = {}) {
   const trimmedTerm = term.trim();
   const normalizedTerm = trimmedTerm.toLowerCase();
   if (!normalizedTerm) throw new Error('Missing required query parameter: word');
@@ -136,7 +146,7 @@ async function fetchRelatedWords(sql, source, term, limit, relationshipType, { m
             return entry;
           })
         : rawData;
-      return { query: trimmedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit, url: url.toString(), data, hasMore };
+      return { query: trimmedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit, data, hasMore };
     },
   });
 
@@ -147,7 +157,7 @@ async function fetchRelatedWords(sql, source, term, limit, relationshipType, { m
     metadata: { term: normalizedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit },
   });
 
-  return cacheResult;
+  return { ...cacheResult, payload: toPublicRelatedWordsPayload(cacheResult.payload) };
 }
 
 export default async function onRequest(request) {

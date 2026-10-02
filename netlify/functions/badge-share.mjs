@@ -1,6 +1,6 @@
 import { getSqlClient } from './_member.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp } from './_security.mjs';
-import { ensureBadgeSchema, getBadgeDefinition, LEARNING_PATH_BADGE_SLUG } from './_badges.mjs';
+import { ensureBadgeSchema, findBadgeHolderByUsername, getBadgeDefinition, LEARNING_PATH_BADGE_SLUG } from './_badges.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const OGP_IMAGE_WIDTH = 1200;
@@ -128,16 +128,9 @@ export async function handler(event) {
     });
     await ensureBadgeSchema(sql);
 
-    const rows = await sql`
-      SELECT u.username, u.display_name, b.earned_at
-      FROM users u
-      JOIN member_badges b ON b.user_id = u.id
-      WHERE LOWER(u.username) = LOWER(${username})
-        AND b.badge_slug = ${slug}
-      LIMIT 1
-    `;
+    const row = await findBadgeHolderByUsername(sql, username, slug);
 
-    if (!rows.length) {
+    if (!row) {
       return {
         statusCode: 404,
         headers: {
@@ -149,7 +142,6 @@ export async function handler(event) {
       };
     }
 
-    const row = rows[0];
     const displayName = String(row.display_name || row.username);
     const earnedAt = row.earned_at
       ? new Date(row.earned_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

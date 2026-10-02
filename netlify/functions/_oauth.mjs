@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { isReservedStaffUsername } from './_admin.mjs';
 import { cookieSecureDirective } from './_auth.mjs';
 import { fetchWithTimeout } from './_security.mjs';
 import {
@@ -6,6 +7,7 @@ import {
   ensureMemberProfile,
   ensureMemberSchema,
   formatMemberUser,
+  getEffectiveMembershipLevel,
   normalizeEmail,
 } from './_member.mjs';
 
@@ -513,7 +515,14 @@ export async function allocateUsername(sql, profile) {
   const seed = buildUsernameSeed(profile);
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const candidate = buildUsernameCandidate(seed, attempt);
-    const taken = await sql`SELECT 1 FROM users WHERE username = ${candidate} LIMIT 1`;
+    // The seed is lowercased, so an exact-match check handed a Google account
+    // named "KevAdmin" the username "kevadmin" right beside the staff account,
+    // and "johnsmith" beside an existing "JohnSmith" whose /b/ link then
+    // resolved to either of them. Compare the way registerMember does.
+    if (isReservedStaffUsername(candidate)) {
+      continue;
+    }
+    const taken = await sql`SELECT 1 FROM users WHERE LOWER(username) = LOWER(${candidate}) LIMIT 1`;
     if (!taken.length) {
       return candidate;
     }
@@ -530,7 +539,12 @@ async function loadMemberRow(sql, userId) {
     WHERE id = ${userId}
     LIMIT 1
   `;
-  return rows.length ? formatMemberUser(rows[0]) : null;
+  if (!rows.length) {
+    return null;
+  }
+  const member = formatMemberUser(rows[0]);
+  member.membershipLevel = getEffectiveMembershipLevel(member);
+  return member;
 }
 
 async function upsertOAuthIdentity(sql, userId, profile) {

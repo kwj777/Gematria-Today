@@ -412,6 +412,34 @@ export function slugify(value) {
     .replace(/(^-|-$)/g, '') || `post-${crypto.randomBytes(4).toString('hex')}`;
 }
 
+const DEFAULT_SUPER_ADMIN_USERNAMES = ['KevAdmin'];
+
+export function getSuperAdminUsernames(env = process.env) {
+  const configuredSuperAdminUsernames = String(env.SUPER_ADMIN_USERNAMES || '')
+    .split(',')
+    .map((username) => username.trim())
+    .filter(Boolean);
+  return [...new Set([...DEFAULT_SUPER_ADMIN_USERNAMES, ...configuredSuperAdminUsernames])];
+}
+
+// The bootstrap grants staff rights by username, and members choose their own
+// usernames -- at signup, or from a Google display name. A member account named
+// like one of these, in any letter case, is either an impersonation of the
+// staff account or a candidate for being mistaken for it, so signup and OAuth
+// treat these names as taken.
+export function isReservedStaffUsername(username, env = process.env) {
+  const normalized = String(username ?? '').trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+  const reserved = [
+    ...SEEDED_ADMIN_USERS.map((user) => user.username),
+    ...getSuperAdminUsernames(env),
+    String(env.ADMIN_USERNAME || '').trim(),
+  ];
+  return reserved.some((name) => name && name.toLowerCase() === normalized);
+}
+
 export async function syncBootstrapAdminUser(sql) {
   if (bootstrapAdminUserPromise) {
     return bootstrapAdminUserPromise;
@@ -426,12 +454,7 @@ export async function syncBootstrapAdminUser(sql) {
 }
 
 async function syncBootstrapAdminUserUncached(sql) {
-  const defaultSuperAdminUsernames = ['KevAdmin'];
-  const configuredSuperAdminUsernames = String(process.env.SUPER_ADMIN_USERNAMES || '')
-    .split(',')
-    .map((username) => username.trim())
-    .filter(Boolean);
-  const superAdminUsernames = [...new Set([...defaultSuperAdminUsernames, ...configuredSuperAdminUsernames])];
+  const superAdminUsernames = getSuperAdminUsernames();
 
   for (const seededUser of SEEDED_ADMIN_USERS) {
     await sql`
@@ -442,12 +465,18 @@ async function syncBootstrapAdminUserUncached(sql) {
     `;
   }
 
+  // This used to match LOWER(username), and usernames are only unique
+  // case-sensitively, so anyone who registered "kevadmin" became a super admin
+  // on the next cold start. Match the exact name, and only escalate an account
+  // that is already staff: a member is never promoted because of what they
+  // chose to call themselves.
   await sql`
     UPDATE users
     SET role = 'super_admin',
         is_admin = TRUE,
         updated_at = NOW()
-    WHERE LOWER(username) = ANY(${superAdminUsernames.map((username) => username.toLowerCase())})
+    WHERE username = ANY(${superAdminUsernames})
+      AND (role IN ('admin', 'super_admin') OR COALESCE(is_admin, FALSE) = TRUE)
   `;
 
   const username = process.env.ADMIN_USERNAME;
@@ -455,8 +484,54 @@ async function syncBootstrapAdminUserUncached(sql) {
   const password = process.env.ADMIN_PASSWORD;
   const email = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase() || null;
 
+  // Seeding blog content must never take down admin login or the public read
+  // paths that call this on cold start. A failure is logged and, because no
+  // marker is written for the post that failed, retried on the next cold start.
+  try {
+    await seedPostsOnce(sql);
+  } catch (error) {
+    console.error('[seed] Seeding the default blog posts failed', error);
+  }
+
+  if (!username || (!passwordHash && !password)) {
+    return;
+  }
+
+  const effectiveHash = passwordHash || await hashPassword(password);
+  await sql`
+    INSERT INTO users (id, username, email, password_hash, role, is_admin)
+    VALUES (${crypto.randomUUID()}, ${username}, ${email}, ${effectiveHash}, 'admin', TRUE)
+    ON CONFLICT (username)
+    DO UPDATE SET email = COALESCE(EXCLUDED.email, users.email), password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
+  `;
+}
+
+// SEEDED_POSTS is starter content, not code-owned content: once a seeded post
+// is in the database the admin owns it. Each one is inserted at most once --
+// on the first cold start after it is added to SEEDED_POSTS -- and a marker
+// row in admin_settings records that, so a later cold start never reverts an
+// admin's edit or unpublish, or brings back a post the admin deleted.
+// ON CONFLICT DO NOTHING has no conflict target, so it also skips a seed whose
+// id or slug is already taken; a seeded slug the admin has since given to
+// another post cannot raise posts_slug_key on every request.
+const SEEDED_POST_MARKER_PREFIX = 'seeded_post:';
+
+async function seedPostsOnce(sql) {
+  const markerKeys = SEEDED_POSTS.map((seededPost) => `${SEEDED_POST_MARKER_PREFIX}${seededPost.id}`);
+  const markerRows = await sql`
+    SELECT setting_key
+    FROM admin_settings
+    WHERE setting_key = ANY(${markerKeys})
+  `;
+  const appliedMarkerKeys = new Set(markerRows.map((row) => row.setting_key));
+
   for (const seededPost of SEEDED_POSTS) {
-    await sql`
+    const markerKey = `${SEEDED_POST_MARKER_PREFIX}${seededPost.id}`;
+    if (appliedMarkerKeys.has(markerKey)) {
+      continue;
+    }
+
+    const insertedRows = await sql`
       INSERT INTO posts (
         id, title, slug, tag, summary, body, read_time, image_url, slider_image_url, show_on_homepage, status, published_at, created_by
       )
@@ -475,33 +550,16 @@ async function syncBootstrapAdminUserUncached(sql) {
         ${seededPost.publishedAt},
         ${seededPost.createdBy}
       )
-      ON CONFLICT (id)
-      DO UPDATE SET
-        title = EXCLUDED.title,
-        slug = EXCLUDED.slug,
-        tag = EXCLUDED.tag,
-        summary = EXCLUDED.summary,
-        body = EXCLUDED.body,
-        read_time = EXCLUDED.read_time,
-        image_url = EXCLUDED.image_url,
-        slider_image_url = EXCLUDED.slider_image_url,
-        status = EXCLUDED.status,
-        published_at = EXCLUDED.published_at,
-        updated_at = NOW()
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    `;
+
+    await sql`
+      INSERT INTO admin_settings (setting_key, setting_value, updated_at)
+      VALUES (${markerKey}, ${insertedRows.length ? 'inserted' : 'skipped_existing'}, NOW())
+      ON CONFLICT (setting_key) DO NOTHING
     `;
   }
-
-  if (!username || (!passwordHash && !password)) {
-    return;
-  }
-
-  const effectiveHash = passwordHash || await hashPassword(password);
-  await sql`
-    INSERT INTO users (id, username, email, password_hash, role, is_admin)
-    VALUES (${crypto.randomUUID()}, ${username}, ${email}, ${effectiveHash}, 'admin', TRUE)
-    ON CONFLICT (username)
-    DO UPDATE SET email = COALESCE(EXCLUDED.email, users.email), password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
-  `;
 }
 
 export async function authenticateCredentials(sql, username, password) {

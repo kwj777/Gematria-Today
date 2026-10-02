@@ -137,6 +137,42 @@ export function buildGoneHtml(post) {
 </html>`;
 }
 
+// netlify.toml rewrites /blog/:slug -> /.netlify/functions/blog-post-share/:slug.
+// This is a v1 handler, and v1 events carry path/rawUrl but never
+// pathParameters (an API Gateway field Netlify does not set), so the slug has
+// to be parsed out of the path, as badge-share does for /b/:username.
+// event.path is normally the original /blog/<slug>; the rewritten function
+// path is accepted too. ?post= (which share links also carry) is the fallback.
+const SLUG_PATH_PATTERN = /\/(?:blog|blog-post-share)\/([^/?#]+)\/?$/i;
+
+function toPathname(value) {
+  const raw = String(value || '');
+  if (!raw) return '';
+  try {
+    return new URL(raw, SITE_ORIGIN).pathname;
+  } catch {
+    return raw.split(/[?#]/)[0];
+  }
+}
+
+function decodeSlug(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+export function extractPostSlug(event) {
+  for (const candidate of [event?.rawPath, event?.path, event?.rawUrl]) {
+    const match = toPathname(candidate).match(SLUG_PATH_PATTERN);
+    const slug = match ? decodeSlug(match[1]).trim().toLowerCase() : '';
+    if (slug) return slug;
+  }
+  const params = event?.queryStringParameters || {};
+  return String(params.post || '').trim().toLowerCase();
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'GET') {
     return {
@@ -148,7 +184,7 @@ export async function handler(event) {
 
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'blog-post-share' });
-    const slug = String(event.pathParameters?.slug || '').trim().toLowerCase();
+    const slug = extractPostSlug(event);
     if (!slug) {
       return {
         statusCode: 302,

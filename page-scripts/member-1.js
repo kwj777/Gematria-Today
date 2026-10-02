@@ -695,7 +695,7 @@
             membershipHeroTitle.textContent = 'Almost there — verify your email.';
             membershipHeroLead.textContent = registrationEmailDelivered
               ? 'We sent you a verification link. Open it, then sign in below to reach your dashboard.'
-              : 'We could not send your verification email. Use the verification link above, then sign in below to reach your dashboard.';
+              : 'We could not send your verification email. Send a fresh link with the form below in a little while, or contact support.';
             membershipHeroCta.textContent = 'Sign in';
             membershipHeroCta.setAttribute('href', '#authSection');
             return;
@@ -1448,21 +1448,14 @@
           emailNode.textContent = maskEmailForResendNotice(email) || 'your inbox';
         }
 
-        const verificationUrl = String(registration?.verificationUrl || '');
+        // No verification link comes back from member-register: it only ever
+        // travels by email, so an undelivered signup is finished by a resend.
         const deliveredBlock = document.getElementById('registerSuccessDelivered');
         const undeliveredBlock = document.getElementById('registerSuccessUndelivered');
-        const verifyLinkWrap = document.getElementById('registerSuccessVerifyLinkWrap');
-        const verifyLink = document.getElementById('registerSuccessVerifyLink');
-        const supportNote = document.getElementById('registerSuccessSupportNote');
         deliveredBlock?.classList.toggle('d-none', !delivered);
         undeliveredBlock?.classList.toggle('d-none', delivered);
         // The spam-folder hint only makes sense for mail that was actually sent.
         document.getElementById('registerSuccessSpamHint')?.classList.toggle('d-none', !delivered);
-        if (verifyLink && verificationUrl) {
-          verifyLink.setAttribute('href', verificationUrl);
-        }
-        verifyLinkWrap?.classList.toggle('d-none', !verificationUrl);
-        supportNote?.classList.toggle('d-none', Boolean(verificationUrl));
 
         panel.classList.remove('d-none');
         // The resend form is the recovery path when the mail never lands, so

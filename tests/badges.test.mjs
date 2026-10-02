@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   BADGE_DEFINITIONS,
   EVENT_BADGE_DEFINITIONS,
   LEARNING_PATH_BADGE_SLUG,
   ensureLearningPathBadgeIfCompleted,
+  findBadgeHolderByUsername,
   getBadgeDefinition,
   recordGematriaNumberSearch,
   recordWordSearchActivity,
@@ -226,4 +228,37 @@ test('ensureLearningPathBadgeIfCompleted swallows SQL errors and returns null', 
   const failingSql = () => Promise.reject(new Error('connection refused'));
   const result = await ensureLearningPathBadgeIfCompleted(failingSql, 'user-1');
   assert.equal(result, null);
+});
+
+// ---------- findBadgeHolderByUsername ----------
+
+test('findBadgeHolderByUsername returns the matching row, or null when there is none', async () => {
+  const row = { username: 'kevin', display_name: 'Kevin', earned_at: '2026-05-23T10:00:00Z' };
+  const hit = createMockSql(() => [row]);
+  assert.deepEqual(await findBadgeHolderByUsername(hit.sql, 'kevin', LEARNING_PATH_BADGE_SLUG), row);
+  assert.ok(hit.calls[0].values.includes('kevin'));
+  assert.ok(hit.calls[0].values.includes(LEARNING_PATH_BADGE_SLUG));
+
+  const miss = createMockSql(() => []);
+  assert.equal(await findBadgeHolderByUsername(miss.sql, 'kevin', LEARNING_PATH_BADGE_SLUG), null);
+});
+
+test('findBadgeHolderByUsername never lets a case twin answer for another member', async () => {
+  // Usernames were only unique case-sensitively and this lookup folded case
+  // with LIMIT 1 and no ORDER BY, so a "Kevin" account could take over kevin's
+  // /b/ share page and card. An exact match must win, and a case-folded match
+  // only counts when no other account has that name in any case.
+  const { sql, calls } = createMockSql(() => []);
+  await findBadgeHolderByUsername(sql, 'kevin', LEARNING_PATH_BADGE_SLUG);
+  const query = calls[0].query.replace(/\s+/g, ' ');
+  assert.match(query, /WHERE LOWER\(u\.username\) = LOWER\(\?\)/);
+  assert.match(query, /u\.username = \? OR NOT EXISTS \( SELECT 1 FROM users twin WHERE LOWER\(twin\.username\) = LOWER\(\?\) AND twin\.id <> u\.id \)/);
+});
+
+test('every public badge route resolves the username through findBadgeHolderByUsername', () => {
+  for (const route of ['public-badge.mjs', 'badge-share.mjs', 'badge-share-image.mjs']) {
+    const source = readFileSync(new URL(`../netlify/functions/${route}`, import.meta.url), 'utf8');
+    assert.match(source, /findBadgeHolderByUsername\(sql, username, slug\)/, `${route} must use the shared lookup`);
+    assert.doesNotMatch(source, /LOWER\(u\.username\)/, `${route} must not fold case on its own`);
+  }
 });

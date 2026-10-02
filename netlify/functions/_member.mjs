@@ -703,13 +703,13 @@ export async function syncMembershipFromStripeSubscription(sql, {
         stripe_subscription_current_period_end = ${periodEnd ? periodEnd.toISOString() : null},
         updated_at = NOW()
     WHERE (
-      ${normalizedMemberId} IS NOT NULL
+      ${normalizedMemberId}::text IS NOT NULL
       AND id = ${normalizedMemberId}
     ) OR (
-      ${normalizedSubscriptionId} IS NOT NULL
+      ${normalizedSubscriptionId}::text IS NOT NULL
       AND stripe_subscription_id = ${normalizedSubscriptionId}
     ) OR (
-      ${normalizedCustomerId} IS NOT NULL
+      ${normalizedCustomerId}::text IS NOT NULL
       AND stripe_customer_id = ${normalizedCustomerId}
     )
     RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_id, stripe_subscription_status, stripe_subscription_current_period_end, status, email_verified, created_at, updated_at

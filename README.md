@@ -35,10 +35,12 @@ Pages are served directly from the repository root; Netlify's `publish` director
 
 ## Modular site builds (Forum / SiteSeeker / GemaBot / etc.)
 
-The site includes a lightweight module toggle system in `site-modules.js`.
+The site includes a lightweight module toggle system. Super admins flip the switches in the admin back-office; they are stored in `admin_settings.site_modules`.
 
-- Default modules are configured in `DEFAULT_MODULES`.
-- Page elements can be tied to modules using `data-module="forum"` (or comma-separated values).
+- Every module is **on** unless an admin saved it off. The defaults live in `DEFAULT_SITE_MODULES` (`netlify/functions/_site-modules.mjs`), mirrored by `DEFAULT_MODULES` in `site-modules.js`.
+- The switches are enforced server-side: each module's endpoints call `assertSiteModuleEnabled` and answer `404` while it is off — forum (`member-forum`), blog (`public-posts`, `/blog.xml`, `/blog/:slug`), SiteSeeker (`public-site-chatbot`), GemaBot (`ai-agent-learnings`, saving new chat sessions) and membership (new sign-ups by password or OAuth, and checkout; existing members keep signing in, their dashboard and the billing portal).
+- `site-modules.js` is part of `site-bundle.js`, so it runs on every page. A page whose `<main>` has `data-module-page="<module>"` shows an "unavailable" notice in place of its content while that module is off.
+- Page elements can be tied to modules using `data-module="forum"` (or comma-separated values, all of which must be on).
 - Module selection is **locked for non-admin users**.
 - Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `gematria.siteModules` — legacy `endtimes.siteModules` is read as a fallback and migrated forward — and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
 
@@ -57,9 +59,8 @@ The site includes a lightweight module toggle system in `site-modules.js`.
 
 ### How to create a custom build
 
-1. Open `site-modules.js`.
-2. Change values in `DEFAULT_MODULES` to `true`/`false` for the modules you want.
-3. Deploy.
+1. Switch the modules you do not want off in the admin back-office (super admins only).
+2. To change what a fresh database starts with, change `DEFAULT_SITE_MODULES` in `netlify/functions/_site-modules.mjs` and `DEFAULT_MODULES` in `site-modules.js` together, then deploy. A saved switch always wins over the defaults.
 
 ## Lines of Code
 
@@ -151,6 +152,9 @@ Apply the SQL files in order when bootstrapping a database:
 
 1. `sql/admin_schema.sql`
 2. `sql/member_schema.sql`
+3. `sql/words_schema.sql`
+
+`words_schema.sql` creates the `words` table (with its `LOWER(word)` and `gematria_value` indexes) that the calculator, value search, `/w/` and `/v/` word pages and the words sitemap read. No function creates it at runtime, so a database bootstrapped without it answers all of those with `relation "words" does not exist`. Every statement is `IF NOT EXISTS`, so it is safe to rerun against an existing database.
 
 `member_schema.sql` is the Phase 2 migration that adds member account fields, profile records, and saved calculation history on top of the shared `users` table.
 

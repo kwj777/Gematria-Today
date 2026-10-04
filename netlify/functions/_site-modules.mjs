@@ -65,6 +65,81 @@ export function buildModulePublicPaths(modules = normalizeSiteModules()) {
   return paths;
 }
 
+// The module switches used to be cosmetic: they hid a few links on three pages
+// while every API behind a switched-off module kept answering, so turning the
+// forum off left POST /api/member-forum taking threads and turning membership
+// off left signups and checkout running. Each module's endpoints now ask here
+// first. A module is off only when an admin saved it off; anything unset stays
+// on (DEFAULT_SITE_MODULES), so a deploy never switches a feature off by itself.
+const SITE_MODULES_TTL_MS = 30_000;
+let siteModulesCache = null;
+
+const SITE_MODULE_UNAVAILABLE_MESSAGES = Object.freeze({
+  forum: 'The forum is currently unavailable.',
+  knowbot: 'SiteSeeker is currently unavailable.',
+  gemabot: 'GemaBot is currently unavailable.',
+  blog: 'The blog is currently unavailable.',
+  membership: 'Membership sign-ups are currently closed.',
+});
+
+export function resetSiteModulesCache() {
+  siteModulesCache = null;
+}
+
+// Read on every guarded request, so it is cached per function instance for a
+// short while. A failed read keeps the last switches this instance saw, or the
+// defaults on a cold instance: the guarded endpoint needs the same database
+// and fails on its own if it is really down.
+export async function loadSiteModules(sql, { now = Date.now() } = {}) {
+  if (siteModulesCache && now - siteModulesCache.loadedAt < SITE_MODULES_TTL_MS) {
+    return siteModulesCache.modules;
+  }
+
+  try {
+    const rows = await sql`
+      SELECT setting_value
+      FROM admin_settings
+      WHERE setting_key = 'site_modules'
+      LIMIT 1
+    `;
+    let parsed = null;
+    try {
+      parsed = JSON.parse(rows[0]?.setting_value || 'null');
+    } catch {
+      parsed = null;
+    }
+    const modules = normalizeSiteModules(parsed);
+    siteModulesCache = { modules, loadedAt: now };
+    return modules;
+  } catch (error) {
+    console.warn('[site-modules] Could not read the module switches:', error?.message || error);
+    return siteModulesCache ? siteModulesCache.modules : { ...DEFAULT_SITE_MODULES };
+  }
+}
+
+export async function isSiteModuleEnabled(sql, moduleName) {
+  const modules = await loadSiteModules(sql);
+  return modules[moduleName] !== false;
+}
+
+export function createSiteModuleDisabledError(moduleName, message = '') {
+  return Object.assign(
+    new Error(message || SITE_MODULE_UNAVAILABLE_MESSAGES[moduleName] || 'This feature is currently unavailable.'),
+    {
+      statusCode: 404,
+      code: 'module_disabled',
+      module: moduleName,
+      headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' },
+    },
+  );
+}
+
+export async function assertSiteModuleEnabled(sql, moduleName, { message = '' } = {}) {
+  if (!(await isSiteModuleEnabled(sql, moduleName))) {
+    throw createSiteModuleDisabledError(moduleName, message);
+  }
+}
+
 export async function loadPublicSiteSettings(sql) {
   const rows = await sql`
     SELECT setting_key, setting_value

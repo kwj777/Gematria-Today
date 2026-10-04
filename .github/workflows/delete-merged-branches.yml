@@ -7,7 +7,14 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
+# A branch is deleted only when everything on it was merged: it lives in this
+# repo, its tip is still the commit a merged PR ended on, and no open PR uses
+# it. Branch names here are reused across sessions, so matching on the name of
+# a PR that was merged once deleted branches carrying unmerged work (and closed
+# their open PRs), and a merged fork PR from `develop` deleted this repo's own
+# `develop`.
 jobs:
   delete-branch:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
@@ -19,13 +26,46 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const branch = context.payload.pull_request.head.ref;
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             // Don't delete protected branches
             const protectedBranches = ['main', 'master', 'preview'];
             if (protectedBranches.includes(branch)) {
               console.log(`Skipping protected branch: ${branch}`);
+              return;
+            }
+            // A fork PR's head branch lives in the fork; a same-named branch
+            // here is someone else's work.
+            if (pr.head.repo?.full_name !== `${owner}/${repo}`) {
+              console.log(`Skipping ${branch}: head is not in ${owner}/${repo}`);
+              return;
+            }
+            let currentSha = null;
+            try {
+              const { data } = await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+              currentSha = data.object.sha;
+            } catch (e) {
+              console.log(`Could not read branch ${branch}: ${e.message}`);
+              return;
+            }
+            if (currentSha !== pr.head.sha) {
+              console.log(`Skipping ${branch}: it moved to ${currentSha} after the merged head ${pr.head.sha}`);
+              return;
+            }
+            const openPRs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const inUse = openPRs.some((open) => (
+              (open.head.ref === branch && open.head.repo?.full_name === `${owner}/${repo}`)
+              || open.base.ref === branch
+            ));
+            if (inUse) {
+              console.log(`Skipping ${branch}: an open PR still uses it`);
               return;
             }
             try {
@@ -47,30 +87,66 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const fullName = `${owner}/${repo}`;
             const protectedBranches = ['main', 'master', 'preview'];
             const currentBranch = context.ref.replace('refs/heads/', '');
 
             // Get all merged PRs
-            const mergedPRs = await github.paginate(github.rest.pulls.list, {
+            const closedPRs = await github.paginate(github.rest.pulls.list, {
               owner,
               repo,
               state: 'closed',
               per_page: 100,
             });
+            const openPRs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
 
-            const mergedBranches = new Set(
-              mergedPRs
-                .filter(pr => pr.merged_at !== null)
-                .map(pr => pr.head.ref)
-            );
+            // Branch name -> every head commit a merged PR from this repo ended
+            // on. Only a branch whose tip is still one of those is fully merged.
+            const mergedHeadShas = new Map();
+            for (const pr of closedPRs) {
+              if (pr.merged_at === null || pr.head.repo?.full_name !== fullName) {
+                continue;
+              }
+              if (!mergedHeadShas.has(pr.head.ref)) {
+                mergedHeadShas.set(pr.head.ref, new Set());
+              }
+              mergedHeadShas.get(pr.head.ref).add(pr.head.sha);
+            }
 
-            console.log(`Found ${mergedBranches.size} merged branches to delete`);
+            const branchesInUse = new Set();
+            for (const pr of openPRs) {
+              if (pr.head.repo?.full_name === fullName) {
+                branchesInUse.add(pr.head.ref);
+              }
+              branchesInUse.add(pr.base.ref);
+            }
+
+            console.log(`Found ${mergedHeadShas.size} merged branch names to check`);
 
             let deleted = 0;
             let skipped = 0;
-            for (const branch of mergedBranches) {
-              if (protectedBranches.includes(branch) || branch === currentBranch) {
+            for (const [branch, shas] of mergedHeadShas) {
+              if (protectedBranches.includes(branch) || branch === currentBranch || branchesInUse.has(branch)) {
                 console.log(`Skipping: ${branch}`);
+                skipped++;
+                continue;
+              }
+              let currentSha = null;
+              try {
+                const { data } = await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+                currentSha = data.object.sha;
+              } catch (e) {
+                // Already deleted, or unreadable: nothing to do either way.
+                skipped++;
+                continue;
+              }
+              if (!shas.has(currentSha)) {
+                console.log(`Skipping ${branch}: its tip ${currentSha} was never merged`);
                 skipped++;
                 continue;
               }

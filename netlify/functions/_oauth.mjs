@@ -608,7 +608,7 @@ async function markEmailVerifiedAndActivate(sql, userId) {
  * Resolves a provider profile to a membership account, creating or linking one
  * as needed. Returns { member, profile, created, linked, requiresEmailVerification }.
  */
-export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
+export async function findOrCreateMemberFromOAuth(sql, oauthProfile, { allowSignup = true } = {}) {
   await ensureOAuthSchema(sql);
 
   if (!oauthProfile?.providerUserId) {
@@ -734,6 +734,15 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
       // it stopped working, instead of leaving them to discover it later.
       passwordRetired: !existing.email_verified,
     };
+  }
+
+  // Signing in and linking stay open for existing members; only creating a
+  // new membership follows the membership switch.
+  if (!allowSignup) {
+    throw Object.assign(new Error('Membership sign-ups are currently closed.'), {
+      statusCode: 403,
+      code: 'signup_closed',
+    });
   }
 
   const username = await allocateUsername(sql, oauthProfile);

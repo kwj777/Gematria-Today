@@ -1,6 +1,7 @@
 import { ensureAdminSchema, jsonResponse } from './_admin.mjs';
 import { getAuthenticatedMember, parseBody } from './_member.mjs';
 import { applyRateLimit, logRequestAudit } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const SETTINGS_KEY = 'ai_agent_global_learnings_v1';
 const MAX_ENTRIES = 200;
@@ -67,6 +68,7 @@ export async function handler(event) {
     const auth = await getAuthenticatedMember(event, { requireAuth: false });
     const sql = auth.sql;
     await ensureAdminSchema(sql);
+    await assertSiteModuleEnabled(sql, 'gemabot');
 
     if (event.httpMethod === 'GET') {
       const entries = await readGlobalLearnings(sql);

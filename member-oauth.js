@@ -21,6 +21,7 @@
     provider_unavailable: 'Social sign-in is not available right now. Please use the form below.',
     unknown_provider: 'That sign-in provider is not supported.',
     rate_limited: 'Too many sign-in attempts. Please wait a few minutes and try again.',
+    signup_closed: 'New membership sign-ups are closed right now, so no account was created.',
   };
   const GENERIC_ERROR = 'We could not complete that sign-in. Please try again, or use the form below.';
 

@@ -47,7 +47,6 @@
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
-    <script defer src="/site-modules.js"></script>
     <script defer src="/register-form.js"></script>
     <script defer src="/member-oauth.js"></script>
     <script src="/pwa-register.js" defer></script>
@@ -67,7 +66,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
 {% nav %}
 
-    <main id="mainContent" class="py-5">
+    <main id="mainContent" class="py-5" data-module-page="membership">
       <div class="container">
         <nav aria-label="Breadcrumb" class="mb-3">
           <ol class="breadcrumb small mb-0">

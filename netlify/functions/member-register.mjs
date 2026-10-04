@@ -12,6 +12,7 @@ import {
 } from './_member.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 // There is no on-screen link to point at. The verification link proves the
 // caller owns the mailbox, so it only ever travels by email; a member whose
@@ -30,6 +31,7 @@ export async function handler(event) {
 
   try {
     const sql = getSqlClient();
+    await assertSiteModuleEnabled(sql, 'membership');
     const body = parseBody(event);
     const normalizedUsername = String(body.username || '').trim().toLowerCase();
     const normalizedEmail = String(body.email || '').trim().toLowerCase();

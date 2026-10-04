@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
-import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
+import { getAuthenticatedMember, getSqlClient, jsonResponse, parseBody } from './_member.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const MAX_SESSIONS = 100;
 const MAX_TITLE_LENGTH = 120;
@@ -58,6 +59,11 @@ function formatSession(row) {
 
 export async function handler(event) {
   try {
+    // Saved sessions stay readable and deletable, but a switched-off GemaBot
+    // takes no new ones.
+    if (event.httpMethod === 'POST') {
+      await assertSiteModuleEnabled(getSqlClient(), 'gemabot');
+    }
     const { sql, member } = await getAuthenticatedMember(event, { requireAuth: true });
 
     if (event.httpMethod === 'GET') {

@@ -1,4 +1,5 @@
 import { ensureAdminSchema, formatPost, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const FEED_PATH = '/blog.xml';
@@ -73,6 +74,7 @@ export async function handler(event) {
     const sql = getSqlClient();
     await ensureAdminSchema(sql);
     await syncBootstrapAdminUser(sql);
+    await assertSiteModuleEnabled(sql, 'blog');
     const rows = await sql`
       SELECT * FROM posts
       WHERE
@@ -108,7 +110,7 @@ export async function handler(event) {
   } catch (error) {
     return {
       statusCode: error.statusCode || 500,
-      headers: { 'content-type': 'text/plain; charset=UTF-8' },
+      headers: { 'content-type': 'text/plain; charset=UTF-8', ...(error.headers || {}) },
       body: error.message || 'Failed to generate RSS feed',
     };
   }

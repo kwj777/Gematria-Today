@@ -227,14 +227,36 @@
         pendingSearchTerm = faqSearch.value;
       });
 
-      fetch('/api/public-faqs')
+      // /api/public-faqs returns one page at a time. Asking once, with no
+      // limit, silently dropped every published FAQ past the API's default
+      // page size from both the page and its FAQPage schema.
+      const FAQ_PAGE_SIZE = 100;
+      const MAX_FAQ_PAGES = 20;
+      const fetchFaqPage = (offset) => fetch(`/api/public-faqs?limit=${FAQ_PAGE_SIZE}&offset=${offset}`)
         .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
         .then(({ ok, payload }) => {
           if (!ok) {
             throw new Error(payload.error || 'Failed to load FAQ entries');
           }
+          return payload;
+        });
+      const fetchAllPublishedFaqs = async () => {
+        const collected = [];
+        let offset = 0;
+        for (let page = 0; page < MAX_FAQ_PAGES; page += 1) {
+          const payload = await fetchFaqPage(offset);
+          collected.push(...(payload.items || []));
+          const nextOffset = Number(payload.nextOffset);
+          if (!payload.hasMore || !Number.isFinite(nextOffset) || nextOffset <= offset) {
+            break;
+          }
+          offset = nextOffset;
+        }
+        return collected;
+      };
 
-          const publishedItems = payload.items || [];
+      fetchAllPublishedFaqs()
+        .then((publishedItems) => {
           const uniqueByQuestion = new Map();
 
           [...publishedItems, ...schemaFaqItems].forEach((item) => {

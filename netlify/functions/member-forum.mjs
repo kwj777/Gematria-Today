@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
-import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
+import { getAuthenticatedMember, getSqlClient, jsonResponse, parseBody } from './_member.mjs';
 import { getEarnedBadgeNamesForUserIds } from './_badges.mjs';
 import { assertHoneypotEmpty } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const DEFAULT_CATEGORIES = [
   { slug: 'member-lounge', name: 'Member Lounge', description: 'General discussion area for all signed-in members.', sortOrder: 1, accessTier: 'free' },
@@ -761,6 +762,7 @@ export async function handler(event) {
   }
 
   try {
+    await assertSiteModuleEnabled(getSqlClient(), 'forum');
     const { sql, user, member } = await getAuthenticatedMember(event, { requireAuth: true });
     if (!member || !user) throw Object.assign(new Error('Unauthorized'), { statusCode: 401 });
 

@@ -26,7 +26,6 @@
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <script src="/admin-theme.js"></script>
-    <script defer src="/site-modules.js"></script>
     <script defer src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   </head>
   <body>
@@ -103,7 +102,7 @@
             </div>
             <span class="badge text-bg-warning">Super admins only</span>
           </div>
-          <p class="text-muted small mb-2">Enable or disable major modules site-wide. Disabling a module hides related UI elements for visitors.</p>
+          <p class="text-muted small mb-2">Enable or disable major modules site-wide. Disabling a module hides its links, puts its pages behind an "unavailable" notice and switches off its APIs for everyone. Membership off closes new sign-ups and checkout; existing members can still sign in and manage billing.</p>
           <p class="text-info-emphasis small mb-2"><strong>Status is saved upon switching toggles.</strong></p>
           <p class="text-muted small mb-3">Note: these switches are global and do not create super-admin-only module access.</p>
           <form id="siteModulesForm" class="row g-3" aria-busy="true" aria-live="polite">

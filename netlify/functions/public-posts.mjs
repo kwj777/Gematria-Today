@@ -1,6 +1,7 @@
 import { ensureAdminSchema, formatPost, getSqlClient, jsonResponse, syncBootstrapAdminUser } from './_admin.mjs';
 import { getOptionalAuthenticatedSession } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 function escapeHtml(value = '') {
   return String(value)
@@ -233,6 +234,7 @@ export async function handler(event) {
     const sql = getSqlClient();
     await ensureAdminSchema(sql);
     await syncBootstrapAdminUser(sql);
+    await assertSiteModuleEnabled(sql, 'blog');
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
     if (!user) {
       await applyRateLimit(sql, event, {

@@ -1,6 +1,7 @@
-import { getAuthenticatedMember, jsonResponse } from './_member.mjs';
+import { getAuthenticatedMember, getSqlClient, jsonResponse } from './_member.mjs';
 import { createMembershipCheckoutSession, getMembershipPaymentConfig } from './_stripe.mjs';
 import { logRequestAudit } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -8,6 +9,11 @@ export async function handler(event) {
   }
 
   try {
+    // Existing members keep their dashboard and billing portal when membership
+    // is switched off; it is new charges that stop.
+    await assertSiteModuleEnabled(getSqlClient(), 'membership', {
+      message: 'Membership upgrades are currently unavailable.',
+    });
     const { sql, member } = await getAuthenticatedMember(event, { requireAuth: true });
 
     const checkoutSession = await createMembershipCheckoutSession(event, member, sql);

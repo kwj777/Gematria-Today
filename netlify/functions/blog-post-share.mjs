@@ -1,5 +1,6 @@
 import { ensureAdminSchema, formatPost, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const FALLBACK_IMAGE = '/assets/blog-hero-insights-16x9.svg';
@@ -196,6 +197,7 @@ export async function handler(event) {
     const sql = getSqlClient();
     await ensureAdminSchema(sql);
     await syncBootstrapAdminUser(sql);
+    await assertSiteModuleEnabled(sql, 'blog');
 
     await applyRateLimit(sql, event, {
       scope: 'blog-post-share-ip',

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import {
   MEMBER_USERNAME_PATTERN,
@@ -412,6 +413,38 @@ test('findOrCreateMemberFromOAuth creates a membership when nothing matches', as
   // second verification email for an address the provider already confirmed.
   assert.ok(insert.values.includes('active'));
   assert.ok(insert.values.includes(true));
+});
+
+// The membership switch closes sign-ups. Social sign-in used to create
+// accounts regardless, so switching membership off left a second door open.
+test('findOrCreateMemberFromOAuth creates no membership while sign-ups are closed', async () => {
+  const { sql, calls } = createMockSql();
+  await assert.rejects(
+    findOrCreateMemberFromOAuth(sql, verifiedProfile(), { allowSignup: false }),
+    (error) => error.code === 'signup_closed' && error.statusCode === 403,
+  );
+  assert.ok(!calls.some(({ query }) => /INSERT INTO users/i.test(query)), 'no account may be created');
+});
+
+test('findOrCreateMemberFromOAuth still signs existing members in while sign-ups are closed', async () => {
+  const { sql } = createMockSql({
+    identityRows: [{ user_id: 'user-1', role: 'member', status: 'active', email_verified: true }],
+  });
+  const result = await findOrCreateMemberFromOAuth(sql, verifiedProfile(), { allowSignup: false });
+  assert.equal(result.created, false);
+  assert.equal(result.member.id, 'user-1');
+
+  const linking = createMockSql({ userByEmailRows: [{ id: 'user-1', role: 'member', status: 'active', email_verified: true }] });
+  const linked = await findOrCreateMemberFromOAuth(linking.sql, verifiedProfile(), { allowSignup: false });
+  assert.equal(linked.linked, true);
+});
+
+test('the OAuth callback passes the membership switch and names signup_closed for the page', () => {
+  const callback = readFileSync(new URL('../netlify/functions/member-oauth-callback.mjs', import.meta.url), 'utf8');
+  assert.match(callback, /allowSignup: await isSiteModuleEnabled\(sql, 'membership'\)/);
+  assert.match(callback, /'signup_closed',/);
+  const client = readFileSync(new URL('../member-oauth.js', import.meta.url), 'utf8');
+  assert.match(client, /signup_closed: '/);
 });
 
 test('findOrCreateMemberFromOAuth links a verified provider email to an existing member', async () => {

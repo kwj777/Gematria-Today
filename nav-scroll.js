@@ -3,10 +3,10 @@
  *      scroll threshold so theme.css can tighten padding and hide the
  *      brand tagline. Uses requestAnimationFrame to avoid layout work on
  *      every scroll event.
- *   2. "/" keyboard shortcut — jump to SiteSeeker search from any page. If
- *      the user is already on /searchbot.html, focus the question field;
- *      otherwise navigate there with ?focus=knowbot so the field can be
- *      focused on arrival. Ignored when typing in another input.
+ *   2. Ctrl+K (Cmd+K on Apple keyboards) — jump to SiteSeeker search from
+ *      any page. If the user is already on /searchbot.html, focus the
+ *      question field; otherwise navigate there with ?focus=knowbot so the
+ *      field can be focused on arrival. Ignored when typing in an input.
  */
 (function installNavHelpers() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -19,12 +19,42 @@
   const SEARCH_FOCUS_PARAM = 'focus';
   const SEARCH_FOCUS_VALUE = 'knowbot';
 
+  // This used to be a bare "/". Pressed -- or misheard by speech input --
+  // while focus sat on a button, radio or link, it navigated away from the
+  // page and dropped an unsent forum draft or a set of calculator results.
+  // A single-character shortcut must be possible to turn off or remap (WCAG
+  // 2.1.4); one that needs a modifier is not single-character.
+  function isSearchShortcut(event) {
+    if (event.altKey || event.shiftKey) return false;
+    if (!event.ctrlKey && !event.metaKey) return false;
+    return String(event.key || '').toLowerCase() === 'k';
+  }
+
+  function isApplePlatform() {
+    const nav = window.navigator || {};
+    const platform = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || '';
+    return /mac|iphone|ipad|ipod/i.test(platform);
+  }
+
+  // The nav pill advertises the shortcut as "Ctrl K"; Apple keyboards use ⌘.
+  function labelShortcutHint() {
+    if (!isApplePlatform()) return;
+    document.querySelectorAll('.nav-search-link').forEach((link) => {
+      const kbd = link.querySelector('.nav-search-link__kbd');
+      if (kbd) kbd.textContent = '⌘K';
+      const label = link.getAttribute('aria-label');
+      if (label) link.setAttribute('aria-label', label.replace('Ctrl+K', 'Command+K'));
+      const title = link.getAttribute('title');
+      if (title) link.setAttribute('title', title.replace('Ctrl+K', '⌘K'));
+    });
+  }
+
   function isTypingTarget(el) {
     if (!el || el.nodeType !== 1) return false;
     if (el.isContentEditable) return true;
     const tag = el.tagName;
     if (tag === 'INPUT') {
-      // Allow "/" to work on inputs that aren't text-y (checkboxes, buttons).
+      // Allow the shortcut on inputs that aren't text-y (checkboxes, buttons).
       const type = (el.getAttribute('type') || 'text').toLowerCase();
       const textyTypes = new Set(['text', 'search', 'email', 'url', 'tel', 'password', 'number']);
       return textyTypes.has(type);
@@ -72,13 +102,14 @@
       } catch (_) { /* ignore malformed URL */ }
     }
 
+    labelShortcutHint();
+
     document.addEventListener('keydown', (event) => {
-      if (event.key !== '/') return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (!isSearchShortcut(event)) return;
       if (isTypingTarget(event.target)) return;
-      // A page with its own "/" search box (blog) handles the key first and
-      // calls preventDefault. Without this check both handlers ran: the page
-      // focused its input, then this one navigated away from it.
+      // A page that claims the same keys for its own search box handles them
+      // first and calls preventDefault; without this check both handlers ran:
+      // the page focused its input, then this one navigated away from it.
       if (event.defaultPrevented) return;
       event.preventDefault();
       if (window.location.pathname === SEARCH_PATH) {

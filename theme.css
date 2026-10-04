@@ -4588,14 +4588,26 @@ select:not(.form-select):focus-visible {
   scroll-margin-top: 5rem;
 }
 
+/* Stacked one-per-line link lists -- the legal pages' "On this page" contents
+   and the blog sidebar's Cipher Atlas -- left 16-19px-tall links with almost
+   no gap, so a tap often landed on the neighbour. WCAG 2.5.8 wants undersized
+   targets 24px apart, centre to centre; space between the items gets there
+   without enlarging the text. */
+nav.legal-copy ol > li + li,
+.blog-sidebar-series ol > li + li {
+  margin-top: 0.5rem;
+}
+
 /* ----- Mobile navbar polish --------------------------------------------- */
 /* The default Bootstrap toggler has no visible label and a faint focus ring.
    Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a
    ::after pseudo-element so the affordance is obvious without editing 29
-   pages of markup, (2) give it a real focus ring, (3) animate the collapse,
-   and (4) lay the menu out as full-width text links followed by a divider
-   and a paired CTA + Search row -- two visual zones (browse vs. act) instead
-   of a top-heavy stack of mismatched shapes. */
+   pages of markup -- that text is also the button's accessible name, so the
+   markup carries no aria-label to contradict it (WCAG 2.5.3: a speech-input
+   user says "tap Menu" or "tap Close"), (2) give it a real focus ring, (3)
+   animate the collapse, and (4) lay the menu out as full-width text links
+   followed by a divider and a paired CTA + Search row -- two visual zones
+   (browse vs. act) instead of a top-heavy stack of mismatched shapes. */
 @media (max-width: 991.98px) {
   /* Keep the brand and the trailing search/theme/menu pills on a single row
      even on narrow iPhones. Bootstrap's default flex-wrap on .navbar will
@@ -4770,8 +4782,8 @@ select:not(.form-select):focus-visible {
     align-self: center;
   }
 
-  /* The "press /" kbd hint inside the Ask KnowBot pill is desktop-only --
-     there's no slash key on touch keyboards, so it's noise on mobile. */
+  /* The Ctrl K kbd hint inside the Ask KnowBot pill is desktop-only --
+     touch keyboards have no Ctrl or Cmd key, so it's noise on mobile. */
   .navbar-nav .nav-search-link__kbd {
     display: none;
   }
@@ -4905,10 +4917,16 @@ select:not(.form-select):focus-visible {
   }
 
   /* On the narrowest phones the "Menu" text label inside the toggle costs
-     ~50px that the logo needs more. Drop it to icon-only; the hamburger and
-     aria-label still communicate the affordance. */
+     ~50px that the logo needs more. Show the hamburger alone, but hide the
+     label visually rather than dropping it: it is the button's only name. */
   .navbar-toggler::after {
-    content: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .navbar-toggler {
     padding: 0.5rem 0.6rem;
@@ -5105,9 +5123,9 @@ select:not(.form-select):focus-visible {
 }
 
 /* Search keyboard-shortcut hint. The kbd badge tells keyboard users they
-   can press "/" anywhere on the site to jump into KnowBot search. Hidden
-   on touch/mobile via pointer-fine guard since the key prompt is
-   meaningless without a hardware keyboard. */
+   can press Ctrl+K (Cmd+K on a Mac) anywhere on the site to jump into
+   KnowBot search. Hidden on touch/mobile via pointer-fine guard since the
+   key prompt is meaningless without a hardware keyboard. */
 .nav-search-link__kbd {
   display: none;
   margin-left: 0.4rem;

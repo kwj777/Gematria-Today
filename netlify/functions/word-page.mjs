@@ -65,17 +65,20 @@ export function letterBreakdown(word) {
     .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
 }
 
+// A definition list, as on how-to-use-gematria and why-english-gematria: each
+// letter is a term and its value the definition. It was role="table" holding
+// role="cell"s with no rows, which screen readers report as a broken table.
 function breakdownHtml(word, total) {
   const letters = letterBreakdown(word);
   if (letters.length === 0) return '';
   const cells = letters
-    .map(({ letter, value }) => `<div class="letter-value-grid__cell" role="cell"><span class="letter-value-grid__letter">${escapeHtml(letter)}</span><span class="letter-value-grid__value">${value}</span></div>`)
+    .map(({ letter, value }) => `<div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">${escapeHtml(letter)}</dt><dd class="letter-value-grid__value mb-0">${value}</dd></div>`)
     .join('\n          ');
   const sum = letters.map(({ letter, value }) => `${escapeHtml(letter)}&nbsp;${value}`).join(' + ');
   return `        <h2 class="h5 mt-4 mb-2">How ${escapeHtml(word)} adds up</h2>
-        <div class="letter-value-grid mb-3" role="table" aria-label="Letter values for ${escapeHtml(word)}">
+        <dl class="letter-value-grid mb-3">
           ${cells}
-        </div>
+        </dl>
         <p class="small text-muted">${sum} = <strong>${total}</strong></p>`;
 }
 

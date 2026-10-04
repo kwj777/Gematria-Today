@@ -56,6 +56,45 @@ test('positioning is viewport-based and corrects for any containing block', () =
   assert.doesNotMatch(SOURCE, /window\.scroll[XY] \+ r\./);
 });
 
+test('the panel is drawn in the top layer, above the stacking context it sits in', () => {
+  // Parented to its term, the panel was trapped in that term's stacking
+  // context: in a hero (every child z-index:1) the artwork painted over the
+  // definition and its link, and on the guides the sticky "On this page"
+  // panel did. z-index cannot climb out of a stacking context; a popover can.
+  assert.match(SOURCE, /popup\.setAttribute\('popover', 'manual'\)/);
+  assert.match(SOURCE, /popup\.showPopover\(\)/);
+  assert.match(SOURCE, /popup\.hidePopover\(\)/);
+  // Shown after the move next to the term: removing a popover from the
+  // document closes it, so showing first would leave it in flow.
+  const showFor = SOURCE.slice(SOURCE.indexOf('function showFor('), SOURCE.indexOf('function scheduleHide('));
+  assert.ok(
+    showFor.indexOf("insertAdjacentElement('afterend', popup)") < showFor.indexOf('setTopLayer(true)'),
+    'the panel must enter the top layer after it is moved next to its term',
+  );
+  // The UA's [popover] defaults centre it in the viewport with a border and a
+  // scrollbar; the panel's own rule has to undo them.
+  const rule = SOURCE.match(/'\.defn-popup\{[^}]*\}'/)?.[0] || '';
+  for (const decl of ['inset:auto', 'margin:0', 'border:0', 'overflow:visible']) {
+    assert.ok(rule.includes(decl), `.defn-popup must set ${decl}`);
+  }
+});
+
+test('the definitions parser takes the definition, not the badge-and-link <dd>', () => {
+  // Each definitions.html card is <dt>, <dd>, <dd class="defn-card__meta">.
+  assert.match(SOURCE, /querySelector\('dd:not\(\.defn-card__meta\)'\)/);
+  // Copies of this script from before the meta <dd> existed take a card's
+  // first <dd>, and a visitor's service worker keeps serving the precached
+  // site-bundle.js after a deploy. With the badge-and-link <dd> first, every
+  // popup on the site read "Beginner #" where the definition belongs.
+  const html = readFileSync(new URL('../src/definitions.html', import.meta.url), 'utf8');
+  const cards = [...html.matchAll(/<div class="defn-card"[^>]*>([\s\S]*?)<\/div>/g)].map((m) => m[1]);
+  assert.equal(cards.length, 30);
+  for (const card of cards) {
+    const dds = [...card.matchAll(/<dd\b[^>]*>/g)].map((m) => m[0]);
+    assert.deepEqual(dds, ['<dd>', '<dd class="defn-card__meta">'], `the definition must be the card's first <dd>: ${card.slice(0, 80)}`);
+  }
+});
+
 test('closing keeps focus on the term instead of stranding it', () => {
   assert.match(SOURCE, /function hidePopup\(restoreFocus\)/);
   assert.match(SOURCE, /suppressFocusOpen = true;[\s\S]{0,200}btn\.focus\(\)/);

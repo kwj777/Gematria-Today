@@ -31,7 +31,9 @@
     // opened it (so the keyboard can reach the link inside it), and that parent
     // could be anything. Viewport coordinates plus the correction in
     // positionPopup keep placement independent of where it sits in the DOM.
-    '.defn-popup{position:fixed;display:block;z-index:1080;max-width:320px;background:#0f172a;color:#f8fafc;padding:.75rem .9rem;border-radius:.5rem;box-shadow:0 10px 28px rgba(15,23,42,.35);font-size:.875rem;line-height:1.45;text-align:left;font-weight:400;}' +
+    // inset/margin/border/overflow undo the UA's [popover] defaults (centred
+    // in the viewport, bordered, scrolling) -- see ensurePopup.
+    '.defn-popup{position:fixed;display:block;z-index:1080;inset:auto;margin:0;border:0;overflow:visible;max-width:320px;background:#0f172a;color:#f8fafc;padding:.75rem .9rem;border-radius:.5rem;box-shadow:0 10px 28px rgba(15,23,42,.35);font-size:.875rem;line-height:1.45;text-align:left;font-weight:400;}' +
     '.defn-popup[hidden]{display:none;}' +
     '.defn-popup__title{display:block;font-weight:600;margin-bottom:.25rem;}' +
     '.defn-popup__body{display:block;margin:0 0 .5rem;color:#e2e8f0;}' +
@@ -148,7 +150,11 @@
           if (dd && dd.tagName === 'DD') recordPair(child, dd);
         } else if (child.tagName === 'DIV') {
           var dt2 = child.querySelector('dt');
-          var dd2 = child.querySelector('dd');
+          // Skip the card's <dd class="defn-card__meta"> (difficulty badge
+          // and copy-link). definitions.html puts the definition first, so
+          // copies of this script that take the first <dd> -- a service
+          // worker can keep one running long after a deploy -- read it too.
+          var dd2 = child.querySelector('dd:not(.defn-card__meta)');
           recordPair(dt2, dd2);
         }
       }
@@ -322,6 +328,8 @@
   // element as a "hover preview" and withholds the click event until the
   // second tap. Gate all hover-triggered popup behavior to real pointers.
   var HAS_HOVER = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+  var SUPPORTS_POPOVER = typeof HTMLElement !== 'undefined' &&
+    Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'popover');
 
   function ensurePopup() {
     if (popup) return popup;
@@ -332,6 +340,14 @@
     popup.id = POPUP_ID;
     popup.className = 'defn-popup';
     popup.hidden = true;
+    // Living next to its term (for tab order, see showFor) also put the panel
+    // inside the term's stacking context, and z-index cannot climb out of one:
+    // in a hero, where every child is z-index:1, the hero artwork painted over
+    // the definition and its link, and on the guides the sticky "On this page"
+    // panel did (WCAG 1.4.13, 2.4.11). A manual popover is drawn in the top
+    // layer, above every stacking context, without leaving its DOM position.
+    // Browsers without the Popover API keep the old in-flow rendering.
+    if (SUPPORTS_POPOVER) popup.setAttribute('popover', 'manual');
     document.body.appendChild(popup);
     if (HAS_HOVER) {
       popup.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
@@ -361,9 +377,21 @@
     return !!(popup && document.activeElement && popup.contains(document.activeElement));
   }
 
+  function setTopLayer(open) {
+    if (!SUPPORTS_POPOVER || !popup) return;
+    try {
+      var isOpen = popup.matches(':popover-open');
+      if (open && !isOpen) popup.showPopover();
+      else if (!open && isOpen) popup.hidePopover();
+    } catch (_) {
+      // Not connected, or an engine quirk: the panel still shows in flow.
+    }
+  }
+
   function hidePopup(restoreFocus) {
     if (!popup) return;
     var btn = activeBtn;
+    setTopLayer(false);
     popup.hidden = true;
     activeBtn = null;
     openedThisInteraction = false;
@@ -449,6 +477,8 @@
     }
     btn.setAttribute('aria-expanded', 'true');
     popup.hidden = false;
+    // After the move above: taking a popover out of the document closes it.
+    setTopLayer(true);
     positionPopup(btn);
   }
 

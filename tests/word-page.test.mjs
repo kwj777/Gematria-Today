@@ -279,6 +279,18 @@ test('word pages show the letter breakdown that makes them non-thin', () => {
   assert.match(html, /= <strong>84<\/strong>/);
 });
 
+test('the word page letter chart is a definition list, not a table without rows', () => {
+  // role="table" holding role="cell"s and no role="row" is a malformed table:
+  // screen readers' table navigation fails or reports it broken (WCAG 1.3.1).
+  const html = renderWordPage('ALA', 84, []);
+  assert.doesNotMatch(html, /role="table"|role="cell"/);
+  const chart = html.match(/<dl class="letter-value-grid[^"]*">([\s\S]*?)<\/dl>/)?.[1] || '';
+  const pairs = [...chart.matchAll(/<div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">([A-Z])<\/dt><dd class="letter-value-grid__value[^"]*">(\d+)<\/dd><\/div>/g)]
+    .map((m) => `${m[1]}=${m[2]}`);
+  assert.deepEqual(pairs, ['A=6', 'L=72', 'A=6']);
+  assert.equal(chart.replace(/<div class="letter-value-grid__cell">[\s\S]*?<\/div>/g, '').trim(), '', 'the <dl> holds only letter groups');
+});
+
 test('slurs are never published, though the calculator still returns them', async () => {
   const { isPublishableWord, isIndexableWord: indexable } = await import('../netlify/functions/_words.mjs');
 

@@ -222,7 +222,7 @@
               <p class="mb-0 small">Basics → pattern grouping → name analysis → research checklist. Earn a badge with a <span class="text-warning"><a class="text-warning" href="/gematria-account-setup.html?return=/gematria-basics.html">free account</a></span>, or read <span class="text-warning"><a class="text-warning" href="/how-to-use-gematria.html">how to use gematria</a></span> first — no sign-up needed.</p>
             </div>
             <div class="d-flex flex-wrap gap-3 align-items-center flex-shrink-0">
-              <a id="learningPathPromoCta" class="btn btn-light btn-sm fw-bold text-dark" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+              <a id="learningPathPromoCta" class="btn btn-light btn-sm fw-bold text-dark" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="This is the way: start the free beginner path">This is the way →</a>
             </div>
           </div>
         </aside>
@@ -267,7 +267,10 @@
             <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
           </div>
 
-          <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-ride="carousel">
+          <div class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" id="blogPostsCarouselRotation" aria-controls="blogPostsCarousel" hidden>Pause slideshow</button>
+          </div>
+          <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-pause="false">
             <div id="blogPostsCarouselIndicators" class="carousel-indicators blog-carousel-indicators position-static mb-4"></div>
             <div id="blogPostsCarouselInner" class="carousel-inner async-content-shell async-content-shell--md" aria-live="polite" aria-busy="true">
               <div class="carousel-item active">

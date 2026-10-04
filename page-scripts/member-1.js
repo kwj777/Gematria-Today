@@ -894,7 +894,7 @@
           if (progress >= 1) {
             learningPathAspireCta.removeAttribute('aria-label');
           } else {
-            learningPathAspireCta.setAttribute('aria-label', 'Start the free beginner path');
+            learningPathAspireCta.setAttribute('aria-label', 'This is the way: start the free beginner path');
           }
           if (!learningPathAspireCta.dataset.bound) {
             learningPathAspireCta.dataset.bound = '1';

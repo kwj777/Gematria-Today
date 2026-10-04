@@ -154,6 +154,65 @@ function renderHomepageSlider(posts, state = 'data') {
       </div>
     `;
   }).join('');
+
+  initializeBlogCarouselRotation(normalizedPosts.length);
+}
+
+// Rotation for the featured-post slider. Bootstrap's autoplay
+// (data-bs-ride="carousel") advanced every five seconds with no way to stop
+// it, and each slide change hid whatever link had keyboard focus, so the next
+// Tab started over at the top of the page (WCAG 2.2.2, 2.4.3). It also restarts
+// itself on every mouseleave and control click, which would override a Pause
+// button, so the page drives the rotation instead: it holds while the pointer
+// or keyboard focus is inside the slider, stops when the visitor presses Pause,
+// and starts stopped for anyone who prefers reduced motion (Play still works).
+function initializeBlogCarouselRotation(slideCount) {
+  const carouselEl = document.getElementById('blogPostsCarousel');
+  const toggle = document.getElementById('blogPostsCarouselRotation');
+  const inner = document.getElementById('blogPostsCarouselInner');
+  if (!carouselEl || !toggle || carouselEl.dataset.rotation === 'ready') return;
+  if (slideCount < 2) {
+    toggle.hidden = true;
+    return;
+  }
+  if (!window.bootstrap?.Carousel) {
+    // bootstrap.bundle loads after this module; the posts can arrive first.
+    window.addEventListener('load', () => initializeBlogCarouselRotation(slideCount), { once: true });
+    return;
+  }
+  carouselEl.dataset.rotation = 'ready';
+
+  // Same settings as the data-bs-* attributes, in case a control click made
+  // the instance first: never autoplay by itself, never resume on mouseleave.
+  const carousel = window.bootstrap.Carousel.getOrCreateInstance(carouselEl, { ride: false, pause: false });
+  const prefersReducedMotion = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  let playing = !prefersReducedMotion;
+  let pointerInside = false;
+  let focusInside = false;
+
+  const apply = () => {
+    const running = playing && !pointerInside && !focusInside;
+    if (running) carousel.cycle();
+    else carousel.pause();
+    // Announcing every automatic slide change would talk over the page.
+    inner?.setAttribute('aria-live', running ? 'off' : 'polite');
+    toggle.textContent = playing ? 'Pause slideshow' : 'Play slideshow';
+  };
+
+  carouselEl.addEventListener('mouseenter', () => { pointerInside = true; apply(); });
+  carouselEl.addEventListener('mouseleave', () => { pointerInside = false; apply(); });
+  carouselEl.addEventListener('focusin', () => { focusInside = true; apply(); });
+  carouselEl.addEventListener('focusout', (event) => {
+    if (event.relatedTarget && carouselEl.contains(event.relatedTarget)) return;
+    focusInside = false;
+    apply();
+  });
+  toggle.addEventListener('click', () => {
+    playing = !playing;
+    apply();
+  });
+  toggle.hidden = false;
+  apply();
 }
 
 // NFKC, then ASCII letters only: the same rule as englishGematria.mjs.
@@ -404,7 +463,9 @@ const initializeHeroQuickCalc = () => {
     if (caption) caption.textContent = total === 0 ? 'Only A–Z letters count toward the value.' : defaultCaption;
     deepLink.innerHTML = 'See it on the full calculator <span aria-hidden="true">&rarr;</span> <kbd class="hero-quick-calc__deep-link-kbd" aria-hidden="true">Enter</kbd>';
     deepLink.setAttribute('href', `/calculator.html?query=${encodeURIComponent(raw)}`);
-    deepLink.setAttribute('aria-label', `See "${raw}" on the full calculator (press Enter)`);
+    // Each name starts with the link's visible words, so a speech-input user
+    // who says them hits the link (WCAG 2.5.3); the query follows.
+    deepLink.setAttribute('aria-label', `See it on the full calculator: "${raw}" (press Enter)`);
     deepLink.setAttribute('aria-disabled', 'false');
     deepLink.removeAttribute('tabindex');
     deepLink.setAttribute('data-active', 'true');
@@ -413,7 +474,7 @@ const initializeHeroQuickCalc = () => {
       nameLink.setAttribute('href', buildNameCalculatorHref(nameParts));
       // Announce what actually travels, not what was typed: a fourth word is
       // dropped, and claiming otherwise in the label would be a lie.
-      nameLink.setAttribute('aria-label', `Compare "${nameParts.join(' ')}" on the name calculator`);
+      nameLink.setAttribute('aria-label', `Compare as a name: "${nameParts.join(' ')}" on the name calculator`);
     }
     if (container) container.setAttribute('data-state', 'filled');
     if (!trackedThisSession) {

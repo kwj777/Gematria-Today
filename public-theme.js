@@ -9,6 +9,10 @@
   window.__publicThemeInstalled = true;
 
   var STORAGE_KEY = 'publicThemePreference';
+  // A toggle button names the setting and lets aria-pressed say whether it is
+  // on. Flipping the label to the action as well ("Switch to light mode,
+  // pressed") made the two contradict each other (WCAG 4.1.2).
+  var LABEL = 'Dark mode';
 
   function readStored() {
     try {
@@ -30,11 +34,9 @@
   }
 
   function syncButton(button, theme) {
-    var isDark = theme === 'dark';
-    button.setAttribute('aria-pressed', String(isDark));
-    var label = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-    button.setAttribute('aria-label', label);
-    button.setAttribute('title', label);
+    button.setAttribute('aria-pressed', String(theme === 'dark'));
+    button.setAttribute('aria-label', LABEL);
+    button.setAttribute('title', LABEL);
   }
 
   function syncAllButtons(theme) {

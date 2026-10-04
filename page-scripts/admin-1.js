@@ -867,7 +867,11 @@
         }
 
         const nextParam = new URLSearchParams(window.location.search).get('next');
-        if (!nextParam || !nextParam.startsWith('/') || nextParam.startsWith('//')) {
+        // A prefix test alone let '/.//evil.example' through: it resolves to
+        // the path '//evil.example', and the redirect below then sent a freshly
+        // signed-in admin off the site. See page-scripts/safe-return-path.js.
+        const nextPath = window.gematriaSafePath?.toSafeInternalPath(nextParam) || '';
+        if (!nextPath) {
           return null;
         }
 
@@ -894,7 +898,7 @@
           // Ignore storage availability issues.
         }
 
-        return nextParam;
+        return nextPath;
       }
 
       async function loadSession() {

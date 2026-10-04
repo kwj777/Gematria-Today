@@ -95,11 +95,29 @@
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
 
+/* A click anywhere on a real thread card opens it, so show that; this used to
+   come from Bootstrap's [role=button] rule. Skeleton cards have no thread id. */
+.forum-thread-card[data-thread-id] {
+  cursor: pointer;
+}
+
+/* The lift (transform) makes the card a stacking context, which traps its
+   author popover's z-index inside it; without the z-index the next card's
+   position:relative author badges paint over the open popover. */
 .forum-thread-card:hover,
-.forum-thread-card:focus-visible {
+.forum-thread-card:focus-within {
+  position: relative;
+  z-index: 1;
   border-color: rgba(53, 95, 140, 0.45);
   box-shadow: 0 0.85rem 1.7rem rgba(53, 95, 140, 0.16);
   transform: translateY(-1px);
+}
+
+/* The card holding the open popover also stays above a lifted neighbour, e.g.
+   a keyboard user's open popover while the pointer rests on the next card. */
+.forum-thread-card:has(.forum-profile-popover) {
+  position: relative;
+  z-index: 2;
 }
 
 .forum-thread-card-main {
@@ -278,7 +296,7 @@
 }
 
 :root[data-bs-theme="dark"] .forum-thread-card:hover,
-:root[data-bs-theme="dark"] .forum-thread-card:focus-visible {
+:root[data-bs-theme="dark"] .forum-thread-card:focus-within {
   border-color: rgba(125, 211, 252, 0.52);
   box-shadow: 0 0.9rem 1.8rem rgba(56, 189, 248, 0.18);
 }

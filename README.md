@@ -35,10 +35,12 @@ Pages are served directly from the repository root; Netlify's `publish` director
 
 ## Modular site builds (Forum / SiteSeeker / GemaBot / etc.)
 
-The site includes a lightweight module toggle system in `site-modules.js`.
+The site includes a lightweight module toggle system. Super admins flip the switches in the admin back-office; they are stored in `admin_settings.site_modules`.
 
-- Default modules are configured in `DEFAULT_MODULES`.
-- Page elements can be tied to modules using `data-module="forum"` (or comma-separated values).
+- Every module is **on** unless an admin saved it off. The defaults live in `DEFAULT_SITE_MODULES` (`netlify/functions/_site-modules.mjs`), mirrored by `DEFAULT_MODULES` in `site-modules.js`.
+- The switches are enforced server-side: each module's endpoints call `assertSiteModuleEnabled` and answer `404` while it is off — forum (`member-forum`), blog (`public-posts`, `/blog.xml`, `/blog/:slug`), SiteSeeker (`public-site-chatbot`), GemaBot (`ai-agent-learnings`, saving new chat sessions) and membership (new sign-ups by password or OAuth, and checkout; existing members keep signing in, their dashboard and the billing portal).
+- `site-modules.js` is part of `site-bundle.js`, so it runs on every page. A page whose `<main>` has `data-module-page="<module>"` shows an "unavailable" notice in place of its content while that module is off.
+- Page elements can be tied to modules using `data-module="forum"` (or comma-separated values, all of which must be on).
 - Module selection is **locked for non-admin users**.
 - Runtime overrides (`window.SITE_MODULE_OVERRIDES`, localStorage key `gematria.siteModules` — legacy `endtimes.siteModules` is read as a fallback and migrated forward — and `?modules=...`) are honored only when the current authenticated admin session is a `super_admin`.
 
@@ -57,9 +59,8 @@ The site includes a lightweight module toggle system in `site-modules.js`.
 
 ### How to create a custom build
 
-1. Open `site-modules.js`.
-2. Change values in `DEFAULT_MODULES` to `true`/`false` for the modules you want.
-3. Deploy.
+1. Switch the modules you do not want off in the admin back-office (super admins only).
+2. To change what a fresh database starts with, change `DEFAULT_SITE_MODULES` in `netlify/functions/_site-modules.mjs` and `DEFAULT_MODULES` in `site-modules.js` together, then deploy. A saved switch always wins over the defaults.
 
 ## Lines of Code
 
@@ -151,12 +152,17 @@ Apply the SQL files in order when bootstrapping a database:
 
 1. `sql/admin_schema.sql`
 2. `sql/member_schema.sql`
+3. `sql/words_schema.sql`
+
+`words_schema.sql` creates the `words` table (with its `LOWER(word)` and `gematria_value` indexes) that the calculator, value search, `/w/` and `/v/` word pages and the words sitemap read. No function creates it at runtime, so a database bootstrapped without it answers all of those with `relation "words" does not exist`. Every statement is `IF NOT EXISTS`, so it is safe to rerun against an existing database.
+
+`admin_schema.sql` creates the `kevandmel` admin account with a password hash that is committed to this repository, so set a new password for it as soon as the database is up. The functions create the `KevAdmin` super admin on a cold start only when that account is missing and the `SUPER_ADMIN_PASSWORD_HASH` environment variable holds its scrypt hash (generate one with `hashPassword` from `netlify/functions/_auth.mjs`); without the variable no owner account is created. Neither the SQL file nor a cold start ever resets the password of an account that already exists.
 
 `member_schema.sql` is the Phase 2 migration that adds member account fields, profile records, and saved calculation history on top of the shared `users` table.
 
 The membership implementation now exposes member auth/profile/history endpoints (`member-register`, `member-login`, `member-session`, `member-profile`, and `member-history`) plus a published `/member.html` dashboard for registration, profile editing, and saved searches.
 
-Stripe-backed membership upgrades now use recurring yearly Checkout sessions via `member-payment-checkout` and `member-payment-confirm`. Stripe credentials can now be managed from the admin back-office via `admin-settings`, with environment variables such as `STRIPE_SECRET_KEY` still supported as a fallback. Configure `STRIPE_WEBHOOK_SIGNING_SECRET` (or its admin-settings equivalent) and point Stripe webhooks to `/api/stripe-webhook` so renewal/cancellation events keep membership state in sync.
+Stripe-backed membership upgrades now use recurring yearly Checkout sessions via `member-payment-checkout` and `member-payment-confirm`. Stripe credentials can now be managed from the admin back-office via `admin-settings`, with environment variables such as `STRIPE_SECRET_KEY` still supported as a fallback. Configure `STRIPE_WEBHOOK_SIGNING_SECRET` (or its admin-settings equivalent) and point Stripe webhooks to `/api/stripe-webhook` so renewal/cancellation events keep membership state in sync. Checkout bills membership as a yearly recurring $19 price, so every renewal also costs $19. The webhook re-reads each subscription from Stripe rather than trusting the event payload, and acknowledges without changes the subscriptions other apps on the same Stripe account create.
 
 Member and admin account recovery now sends transactional emails through SendGrid only. Recovery requests require outbound email to be configured; recovery codes and username reminders are no longer shown on screen. SendGrid sender details/API credentials can now be saved from the admin back-office via `admin-settings`, with environment variables still supported as a fallback.
 
@@ -169,7 +175,8 @@ authorization-code exchange across three endpoints:
   buttons stay hidden until this reports one, so an unconfigured deploy never shows a button that
   dead-ends in an error.
 - `/api/member-oauth-start?provider=google` — signs a `state` value, stores it in a short-lived
-  `HttpOnly` cookie, and redirects to the provider.
+  `HttpOnly` cookie (`Max-Age`, so a browser with a wrong clock keeps it), and redirects to the
+  provider.
 - `/api/member-oauth-callback` — the provider's redirect target. Verifies `state` against the cookie,
   exchanges the code with the PKCE verifier, validates the `id_token` claims (`iss`, `aud`, `exp`,
   `nonce` — all required), then creates or links the membership and issues the normal member session
@@ -197,11 +204,24 @@ address by password; that account sits `pending` and its password is inert only 
 cannot sign in. Linking activates the row, which would quietly arm that password against an account
 the member now believes is theirs — so when the local row was never verified, its password is replaced
 with the OAuth-only sentinel and its sessions are revoked before the row is adopted. The member is
-told this happened and pointed at account recovery to set a new password.
+told this happened and pointed at account recovery to set a new password. A `pending` row's username
+and display name were chosen by the same anonymous registrant, so they are replaced with ones generated
+from the provider profile, exactly as for a new signup. Rows that are active (they predate email
+verification), paid, or proven by a completed password reset keep their names.
 
 A new account whose provider email is unverified is created as `pending` and receives the usual
 verification email; no session is issued until that link is used. Retrying later re-sends the link
-rather than dead-ending.
+rather than dead-ending. A stored identity is found by provider subject, and the provider's email can
+change under the same subject, so its `email_verified` only verifies the account when the address it
+reports is the account's own address.
+
+A password reset is how a member takes an account back, so it keeps only the linked identities whose
+provider asserts the account's own address as verified; any other identity is removed along with the
+old sessions.
+
+The learning-path signup page tags its Google button with `data-oauth-signup-source`. The start
+endpoint carries a recognised `signup_source` inside the signed `state`, and a new account created by
+the callback gets the same initial preferences a password signup from that page would.
 
 Usernames are the public badge slug (`/b/<username>`), so signups get one generated from the provider
 **display name** — never the email address, which would permanently publish a guess at the member's

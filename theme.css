@@ -39,6 +39,17 @@
   --color-text: #35414f;
   --color-text-rgb: 53, 65, 79;
   --color-text-on-dark: #f8fafc;
+  /* Secondary copy (descriptions, captions). Callers used to reach for this
+     name with nothing defining it, so each fell back to its own grey -- the
+     404 quick-link descriptions landed at 4.36:1 light and 3.83:1 dark.
+     #5b6676 is 5.07:1 on the cream page; the dark value is below. */
+  --color-text-muted: #5b6676;
+
+  /* Eyebrow label above section headings. Deep amber on light surfaces
+     (7.09:1 on white, 6.17:1 on the cream page); the bright #fbbf24 it used
+     to be everywhere is 1.67:1 on white, so it is kept for dark surfaces only
+     (dark theme below, and the always-dark hero / WOTD panels). */
+  --section-kicker-color: #92400e;
 
   /* Nav-search pill tokens. The pill sits on the dark navbar, so its text
      and chrome are tinted-white at varying alpha. Two rungs (resting/hover)
@@ -134,6 +145,36 @@
   --z-loading: 4000;
   --z-floating: 9000;
   --z-banner: 9100;
+}
+
+/* Light-theme text tokens Bootstrap leaves at values that only pass on pure
+   white. Links (#0d6efd) are 4.50:1 on #fff but 3.92:1 on the cream page,
+   4.06:1 on .alert-warning and 3.81:1 on the privacy TL;DR; <code> (#d63384)
+   has the same luminance. Same hues, one step darker. Scoped to light so
+   Bootstrap's own [data-bs-theme=dark] values still apply in dark mode. */
+:root:not([data-bs-theme="dark"]) {
+  --bs-link-color: #0a58ca; /* 5.61:1 cream, 4.82:1 on .alert-danger */
+  --bs-link-color-rgb: 10, 88, 202;
+  --bs-link-hover-color: #084298;
+  --bs-link-hover-color-rgb: 8, 66, 152;
+  --bs-code-color: #ab296a; /* 5.61:1 cream, 5.82:1 on .alert-warning */
+}
+
+:root[data-bs-theme="dark"] {
+  --color-text-muted: #aab4c3; /* 8.00:1 on --color-surface-dark */
+  --section-kicker-color: #fbbf24;
+}
+
+/* Panels that are dark in both themes. Their own text is set light, but
+   anything that inherits a light-theme token (links, kickers) would land
+   dark-on-navy: a byline link was 2.80:1 on the hero gradient. */
+.hero-panel,
+.word-of-day-spotlight {
+  --section-kicker-color: #fbbf24; /* 5.15:1 at the hero's amber glow */
+  --bs-link-color: #93c5fd; /* 4.77:1 at the glow, 6.99:1 on #1d3358 */
+  --bs-link-color-rgb: 147, 197, 253;
+  --bs-link-hover-color: #bfdbfe;
+  --bs-link-hover-color-rgb: 191, 219, 254;
 }
 
 h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6, .navbar-brand {
@@ -1799,9 +1840,9 @@ button[aria-disabled="true"]:not(:disabled):focus-visible {
   letter-spacing: 0.14em;
   font-size: 0.78rem;
   font-weight: 700;
-  /* Brighter amber than --bs-warning so the kicker reads as a vivid
-     eyebrow against dark hero / WOTD panel backgrounds. */
-  color: #fbbf24;
+  /* Deep amber on light surfaces, bright amber on dark ones -- see
+     --section-kicker-color at the top of this file. */
+  color: var(--section-kicker-color);
 }
 
 .metric-value {
@@ -2376,7 +2417,19 @@ button.definition-link:focus-visible {
 .blog-tag-chip:focus-visible {
   border-color: rgba(var(--bs-primary-rgb), 0.55);
   box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.15);
-  outline: none;
+}
+
+/* The tinted halo above is about 1.2:1, and on the filled active chip the
+   border tint matches the fill, so focusing the selected filter changed
+   nothing visible. A solid ring outside the chip does not depend on the fill
+   (4.37:1 on the cream page, 10.14:1 on dark surfaces). */
+.blog-tag-chip:focus-visible {
+  outline: 2px solid var(--brand-amber);
+  outline-offset: 2px;
+}
+
+:root[data-bs-theme="dark"] .blog-tag-chip:focus-visible {
+  outline-color: #fbbf24;
 }
 
 .blog-tag-chip__count {
@@ -2419,7 +2472,10 @@ button.definition-link:focus-visible {
   color: rgba(230, 235, 242, 0.85);
 }
 
-:root[data-bs-theme="dark"] .blog-tag-chip--active {
+/* Doubled class so this matches the specificity of the hover/focus rule above
+   and wins by order: at 0,3,0 it lost, and the selected chip dropped its fill
+   (looked unselected) whenever it was hovered or focused. */
+:root[data-bs-theme="dark"] .blog-tag-chip.blog-tag-chip--active {
   background: var(--bs-primary, #0d6efd);
   border-color: var(--bs-primary, #0d6efd);
   color: #fff;
@@ -3372,6 +3428,11 @@ body.page-render-pending footer {
   background: rgba(var(--brand-amber-rgb), 0.12);
 }
 
+/* --brand-amber is 3.07:1 on the dark callout; use the dark-surface amber. */
+:root[data-bs-theme="dark"] .premium-pricing-callout__kicker {
+  color: #fbbf24; /* 9.25:1 */
+}
+
 /* Stacked definition list used for legal/terms sections that previously
    relied on bullet lists with bold term-style prefixes. Each <dt> sits as
    a small subhead above its <dd> body so scanning is faster than a wall
@@ -3450,6 +3511,12 @@ body.page-render-pending footer {
   color: #7a4e00;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+/* #7a4e00 has no dark variant: 1.85:1 on the dark badge, so the upgrade
+   panel's price was close to invisible. */
+:root[data-bs-theme="dark"] .membership-price-badge {
+  color: #fcd34d; /* 9.22:1 */
 }
 
 .membership-upgrade-note {
@@ -4521,14 +4588,35 @@ select:not(.form-select):focus-visible {
   scroll-margin-top: 5rem;
 }
 
+/* Stacked one-per-line link lists -- the legal pages' "On this page" contents
+   and the blog sidebar's Cipher Atlas -- left 16-19px-tall links with almost
+   no gap, so a tap often landed on the neighbour. WCAG 2.5.8 wants undersized
+   targets 24px apart, centre to centre; space between the items gets there
+   without enlarging the text. */
+nav.legal-copy ol > li + li,
+.blog-sidebar-series ol > li + li {
+  margin-top: 0.5rem;
+}
+
+/* The menu button's name is its visible "Menu" / "Close" text, which is real
+   markup (src/_includes/nav.html and the admin pages) rather than ::after
+   content: generated content is not part of the name for axe/Lighthouse and
+   some screen readers. Only the word for the current state is rendered. */
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-label__closed,
+.navbar-toggler:not([aria-expanded="true"]) .navbar-toggler-label__open {
+  display: none;
+}
+
 /* ----- Mobile navbar polish --------------------------------------------- */
 /* The default Bootstrap toggler has no visible label and a faint focus ring.
-   Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a
-   ::after pseudo-element so the affordance is obvious without editing 29
-   pages of markup, (2) give it a real focus ring, (3) animate the collapse,
-   and (4) lay the menu out as full-width text links followed by a divider
-   and a paired CTA + Search row -- two visual zones (browse vs. act) instead
-   of a top-heavy stack of mismatched shapes. */
+   Below the lg breakpoint we (1) show the toggler's "Menu" / "Close" label
+   (.navbar-toggler-label) so the affordance is obvious -- that text is also
+   the button's accessible name, so the markup carries no aria-label to
+   contradict it (WCAG 2.5.3: a speech-input user says "tap Menu" or "tap
+   Close"), (2) give it a real focus ring, (3)
+   animate the collapse, and (4) lay the menu out as full-width text links
+   followed by a divider and a paired CTA + Search row -- two visual zones
+   (browse vs. act) instead of a top-heavy stack of mismatched shapes. */
 @media (max-width: 991.98px) {
   /* Keep the brand and the trailing search/theme/menu pills on a single row
      even on narrow iPhones. Bootstrap's default flex-wrap on .navbar will
@@ -4577,16 +4665,11 @@ select:not(.form-select):focus-visible {
     gap: 0.5rem;
   }
 
-  .navbar-toggler::after {
-    content: "Menu";
+  .navbar-toggler-label {
     font-size: var(--font-size-sm);
     font-weight: 600;
     letter-spacing: var(--tracking-wide);
     color: rgba(255, 255, 255, 0.92);
-  }
-
-  .navbar-toggler[aria-expanded="true"]::after {
-    content: "Close";
   }
 
   .navbar-toggler:focus-visible {
@@ -4703,8 +4786,8 @@ select:not(.form-select):focus-visible {
     align-self: center;
   }
 
-  /* The "press /" kbd hint inside the Ask KnowBot pill is desktop-only --
-     there's no slash key on touch keyboards, so it's noise on mobile. */
+  /* The Ctrl K kbd hint inside the Ask KnowBot pill is desktop-only --
+     touch keyboards have no Ctrl or Cmd key, so it's noise on mobile. */
   .navbar-nav .nav-search-link__kbd {
     display: none;
   }
@@ -4838,10 +4921,16 @@ select:not(.form-select):focus-visible {
   }
 
   /* On the narrowest phones the "Menu" text label inside the toggle costs
-     ~50px that the logo needs more. Drop it to icon-only; the hamburger and
-     aria-label still communicate the affordance. */
-  .navbar-toggler::after {
-    content: none;
+     ~50px that the logo needs more. Show the hamburger alone, but hide the
+     label only visually: it is the button's only name. */
+  .navbar-toggler-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .navbar-toggler {
     padding: 0.5rem 0.6rem;
@@ -4985,7 +5074,8 @@ select:not(.form-select):focus-visible {
     margin-top: 0.5rem;
     padding: 0.5rem 0.75rem 0.25rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    color: var(--brand-amber);
+    /* The menu is dark in both themes; --brand-amber is 3.06:1 on it. */
+    color: #fbbf24; /* 9.19:1 on #2a241d */
     text-align: right;
     font-size: 0.85rem;
     font-weight: 600;
@@ -4993,7 +5083,7 @@ select:not(.form-select):focus-visible {
   }
   .nav-mega-footer:hover,
   .nav-mega-footer:focus-visible {
-    color: var(--brand-amber);
+    color: #fbbf24;
     text-decoration: underline;
   }
 
@@ -5037,9 +5127,9 @@ select:not(.form-select):focus-visible {
 }
 
 /* Search keyboard-shortcut hint. The kbd badge tells keyboard users they
-   can press "/" anywhere on the site to jump into KnowBot search. Hidden
-   on touch/mobile via pointer-fine guard since the key prompt is
-   meaningless without a hardware keyboard. */
+   can press Ctrl+K (Cmd+K on a Mac) anywhere on the site to jump into
+   KnowBot search. Hidden on touch/mobile via pointer-fine guard since the
+   key prompt is meaningless without a hardware keyboard. */
 .nav-search-link__kbd {
   display: none;
   margin-left: 0.4rem;
@@ -5170,7 +5260,7 @@ select:not(.form-select):focus-visible {
     display: block;
     margin-top: 0.25rem;
     padding: 0.4rem 0;
-    color: var(--brand-amber);
+    color: #fbbf24; /* drawer is var(--bs-dark): 6.27:1 on #3f403a, 9.24:1 on #212529 */
     font-weight: 600;
     text-decoration: none;
   }
@@ -5257,6 +5347,78 @@ select:not(.form-select):focus-visible {
 :root[data-bs-theme="dark"] #registerBenefitsPreviewLink,
 :root[data-bs-theme="dark"] #comparisonCurrentLevel {
   color: #93c5fd; /* 6.84:1 on the dark amber panel */
+}
+
+/* Navbar focus. Bootstrap's .nav-link ring is rgba(13,110,253,.25) and the
+   theme toggle / Menu button ring is brand amber at 45% -- composited on the
+   #1f1b16 / #2a241d bar they are 1.29:1 and 1.65:1, so Tools, Learn, the
+   theme toggle and Menu showed no usable focus. A solid bright-amber outline
+   is 10.26:1 / 9.19:1 on the bar and 6.27:1 on the mobile drawer. */
+.navbar-dark .nav-link:focus-visible,
+.navbar-dark .nav-theme-toggle:focus-visible,
+.navbar-dark .navbar-toggler:focus-visible,
+.navbar-dark .btn:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* .text-primary resolves through --bs-primary-rgb (#355f8c), which has no dark
+   variant: 2.55:1 for the member dashboard stat values in dark mode. Bootstrap
+   marks the utility !important, so the override has to be as well. */
+:root[data-bs-theme="dark"] .text-primary {
+  color: #9ec5fe !important; /* 9.54:1 on the dark stat card */
+}
+
+/* Text utilities against the base tokens in public-theme-css. Secondary,
+   success and danger are fills behind white badge text there, so they are
+   dark; as text on dark surfaces they need the light shade back. Info and
+   warning are fills behind black text, so they stay light; as text on light
+   surfaces they need a dark shade. */
+:root[data-bs-theme="dark"] .text-secondary {
+  color: #9a958b !important; /* 5.68:1 on the dark panel */
+}
+
+:root[data-bs-theme="dark"] .text-success {
+  color: #97c93c !important; /* 8.65:1 on the dark panel */
+}
+
+:root[data-bs-theme="dark"] .text-danger {
+  color: #ea868f !important; /* 6.70:1 on the dark panel */
+}
+
+/* The same tokens are Bootstrap's .bg-* fills, which have no dark-mode value
+   of their own. The fill-only bars (sign-up password strength meter, admin
+   conversion funnel) sit on the dark progress track #343a40, where the dark
+   fills are 1.63:1 (success) and 1.75:1 (danger); they get the light shades
+   too. .text-bg-* is left alone: it pairs the fill with white text. */
+:root[data-bs-theme="dark"] .bg-secondary {
+  background-color: rgba(154, 149, 139, var(--bs-bg-opacity)) !important; /* #9a958b, 3.86:1 on #343a40 */
+}
+
+:root[data-bs-theme="dark"] .bg-success {
+  background-color: rgba(151, 201, 60, var(--bs-bg-opacity)) !important; /* #97c93c, 5.88:1 on #343a40 */
+}
+
+:root[data-bs-theme="dark"] .bg-danger {
+  background-color: rgba(234, 134, 143, var(--bs-bg-opacity)) !important; /* #ea868f, 4.55:1 on #343a40 */
+}
+
+:root:not([data-bs-theme="dark"]) .text-info {
+  color: #0e6a99 !important; /* 5.88:1 on a light panel (#33a1d6 was 2.91:1) */
+}
+
+/* Scoped to stat cards: the other .text-warning use is on the always-dark
+   learning-path promo, where the light orange is correct. */
+:root:not([data-bs-theme="dark"]) .stat-card .text-warning {
+  color: #b45309 !important; /* 4.98:1 (#ff7c35 was 2.57:1) */
+}
+
+/* Bootstrap's #6c757d is 4.08:1 on the cream page background, where the
+   GemaBot "Hide intro" and dashboard "Premium research" buttons sit. */
+:root:not([data-bs-theme="dark"]) .btn-outline-secondary {
+  --bs-btn-color: #5c636a; /* 5.30:1 on cream */
+  --bs-btn-border-color: #5c636a;
 }
 
 /* Social sign-in ---------------------------------------------------------- */

@@ -233,29 +233,35 @@
         });
       }
 
+      // Every category gets its own editor form, so field ids are scoped by
+      // category id; without them the labels named nothing for screen readers.
+      function categoryFieldId(category, field) {
+        return `forumCategory-${String(category.id).replace(/[^A-Za-z0-9_-]/g, '')}-${field}`;
+      }
+
       function renderCategories(categories) {
         if (!categories.length) { categoriesListEl.innerHTML = '<p class="text-muted mb-0">No categories found.</p>'; return; }
         categoriesListEl.innerHTML = categories.map((category) => `
           <form class="border rounded p-3 mb-3" data-category-form="${category.id}">
             <input type="hidden" name="id" value="${category.id}" />
             <div class="row g-2 align-items-end">
-              <div class="col-md-2"><label class="form-label small">Name</label><input class="form-control" name="name" value="${esc(category.name)}" required /></div>
-              <div class="col-md-2"><label class="form-label small">Slug</label><input class="form-control" name="slug" value="${esc(category.slug)}" required /></div>
-              <div class="col-md-2"><label class="form-label small">Access</label><select class="form-select" name="accessTier"><option value="free" ${category.accessTier === 'free' ? 'selected' : ''}>Free</option><option value="premium" ${category.accessTier === 'premium' ? 'selected' : ''}>Premium</option></select></div>
-              <div class="col-md-2"><label class="form-label small">Sort</label><input class="form-control" name="sortOrder" type="number" value="${category.sortOrder}" /></div>
-              <div class="col-md-2"><label class="form-label small">Post mode</label><select class="form-select" name="postMode"><option value="members" ${category.postMode === 'members' ? 'selected' : ''}>Members</option><option value="moderators" ${category.postMode === 'moderators' ? 'selected' : ''}>Moderators</option></select></div>
-              <div class="col-md-2"><label class="form-label small">Default sort</label><select class="form-select" name="defaultSortMode"><option value="newest" ${category.defaultSortMode === 'newest' ? 'selected' : ''}>Newest</option><option value="popular" ${category.defaultSortMode === 'popular' ? 'selected' : ''}>Popular</option></select></div>
+              <div class="col-md-2"><label class="form-label small" for="${categoryFieldId(category, 'name')}">Name</label><input id="${categoryFieldId(category, 'name')}" class="form-control" name="name" value="${esc(category.name)}" required /></div>
+              <div class="col-md-2"><label class="form-label small" for="${categoryFieldId(category, 'slug')}">Slug</label><input id="${categoryFieldId(category, 'slug')}" class="form-control" name="slug" value="${esc(category.slug)}" required /></div>
+              <div class="col-md-2"><label class="form-label small" for="${categoryFieldId(category, 'accessTier')}">Access</label><select id="${categoryFieldId(category, 'accessTier')}" class="form-select" name="accessTier"><option value="free" ${category.accessTier === 'free' ? 'selected' : ''}>Free</option><option value="premium" ${category.accessTier === 'premium' ? 'selected' : ''}>Premium</option></select></div>
+              <div class="col-md-2"><label class="form-label small" for="${categoryFieldId(category, 'sortOrder')}">Sort</label><input id="${categoryFieldId(category, 'sortOrder')}" class="form-control" name="sortOrder" type="number" value="${category.sortOrder}" /></div>
+              <div class="col-md-2"><label class="form-label small" for="${categoryFieldId(category, 'postMode')}">Post mode</label><select id="${categoryFieldId(category, 'postMode')}" class="form-select" name="postMode"><option value="members" ${category.postMode === 'members' ? 'selected' : ''}>Members</option><option value="moderators" ${category.postMode === 'moderators' ? 'selected' : ''}>Moderators</option></select></div>
+              <div class="col-md-2"><label class="form-label small" for="${categoryFieldId(category, 'defaultSortMode')}">Default sort</label><select id="${categoryFieldId(category, 'defaultSortMode')}" class="form-select" name="defaultSortMode"><option value="newest" ${category.defaultSortMode === 'newest' ? 'selected' : ''}>Newest</option><option value="popular" ${category.defaultSortMode === 'popular' ? 'selected' : ''}>Popular</option></select></div>
               <div class="col-md-2">
-                <label class="form-label small">Color badge</label>
+                <label class="form-label small" for="${categoryFieldId(category, 'colorBadge')}">Color badge</label>
                 <div class="input-group" data-color-pair>
-                  <input class="form-control" name="colorBadge" data-color-text value="${esc(category.colorBadge || '')}" />
+                  <input id="${categoryFieldId(category, 'colorBadge')}" class="form-control" name="colorBadge" data-color-text value="${esc(category.colorBadge || '')}" />
                   <input class="form-control form-control-color" type="color" data-color-picker value="${esc(sanitizeColor(category.colorBadge || ''))}" aria-label="Pick badge color" title="Pick badge color" />
                 </div>
               </div>
-              <div class="col-md-2"><label class="form-label small">Icon</label><select class="form-select" name="iconName">${iconOptionsMarkup(category.iconName || '')}</select></div>
-              <div class="col-md-3"><label class="form-label small">Description</label><input class="form-control" name="description" value="${esc(category.description || '')}" /></div>
-              <div class="col-md-5"><label class="form-label small">Guidelines</label><input class="form-control" name="guidelines" value="${esc(category.guidelines || '')}" /></div>
-              <div class="col-md-12"><label class="form-label small">Thread template prompt</label><input class="form-control" name="threadTemplatePrompt" value="${esc(category.threadTemplatePrompt || '')}" /></div>
+              <div class="col-md-2"><label class="form-label small" for="${categoryFieldId(category, 'iconName')}">Icon</label><select id="${categoryFieldId(category, 'iconName')}" class="form-select" name="iconName">${iconOptionsMarkup(category.iconName || '')}</select></div>
+              <div class="col-md-3"><label class="form-label small" for="${categoryFieldId(category, 'description')}">Description</label><input id="${categoryFieldId(category, 'description')}" class="form-control" name="description" value="${esc(category.description || '')}" /></div>
+              <div class="col-md-5"><label class="form-label small" for="${categoryFieldId(category, 'guidelines')}">Guidelines</label><input id="${categoryFieldId(category, 'guidelines')}" class="form-control" name="guidelines" value="${esc(category.guidelines || '')}" /></div>
+              <div class="col-md-12"><label class="form-label small" for="${categoryFieldId(category, 'threadTemplatePrompt')}">Thread template prompt</label><input id="${categoryFieldId(category, 'threadTemplatePrompt')}" class="form-control" name="threadTemplatePrompt" value="${esc(category.threadTemplatePrompt || '')}" /></div>
               <div class="col-12 d-flex flex-wrap gap-3 mt-2">
                 <label class="form-check"><input class="form-check-input" type="checkbox" name="isArchived" ${category.isArchived ? 'checked' : ''}><span class="form-check-label">Archived</span></label>
                 <label class="form-check"><input class="form-check-input" type="checkbox" name="isLocked" ${category.isLocked ? 'checked' : ''}><span class="form-check-label">Locked</span></label>
@@ -279,7 +285,7 @@
         categoriesListEl.querySelectorAll('[data-delete-category]').forEach((button) => {
           button.addEventListener('click', async () => {
             const categoryName = button.closest('form')?.querySelector('[name="name"]')?.value?.trim() || 'this category';
-            if (!window.confirm(`Warning: you are about to permanently delete ${categoryName}. This only works when no active threads exist in it.`)) return;
+            if (!window.confirm(`Warning: you are about to permanently delete ${categoryName}. This only works for a category that has never held a thread, deleted threads included; archive it instead if it has.`)) return;
             try { hideAlert(); await request(`/api/admin-forum?id=${encodeURIComponent(button.dataset.deleteCategory)}`, { method: 'DELETE' }); await load(); showAlert('Category deleted.', 'success'); }
             catch (error) { showAlert(error.message); }
           });

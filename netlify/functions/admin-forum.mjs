@@ -7,6 +7,8 @@ const REPORT_STATUSES = new Set(['open', 'in_review', 'actioned', 'dismissed', '
 const REPORT_ACTIONS = new Set(['none', 'resolve', 'dismiss', 'remove_post', 'hide_thread', 'warn_user', 'suspend_user', 'escalate']);
 const CATEGORY_POST_MODES = new Set(['members', 'moderators']);
 const CATEGORY_DEFAULT_SORT_MODES = new Set(['newest', 'popular']);
+const FOREIGN_KEY_VIOLATION = '23503';
+const CATEGORY_HAS_DELETED_THREADS_MESSAGE = 'This category still holds threads, including deleted ones kept for the moderation record, so it cannot be deleted. Archive it instead.';
 
 function normalizeSlug(value) {
   return String(value || '')
@@ -290,17 +292,32 @@ async function deleteCategory(sql, event) {
   const id = String(event.queryStringParameters?.id || parseBody(event).id || '').trim();
   if (!id) throw Object.assign(new Error('id is required'), { statusCode: 400 });
 
+  // Moderators only ever soft-delete threads, and those rows (and the reports
+  // that point at them) are kept, so their foreign key still pins the category.
+  // Counting only live threads let the DELETE through to a raw FK error.
   const inUseRows = await sql`
-    SELECT COUNT(*)::INTEGER AS total
+    SELECT COUNT(*) FILTER (WHERE deleted_at IS NULL)::INTEGER AS active_total,
+      COUNT(*)::INTEGER AS total
     FROM forum_threads
     WHERE category_id = ${id}
-      AND deleted_at IS NULL
   `;
-  if ((inUseRows[0]?.total || 0) > 0) {
+  if ((inUseRows[0]?.active_total || 0) > 0) {
     throw Object.assign(new Error('Cannot delete category while active threads exist in it'), { statusCode: 409 });
   }
+  if ((inUseRows[0]?.total || 0) > 0) {
+    throw Object.assign(new Error(CATEGORY_HAS_DELETED_THREADS_MESSAGE), { statusCode: 409 });
+  }
 
-  const deletedRows = await sql`DELETE FROM forum_categories WHERE id = ${id} RETURNING id`;
+  let deletedRows;
+  try {
+    deletedRows = await sql`DELETE FROM forum_categories WHERE id = ${id} RETURNING id`;
+  } catch (error) {
+    // A thread posted between the check and the delete.
+    if (error?.code === FOREIGN_KEY_VIOLATION) {
+      throw Object.assign(new Error(CATEGORY_HAS_DELETED_THREADS_MESSAGE), { statusCode: 409 });
+    }
+    throw error;
+  }
   if (!deletedRows.length) throw Object.assign(new Error('Category not found'), { statusCode: 404 });
   return { deleted: true };
 }
@@ -341,7 +358,45 @@ async function resolveReport(sql, event, user) {
 
   if (!rows.length) throw Object.assign(new Error('Report not found'), { statusCode: 404 });
   await Promise.all(rows.map((row) => createAuditEntry(sql, user.id, 'report', row.id, `report_${status || 'resolved'}`, { actionTaken, assignTo: assignTo || null })));
-  return { updated: rows.length };
+
+  const suspendedUserIds = actionTaken === 'suspend_user'
+    ? await suspendReportedAuthors(sql, rows.map((row) => row.id), user.id)
+    : [];
+  return { updated: rows.length, suspendedUserIds };
+}
+
+// 'suspend_user' used to be written to the report and nothing else, so the
+// member kept their sessions and kept posting. It now suspends the author of
+// each reported reply (or of the thread, for a thread report) and deletes their
+// sessions; the session lookups in _auth.mjs refuse a suspended account and
+// password sign-in already does. Staff accounts and the moderator acting are
+// never suspended from here.
+async function suspendReportedAuthors(sql, reportIds, actorUserId) {
+  const suspendedRows = await sql`
+    UPDATE users
+    SET status = 'suspended',
+        updated_at = NOW()
+    WHERE id IN (
+      SELECT COALESCE(p.author_user_id, t.author_user_id)
+      FROM forum_reports r
+      LEFT JOIN forum_posts p ON p.id = r.post_id
+      LEFT JOIN forum_threads t ON t.id = r.thread_id
+      WHERE r.id = ANY(${reportIds})
+    )
+      AND id <> ${actorUserId}
+      AND role = 'member'
+      AND COALESCE(is_admin, FALSE) = FALSE
+      AND status <> 'deleted'
+    RETURNING id
+  `;
+  const suspendedUserIds = suspendedRows.map((row) => row.id);
+  if (!suspendedUserIds.length) {
+    return [];
+  }
+
+  await sql`DELETE FROM sessions WHERE user_id = ANY(${suspendedUserIds})`;
+  await Promise.all(suspendedUserIds.map((suspendedUserId) => createAuditEntry(sql, actorUserId, 'user', suspendedUserId, 'suspend_user', { reportIds })));
+  return suspendedUserIds;
 }
 
 export async function handler(event) {

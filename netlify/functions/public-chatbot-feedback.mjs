@@ -33,16 +33,16 @@ export async function handler(event) {
     await syncBootstrapAdminUser(sql);
 
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
-    if (!user) {
-      await applyRateLimit(sql, event, {
-        scope: 'public-chatbot-feedback-ip',
-        key: getClientIp(event),
-        limit: 20,
-        windowMs: 60_000,
-        blockMs: 5 * 60_000,
-        message: 'Too many SiteSeeker feedback submissions. Please try again soon.',
-      });
-    }
+    // Every submission lands in the admin review queue, so signed-in callers
+    // are throttled too (per account), not only anonymous ones (per IP).
+    await applyRateLimit(sql, event, {
+      scope: user ? 'public-chatbot-feedback-user' : 'public-chatbot-feedback-ip',
+      key: user ? String(user.id) : getClientIp(event),
+      limit: 20,
+      windowMs: 60_000,
+      blockMs: 5 * 60_000,
+      message: 'Too many SiteSeeker feedback submissions. Please try again soon.',
+    });
 
     const { visitorSessionId, isNew: isNewVisitor, visitorCookie } = getOrCreateVisitorSession(event);
     const payload = parseBody(event);

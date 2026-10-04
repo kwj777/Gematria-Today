@@ -1,19 +1,22 @@
 import type { Config, Context } from '@netlify/edge-functions';
+import { englishGematria, replaceMetaContent, replaceTitle } from './lib/og-meta.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
+const OGP_IMAGE_WIDTH = 1200;
+const OGP_IMAGE_FORMAT = 'jpg';
 
-function escapeAttr(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function replaceMetaContent(html: string, selector: string, newValue: string): string {
-  const attrMatch = selector.match(/meta\[(property|name)="([^"]+)"\]/);
-  if (!attrMatch) {
-    return html;
+// The share image is rendered by a function, and robots.txt disallows
+// /.netlify/functions/ -- X and LinkedIn honour that for card images and drop
+// the picture. Serve it through the image CDN instead, as calculator-og does:
+// /.netlify/images is crawlable and also rasterizes the SVG to the JPEG the
+// card crawlers expect.
+function toShareImageUrl(value: string): string {
+  const absoluteUrl = String(value || '').trim();
+  if (!absoluteUrl || /^data:image\//i.test(absoluteUrl)) {
+    return '';
   }
-  const [, attrName, attrValue] = attrMatch;
-  const pattern = new RegExp(`(<meta\\s[^>]*${attrName}="${attrValue}"[^>]*\\scontent=")([^"]*)(")`);
-  return html.replace(pattern, `$1${escapeAttr(newValue)}$3`);
+  const encoded = encodeURIComponent(absoluteUrl);
+  return `${SITE_ORIGIN}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
 }
 
 export default async (req: Request, context: Context) => {
@@ -21,7 +24,6 @@ export default async (req: Request, context: Context) => {
   const names = ['name1', 'name2', 'name3']
     .map((key) => String(requestUrl.searchParams.get(key) || '').trim())
     .filter(Boolean);
-  const totals = String(requestUrl.searchParams.get('totals') || '').trim();
 
   const response = await context.next();
   let html = await response.text();
@@ -30,27 +32,26 @@ export default async (req: Request, context: Context) => {
     return new Response(html, { headers: response.headers });
   }
 
+  // Share links also carry totals=, but it is ignored: each name's total is
+  // recomputed so a hand-edited link cannot print any number it likes.
+  const totals = names.map((name) => englishGematria(name)).join(', ');
   const title = `Name calculator: ${names.join(', ')} | Gematria.Today`;
-  const description = totals
-    ? `Compare gematria totals (${totals}) for ${names.join(', ')}.`
-    : `Compare gematria results for ${names.join(', ')} on Gematria.Today.`;
+  const description = `Compare gematria totals (${totals}) for ${names.join(', ')}.`;
   const shareUrl = `${SITE_ORIGIN}/name-calculator.html${requestUrl.search}`;
   const imageUrl = new URL('/.netlify/functions/calculator-share-image', SITE_ORIGIN);
   imageUrl.searchParams.set('type', 'name');
   names.forEach((name, index) => imageUrl.searchParams.set(`name${index + 1}`, name));
-  if (totals) {
-    imageUrl.searchParams.set('totals', totals);
-  }
+  const shareImageUrl = toShareImageUrl(imageUrl.toString()) || imageUrl.toString();
 
-  html = html.replace(/(<title[^>]*>)[^<]*(<\/title>)/, `$1${escapeAttr(title)}$2`);
+  html = replaceTitle(html, title);
   html = replaceMetaContent(html, 'meta[name="description"]', description);
   html = replaceMetaContent(html, 'meta[property="og:title"]', title);
   html = replaceMetaContent(html, 'meta[property="og:description"]', description);
   html = replaceMetaContent(html, 'meta[property="og:url"]', shareUrl);
-  html = replaceMetaContent(html, 'meta[property="og:image"]', imageUrl.toString());
+  html = replaceMetaContent(html, 'meta[property="og:image"]', shareImageUrl);
   html = replaceMetaContent(html, 'meta[name="twitter:title"]', title);
   html = replaceMetaContent(html, 'meta[name="twitter:description"]', description);
-  html = replaceMetaContent(html, 'meta[name="twitter:image"]', imageUrl.toString());
+  html = replaceMetaContent(html, 'meta[name="twitter:image"]', shareImageUrl);
 
   return new Response(html, { headers: response.headers });
 };

@@ -29,12 +29,14 @@
     <meta property="og:title" content="How to Use Gematria: A Practical Guide to the Calculator" />
     <meta property="og:description" content="The letter values, the four numbers a calculator gives you, and the arithmetic that tells you which matches mean nothing." />
     <meta property="og:url" content="https://gematria.today/how-to-use-gematria.html" />
-    <meta property="og:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Constellation artwork representing linked words and numbers." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="How to Use Gematria: A Practical Guide to the Calculator" />
     <meta name="twitter:description" content="The letter values, the four numbers a calculator gives you, and the arithmetic that tells you which matches mean nothing." />
-    <meta name="twitter:image" content="https://gematria.today/assets/calculator-hero-constellation.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
     <meta name="twitter:image:alt" content="Constellation artwork representing linked words and numbers." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
@@ -95,7 +97,7 @@
             "name": "What is a digital root?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Add the digits of the total together, and keep going until one digit is left. 336 becomes 3+3+6=12, then 1+2=3. There are only nine possible digital roots, so roughly one pair of unrelated words in nine shares one by chance. Treat a shared digital root as almost no evidence on its own."
+              "text": "Add the digits of the total together, and keep going until one digit is left. 336 becomes 3+3+6=12, then 1+2=3. Every total in this cipher is a multiple of six, so its digital root can only be 3, 6 or 9, and roughly one pair of unrelated words in three shares one by chance. Treat a shared digital root as almost no evidence on its own."
             }
           },
           {
@@ -249,7 +251,7 @@
             <div class="col-md-6">
               <div class="h-100 border rounded-3 p-3">
                 <h3 class="h6 mb-2">Digital root &mdash; <span class="fw-normal text-muted">3</span></h3>
-                <p class="small text-muted mb-0">Add the digits until one is left: 336 &rarr; 3+3+6 = 12 &rarr; 1+2 = 3. It sorts every word in existence into nine buckets, so use it to group, never as evidence.</p>
+                <p class="small text-muted mb-0">Add the digits until one is left: 336 &rarr; 3+3+6 = 12 &rarr; 1+2 = 3. In this cipher it sorts every word in existence into just three buckets &mdash; 3, 6 or 9 &mdash; so use it to group, never as evidence.</p>
               </div>
             </div>
             <div class="col-md-6">
@@ -278,8 +280,8 @@
           <h3 class="h6 mt-4 mb-2">b. Anagrams always match</h3>
           <p class="mb-3">Addition ignores order. <code>EARTH</code> and <code>HEART</code> both total 312 because they are the same five letters in a different arrangement. So do <code>ALTER</code> and <code>LATER</code>, at 336. Every anagram pair in every additive cipher matches, every time. If your two words are anagrams, you have found a property of the alphabet, not a correspondence.</p>
 
-          <h3 class="h6 mt-4 mb-2">c. Digital roots are nine buckets</h3>
-          <p class="mb-3">There are nine possible digital roots, so two unrelated words share one about one time in nine. A shared digital root, on its own, is close to no evidence at all. It is a useful way to sort a long list; it is not a finding.</p>
+          <h3 class="h6 mt-4 mb-2">c. Digital roots are three buckets</h3>
+          <p class="mb-3">Every total in this cipher is a multiple of six, and the digital root of a multiple of six can only be 3, 6 or 9. So two unrelated words share a digital root about one time in three. (Ciphers such as English Ordinal spread totals across all nine roots, but that still makes a shared root a one-in-nine event.) A shared digital root, on its own, is close to no evidence at all. It is a useful way to sort a long list; it is not a finding.</p>
 
           <h3 class="h6 mt-4 mb-2">The test that actually works: run controls</h3>
           <p class="mb-2">A match only carries information if it happens more often among related words than among unrelated ones. So check both.</p>
@@ -317,7 +319,7 @@
           <ol class="mb-0">
             <li class="mb-2"><strong>Changing spelling until something matches.</strong> Adding a middle name, dropping a title, switching transliterations &mdash; try enough spellings and any target value becomes reachable. Fix the spelling first.</li>
             <li class="mb-2"><strong>Switching ciphers until something matches.</strong> Same problem, seven times over. Pick the cipher before the word.</li>
-            <li class="mb-2"><strong>Reading a shared digital root as a match.</strong> One in nine. See <a href="#test-the-match">step 4c</a>.</li>
+            <li class="mb-2"><strong>Reading a shared digital root as a match.</strong> In this cipher, one unrelated pair in three. See <a href="#test-the-match">step 4c</a>.</li>
             <li class="mb-2"><strong>Comparing a phrase to a single word.</strong> Longer inputs reach higher totals, so a long phrase and a short word matching is a different kind of event from two words of the same length matching. Compare like with like.</li>
             <li class="mb-0"><strong>Testing one pair.</strong> A single coincidence has no denominator. The question is never &ldquo;do these two match&rdquo; but &ldquo;how often do things like these match&rdquo;.</li>
           </ol>
@@ -333,7 +335,7 @@
             <dd>No. Only A&ndash;Z. Because spacing is ignored, a phrase and the same phrase written as one word always match.</dd>
 
             <dt class="h6 mt-3">What is a digital root?</dt>
-            <dd>The digits of the total added until one remains: 336 &rarr; 12 &rarr; 3. Nine possible values, so roughly one unrelated pair in nine shares one. <a href="/definitions.html#defn-digit-sum-root-reduction">Full definition</a>.</dd>
+            <dd>The digits of the total added until one remains: 336 &rarr; 12 &rarr; 3. Every total here is a multiple of six, so only 3, 6 and 9 occur, and roughly one unrelated pair in three shares one. <a href="/definitions.html#defn-digit-sum-root-reduction">Full definition</a>.</dd>
 
             <dt class="h6 mt-3">Two words I care about share a value. Does that mean something?</dt>
             <dd>Usually not on its own. Every total is a multiple of six, and a five-letter word has only 126 totals available to it. Matches are the norm. What carries information is whether related words match more often than unrelated ones &mdash; which is what <a href="#test-the-match">step 4</a> measures.</dd>

@@ -22,6 +22,10 @@ const SOURCES = [
   'nav-scroll.js',
   'public-theme.js',
   'anti-bot.js',
+  // Every page needs it: the module switches hide links in the shared nav and
+  // footer and put a switched-off module's own page behind a notice. It used
+  // to load on three pages only, so the switches did nothing anywhere else.
+  'site-modules.js',
 ];
 const OUTPUT = 'site-bundle.js';
 

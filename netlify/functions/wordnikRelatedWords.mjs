@@ -1,6 +1,7 @@
 import { getSqlClient, jsonResponse } from './_auth.mjs';
 import { getAuthenticatedMember } from './_member.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
+import { extractKindFromEvent, isNameLookup } from './englishGematria.mjs';
 
 export const DEFAULT_WORDNIK_RELATIONSHIP_TYPE = 'synonym';
 export const ALLOWED_WORDNIK_RELATIONSHIP_TYPES = new Set([
@@ -98,14 +99,19 @@ export function getErrorStatusCode(error) {
   return 500;
 }
 
-export async function fetchRelatedWords(sql, source, term, limit, relationshipType, { membershipLevel } = {}) {
+// The name calculator asks for each name's related words when a member is
+// signed in, and sends kind=name as it does to englishGematria. A name is a
+// person, so that lookup is fetched fresh instead of being kept in the shared
+// response cache, whose payload carries the name, and the audit entry records
+// that a name was looked up, not which one.
+export async function fetchRelatedWords(sql, source, term, limit, relationshipType, { membershipLevel, isName = false } = {}) {
   const trimmedTerm = term.trim();
   const normalizedTerm = trimmedTerm.toLowerCase();
   if (!normalizedTerm) throw new Error('Missing required query parameter: word');
   const parsedLimit = parseLimit(limit, { membershipLevel });
   const parsedRelationshipType = parseRelationshipType(relationshipType);
 
-  const cacheResult = await withCachedJson(sql, {
+  const lookup = {
     cacheKey: buildCacheKey({
       route: 'wordnikRelatedWords',
       term: normalizedTerm,
@@ -148,13 +154,20 @@ export async function fetchRelatedWords(sql, source, term, limit, relationshipTy
         : rawData;
       return { query: trimmedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit, data, hasMore };
     },
-  });
+  };
+  const cacheResult = isName
+    ? { statusCode: 200, payload: await lookup.compute(), cached: false }
+    : await withCachedJson(sql, lookup);
 
   await logRequestAudit(sql, source, {
     route: 'wordnikRelatedWords',
     action: 'lookup',
     outcome: cacheResult.cached ? 'cache_hit' : 'origin_hit',
-    metadata: { term: normalizedTerm, relationshipType: parsedRelationshipType, limit: parsedLimit },
+    metadata: {
+      ...(isName ? { kind: 'name' } : { term: normalizedTerm }),
+      relationshipType: parsedRelationshipType,
+      limit: parsedLimit,
+    },
   });
 
   return { ...cacheResult, payload: toPublicRelatedWordsPayload(cacheResult.payload) };
@@ -165,6 +178,7 @@ export default async function onRequest(request) {
   const term = searchParams.get('word') ?? searchParams.get('phrase');
   const limit = searchParams.get('limit');
   const relationshipType = searchParams.get('relationshipType');
+  const isName = isNameLookup(searchParams.get('kind'));
   if (!term?.trim()) return toResponse(400, { error: 'Missing required query parameter: word' });
 
   try {
@@ -179,7 +193,7 @@ export default async function onRequest(request) {
       blockMs: 5 * 60_000,
       message: 'Too many related-word lookups.',
     });
-    const cacheResult = await fetchRelatedWords(sql, request, term, limit, relationshipType, { membershipLevel: member.membershipLevel });
+    const cacheResult = await fetchRelatedWords(sql, request, term, limit, relationshipType, { membershipLevel: member.membershipLevel, isName });
     return toResponse(200, cacheResult.payload, {
       'cache-control': 'private, max-age=600',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
@@ -191,6 +205,7 @@ export default async function onRequest(request) {
 
 export async function handler(event) {
   const { term, limit, relationshipType } = extractRequestOptionsFromEvent(event);
+  const isName = isNameLookup(extractKindFromEvent(event));
   if (!term?.trim()) return jsonResponse(400, { error: 'Missing required query parameter: word' });
 
   try {
@@ -205,7 +220,7 @@ export async function handler(event) {
       blockMs: 5 * 60_000,
       message: 'Too many related-word lookups.',
     });
-    const cacheResult = await fetchRelatedWords(sql, event, term, limit, relationshipType, { membershipLevel: member.membershipLevel });
+    const cacheResult = await fetchRelatedWords(sql, event, term, limit, relationshipType, { membershipLevel: member.membershipLevel, isName });
     return jsonResponse(200, cacheResult.payload, {
       'cache-control': 'private, max-age=600',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',

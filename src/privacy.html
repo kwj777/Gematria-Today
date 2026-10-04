@@ -26,12 +26,14 @@
     <meta property="og:title" content="Privacy Policy | Gematria.Today" />
     <meta property="og:description" content="Review how Gematria.Today handles data, privacy, and account information across public and member features." />
     <meta property="og:url" content="https://gematria.today/privacy.html" />
-    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Privacy Policy | Gematria.Today" />
     <meta name="twitter:description" content="Review how Gematria.Today handles data, privacy, and account information across public and member features." />
-    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
     <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
@@ -50,7 +52,7 @@
         <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
           <p class="section-kicker mb-2">Privacy</p>
           <h1 class="mb-3">Privacy Policy</h1>
-          <p class="lead text-muted mb-2">Effective <time datetime="2026-05-21">May 21, 2026</time></p>
+          <p class="lead text-muted mb-2">Effective <time datetime="2026-10-04">October 4, 2026</time></p>
           <p class="mb-0">This Privacy Policy describes how <strong>Lunar Web Studio LLC</strong> (&ldquo;Lunar Web Studio,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), the operator of <strong>Gematria.Today</strong> (the &ldquo;Site&rdquo;), collects, uses, discloses, and protects information about visitors, registered members, premium members, and authorized administrators.</p>
         </section>
 
@@ -59,9 +61,10 @@
           <h2 id="privacyTldrHeading" class="h5 mb-3">The 30-second summary</h2>
           <ul class="mb-2">
             <li><strong>We do not sell your personal data.</strong></li>
-            <li>We use <strong>Google Analytics</strong> for anonymous usage measurement. In the EU/UK we ask consent first; "Decline" is a single click and equally weighted with "Accept."</li>
+            <li>We use <strong>Google Analytics</strong> and our own click and sign-up measurement to see how the Site is used. In the EU/UK we ask consent first; "Decline" is a single click, equally weighted with "Accept," and turns both off.</li>
             <li>Payments are handled by <strong>Stripe</strong>; we never see your card details.</li>
             <li>We process calculator inputs, account data, forum posts, and AI prompts only to run the Site &mdash; not to train third-party foundation models.</li>
+            <li>A word or short phrase you look up in the main Calculator joins the Site&rsquo;s public word list, with no link to you. Names you enter in the Name Calculator never do.</li>
             <li>You can <a href="/contact.html">contact us</a> at any time to access, correct, or delete your account data.</li>
           </ul>
           <p class="small text-muted mb-0">The full policy below has the legal detail. This summary is for orientation only.</p>
@@ -131,6 +134,7 @@
           <h3 class="h5 mt-4">Information from third parties</h3>
           <ul>
             <li>Billing status and event notifications from Stripe.</li>
+            <li>If you choose &ldquo;Continue with Google&rdquo;, your name, email address, whether Google has verified that address, your Google account ID, and the address of your Google profile photo.</li>
             <li>Reference content from dictionary APIs (such as Wordnik) and other reference services. This typically does not include personal information about you.</li>
             <li>Diagnostic and abuse signals from infrastructure providers such as Netlify.</li>
           </ul>
@@ -167,10 +171,10 @@
           <h2 id="cookies">Cookies, analytics, and tracking</h2>
           <p>We use cookies and similar technologies for the following purposes:</p>
           <ul>
-            <li><strong>Strictly necessary &mdash; authentication.</strong> Members and administrators who sign in receive a secure session cookie (such as <code>gematria_admin_session</code>) used only for authentication and session continuity. Authentication cookies are configured as <code>HttpOnly</code>, <code>Secure</code>, and <code>SameSite=Lax</code>.</li>
+            <li><strong>Strictly necessary &mdash; authentication.</strong> Members and administrators who sign in receive a secure session cookie (such as <code>gematria_admin_session</code>) used only for authentication and session continuity. Authentication cookies are configured as <code>HttpOnly</code>, <code>Secure</code>, and <code>SameSite=Lax</code>. Alongside them, signed-in members receive <code>gematria_member_tier</code>, which holds only the membership level (free, premium, or lifetime) so pages can show the right options, and administrators receive <code>gematria_admin_flag</code>, which holds no identifier and only tells the Site&rsquo;s own scripts to skip the consent prompt and click tracking for them. Neither grants any access, and both expire with the session.</li>
             <li><strong>Strictly necessary &mdash; preferences and consent.</strong> We store a consent-state value in your browser&rsquo;s <code>localStorage</code> (key <code>gematria_cookie_consent</code>) so that we remember your cookie choice and so that we apply the correct Google Analytics consent mode.</li>
-            <li><strong>Analytics.</strong> We use <strong>Google Analytics 4</strong> (measurement ID <code>G-E611H84D6Y</code>) to understand how visitors discover and use the Site. Google Analytics sets cookies (such as <code>_ga</code> and <code>_ga_*</code>) and collects information described in <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google&rsquo;s Privacy Policy</a>. For visitors detected in the EEA, the UK, and other regions that require it, we run Google Consent Mode v2 in default-denied state and only enable analytics, advertising, and personalization signals after you accept. Visitors in other regions are tracked by default unless they opt out using the controls on the Site.</li>
-            <li><strong>Conversion and feature analytics.</strong> Our own scripts record events such as account sign-up, premium upgrade, and key feature clicks for product analytics and abuse detection.</li>
+            <li><strong>Analytics.</strong> We use <strong>Google Analytics 4</strong> (measurement ID <code>G-E611H84D6Y</code>) to understand how visitors discover and use the Site. Google Analytics sets cookies (such as <code>_ga</code> and <code>_ga_*</code>) and collects information described in <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google&rsquo;s Privacy Policy</a>. For visitors detected in the EEA, the UK, and other regions that require it, we run Google Consent Mode v2 in default-denied state and only enable analytics, advertising, and personalization signals after you accept. Visitors in other regions are tracked by default unless they opt out using the controls on the Site. Because the Site shows no ads, advertising and personalization signals stay off for every visitor unless you turn them on in Cookie settings.</li>
+            <li><strong>Conversion and feature analytics.</strong> Our own scripts record events such as account sign-up, premium upgrade, and key feature clicks for product analytics and abuse detection. Each event is stored with your IP address, approximate location (country, region, and city), a browser fingerprint, and a random visitor identifier kept in the <code>gematria_visitor_session</code> cookie (<code>HttpOnly</code>, 30 days); the same cookie also keeps a site-chatbot conversation together. These scripts follow your analytics choice: if you decline analytics, or have not chosen yet where consent is required, they send nothing.</li>
           </ul>
           <p>You can change your choice at any time: select <button type="button" class="site-legal-link-button" data-cookie-settings>Cookie settings</button> here or in the footer of any page to reopen the consent prompt with your current preferences. You can also control cookies through your browser settings. Browser-level blocking of strictly necessary cookies may break sign-in, premium features, or the consent prompt itself.</p>
           <p class="mb-0">You may opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out Browser Add-on</a>.</p>
@@ -182,6 +186,7 @@
           <ul>
             <li><strong>Service providers and sub-processors</strong> who process information on our behalf, under contracts that restrict their use of the information (see list below).</li>
             <li><strong>Other users</strong>, when you choose to post or share content publicly &mdash; for example, your display name, avatar, reputation, and forum posts will be visible to others.</li>
+            <li><strong>The public word list</strong> &mdash; a single word or short phrase (up to three words of letters) that you look up in the main Calculator is added to the Site&rsquo;s shared word list, with no link to you or your account. Other visitors can see it in reverse lookups and on word and value pages, which search engines may index. Names you enter in the Name Calculator, and longer or free-form text, are not added. Please do not enter personal information into the main Calculator.</li>
             <li><strong>Legal, safety, and enforcement</strong> &mdash; when we believe disclosure is required by law, court order, or government request, or is necessary to protect the rights, property, or safety of Lunar Web Studio LLC, our users, or the public, including to investigate fraud or abuse.</li>
             <li><strong>Business transfers</strong> &mdash; if we are involved in a merger, acquisition, financing, reorganization, or sale of assets, personal information may be transferred as part of that transaction, subject to standard confidentiality protections.</li>
             <li><strong>With your consent</strong> &mdash; for any other purpose disclosed at the time we collect the information.</li>
@@ -195,11 +200,14 @@
             <li><strong>Hosting and serverless infrastructure</strong> &mdash; Netlify.</li>
             <li><strong>Database</strong> &mdash; Neon.</li>
             <li><strong>Payments and subscription billing</strong> &mdash; Stripe, Inc.</li>
+            <li><strong>Transactional email</strong> &mdash; Twilio SendGrid, which delivers account-verification, password-recovery, and username-reminder emails and so receives your email address, your username, and the content of those messages.</li>
+            <li><strong>Sign-in</strong> &mdash; Google, if you choose &ldquo;Continue with Google&rdquo; to create an account or sign in.</li>
             <li><strong>Analytics and consent</strong> &mdash; Google (Google Analytics 4, Google Consent Mode).</li>
-            <li><strong>Content delivery and front-end assets</strong> &mdash; jsDelivr, Bootstrap CDN, and similar CDNs that serve our static assets.</li>
+            <li><strong>Blog subscriptions</strong> &mdash; follow.it, if you subscribe to blog updates from the blog or when you register. Your email address is sent to follow.it, which manages the subscription and sends the update emails.</li>
             <li><strong>Reference and dictionary APIs</strong> &mdash; Wordnik and similar providers used by glossary and related-word features.</li>
-            <li><strong>AI model providers</strong> &mdash; large-language-model providers that power SiteSeeker and GemaBot. Prompts you submit may be sent to those providers under contractual restrictions on use and retention.</li>
+            <li><strong>Front-end assets</strong> &mdash; public pages load Bootstrap and our other front-end files from our own domain. Only the administrator back office loads optional theme stylesheets from the jsDelivr CDN.</li>
           </ul>
+          <p>SiteSeeker and GemaBot run on our own servers and in your browser: SiteSeeker searches the Site&rsquo;s own pages, posts, and FAQs, and GemaBot answers from the Site&rsquo;s calculators, word database, and dictionary lookups. Neither sends your prompts to an outside AI or large-language-model provider.</p>
           <p class="mb-0">Each provider has its own privacy policy. We update this list as our processors change.</p>
         </section>
 
@@ -257,7 +265,7 @@
 
         <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
           <h2 id="dnt">Do Not Track and Global Privacy Control</h2>
-          <p>The Site does not currently respond to browser &ldquo;Do Not Track&rdquo; signals. For visitors subject to laws that recognize the Global Privacy Control (GPC), we will treat a GPC signal as a valid opt-out of any &ldquo;sale&rdquo; or &ldquo;sharing&rdquo; under those laws.</p>
+          <p>The Site does not currently respond to browser &ldquo;Do Not Track&rdquo; signals. For visitors subject to laws that recognize the Global Privacy Control (GPC), we will treat a GPC signal as a valid opt-out of any &ldquo;sale&rdquo; or &ldquo;sharing&rdquo; under those laws. While a GPC signal is present, Google&rsquo;s advertising and personalization signals stay off even if they are allowed in Cookie settings.</p>
         </section>
 
         <section class="content-panel p-4 p-lg-5 legal-copy">

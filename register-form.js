@@ -119,14 +119,12 @@
       pageAlert.show?.('Creating your account—thanks for your patience. This can take a few seconds.', 'info');
       window.gematriaTracking?.track?.('sign_up_start', { source });
 
+      let response;
       try {
-        const response = await request(REGISTER_ENDPOINT, {
+        response = await request(REGISTER_ENDPOINT, {
           method: 'POST',
           body: JSON.stringify(payload),
         });
-        pageAlert.clear?.();
-        window.gematriaTracking?.track?.('sign_up_complete', { source });
-        config.onSuccess?.(response, { payload, form });
       } catch (error) {
         window.gematriaTracking?.track?.('sign_up_error', {
           source,
@@ -140,11 +138,19 @@
             'danger',
           );
         }
+        return;
       } finally {
         submitButton.disabled = false;
         submitButton.removeAttribute('aria-busy');
         submitButton.innerHTML = originalButtonHtml;
       }
+
+      // Outside the request's try: the account exists now, so a page's own
+      // success handling throwing must never be shown or tracked as a failed
+      // signup -- resubmitting would only meet "already exists".
+      pageAlert.clear?.();
+      window.gematriaTracking?.track?.('sign_up_complete', { source });
+      config.onSuccess?.(response, { payload, form });
     });
 
     return { request };

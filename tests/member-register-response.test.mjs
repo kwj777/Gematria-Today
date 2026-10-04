@@ -109,7 +109,7 @@ function configureEnv({ sendgrid }) {
 async function registerSomeoneElsesAddress() {
   const response = await registerHandler({
     httpMethod: 'POST',
-    headers: { 'x-forwarded-for': '203.0.113.9' },
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.9' },
     body: JSON.stringify({
       username: 'attacker1',
       email: 'victim@example.com',

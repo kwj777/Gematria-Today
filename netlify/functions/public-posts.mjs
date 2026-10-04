@@ -1,6 +1,8 @@
 import { ensureAdminSchema, formatPost, getSqlClient, jsonResponse, syncBootstrapAdminUser } from './_admin.mjs';
 import { getOptionalAuthenticatedSession } from './_auth.mjs';
+import { promoteDueScheduledPosts } from './_posts.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 function escapeHtml(value = '') {
   return String(value)
@@ -149,7 +151,7 @@ function applySeriesOrderOverrides(posts) {
   return ordered;
 }
 
-function buildInternalLinkTargets(posts, currentSlug = '') {
+export function buildInternalLinkTargets(posts, currentSlug = '') {
   const targets = [
     { phrase: 'Word/Phrase Calculator', href: '/calculator.html' },
     { phrase: 'gematria calculator', href: '/calculator.html' },
@@ -181,7 +183,47 @@ function buildInternalLinkTargets(posts, currentSlug = '') {
     .sort((left, right) => right.phrase.length - left.phrase.length);
 }
 
-function linkifyHtmlContent(html, targets = []) {
+// Links the first match of each target in one text node. Every target is
+// matched against the original text and its anchor is only built once all of
+// them are placed: splicing each anchor in as soon as it was found let a later,
+// shorter target match inside the markup of an earlier one, so "gematria
+// calculator" came out as an anchor nested in the href of another anchor
+// (href="/<a ... href="/calculator.html">calculator</a>.html").
+function linkifyTextToken(text, targets, linkedTargets) {
+  const spans = [];
+  targets.forEach((target) => {
+    const normalizedPhrase = String(target?.phrase || '').toLowerCase();
+    if (!target?.phrase || !target?.href || linkedTargets.has(normalizedPhrase)) {
+      return;
+    }
+    const pattern = new RegExp(`(^|[^\\w])(${escapeRegex(target.phrase)})(?=[^\\w]|$)`, 'gi');
+    for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+      const start = match.index + match[1].length;
+      const end = start + match[2].length;
+      if (spans.every((span) => end <= span.start || start >= span.end)) {
+        spans.push({ start, end, href: target.href });
+        linkedTargets.add(normalizedPhrase);
+        return;
+      }
+      // This match sits inside a phrase an earlier, longer target already
+      // links; look further along.
+      pattern.lastIndex = match.index + 1;
+    }
+  });
+  if (!spans.length) {
+    return text;
+  }
+  spans.sort((left, right) => left.start - right.start);
+  let output = '';
+  let cursor = 0;
+  spans.forEach(({ start, end, href }) => {
+    output += `${text.slice(cursor, start)}<a class="news-inline-link" href="${escapeHtml(href)}">${text.slice(start, end)}</a>`;
+    cursor = end;
+  });
+  return `${output}${text.slice(cursor)}`;
+}
+
+export function linkifyHtmlContent(html, targets = []) {
   const tokens = String(html || '').split(/(<[^>]+>)/g);
   const linkedTargets = new Set();
   let excludedDepth = 0;
@@ -206,21 +248,25 @@ function linkifyHtmlContent(html, targets = []) {
     if (excludedDepth > 0 || !token.trim()) {
       return token;
     }
-    let updated = token;
-    targets.forEach((target) => {
-      const normalizedPhrase = String(target?.phrase || '').toLowerCase();
-      if (!target?.phrase || !target?.href || linkedTargets.has(normalizedPhrase)) {
-        return;
-      }
-      const pattern = new RegExp(`(^|[^\\w])(${escapeRegex(target.phrase)})(?=[^\\w]|$)`, 'i');
-      if (!pattern.test(updated)) {
-        return;
-      }
-      updated = updated.replace(pattern, (_, prefix, phrase) => `${prefix}<a class="news-inline-link" href="${escapeHtml(target.href)}">${phrase}</a>`);
-      linkedTargets.add(normalizedPhrase);
-    });
-    return updated;
+    return linkifyTextToken(token, targets, linkedTargets);
   }).join('');
+}
+
+// A ?preview=true answer depends on who asks: an admin's session gets the
+// drafts, anyone else the public list. Shared caches (Netlify's CDN, proxies)
+// key on the URL alone, so a public header let them hand one viewer's answer
+// to the other -- unpublished drafts to an outsider polling the preview URL,
+// or a draft-less list to the admin. Only the cookie-independent, non-preview
+// answer may be cached publicly.
+export function postsCacheHeaders({ previewRequested = false } = {}) {
+  if (previewRequested) {
+    return {
+      'cache-control': 'private, no-store',
+      'netlify-cdn-cache-control': 'no-store',
+      vary: 'Cookie',
+    };
+  }
+  return { 'cache-control': 'public, max-age=120, stale-while-revalidate=60' };
 }
 
 export async function handler(event) {
@@ -233,6 +279,7 @@ export async function handler(event) {
     const sql = getSqlClient();
     await ensureAdminSchema(sql);
     await syncBootstrapAdminUser(sql);
+    await assertSiteModuleEnabled(sql, 'blog');
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
     if (!user) {
       await applyRateLimit(sql, event, {
@@ -244,6 +291,7 @@ export async function handler(event) {
         message: 'Too many requests for published posts.',
       });
     }
+    await promoteDueScheduledPosts(sql);
 
     const featuredOnly = event.queryStringParameters?.featured === 'true';
     const previewRequested = event.queryStringParameters?.preview === 'true';
@@ -287,7 +335,7 @@ export async function handler(event) {
                 AND scheduled_publish_at <= NOW()
               )
             ) AND show_on_homepage = TRUE
-            ORDER BY COALESCE(published_at, created_at) DESC
+            ORDER BY COALESCE(published_at, scheduled_publish_at, created_at) DESC
             LIMIT ${effectiveLimit}
             OFFSET ${effectiveOffset}
           `;
@@ -302,7 +350,7 @@ export async function handler(event) {
                 AND scheduled_publish_at <= NOW()
               )
             ) AND show_on_homepage = TRUE
-            ORDER BY COALESCE(published_at, created_at) DESC
+            ORDER BY COALESCE(published_at, scheduled_publish_at, created_at) DESC
           `;
         } else if (requestedLimit) {
           rows = await sql`
@@ -318,7 +366,7 @@ export async function handler(event) {
             )
               AND (${idFilter ? 1 : 0} = 0 OR id = ${idFilter})
               AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
-            ORDER BY COALESCE(published_at, created_at) DESC
+            ORDER BY COALESCE(published_at, scheduled_publish_at, created_at) DESC
             LIMIT ${effectiveLimit}
             OFFSET ${effectiveOffset}
           `;
@@ -336,7 +384,7 @@ export async function handler(event) {
             )
               AND (${idFilter ? 1 : 0} = 0 OR id = ${idFilter})
               AND (${slugFilter ? 1 : 0} = 0 OR LOWER(COALESCE(slug, '')) = ${slugFilter})
-            ORDER BY COALESCE(published_at, created_at) DESC
+            ORDER BY COALESCE(published_at, scheduled_publish_at, created_at) DESC
           `;
         }
         const hasMore = Boolean(requestedLimit) && rows.length > requestedLimit;
@@ -345,10 +393,6 @@ export async function handler(event) {
         }
         const formattedPosts = applySeriesOrderOverrides(rows.map(formatPost));
         const items = formattedPosts.map((post) => {
-          const renderedBodyHtml = linkifyHtmlContent(
-            normalizePostBodyHtml(post.body || ''),
-            buildInternalLinkTargets(formattedPosts, post.slug)
-          );
           const summaryItem = {
             id: post.id,
             title: post.title,
@@ -367,15 +411,21 @@ export async function handler(event) {
             scheduledPublishAt: post.scheduledPublishAt,
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
-            renderedBodyHtml,
           };
+          // Lists only draw titles and summaries, so the rendered body is
+          // built and sent for a single post (?id= or ?slug=) only. Sending
+          // it with every list item shipped the whole archive's article HTML
+          // to the blog index and the home page.
           if (!detailMode) {
             return summaryItem;
           }
           return {
             ...summaryItem,
             body: post.body,
-            renderedBodyHtml,
+            renderedBodyHtml: linkifyHtmlContent(
+              normalizePostBodyHtml(post.body || ''),
+              buildInternalLinkTargets(formattedPosts, post.slug)
+            ),
           };
         });
         const nextOffset = requestedOffset + items.length;
@@ -398,7 +448,7 @@ export async function handler(event) {
     });
 
     return jsonResponse(200, cacheResult.payload, {
-      'cache-control': 'public, max-age=120, stale-while-revalidate=60',
+      ...postsCacheHeaders({ previewRequested }),
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {

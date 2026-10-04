@@ -6,6 +6,11 @@
 -- INSERT ... ON CONFLICT (id) DO UPDATE so existing rows are updated in
 -- place rather than duplicated.
 --
+-- Re-running it also overwrites any edit an admin has made to these rows. To
+-- correct a row that is already live, change it here AND add the edit to
+-- netlify/functions/_seeded-content-corrections.mjs, which applies it once to
+-- existing databases without touching passages an admin has rewritten.
+--
 -- Prerequisites:
 --   * The `faqs` table must already exist (sql/admin_schema.sql applied at
 --     least once).
@@ -26,8 +31,8 @@ INSERT INTO faqs (id, question, answer, sort_order, is_published, created_by, up
 VALUES
   (
     'seed-faq-calculator-vs-name-calculator-vs-pattern-grouping',
-    'What''s the difference between the calculator, name calculator, and pattern grouping tool?',
-    'The Calculator (/calculator.html) takes any word or phrase and returns its value under several English ciphers. The Name Calculator (/name-calculator.html) is tuned for personal names and side-by-side family or comparison analyses. The Pattern Grouping tool (/gematria-pattern-grouping.html) helps you cluster related terms by digital roots and base-root words so you can spot structural patterns across a themed set instead of evaluating isolated values.',
+    'What''s the difference between the calculator, the multi-cipher calculator, the name calculator, and pattern grouping?',
+    'The Calculator (/calculator.html) takes any word or phrase and returns its English Gematria value (A=6, B=12 ... Z=156), its digital root, and the other words in our database that share that value; enter a multiple of six instead to list the words at that value. The Multi-Cipher Calculator (/multi-cipher-calculator.html) shows the same input under seven ciphers side by side. The Name Calculator (/name-calculator.html) is tuned for personal names and side-by-side family or comparison analyses. Pattern Grouping (/gematria-pattern-grouping.html) is a lesson in the learning path rather than a separate tool: it walks you through building a themed word set and grouping the calculator''s results so you can spot structural patterns across the set instead of evaluating isolated values.',
     100,
     TRUE,
     'kevandmel',
@@ -36,7 +41,7 @@ VALUES
   (
     'seed-faq-which-ciphers-supported',
     'Which ciphers does the calculator support, and why those?',
-    'The calculator supports the most widely cited English ciphers: English Ordinal (A=1, B=2 ... Z=26), Reverse Ordinal (A=26 ... Z=1), Reduction or Pythagorean (letters reduced to 1-9), Reverse Reduction, and English Gematria (multiples of six). Using more than one cipher is intentional: it prevents cherry-picking a single value that happens to fit and lets you check whether a relationship holds across systems.',
+    'The main calculator (/calculator.html) and the word database use one cipher, English Gematria, also called Sumerian: each letter''s position in the alphabet times six, A=6, B=12 ... Z=156. The Multi-Cipher Calculator (/multi-cipher-calculator.html) shows seven: English Ordinal (A=1 ... Z=26), Reverse Ordinal (A=26 ... Z=1), Full Reduction or Pythagorean (letters reduced to 1-9), Reverse Full Reduction, Sumerian (the same A=6 ... Z=156 table), Reverse Sumerian, and Jewish / Latin. Database matches are available only for the English Gematria (Sumerian) value. Comparing ciphers side by side is useful, but choose your cipher before you look at results: switching ciphers until a value fits is cherry-picking.',
     101,
     TRUE,
     'kevandmel',
@@ -45,7 +50,7 @@ VALUES
   (
     'seed-faq-reading-calculator-results',
     'How do I read the calculator results page?',
-    'After you submit a phrase, the results page shows the value under each cipher, the digital root for each value, and a database match list — other words and phrases in our database that share the same total under the same cipher. The matches are evidence to evaluate, not conclusions; use multiple ciphers, digital roots, and base-root grouping to test whether a match holds up across the full picture.',
+    'After you submit a phrase, the results show its English Gematria total, its digital root, whether the total is a base root (a value on the 6, 60, 114, 168 ... ladder), and a database match list: other words and phrases in our database with the same total. The matches are evidence to evaluate, not conclusions; test whether related words match more often than unrelated ones (see /how-to-use-gematria.html) before reading anything into a match.',
     102,
     TRUE,
     'kevandmel',
@@ -54,7 +59,7 @@ VALUES
   (
     'seed-faq-digital-root',
     'What is a digital root, and when does it matter in gematria research?',
-    'A digital root is the single digit you get by repeatedly summing the digits of a number — for example, the digital root of 137 is 1+3+7 = 11 → 1+1 = 2. It is not a replacement for the full value, but when a themed set of terms repeatedly shares the same digital root across different ciphers, that structural alignment is a useful checkpoint that raw totals alone would miss. The Pattern Grouping tool surfaces these alignments automatically.',
+    'A digital root is the single digit you get by repeatedly summing the digits of a number — for example, the digital root of 137 is 1+3+7 = 11 → 1+1 = 2. It is not a replacement for the full value. In English Gematria, the cipher the calculator uses, every total is a multiple of six, so its digital root can only be 3, 6 or 9, and two unrelated words share one about one time in three; use it to sort results, not as evidence. Ciphers such as English Ordinal on the Multi-Cipher Calculator (/multi-cipher-calculator.html) spread totals across all nine digital roots.',
     103,
     TRUE,
     'kevandmel',
@@ -72,7 +77,7 @@ VALUES
   (
     'seed-faq-base-root-word-grouping',
     'What is base-root word grouping, and how do I use it?',
-    'Base-root word grouping treats families of related words (a shared root plus variants like plurals, tenses, and compounds) as a single cluster and looks at how their values distribute. It reframes the question from "does this one word equal that one word?" to "does this theme consistently hit certain numbers?" The Pattern Grouping tool (/gematria-pattern-grouping.html) is built around this approach and lets you build clusters interactively.',
+    'Base-root word grouping treats families of related words (a shared root plus variants like plurals, tenses, and compounds) as a single cluster and looks at how their values distribute. It reframes the question from "does this one word equal that one word?" to "does this theme consistently hit certain numbers?" The Pattern Grouping lesson (/gematria-pattern-grouping.html) walks through this approach step by step; you build each cluster yourself by running its words through the calculator.',
     105,
     TRUE,
     'kevandmel',
@@ -90,7 +95,7 @@ VALUES
   (
     'seed-faq-premium-vs-free',
     'What is included in premium membership versus the free account?',
-    'A free account lets you save searches, use the calculators, browse the FAQ and blog, and read public forum threads. Premium adds deeper antonym and synonym discovery, the ability to search the database by exact English gematria multiples of six, premium-only dataset statistics and trend spotlights, and access to the premium member forum. See /premium-research.html for the full feature list.',
+    'A free account lets you save searches, use the calculators, browse the FAQ and blog, and read and post in the members'' forum. Premium adds deeper antonym and synonym discovery, premium-only dataset statistics and trend spotlights, and access to the premium forum categories. Looking up the words at an exact English Gematria value (any multiple of six) is free for everyone in the calculator (/calculator.html). See /premium-research.html for the full feature list.',
     107,
     TRUE,
     'kevandmel',
@@ -117,7 +122,7 @@ VALUES
   (
     'seed-faq-export-saved-research',
     'Can I export my saved research and notes?',
-    'Saved searches and notes attached to your account are exportable from the member page (/member.html). If you need a bulk export not available in the UI — for example, for offline analysis or migrating to your own spreadsheet — contact us through /contact.html and we will send a copy of your data.',
+    'Your saved searches and the notes attached to them are listed on your member page (/member.html), and GemaBot chat sessions saved there can be downloaded as HTML, Markdown, plain text or JSON. Saved searches and notes have no export button yet; if you want a copy — for example, for offline analysis or to move them into your own spreadsheet — contact us through /contact.html and we will send you your data.',
     110,
     TRUE,
     'kevandmel',
@@ -126,7 +131,7 @@ VALUES
   (
     'seed-faq-forum-reputation-overview',
     'How does the forum reputation score work?',
-    'Reputation is earned by posting, receiving upvotes, and contributing in other ways the community values; tiers unlock progressive privileges as you advance. The full scale, points table, and tier benefits are documented at /forum-reputation-scale.html.',
+    'Reputation comes from posting: each thread you start earns 10 points and each reply 4, and there is no voting. When a moderator deletes a thread or reply, the points it earned are taken back, and deleting a thread also takes back the points for every reply in it. Reaching 50 points earns the Trusted badge and 200 the Sage badge; badges are recognition only and do not unlock extra permissions. The full points table and badge list are at /forum-reputation-scale.html.',
     111,
     TRUE,
     'kevandmel',
@@ -144,7 +149,7 @@ VALUES
   (
     'seed-faq-guest-forum-access',
     'Can guests read the forum without an account?',
-    'Most public threads are readable without signing in. Posting, voting, building reputation, and accessing the premium member forum all require an account — and, for the premium forum, an active premium subscription.',
+    'No. The forum is for signed-in members: reading, posting, and earning reputation all need a free account, which you can create at /member.html. The premium categories also need an active premium or lifetime membership.',
     113,
     TRUE,
     'kevandmel',
@@ -189,7 +194,7 @@ VALUES
   (
     'seed-faq-what-search-data-is-stored',
     'What do you store about my searches?',
-    'For signed-in members, we store searches you explicitly save and any notes you attach to them. For all visitors we may log aggregated request metrics (page, timestamp, success/failure) used for site reliability and abuse prevention. Full details of what is collected, why, and your rights are in our Privacy Policy (/privacy.html).',
+    'For signed-in members, we store searches you explicitly save and any notes you attach to them. A single word or short phrase you look up in the main Calculator is also added to the site''s shared word list, with no link to you, where other visitors can see it in reverse lookups and on word and value pages; names you enter in the Name Calculator are never added. For all visitors we keep short-lived request logs (page, timestamp, IP address, success/failure) used for site reliability and abuse prevention, along with the links and buttons you click if you have allowed analytics. Words you look up are recorded in those logs. Names you enter in the Name Calculator are not, although a logged click records the page address and the link clicked, which can contain a name, as a shared Name Calculator link or a name''s definition link does. Full details of what is collected, why, and your rights are in our Privacy Policy (/privacy.html).',
     118,
     TRUE,
     'kevandmel',
@@ -207,7 +212,7 @@ VALUES
   (
     'seed-faq-data-retention-after-cancellation',
     'How long is my account data kept after I cancel?',
-    'Cancelling premium leaves your free account and saved data intact — you simply lose premium-only features at the end of the paid period. If you fully delete your account, profile data and saved searches are removed; some records (for example, payment receipts) may be retained for legal and accounting requirements as described in our Privacy Policy (/privacy.html).',
+    'Cancelling premium leaves your free account and saved data intact — you simply lose premium-only features at the end of the paid period. There is no self-serve account deletion yet; to delete your account, contact us through /contact.html. When an account is deleted, profile data and saved searches are removed; some records (for example, payment receipts) may be retained for legal and accounting requirements as described in our Privacy Policy (/privacy.html).',
     120,
     TRUE,
     'kevandmel',

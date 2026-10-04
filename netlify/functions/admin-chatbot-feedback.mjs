@@ -1,5 +1,8 @@
 import crypto from 'node:crypto';
 import { getAuthenticatedUser, jsonResponse, parseBody } from './_admin.mjs';
+// GemaBot's own matching rules, so a trained note is one GemaBot can show
+// (netlify.toml ships this file with the function).
+import { isContextDependentPrompt, isLearnablePrompt } from '../../page-scripts/ai-agent-helpers.mjs';
 
 function sanitizeSources(rawSources) {
   if (!Array.isArray(rawSources)) return [];
@@ -126,6 +129,19 @@ export async function handler(event) {
 
         if (!prompt || !explanation) {
           return jsonResponse(400, { error: 'Feedback must have a query and feedback text to use as training data' });
+        }
+        // GemaBot never shows a note saved under these keys (findLearnedEntry),
+        // so training would close the feedback without changing any answer.
+        // Leave it open for a reply instead.
+        if (isContextDependentPrompt(prompt)) {
+          return jsonResponse(400, {
+            error: `Cannot train from "${prompt}": it only makes sense after an earlier GemaBot answer, so GemaBot would never show this note. Reply to the member or close the feedback instead.`,
+          });
+        }
+        if (!isLearnablePrompt(prompt)) {
+          return jsonResponse(400, {
+            error: `Cannot train from "${prompt}": it has no English letters or digits for GemaBot to match a note to. Reply to the member or close the feedback instead.`,
+          });
         }
 
         const SETTINGS_KEY = 'ai_agent_global_learnings_v1';

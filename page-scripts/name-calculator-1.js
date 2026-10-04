@@ -263,18 +263,21 @@ const form = document.querySelector('#name-form');
         return payload;
       }
 
-      // intent=view returns the value without recording demand for the name.
-      // See the same helper in calculator-1.js: search_count decides what gets
-      // an indexable /w/ page, so a name the page filled in from ?name1= must
-      // not move it.
+      // kind=name: names are people, not words, so the gematria lookup never
+      // adds one to the shared word list -- which every visitor can browse --
+      // counts it as demand for a word page, or writes it to the response
+      // cache or audit log. intent=view, for a name the page filled in from
+      // ?name1=, also withholds the member's lookup credit: nobody typed it.
       function requestGematria(word, { countAsSearch = true } = {}) {
-        const searchParams = new URLSearchParams({ word });
+        const searchParams = new URLSearchParams({ word, kind: 'name' });
         if (!countAsSearch) searchParams.set('intent', 'view');
         return requestJson('/.netlify/functions/englishGematria', searchParams);
       }
 
+      // kind=name here and on the definition requests below too: the name is
+      // not kept in the shared response cache or written to the audit log.
       function requestRelatedWords(word, limit = getFullRelatedWordLimit()) {
-        return requestJson('/.netlify/functions/wordnikRelatedWords', new URLSearchParams({ word, limit: String(limit) }));
+        return requestJson('/.netlify/functions/wordnikRelatedWords', new URLSearchParams({ word, limit: String(limit), kind: 'name' }));
       }
 
       function requestWordsByGematria(total, { globalLoading = true } = {}) {
@@ -360,9 +363,10 @@ const form = document.querySelector('#name-form');
         return link;
       }
 
+      // Same normalization as englishGematria() on the server, so the letters
+      // shown always add up to the total returned for them.
       function getPerLetterValues(input) {
-        return Array.from(String(input || '').toUpperCase())
-          .filter((char) => char >= 'A' && char <= 'Z')
+        return Array.from(String(input || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase())
           .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
       }
 
@@ -381,7 +385,7 @@ const form = document.querySelector('#name-form');
         const link = document.createElement('a');
         link.className = 'definition-link ms-2';
         const returnTo = `${window.location.pathname}${window.location.search}`;
-        const params = new URLSearchParams({ word, returnTo });
+        const params = new URLSearchParams({ word, kind: 'name', returnTo });
         link.href = `/definition?${params.toString()}`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -396,7 +400,7 @@ const form = document.querySelector('#name-form');
         if (!normalizedWord) return false;
         try {
           const response = await fetch(
-            `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+            `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}&kind=name`,
             { headers: { accept: 'application/json' } }
           );
           if (!response.ok) return false;
@@ -481,14 +485,23 @@ const form = document.querySelector('#name-form');
         return `${getCanonicalShareOrigin()}${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
 
+      // One slot per name, in name order: the share card pairs the Nth total
+      // with nameN. A failed lookup used to be dropped from the list, which
+      // shifted every later total onto the wrong name. It now keeps its slot
+      // as '?', the mark the card already prints for a missing total.
+      function formatShareTotals(totals = []) {
+        const slots = totals.slice(0, 3).map((value) => String(value ?? '').trim() || '?');
+        return slots.some((slot) => slot !== '?') ? slots.join(',') : '';
+      }
+
       function createNameShareUrl(names = [], totals = []) {
         const url = new URL('/name-calculator.html', getCanonicalShareOrigin());
         names.filter(Boolean).slice(0, 3).forEach((name, index) => {
           url.searchParams.set(`name${index + 1}`, String(name).trim());
         });
-        const normalizedTotals = totals.map((value) => String(value || '').trim()).filter(Boolean);
-        if (normalizedTotals.length) {
-          url.searchParams.set('totals', normalizedTotals.join(','));
+        const totalsParam = formatShareTotals(totals);
+        if (totalsParam) {
+          url.searchParams.set('totals', totalsParam);
         }
         url.hash = 'name-form';
         return url.toString();
@@ -500,9 +513,9 @@ const form = document.querySelector('#name-form');
         names.filter(Boolean).slice(0, 3).forEach((name, index) => {
           imageUrl.searchParams.set(`name${index + 1}`, String(name).trim());
         });
-        const normalizedTotals = totals.map((value) => String(value || '').trim()).filter(Boolean);
-        if (normalizedTotals.length) {
-          imageUrl.searchParams.set('totals', normalizedTotals.join(','));
+        const totalsParam = formatShareTotals(totals);
+        if (totalsParam) {
+          imageUrl.searchParams.set('totals', totalsParam);
         }
         return imageUrl;
       }
@@ -592,13 +605,14 @@ const form = document.querySelector('#name-form');
         nameChartPreview.src = createNameChartPreviewUrl(names, matches);
         nameChartPreview.hidden = false;
         if (nameChartStatus) {
-          nameChartStatus.textContent = 'Preview only — the printable chart is unmarked and print resolution.';
+          nameChartStatus.textContent = 'Preview only — unmarked print-resolution charts are not available to order yet.';
         }
       }
 
       function reportButtonEvent(action, metadata = {}) {
         const normalizedAction = String(action || '').trim().toLowerCase();
-        if (!normalizedAction) {
+        // Analytics: skipped unless the visitor allows it (cookie-consent.js).
+        if (!normalizedAction || window.gematriaCookieConsent?.analyticsAllowed?.() !== true) {
           return;
         }
         fetch('/api/public-button-report', {
@@ -734,9 +748,14 @@ View results: ${shareUrl}`.trim(),
         }
 
         if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(sharePayload.url);
-          statusNode.textContent = 'Share link copied to clipboard.';
-          return;
+          try {
+            await navigator.clipboard.writeText(sharePayload.url);
+            statusNode.textContent = 'Share link copied to clipboard.';
+            return;
+          } catch {
+            // Same as calculator-1.js sharePage: a refused write used to reject
+            // out of the click handler silently. Fall back to the prompt.
+          }
         }
 
         window.prompt('Copy this link to share:', sharePayload.url);
@@ -791,7 +810,6 @@ View results: ${shareUrl}`.trim(),
 
       function createResultCard(name, result, options = {}) {
         const highlightBaseRootMatch = options.highlightBaseRootMatch === true;
-        const isBaseRoot = result.gematria.isBaseRoot === true;
         const article = document.createElement('article');
         article.className = 'result-card';
 
@@ -814,6 +832,10 @@ View results: ${shareUrl}`.trim(),
           return article;
         }
 
+        // Read only after the error branch: a failed lookup has no gematria,
+        // and reading it first threw, so the error card never rendered and
+        // the whole batch failed with it.
+        const isBaseRoot = result.gematria.isBaseRoot === true;
         const meta = document.createElement('div');
         meta.className = 'meta';
         const shouldHighlightBaseRoot = highlightBaseRootMatch || isBaseRoot;
@@ -935,20 +957,18 @@ View results: ${shareUrl}`.trim(),
           return;
         }
 
-        try {
-          const returnUrl = new URL(returnTo, window.location.origin);
-          if (returnUrl.origin !== window.location.origin) {
-            return;
-          }
-          learningPathReturnLink.href = `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`;
-          const level = window.gematriaLearningPath?.getLevel?.(returnUrl.pathname) ?? null;
-          learningPathReturnLink.textContent = level
-            ? `Nice! Back to Level ${level}`
-            : 'Nice! Back to lesson';
-          shouldShowLearningPathReturn = true;
-        } catch {
-          // Ignore invalid return URL values.
+        // A same-origin test alone let '/.//evil.example' through as the
+        // off-site link '//evil.example'. See page-scripts/safe-return-path.js.
+        const safeReturnPath = window.gematriaSafePath?.toSafeInternalPath(returnTo) || '';
+        if (!safeReturnPath) {
+          return;
         }
+        learningPathReturnLink.href = safeReturnPath;
+        const level = window.gematriaLearningPath?.getLevel?.(new URL(safeReturnPath, window.location.origin).pathname) ?? null;
+        learningPathReturnLink.textContent = level
+          ? `Nice! Back to Level ${level}`
+          : 'Nice! Back to lesson';
+        shouldShowLearningPathReturn = true;
       }
 
       async function renderResults(names, { countAsSearch = true } = {}) {
@@ -962,9 +982,11 @@ View results: ${shareUrl}`.trim(),
         const results = await Promise.all(names.map((name) => fetchNameResult(name, { countAsSearch })));
         resultsActions.innerHTML = '';
         if (names.length) {
-          const successfulTotals = results
-            .filter((result) => !result.error && result.gematria?.gematria?.total != null)
-            .map((result) => result.gematria.gematria.total);
+          // Positional, one entry per name, so a failed lookup cannot shift
+          // the totals after it onto the wrong names (see formatShareTotals).
+          const shareTotals = results.map((result) => (
+            !result.error && result.gematria?.gematria?.total != null ? result.gematria.gematria.total : ''
+          ));
           const shareAllButton = document.createElement('button');
           shareAllButton.type = 'button';
           shareAllButton.className = 'btn btn-sm btn-outline-primary fw-semibold share-action-button';
@@ -975,7 +997,7 @@ View results: ${shareUrl}`.trim(),
             await shareUrl({
               title: `Name calculator comparison: ${names.join(', ')}`,
               text: 'Compare these gematria name results.',
-              url: createNameShareUrl(names, successfulTotals),
+              url: createNameShareUrl(names, shareTotals),
             });
           });
           resultsActions.appendChild(shareAllButton);
@@ -987,7 +1009,7 @@ View results: ${shareUrl}`.trim(),
           downloadImageButton.addEventListener('click', async () => {
             reportButtonEvent('image_download', { source: 'name_calculator_comparison' });
             try {
-              const shareImageUrl = createNameShareImageUrl(names, successfulTotals);
+              const shareImageUrl = createNameShareImageUrl(names, shareTotals);
               await downloadShareImage(toShareImageAssetUrl(shareImageUrl.toString()), 'name-calculator-comparison.jpg');
               statusNode.textContent = 'Comparison image downloaded.';
             } catch (error) {
@@ -1046,6 +1068,17 @@ View results: ${shareUrl}`.trim(),
           resetResultsView();
           return;
         }
+
+        // Only A-Z count, so a name written in another script came back as a
+        // total of 0, presented as if that were its value.
+        const nameWithoutLetters = names.find((name) => !getPerLetterValues(name).length);
+        if (nameWithoutLetters) {
+          statusNode.textContent = '';
+          showNameFormError(`This calculator counts English letters A-Z only, and "${nameWithoutLetters}" has none.`);
+          resetResultsView();
+          return;
+        }
+
         showCalculatorLoadingOverlay();
         setNameSubmitBusy(true);
 

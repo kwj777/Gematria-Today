@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
+import handler, {
   buildSvg,
   escapeXml,
   normalizeSummaryLines,
+  readShareParams,
   truncate,
 } from '../netlify/functions/ai-agent-share-image.mjs';
 
@@ -160,4 +161,86 @@ test('buildSvg embeds the canonical 1200x630 dimensions', () => {
   assert.ok(svg.includes('width="1200"'));
   assert.ok(svg.includes('height="630"'));
   assert.ok(svg.includes('viewBox="0 0 1200 630"'));
+});
+
+// ---------- readShareParams ----------
+
+test('readShareParams computes total and root from the topic and ignores forged ones', () => {
+  // ?topic=Obama&total=666&root=9 used to render a gematria.today card
+  // claiming 666. O90 + B12 + A6 + M78 + A6 = 192.
+  assert.deepEqual(readShareParams(new URLSearchParams({ topic: 'Obama', total: '666', root: '9' })), {
+    topic: 'Obama',
+    total: '192',
+    root: '3',
+    summaryLines: [],
+  });
+  // A 6000-digit total used to run off the card and slow every render.
+  const { total, root } = readShareParams(new URLSearchParams({ topic: 'Light', total: '9'.repeat(6000), root: '1'.repeat(500) }));
+  assert.equal(total, '336');
+  assert.equal(root, '3');
+});
+
+test('readShareParams counts the whole topic, not the 48-character one drawn on the card', () => {
+  const params = readShareParams(new URLSearchParams({ topic: 'a'.repeat(100) }));
+  assert.equal(params.topic.length, 48);
+  assert.equal(params.total, '600');
+  assert.equal(params.root, '6');
+});
+
+test('readShareParams fills placeholders when there is nothing to count', () => {
+  const empty = readShareParams(new URLSearchParams({ total: '666', root: '9' }));
+  assert.equal(empty.topic, 'Gematria Agent Result');
+  assert.equal(empty.total, '?');
+  assert.equal(empty.root, '?');
+  const digits = readShareParams(new URLSearchParams({ topic: '2024', total: '666' }));
+  assert.equal(digits.total, '?');
+});
+
+// ---------- handler ----------
+
+test('the handler honours the protection kill switch', async () => {
+  const prior = process.env.PROTECTION_HIGH_ALERT_MODE;
+  process.env.PROTECTION_HIGH_ALERT_MODE = 'true';
+  try {
+    const response = await handler(new Request('https://gematria.today/api/ai-agent-share-image?topic=x'));
+    assert.equal(response.status, 503);
+  } finally {
+    if (prior === undefined) {
+      delete process.env.PROTECTION_HIGH_ALERT_MODE;
+    } else {
+      process.env.PROTECTION_HIGH_ALERT_MODE = prior;
+    }
+  }
+});
+
+test('the handler renders the same card whatever total and root the link claims', async () => {
+  const prior = process.env.DATABASE_URL;
+  delete process.env.DATABASE_URL;
+  try {
+    const render = async (search) => {
+      const response = await handler(new Request(`https://gematria.today/api/ai-agent-share-image?${search}`));
+      assert.equal(response.status, 200);
+      return Buffer.from(await response.arrayBuffer());
+    };
+    const forged = await render('topic=Obama&total=666&root=9');
+    const honest = await render('topic=Obama');
+    assert.ok(forged.equals(honest));
+    assert.ok(buildSvg(readShareParams(new URLSearchParams('topic=Obama&total=666&root=9'))).includes('Gematria: 192'));
+  } finally {
+    if (prior !== undefined) process.env.DATABASE_URL = prior;
+  }
+});
+
+test('the handler still renders a PNG when the rate-limit store is unavailable', async () => {
+  const prior = process.env.DATABASE_URL;
+  delete process.env.DATABASE_URL;
+  try {
+    const response = await handler(new Request('https://gematria.today/api/ai-agent-share-image?topic=Light&total=312&root=6'));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'image/png');
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    assert.deepEqual(Array.from(bytes.slice(0, 4)), [0x89, 0x50, 0x4e, 0x47]);
+  } finally {
+    if (prior !== undefined) process.env.DATABASE_URL = prior;
+  }
 });

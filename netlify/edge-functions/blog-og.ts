@@ -1,4 +1,5 @@
 import type { Config, Context } from '@netlify/edge-functions';
+import { replaceCanonical, replaceMetaContent, replaceTitle } from './lib/og-meta.mjs';
 
 const FALLBACK_SITE_ORIGIN = 'https://gematria.today';
 const DEFAULT_OG_IMAGE_PATH = '/assets/beast-identity-rev13-hero-16x9.svg';
@@ -19,6 +20,71 @@ interface Post {
   heroImageUrl?: string;
   imageUrl?: string;
   sliderImageUrl?: string;
+}
+
+// blog.html ships one static Article block describing the blog index (its
+// tagline as headline, a fixed date, mainEntityOfPage blog.html). Left alone,
+// every post URL claimed to be that same article. The block carries an id so a
+// post view can swap it for the post's own data.
+const ARTICLE_JSON_LD_PATTERN =
+  /<script type="application\/ld\+json" id="blogArticleJsonLd">[\s\S]*?<\/script>/;
+
+interface ArticleSource {
+  title?: string;
+  summary?: string;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+function toIsoDate(value: string | null | undefined): string {
+  const raw = String(value ?? '').trim();
+  if (!raw) {
+    return '';
+  }
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
+}
+
+export function buildPostArticleJsonLd(
+  post: ArticleSource,
+  { canonicalUrl, imageUrl, siteOrigin }: { canonicalUrl: string; imageUrl: string; siteOrigin: string }
+): Record<string, unknown> {
+  const datePublished = toIsoDate(post.publishedAt) || toIsoDate(post.createdAt);
+  const dateModified = toIsoDate(post.updatedAt) || datePublished;
+  const data: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: String(post.title || DEFAULT_TITLE).trim(),
+    description: String(post.summary || DEFAULT_DESCRIPTION).trim(),
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
+    url: canonicalUrl,
+    author: { '@type': 'Organization', name: 'Gematria.Today Editorial Team' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Gematria.Today',
+      logo: { '@type': 'ImageObject', url: `${siteOrigin}/apple-touch-icon.png`, width: 180, height: 180 },
+    },
+    isPartOf: { '@type': 'Blog', '@id': `${siteOrigin}/blog.html` },
+  };
+  if (imageUrl) {
+    data.image = [imageUrl];
+  }
+  if (datePublished) {
+    data.datePublished = datePublished;
+  }
+  if (dateModified) {
+    data.dateModified = dateModified;
+  }
+  return data;
+}
+
+export function replaceArticleJsonLd(html: string, data: Record<string, unknown>): string {
+  // '<' is the only character that can end a <script> early; JSON.stringify
+  // handles the rest. A replacer function keeps '$' in a title literal.
+  const json = JSON.stringify(data, null, 2).replace(/</g, '\\u003c');
+  const block = `<script type="application/ld+json" id="blogArticleJsonLd">\n${json}\n</script>`;
+  return html.replace(ARTICLE_JSON_LD_PATTERN, () => block);
 }
 
 function toAbsoluteImageUrl(value: string | null | undefined, siteOrigin: string): string {
@@ -59,21 +125,36 @@ function getPostHeroImage(post?: Post | null): string {
   );
 }
 
-function escapeAttr(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+type PostLookup =
+  | { status: 'found'; post: Post }
+  | { status: 'missing'; post?: undefined }
+  | { status: 'unavailable'; post?: undefined };
 
-function replaceMetaContent(html: string, selector: string, newValue: string): string {
-  // Match meta tags by property or name attribute
-  const attrMatch = selector.match(/meta\[(property|name)="([^"]+)"\]/);
-  if (!attrMatch) {
-    return html;
+// Asks /api/public-posts for this one post (?slug= is its single-row detail
+// mode) rather than the whole list. 'missing' means the API answered and has
+// no such published post; any failure to get an answer is 'unavailable', which
+// must not be mistaken for a missing post.
+async function lookupPost(origin: string, postSlug: string): Promise<PostLookup> {
+  try {
+    const apiUrl = new URL('/api/public-posts', origin);
+    apiUrl.searchParams.set('slug', postSlug);
+    const apiResponse = await fetch(apiUrl.toString(), {
+      headers: { Accept: 'application/json' },
+    });
+    if (!apiResponse.ok) {
+      return { status: 'unavailable' };
+    }
+    const data = await apiResponse.json();
+    const posts: Post[] | undefined = Array.isArray(data?.items) ? data.items : undefined;
+    if (!posts) {
+      return { status: 'unavailable' };
+    }
+    const wantedSlug = postSlug.trim().toLowerCase();
+    const post = posts.find((p) => String(p?.slug || '').trim().toLowerCase() === wantedSlug);
+    return post ? { status: 'found', post } : { status: 'missing' };
+  } catch {
+    return { status: 'unavailable' };
   }
-  const [, attrName, attrValue] = attrMatch;
-  const pattern = new RegExp(
-    `(<meta\\s[^>]*${attrName}="${attrValue}"[^>]*\\scontent=")([^"]*)(")`
-  );
-  return html.replace(pattern, `$1${escapeAttr(newValue)}$3`);
 }
 
 export default async (req: Request, context: Context) => {
@@ -88,22 +169,14 @@ export default async (req: Request, context: Context) => {
   const defaultOgImage = `${siteOrigin}${DEFAULT_OG_IMAGE_PATH}`;
 
   const response = await context.next();
-  let html = await response.text();
-
-  let post: Post | undefined;
-  try {
-    const apiUrl = new URL('/api/public-posts', url.origin);
-    const apiResponse = await fetch(apiUrl.toString(), {
-      headers: { Accept: 'application/json' },
-    });
-    if (apiResponse.ok) {
-      const data = await apiResponse.json();
-      const posts: Post[] = data.items || data || [];
-      post = posts.find((p) => p.slug === postSlug);
-    }
-  } catch {
-    // API unavailable — fall through with default meta tags
+  const lookup = await lookupPost(url.origin, postSlug);
+  if (lookup.status === 'unavailable') {
+    // A 429, a 5xx or a network error says nothing about the post, so the
+    // page goes out exactly as built: default meta tags, still indexable.
+    return response;
   }
+  let html = await response.text();
+  const post = lookup.post;
 
   if (!post) {
     const noindexedHtml = replaceMetaContent(
@@ -120,19 +193,16 @@ export default async (req: Request, context: Context) => {
   const description = String(post.summary || DEFAULT_DESCRIPTION).trim();
   const heroImage = getPostHeroImage(post) || defaultOgImage;
   const imageUrl = toShareImageUrl(heroImage, siteOrigin) || toShareImageUrl(defaultOgImage, siteOrigin);
-  const shareUrl = `${siteOrigin}/blog.html?post=${encodeURIComponent(postSlug)}#${encodeURIComponent(postSlug)}`;
+  // Canonical form shared with blog-post-share's /blog/<slug> stub and the
+  // sitemap. No fragment: it is dropped by crawlers and only made the three
+  // declarations differ.
+  const shareUrl = `${siteOrigin}/blog.html?post=${encodeURIComponent(postSlug)}`;
 
   // Replace title tag
-  html = html.replace(
-    /(<title[^>]*>)[^<]*(<\/title>)/,
-    `$1${escapeAttr(title)}$2`
-  );
+  html = replaceTitle(html, title);
 
   // Replace canonical URL
-  html = html.replace(
-    /(<link\s+rel="canonical"\s+href=")[^"]*(")/,
-    `$1${escapeAttr(shareUrl)}$2`
-  );
+  html = replaceCanonical(html, shareUrl);
 
   // Replace meta tags
   html = replaceMetaContent(html, 'meta[name="description"]', description);
@@ -143,6 +213,11 @@ export default async (req: Request, context: Context) => {
   html = replaceMetaContent(html, 'meta[name="twitter:title"]', title);
   html = replaceMetaContent(html, 'meta[name="twitter:description"]', description);
   html = replaceMetaContent(html, 'meta[name="twitter:image"]', imageUrl);
+
+  html = replaceArticleJsonLd(
+    html,
+    buildPostArticleJsonLd(post, { canonicalUrl: shareUrl, imageUrl, siteOrigin })
+  );
 
   return new Response(html, { headers: response.headers });
 };

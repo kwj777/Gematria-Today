@@ -26,7 +26,9 @@
     <meta property="og:title" content="Account Recovery | Gematria.Today" />
     <meta property="og:description" content="Recover your Gematria.Today member account with a one-time recovery code and secure password reset flow." />
     <meta property="og:url" content="https://gematria.today/account-recovery.html" />
-    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Account Recovery | Gematria.Today" />
     <meta name="twitter:description" content="Recover your Gematria.Today member account with a one-time recovery code and secure password reset flow." />
@@ -147,7 +149,7 @@
             <div class="col-12">
               <label class="form-label fw-semibold" for="recoveryCode">Recovery code</label>
               <div class="input-group">
-                <input id="recoveryCode" class="form-control font-monospace" autocomplete="one-time-code" inputmode="text" autocapitalize="characters" autocorrect="off" spellcheck="false" pattern="[A-Za-z0-9\-]{6,64}" maxlength="64" placeholder="e.g. ABC123-XYZ789" aria-describedby="recoveryCodeHelp" required />
+                <input id="recoveryCode" class="form-control font-monospace" autocomplete="one-time-code" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" pattern="[A-Za-z0-9\-]{6,64}" maxlength="64" placeholder="e.g. 3f9a0c7b…" aria-describedby="recoveryCodeHelp" required />
                 <button id="pasteCodeButton" class="btn btn-outline-secondary" type="button" aria-label="Paste recovery code from clipboard">Paste</button>
               </div>
               <div id="recoveryCodeHelp" class="form-text">Paste the code from the recovery email exactly as shown.</div>

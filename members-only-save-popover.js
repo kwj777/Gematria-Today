@@ -5,7 +5,12 @@
 
   const HIDE_DELAY_MS = 200;
   const POPOVER_CONTENT = 'Only registered members can save searches. <a href="/member.html#registerForm">Join</a>.';
-  const ARIA_LABEL = 'Only registered members can save searches. Join to unlock this feature.';
+  // Appended to the button's visible text, never in place of it: speech-input
+  // users say what they see ("click Save result"), and a name that dropped
+  // those words matched nothing (WCAG 2.5.3). The popover, which Bootstrap
+  // links through aria-describedby while it is open, carries the rest.
+  const ARIA_LABEL_SUFFIX = ' (members only)';
+  const FALLBACK_ARIA_LABEL = 'Save (members only)';
   // iOS treats the first tap on a hoverable element as a hover preview and
   // delays the click event until the second tap. Only attach hover triggers
   // on devices that actually have a hover-capable pointer.
@@ -20,9 +25,11 @@
     }
 
     // Bootstrap reads the `title` attribute as the popover header, which
-    // duplicates the body text. Strip it and expose the same copy via aria-label.
+    // duplicates the body text. Strip it, and say in the name that saving is
+    // for members.
     button.removeAttribute('title');
-    button.setAttribute('aria-label', ARIA_LABEL);
+    const visibleLabel = String(button.textContent || '').replace(/\s+/g, ' ').trim();
+    button.setAttribute('aria-label', visibleLabel ? `${visibleLabel}${ARIA_LABEL_SUFFIX}` : FALLBACK_ARIA_LABEL);
 
     const popover = new window.bootstrap.Popover(button, {
       container: 'body',

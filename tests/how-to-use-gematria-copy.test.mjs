@@ -84,6 +84,38 @@ test('the claim about the size of the value space is arithmetic, not vibes', () 
   assert.notEqual(Number(englishGematria('light')) % 6, 1, 'sanity: totals are never 337-shaped');
 });
 
+test('the digital-root odds match this cipher, where only 3, 6 and 9 occur', () => {
+  // Every total is six times the ordinal sum, and a multiple of six can only
+  // reduce to 3, 6 or 9. The page used to promise nine roots and one-in-nine
+  // odds of a chance match, three times rarer than they really are.
+  const roots = new Set();
+  for (let sum = 1; sum <= 3000; sum += 1) roots.add(digitalRoot(6 * sum));
+  assert.deepEqual([...roots].sort(), [3, 6, 9]);
+
+  // Exact odds for two random five-letter strings. The root of 6 x sum is set
+  // by the ordinal sum mod 3 (0 -> 9, 1 -> 6, 2 -> 3), so convolve the
+  // per-letter residues five times and add up the chance both land alike.
+  for (const [sum, root] of [[3, 9], [4, 6], [5, 3]]) assert.equal(digitalRoot(6 * sum), root);
+  let residues = [1, 0, 0];
+  for (let letter = 0; letter < 5; letter += 1) {
+    const next = [0, 0, 0];
+    for (let residue = 0; residue < 3; residue += 1) {
+      for (let index = 1; index <= 26; index += 1) next[(residue + index) % 3] += residues[residue] / 26;
+    }
+    residues = next;
+  }
+  const shareRate = residues.reduce((total, chance) => total + chance * chance, 0);
+  assert.ok(Math.abs(shareRate - 1 / 3) < 0.01, `unrelated words share a root ${shareRate} of the time, not about a third`);
+
+  for (const claim of ['nine possible digital roots', 'nine buckets', 'One in nine.', 'Nine possible values', 'one time in nine']) {
+    assert.ok(!PAGE.includes(claim), `the page still says "${claim}"`);
+  }
+  assertCopyContains('its digital root can only be 3, 6 or 9, and roughly one pair of unrelated words in three shares one by chance');
+  assertCopyContains('<h3 class="h6 mt-4 mb-2">c. Digital roots are three buckets</h3>');
+  assertCopyContains('So two unrelated words share a digital root about one time in three.');
+  assertCopyContains('so only 3, 6 and 9 occur, and roughly one unrelated pair in three shares one');
+});
+
 test('the base root examples sit on the 54-step ladder', () => {
   const isBaseRoot = (total) => (total - 6) % 54 === 0;
 

@@ -19,6 +19,7 @@ import {
   extractWordFromEvent,
   getStatusCode,
 } from '../netlify/functions/wordnikDefinition.mjs';
+import { wordOfDayCacheControl } from '../netlify/functions/wordnikWordOfDay.mjs';
 
 const ENV_KEYS = ['WORDNIK_BASE_URL', 'WORDNIK_URL_BASE', 'WORDNIK_API_KEY'];
 const PRIOR_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
@@ -396,4 +397,38 @@ test('wordnikDefinition.getStatusCode honors explicit error.statusCode', () => {
 
 test('wordnikDefinition.getStatusCode defaults to 500 for unrecognized errors', () => {
   assert.equal(getStatusCode(new Error('boom')), 500);
+});
+
+// ---------- wordnikWordOfDay cache lifetime ----------
+
+test('the word of the day is never cached past the UTC midnight it changes at', () => {
+  // The URL has no date, so a flat max-age=3600 from 23:55 kept yesterday's
+  // word on the home page until after 01:00.
+  assert.equal(
+    wordOfDayCacheControl(new Date('2026-10-01T23:55:00Z')),
+    'public, max-age=300',
+  );
+  assert.equal(
+    wordOfDayCacheControl(new Date('2026-10-01T22:55:00Z')),
+    'public, max-age=3600, stale-while-revalidate=300',
+  );
+  assert.equal(
+    wordOfDayCacheControl(new Date('2026-10-01T12:00:00Z')),
+    'public, max-age=3600, stale-while-revalidate=600',
+  );
+  assert.equal(
+    wordOfDayCacheControl(new Date('2026-10-02T00:00:00Z')),
+    'public, max-age=3600, stale-while-revalidate=600',
+  );
+  assert.equal(
+    wordOfDayCacheControl(new Date('2026-12-31T23:59:59.500Z')),
+    'public, max-age=0',
+  );
+});
+
+test('both word-of-the-day handlers use the day-bounded cache lifetime', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../netlify/functions/wordnikWordOfDay.mjs', import.meta.url), 'utf8');
+  assert.equal((source.match(/'cache-control': wordOfDayCacheControl\(\)/g) || []).length, 2);
+  assert.ok(!/max-age=3600, stale-while-revalidate=600'/.test(source));
 });

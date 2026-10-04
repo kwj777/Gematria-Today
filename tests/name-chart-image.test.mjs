@@ -1,26 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import handler, {
   CHART_HEIGHT,
   CHART_WIDTH,
   MAX_MATCHES,
   MAX_NAMES,
+  MAX_NAME_LETTERS,
   buildChartSvg,
+  buildLetterTiles,
   computeChart,
   computeLadderStartY,
   computeTileMetrics,
   escapeXml,
+  filterMatches,
   fitDisplayFontSize,
   getPerLetterValues,
+  isFullChartAuthorized,
   layoutTitle,
   parseCalculatedOn,
   parseMatches,
   parseNames,
   resolveFontFiles,
+  signChartRequest,
   splitTitleLines,
   truncate,
 } from '../netlify/functions/name-chart-image.mjs';
+import { englishGematria } from '../netlify/functions/englishGematria.mjs';
 
 function params(object) {
   return new URLSearchParams(object);
@@ -120,6 +129,48 @@ test('computeChart labels rows First/Second/Third, matching the form fields', ()
 
 test('computeChart upper-cases the printed name', () => {
   assert.equal(chartFor('sarah', 'morgan').fullName, 'SARAH MORGAN');
+});
+
+// ---------- letter tiles ----------
+
+test('a name longer than the ladder folds its tail into a "+N" tile so the tiles add up', () => {
+  // 22 letters. The ladder used to show the first 20 tiles (summing to less)
+  // next to a subtotal computed from all 22.
+  const chart = chartFor('Elizabeth Alexandra Mary');
+  const [row] = chart.rows;
+  assert.equal(row.letters.length, MAX_NAME_LETTERS);
+  assert.equal(row.letters.at(-1).letter, '+3');
+  assert.equal(row.letters.reduce((sum, { value }) => sum + value, 0), row.subtotal);
+  assert.equal(row.subtotal, Number(englishGematria('Elizabeth Alexandra Mary')));
+  const svg = buildChartSvg({ chart, matches: [], calculatedOn: 'x' });
+  assert.ok(svg.includes('>+3<'));
+});
+
+test('buildLetterTiles leaves names that fit untouched', () => {
+  assert.deepEqual(buildLetterTiles('Sarah'), getPerLetterValues('Sarah'));
+  const exact = 'A'.repeat(MAX_NAME_LETTERS);
+  assert.deepEqual(buildLetterTiles(exact), getPerLetterValues(exact));
+});
+
+test('the tiles always sum to the row subtotal, whatever the name length', () => {
+  for (const length of [1, MAX_NAME_LETTERS - 1, MAX_NAME_LETTERS, MAX_NAME_LETTERS + 1, 200]) {
+    const name = 'QWERTYUIOPASDFGHJKLZXCVBNM'.repeat(10).slice(0, length);
+    const [row] = chartFor(name).rows;
+    assert.ok(row.letters.length <= MAX_NAME_LETTERS, `length ${length}`);
+    assert.equal(row.letters.reduce((sum, { value }) => sum + value, 0), row.subtotal, `length ${length}`);
+  }
+});
+
+// ---------- matching words ----------
+
+test('filterMatches keeps only words whose own value is the full-name total', () => {
+  const chart = chartFor('Sarah', 'Jane', 'Morgan');
+  // ?matches= arrives from the URL; a hand-edited list must not be able to put
+  // arbitrary words under "WORDS SHARING THIS VALUE".
+  const genuine = ['A'.repeat(chart.total / 6)];
+  assert.equal(Number(englishGematria(genuine[0])), chart.total);
+  assert.deepEqual(filterMatches([...genuine, 'antichrist', 'beast'], chart.total), genuine);
+  assert.deepEqual(filterMatches([], chart.total), []);
 });
 
 // ---------- forgery resistance ----------
@@ -269,9 +320,20 @@ test('resolveFontFiles returns nothing for a directory that does not exist', () 
 });
 
 test('resolveFontFiles ignores woff2, which resvg cannot read', () => {
-  // assets/fonts currently ships woff2 only; picking those up would hand resvg
-  // files it silently fails to parse.
-  assert.deepEqual(resolveFontFiles('assets/fonts'), []);
+  const directory = mkdtempSync(join(tmpdir(), 'chart-fonts-'));
+  try {
+    writeFileSync(join(directory, 'face.woff2'), '');
+    writeFileSync(join(directory, 'face.ttf'), '');
+    assert.deepEqual(resolveFontFiles(directory, '/'), [join(directory, 'face.ttf')]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('resolveFontFiles finds the bundled Fraunces and Inter cuts', () => {
+  const names = resolveFontFiles('assets/fonts').map((file) => file.split('/').pop());
+  assert.ok(names.some((name) => /^fraunces-.*\.ttf$/.test(name)), names.join(', '));
+  assert.ok(names.some((name) => /^inter-.*\.ttf$/.test(name)), names.join(', '));
 });
 
 // ---------- handler ----------
@@ -295,12 +357,102 @@ test('the handler returns a PNG for the print chart', async () => {
   assert.deepEqual(Array.from(bytes.slice(0, 4)), [0x89, 0x50, 0x4e, 0x47]);
 });
 
-test('the preview render is smaller than the print render', async () => {
-  const [print, preview] = await Promise.all([
-    handler(request('name1=Sarah&calculatedOn=2026-08-19')),
+async function withEnv(values, run) {
+  const prior = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
+  Object.assign(process.env, values);
+  try {
+    return await run();
+  } finally {
+    for (const [key, value] of Object.entries(prior)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+const SIGNING_SECRET = 'test-name-chart-secret';
+
+test('the preview render is smaller than the signed print render', async () => {
+  const sig = signChartRequest({ names: ['Sarah'], calculatedOn: '2026-08-19' }, SIGNING_SECRET);
+  const [print, preview] = await withEnv({ NAME_CHART_SIGNING_SECRET: SIGNING_SECRET }, () => Promise.all([
+    handler(request(`name1=Sarah&calculatedOn=2026-08-19&sig=${sig}`)),
     handler(request('name1=Sarah&calculatedOn=2026-08-19&preview=1')),
-  ]);
+  ]));
   const printBytes = (await print.arrayBuffer()).byteLength;
   const previewBytes = (await preview.arrayBuffer()).byteLength;
   assert.ok(previewBytes < printBytes, 'the free preview must not match the paid resolution');
+});
+
+test('dropping preview=1 does not unlock the unmarked print', async () => {
+  // There is no purchase flow yet; editing the preview URL used to download
+  // the full-resolution, unwatermarked chart for free.
+  const [unsigned, preview] = await withEnv({ NAME_CHART_SIGNING_SECRET: SIGNING_SECRET }, () => Promise.all([
+    handler(request('name1=Sarah&calculatedOn=2026-08-19')),
+    handler(request('name1=Sarah&calculatedOn=2026-08-19&preview=1')),
+  ]));
+  assert.equal(unsigned.status, 200);
+  assert.deepEqual(new Uint8Array(await unsigned.arrayBuffer()), new Uint8Array(await preview.arrayBuffer()));
+});
+
+test('isFullChartAuthorized needs a configured secret and a signature over these names and date', () => {
+  const sig = signChartRequest({ names: ['Sarah'], calculatedOn: '2026-08-19' }, SIGNING_SECRET);
+  const signed = params({ name1: 'Sarah', calculatedOn: '2026-08-19', sig });
+  assert.equal(isFullChartAuthorized(signed, ['Sarah'], SIGNING_SECRET), true);
+  assert.equal(isFullChartAuthorized(signed, ['Sarah'], ''), false);
+  assert.equal(isFullChartAuthorized(signed, ['Sarah'], 'another-secret'), false);
+  assert.equal(isFullChartAuthorized(signed, ['Sara'], SIGNING_SECRET), false);
+  assert.equal(isFullChartAuthorized(params({ name1: 'Sarah', calculatedOn: '2026-08-20', sig }), ['Sarah'], SIGNING_SECRET), false);
+  assert.equal(isFullChartAuthorized(params({ name1: 'Sarah', sig: 'abc' }), ['Sarah'], SIGNING_SECRET), false);
+});
+
+test('the name calculator does not promise a print nobody can get', () => {
+  // The page advertised "an unmarked 8x10 at 300 DPI" with no button, link or
+  // checkout anywhere -- a dead end for anyone who wanted it.
+  const page = readFileSync('src/name-calculator.html', 'utf8');
+  const script = readFileSync('page-scripts/name-calculator-1.js', 'utf8');
+  assert.doesNotMatch(page, /the full chart is an unmarked/i);
+  assert.doesNotMatch(script, /the printable chart is unmarked and print resolution/i);
+  assert.match(page, /not available to order yet/);
+});
+
+// ---------- abuse protection ----------
+
+test('the protection kill switch turns the renderer off before any work', async () => {
+  const response = await withEnv({ DISABLE_EXPENSIVE_PUBLIC_ENDPOINTS: 'true' }, () => handler(request('name1=Sarah&preview=1')));
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+});
+
+// Stand-in for Neon's HTTP endpoint: every statement succeeds empty except the
+// rate-limit upsert, which reports this client as blocked.
+async function withBlockedRateLimit(run) {
+  const priorFetch = globalThis.fetch;
+  const scopes = [];
+  const answer = (query) => {
+    if (!/INSERT INTO request_rate_limits/.test(query.query)) return { fields: [], rows: [] };
+    scopes.push(query.params[0]);
+    const fields = ['count', 'window_started_at', 'blocked_until'].map((name) => ({ name, dataTypeID: 25 }));
+    return { fields, rows: [['999', new Date().toISOString(), new Date(Date.now() + 60_000).toISOString()]] };
+  };
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body);
+    const payload = Array.isArray(body.queries) ? { results: body.queries.map(answer) } : answer(body);
+    return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  try {
+    const response = await withEnv({ DATABASE_URL: 'postgres://user:pass@db.example.test/neondb' }, run);
+    return { response, scopes };
+  } finally {
+    globalThis.fetch = priorFetch;
+  }
+}
+
+test('a client over the per-IP limit gets a 429 instead of a render', async () => {
+  const { response, scopes } = await withBlockedRateLimit(() => handler(request('name1=Sarah&preview=1')));
+  assert.equal(response.status, 429);
+  assert.ok(Number(response.headers.get('retry-after')) > 0);
+  assert.deepEqual(scopes, ['name-chart-image-ip']);
 });

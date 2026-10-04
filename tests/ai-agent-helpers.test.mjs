@@ -6,6 +6,7 @@ import {
   englishGematria,
   gematriaLetterBreakdown,
   digitalRoot,
+  describeSharedLookup,
   isBaseRootTotal,
   describeMatchConfidence,
   normalizeCandidate,
@@ -14,6 +15,12 @@ import {
   MAX_TARGET_WORD_LENGTH,
   tokenizeForLearning,
   scoreLearningOverlap,
+  findLearnedEntry,
+  buildLearnedNoteHtml,
+  buildLearningPrompt,
+  isContextDependentPrompt,
+  isBareAffirmation,
+  isLearnablePrompt,
   isAffirmativePrompt,
   isCancellationPrompt,
   isFollowupQuestion,
@@ -95,6 +102,32 @@ test('digitalRoot of 0 is 0', () => {
 
 test('digitalRoot handles negative input via absolute value', () => {
   assert.equal(digitalRoot(-144), 9);
+});
+
+// ---------- describeSharedLookup ----------
+
+test('describeSharedLookup computes the banner values from the shared topic', () => {
+  // O90 + B12 + A6 + M78 + A6
+  assert.deepEqual(describeSharedLookup('  Obama '), { topic: 'Obama', total: 192, root: 3 });
+});
+
+test('describeSharedLookup returns null when there is nothing to count', () => {
+  assert.equal(describeSharedLookup(''), null);
+  assert.equal(describeSharedLookup(null), null);
+  assert.equal(describeSharedLookup('12345'), null);
+});
+
+test('the shared-lookup banner ignores sharedTotal and sharedRoot from the URL', async () => {
+  // /ai-agent.html?sharedTopic=Obama&sharedTotal=666&sharedRoot=9 used to
+  // print "Obama -> total 666, digital root 9" under the site's banner.
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../page-scripts/ai-agent-1.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('function showSharedResultIfPresent()');
+  assert.ok(start > -1);
+  const body = source.slice(start, source.indexOf('\n      }\n', start));
+  assert.ok(body.includes("describeSharedLookup(params.get('sharedTopic'))"));
+  assert.ok(!body.includes('sharedTotal'));
+  assert.ok(!body.includes('sharedRoot'));
 });
 
 // ---------- isBaseRootTotal ----------
@@ -192,6 +225,238 @@ test('scoreLearningOverlap returns Jaccard when at least 2 tokens overlap', () =
 test('scoreLearningOverlap returns 0 for empty input', () => {
   assert.equal(scoreLearningOverlap([], ['a', 'b']), 0);
   assert.equal(scoreLearningOverlap(['a', 'b'], []), 0);
+});
+
+// ---------- findLearnedEntry & buildLearnedNoteHtml ----------
+
+const LEARNED = [
+  { prompt: 'calculate new jerusalem', explanation: 'Mention the Revelation 21 measurements.' },
+  { prompt: 'e', explanation: 'Spam note.' },
+  { prompt: 'love', explanation: 'One-word note.' },
+];
+
+test('findLearnedEntry matches the same prompt and prompts that contain it on whole words', () => {
+  assert.equal(findLearnedEntry('Calculate  New Jerusalem', LEARNED), LEARNED[0]);
+  assert.equal(findLearnedEntry('please calculate "new jerusalem" again', LEARNED), LEARNED[0]);
+});
+
+test('findLearnedEntry does not let a short entry attach its note to every reply', () => {
+  // A saved prompt of "e" used to substring-match nearly any prompt.
+  assert.equal(findLearnedEntry('compare pilot and process', LEARNED), null);
+  assert.equal(findLearnedEntry('calculate lovely', LEARNED), null);
+  assert.equal(findLearnedEntry('calculate love', LEARNED), null);
+  assert.equal(findLearnedEntry('love', LEARNED), LEARNED[2]);
+});
+
+test('findLearnedEntry does not match a one-word prompt against a longer entry that contains it', () => {
+  assert.equal(findLearnedEntry('jerusalem', LEARNED), null);
+});
+
+test('findLearnedEntry matches a reworded prompt that keeps every meaningful word of the entry', () => {
+  const entries = [{ prompt: 'show base-root status for mercy', explanation: 'Explain base roots first.' }];
+  assert.equal(findLearnedEntry('show the base-root status of mercy', entries), entries[0]);
+  assert.equal(findLearnedEntry('mercy: show base-root status', entries), entries[0]);
+  assert.equal(findLearnedEntry('', entries), null);
+  assert.equal(findLearnedEntry('show the base-root status of mercy', []), null);
+});
+
+// Notes are visible, so a prompt built on the same template about a different
+// word must not pick up a note written about the first word.
+test('findLearnedEntry does not attach a note to the same question about a different word', () => {
+  const entries = [
+    { prompt: 'what is the gematria value of love', explanation: 'Love should also show its digital root 9.' },
+    { prompt: 'compare alpha and omega', explanation: 'Mention Revelation 22:13.' },
+    { prompt: 'what is the gematria of love', explanation: 'Start with the total.' },
+  ];
+  assert.equal(findLearnedEntry('what is the gematria value of jerusalem', entries), null);
+  assert.equal(findLearnedEntry('compare alpha and beta', entries), null);
+  assert.equal(findLearnedEntry('compare omega and delta', entries), null);
+  assert.equal(findLearnedEntry('what is the gematria of hate', entries), null);
+  assert.equal(findLearnedEntry('What is the gematria value of LOVE?', entries), entries[0]);
+  assert.equal(findLearnedEntry('compare omega and alpha', entries), entries[1]);
+});
+
+test('findLearnedEntry does not match a prompt that is only part of an entry', () => {
+  // "what is the gematria" has no subject; a note about love is not about it.
+  const entries = [{ prompt: 'what is the gematria of love', explanation: 'Start with the total.' }];
+  assert.equal(findLearnedEntry('what is the gematria', entries), null);
+  assert.equal(findLearnedEntry('gematria of love', entries), null);
+});
+
+test('findLearnedEntry prefers the same prompt, then the most specific entry', () => {
+  const entries = [
+    { prompt: 'calculate love', explanation: 'General love note.' },
+    { prompt: 'calculate love and hate', explanation: 'Pair note.' },
+    { prompt: 'reverse gematria 324', explanation: 'Mention that love is 324.' },
+  ];
+  assert.equal(findLearnedEntry('please calculate love and hate', entries), entries[1]);
+  assert.equal(findLearnedEntry('calculate love', entries), entries[0]);
+  assert.equal(findLearnedEntry('Reverse gematria 324', entries), entries[2]);
+  assert.equal(findLearnedEntry('reverse gematria 3240', entries), null);
+});
+
+test('buildLearnedNoteHtml shows the escaped explanation instead of a hidden marker', () => {
+  const html = buildLearnedNoteHtml({ prompt: 'say "hi"', explanation: '<img src=x onerror=alert(1)> use the summary' });
+  assert.match(html, /Community note:/);
+  assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt; use the summary/);
+  assert.doesNotMatch(html, /<img/);
+  assert.doesNotMatch(html, /d-none/);
+  assert.match(html, /data-applied-learning="say &quot;hi&quot;"/);
+  assert.equal(buildLearnedNoteHtml({ prompt: 'x', explanation: '' }), '');
+  assert.equal(buildLearnedNoteHtml(null), '');
+});
+
+// A follow-up names no subject. A note saved under "what does that mean"
+// (after "love") used to match "what does jerusalem mean" and every later
+// "what does that mean", whatever word it followed.
+test('findLearnedEntry ignores notes saved under a context-dependent prompt', () => {
+  const entries = [
+    { prompt: 'what does that mean', explanation: 'Love = 324 because ...' },
+    { prompt: 'why', explanation: 'Because of the base root.' },
+    { prompt: 'tell me more', explanation: 'Jerusalem has 9 letters.' },
+    { prompt: 'yes', explanation: 'Related words for love.' },
+    { prompt: 'never mind', explanation: 'Cleared.' },
+  ];
+  assert.equal(findLearnedEntry('what does jerusalem mean', entries), null);
+  assert.equal(findLearnedEntry('what does 324 mean', entries), null);
+  assert.equal(findLearnedEntry('tell me more about jerusalem', entries), null);
+  assert.equal(findLearnedEntry('yes calculate hate', entries), null);
+  assert.equal(findLearnedEntry('what does that mean', entries), null);
+  assert.equal(findLearnedEntry('why', entries), null);
+  assert.equal(findLearnedEntry('never mind', entries), null);
+});
+
+test('findLearnedEntry looks nothing up for a context-dependent prompt', () => {
+  const entries = [{ prompt: 'what mean', explanation: 'A note.' }];
+  assert.equal(findLearnedEntry('What does that mean?', entries), null);
+  assert.equal(isContextDependentPrompt('what does that mean?'), true);
+  assert.equal(isContextDependentPrompt('Never mind'), true);
+  assert.equal(isContextDependentPrompt('yes'), true);
+  assert.equal(isContextDependentPrompt('what does jerusalem mean'), false);
+});
+
+// ---------- buildLearningPrompt ----------
+
+const LOVE_CONTEXT = { kind: 'calculation', topic: 'love', total: 324, root: 9, isBaseRoot: false, matchCount: 3 };
+
+test('buildLearningPrompt keys an ordinary prompt by its resolved form', () => {
+  assert.equal(
+    buildLearningPrompt('what is its digital root', { resolvedPrompt: "what is love's digital root", context: LOVE_CONTEXT }),
+    "what is love's digital root",
+  );
+  assert.equal(buildLearningPrompt('  calculate   jerusalem '), 'calculate jerusalem');
+});
+
+test('buildLearningPrompt keys a follow-up with the subject it follows', () => {
+  const afterLove = buildLearningPrompt('what does that mean', { context: LOVE_CONTEXT });
+  const afterJerusalem = buildLearningPrompt('what does that mean', {
+    context: { ...LOVE_CONTEXT, topic: 'jerusalem', total: 558 },
+  });
+  assert.equal(afterLove, 'about love: what does that mean');
+  assert.notEqual(afterLove, afterJerusalem);
+  assert.equal(isContextDependentPrompt(afterLove), false);
+
+  // The saved key brings the note back on the same follow-up about love, and
+  // only there.
+  const entries = [{ prompt: afterLove, explanation: 'Love = 324 because ...' }];
+  assert.equal(findLearnedEntry(buildLearningPrompt('What does that mean?', { context: LOVE_CONTEXT }), entries), entries[0]);
+  assert.equal(findLearnedEntry(afterJerusalem, entries), null);
+  assert.equal(findLearnedEntry('what does jerusalem mean', entries), null);
+  assert.equal(findLearnedEntry('what does 324 mean', entries), null);
+  assert.equal(findLearnedEntry(buildLearningPrompt('why', { context: LOVE_CONTEXT }), entries), null);
+});
+
+test('buildLearningPrompt names comparison and reverse lookup subjects', () => {
+  assert.equal(
+    buildLearningPrompt('why', { context: { kind: 'comparison', reports: [{ target: 'alpha' }, { target: 'omega' }] } }),
+    'about compare alpha and omega: why',
+  );
+  assert.equal(
+    buildLearningPrompt('tell me more', { context: { kind: 'reverse', value: 324, archivedCount: 2 } }),
+    'about reverse gematria 324: tell me more',
+  );
+  assert.equal(
+    buildLearningPrompt('explain', { context: { kind: 'reverseRange', min: 300, max: 360 } }),
+    'about reverse gematria 300 to 360: explain',
+  );
+});
+
+test('buildLearningPrompt keys a "yes" by the topic it accepts', () => {
+  assert.equal(buildLearningPrompt('yes', { context: LOVE_CONTEXT, pendingTopic: 'love' }), 'about related words for love: yes');
+  assert.equal(buildLearningPrompt('yes', { context: LOVE_CONTEXT }), '');
+});
+
+// buildAgentReply only takes a "yes" as accepting the related-words offer
+// while one is pending; otherwise "ok what is the gematria of love" is answered
+// as the question it is, so it keeps its own key and its note.
+test('a question that only starts with "ok" or "yes" keeps its key and its note', () => {
+  for (const prompt of ['ok what is the gematria of love', 'yes what does love mean', 'yeah but what about hate', 'yes 324']) {
+    assert.equal(isContextDependentPrompt(prompt), false, `"${prompt}" should not be context-dependent`);
+    assert.equal(buildLearningPrompt(prompt, { context: LOVE_CONTEXT }), prompt);
+  }
+
+  const key = buildLearningPrompt('OK what is the gematria of love?', { context: LOVE_CONTEXT });
+  assert.equal(key, 'OK what is the gematria of love?');
+  // Notes saved under it (or under the raw prompt, as older entries were)
+  // come back on the same question.
+  const entries = [{ prompt: 'ok what is the gematria of love', explanation: 'Start with the total.' }];
+  assert.equal(findLearnedEntry(key, entries), entries[0]);
+  assert.equal(findLearnedEntry('ok what is the gematria of hate', entries), null);
+});
+
+test('a "yes" that accepts a pending offer is keyed by the offer, whatever follows it', () => {
+  assert.equal(isContextDependentPrompt('ok what is the gematria of love', { pendingTopic: 'hate' }), true);
+  assert.equal(
+    buildLearningPrompt('ok what is the gematria of love', { context: LOVE_CONTEXT, pendingTopic: 'hate' }),
+    'about related words for hate: ok what is the gematria of love',
+  );
+  assert.equal(isContextDependentPrompt('calculate love', { pendingTopic: 'hate' }), false);
+  assert.equal(buildLearningPrompt('calculate love', { pendingTopic: 'hate' }), 'calculate love');
+});
+
+test('a bare "yes" or "why" is still context-dependent and gets no key of its own', () => {
+  for (const prompt of ['yes', 'Yes please!', 'ok go ahead', 'sure, thanks', 'why', 'Why?', 'never mind']) {
+    assert.equal(isContextDependentPrompt(prompt), true, `"${prompt}" should be context-dependent`);
+    assert.equal(isLearnablePrompt(prompt), false);
+    assert.equal(buildLearningPrompt(prompt), '', `"${prompt}" got a key with no subject`);
+  }
+  assert.equal(isBareAffirmation('Yes please!'), true);
+  assert.equal(isBareAffirmation('yes what does love mean'), false);
+  assert.equal(isBareAffirmation('calculate love'), false);
+
+  const entries = [
+    { prompt: 'yes', explanation: 'Related words for love.' },
+    { prompt: 'yes please', explanation: 'Related words for love.' },
+    { prompt: 'why', explanation: 'Because of the base root.' },
+  ];
+  assert.equal(findLearnedEntry('yes', entries), null);
+  assert.equal(findLearnedEntry('yes please', entries), null);
+  assert.equal(findLearnedEntry('why', entries), null);
+  assert.equal(findLearnedEntry('yes please calculate love', entries), null);
+});
+
+test('isLearnablePrompt is false for a key findLearnedEntry can never match', () => {
+  assert.equal(isLearnablePrompt('ok what is the gematria of love'), true);
+  assert.equal(isLearnablePrompt('about love: what does that mean'), true);
+  assert.equal(isLearnablePrompt('אהבה'), false);
+  assert.equal(isLearnablePrompt('???'), false);
+  assert.equal(isLearnablePrompt(''), false);
+
+  // These get a non-empty key, so "Save learning" has to ask isLearnablePrompt
+  // rather than whether a key exists: a note saved under it never shows.
+  for (const prompt of ['אהבה', 'αγάπη', '???']) {
+    const key = buildLearningPrompt(prompt);
+    assert.notEqual(key, '', `"${prompt}" should keep its own key`);
+    assert.equal(isLearnablePrompt(key), false, `"${prompt}" should not promise a community note`);
+    assert.equal(findLearnedEntry(key, [{ prompt: key, explanation: 'A note.' }]), null);
+  }
+});
+
+test('buildLearningPrompt gives no key to a reply with no subject', () => {
+  assert.equal(buildLearningPrompt('never mind', { context: LOVE_CONTEXT, pendingTopic: 'love' }), '');
+  assert.equal(buildLearningPrompt('what does that mean'), '');
+  assert.equal(buildLearningPrompt('why', { context: { kind: 'comparison', reports: [] } }), '');
+  assert.equal(findLearnedEntry('', [{ prompt: 'why', explanation: 'x' }]), null);
 });
 
 // ---------- isAffirmativePrompt ----------

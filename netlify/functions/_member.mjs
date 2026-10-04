@@ -212,11 +212,38 @@ export function formatMemberUser(row) {
 
 // Stripe subscription states that still carry premium. The webhook sync and the
 // checkout confirmation both read this, so neither can grant what the other
-// would take away.
-const PREMIUM_SUBSCRIPTION_STATUSES = new Set(['trialing', 'active', 'past_due', 'unpaid']);
+// would take away. 'unpaid' is not one: Stripe sets it once every retry of a
+// renewal has failed and keeps the subscription open with nothing paid; paying
+// the invoice later makes it active again.
+const PREMIUM_SUBSCRIPTION_STATUSES = new Set(['trialing', 'active', 'past_due']);
 
 export function isPremiumSubscriptionStatus(status) {
   return PREMIUM_SUBSCRIPTION_STATUSES.has(String(status || '').trim());
+}
+
+// A renewal Stripe could not collect leaves the subscription open: past_due
+// while Stripe retries the card (about two weeks by default), unpaid once it
+// stops. Premium ends before then, but paying the invoice still makes that
+// subscription active again, so the member settles or cancels it under Manage
+// subscription. A new checkout would start a second one beside it.
+const UNSETTLED_SUBSCRIPTION_STATUSES = new Set(['past_due', 'unpaid']);
+
+export function isUnsettledSubscriptionStatus(status) {
+  return UNSETTLED_SUBSCRIPTION_STATUSES.has(String(status || '').trim());
+}
+
+// The date a subscription pays premium through. Stripe starts the new period
+// before it collects the renewal, so a past_due subscription's period end is a
+// year nobody has paid for: it carries premium only from the start of that
+// unpaid period through the renewal grace below, while Stripe retries the card.
+// A retry that succeeds turns it active again with the full period end.
+export function getSubscriptionPremiumExpiry({ status = null, currentPeriodStart = null, currentPeriodEnd = null } = {}) {
+  const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  if (String(status || '').trim() !== 'past_due' || !currentPeriodStart) {
+    return periodEnd;
+  }
+  const periodStart = new Date(currentPeriodStart);
+  return periodEnd && periodEnd.getTime() < periodStart.getTime() ? periodEnd : periodStart;
 }
 
 // Stripe renews a subscription at the end of its period and only then sends
@@ -255,6 +282,17 @@ export function formatMemberProfile(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+// ?limit= and ?offset= arrive as raw strings. Number('abc') is NaN, NaN gets
+// through Math.min and Math.max, and '2.5' was passed on unchanged, so both
+// reached LIMIT and Postgres answered with a 500 carrying its own error text.
+export function parseBoundedIntegerParam(raw, { fallback, min, max }) {
+  const parsed = Number.parseInt(String(raw ?? '').trim(), 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(Math.max(parsed, min), max);
 }
 
 export function formatCalculationHistory(row) {
@@ -296,13 +334,20 @@ export async function ensureMemberProfile(sql, userId, profile = {}) {
 
 export const LEARNING_PATH_LEVEL_0_SOURCE = 'learning_path_level_0';
 
-function buildInitialPreferencesForSignupSource(signupSource) {
-  return String(signupSource || '').trim() === LEARNING_PATH_LEVEL_0_SOURCE
-    ? { learningPathStep1Intent: true }
-    : {};
+// The signup form's blog opt-in used to live only in that browser's
+// localStorage, so verifying the email and signing in on another device -- or
+// a blocked popup after sign-in -- lost it without a word. It is kept on the
+// profile until the member finishes subscribing from the dashboard.
+export const BLOG_SUBSCRIPTION_PENDING_PREFERENCE = 'blogSubscriptionPending';
+
+export function buildInitialMemberPreferences({ signupSource = '', blogSubscribe = false } = {}) {
+  return {
+    ...(String(signupSource || '').trim() === LEARNING_PATH_LEVEL_0_SOURCE ? { learningPathStep1Intent: true } : {}),
+    ...(blogSubscribe === true ? { [BLOG_SUBSCRIPTION_PENDING_PREFERENCE]: true } : {}),
+  };
 }
 
-export async function registerMember(sql, { username, email, password, displayName = '', signupSource = '' }) {
+export async function registerMember(sql, { username, email, password, displayName = '', signupSource = '', blogSubscribe = false }) {
   await ensureMemberSchema(sql);
 
   const normalizedUsername = normalizeUsername(username);
@@ -348,8 +393,14 @@ export async function registerMember(sql, { username, email, password, displayNa
       LIMIT 1
     `;
 
+  // A pending signup keeps its name and address until it is verified or the
+  // nightly prune removes it, so someone signing up again is pointed at the
+  // resend form rather than left to guess why their own details are taken.
   if (existing.length) {
-    throw Object.assign(new Error('A member with that username or email already exists'), { statusCode: 409 });
+    throw Object.assign(
+      new Error('A member with that username or email already exists. If you signed up but never verified your email, request a fresh verification link from the sign-in page.'),
+      { statusCode: 409 },
+    );
   }
 
   const passwordHash = await hashPassword(password);
@@ -388,7 +439,7 @@ export async function registerMember(sql, { username, email, password, displayNa
   `;
 
   const member = rows[0];
-  const initialPreferences = buildInitialPreferencesForSignupSource(signupSource);
+  const initialPreferences = buildInitialMemberPreferences({ signupSource, blogSubscribe });
   const profile = await ensureMemberProfile(sql, member.id, { preferences: initialPreferences });
   return { member: formatMemberUser(member), profile };
 }
@@ -478,6 +529,43 @@ export async function markVerificationEmailDelivered(sql, userId, delivered) {
   `;
 }
 
+// Whether a pending signup may be sent a fresh verification link. The nightly
+// prune spares an account while it holds a live link, so with no bound here
+// anyone who registered someone else's address could re-send a link once a
+// week and hold that address and username for good. An account past
+// UNVERIFIED_RETENTION that our email has already reached gets no new link:
+// whatever link it holds runs out within a week, and the prune removes it. An
+// account our email never reached is never past that point, however old --
+// the prune keeps it too -- so the resend still rescues it once delivery works;
+// nor is one the prune never removes (paid, or reset-proven).
+export async function canRefreshMemberEmailVerification(sql, userId) {
+  await ensureMemberSchema(sql);
+  if (!userId) return false;
+  const rows = await sql`
+    SELECT 1 AS verification_window_closed
+    FROM users
+    WHERE id = ${userId}
+      AND created_at <= NOW() - ${UNVERIFIED_RETENTION}::interval
+      AND EXISTS (
+        SELECT 1 FROM member_email_verification_requests r
+        WHERE r.user_id = users.id
+          AND r.email_delivered = TRUE
+      )
+      AND membership_level = 'free'
+      AND stripe_customer_id IS NULL
+      AND stripe_subscription_id IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM account_recovery_requests ar
+        WHERE ar.user_id = users.id
+          AND ar.role = 'member'
+          AND ar.recovery_type = 'forgot-password'
+          AND ar.consumed_at IS NOT NULL
+      )
+    LIMIT 1
+  `;
+  return rows.length === 0;
+}
+
 export async function countUndeliveredVerifications(sql) {
   await ensureMemberSchema(sql);
   const rows = await sql`
@@ -505,6 +593,15 @@ export async function deleteExpiredUnverifiedMembers(sql) {
         SELECT 1 FROM member_email_verification_requests r
         WHERE r.user_id = users.id
           AND r.email_delivered = TRUE
+      )
+      -- Nor while a link is still live. A member who asks for a fresh link on
+      -- day 27 is told it works until day 34; pruning at day 30 deleted the
+      -- account, and the link with it, before they could use it.
+      AND NOT EXISTS (
+        SELECT 1 FROM member_email_verification_requests r
+        WHERE r.user_id = users.id
+          AND r.consumed_at IS NULL
+          AND r.expires_at > NOW()
       )
       -- Never an abandoned signup, whatever status still says: a member who
       -- paid, or who proved the address by finishing a password reset. The
@@ -544,87 +641,6 @@ export async function deleteExpiredUnverifiedMembers(sql) {
 
   return rows.length;
 }
-
-// A signup whose verification email never arrived leaves a pending account that
-// nobody can use and nobody can replace: registering again is refused because
-// the username and email are taken, and the nightly prune cannot reach it
-// either. Once the verification link has expired the account is unrecoverable
-// by the person who created it, so the claim on that name and address is
-// released and they can sign up again. While a link is still live the account
-// is left alone, so a signup in progress cannot be taken out from under the
-// person who started it by anyone who knows their email.
-export async function releaseUnverifiedMemberClaim(sql, { username = '', email = '' } = {}) {
-  await ensureMemberSchema(sql);
-  const normalizedUsername = normalizeUsername(username);
-  const normalizedEmail = normalizeEmail(email);
-  if (!normalizedUsername && !normalizedEmail) {
-    return 0;
-  }
-
-  const rows = await sql`
-    DELETE FROM users
-    WHERE role = 'member'
-      AND status = 'pending'
-      AND email_verified = FALSE
-      AND (
-        username = ${normalizedUsername || null}
-        OR LOWER(email) = ${normalizedEmail || null}
-      )
-      AND NOT EXISTS (
-        SELECT 1 FROM member_email_verification_requests r
-        WHERE r.user_id = users.id
-          AND r.consumed_at IS NULL
-          AND r.expires_at > NOW()
-      )
-      -- Same exemption as deleteExpiredUnverifiedMembers: paid or reset-proven.
-      AND membership_level = 'free'
-      AND stripe_customer_id IS NULL
-      AND stripe_subscription_id IS NULL
-      AND NOT EXISTS (
-        SELECT 1 FROM account_recovery_requests ar
-        WHERE ar.user_id = users.id
-          AND ar.role = 'member'
-          AND ar.recovery_type = 'forgot-password'
-          AND ar.consumed_at IS NOT NULL
-      )
-    RETURNING id
-  `;
-  return rows.length;
-}
-
-export async function deleteExpiredUnverifiedMemberByIdentifier(sql, identifier = '') {
-  await ensureMemberSchema(sql);
-  const normalizedIdentifier = String(identifier || '').trim();
-  if (!normalizedIdentifier) {
-    return 0;
-  }
-  const normalizedEmail = normalizeEmail(normalizedIdentifier);
-  const rows = await sql`
-    DELETE FROM users
-    WHERE role = 'member'
-      AND status = 'pending'
-      AND email_verified = FALSE
-      AND created_at <= NOW() - ${UNVERIFIED_RETENTION}::interval
-      AND (
-        username = ${normalizedIdentifier}
-        OR LOWER(email) = ${normalizedEmail}
-      )
-      -- Same exemption as deleteExpiredUnverifiedMembers: paid or reset-proven.
-      AND membership_level = 'free'
-      AND stripe_customer_id IS NULL
-      AND stripe_subscription_id IS NULL
-      AND NOT EXISTS (
-        SELECT 1 FROM account_recovery_requests ar
-        WHERE ar.user_id = users.id
-          AND ar.role = 'member'
-          AND ar.recovery_type = 'forgot-password'
-          AND ar.consumed_at IS NOT NULL
-      )
-    RETURNING id
-  `;
-  return rows.length;
-}
-
 
 export function getYearlyMembershipTerm({ purchasedAt = new Date(), subscriptionCurrentPeriodEnd = null } = {}) {
   const startedAt = new Date(purchasedAt);
@@ -689,28 +705,39 @@ export async function syncMembershipFromStripeSubscription(sql, {
 
   const periodStart = currentPeriodStart ? new Date(currentPeriodStart) : null;
   const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  const premiumExpiresAt = getSubscriptionPremiumExpiry({ status: normalizedStatus, currentPeriodStart: periodStart, currentPeriodEnd: periodEnd });
   const isActive = isPremiumSubscriptionStatus(normalizedStatus);
   const nextMembershipLevel = isActive ? 'premium' : 'free';
 
+  // A live subscription grants premium to its member and becomes the one the
+  // account follows. One that has ended only takes premium away from an
+  // account still following that same subscription: an old subscription
+  // cancelled after the member started a new one, or after an admin grant,
+  // must not switch off premium that something else pays for.
   const rows = await sql`
     UPDATE users
     SET membership_level = ${nextMembershipLevel},
         membership_started_at = COALESCE(${periodStart ? periodStart.toISOString() : null}, membership_started_at),
-        membership_expires_at = ${periodEnd ? periodEnd.toISOString() : null},
+        membership_expires_at = ${premiumExpiresAt ? premiumExpiresAt.toISOString() : null},
         stripe_customer_id = COALESCE(${normalizedCustomerId}, stripe_customer_id),
         stripe_subscription_id = COALESCE(${normalizedSubscriptionId}, stripe_subscription_id),
         stripe_subscription_status = COALESCE(${normalizedStatus}, stripe_subscription_status),
         stripe_subscription_current_period_end = ${periodEnd ? periodEnd.toISOString() : null},
         updated_at = NOW()
     WHERE (
-      ${normalizedMemberId}::text IS NOT NULL
-      AND id = ${normalizedMemberId}
-    ) OR (
-      ${normalizedSubscriptionId}::text IS NOT NULL
-      AND stripe_subscription_id = ${normalizedSubscriptionId}
-    ) OR (
-      ${normalizedCustomerId}::text IS NOT NULL
-      AND stripe_customer_id = ${normalizedCustomerId}
+      (
+        ${normalizedMemberId}::text IS NOT NULL
+        AND id = ${normalizedMemberId}
+      ) OR (
+        ${normalizedSubscriptionId}::text IS NOT NULL
+        AND stripe_subscription_id = ${normalizedSubscriptionId}
+      ) OR (
+        ${normalizedCustomerId}::text IS NOT NULL
+        AND stripe_customer_id = ${normalizedCustomerId}
+      )
+    ) AND (
+      ${isActive}::boolean
+      OR stripe_subscription_id = ${normalizedSubscriptionId}
     )
     RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_id, stripe_subscription_status, stripe_subscription_current_period_end, status, email_verified, created_at, updated_at
   `;
@@ -747,8 +774,11 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
   if (!normalizedIdentifier || !password) {
     return null;
   }
-  await deleteExpiredUnverifiedMemberByIdentifier(sql, normalizedIdentifier);
 
+  // Signing in deletes nothing. It used to remove a month-old pending account
+  // matching the identifier before the password was checked, so a stranger
+  // typing a username with any password could delete it -- including the
+  // accounts the nightly prune keeps because our email never reached them.
   const normalizedEmail = normalizeEmail(normalizedIdentifier);
   const rows = await sql`
     SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_status, status, email_verified, password_hash, role, created_at, updated_at

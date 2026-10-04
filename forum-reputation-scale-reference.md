@@ -25,8 +25,8 @@ codebase: every member posts under the same rate limits regardless of score.
 An earlier version of this table published seven tiers (Restricted, Newcomer,
 Contributor, Regular, Trusted, Senior, Steward) with per-tier unlocks such as
 link/media permissions, content flags, category edit suggestions and moderator
-nomination. None of it existed, and `< 0` was unreachable because nothing ever
-subtracts points. Don't reintroduce a tier here before the code implements it.
+nomination. None of it existed, and `< 0` is unreachable because a deduction
+stops at zero. Don't reintroduce a tier here before the code implements it.
 
 ## 2) Admin-Only Reputation Scale
 
@@ -47,9 +47,13 @@ subtracts points. Don't reintroduce a tier here before the code implements it.
 - **+10**: Thread posted.
 - **+4**: Reply posted.
 
-There are no deductions, and no upvote mechanic exists anywhere in the codebase.
-Rule violations are handled through the moderation actions in the admin forum
-queue (hide, remove, warn, suspend), not by adjusting a score.
+The only deduction is `revokeReputation`: when a moderator deletes a thread
+(`delete_thread`) or a reply (`delete_reply`), the points, thread count and reply
+count it earned are taken back, clamped at zero. Deleting a thread also takes
+back what every live reply in it earned, from each reply's author. A thread
+deleted while still pending approval earned nothing, so nothing is taken back.
+No upvote mechanic exists anywhere in the codebase, and no other moderation
+action adjusts a score.
 
 ## Admin Workflow States
 

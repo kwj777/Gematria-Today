@@ -1,4 +1,6 @@
 (() => {
+  // Mirrors DEFAULT_SITE_MODULES in netlify/functions/_site-modules.mjs. Every
+  // module is on unless an admin saved it off.
   const DEFAULT_MODULES = Object.freeze({
     forum: true,
     knowbot: true,
@@ -6,11 +8,15 @@
     blog: true,
     membership: true,
     wordnik_wotd_slider: true,
-    blog_home_slider: false,
+    blog_home_slider: true,
     blog_home_featured_grid: true,
   });
 
   const STORAGE_KEY = 'gematria.siteModules';
+  // The switches the server last reported. A failed /api/public-site-modules
+  // fetch used to fall back to the defaults -- every module on -- and so
+  // re-showed whatever an admin had switched off.
+  const LAST_KNOWN_STORAGE_KEY = 'gematria.siteModules.lastKnown';
   const normalizeName = (value) => String(value || '').trim().toLowerCase();
   let activeModules = { ...DEFAULT_MODULES };
   let superAdminCanOverrideModules = false;
@@ -72,23 +78,121 @@
     }
   };
 
+  const readLastKnownModules = () => {
+    try {
+      const raw = window.localStorage.getItem(LAST_KNOWN_STORAGE_KEY);
+      return raw ? parseModuleOverrides(JSON.parse(raw)) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const storeLastKnownModules = (modules) => {
+    try {
+      window.localStorage.setItem(LAST_KNOWN_STORAGE_KEY, JSON.stringify(parseModuleOverrides(modules)));
+    } catch {
+      // A per-browser convenience only; the server enforces the switches.
+    }
+  };
+
   const isEnabled = (moduleName) => activeModules[normalizeName(moduleName)] !== false;
 
   const MODULE_PATH_MATCHERS = Object.freeze({
     blog: [/\/blog(?:\.html)?(?:[?#].*)?$/i],
-    forum: [/\/forum(?:\.html)?(?:[?#].*)?$/i],
-    membership: [/\/member(?:\.html)?(?:[?#].*)?$/i],
+    forum: [/\/forum(?:\.html)?(?:[?#].*)?$/i, /\/forum-reputation-scale(?:\.html)?(?:[?#].*)?$/i],
+    // Sign-up and upgrade links only. Switching membership off stops new
+    // sign-ups and charges; existing members still sign in at /member and
+    // cancel from its billing portal, so links to /member itself (Log in,
+    // Dashboard, the footer's Membership) stay.
+    membership: [
+      /\/gematria-account-setup(?:\.html)?(?:[?#].*)?$/i,
+      /\/member(?:\.html)?(?:\?[^#]*)?#(?:registerForm|membershipUpgradeSection)$/i,
+      /\/member(?:\.html)?\?(?:[^#]*&)?auth=register(?:[&#].*)?$/i,
+    ],
+    gemabot: [/\/ai-agent(?:\.html)?(?:[?#].*)?$/i],
+    knowbot: [/\/searchbot(?:\.html)?(?:[?#].*)?$/i],
+  });
+
+  const MODULE_PAGE_NAMES = Object.freeze({
+    forum: 'The forum',
+    knowbot: 'SiteSeeker',
+    gemabot: 'GemaBot',
+    blog: 'The blog',
+    membership: 'Membership sign-up',
   });
 
   const MODULE_LINK_HIDDEN_FLAG = 'moduleLinkHidden';
   const MODULE_PRELOAD_HIDDEN_FLAG = 'modulePreloadHidden';
+  const MODULE_PAGE_HIDDEN_FLAG = 'modulePageHidden';
+
+  // A page whose <main> carries data-module-page="<module>" belongs to that
+  // module. Its pages used to load and run as normal with the module off;
+  // now the content is set aside behind a notice. The inline !important
+  // display beats any class a page script toggles later.
+  const buildModuleDisabledNotice = (moduleName) => {
+    const notice = document.createElement('section');
+    notice.className = 'content-panel p-4 p-lg-5 my-4 mx-auto text-center';
+    notice.setAttribute('data-module-disabled-notice', moduleName);
+    notice.setAttribute('role', 'status');
+    const heading = document.createElement('h1');
+    heading.className = 'h3 mb-3';
+    heading.textContent = `${MODULE_PAGE_NAMES[moduleName] || 'This feature'} is currently unavailable`;
+    const body = document.createElement('p');
+    body.className = 'text-muted mb-4';
+    body.textContent = 'This part of Gematria.Today is switched off for now. Please check back later.';
+    const link = document.createElement('a');
+    link.className = 'btn btn-primary';
+    link.href = '/';
+    link.textContent = 'Back to the home page';
+    notice.append(heading, body, link);
+    return notice;
+  };
+
+  const applyModulePageState = () => {
+    document.querySelectorAll('[data-module-page]').forEach((page) => {
+      const moduleName = normalizeName(page.getAttribute('data-module-page'));
+      const disabled = Boolean(moduleName) && !isEnabled(moduleName);
+      const existingNotice = page.querySelector(':scope > [data-module-disabled-notice]');
+
+      if (!disabled) {
+        existingNotice?.remove();
+        Array.from(page.children).forEach((child) => {
+          if (child.dataset[MODULE_PAGE_HIDDEN_FLAG] === '1') {
+            child.style.removeProperty('display');
+            child.removeAttribute('aria-hidden');
+            delete child.dataset[MODULE_PAGE_HIDDEN_FLAG];
+          }
+        });
+        return;
+      }
+
+      Array.from(page.children).forEach((child) => {
+        if (child === existingNotice || child.dataset[MODULE_PAGE_HIDDEN_FLAG] === '1') {
+          return;
+        }
+        child.style.setProperty('display', 'none', 'important');
+        child.setAttribute('aria-hidden', 'true');
+        child.dataset[MODULE_PAGE_HIDDEN_FLAG] = '1';
+      });
+      if (!existingNotice) {
+        page.prepend(buildModuleDisabledNotice(moduleName));
+      }
+    });
+  };
 
   const applySynchronousModuleOverrides = () => {
+    const lastKnownModules = readLastKnownModules();
     const preloadOverrides = {
+      ...lastKnownModules,
       ...parseModuleOverrides(window.SITE_MODULE_OVERRIDES || {}),
       ...parseStoredModules(),
       ...parseModulesFromQuery(),
     };
+
+    // Until the server answers, go by what it said last time, so a returning
+    // visitor does not see a switched-off page flash up first.
+    activeModules = { ...DEFAULT_MODULES, ...lastKnownModules };
+    applyModulePageState();
 
     document.querySelectorAll('[data-module]').forEach((element) => {
       const requiredModules = String(element.getAttribute('data-module') || '')
@@ -199,6 +303,7 @@
     });
 
     applyModuleLinkVisibility();
+    applyModulePageState();
   };
 
   const renderSuperAdminTogglePanel = () => {
@@ -265,14 +370,14 @@
         headers: { accept: 'application/json' },
       });
       if (!response.ok) {
-        return {};
+        return { modules: readLastKnownModules() };
       }
       const payload = await response.json();
-      return {
-        modules: parseModuleOverrides(payload?.modules),
-      };
+      const modules = parseModuleOverrides(payload?.modules);
+      storeLastKnownModules(modules);
+      return { modules };
     } catch {
-      return { modules: {} };
+      return { modules: readLastKnownModules() };
     }
   };
 

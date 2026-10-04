@@ -23,12 +23,14 @@
     <meta property="og:title" content="Membership Dashboard | Gematria.Today" />
     <meta property="og:description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
     <meta property="og:url" content="https://gematria.today/member.html" />
-    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Membership Dashboard | Gematria.Today" />
     <meta name="twitter:description" content="Create a free Gematria.Today account, save gematria searches, and upgrade to premium research when you need deeper limits." />
-    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
     <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
@@ -36,7 +38,6 @@
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
-    <script defer src="/site-modules.js"></script>
     <script defer src="/register-form.js"></script>
     <script defer src="/member-oauth.js"></script>
     <script type="application/ld+json">
@@ -189,7 +190,7 @@
                   <th scope="row">Price</th>
                   <td class="comparison-col comparison-col--visitor"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
                   <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
-                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium"><span>$19 intro / year</span><small>regularly $29</small></span></td>
+                  <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium"><span>$19 / year</span><small>renews at $19 / year</small></span></td>
                 </tr>
               </tbody>
             </table>
@@ -411,7 +412,7 @@
                 <h3 class="h5 mb-1">Earn your Beginner Path Graduate badge</h3>
                 <p id="learningPathAspireProgress" class="mb-2 small text-muted">Four short levels. Free for all members. The badge lands on your dashboard and forum profile when you finish.</p>
                 <div class="d-flex flex-wrap gap-2">
-                  <a id="learningPathAspireCta" class="btn btn-warning btn-sm fw-bold" href="/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+                  <a id="learningPathAspireCta" class="btn btn-warning btn-sm fw-bold" href="/gematria-basics.html" aria-label="This is the way: start the free beginner path">This is the way →</a>
                   <a class="btn btn-link btn-sm p-0 ms-2 fw-semibold" href="/gematria-guide.html">See the path overview →</a>
                 </div>
               </div>
@@ -494,7 +495,7 @@
                       <tr>
                         <th scope="row">Price</th>
                         <td class="comparison-col comparison-col--member"><span class="comparison-pill comparison-pill--neutral">$0</span></td>
-                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium"><span>$19 intro / year</span><small>regularly $29</small></span></td>
+                        <td class="comparison-col comparison-col--premium"><span class="comparison-pill comparison-pill--premium"><span>$19 / year</span><small>renews at $19 / year</small></span></td>
                       </tr>
                     </tbody>
                   </table>
@@ -503,21 +504,21 @@
               <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
                 <div>
                   <h4 class="h5 mb-2">Pay with Stripe</h4>
-                  <p class="text-muted mb-2">Upgrade to a one-year premium membership for <strong>$29 per year</strong>, with a <strong>limited-time introductory price of $19</strong>. Lifetime memberships are not offered yet.</p>
+                  <p class="text-muted mb-2">Upgrade to a yearly premium membership for <strong>$19 per year</strong>, renewing at <strong>$19 per year</strong> until you cancel. Lifetime memberships are not offered yet.</p>
                   <ul class="small text-muted mb-0 ps-3">
-                    <li>Annual subscription — billed once today at the introductory rate.</li>
-                    <li>Auto-renews each year at the then-current price ($29/year as of today) unless you cancel.</li>
+                    <li>Annual subscription — billed $19 today for one year of premium access.</li>
+                    <li>Auto-renews each year at $19/year unless you cancel.</li>
                     <li>Applicable sales tax is calculated and added at checkout based on your billing address.</li>
                     <li>Cancel anytime from <strong>Manage subscription</strong> on this dashboard; access continues through the paid period.</li>
                   </ul>
                 </div>
-                <div class="membership-price-badge"><span class="text-decoration-line-through opacity-75 me-2">$29</span>$19 / year intro</div>
+                <div class="membership-price-badge">$19 / year</div>
               </div>
               <form id="paymentForm" class="membership-payment-form row g-3 align-items-end">
                 <div class="col-md-7">
                   <label class="form-label" for="paymentPlan">Membership plan <span class="text-muted small">(USD)</span></label>
                   <select id="paymentPlan" class="form-select" disabled>
-                    <option value="yearly" selected>One year membership — US$19 introductory price (regularly US$29/year)</option>
+                    <option value="yearly" selected>Yearly membership — US$19/year, renews at US$19/year</option>
                   </select>
                   <div class="form-text">All prices are billed in US dollars and exclude sales tax, which is calculated at checkout based on your billing address. Your card issuer may convert and apply a foreign-transaction fee outside the US.</div>
                 </div>
@@ -667,6 +668,7 @@
             <p class="section-kicker mb-2">Blog Updates</p>
             <h3 class="h4 mb-2">Subscribe with your membership email</h3>
             <p class="text-muted mb-3">Get notified when new blog posts are published.</p>
+            <p id="blogSubscriptionPendingNotice" class="alert alert-info small mb-3 d-none" role="status">You asked for blog updates when you signed up. Click <strong>Subscribe to blog updates</strong> to finish.</p>
             <form id="blogSubscriptionForm" class="row g-3">
               <div class="col-12">
                 <label class="form-label" for="blogSubscriptionEmail">Membership email</label>
@@ -703,6 +705,9 @@
                   <div id="historyList" class="admin-list"></div>
                   <div id="historyListToggleWrap" class="mt-3 d-none">
                     <button id="historyListToggleButton" class="btn btn-outline-primary btn-sm" type="button">View all saved calculations</button>
+                  </div>
+                  <div id="historyLoadMoreWrap" class="mt-3 d-none">
+                    <button id="historyLoadMoreButton" class="btn btn-outline-secondary btn-sm" type="button">Load older saved calculations</button>
                   </div>
                 </div>
               </section>

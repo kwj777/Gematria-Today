@@ -3,7 +3,9 @@ import { isReservedStaffUsername } from './_admin.mjs';
 import { cookieSecureDirective } from './_auth.mjs';
 import { fetchWithTimeout } from './_security.mjs';
 import {
+  LEARNING_PATH_LEVEL_0_SOURCE,
   MEMBER_USERNAME_PATTERN,
+  buildInitialMemberPreferences,
   ensureMemberProfile,
   ensureMemberSchema,
   formatMemberUser,
@@ -169,17 +171,29 @@ export function sanitizeReturnPath(value) {
   } catch {
     return OAUTH_RETURN_PATH;
   }
-  if (resolved.origin !== RETURN_PATH_ORIGIN) {
+  // '/.//evil.example' resolves on this origin but to the path
+  // '//evil.example', which a Location header sends off-site.
+  if (resolved.origin !== RETURN_PATH_ORIGIN || /^[/\\]{2}/.test(resolved.pathname)) {
     return OAUTH_RETURN_PATH;
   }
   return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+}
+
+// Signup sources that seed something on a new account, the same ones
+// registerMember honours. Anything else is dropped rather than carried through
+// the provider round trip, so the signed state never echoes caller-chosen text.
+const OAUTH_SIGNUP_SOURCES = new Set([LEARNING_PATH_LEVEL_0_SOURCE]);
+
+export function sanitizeSignupSource(value) {
+  const normalized = String(value || '').trim();
+  return OAUTH_SIGNUP_SOURCES.has(normalized) ? normalized : '';
 }
 
 // Separator between the state and the PKCE verifier inside the cookie. Both
 // halves are base64url, so this byte can never occur inside either.
 const OAUTH_COOKIE_SEPARATOR = '~';
 
-export function createOAuthState({ provider, returnTo = OAUTH_RETURN_PATH } = {}) {
+export function createOAuthState({ provider, returnTo = OAUTH_RETURN_PATH, signupSource = '' } = {}) {
   const nonce = crypto.randomBytes(16).toString('hex');
   const payload = {
     p: String(provider),
@@ -187,6 +201,13 @@ export function createOAuthState({ provider, returnTo = OAUTH_RETURN_PATH } = {}
     r: sanitizeReturnPath(returnTo),
     t: Date.now(),
   };
+  // The password form on the learning-path page sends signupSource with the
+  // registration. A Google signup from the same page leaves the site and comes
+  // back through the callback, so the state is the only thing that can carry it.
+  const source = sanitizeSignupSource(signupSource);
+  if (source) {
+    payload.s = source;
+  }
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
   const state = `${encodedPayload}.${signStatePayload(encodedPayload)}`;
 
@@ -259,7 +280,13 @@ export function createOAuthStateCookie(cookieValue) {
   // SameSite=Lax, not Strict: the callback arrives as a top-level GET navigation
   // from accounts.google.com, and Strict would withhold the cookie on exactly
   // that request, breaking every sign-in.
-  return `${OAUTH_STATE_COOKIE}=${encodeURIComponent(cookieValue)}; Path=/; HttpOnly${cookieSecureDirective()}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+  //
+  // Max-Age, not only Expires. Expires is a date on OUR clock that the browser
+  // compares with ITS clock, so a device running more than ten minutes fast
+  // drops the cookie on arrival and every sign-in ends in invalid_state.
+  // Max-Age counts from receipt and wins wherever both are understood; the
+  // signed timestamp in the state still enforces the TTL on the server.
+  return `${OAUTH_STATE_COOKIE}=${encodeURIComponent(cookieValue)}; Path=/; HttpOnly${cookieSecureDirective()}; SameSite=Lax; Max-Age=${Math.floor(OAUTH_STATE_TTL_MS / 1000)}; Expires=${expiresAt.toUTCString()}`;
 }
 
 export function clearOAuthStateCookie() {
@@ -604,11 +631,40 @@ async function markEmailVerifiedAndActivate(sql, userId) {
   `;
 }
 
+// A linked identity vouches for an account only while its provider asserts the
+// account's own address as verified. One that does not -- created from an
+// unverified provider email, or since moved to some other address -- proves
+// nothing about who owns the account. Account recovery calls this: the member
+// just proved the address, and anything that cannot do the same has to go, or
+// whoever attached it signs straight back in through the provider. A genuine
+// identity -- verified, at this address -- survives, and one dropped here can
+// link again by signing in while its provider vouches for this address.
+export async function revokeUnprovenOAuthIdentities(sql, userId) {
+  await ensureOAuthSchema(sql);
+  await sql`
+    DELETE FROM member_oauth_identities AS identities
+    USING users
+    WHERE identities.user_id = ${userId}
+      AND users.id = identities.user_id
+      AND (
+        identities.email_verified = FALSE
+        OR identities.email IS NULL
+        OR LOWER(identities.email) IS DISTINCT FROM LOWER(users.email)
+      )
+  `;
+}
+
 /**
  * Resolves a provider profile to a membership account, creating or linking one
  * as needed. Returns { member, profile, created, linked, requiresEmailVerification }.
+ * signupSource seeds the initial preferences of a newly created account, the
+ * same way registerMember does for a password signup.
  */
-export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
+export async function findOrCreateMemberFromOAuth(
+  sql,
+  oauthProfile,
+  { allowSignup = true, signupSource = '' } = {}
+) {
   await ensureOAuthSchema(sql);
 
   if (!oauthProfile?.providerUserId) {
@@ -631,7 +687,7 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
   // admin cookie -- so an unchecked role here is a password-free path to admin.
   // loadMemberRow cannot carry it; formatMemberUser has no role key.
   const existingIdentity = await sql`
-    SELECT identities.user_id, users.role, users.status, users.email_verified
+    SELECT identities.user_id, users.role, users.status, users.email_verified, users.email
     FROM member_oauth_identities AS identities
     JOIN users ON users.id = identities.user_id
     WHERE identities.provider = ${oauthProfile.provider}
@@ -651,7 +707,13 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
     if (identity.status === 'suspended' || identity.status === 'deleted') {
       throw Object.assign(new Error(`This membership account is ${identity.status}`), { statusCode: 403, code: 'account_not_active' });
     }
-    if (oauthProfile.emailVerified) {
+    // The identity was found by provider subject alone, and the provider's
+    // email can change under the same subject. Its email_verified is a claim
+    // about whatever address it reports now, so it may only verify this
+    // account when that address IS the account's. Otherwise a provider account
+    // that created a pending row for someone else's address, then moved to an
+    // address its holder really owns, activated the row it never proved.
+    if (oauthProfile.emailVerified && normalizeEmail(identity.email) === oauthProfile.email) {
       await markEmailVerifiedAndActivate(sql, userId);
     }
     await upsertOAuthIdentity(sql, userId, oauthProfile);
@@ -660,7 +722,8 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
       throw Object.assign(new Error('That membership account no longer exists'), { statusCode: 404, code: 'member_missing' });
     }
     const memberProfile = await ensureMemberProfile(sql, userId, {});
-    // Still pending means the provider has never asserted this address. Sending
+    // Still pending means the provider has never asserted this address (the
+    // link goes to the account's own address, not the provider's). Sending
     // them a fresh verification link is the only way out; the old code threw
     // account_not_active, which is a dead end with no resend affordance on the
     // page and no way for the member to guess what to do next.
@@ -709,6 +772,7 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
     // flips it to active, which quietly arms that password against an account
     // the victim now believes is theirs. So when the local row was never
     // verified, retire the credential it was created with before adopting it.
+    let usernameReplaced = false;
     if (!existing.email_verified) {
       await sql`
         UPDATE users
@@ -718,6 +782,41 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
           AND email_verified = FALSE
       `;
       await sql`DELETE FROM sessions WHERE user_id = ${existing.id}`;
+
+      // The password is not the only thing the anonymous registrant chose. The
+      // username is the public slug on /b/<username>, forum posts and badge
+      // shares, with no rename endpoint, so adopting the row as-is published
+      // the owner under whatever handle and display name the registrant picked
+      // -- and told the registrant their login name. A row nobody ever signed
+      // in to is named the way a fresh signup would be. Only that row, though:
+      // an active one predates email verification and has been used under its
+      // name, and a paid or reset-proven one (the same exemption the unverified
+      // prune makes) was used by whoever owns the address.
+      if (existing.status === 'pending') {
+        const username = await allocateUsername(sql, oauthProfile);
+        const displayName = oauthProfile.displayName || username;
+        const renamed = await sql`
+          UPDATE users
+          SET username = ${username},
+              display_name = ${displayName},
+              updated_at = NOW()
+          WHERE id = ${existing.id}
+            AND status = 'pending'
+            AND email_verified = FALSE
+            AND membership_level = 'free'
+            AND stripe_customer_id IS NULL
+            AND stripe_subscription_id IS NULL
+            AND NOT EXISTS (
+              SELECT 1 FROM account_recovery_requests ar
+              WHERE ar.user_id = users.id
+                AND ar.role = 'member'
+                AND ar.recovery_type = 'forgot-password'
+                AND ar.consumed_at IS NOT NULL
+            )
+          RETURNING id
+        `;
+        usernameReplaced = renamed.length > 0;
+      }
     }
 
     await markEmailVerifiedAndActivate(sql, existing.id);
@@ -733,7 +832,17 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
       // Surfaced so the page can tell a member whose password was retired why
       // it stopped working, instead of leaving them to discover it later.
       passwordRetired: !existing.email_verified,
+      usernameReplaced,
     };
+  }
+
+  // Signing in and linking stay open for existing members; only creating a
+  // new membership follows the membership switch.
+  if (!allowSignup) {
+    throw Object.assign(new Error('Membership sign-ups are currently closed.'), {
+      statusCode: 403,
+      code: 'signup_closed',
+    });
   }
 
   const username = await allocateUsername(sql, oauthProfile);
@@ -760,7 +869,9 @@ export async function findOrCreateMemberFromOAuth(sql, oauthProfile) {
   `;
 
   await upsertOAuthIdentity(sql, inserted[0].id, oauthProfile);
-  const memberProfile = await ensureMemberProfile(sql, inserted[0].id, {});
+  const memberProfile = await ensureMemberProfile(sql, inserted[0].id, {
+    preferences: buildInitialMemberPreferences({ signupSource: sanitizeSignupSource(signupSource) }),
+  });
   const member = await loadMemberRow(sql, inserted[0].id);
   return {
     member,

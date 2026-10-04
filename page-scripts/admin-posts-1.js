@@ -37,10 +37,15 @@
         .replaceAll("'", '&apos;');
 
       function applyInlineMarkdown(value = '') {
+        // Quotes are escaped too: a link URL is written into a double-quoted
+        // href, and member proposals pass through here (see
+        // loadProposalFromQueryParam), so `[x](https://a"onclick="...)` must
+        // not be able to close the attribute.
         return String(value)
           .replaceAll('&', '&amp;')
           .replaceAll('<', '&lt;')
           .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
           .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*(.+?)\*/g, '<em>$1</em>')
@@ -646,7 +651,12 @@
         document.getElementById('createPostTitle').value = proposal.title || '';
         document.getElementById('createPostTag').value = proposal.suggestedTags || '';
         document.getElementById('createPostSummary').value = proposal.summary || '';
-        setEditorHtml('createPostBody', proposal.body || '');
+        // A proposal body is whatever a member typed into a plain textarea, so it
+        // is text (optionally light Markdown), never markup. Loading it with
+        // innerHTML let a proposal plant <meta http-equiv="refresh">, <style> or
+        // <base> in the admin console, and from there into the published post.
+        // markdownToHtml escapes everything and only emits its own tags.
+        setEditorHtml('createPostBody', markdownToHtml(proposal.body || ''));
         const details = document.getElementById('createPostDetails');
         details?.setAttribute('open', 'open');
         renderCreatePostPreview();

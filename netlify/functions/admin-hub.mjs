@@ -13,6 +13,9 @@
  *   { action: 'save-sites', sites: [ { id, name, url, sharedSecret } ] }
  *     → saves the site registry to admin_settings
  *
+ *   { action: 'remove-site', siteId: '<id>' }
+ *     → removes one site from the registry, keeping the others' secrets
+ *
  * Hub sites are stored in admin_settings under the key 'hub_sites' as a JSON
  * array of { id, name, url, sharedSecret }.  Secrets are never returned to the
  * client — only id, name, and url are exposed.
@@ -279,6 +282,20 @@ export function validateSites(raw, existingSites = []) {
   });
 }
 
+/**
+ * Drop one site from the stored registry by id. Removal goes through its own
+ * action rather than 'save-sites': the browser never holds the other sites'
+ * secrets, so resubmitting the remaining list failed validation whenever any
+ * other site was registered.
+ */
+export function removeSiteById(sites, siteId) {
+  const id = String(siteId || '').trim();
+  if (!id) throw Object.assign(new Error('siteId is required'), { statusCode: 400 });
+  const nextSites = sites.filter((site) => String(site?.id || '').trim() !== id);
+  if (nextSites.length === sites.length) throw Object.assign(new Error('Site not found'), { statusCode: 404 });
+  return nextSites;
+}
+
 // ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
@@ -402,6 +419,15 @@ async function handlePost(sql, user, event) {
     });
   }
 
+  if (action === 'remove-site') {
+    const sites = removeSiteById(await getHubSites(sql), body.siteId);
+    await upsertSetting(sql, 'hub_sites', JSON.stringify(sites), user.id);
+    return jsonResponse(200, {
+      saved: true,
+      sites: sites.map(({ id, name, url, netlifySiteId }) => ({ id, name, url, netlifySiteId: netlifySiteId || '' })),
+    });
+  }
+
   return jsonResponse(400, { error: `Unknown action: ${action}` });
 }
 
@@ -423,7 +449,9 @@ export async function handler(event) {
       return jsonResponse(403, { error: 'Hub management requires super admin access' });
     }
 
-    return routeByHttpMethod(event, {
+    // Awaited so a rejection from a route handler (validateSites' 400, a DB
+    // error) is caught below and returned as JSON instead of escaping.
+    return await routeByHttpMethod(event, {
       GET: () => handleGet(sql, user, event),
       POST: () => handlePost(sql, user, event),
     });

@@ -26,12 +26,14 @@
     <meta property="og:title" content="Gematria Definitions: Glossary of Terms for New Users" />
     <meta property="og:description" content="A beginner-friendly glossary explaining the gematria vocabulary used across this site." />
     <meta property="og:url" content="https://gematria.today/definitions.html" />
-    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Gematria Definitions: Glossary of Terms for New Users" />
     <meta name="twitter:description" content="A beginner-friendly glossary explaining the gematria vocabulary used across this site." />
-    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
     <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
@@ -107,15 +109,33 @@
         text-decoration: none;
         line-height: inherit;
       }
+      /* Same colours as glossary-popup.js, which skips this page. #0d6efd was
+         3.76:1 on the dark-theme card. */
       .defn-term:hover,
       .defn-term:focus-visible {
         outline: none;
         border-bottom-style: solid;
-        color: #0d6efd;
+        color: #0a58ca;
       }
+      :root[data-bs-theme="dark"] .defn-term:hover,
+      :root[data-bs-theme="dark"] .defn-term:focus-visible {
+        color: #93c5fd;
+      }
+      /* The page script inserts the panel right after its term (so the
+         keyboard reaches its link), marks it --anchored, places it in
+         viewport coordinates and, where the Popover API exists, draws it in
+         the top layer; inset/margin/border/overflow undo the UA's [popover]
+         defaults. A visitor's service worker can still hand this page an
+         older copy of the script, which appends a bare .defn-popup to <body>
+         and places it in page coordinates, so that one stays absolute. */
       .defn-popup {
         position: absolute;
+        display: block;
         z-index: 1080;
+        inset: auto;
+        margin: 0;
+        border: 0;
+        overflow: visible;
         max-width: 320px;
         background: #0f172a;
         color: #f8fafc;
@@ -124,10 +144,13 @@
         box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35);
         font-size: 0.875rem;
         line-height: 1.45;
+        text-align: left;
+        font-weight: 400;
       }
+      .defn-popup--anchored { position: fixed; }
       .defn-popup[hidden] { display: none; }
-      .defn-popup__title { font-weight: 600; margin-bottom: 0.25rem; }
-      .defn-popup__body { margin: 0 0 0.5rem; color: #e2e8f0; }
+      .defn-popup__title { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+      .defn-popup__body { display: block; margin: 0 0 0.5rem; color: #e2e8f0; }
       .defn-popup__link { color: #93c5fd; font-size: 0.8125rem; text-decoration: underline; }
       .defn-popup__link:hover,
       .defn-popup__link:focus-visible { color: #bfdbfe; }
@@ -301,10 +324,21 @@
       @media (min-width: 768px) {
         .defn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
+      /* One row for the term, its badge and the copy-link, then the
+         definition on a row of its own. The badge and link sit in a <dd> of
+         their own: a <dl> group may hold only <dt>s then <dd>s, so the old
+         wrapper <div> around the <dt> hid every term/definition pair from
+         assistive technology (WCAG 1.3.1). That <dd> comes after the
+         definition in the markup, and `order` draws it beside the term:
+         glossary-popup.js and this page's script take a card's first <dd> as
+         its definition, and a visitor's service worker can keep running an
+         older copy of either against this markup. */
       .defn-card {
         display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        align-items: center;
+        gap: 0.4rem 0.5rem;
         padding: 0.95rem 1.05rem 1rem;
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -319,12 +353,15 @@
         box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.14);
       }
       .defn-card[hidden] { display: none !important; }
-      .defn-card__head {
+      .defn-card dt { flex: 0 1 auto; order: 0; }
+      .defn-card dd.defn-card__meta {
         display: flex;
+        flex: 1 1 auto;
+        order: 1;
         align-items: center;
-        flex-wrap: wrap;
         gap: 0.5rem;
       }
+      .defn-card dd:not(.defn-card__meta) { flex: 1 1 100%; order: 2; }
       .defn-card dt {
         margin: 0;
         font-weight: 600;
@@ -571,7 +608,7 @@
           <h1 class="fw-bold">Gematria definitions for new users</h1>
           <address class="small text-muted mb-2 fst-normal">By the <a href="/disclaimer.html">Gematria.Today Editorial Team</a> · Updated <time datetime="2026-05-24">May 24, 2026</time></address>
           <p class="lead mb-3">A plain-language glossary of the vocabulary used across Gematria.Today. Search by term, jump to a letter, or skim by topic.</p>
-          <button id="printGlossaryButton" type="button" class="btn btn-outline-light btn-sm d-print-none" aria-label="Print or save this glossary as PDF">
+          <button id="printGlossaryButton" type="button" class="btn btn-outline-light btn-sm d-print-none" aria-label="Print or save as PDF (the whole glossary)">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true" focusable="false" style="vertical-align:-3px;margin-right:0.35rem;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             Print or save as PDF
           </button>
@@ -625,48 +662,33 @@
               </div>
               <dl class="defn-grid">
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-gematria">Gematria</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-gematria" aria-label="Copy link to Gematria">#</a>
-                  </div>
+                  <dt id="defn-gematria">Gematria</dt>
                   <dd>A practice that assigns a number to every letter, so any word or phrase can be added up to a single value. It is most often discussed alongside Hebrew scripture, but the same idea works for English, Greek, and other alphabets.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-gematria" aria-label="Copy link to Gematria">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-letter-value">Letter value</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-letter-value" aria-label="Copy link to Letter value">#</a>
-                  </div>
+                  <dt id="defn-letter-value">Letter value</dt>
                   <dd>The number assigned to one letter under a particular cipher. This site uses the English (Base-6) cipher: A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12, and so on to Z&nbsp;=&nbsp;156.<br><span class="defn-example">A = 6 · B = 12 · … · Z = 156</span></dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-letter-value" aria-label="Copy link to Letter value">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-word-value-gematria-value">Word value (gematria value)</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-word-value-gematria-value" aria-label="Copy link to Word value">#</a>
-                  </div>
+                  <dt id="defn-word-value-gematria-value">Word value (gematria value)</dt>
                   <dd>The total you get by adding up the letter values for every letter in a word or phrase. Two different phrases that share the same total are sometimes called a match.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-word-value-gematria-value" aria-label="Copy link to Word value">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-phrase">Phrase</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-phrase" aria-label="Copy link to Phrase">#</a>
-                  </div>
+                  <dt id="defn-phrase">Phrase</dt>
                   <dd>Any string of one or more words entered into the calculator. Spelling, spacing, and punctuation must be kept consistent so totals stay repeatable.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-phrase" aria-label="Copy link to Phrase">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-cipher">Cipher</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-cipher" aria-label="Copy link to Cipher">#</a>
-                  </div>
+                  <dt id="defn-cipher">Cipher</dt>
                   <dd>A specific rule set for converting letters into numbers. Gematria.Today's default is English (Base-6), where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 … Z&nbsp;=&nbsp;156 — it is what the main calculator, word pages and search use. The other ciphers listed below can be computed side by side in the <a href="/multi-cipher-calculator.html">multi-cipher calculator</a>, and produce different totals for the same word.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-cipher" aria-label="Copy link to Cipher">#</a></dd>
                 </div>
               </dl>
             </section>
@@ -679,66 +701,45 @@
               <p class="small text-muted mb-3">Gematria.Today's default cipher is <strong>English Gematria (multiples of six)</strong>, where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 … Z&nbsp;=&nbsp;156 — every total on the calculator, the word pages and search uses it. The other ciphers defined below can be calculated side by side in the <a href="/multi-cipher-calculator.html">multi-cipher calculator</a>, which covers all seven.</p>
               <dl class="defn-grid">
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-english-ordinal-simple-english-gematria">English Ordinal (Simple English Gematria)</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-english-ordinal-simple-english-gematria" aria-label="Copy link to English Ordinal">#</a>
-                  </div>
+                  <dt id="defn-english-ordinal-simple-english-gematria">English Ordinal (Simple English Gematria)</dt>
                   <dd>The most common starting point: A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2 ... Z&nbsp;=&nbsp;26. Letters count in their natural alphabet order.<br><span class="defn-example">A=1 · B=2 · C=3 · … · Z=26</span></dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-english-ordinal-simple-english-gematria" aria-label="Copy link to English Ordinal">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-reverse-ordinal">Reverse Ordinal</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-reverse-ordinal" aria-label="Copy link to Reverse Ordinal">#</a>
-                  </div>
+                  <dt id="defn-reverse-ordinal">Reverse Ordinal</dt>
                   <dd>The same idea, counted backwards: A&nbsp;=&nbsp;26, B&nbsp;=&nbsp;25 ... Z&nbsp;=&nbsp;1.<br><span class="defn-example">A=26 · B=25 · … · Z=1</span></dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-reverse-ordinal" aria-label="Copy link to Reverse Ordinal">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-reduction-pythagorean">Reduction (Pythagorean)</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-reduction-pythagorean" aria-label="Copy link to Reduction">#</a>
-                  </div>
+                  <dt id="defn-reduction-pythagorean">Reduction (Pythagorean)</dt>
                   <dd>Letters are reduced to single digits so the alphabet only uses 1 through 9 (A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2 ... I&nbsp;=&nbsp;9, then J&nbsp;=&nbsp;1 again). Often called Pythagorean gematria.<br><span class="defn-example">A=1 · I=9 · J=1 · R=9 · S=1</span></dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-reduction-pythagorean" aria-label="Copy link to Reduction">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-reverse-reduction">Reverse Reduction</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-reverse-reduction" aria-label="Copy link to Reverse Reduction">#</a>
-                  </div>
+                  <dt id="defn-reverse-reduction">Reverse Reduction</dt>
                   <dd>Reduction applied to the reversed alphabet, so A&nbsp;=&nbsp;8 (because Z would be 1 in reverse, Y would be 2, and so on, reduced to single digits).</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-reverse-reduction" aria-label="Copy link to Reverse Reduction">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-english-gematria-multiples-of-six">English Gematria (multiples of six)</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-english-gematria-multiples-of-six" aria-label="Copy link to English Gematria">#</a>
-                  </div>
+                  <dt id="defn-english-gematria-multiples-of-six">English Gematria (multiples of six)</dt>
                   <dd>A variant where A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12 ... Z&nbsp;=&nbsp;156. It is the English Ordinal value multiplied by six.<br><span class="defn-example">A=6 · B=12 · … · Z=156</span></dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-english-gematria-multiples-of-six" aria-label="Copy link to English Gematria">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="advanced">
-                  <div class="defn-card__head">
-                    <dt id="defn-hebrew-gematria">Hebrew Gematria</dt>
-                    <span class="defn-badge defn-badge--advanced">Advanced</span>
-                    <a class="defn-anchor" href="#defn-hebrew-gematria" aria-label="Copy link to Hebrew Gematria">#</a>
-                  </div>
+                  <dt id="defn-hebrew-gematria">Hebrew Gematria</dt>
                   <dd>The original Hebrew system, where each letter of the Hebrew alphabet has a traditional value (Aleph&nbsp;=&nbsp;1, Bet&nbsp;=&nbsp;2, Yod&nbsp;=&nbsp;10, and so on).</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--advanced">Advanced</span><a class="defn-anchor" href="#defn-hebrew-gematria" aria-label="Copy link to Hebrew Gematria">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="advanced">
-                  <div class="defn-card__head">
-                    <dt id="defn-isopsephy-greek-gematria">Isopsephy (Greek gematria)</dt>
-                    <span class="defn-badge defn-badge--advanced">Advanced</span>
-                    <a class="defn-anchor" href="#defn-isopsephy-greek-gematria" aria-label="Copy link to Isopsephy">#</a>
-                  </div>
+                  <dt id="defn-isopsephy-greek-gematria">Isopsephy (Greek gematria)</dt>
                   <dd>The Greek equivalent of gematria, using values assigned to Greek letters. It is the system referenced by the number 666 in Revelation 13:18.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--advanced">Advanced</span><a class="defn-anchor" href="#defn-isopsephy-greek-gematria" aria-label="Copy link to Isopsephy">#</a></dd>
                 </div>
               </dl>
             </section>
@@ -750,57 +751,39 @@
               </div>
               <dl class="defn-grid">
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-calculator">Calculator</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-calculator" aria-label="Copy link to Calculator">#</a>
-                  </div>
+                  <dt id="defn-calculator">Calculator</dt>
                   <dd>The input tool on the <a href="/calculator.html">word/phrase</a> and <a href="/name-calculator.html">name</a> pages where you type text and receive a gematria value back.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-calculator" aria-label="Copy link to Calculator">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-query">Query</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-query" aria-label="Copy link to Query">#</a>
-                  </div>
+                  <dt id="defn-query">Query</dt>
                   <dd>The exact text you entered into the calculator. The same query should always return the same value under the same cipher.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-query" aria-label="Copy link to Query">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-lookup">Lookup</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-lookup" aria-label="Copy link to Lookup">#</a>
-                  </div>
+                  <dt id="defn-lookup">Lookup</dt>
                   <dd>A single calculator run for one query. Looking up several related terms and comparing them is more useful than relying on one lookup alone.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-lookup" aria-label="Copy link to Lookup">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-baseline">Baseline</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-baseline" aria-label="Copy link to Baseline">#</a>
-                  </div>
+                  <dt id="defn-baseline">Baseline</dt>
                   <dd>The first value you record for a term. You compare later results against this baseline to check consistency and to anchor your interpretations.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-baseline" aria-label="Copy link to Baseline">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-digit-sum-root-reduction">Digit sum / Root reduction</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-digit-sum-root-reduction" aria-label="Copy link to Digit sum">#</a>
-                  </div>
+                  <dt id="defn-digit-sum-root-reduction">Digit sum / Root reduction</dt>
                   <dd>Adding the digits of a number until you get a single digit. Some research methods compare these reduced "roots."<br><span class="defn-example">276 → 2+7+6 = 15 → 1+5 = 6</span></dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-digit-sum-root-reduction" aria-label="Copy link to Digit sum">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-database-match-list">Database match list</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-database-match-list" aria-label="Copy link to Database match list">#</a>
-                  </div>
+                  <dt id="defn-database-match-list">Database match list</dt>
                   <dd>After a lookup, the results page lists other words and phrases from our database that share the same value. Coverage is limited to words currently stored — your own custom phrases may not appear yet.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-database-match-list" aria-label="Copy link to Database match list">#</a></dd>
                 </div>
               </dl>
             </section>
@@ -812,57 +795,39 @@
               </div>
               <dl class="defn-grid">
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-match">Match</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-match" aria-label="Copy link to Match">#</a>
-                  </div>
+                  <dt id="defn-match">Match</dt>
                   <dd>Two or more words/phrases that produce the same gematria value under the same cipher. A single match by itself is not evidence — it becomes interesting only when several related terms line up.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-match" aria-label="Copy link to Match">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-cluster">Cluster</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-cluster" aria-label="Copy link to Cluster">#</a>
-                  </div>
+                  <dt id="defn-cluster">Cluster</dt>
                   <dd>A group of thematically related terms that all share the same value (or a small set of values). Clusters are stronger signals than isolated matches because they show repeating structure.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-cluster" aria-label="Copy link to Cluster">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-pattern-grouping">Pattern grouping</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-pattern-grouping" aria-label="Copy link to Pattern grouping">#</a>
-                  </div>
+                  <dt id="defn-pattern-grouping">Pattern grouping</dt>
                   <dd>The practice of sorting your matches into themed buckets so the cluster behavior is visible. See the <a href="/gematria-pattern-grouping.html">Level&nbsp;2 lesson</a>.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-pattern-grouping" aria-label="Copy link to Pattern grouping">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-non-match">Non-match</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-non-match" aria-label="Copy link to Non-match">#</a>
-                  </div>
+                  <dt id="defn-non-match">Non-match</dt>
                   <dd>A related term you expected to share a value but that did not. Including non-matches keeps interpretation honest and prevents cherry-picking.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-non-match" aria-label="Copy link to Non-match">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="advanced">
-                  <div class="defn-card__head">
-                    <dt id="defn-overfitting">Overfitting</dt>
-                    <span class="defn-badge defn-badge--advanced">Advanced</span>
-                    <a class="defn-anchor" href="#defn-overfitting" aria-label="Copy link to Overfitting">#</a>
-                  </div>
+                  <dt id="defn-overfitting">Overfitting</dt>
                   <dd>Choosing words after the fact so they fit a desired total. An overfit cluster looks convincing but only because the misses were hidden.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--advanced">Advanced</span><a class="defn-anchor" href="#defn-overfitting" aria-label="Copy link to Overfitting">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="advanced">
-                  <div class="defn-card__head">
-                    <dt id="defn-coincidence-floor">Coincidence floor</dt>
-                    <span class="defn-badge defn-badge--advanced">Advanced</span>
-                    <a class="defn-anchor" href="#defn-coincidence-floor" aria-label="Copy link to Coincidence floor">#</a>
-                  </div>
+                  <dt id="defn-coincidence-floor">Coincidence floor</dt>
                   <dd>The reminder that some matches will always occur by chance. The goal of clustering and non-matches is to rise above this floor — not to pretend it isn't there.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--advanced">Advanced</span><a class="defn-anchor" href="#defn-coincidence-floor" aria-label="Copy link to Coincidence floor">#</a></dd>
                 </div>
               </dl>
             </section>
@@ -874,57 +839,39 @@
               </div>
               <dl class="defn-grid">
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-cherry-picking">Cherry-picking</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-cherry-picking" aria-label="Copy link to Cherry-picking">#</a>
-                  </div>
+                  <dt id="defn-cherry-picking">Cherry-picking</dt>
                   <dd>Selecting only the terms that support a conclusion while ignoring those that don't. The site's checklist actively pushes against this.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-cherry-picking" aria-label="Copy link to Cherry-picking">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-cross-validation">Cross-validation</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-cross-validation" aria-label="Copy link to Cross-validation">#</a>
-                  </div>
+                  <dt id="defn-cross-validation">Cross-validation</dt>
                   <dd>Testing a pattern against new words or unrelated phrase sets to confirm it isn't an artifact of one chosen list.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-cross-validation" aria-label="Copy link to Cross-validation">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-sample-size">Sample size</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-sample-size" aria-label="Copy link to Sample size">#</a>
-                  </div>
+                  <dt id="defn-sample-size">Sample size</dt>
                   <dd>How many independently related terms you compared. Larger, more diverse samples make a cluster more credible.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-sample-size" aria-label="Copy link to Sample size">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="intermediate">
-                  <div class="defn-card__head">
-                    <dt id="defn-confidence-level">Confidence level</dt>
-                    <span class="defn-badge defn-badge--intermediate">Intermediate</span>
-                    <a class="defn-anchor" href="#defn-confidence-level" aria-label="Copy link to Confidence level">#</a>
-                  </div>
+                  <dt id="defn-confidence-level">Confidence level</dt>
                   <dd>A plain-language note (low / medium / high) about how strongly your data supports your interpretation. Always state this before publishing.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--intermediate">Intermediate</span><a class="defn-anchor" href="#defn-confidence-level" aria-label="Copy link to Confidence level">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="advanced">
-                  <div class="defn-card__head">
-                    <dt id="defn-editorial-policy">Editorial policy</dt>
-                    <span class="defn-badge defn-badge--advanced">Advanced</span>
-                    <a class="defn-anchor" href="#defn-editorial-policy" aria-label="Copy link to Editorial policy">#</a>
-                  </div>
+                  <dt id="defn-editorial-policy">Editorial policy</dt>
                   <dd>The standards Gematria.Today applies to interpretive content. See the <a href="/disclaimer.html">disclaimer page</a> for the full text.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--advanced">Advanced</span><a class="defn-anchor" href="#defn-editorial-policy" aria-label="Copy link to Editorial policy">#</a></dd>
                 </div>
 
                 <div class="defn-card" data-difficulty="beginner">
-                  <div class="defn-card__head">
-                    <dt id="defn-learning-path">Learning path</dt>
-                    <span class="defn-badge defn-badge--beginner">Beginner</span>
-                    <a class="defn-anchor" href="#defn-learning-path" aria-label="Copy link to Learning path">#</a>
-                  </div>
+                  <dt id="defn-learning-path">Learning path</dt>
                   <dd>The numbered lesson sequence (Levels 0&ndash;4) under the <a href="/gematria-guide.html">main guide</a>. Each level introduces a new layer of vocabulary used here.</dd>
+                  <dd class="defn-card__meta"><span class="defn-badge defn-badge--beginner">Beginner</span><a class="defn-anchor" href="#defn-learning-path" aria-label="Copy link to Learning path">#</a></dd>
                 </div>
               </dl>
             </section>
@@ -933,7 +880,7 @@
               <h2 class="h4 mb-3">Keep learning</h2>
               <p class="mb-3">Definitions are easier to remember once you've used them in the calculator. Start at Level&nbsp;1 if you're new, or jump to the FAQ for common follow-up questions.</p>
               <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-primary" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+                <a class="btn btn-primary" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="This is the way: start the free beginner path">This is the way →</a>
                 <a class="btn btn-outline-primary" href="/calculator.html">Open the calculator</a>
                 <a class="btn btn-outline-secondary" href="/faq.html">Read the FAQ</a>
               </div>

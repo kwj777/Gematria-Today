@@ -11,7 +11,7 @@
 // Console. Each chunk now touches PAGE_SIZE rows with LIMIT/OFFSET.
 import { getSqlClient } from './_auth.mjs';
 import { assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, withCachedJson } from './_security.mjs';
-import { isPublishableWord, MIN_SEARCHES_FOR_INDEX, MIN_SHARED_VALUE_WORDS } from './_words.mjs';
+import { isPublishableWord, MAX_STORED_WORD_LENGTH, MIN_SEARCHES_FOR_INDEX, MIN_SHARED_VALUE_WORDS, STORABLE_WORD_PATTERN } from './_words.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const PAGE_SIZE = 5000;
@@ -19,16 +19,19 @@ const PAGE_SIZE = 5000;
 const MAX_PAGES = 40;
 // Bump when the shape or filtering of cached payloads changes, so existing
 // entries are not served until their TTL lapses.
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 
 // isPublishableWord is JavaScript and cannot run inside the query, so the SQL
-// below pre-filters on the one rule that removes almost all of the junk: a real
-// word starts with a letter, which bare numbers ("276"), punctuation ("*"),
-// fragments ("-ol") and raw markup ("<er>annoy</er>") all fail. It is
-// deliberately *looser* than the JS rule, never tighter -- over-counting a
-// value group by a blocked word is harmless, under-counting would drop pages
-// the word-page route considers indexable and put the two out of step.
-const LOOKS_LIKE_A_WORD = '^[A-Za-z]';
+// below pre-filters on its shape rule -- the same pattern and length cap that
+// decide what the calculator may store -- which bare numbers ("276"),
+// punctuation ("*"), fragments ("-ol"), raw markup ("<er>annoy</er>") and
+// free-text phrases ("Buy cheap pills at rxshop dot com") all fail. The JS
+// rule also drops blocked words, so the SQL stays *looser* than it, never
+// tighter: over-counting a value group by a blocked word is harmless,
+// under-counting would drop pages the word-page route considers indexable and
+// put the two out of step. Counting rows the shape rule rejects would do the
+// opposite, and list value pages whose visible word list is too short to index.
+const LOOKS_LIKE_A_WORD = STORABLE_WORD_PATTERN;
 
 export function escapeXml(value = '') {
   return String(value)
@@ -98,7 +101,8 @@ export default async function onRequest(request) {
               SELECT word, search_count, gematria_value,
                      COUNT(*) OVER (PARTITION BY gematria_value) AS value_word_count
               FROM words
-              WHERE word ~ ${LOOKS_LIKE_A_WORD}
+              WHERE BTRIM(word) ~ ${LOOKS_LIKE_A_WORD}
+                AND char_length(BTRIM(word)) <= ${MAX_STORED_WORD_LENGTH}
             )
             SELECT COUNT(*)::int AS total FROM candidates
             WHERE search_count >= ${MIN_SEARCHES_FOR_INDEX}
@@ -124,7 +128,8 @@ export default async function onRequest(request) {
           // matching the /v/ branch of word-page.mjs.
           const rows = await sql`
             SELECT gematria_value FROM words
-            WHERE word ~ ${LOOKS_LIKE_A_WORD}
+            WHERE BTRIM(word) ~ ${LOOKS_LIKE_A_WORD}
+              AND char_length(BTRIM(word)) <= ${MAX_STORED_WORD_LENGTH}
             GROUP BY gematria_value
             HAVING COUNT(*) >= ${MIN_SHARED_VALUE_WORDS}
             ORDER BY gematria_value ASC LIMIT ${PAGE_SIZE}
@@ -137,7 +142,8 @@ export default async function onRequest(request) {
             SELECT word, search_count, gematria_value,
                    COUNT(*) OVER (PARTITION BY gematria_value) AS value_word_count
             FROM words
-            WHERE word ~ ${LOOKS_LIKE_A_WORD}
+            WHERE BTRIM(word) ~ ${LOOKS_LIKE_A_WORD}
+              AND char_length(BTRIM(word)) <= ${MAX_STORED_WORD_LENGTH}
           )
           SELECT word FROM candidates
           WHERE search_count >= ${MIN_SEARCHES_FOR_INDEX}

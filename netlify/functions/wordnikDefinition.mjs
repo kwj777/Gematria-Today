@@ -1,17 +1,24 @@
 import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse as secureJsonResponse } from './_auth.mjs';
-import { applyRateLimit, assertEndpointEnabled, buildCacheKey, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
+import { applyRateLimit, assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit, withCachedJson } from './_security.mjs';
+import { extractKindFromEvent, isNameLookup } from './englishGematria.mjs';
 // netlify.toml's [[headers]] blocks never reach a function response, so the
 // noindex has to be set here. It is sent alongside the meta tag rather than
 // instead of it: the header covers the error branches, which render bare HTML
 // with no <head> for a meta tag to sit in.
 const NOINDEX_HTML_HEADERS = Object.freeze({ 'x-robots-tag': 'noindex, nofollow' });
 
+// The HTML branch renders Wordnik's text on the site's own origin, so it
+// carries the site's document headers -- CSP included -- like every other
+// server-rendered page. Its scripts live in /page-scripts/wordnik-definition-1.js
+// because that CSP allows no inline script.
 function toResponse(statusCode, payload, contentType = "application/json; charset=utf-8") {
   const isJson = contentType.startsWith("application/json");
   const body = isJson ? JSON.stringify(payload) : payload;
   return new Response(body, {
     status: statusCode,
-    headers: { 'content-type': contentType, ...(isJson ? {} : NOINDEX_HTML_HEADERS) },
+    headers: isJson
+      ? { 'content-type': contentType }
+      : documentSecurityHeaders({ 'content-type': contentType, ...NOINDEX_HTML_HEADERS }),
   });
 }
 
@@ -90,19 +97,56 @@ function stripHtmlTags(value) {
     .trim();
 }
 
-function sanitizeInlineHtml(value) {
-  return String(value ?? '')
-    .replace(/<a\s+([^>]*?)href=(['"])(.*?)\2([^>]*)>(.*?)<\/a>/gi, (_match, beforeHref, _quote, href, afterHref, textContent) => {
-      const hrefValue = escapeHtml(href);
-      const label = escapeHtml(stripHtmlTags(textContent));
-      const extraAttributes = `${beforeHref} ${afterHref}`;
-      const targetBlank = /target\s*=\s*(['"])_blank\1/i.test(extraAttributes);
-      const relValueMatch = extraAttributes.match(/rel\s*=\s*(['"])(.*?)\1/i);
-      const relValue = relValueMatch ? escapeHtml(relValueMatch[2]) : 'noopener noreferrer';
-      const targetAttribute = targetBlank ? ' target="_blank"' : '';
-      return `<a href="${hrefValue}"${targetAttribute} rel="${relValue}">${label}</a>`;
-    })
-    .replace(/<(?!\/?a\b)[^>]*>/gi, ' ')
+const NAMED_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+// Marks where a rebuilt link goes back into the escaped text. A private-use
+// character, removed from the input and never produced by decodeEntities, so
+// the definition text cannot forge one.
+const LINK_SLOT = '\uE000';
+
+// Wordnik's text is HTML-ish. Its entities are decoded before the text is
+// escaped again, so "&amp;" does not render as "&amp;amp;".
+function decodeEntities(value) {
+  return String(value ?? '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
+    if (entity[0] !== '#') return NAMED_ENTITIES[entity.toLowerCase()] ?? match;
+    const code = /^#x/i.test(entity) ? Number.parseInt(entity.slice(2), 16) : Number.parseInt(entity.slice(1), 10);
+    return code > 0 && code <= 0x10ffff && code !== LINK_SLOT.codePointAt(0) ? String.fromCodePoint(code) : match;
+  });
+}
+
+// Only an absolute http(s) URL survives. javascript:, data: and anything
+// relative are dropped along with the link.
+export function safeDefinitionHref(attributes) {
+  const match = String(attributes ?? '').match(/\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'<>`]+))/i);
+  if (!match) return null;
+  try {
+    const url = new URL(decodeEntities(match[1] ?? match[2] ?? match[3]).trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+// Definition text comes from Wordnik, which aggregates third-party sources, and
+// is rendered as markup on this origin. Anchors used to be kept whole -- every
+// attribute, any href scheme -- and any other `<a ...>` passed the tag strip
+// untouched, so an onmouseover anchor or a javascript: link in a definition ran
+// script for every visitor to that word. Each anchor is now rebuilt from
+// scratch (an http(s) href, an optional target, a fixed rel), every other tag
+// is removed, and all remaining text is escaped, which also neutralizes a tag
+// left unclosed.
+export function sanitizeInlineHtml(value) {
+  const links = [];
+  const withPlaceholders = String(value ?? '')
+    .replaceAll(LINK_SLOT, '')
+    .replace(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi, (_match, attributes, textContent) => {
+      const label = escapeHtml(decodeEntities(stripHtmlTags(textContent)));
+      const href = safeDefinitionHref(attributes);
+      const targetAttribute = /\btarget\s*=\s*(['"]?)_blank\1/i.test(attributes) ? ' target="_blank"' : '';
+      links.push(href ? `<a href="${escapeHtml(href)}"${targetAttribute} rel="noopener noreferrer">${label}</a>` : label);
+      return `${LINK_SLOT}${links.length - 1}${LINK_SLOT}`;
+    });
+  return escapeHtml(decodeEntities(withPlaceholders.replace(/<[^>]*>/g, ' ')))
+    .replace(new RegExp(`${LINK_SLOT}(\\d+)${LINK_SLOT}`, 'g'), (_match, index) => links[Number(index)])
     .replace(/\s+/g, ' ')
     .replace(/>\s+</g, '><')
     .trim();
@@ -196,7 +240,7 @@ function createExamples(definition) {
   return `<div class="examples"><h3>Examples</h3><ul>${items}</ul></div>`;
 }
 
-function renderDefinitionPage(payload, { returnPath = '/' } = {}) {
+function renderDefinitionPage(payload, { returnPath = '/', isName = false } = {}) {
   const definitions = Array.isArray(payload.definitions) ? payload.definitions : [];
   const visibleDefinitions = definitions
     .map((definition) => ({
@@ -220,7 +264,7 @@ function renderDefinitionPage(payload, { returnPath = '/' } = {}) {
   const body = visibleDefinitions.length > 0
     ? definitionItems
     : '<p class="empty-state">No definitions were returned for this word.</p>';
-  const canonicalPath = `/definition?word=${encodeURIComponent(payload.word)}`;
+  const canonicalPath = `/definition?word=${encodeURIComponent(payload.word)}${isName ? '&kind=name' : ''}`;
 
   return `<!doctype html>
 <html lang="en">
@@ -245,11 +289,7 @@ function renderDefinitionPage(payload, { returnPath = '/' } = {}) {
       how a crawl walked into the words table in the first place.
     -->
     <meta name="robots" content="noindex,nofollow" />
-    <script>
-      if (window.location.pathname.startsWith('/.netlify/functions/wordnikDefinition')) {
-        window.history.replaceState({}, '', ${JSON.stringify(canonicalPath)});
-      }
-    </script>
+    <script defer src="/page-scripts/wordnik-definition-1.js"></script>
     <style>
       :root { color-scheme: light; }
       body {
@@ -372,7 +412,7 @@ function renderDefinitionPage(payload, { returnPath = '/' } = {}) {
       }
     </style>
   </head>
-  <body>
+  <body data-canonical-path="${escapeHtml(canonicalPath)}" data-return-path="${escapeHtml(returnPath)}">
     <main>
       <div class="top-controls">
         <button id="close-definition-button" class="close-button" type="button" aria-label="Close this definition page">✕ Close</button>
@@ -383,26 +423,11 @@ function renderDefinitionPage(payload, { returnPath = '/' } = {}) {
       </section>
       <section class="definitions">${body}</section>
     </main>
-    <script>
-      (() => {
-        const closeButton = document.getElementById('close-definition-button');
-        if (!closeButton) return;
-
-        closeButton.addEventListener('click', () => {
-          window.close();
-          setTimeout(() => {
-            if (!window.closed) {
-              window.location.assign(${JSON.stringify(returnPath)});
-            }
-          }, 100);
-        });
-      })();
-    </script>
   </body>
 </html>`;
 }
 
-async function fetchDefinition(sql, source, word) {
+async function fetchDefinition(sql, source, word, { isName = false } = {}) {
   const trimmedWord = String(word ?? '').trim();
 
   if (!trimmedWord) {
@@ -435,16 +460,35 @@ async function fetchDefinition(sql, source, word) {
     route: 'wordnikDefinition',
     action: 'lookup',
     outcome: 'origin_hit',
-    metadata: { word: trimmedWord.toLowerCase() },
+    metadata: isName ? { kind: 'name' } : { word: trimmedWord.toLowerCase() },
   });
 
   return payload;
+}
+
+// The name calculator asks whether each name it shows has a definition -- for
+// every visitor, signed in or not -- and its "(definition)" link opens this
+// page for the name. It sends kind=name, as it does to englishGematria: a name
+// is a person, so it is fetched fresh instead of being kept in the shared
+// response cache (the payload carries the name for its TTL and the cleanup
+// grace period after it), and the audit entry records that a name was looked
+// up, not which one.
+async function lookupDefinition(sql, source, word, { isName }) {
+  const compute = () => fetchDefinition(sql, source, word, { isName });
+  if (isName) return { payload: await compute(), cached: false };
+  return withCachedJson(sql, {
+    cacheKey: buildCacheKey({ route: 'wordnikDefinition', word: String(word).trim().toLowerCase() }),
+    route: 'wordnikDefinition',
+    ttlSeconds: 600,
+    compute,
+  });
 }
 
 export default async function onRequest(request) {
   const requestUrl = new URL(request.url);
   const word = requestUrl.searchParams.get('word');
   const returnPath = sanitizeReturnPath(requestUrl.searchParams.get('returnTo'));
+  const isName = isNameLookup(requestUrl.searchParams.get('kind'));
 
   if (!word?.trim()) {
     const payload = { error: 'Missing required query parameter: word' };
@@ -467,15 +511,10 @@ export default async function onRequest(request) {
         message: 'Too many definition lookups.',
       });
     }
-    const cacheResult = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'wordnikDefinition', word: String(word).trim().toLowerCase() }),
-      route: 'wordnikDefinition',
-      ttlSeconds: 600,
-      compute: () => fetchDefinition(sql, request, word),
-    });
+    const cacheResult = await lookupDefinition(sql, request, word, { isName });
     const payload = cacheResult.payload;
     return isHtmlRequest(request)
-      ? toResponse(200, renderDefinitionPage(payload, { returnPath }), 'text/html; charset=utf-8')
+      ? toResponse(200, renderDefinitionPage(payload, { returnPath, isName }), 'text/html; charset=utf-8')
       : toResponse(200, payload, 'application/json; charset=utf-8');
   } catch (error) {
     const statusCode = getStatusCode(error);
@@ -487,6 +526,7 @@ export default async function onRequest(request) {
 
 export async function handler(event) {
   const word = extractWordFromEvent(event);
+  const isName = isNameLookup(extractKindFromEvent(event));
 
   if (!word?.trim()) {
     return toNetlifyResponse(400, { error: 'Missing required query parameter: word' });
@@ -506,15 +546,10 @@ export async function handler(event) {
         message: 'Too many definition lookups.',
       });
     }
-    const cacheResult = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'wordnikDefinition', word: String(word).trim().toLowerCase() }),
-      route: 'wordnikDefinition',
-      ttlSeconds: 600,
-      compute: () => fetchDefinition(sql, event, word),
-    });
+    const cacheResult = await lookupDefinition(sql, event, word, { isName });
     const payload = cacheResult.payload;
     return secureJsonResponse(200, payload, {
-      'cache-control': 'public, max-age=600, stale-while-revalidate=120',
+      'cache-control': isName ? 'private, max-age=600' : 'public, max-age=600, stale-while-revalidate=120',
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {

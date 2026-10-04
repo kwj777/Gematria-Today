@@ -133,6 +133,20 @@ test('the shared digital root the FAQ cites is real', () => {
   assert.equal(digitalRoot(282), 3);
 });
 
+test('the FAQ quotes the digital-root odds for this cipher, not for a nine-root one', () => {
+  // Totals are multiples of six, so their digital root is always 3, 6 or 9.
+  for (let sum = 1; sum <= 3000; sum += 1) {
+    assert.ok([3, 6, 9].includes(digitalRoot(6 * sum)), `6 x ${sum} reduces to ${digitalRoot(6 * sum)}`);
+  }
+  assert.ok(!PAGE.includes('nine possible roots'));
+  assert.ok(!PAGE.includes('one unrelated pair in nine'));
+  assert.equal(
+    PAGE.split('its digital root can only be 3, 6 or 9, and roughly one unrelated pair in three will share one').length - 1,
+    2,
+    'the visible answer and the FAQPage structured data should both say it',
+  );
+});
+
 test('the cipher range quoted in the FAQ matches the engine', () => {
   assert.ok(PAGE.includes('A=6, B=12, C=18'));
   assert.equal(englishGematria('A'), '6');

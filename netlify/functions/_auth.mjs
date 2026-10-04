@@ -90,7 +90,9 @@ export async function consumeAccountRecoveryRequest(sql, {
   token,
 } = {}) {
   await ensureAccountRecoverySchema(sql);
-  const normalizedToken = String(token || '').trim();
+  // Issued as lowercase hex (createAccountRecoveryRequest), and people type
+  // these, so the case they type it in must not matter.
+  const normalizedToken = String(token || '').trim().toLowerCase();
   if (!role || !recoveryType || !normalizedToken) {
     return null;
   }
@@ -122,6 +124,7 @@ export function cookieSecureDirective() {
 
 export const AUTH_COOKIES = {
   admin: 'gematria_admin_session',
+  adminFlag: 'gematria_admin_flag',
   member: 'gematria_member_session',
   memberTier: 'gematria_member_tier',
   visitor: 'gematria_visitor_session',
@@ -207,6 +210,11 @@ export function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+// Account status used to be checked only at password and OAuth sign-in, so a
+// suspended member kept every session they already held. Both session lookups
+// refuse a suspended or deleted account -- the statuses _oauth.mjs refuses --
+// so a suspension ends the member's sessions on their next request, and the
+// lookup deletes the session row it refused.
 async function findAuthenticatedSession(event, sql, cookieName) {
   const cookies = parseCookies(event);
   const sessionToken = cookies[cookieName] || null;
@@ -221,6 +229,7 @@ async function findAuthenticatedSession(event, sql, cookieName) {
     JOIN users ON users.id = sessions.user_id
     WHERE sessions.token_hash = ${hashToken(sessionToken)}
       AND sessions.expires_at > NOW()
+      AND users.status NOT IN ('suspended', 'deleted')
     LIMIT 1
   `;
 
@@ -253,7 +262,24 @@ function buildSessionClearHeader(cookieName, { httpOnly = true } = {}) {
 }
 
 export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
-  return [buildSessionClearHeader(cookieName)];
+  const cleared = [buildSessionClearHeader(cookieName)];
+  if (cookieName === AUTH_COOKIES.admin) {
+    cleared.push(buildSessionClearHeader(AUTH_COOKIES.adminFlag, { httpOnly: false }));
+  }
+  return cleared;
+}
+
+// UI-only hint (not HttpOnly) so the consent banner and the click trackers can
+// tell an admin is browsing: the admin session cookie is HttpOnly and invisible
+// to them. It holds no token and grants nothing; it lives and dies with the
+// session cookie it accompanies.
+export function createAdminFlagCookie(expiresAt) {
+  const secureDirective = cookieSecureDirective();
+  return `${AUTH_COOKIES.adminFlag}=1; Path=/${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+}
+
+export function createAdminSessionCookies(token, expiresAt) {
+  return [createSessionCookie(token, expiresAt, AUTH_COOKIES.admin), createAdminFlagCookie(expiresAt)];
 }
 
 const ALLOWED_MEMBER_TIERS = new Set(['free', 'premium', 'lifetime']);
@@ -433,6 +459,26 @@ export function isSameOriginRequest(event) {
   return false;
 }
 
+// Login CSRF. parseBody JSON-parses a body whatever its content type, and a
+// cross-site page can make the browser POST a text/plain form whose body reads
+// as JSON -- so it could sign the visitor into the attacker's account, where
+// the calculations, notes and chats the visitor goes on to save would land.
+// A form can only send urlencoded, multipart or text/plain bodies, and a
+// cross-site fetch that sends application/json needs a CORS preflight these
+// functions never grant. Every page that calls the sign-in, signup and
+// recovery endpoints sends JSON. Sec-Fetch-Site is set by the browser, not by
+// page script, so a request it marks cross-site is refused outright.
+export function assertJsonRequestFromThisSite(event) {
+  const mediaType = readRequestHeader(event, 'content-type').split(';')[0].trim().toLowerCase();
+  if (mediaType !== 'application/json') {
+    throw Object.assign(new Error('Send this request as JSON.'), { statusCode: 415, expose: true });
+  }
+
+  if (readRequestHeader(event, 'sec-fetch-site').toLowerCase() === 'cross-site') {
+    throw Object.assign(new Error('Cross-site requests are not allowed.'), { statusCode: 403, expose: true });
+  }
+}
+
 export function validateCsrfRequest(event, sessionToken) {
   const providedToken = getCsrfTokenFromRequest(event);
   if (providedToken && validateCsrfToken(providedToken, sessionToken)) {
@@ -465,6 +511,7 @@ export async function getAuthenticatedUser(event, {
     JOIN users ON users.id = sessions.user_id
     WHERE sessions.token_hash = ${hashToken(sessionToken)}
       AND sessions.expires_at > NOW()
+      AND users.status NOT IN ('suspended', 'deleted')
     LIMIT 1
   `;
 

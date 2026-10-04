@@ -27,12 +27,14 @@
     <meta property="og:title" content="Gematria.Today | Gematria Calculator, Name Meaning & Blog" />
     <meta property="og:description" content="Use Gematria.Today to calculate English gematria values, compare names, explore related words, and read curated blog insights in one place." />
     <meta property="og:url" content="https://gematria.today/" />
-    <meta property="og:image" content="https://gematria.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/why-english-gematria-backdrop-compact-16x9.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Backdrop illustration of English gematria letters paired with their numeric values." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Gematria.Today | Gematria Calculator, Name Meaning & Blog" />
     <meta name="twitter:description" content="Use Gematria.Today to calculate English gematria values, compare names, explore related words, and read curated blog insights in one place." />
-    <meta name="twitter:image" content="https://gematria.today/assets/why-english-gematria-backdrop-compact-16x9.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/why-english-gematria-backdrop-compact-16x9.png" />
     <meta name="twitter:image:alt" content="Backdrop illustration of English gematria letters paired with their numeric values." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <style>
@@ -102,7 +104,6 @@
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet fetchpriority="low" />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <link rel="modulepreload" href="/home-page.js" />
-    <script defer src="/site-modules.js"></script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -221,7 +222,7 @@
               <p class="mb-0 small">Basics → pattern grouping → name analysis → research checklist. Earn a badge with a <span class="text-warning"><a class="text-warning" href="/gematria-account-setup.html?return=/gematria-basics.html">free account</a></span>, or read <span class="text-warning"><a class="text-warning" href="/how-to-use-gematria.html">how to use gematria</a></span> first — no sign-up needed.</p>
             </div>
             <div class="d-flex flex-wrap gap-3 align-items-center flex-shrink-0">
-              <a id="learningPathPromoCta" class="btn btn-light btn-sm fw-bold text-dark" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="Start the free beginner path">This is the way →</a>
+              <a id="learningPathPromoCta" class="btn btn-light btn-sm fw-bold text-dark" href="/gematria-account-setup.html?return=/gematria-basics.html" aria-label="This is the way: start the free beginner path">This is the way →</a>
             </div>
           </div>
         </aside>
@@ -256,7 +257,7 @@
           </div>
         </section>
 
-        <section class="content-panel p-4 p-lg-5 mb-5 d-none" data-module="blog_home_slider">
+        <section class="content-panel p-4 p-lg-5 mb-5 d-none" data-module="blog,blog_home_slider">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div>
               <span class="section-kicker d-block mb-2">Featured</span>
@@ -266,7 +267,10 @@
             <a class="btn btn-outline-primary" href="/blog.html">View all posts</a>
           </div>
 
-          <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-ride="carousel">
+          <div class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" id="blogPostsCarouselRotation" aria-controls="blogPostsCarousel" hidden>Pause slideshow</button>
+          </div>
+          <div id="blogPostsCarousel" class="carousel slide blog-carousel" data-bs-pause="false">
             <div id="blogPostsCarouselIndicators" class="carousel-indicators blog-carousel-indicators position-static mb-4"></div>
             <div id="blogPostsCarouselInner" class="carousel-inner async-content-shell async-content-shell--md" aria-live="polite" aria-busy="true">
               <div class="carousel-item active">
@@ -339,7 +343,7 @@
           </div>
         </section>
 
-        <section class="home-section mb-5" data-module="blog_home_featured_grid">
+        <section class="home-section mb-5" data-module="blog,blog_home_featured_grid">
           <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 pb-3 home-section__header">
             <div>
               <span class="section-kicker d-block mb-2">From the Blog</span>

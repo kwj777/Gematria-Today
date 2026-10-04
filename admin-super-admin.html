@@ -20,13 +20,12 @@
     <meta name="robots" content="noindex,nofollow" />
     <link rel="canonical" href="https://gematria.today/admin-super-admin.html" />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
-    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
-    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="preload" as="style" href="/api/public-theme-css?scope=admin" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css?scope=admin" /></noscript>
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <script src="/admin-theme.js"></script>
-    <script defer src="/site-modules.js"></script>
     <script defer src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   </head>
   <body>
@@ -34,8 +33,9 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg?v=2" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false">
           <span class="navbar-toggler-icon"></span>
+          <span class="navbar-toggler-label"><span class="navbar-toggler-label__closed">Menu</span><span class="navbar-toggler-label__open">Close</span></span>
         </button>
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
@@ -50,7 +50,7 @@
             <li class="nav-item"><a class="nav-link" href="/index.html">View Public Site</a></li>
           </ul>
           <div class="d-flex ms-lg-3">
-            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false">Dark mode</button>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@
             </div>
             <span class="badge text-bg-warning">Super admins only</span>
           </div>
-          <p class="text-muted small mb-2">Enable or disable major modules site-wide. Disabling a module hides related UI elements for visitors.</p>
+          <p class="text-muted small mb-2">Enable or disable major modules site-wide. Disabling a module hides its links, puts its pages behind an "unavailable" notice and switches off its APIs for everyone. Membership off closes new sign-ups and checkout; existing members can still sign in and manage billing.</p>
           <p class="text-info-emphasis small mb-2"><strong>Status is saved upon switching toggles.</strong></p>
           <p class="text-muted small mb-3">Note: these switches are global and do not create super-admin-only module access.</p>
           <form id="siteModulesForm" class="row g-3" aria-busy="true" aria-live="polite">

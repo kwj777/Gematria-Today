@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 
 import {
   getSuperAdminUsernames,
@@ -87,4 +88,131 @@ test('the cold-start super admin promotion matches exact names and only escalate
     /AND \(role IN \('admin', 'super_admin'\) OR COALESCE\(is_admin, FALSE\) = TRUE\)/i,
     'only an account that is already staff may be escalated',
   );
+});
+
+// The seeded owner account used to be written with ON CONFLICT (username) DO
+// UPDATE SET password_hash = EXCLUDED.password_hash, so every cold start put
+// the committed hash back: a reset or rotation of KevAdmin's password lasted
+// until the next deploy. A fresh copy of the module stands in for a new lambda
+// instance, since the bootstrap is memoized per instance.
+let bootstrapColdStarts = 0;
+async function coldStartBootstrap(sql, { ownerPasswordHash } = {}) {
+  bootstrapColdStarts += 1;
+  const module = await import(`../netlify/functions/_admin.mjs?bootstrap-cold-start=${bootstrapColdStarts}`);
+  const previous = {
+    ADMIN_USERNAME: process.env.ADMIN_USERNAME,
+    SUPER_ADMIN_PASSWORD_HASH: process.env.SUPER_ADMIN_PASSWORD_HASH,
+  };
+  delete process.env.ADMIN_USERNAME;
+  if (ownerPasswordHash === undefined) delete process.env.SUPER_ADMIN_PASSWORD_HASH;
+  else process.env.SUPER_ADMIN_PASSWORD_HASH = ownerPasswordHash;
+  try {
+    await module.syncBootstrapAdminUser(sql);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
+// A users table that applies the conflict clause the seed insert is written
+// with, so the test checks the row the owner ends up with, not only SQL text.
+function createUsersTable(rows) {
+  const users = new Map(rows.map((row) => [row.username, { ...row }]));
+  const sql = (strings, ...values) => {
+    const text = strings.join('?');
+    if (/INSERT INTO users \(id, username, password_hash, role, is_admin\)/.test(text)) {
+      const [id, username, passwordHash, role] = values;
+      const existing = users.get(username) || [...users.values()].find((user) => user.id === id);
+      if (!existing) {
+        users.set(username, { id, username, password_hash: passwordHash, role, is_admin: true });
+      } else if (/DO UPDATE SET[^]*password_hash = EXCLUDED\.password_hash/.test(text)) {
+        Object.assign(existing, { password_hash: passwordHash, role, is_admin: true });
+      } else if (!/ON CONFLICT DO NOTHING/.test(text)) {
+        return Promise.reject(new Error(`unexpected seed conflict handling: ${text}`));
+      }
+    }
+    return Promise.resolve([]);
+  };
+  return { sql, users };
+}
+
+const CONFIGURED_OWNER_HASH = 'scrypt$ffeeddccbbaa99887766554433221100$configured';
+
+test('a cold start keeps the owner account\'s rotated password instead of restoring the seeded hash', async () => {
+  const rotatedHash = 'scrypt$00112233445566778899aabbccddeeff$rotated';
+  const { sql, users } = createUsersTable([
+    { id: 'KevAdmin', username: 'KevAdmin', password_hash: rotatedHash, role: 'super_admin', is_admin: true },
+  ]);
+
+  await coldStartBootstrap(sql, { ownerPasswordHash: CONFIGURED_OWNER_HASH });
+
+  assert.equal(users.get('KevAdmin').password_hash, rotatedHash);
+  assert.equal(users.get('KevAdmin').role, 'super_admin');
+});
+
+test('an empty database gets the owner account from SUPER_ADMIN_PASSWORD_HASH', async () => {
+  const { sql, users } = createUsersTable([]);
+
+  await coldStartBootstrap(sql, { ownerPasswordHash: CONFIGURED_OWNER_HASH });
+
+  const owner = users.get('KevAdmin');
+  assert.ok(owner, 'the owner account is created');
+  assert.equal(owner.password_hash, CONFIGURED_OWNER_HASH);
+  assert.equal(owner.role, 'super_admin');
+});
+
+// The owner's hash used to be committed to the repository and inserted
+// whenever the row was missing, so deleting KevAdmin -- or pointing the site
+// at a fresh or restored database -- brought back a super admin whose hash
+// anyone could read. Without the environment secret nothing is created.
+test('without SUPER_ADMIN_PASSWORD_HASH a cold start creates no owner account', async () => {
+  const { sql, users } = createUsersTable([]);
+
+  await coldStartBootstrap(sql);
+
+  assert.equal(users.size, 0);
+});
+
+test('no password hash is committed in the admin bootstrap module', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/_admin.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /scrypt\$[0-9a-f]{16,}\$[0-9a-f]{16,}/);
+});
+
+test('a renamed owner row that keeps the seeded id does not fail the cold start', async () => {
+  const { sql, users } = createUsersTable([
+    { id: 'KevAdmin', username: 'Kev', password_hash: 'scrypt$aa$bb', role: 'super_admin', is_admin: true },
+  ]);
+
+  await coldStartBootstrap(sql, { ownerPasswordHash: CONFIGURED_OWNER_HASH });
+
+  assert.equal(users.size, 1);
+  assert.equal(users.get('Kev').password_hash, 'scrypt$aa$bb');
+});
+
+// README tells people to run sql/admin_schema.sql to bootstrap a database. Its
+// seed of the kevandmel admin -- same committed hash as KevAdmin, and the
+// seeded posts are created_by it -- was ON CONFLICT (username) DO UPDATE SET
+// password_hash = EXCLUDED.password_hash, so any re-run put the public hash
+// back on a live admin account and undid a rotation.
+test('no SQL bootstrap file resets an existing account\'s password', async () => {
+  const sqlDir = new URL('../sql/', import.meta.url);
+  const files = (await fs.readdir(sqlDir)).filter((name) => name.endsWith('.sql'));
+  const userSeeds = [];
+  for (const file of files) {
+    const source = await fs.readFile(new URL(file, sqlDir), 'utf8');
+    for (const [statement] of source.matchAll(/INSERT INTO users\b[^;]*;/gi)) {
+      userSeeds.push({ file, statement });
+    }
+  }
+
+  assert.ok(
+    userSeeds.some(({ file, statement }) => file === 'admin_schema.sql' && /'kevandmel'/.test(statement)),
+    'expected the kevandmel seed in admin_schema.sql',
+  );
+  for (const { file, statement } of userSeeds) {
+    assert.doesNotMatch(statement, /DO\s+UPDATE/i, `${file}: a user seed must not update an existing row`);
+    assert.match(statement, /ON CONFLICT DO NOTHING\s*;$/i, `${file}: a user seed must skip any existing row`);
+  }
 });

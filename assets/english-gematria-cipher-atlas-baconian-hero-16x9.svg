@@ -1,6 +1,6 @@
 <svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="caBaTitle caBaDesc">
   <title id="caBaTitle">Cipher Atlas — Baconian Biliteral Cipher hero</title>
-  <desc id="caBaDesc">Five-place a/b sequences for the word CAB shown as binary cells, with a comparison of Bacon's Simple and Kaye 24-letter alphabets.</desc>
+  <desc id="caBaDesc">Five-place a/b sequences for the word CAB shown as binary cells, with a comparison of the 24-letter and 26-letter biliteral alphabets.</desc>
   <defs>
     <linearGradient id="caBaBg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
       <stop stop-color="#070B22"/>
@@ -65,13 +65,13 @@
     </g>
   </g>
 
-  <!-- Simple vs Kaye comparison panel -->
+  <!-- 24-letter vs 26-letter biliteral table panel -->
   <g font-family="'Inter', 'Segoe UI', sans-serif" transform="translate(1050,290)">
     <rect x="0" y="0" width="420" height="380" rx="14" fill="#0B1230" stroke="#FBBF24" stroke-opacity="0.45" stroke-width="1.5"/>
-    <text x="210" y="46" font-size="22" font-weight="700" fill="#FBBF24" text-anchor="middle">Simple vs Kaye</text>
+    <text x="210" y="46" font-size="22" font-weight="700" fill="#FBBF24" text-anchor="middle">Two biliteral tables</text>
     <line x1="210" y1="60" x2="210" y2="370" stroke="#243067" stroke-width="1.2"/>
-    <text x="105" y="92" font-size="16" font-weight="700" fill="#9CC8FF" text-anchor="middle">SIMPLE (24)</text>
-    <text x="315" y="92" font-size="16" font-weight="700" fill="#9CC8FF" text-anchor="middle">KAYE (26)</text>
+    <text x="105" y="92" font-size="16" font-weight="700" fill="#9CC8FF" text-anchor="middle">24-LETTER</text>
+    <text x="315" y="92" font-size="16" font-weight="700" fill="#9CC8FF" text-anchor="middle">26-LETTER</text>
     <g font-family="'JetBrains Mono', 'Menlo', monospace" font-size="15" fill="#E6F2FF" text-anchor="middle">
       <text x="105" y="124">I = J</text><text x="315" y="124">I ≠ J</text>
       <text x="105" y="152">U = V</text><text x="315" y="152">U ≠ V</text>
@@ -80,7 +80,7 @@
       <text x="105" y="236">J = abaaa</text><text x="315" y="236">J = abaab</text>
       <text x="105" y="264">U = baabb</text><text x="315" y="264">U = babaa</text>
       <text x="105" y="292">V = baabb</text><text x="315" y="292">V = babab</text>
-      <text x="105" y="320">Z = babbb</text><text x="315" y="320">Z = bbabb</text>
+      <text x="105" y="320">Z = babbb</text><text x="315" y="320">Z = bbaab</text>
     </g>
     <text x="210" y="356" font-size="13" fill="#9CC8FF" fill-opacity="0.8" text-anchor="middle">Two tables — different decoded outputs</text>
   </g>

@@ -3,9 +3,8 @@ import assert from 'node:assert/strict';
 import { neonConfig } from '@neondatabase/serverless';
 
 import {
-  deleteExpiredUnverifiedMemberByIdentifier,
+  authenticateMemberCredentials,
   deleteExpiredUnverifiedMembers,
-  releaseUnverifiedMemberClaim,
 } from '../netlify/functions/_member.mjs';
 import { handler as accountRecoveryHandler } from '../netlify/functions/member-account-recovery.mjs';
 
@@ -47,20 +46,29 @@ test('the nightly prune spares paid and reset-proven members, and their recovery
   assert.ok(createIndex < stub.calls.indexOf(del), 'the table has to exist before the delete reads it');
 });
 
-test('a login or resend attempt spares paid and reset-proven members', async () => {
+test('the nightly prune spares an account whose fresh verification link is still live', async () => {
   const stub = createSqlStub();
-  await deleteExpiredUnverifiedMemberByIdentifier(stub.sql, 'kev');
+  await deleteExpiredUnverifiedMembers(stub.sql);
 
+  // A member who resends on day 27 is emailed a link that works until day 34.
+  // Measuring only from created_at deleted the account -- and the link with
+  // it on cascade -- at the first midnight after day 30.
   const [del] = stub.userDeletes();
-  assertSparesPaidAndResetMembers(del.text);
+  assert.match(
+    del.text,
+    /AND NOT EXISTS \(\s*SELECT 1 FROM member_email_verification_requests r\s+WHERE r\.user_id = users\.id\s+AND r\.consumed_at IS NULL\s+AND r\.expires_at > NOW\(\)\s*\)/,
+  );
 });
 
-test('registering someone else\'s username cannot release a paid or reset-proven member', async () => {
+test('a sign-in attempt deletes nothing, whatever the password', async () => {
   const stub = createSqlStub();
-  await releaseUnverifiedMemberClaim(stub.sql, { username: 'kev', email: 'kev@example.com' });
+  // No row comes back, as for a wrong password; the attempt simply fails.
+  assert.equal(await authenticateMemberCredentials(stub.sql, 'kev', 'not-the-password'), null);
 
-  const [del] = stub.userDeletes();
-  assertSparesPaidAndResetMembers(del.text);
+  // It used to delete a month-old pending account matching the identifier
+  // before the password was checked -- including the ones the nightly prune
+  // keeps because our verification email never reached them.
+  assert.equal(stub.userDeletes().length, 0);
 });
 
 // ---------- reset-password, driven through the real handler ----------
@@ -111,7 +119,15 @@ function answer(db, query, params) {
     return [{ status: user.status, email_verified: user.email_verified }];
   }
   if (/DELETE FROM member_oauth_identities/.test(query)) {
-    db.identities = [];
+    // The conditional form keeps only identities whose provider vouches for
+    // the account's own address; the bare form drops every identity.
+    if (/identities\.email_verified = FALSE/.test(query)) {
+      db.identities = db.identities.filter((identity) => identity.email_verified
+        && identity.email
+        && identity.email.toLowerCase() === String(user.email).toLowerCase());
+    } else {
+      db.identities = [];
+    }
     return [];
   }
   if (/UPDATE users\s+SET password_hash/.test(query)) {
@@ -146,8 +162,10 @@ test.after(() => {
   else process.env.DATABASE_URL = PRIOR_DATABASE_URL;
 });
 
-async function resetPasswordFor(user) {
-  const db = { user: { ...user }, identities: ['google:attacker-sub'], sessions: [] };
+async function resetPasswordFor(user, {
+  identities = [{ id: 'google:attacker-sub', email: user.email, email_verified: true }],
+} = {}) {
+  const db = { user: { ...user }, identities: identities.map((identity) => ({ ...identity })), sessions: [] };
   process.env.DATABASE_URL = 'postgresql://tester:secret@fake-db.invalid/neondb';
   neonConfig.fetchFunction = async (_url, init) => {
     const { query, params } = JSON.parse(init.body);
@@ -197,7 +215,36 @@ test('a reset on an already verified account leaves its linked identities alone'
 
   assert.equal(response.statusCode, 200);
   assert.equal(db.user.status, 'active');
-  assert.deepEqual(db.identities, ['google:attacker-sub']);
+  assert.deepEqual(db.identities.map((identity) => identity.id), ['google:attacker-sub']);
+});
+
+// The verification link activates a pending row with whatever identity created
+// it still attached, so "already active" proves nothing about the identities.
+// A reset that revoked every session but kept such an identity left whoever
+// attached it a provider sign-in straight back into the recovered account.
+for (const [label, identity] of [
+  ['created from an unverified claim to the address', { email: 'kev@example.com', email_verified: false }],
+  ['since moved to some other verified address', { email: 'attacker@example.net', email_verified: true }],
+  ['that reports no address at all', { email: null, email_verified: true }],
+]) {
+  test(`a reset on an active account revokes an identity ${label}`, async () => {
+    const { response, db } = await resetPasswordFor({
+      id: 'u-1', username: 'kev', email: 'kev@example.com', status: 'active', email_verified: true,
+    }, { identities: [{ id: 'google:attacker-sub', ...identity }] });
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(db.identities, []);
+    assert.equal(db.sessions.length, 1);
+  });
+}
+
+test('a reset keeps an identity that vouches for the address in another letter case', async () => {
+  const { response, db } = await resetPasswordFor({
+    id: 'u-1', username: 'kev', email: 'kev@example.com', status: 'active', email_verified: true,
+  }, { identities: [{ id: 'google:owner-sub', email: 'Kev@Example.COM', email_verified: true }] });
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(db.identities.map((identity) => identity.id), ['google:owner-sub']);
 });
 
 for (const status of ['suspended', 'deleted']) {

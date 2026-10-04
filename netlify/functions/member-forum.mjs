@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
-import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
+import { getAuthenticatedMember, getSqlClient, jsonResponse, parseBody } from './_member.mjs';
 import { getEarnedBadgeNamesForUserIds } from './_badges.mjs';
-import { assertHoneypotEmpty } from './_security.mjs';
+import { applyRateLimit, assertHoneypotEmpty } from './_security.mjs';
+import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const DEFAULT_CATEGORIES = [
   { slug: 'member-lounge', name: 'Member Lounge', description: 'General discussion area for all signed-in members.', sortOrder: 1, accessTier: 'free' },
@@ -16,8 +17,26 @@ const REPUTATION_POINTS = {
   thread: 10,
   reply: 4,
 };
+const MODERATOR_ROLES = new Set(['admin', 'super_admin']);
+const POSTING_COOLDOWN_MS = 15_000;
+const REPORT_LIMIT_PER_HOUR = 20;
 
-export async function ensureForumSchema(sql) {
+let forumSchemaReadyPromise = null;
+
+// The schema (about 45 DDL statements, ALTER TABLEs among them) and the
+// one-time category seed run once per function instance, not on every forum
+// and admin-forum request. A failed run is retried by the next request.
+export function ensureForumSchema(sql) {
+  if (!forumSchemaReadyPromise) {
+    forumSchemaReadyPromise = createForumSchema(sql).catch((error) => {
+      forumSchemaReadyPromise = null;
+      throw error;
+    });
+  }
+  return forumSchemaReadyPromise;
+}
+
+async function createForumSchema(sql) {
   await sql`CREATE TABLE IF NOT EXISTS forum_categories (
     id TEXT PRIMARY KEY,
     slug TEXT NOT NULL UNIQUE,
@@ -65,6 +84,7 @@ export async function ensureForumSchema(sql) {
     locked_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
     deleted_at TIMESTAMPTZ,
     deleted_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    pending_approval BOOLEAN NOT NULL DEFAULT FALSE,
     last_activity_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -75,7 +95,8 @@ export async function ensureForumSchema(sql) {
     ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS locked_by_user_id TEXT,
     ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS deleted_by_user_id TEXT`;
+    ADD COLUMN IF NOT EXISTS deleted_by_user_id TEXT,
+    ADD COLUMN IF NOT EXISTS pending_approval BOOLEAN NOT NULL DEFAULT FALSE`;
 
   await sql`DO $$
   BEGIN
@@ -199,23 +220,57 @@ export async function ensureForumSchema(sql) {
     ON forum_threads USING GIN (to_tsvector('simple', COALESCE(title, '') || ' ' || COALESCE(body, '')))
     WHERE deleted_at IS NULL`;
 
+  await seedDefaultCategoriesOnce(sql);
+}
+
+// DEFAULT_CATEGORIES is starter content: once a default category exists the
+// admin owns it. The seed used to upsert all five on every forum request, so
+// an admin's rename, reorder or access-tier change (premium to free, or back)
+// was silently reverted on the next page load. Each default is now inserted at
+// most once, and a marker row in admin_settings records that, so a later run
+// never touches an edited category or brings back one the admin deleted.
+const SEEDED_CATEGORY_MARKER_PREFIX = 'seeded_forum_category:';
+
+async function seedDefaultCategoriesOnce(sql) {
+  const markerKeys = DEFAULT_CATEGORIES.map((category) => `${SEEDED_CATEGORY_MARKER_PREFIX}${category.slug}`);
+  const markerRows = await sql`
+    SELECT setting_key
+    FROM admin_settings
+    WHERE setting_key = ANY(${markerKeys})
+  `;
+  const appliedMarkerKeys = new Set(markerRows.map((row) => row.setting_key));
+
   for (const category of DEFAULT_CATEGORIES) {
-    await sql`
+    const markerKey = `${SEEDED_CATEGORY_MARKER_PREFIX}${category.slug}`;
+    if (appliedMarkerKeys.has(markerKey)) {
+      continue;
+    }
+
+    const insertedRows = await sql`
       INSERT INTO forum_categories (id, slug, name, description, access_tier, sort_order)
       VALUES (${crypto.randomUUID()}, ${category.slug}, ${category.name}, ${category.description}, ${category.accessTier}, ${category.sortOrder})
-      ON CONFLICT (slug)
-      DO UPDATE SET
-        name = EXCLUDED.name,
-        description = EXCLUDED.description,
-        access_tier = EXCLUDED.access_tier,
-        sort_order = EXCLUDED.sort_order
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    `;
+
+    await sql`
+      INSERT INTO admin_settings (setting_key, setting_value, updated_at)
+      VALUES (${markerKey}, ${insertedRows.length ? 'inserted' : 'skipped_existing'}, NOW())
+      ON CONFLICT (setting_key) DO NOTHING
     `;
   }
 }
 
+// Staff accounts are role 'admin' or 'super_admin' (the site owner), and
+// is_admin marks both; getAuthenticatedUser accepts the same set for admin
+// pages. Checking role === 'admin' alone locked the owner out of moderation.
+function isForumModerator(user) {
+  return MODERATOR_ROLES.has(user?.role) || Boolean(user?.isAdmin);
+}
+
 function isPremiumMember(member, user) {
   const hasPaidMembership = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
-  return hasPaidMembership || user?.role === 'admin';
+  return hasPaidMembership || isForumModerator(user);
 }
 
 function assertPremiumAreaAccess(member, user) {
@@ -225,7 +280,7 @@ function assertPremiumAreaAccess(member, user) {
 }
 
 function assertAdmin(user) {
-  if (user?.role !== 'admin') {
+  if (!isForumModerator(user)) {
     throw Object.assign(new Error('Admin privileges are required for moderation actions'), { statusCode: 403 });
   }
 }
@@ -266,22 +321,32 @@ function assertNotSpam(text, fieldName) {
   }
 }
 
-async function assertPostingCooldown(sql, userId) {
-  const rows = await sql`
-    SELECT latest_posted_at
-    FROM (
-      SELECT MAX(created_at) AS latest_posted_at
-      FROM (
-        SELECT created_at FROM forum_threads WHERE author_user_id = ${userId}
-        UNION ALL
-        SELECT created_at FROM forum_posts WHERE author_user_id = ${userId}
-      ) activity
-    ) t
-    WHERE latest_posted_at > NOW() - INTERVAL '15 seconds'
-  `;
+// The cooldown used to SELECT the member's latest post and insert separately,
+// so a burst of concurrent requests all passed the check before any insert
+// landed. applyRateLimit claims the slot with one upsert on a row keyed by the
+// member, which Postgres serializes, so only one post per window gets through.
+// It runs after every other check, so a rejected post does not start a wait.
+async function assertPostingCooldown(sql, event, userId) {
+  await applyRateLimit(sql, event, {
+    scope: 'member-forum-post',
+    key: userId,
+    limit: 1,
+    windowMs: POSTING_COOLDOWN_MS,
+    message: 'Please wait a few seconds before posting again',
+  });
+}
 
-  if (rows.length) {
-    throw Object.assign(new Error('Please wait a few seconds before posting again'), { statusCode: 429 });
+// Archived categories are read-only. A locked category takes no new threads,
+// and a moderators-only category takes them from staff alone.
+function assertCategoryAcceptsThreads(category, user) {
+  if (category.is_archived) {
+    throw Object.assign(new Error('This category is archived and no longer accepts new threads'), { statusCode: 403 });
+  }
+  if (category.is_locked) {
+    throw Object.assign(new Error('This category is locked by moderators'), { statusCode: 403 });
+  }
+  if (category.post_mode === 'moderators' && !isForumModerator(user)) {
+    throw Object.assign(new Error('Only moderators can start threads in this category'), { statusCode: 403 });
   }
 }
 
@@ -306,7 +371,7 @@ function mapThreadRow(row, earnedBadgeMap) {
     authorBadges: deriveBadges(authorReputation, {
       threadCount: Number(row.author_thread_count || 0),
       replyCount: Number(row.author_reply_count || 0),
-      isAdmin: row.author_role === 'admin',
+      isAdmin: isForumModerator({ role: row.author_role }),
       isPremium: row.author_membership_level === 'premium' || row.author_membership_level === 'lifetime',
       earnedBadgeNames: earnedBadgeMap?.get(row.author_user_id) || [],
     }),
@@ -317,6 +382,7 @@ function mapThreadRow(row, earnedBadgeMap) {
     popularityScore: Number(row.popularity_score || 0),
     isLocked: Boolean(row.is_locked),
     lockedAt: row.locked_at,
+    pendingApproval: Boolean(row.pending_approval),
     deletedAt: row.deleted_at,
     lastActivityAt: row.last_activity_at,
     createdAt: row.created_at,
@@ -340,7 +406,7 @@ function mapReplyRow(row, earnedBadgeMap) {
     authorBadges: deriveBadges(authorReputation, {
       threadCount: Number(row.author_thread_count || 0),
       replyCount: Number(row.author_reply_count || 0),
-      isAdmin: row.author_role === 'admin',
+      isAdmin: isForumModerator({ role: row.author_role }),
       isPremium: row.author_membership_level === 'premium' || row.author_membership_level === 'lifetime',
       earnedBadgeNames: earnedBadgeMap?.get(row.author_user_id) || [],
     }),
@@ -380,6 +446,22 @@ async function awardReputation(sql, userId, updates) {
   `;
 }
 
+// A moderator removing a post takes back what posting it earned, so spam that
+// is cleaned up does not leave its author with the reputation or badges.
+async function revokeReputation(sql, userId, updates) {
+  const points = Number(updates.points || 0);
+  const threadDelta = Number(updates.threadCount || 0);
+  const replyDelta = Number(updates.replyCount || 0);
+  await sql`
+    UPDATE forum_member_reputation
+    SET points = GREATEST(points - ${points}, 0),
+        thread_count = GREATEST(thread_count - ${threadDelta}, 0),
+        reply_count = GREATEST(reply_count - ${replyDelta}, 0),
+        updated_at = NOW()
+    WHERE user_id = ${userId}
+  `;
+}
+
 async function listThreads(sql, member, user, event) {
   const url = parseUrl(event);
   const area = normalizeArea(url.searchParams.get('area'));
@@ -394,9 +476,11 @@ async function listThreads(sql, member, user, event) {
   const searchPattern = `%${searchQuery.toLowerCase()}%`;
   const limitRaw = Number.parseInt(String(url.searchParams.get('limit') || '25'), 10);
   const limit = Number.isInteger(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 25;
+  // A thread waiting for approval is shown only to its author and to staff.
+  const canModerate = isForumModerator(user);
 
   const categories = await sql`
-    SELECT id, slug, name, description, access_tier, sort_order, color_badge, icon_name
+    SELECT id, slug, name, description, access_tier, sort_order, color_badge, icon_name, is_archived, is_locked, post_mode, require_approval
     FROM forum_categories
     WHERE access_tier = ${area}
     ORDER BY sort_order ASC, name ASC
@@ -420,6 +504,7 @@ async function listThreads(sql, member, user, event) {
       JOIN forum_categories c ON c.id = t.category_id
       LEFT JOIN forum_member_reputation r ON r.user_id = u.id
       WHERE t.deleted_at IS NULL
+        AND (t.pending_approval = FALSE OR t.author_user_id = ${member.id} OR ${canModerate} = TRUE)
         AND c.access_tier = ${area}
         AND (${hasCategoryFilter} = FALSE OR c.slug = ${category})
         AND (
@@ -448,6 +533,7 @@ async function listThreads(sql, member, user, event) {
       JOIN forum_categories c ON c.id = t.category_id
       LEFT JOIN forum_member_reputation r ON r.user_id = u.id
       WHERE t.deleted_at IS NULL
+        AND (t.pending_approval = FALSE OR t.author_user_id = ${member.id} OR ${canModerate} = TRUE)
         AND c.access_tier = ${area}
         AND (${hasCategoryFilter} = FALSE OR c.slug = ${category})
         AND (
@@ -473,6 +559,10 @@ async function listThreads(sql, member, user, event) {
       sortOrder: Number(row.sort_order || 0),
       colorBadge: row.color_badge,
       iconName: row.icon_name,
+      isArchived: Boolean(row.is_archived),
+      isLocked: Boolean(row.is_locked),
+      postMode: row.post_mode || 'members',
+      requireApproval: Boolean(row.require_approval),
     })),
     area,
     sort,
@@ -505,6 +595,7 @@ async function getThread(sql, member, user, event) {
     LEFT JOIN forum_member_reputation r ON r.user_id = u.id
     WHERE t.id = ${threadId}
       AND t.deleted_at IS NULL
+      AND (t.pending_approval = FALSE OR t.author_user_id = ${member.id} OR ${isForumModerator(user)} = TRUE)
     LIMIT 1
   `;
 
@@ -559,25 +650,38 @@ async function createThread(sql, member, user, event) {
 
   assertNotSpam(title, 'title');
   assertNotSpam(content, 'body');
-  await assertPostingCooldown(sql, member.id);
 
-  const categories = await sql`SELECT id, access_tier FROM forum_categories WHERE slug = ${categorySlug} LIMIT 1`;
+  const categories = await sql`
+    SELECT id, access_tier, is_archived, is_locked, post_mode, require_approval
+    FROM forum_categories
+    WHERE slug = ${categorySlug}
+    LIMIT 1
+  `;
   if (!categories.length) throw Object.assign(new Error('Invalid categorySlug'), { statusCode: 400 });
   if (categories[0].access_tier === 'premium') {
     assertPremiumAreaAccess(member, user);
   }
+  assertCategoryAcceptsThreads(categories[0], user);
+  // In a category that requires approval a member's thread waits, hidden from
+  // other members, until a moderator approves it; staff threads go straight up.
+  const pendingApproval = Boolean(categories[0].require_approval) && !isForumModerator(user);
+
+  await assertPostingCooldown(sql, event, member.id);
 
   const threadId = crypto.randomUUID();
   const rows = await sql`
     INSERT INTO forum_threads (
-      id, category_id, author_user_id, title, body, reply_count, view_count, last_activity_at
+      id, category_id, author_user_id, title, body, reply_count, view_count, pending_approval, last_activity_at
     )
     VALUES (
-      ${threadId}, ${categories[0].id}, ${member.id}, ${title}, ${content}, 0, 0, NOW()
+      ${threadId}, ${categories[0].id}, ${member.id}, ${title}, ${content}, 0, 0, ${pendingApproval}, NOW()
     )
     RETURNING *
   `;
-  await awardReputation(sql, member.id, { points: REPUTATION_POINTS.thread, threadCount: 1 });
+  // A pending thread earns its reputation when a moderator approves it.
+  if (!pendingApproval) {
+    await awardReputation(sql, member.id, { points: REPUTATION_POINTS.thread, threadCount: 1 });
+  }
 
   const earnedBadgeMap = await getEarnedBadgeNamesForUserIds(sql, [member.id]);
   return {
@@ -601,10 +705,9 @@ async function createReply(sql, member, user, event) {
   if (content.length > 5000) throw Object.assign(new Error('body must be 5000 characters or fewer'), { statusCode: 400 });
 
   assertNotSpam(content, 'body');
-  await assertPostingCooldown(sql, member.id);
 
   const threads = await sql`
-    SELECT t.id, t.is_locked, c.access_tier
+    SELECT t.id, t.is_locked, t.pending_approval, c.access_tier, c.is_archived, c.is_locked AS category_is_locked
     FROM forum_threads t
     JOIN forum_categories c ON c.id = t.category_id
     WHERE t.id = ${threadId}
@@ -616,6 +719,15 @@ async function createReply(sql, member, user, event) {
     assertPremiumAreaAccess(member, user);
   }
   if (threads[0].is_locked) throw Object.assign(new Error('This thread is locked by moderators'), { statusCode: 403 });
+  // A locked or archived category is closed to replies as well as new threads,
+  // the same way a locked thread is, so existing threads in it go quiet too.
+  if (threads[0].is_archived) throw Object.assign(new Error('This category is archived and no longer accepts replies'), { statusCode: 403 });
+  if (threads[0].category_is_locked) throw Object.assign(new Error('This category is locked by moderators'), { statusCode: 403 });
+  if (threads[0].pending_approval && !isForumModerator(user)) {
+    throw Object.assign(new Error('This thread is waiting for moderator approval'), { statusCode: 403 });
+  }
+
+  await assertPostingCooldown(sql, event, member.id);
 
   const replyId = crypto.randomUUID();
   const rows = await sql`
@@ -678,6 +790,29 @@ async function reportContent(sql, member, user, event) {
     if (postRows[0].access_tier === 'premium') assertPremiumAreaAccess(member, user);
   }
 
+  // Reporting the same post again while the first report is still open adds
+  // nothing for moderators, so it is acknowledged without a second row.
+  const openReports = await sql`
+    SELECT id
+    FROM forum_reports
+    WHERE reporter_user_id = ${member.id}
+      AND thread_id IS NOT DISTINCT FROM ${threadId || null}::text
+      AND post_id IS NOT DISTINCT FROM ${postId || null}::text
+      AND status IN ('open', 'in_review')
+    LIMIT 1
+  `;
+  if (openReports.length) {
+    return { ok: true };
+  }
+
+  await applyRateLimit(sql, event, {
+    scope: 'member-forum-report',
+    key: member.id,
+    limit: REPORT_LIMIT_PER_HOUR,
+    windowMs: 60 * 60_000,
+    message: 'You have sent a lot of reports recently. Please try again later.',
+  });
+
   await sql`
     INSERT INTO forum_reports (id, thread_id, post_id, reporter_user_id, reason, details)
     VALUES (${crypto.randomUUID()}, ${threadId || null}, ${postId || null}, ${member.id}, ${reason}, ${details || null})
@@ -697,7 +832,60 @@ async function moderateThread(sql, user, event, mode) {
   } else if (mode === 'unlock') {
     await sql`UPDATE forum_threads SET is_locked = FALSE, locked_at = NULL, locked_by_user_id = NULL, updated_at = NOW() WHERE id = ${threadId} AND deleted_at IS NULL`;
   } else if (mode === 'delete') {
-    await sql`UPDATE forum_threads SET deleted_at = NOW(), deleted_by_user_id = ${user.id}, updated_at = NOW() WHERE id = ${threadId} AND deleted_at IS NULL`;
+    const rows = await sql`
+      UPDATE forum_threads
+      SET deleted_at = NOW(), deleted_by_user_id = ${user.id}, updated_at = NOW()
+      WHERE id = ${threadId}
+        AND deleted_at IS NULL
+      RETURNING author_user_id, pending_approval
+    `;
+    if (rows.length) {
+      // A thread still waiting for approval never earned anything.
+      if (!rows[0].pending_approval) {
+        await revokeReputation(sql, rows[0].author_user_id, { points: REPUTATION_POINTS.thread, threadCount: 1 });
+      }
+
+      // Deleting the thread hides every reply in it, and once it is gone the
+      // replies can no longer be deleted one by one, so what they earned is
+      // taken back here too. Otherwise a member could post a burst of replies
+      // in one thread (or have a second account do it) and keep the points and
+      // badges after a moderator removed the thread. Replies a moderator had
+      // already deleted were taken back then and are not counted again.
+      const replyAuthors = await sql`
+        SELECT author_user_id, COUNT(*)::INTEGER AS total
+        FROM forum_posts
+        WHERE thread_id = ${threadId}
+          AND deleted_at IS NULL
+        GROUP BY author_user_id
+      `;
+      for (const replyAuthor of replyAuthors) {
+        const total = Number(replyAuthor.total || 0);
+        await revokeReputation(sql, replyAuthor.author_user_id, { points: REPUTATION_POINTS.reply * total, replyCount: total });
+      }
+    }
+  }
+
+  return { ok: true };
+}
+
+async function approveThread(sql, user, event) {
+  assertAdmin(user);
+  const body = parseBody(event);
+  const threadId = String(body.threadId || '').trim();
+  if (!threadId) throw Object.assign(new Error('threadId is required'), { statusCode: 400 });
+
+  const rows = await sql`
+    UPDATE forum_threads
+    SET pending_approval = FALSE,
+        last_activity_at = NOW(),
+        updated_at = NOW()
+    WHERE id = ${threadId}
+      AND pending_approval = TRUE
+      AND deleted_at IS NULL
+    RETURNING author_user_id
+  `;
+  if (rows.length) {
+    await awardReputation(sql, rows[0].author_user_id, { points: REPUTATION_POINTS.thread, threadCount: 1 });
   }
 
   return { ok: true };
@@ -709,12 +897,21 @@ async function moderateReply(sql, user, event) {
   const replyId = String(body.replyId || '').trim();
   if (!replyId) throw Object.assign(new Error('replyId is required'), { statusCode: 400 });
 
+  // A reply in a deleted thread already had its reputation taken back with the
+  // thread, so deleting it again (say from a page loaded before the thread was
+  // removed) is a no-op rather than a second deduction.
   const rows = await sql`
     UPDATE forum_posts
     SET deleted_at = NOW(), deleted_by_user_id = ${user.id}
     WHERE id = ${replyId}
       AND deleted_at IS NULL
-    RETURNING thread_id
+      AND EXISTS (
+        SELECT 1
+        FROM forum_threads t
+        WHERE t.id = forum_posts.thread_id
+          AND t.deleted_at IS NULL
+      )
+    RETURNING thread_id, author_user_id
   `;
 
   if (rows.length) {
@@ -724,6 +921,7 @@ async function moderateReply(sql, user, event) {
           updated_at = NOW()
       WHERE id = ${rows[0].thread_id}
     `;
+    await revokeReputation(sql, rows[0].author_user_id, { points: REPUTATION_POINTS.reply, replyCount: 1 });
   }
 
   return { ok: true };
@@ -741,6 +939,17 @@ async function listReports(sql, user) {
     LIMIT 200
   `;
 
+  const pendingRows = await sql`
+    SELECT t.id, t.title, t.created_at, c.name AS category_name, u.username AS author_username
+    FROM forum_threads t
+    JOIN forum_categories c ON c.id = t.category_id
+    JOIN users u ON u.id = t.author_user_id
+    WHERE t.pending_approval = TRUE
+      AND t.deleted_at IS NULL
+    ORDER BY t.created_at ASC
+    LIMIT 200
+  `;
+
   return {
     reports: rows.map((row) => ({
       id: row.id,
@@ -752,6 +961,13 @@ async function listReports(sql, user) {
       createdAt: row.created_at,
       reporterUsername: row.reporter_username,
     })),
+    pendingThreads: pendingRows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      categoryName: row.category_name,
+      authorUsername: row.author_username,
+      createdAt: row.created_at,
+    })),
   };
 }
 
@@ -761,6 +977,7 @@ export async function handler(event) {
   }
 
   try {
+    await assertSiteModuleEnabled(getSqlClient(), 'forum');
     const { sql, user, member } = await getAuthenticatedMember(event, { requireAuth: true });
     if (!member || !user) throw Object.assign(new Error('Unauthorized'), { statusCode: 401 });
 
@@ -789,8 +1006,9 @@ export async function handler(event) {
     if (action === 'unlock_thread') return jsonResponse(200, await moderateThread(sql, user, event, 'unlock'));
     if (action === 'delete_thread') return jsonResponse(200, await moderateThread(sql, user, event, 'delete'));
     if (action === 'delete_reply') return jsonResponse(200, await moderateReply(sql, user, event));
+    if (action === 'approve_thread') return jsonResponse(200, await approveThread(sql, user, event));
 
-    throw Object.assign(new Error('Unsupported action. Use one of: create_thread, create_reply, report_thread, report_reply, lock_thread, unlock_thread, delete_thread, delete_reply'), { statusCode: 400 });
+    throw Object.assign(new Error('Unsupported action. Use one of: create_thread, create_reply, report_thread, report_reply, lock_thread, unlock_thread, delete_thread, delete_reply, approve_thread'), { statusCode: 400 });
   } catch (error) {
     return jsonResponse(error.statusCode || 500, { error: error.message || 'Unable to process forum request' }, error.headers || {});
   }

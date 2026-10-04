@@ -13,6 +13,7 @@
   const shareCopied = document.getElementById('badgeShareCopied');
   const pageTitle = document.getElementById('badgePageTitle');
   const pageDescription = document.getElementById('badgePageDescription');
+  const REQUEST_TIMEOUT_MS = 10000;
 
   function showError(message) {
     if (loadingShell) loadingShell.classList.add('d-none');
@@ -66,30 +67,66 @@
     }
   }
 
+  // Without a timeout a hung request left the loading shell spinning forever,
+  // with no error path ever reached. AbortController rather than
+  // AbortSignal.timeout: the browser gate in early-bootstrap.js admits anything
+  // with fetch, and Safari before 16 has one but not the other -- there the
+  // call threw before any request and every badge showed "Network error".
+  async function requestJson(url) {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutId = controller ? window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS) : null;
+    try {
+      const response = await fetch(url, {
+        credentials: 'same-origin',
+        headers: { accept: 'application/json' },
+        signal: controller ? controller.signal : undefined,
+      });
+      const data = response.ok ? await response.json() : null;
+      return { ok: response.ok, status: response.status, data };
+    } finally {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  // "Your badges" links (the forum reputation page) carry no ?u, so fall back
+  // to the signed-in member rather than an error.
+  async function signedInUsername() {
+    try {
+      const { ok, data } = await requestJson('/api/member-session');
+      if (!ok || !data?.authenticated) return '';
+      return String(data.member?.username || data.user?.username || '').trim();
+    } catch {
+      return '';
+    }
+  }
+
   async function load() {
     const params = new URLSearchParams(window.location.search);
-    const username = (params.get('u') || params.get('user') || '').trim();
+    let username = (params.get('u') || params.get('user') || '').trim();
+    const isOwnBadge = !username;
     if (!username) {
-      showError('No user specified. Add ?u=username to the URL to view a member\'s badge.');
+      username = await signedInUsername();
+    }
+    if (!username) {
+      showError('Sign in to see your own badges, or open a member\'s badge link to see theirs.');
       return;
     }
 
     try {
-      // Without a timeout a hung request left the loading shell spinning
-      // forever, with no error path ever reached.
-      const response = await fetch(`/api/public-badge?user=${encodeURIComponent(username)}`, {
-        headers: { accept: 'application/json' },
-        signal: AbortSignal.timeout(10000),
-      });
+      const response = await requestJson(`/api/public-badge?user=${encodeURIComponent(username)}`);
       if (response.status === 404) {
-        showError(`We couldn't find a Beginner Path Graduate badge for "${username}".`);
+        showError(isOwnBadge
+          ? 'You haven\'t earned the Beginner Path Graduate badge yet. Finish the four-level learning path to get it.'
+          : `We couldn't find a Beginner Path Graduate badge for "${username}".`);
         return;
       }
       if (!response.ok) {
         showError('Something went wrong loading this badge. Please try again later.');
         return;
       }
-      const data = await response.json();
+      const data = response.data;
       const displayName = String(data.displayName || data.username || username);
       const earnedAt = formatDate(data.badge?.earnedAt);
       if (holderName) holderName.textContent = displayName;

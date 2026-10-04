@@ -16,7 +16,8 @@ export function escapeHtml(value) {
 
 export function englishGematria(text) {
   let total = 0;
-  for (const char of String(text || '').toUpperCase()) {
+  // NFKC, then ASCII letters only: the same rule as englishGematria.mjs.
+  for (const char of String(text || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase()) {
     const code = char.charCodeAt(0);
     if (code >= 65 && code <= 90) {
       total += (code - 64) * 6;
@@ -26,8 +27,7 @@ export function englishGematria(text) {
 }
 
 export function gematriaLetterBreakdown(text) {
-  return [...String(text || '').toUpperCase()]
-    .filter((char) => char >= 'A' && char <= 'Z')
+  return [...String(text || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase()]
     .map((char) => {
       const value = (char.charCodeAt(0) - 64) * 6;
       return { char, value };
@@ -40,6 +40,17 @@ export function digitalRoot(numberValue) {
     root = String(root).split('').reduce((sum, digit) => sum + Number(digit), 0);
   }
   return root;
+}
+
+// A shared GemaBot link (/ai-agent.html?sharedTopic=...) also carries
+// sharedTotal and sharedRoot, but the banner recomputes both from the topic so
+// an edited link cannot show a site-branded result for any value it likes.
+// Returns null when the topic has no A-Z letters to count.
+export function describeSharedLookup(topic) {
+  const text = String(topic || '').trim();
+  const total = englishGematria(text);
+  if (!total) return null;
+  return { topic: text, total, root: digitalRoot(total) };
 }
 
 export function isBaseRootTotal(total) {
@@ -99,6 +110,61 @@ export function scoreLearningOverlap(promptTokens, entryTokens) {
   return intersection / unionSize;
 }
 
+function toLearningMatchText(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+// Learned entries are written by members and shown as a note on matching
+// replies, so a match has to mean the prompts are about the same thing. Apart
+// from the same prompt (ignoring case and punctuation), an entry only matches
+// when every meaningful word of it appears in the prompt and it has at least
+// two of them. Requiring all of them keeps the subject word in play: a note
+// saved for "what is the gematria value of love" must not land on the same
+// question about "jerusalem", which a share-of-words score (or the prompt being
+// part of the entry) let through. Two words keeps an entry saved for "e" (or
+// "love") from attaching its note to nearly every reply.
+//
+// A context-dependent prompt ("what does that mean", "why", "yes") names no
+// subject, so it neither matches nor is matched: an entry saved under one
+// (older entries were saved under the raw prompt) would put a note written
+// after "love" on "what does jerusalem mean" and on every later "why".
+// buildLearningPrompt gives those replies a key that carries their subject.
+export function findLearnedEntry(prompt, entries = []) {
+  const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
+  if (!isLearnablePrompt(normalizedPrompt)) return null;
+  if (!Array.isArray(entries) || !entries.length) return null;
+
+  const promptText = toLearningMatchText(normalizedPrompt);
+  const usable = entries.filter((entry) => isLearnablePrompt(entry?.prompt)
+    && normalizeCandidate(entry?.explanation));
+  const exactHit = usable.find((entry) => toLearningMatchText(entry.prompt) === promptText);
+  if (exactHit) return exactHit;
+
+  const promptTokens = new Set(tokenizeForLearning(normalizedPrompt));
+  let best = null;
+  let bestSize = 0;
+  for (const entry of usable) {
+    const entryTokens = tokenizeForLearning(entry.prompt);
+    if (entryTokens.length < 2 || entryTokens.length <= bestSize) continue;
+    if (entryTokens.every((token) => promptTokens.has(token))) {
+      best = entry;
+      bestSize = entryTokens.length;
+    }
+  }
+  return best;
+}
+
+// The visible part of a learned response. It used to be a hidden span, so a
+// saved learning (or an admin's "Train from this") changed nothing anyone
+// could see. data-applied-learning stays on it: the "No" feedback button
+// reads it to drop a device-local learning that missed.
+export function buildLearnedNoteHtml(entry) {
+  const prompt = normalizeCandidate(entry?.prompt);
+  const explanation = normalizeCandidate(entry?.explanation);
+  if (!prompt || !explanation) return '';
+  return `<p class="mb-2 small agent-learned-note" data-applied-learning="${escapeHtml(prompt)}"><strong>Community note:</strong> ${escapeHtml(explanation)}</p>`;
+}
+
 export function isAffirmativePrompt(prompt) {
   const normalized = normalizeCandidate(prompt).toLowerCase();
   if (!normalized) return false;
@@ -115,6 +181,78 @@ export function isFollowupQuestion(prompt) {
   const stripped = normalizeCandidate(prompt).toLowerCase().replace(/[?.!]+$/g, '').trim();
   if (!stripped || stripped.length > 60) return false;
   return /^(?:why|how come|huh|wait|so what|context|meaning|interpret(?:\s+(?:that|this|it))?|explain(?:\s+(?:that|this|it|more))?|elaborate|tell\s+me\s+more|more(?:\s+details?)?|details?|what(?:'s|\s+is|\s+does)?\s*(?:that|this|it)?\s*(?:mean|meaning|matter|signify|imply)?)$/.test(stripped);
+}
+
+const AFFIRMATION_WORDS = new Set([
+  'yes', 'yep', 'yup', 'yeah', 'sure', 'ok', 'okay', 'absolutely', 'affirmative', 'alright',
+  'please', 'thanks', 'thank', 'you', 'do', 'go', 'ahead', 'for', 'it', 'that', 'thats', 'this',
+  'sounds', 'good', 'great', 'cool', 'fine', 'works', 'thing', 'of', 'course', 'lets', 'now', 'then',
+]);
+
+// "yes", "Yes please!", "ok go ahead": a confirmation and nothing else, as
+// opposed to "ok what is the gematria of love", which is a question of its own.
+export function isBareAffirmation(prompt) {
+  if (!isAffirmativePrompt(prompt)) return false;
+  const words = normalizeCandidate(prompt).toLowerCase().replace(/['\u2019]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return words.length > 0 && words.every((word) => AFFIRMATION_WORDS.has(word));
+}
+
+// "why", "what does that mean", "yes", "never mind": the reply to these is
+// about whatever came before, not about their own words. A prompt that only
+// starts with a "yes" ("ok what is the gematria of love", "yeah but what
+// about hate") counts only when buildAgentReply would take it as accepting
+// the related-words offer, which it does only while one is pending
+// (pendingTopic); otherwise it is answered as the question it is. Without a
+// pendingTopic (a stored key, a note's entry) only a bare "yes" counts.
+export function isContextDependentPrompt(prompt, { pendingTopic = '' } = {}) {
+  if (isFollowupQuestion(prompt) || isCancellationPrompt(prompt)) return true;
+  if (!isAffirmativePrompt(prompt)) return false;
+  return Boolean(normalizeCandidate(pendingTopic)) || isBareAffirmation(prompt);
+}
+
+// Whether a note saved under this key can ever be shown: findLearnedEntry
+// skips keys with no letters or digits to match on and context-dependent keys.
+export function isLearnablePrompt(prompt) {
+  return Boolean(toLearningMatchText(normalizeCandidate(prompt))) && !isContextDependentPrompt(prompt);
+}
+
+// What the previous answer was about, in words a note's key can carry.
+function describeLearningSubject(context) {
+  if (!context) return '';
+  if (context.kind === 'calculation') return normalizeCandidate(context.topic);
+  if (context.kind === 'comparison' && Array.isArray(context.reports)) {
+    const targets = context.reports.map((entry) => normalizeCandidate(entry?.target)).filter(Boolean);
+    return targets.length ? `compare ${targets.join(' and ')}` : '';
+  }
+  if (context.kind === 'reverse' && Number.isFinite(context.value)) return `reverse gematria ${context.value}`;
+  if (context.kind === 'reverseRange' && Number.isFinite(context.min) && Number.isFinite(context.max)) {
+    return `reverse gematria ${context.min} to ${context.max}`;
+  }
+  return '';
+}
+
+// The key a reply's community note is looked up and saved under: the resolved
+// prompt, except for a context-dependent one, which gets the subject of the
+// answer it follows put in front ("about love: what does that mean"). That way
+// a note written after "love" shows on that follow-up after "love" and not
+// after "jerusalem". With no subject (never mind, a follow-up with nothing
+// before it, a bare "yes" when nothing was offered) the key is empty, so no
+// note is shown and none is saved for everyone. Same order of checks as
+// buildAgentReply: cancellation and follow-up on the raw prompt, then a "yes"
+// on the resolved one, which only accepts the offer while one is pending; an
+// "ok what is the gematria of love" with nothing pending keeps its own key.
+export function buildLearningPrompt(prompt, { resolvedPrompt = prompt, context = null, pendingTopic = '' } = {}) {
+  const raw = normalizeCandidate(prompt);
+  const resolved = normalizeCandidate(resolvedPrompt);
+  if (isCancellationPrompt(raw)) return '';
+  if (isFollowupQuestion(raw)) {
+    const subject = describeLearningSubject(context);
+    return subject ? `about ${subject}: ${raw}` : '';
+  }
+  if (!isContextDependentPrompt(raw) && !isContextDependentPrompt(resolved, { pendingTopic })) return resolved;
+  // A "yes" that accepts the pending offer, or a bare one with nothing offered.
+  const offeredTopic = normalizeCandidate(pendingTopic);
+  return offeredTopic && isAffirmativePrompt(resolved) ? `about related words for ${offeredTopic}: ${raw}` : '';
 }
 
 export function isComparisonRequest(prompt) {

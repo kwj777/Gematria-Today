@@ -24,6 +24,7 @@ import {
 import { jsonResponse, parseCookies } from './_auth.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
+import { isSiteModuleEnabled } from './_site-modules.mjs';
 
 // Provider-side errors are a fixed vocabulary; anything unrecognised becomes a
 // generic code so a provider can never inject arbitrary text into the page.
@@ -102,7 +103,10 @@ export async function handler(event) {
       codeVerifier: statePayload.codeVerifier,
     });
     const oauthProfile = await fetchOAuthProfile(provider, tokens, { clientId, nonce: statePayload.n });
-    const result = await findOrCreateMemberFromOAuth(sql, oauthProfile);
+    const result = await findOrCreateMemberFromOAuth(sql, oauthProfile, {
+      allowSignup: await isSiteModuleEnabled(sql, 'membership'),
+      signupSource: statePayload.s,
+    });
 
     // No session until the address is confirmed. Signing them in here would
     // make our own verification email pointless.
@@ -164,6 +168,7 @@ export async function handler(event) {
         ...(result.created ? { oauth_new: '1' } : {}),
         ...(result.linked ? { oauth_linked: '1' } : {}),
         ...(result.passwordRetired ? { oauth_password_retired: '1' } : {}),
+        ...(result.usernameReplaced ? { oauth_username_replaced: '1' } : {}),
       }, { remove: ['auth'] }),
       {
         cookies: [
@@ -197,6 +202,7 @@ export async function handler(event) {
       'account_not_active',
       'provider_unavailable',
       'nonce_mismatch',
+      'signup_closed',
     ]);
     if (error.code && actionableCodes.has(error.code)) {
       return failureRedirect(returnTo, error.code);

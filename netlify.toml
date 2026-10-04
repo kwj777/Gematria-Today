@@ -3,15 +3,22 @@
   functions = "netlify/functions"
   publish = "_site"
 
+# Forced: robots.txt and sitemap.xml also exist as static files in _site, and a
+# non-forced rewrite loses to a file at the same path, so the module-aware
+# functions never ran and switching a module off changed nothing crawlers saw.
+# Both functions fall back to the default output (identical to the tracked
+# files) rather than erroring when the database is unreachable.
 [[redirects]]
   from = "/robots.txt"
   to = "/.netlify/functions/robots-txt"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/sitemap.xml"
   to = "/.netlify/functions/sitemap-xml"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/nameCalculator.html"
@@ -519,6 +526,10 @@
 [functions."word-page"]
   included_files = ["src/_includes/*.html"]
 
+# The tracked sitemap.xml holds each page's <lastmod>; the function reads it.
+[functions."sitemap-xml"]
+  included_files = ["sitemap.xml"]
+
 [functions."admin-hub"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
 
@@ -533,11 +544,21 @@
 [functions."super-admin-guide-index"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
 
-# resvg cannot read the woff2 cuts the site serves to browsers, so the chart
-# renderer needs TTF/OTF alongside it to print in the brand faces rather than
-# the host's default serif.
+# The "Train from this" action checks a prompt with GemaBot's own matching
+# helpers, imported from the page script by a relative path. Shipped for the
+# same reason as the _*.mjs helpers above: a verbatim-copy packager keeps the
+# import live, so the file has to exist at that path at runtime.
+[functions."admin-chatbot-feedback"]
+  included_files = ["page-scripts/ai-agent-helpers.mjs"]
+
+# resvg cannot read the woff2 cuts the site serves to browsers, and Lambda has
+# no system fonts at all -- without these TTF cuts both PNG renderers drop every
+# <text> node. tests/resvg-fonts.test.mjs fails if a glob here stops matching.
 [functions."name-chart-image"]
-  included_files = ["assets/fonts/*.ttf", "assets/fonts/*.otf"]
+  included_files = ["assets/fonts/*.ttf"]
+
+[functions."ai-agent-share-image"]
+  included_files = ["assets/fonts/*.ttf"]
 
 [functions."member-prune-unverified"]
   schedule = "0 0 * * *"

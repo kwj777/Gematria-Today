@@ -319,10 +319,18 @@ test('clearSessionCookie returns an array of cookies with Expires=Thu, 01 Jan 19
   process.env.AUTH_COOKIE_SECURE = 'false';
   const result = clearSessionCookie(AUTH_COOKIES.admin);
   assert.ok(Array.isArray(result));
-  assert.equal(result.length, 1);
+  // The admin session also clears its readable companion flag.
+  assert.equal(result.length, 2);
   assert.ok(result[0].startsWith(`${AUTH_COOKIES.admin}=;`));
   assert.ok(result[0].includes('Expires=Thu, 01 Jan 1970 00:00:00 GMT'));
   assert.ok(result[0].includes('HttpOnly'));
+  assert.ok(result[1].startsWith(`${AUTH_COOKIES.adminFlag}=;`));
+  assert.ok(result[1].includes('Expires=Thu, 01 Jan 1970 00:00:00 GMT'));
+  assert.ok(!result[1].includes('HttpOnly'));
+
+  const memberResult = clearSessionCookie(AUTH_COOKIES.member);
+  assert.equal(memberResult.length, 1);
+  assert.ok(memberResult[0].startsWith(`${AUTH_COOKIES.member}=;`));
 });
 
 // ---------- createMemberTierCookie / clearMemberTierCookie ----------

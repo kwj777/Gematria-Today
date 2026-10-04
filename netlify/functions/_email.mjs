@@ -163,24 +163,35 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
   const expiresText = new Date(expiresAt).toUTCString();
   const safeUsername = escapeHtml(username);
   const safeRecoveryCode = escapeHtml(recoveryCode);
-  const recoveryUrl = config.appBaseUrl
-    ? `${config.appBaseUrl}/${accountLabel === 'admin' ? 'admin.html' : 'account-recovery.html'}${recoveryType === 'forgot-password' ? `?recovery_code=${encodeURIComponent(recoveryCode)}` : ''}`
-    : null;
+  // A username reminder carries no code and links to sign-in. Nothing accepts a
+  // forgot-userid code -- the reset form only takes password-reset codes --
+  // and the recovery page promises "no code or reset needed", so the code it
+  // used to show was rejected by the one form that looked like it wanted it,
+  // and its "sign-in page" link opened account recovery. forgot-both is one
+  // email, as the page promises: the reset email, which names the username.
+  const isUsernameReminder = recoveryType === 'forgot-userid';
+  const recoveryPath = isUsernameReminder
+    ? (accountLabel === 'admin' ? 'admin.html' : 'member.html?auth=login#authSection')
+    : `${accountLabel === 'admin' ? 'admin.html' : 'account-recovery.html'}?recovery_code=${encodeURIComponent(recoveryCode)}`;
+  const recoveryUrl = config.appBaseUrl ? `${config.appBaseUrl}/${recoveryPath}` : null;
 
-  const subject = recoveryType === 'forgot-userid'
+  const subject = isUsernameReminder
     ? `Your ${accountLabel} username for Gematria.Today`
-    : `Your ${accountLabel} password reset code for Gematria.Today`;
+    : recoveryType === 'forgot-both'
+      ? `Your ${accountLabel} username and password reset code for Gematria.Today`
+      : `Your ${accountLabel} password reset code for Gematria.Today`;
+  const resetIntro = recoveryType === 'forgot-both'
+    ? 'You requested your username and a password reset code for your Gematria.Today account.'
+    : 'You requested a password reset code for your Gematria.Today account.';
 
-  const text = recoveryType === 'forgot-userid'
+  const text = isUsernameReminder
     ? [
       'You requested a username reminder for your Gematria.Today account.',
       `Username: ${username}`,
-      `Recovery code: ${recoveryCode}`,
-      `Expires: ${expiresText}`,
       recoveryUrl ? `Sign in: ${recoveryUrl}` : null,
     ].filter(Boolean).join('\n')
     : [
-      'You requested a password reset code for your Gematria.Today account.',
+      resetIntro,
       `Username: ${username}`,
       `Recovery code: ${recoveryCode}`,
       `Expires: ${expiresText}`,
@@ -202,16 +213,14 @@ export async function sendRecoveryEmail({ toEmail, username, recoveryCode, expir
     <span style="color:#57606a;font-size:12px;">If the button is unavailable in your email app, copy the recovery code manually.</span>
   `;
 
-  const html = recoveryType === 'forgot-userid'
+  const html = isUsernameReminder
     ? `
       <p>You requested a username reminder for your Gematria.Today account.</p>
       <p><strong>Username:</strong> ${safeUsername}</p>
-      <p><strong>Recovery code:</strong> ${recoveryCodeHtml}</p>
-      <p><strong>Expires:</strong> ${escapeHtml(expiresText)}</p>
-      ${recoveryUrl ? `<p><a href="${escapeHtml(recoveryUrl)}">Open the sign-in page</a></p>` : ''}
+      ${recoveryUrl ? `<p><a href="${escapeHtml(recoveryUrl)}">Sign in</a></p>` : ''}
     `
     : `
-      <p>You requested a password reset code for your Gematria.Today account.</p>
+      <p>${escapeHtml(resetIntro)}</p>
       <p><strong>Username:</strong> ${safeUsername}</p>
       <p><strong>Recovery code:</strong> ${recoveryCodeHtml}</p>
       <p><strong>Expires:</strong> ${escapeHtml(expiresText)}</p>

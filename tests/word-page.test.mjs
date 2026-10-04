@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
-import { parseRoute, renderWordPage, renderValuePage, isBaseRootValue, isIndexableWord, letterBreakdown, escapeHtml } from '../netlify/functions/word-page.mjs';
+import onRequest, { cacheControlForStatus, parseRoute, renderWordPage, renderValuePage, isBaseRootValue, isIndexableWord, letterBreakdown, escapeHtml } from '../netlify/functions/word-page.mjs';
 import { buildSitemapIndex, buildUrlSet, pageLocs, escapeXml } from '../netlify/functions/sitemap-words-xml.mjs';
 
 test('parseRoute reads the original request path', () => {
@@ -92,7 +92,8 @@ test('the words sitemap is an index over fixed-size chunks', () => {
 
 test('sitemap chunks emit value pages first, then words, correctly encoded', () => {
   assert.deepEqual(pageLocs({ page: 1, values: [6, 336], words: [] }), ['/v/6', '/v/336']);
-  assert.deepEqual(pageLocs({ page: 2, values: [], words: ['light', 'a&b'] }), ['/w/light', '/w/a%26b']);
+  // 'a&b' is not the shape of a word, so it is not published at all.
+  assert.deepEqual(pageLocs({ page: 2, values: [], words: ['light', 'A per se', 'a&b'] }), ['/w/light', '/w/A%20per%20se']);
 
   const xml = buildUrlSet(['/w/light', '/w/a%26b']);
   assert.match(xml, /<urlset/);
@@ -212,12 +213,22 @@ test('the sitemap cache key is versioned so filtering changes take effect at onc
   assert.match(source, /v: CACHE_VERSION/);
 });
 
-test('the storage rule and the indexing rule are the same definition', async () => {
+test('storage is never looser than rendering or publishing', async () => {
   // Storage, rendering and the sitemap must agree, or the table refills with
-  // entries the sitemap then has to filter out again.
-  const { isIndexableWord: shared, isStorableWord } = await import('../netlify/functions/_words.mjs');
-  assert.equal(isStorableWord, shared);
+  // entries the sitemap then has to filter out again. Storage is now the
+  // strictest of the three: anything stored renders, and publishes unless it
+  // is a blocked word; anything published is something storage would accept.
+  const { isIndexableWord: shared, isStorableWord, isPublishableWord } = await import('../netlify/functions/_words.mjs');
   assert.equal(shared, isIndexableWord, 'word-page must re-export the shared rule');
+  const samples = [
+    'light', 'A per se', 'A-one', 'Abyssinian cat', 'ALGOL', "O'Brien", 'café', 'fag',
+    '*', '0', '-ol', '2 5 0 62 4', '<er>annoy</er>', 'a 2 5 0 62 4', 'Catch-22',
+    'Buy cheap pills at rxshop dot com', 'Call 555 0100 for loans', 'rxshop.com', '',
+  ];
+  for (const word of samples) {
+    if (isStorableWord(word)) assert.equal(shared(word), true, `${JSON.stringify(word)} is storable but would not render`);
+    if (isPublishableWord(word)) assert.equal(isStorableWord(word), true, `${JSON.stringify(word)} is published but storage would refuse it`);
+  }
 
   const gematria = await fs.readFile(new URL('../netlify/functions/englishGematria.mjs', import.meta.url), 'utf8');
   assert.match(gematria, /from '\.\/_words\.mjs'/);
@@ -266,6 +277,18 @@ test('word pages show the letter breakdown that makes them non-thin', () => {
   const html = renderWordPage('ALA', 84, []);
   assert.match(html, /letter-value-grid/);
   assert.match(html, /= <strong>84<\/strong>/);
+});
+
+test('the word page letter chart is a definition list, not a table without rows', () => {
+  // role="table" holding role="cell"s and no role="row" is a malformed table:
+  // screen readers' table navigation fails or reports it broken (WCAG 1.3.1).
+  const html = renderWordPage('ALA', 84, []);
+  assert.doesNotMatch(html, /role="table"|role="cell"/);
+  const chart = html.match(/<dl class="letter-value-grid[^"]*">([\s\S]*?)<\/dl>/)?.[1] || '';
+  const pairs = [...chart.matchAll(/<div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">([A-Z])<\/dt><dd class="letter-value-grid__value[^"]*">(\d+)<\/dd><\/div>/g)]
+    .map((m) => `${m[1]}=${m[2]}`);
+  assert.deepEqual(pairs, ['A=6', 'L=72', 'A=6']);
+  assert.equal(chart.replace(/<div class="letter-value-grid__cell">[\s\S]*?<\/div>/g, '').trim(), '', 'the <dl> holds only letter groups');
 });
 
 test('slurs are never published, though the calculator still returns them', async () => {
@@ -338,7 +361,12 @@ test('mixed-case URLs canonicalise to one form instead of competing', () => {
 });
 
 test('the related-word list is styled and the cap has a way out', () => {
-  const many = Array.from({ length: 260 }, (_, i) => ({ word: `word${i}`, search_count: 1 }));
+  // Letters only: a digit would make each one something the site no longer
+  // publishes.
+  const many = Array.from({ length: 260 }, (_, i) => ({
+    word: `word${String.fromCharCode(97 + Math.floor(i / 26))}${String.fromCharCode(97 + (i % 26))}`,
+    search_count: 1,
+  }));
   const html = renderValuePage(336, many);
   assert.match(html, /<ul class="related-word-list">/);
   // The footer's own link stacks legitimately use site-footer-list, so only the
@@ -401,6 +429,29 @@ test('the call to action prefills the calculator with the word', () => {
   const html = renderWordPage('light', 336, []);
   assert.match(html, /\/calculator\.html\?query=light/);
   assert.ok(!/calculator\.html\?word=/.test(html));
+});
+
+test('only a real page is cached publicly for long', () => {
+  // A 429 is one visitor's rate limit and a 5xx a passing outage; cached
+  // publicly for 10 minutes plus a day of stale, either kept the word broken
+  // long after recovery and could serve one person's 429 to a whole proxy.
+  assert.equal(cacheControlForStatus(200), 'public, max-age=600, stale-while-revalidate=86400');
+  assert.equal(cacheControlForStatus(404), 'public, max-age=60');
+  for (const status of [429, 500, 502, 503]) {
+    assert.equal(cacheControlForStatus(status), 'no-store', `status ${status}`);
+  }
+});
+
+test('a word page that fails to build is not cached', async () => {
+  const prior = process.env.DATABASE_URL;
+  delete process.env.DATABASE_URL;
+  try {
+    const response = await onRequest(new Request('https://gematria.today/w/light'));
+    assert.equal(response.status, 500);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  } finally {
+    if (prior !== undefined) process.env.DATABASE_URL = prior;
+  }
 });
 
 test('the generated footer tagline matches the built tools pages', async () => {

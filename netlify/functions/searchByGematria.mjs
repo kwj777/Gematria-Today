@@ -1,6 +1,8 @@
 import { getOptionalAuthenticatedSession, getSqlClient, jsonResponse } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 import { recordGematriaNumberSearch } from './_badges.mjs';
+import { MAX_GEMATRIA_VALUE, parseGematriaValue } from './_words.mjs';
+import { wordHasValue } from './englishGematria.mjs';
 
 function extractGematriaValue(source) {
   if (!source || typeof source !== 'object') return null;
@@ -9,10 +11,17 @@ function extractGematriaValue(source) {
   return null;
 }
 
+function badRequest(message) {
+  return Object.assign(new Error(message), { statusCode: 400 });
+}
+
 async function searchByGematria(sql, gematriaValue) {
-  const normalizedValue = String(gematriaValue ?? '').trim();
-  if (!normalizedValue) throw new Error('Missing required query parameter: gematria');
-  if (!/^\d+$/.test(normalizedValue)) throw new Error('Gematria must be a positive integer.');
+  const rawValue = String(gematriaValue ?? '').trim();
+  if (!rawValue) throw badRequest('Missing required query parameter: gematria');
+  if (!/^\d+$/.test(rawValue)) throw badRequest('Gematria must be a positive integer.');
+  const value = parseGematriaValue(rawValue);
+  if (value === null) throw badRequest(`Gematria must be no larger than ${MAX_GEMATRIA_VALUE}.`);
+  const normalizedValue = String(value);
 
   const cacheResult = await withCachedJson(sql, {
     cacheKey: buildCacheKey({ route: 'searchByGematria', gematria: normalizedValue }),
@@ -23,13 +32,17 @@ async function searchByGematria(sql, gematriaValue) {
       // page renders a card for each one. 500 is well past any real value's
       // match count and keeps a pathological row set from becoming a
       // pathological page.
-      const words = await sql`
+      const rows = await sql`
         SELECT word, gematria_value, digital_root, is_base_root, search_count
         FROM words
-        WHERE gematria_value = ${Number(normalizedValue)}
+        WHERE gematria_value = ${value}
         ORDER BY LOWER(word) ASC
         LIMIT 500
       `;
+      // A row stored under the old letter rule can still carry a total its
+      // word no longer adds up to ("Straße" at 606, now 378). Listed here, it
+      // would open to a different number than the one it was found under.
+      const words = rows.filter((row) => wordHasValue(row.word, value));
 
       return {
         gematria: normalizedValue,
@@ -50,6 +63,22 @@ async function searchByGematria(sql, gematriaValue) {
   return cacheResult;
 }
 
+// newlyEarnedBadges belongs to the member who asked. Under a public header a
+// shared cache keyed on the URL would replay their badge toast to every later
+// visitor of the same search, so only the badge-free answer is cached publicly.
+export function searchCacheControl(payload) {
+  return payload?.newlyEarnedBadges ? 'private, no-store' : 'public, max-age=300, stale-while-revalidate=120';
+}
+
+// Validation errors carry their own status and say what to fix. Anything else
+// is unexpected -- usually the database's -- and its message is logged, not
+// returned.
+function toErrorResponse(error) {
+  if (error.statusCode) return { statusCode: error.statusCode, message: error.message };
+  console.error('searchByGematria failed', error);
+  return { statusCode: 500, message: 'Gematria search failed. Please try again.' };
+}
+
 export default async function onRequest(request) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'searchByGematria' });
@@ -68,7 +97,10 @@ export default async function onRequest(request) {
     const gematriaParam = new URL(request.url).searchParams.get('gematria');
     const cacheResult = await searchByGematria(sql, gematriaParam);
     let badgeAward = null;
-    if (user?.id && !cacheResult.cached) {
+    // Credit follows the member's request, not the shared cache: a search
+    // answered from cache because someone else ran the same value is still a
+    // search this member made.
+    if (user?.id) {
       badgeAward = await recordGematriaNumberSearch(sql, user.id);
     }
     await logRequestAudit(sql, request, {
@@ -83,13 +115,13 @@ export default async function onRequest(request) {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+        'cache-control': searchCacheControl(responsePayload),
         'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
       },
     });
   } catch (error) {
-    const statusCode = error.statusCode || (error.message.startsWith('Missing required') || error.message.includes('positive integer') ? 400 : 500);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const { statusCode, message } = toErrorResponse(error);
+    return new Response(JSON.stringify({ error: message }), {
       status: statusCode,
       headers: { 'content-type': 'application/json; charset=utf-8', ...(error.headers || {}) },
     });
@@ -114,7 +146,7 @@ export async function handler(event) {
     const gematriaParam = extractGematriaValue(event);
     const cacheResult = await searchByGematria(sql, gematriaParam);
     let badgeAward = null;
-    if (user?.id && !cacheResult.cached) {
+    if (user?.id) {
       badgeAward = await recordGematriaNumberSearch(sql, user.id);
     }
     await logRequestAudit(sql, event, {
@@ -126,11 +158,11 @@ export async function handler(event) {
       ? { ...cacheResult.payload, newlyEarnedBadges: badgeAward.newBadges }
       : cacheResult.payload;
     return jsonResponse(200, responsePayload, {
-      'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+      'cache-control': searchCacheControl(responsePayload),
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {
-    const statusCode = error.statusCode || (error.message.startsWith('Missing required') || error.message.includes('positive integer') ? 400 : 500);
-    return jsonResponse(statusCode, { error: error.message }, error.headers || {});
+    const { statusCode, message } = toErrorResponse(error);
+    return jsonResponse(statusCode, { error: message }, error.headers || {});
   }
 }

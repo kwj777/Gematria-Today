@@ -245,7 +245,8 @@
         event.preventDefault();
         resetAlert.clear();
 
-        const recoveryCode = recoveryCodeInput.value.trim();
+        // Codes are lowercase hex; one typed in capitals is the same code.
+        const recoveryCode = recoveryCodeInput.value.trim().toLowerCase();
         const newPassword = newPasswordInput.value;
         const confirmNewPassword = confirmPasswordInput.value;
 
@@ -286,8 +287,18 @@
         }
       });
 
-      const recoveryCodeFromUrl = new URL(window.location.href).searchParams.get('recovery_code');
+      const pageUrl = new URL(window.location.href);
+      const recoveryCodeFromUrl = pageUrl.searchParams.get('recovery_code');
       if (recoveryCodeFromUrl) {
+        // The code is a live password-reset credential. Once it is in the form,
+        // drop it from the address bar so it stays out of history, the Referer of
+        // the next page and anything that reports the page URL.
+        pageUrl.searchParams.delete('recovery_code');
+        try {
+          window.history.replaceState(window.history.state, '', `${pageUrl.pathname}${pageUrl.search}${pageUrl.hash}`);
+        } catch {
+          // Ignore: the form still works with the code left in the URL.
+        }
         recoveryCodeInput.value = recoveryCodeFromUrl;
         resetSection.classList.remove('d-none');
         setStep(3);

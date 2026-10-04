@@ -1,4 +1,5 @@
 import type { Config, Context } from '@netlify/edge-functions';
+import { digitalRoot, englishGematria, replaceMetaContent, replaceTitle } from './lib/og-meta.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
 const OGP_IMAGE_WIDTH = 1200;
@@ -14,28 +15,10 @@ function toShareImageUrl(value: string): string {
   return `${SITE_ORIGIN}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
 }
 
-function escapeAttr(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function replaceMetaContent(html: string, selector: string, newValue: string): string {
-  const attrMatch = selector.match(/meta\[(property|name)="([^"]+)"\]/);
-  if (!attrMatch) {
-    return html;
-  }
-  const [, attrName, attrValue] = attrMatch;
-  const pattern = new RegExp(`(<meta\\s[^>]*${attrName}="${attrValue}"[^>]*\\scontent=")([^"]*)(")`);
-  return html.replace(pattern, `$1${escapeAttr(newValue)}$3`);
-}
-
 export default async (req: Request, context: Context) => {
   const requestUrl = new URL(req.url);
   const query = String(requestUrl.searchParams.get('query') || '').trim();
-  const total = String(requestUrl.searchParams.get('total') || '').trim();
-  const digitalRoot = String(requestUrl.searchParams.get('digitalRoot') || '').trim();
-  const isBaseRoot = String(requestUrl.searchParams.get('isBaseRoot') || '').trim();
   const definitionPreview = String(requestUrl.searchParams.get('definitionPreview') || '').trim();
-  const perLetterValues = String(requestUrl.searchParams.get('perLetterValues') || '').trim();
 
   const response = await context.next();
   let html = await response.text();
@@ -44,33 +27,28 @@ export default async (req: Request, context: Context) => {
     return new Response(html, { headers: response.headers });
   }
 
-  const title = total
+  // Share links also carry total, digitalRoot, isBaseRoot and perLetterValues.
+  // They are ignored: the numbers are recomputed from the query, so a
+  // hand-edited link cannot unfurl as a site-branded result for any value.
+  const total = englishGematria(query);
+  // Same letter rule as the total (NFKC, then ASCII A-Z), so full-width
+  // letters count and an accent-only query does not unfurl as "(0)".
+  const hasLetters = total > 0;
+  const title = hasLetters
     ? `Gematria lookup for "${query}" (${total}) | Gematria.Today`
     : `Gematria lookup for "${query}" | Gematria.Today`;
-  const description = total
-    ? `Lookup result: ${query} has base-6 English gematria ${total}${digitalRoot ? ` (digital root ${digitalRoot})` : ''}.`
+  const description = hasLetters
+    ? `Lookup result: ${query} has base-6 English gematria ${total} (digital root ${digitalRoot(total)}).`
     : `Lookup result for ${query} on the Gematria.Today calculator.`;
   const shareUrl = `${SITE_ORIGIN}/calculator.html${requestUrl.search}`;
   const imageUrl = new URL('/.netlify/functions/calculator-share-image', SITE_ORIGIN);
   imageUrl.searchParams.set('type', 'word');
   imageUrl.searchParams.set('query', query);
-  if (total) {
-    imageUrl.searchParams.set('total', total);
-  }
-  if (digitalRoot) {
-    imageUrl.searchParams.set('digitalRoot', digitalRoot);
-  }
-  if (isBaseRoot) {
-    imageUrl.searchParams.set('isBaseRoot', isBaseRoot);
-  }
   if (definitionPreview) {
     imageUrl.searchParams.set('definitionPreview', definitionPreview);
   }
-  if (perLetterValues) {
-    imageUrl.searchParams.set('perLetterValues', perLetterValues);
-  }
 
-  html = html.replace(/(<title[^>]*>)[^<]*(<\/title>)/, `$1${escapeAttr(title)}$2`);
+  html = replaceTitle(html, title);
   html = replaceMetaContent(html, 'meta[name="description"]', description);
   html = replaceMetaContent(html, 'meta[property="og:title"]', title);
   html = replaceMetaContent(html, 'meta[property="og:description"]', description);

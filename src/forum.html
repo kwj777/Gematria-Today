@@ -20,12 +20,14 @@
     <meta property="og:title" content="Community Forum | Gematria.Today" />
     <meta property="og:description" content="Join the Gematria.Today community forum with a free member area and a premium member area for subscribers." />
     <meta property="og:url" content="https://gematria.today/forum.html" />
-    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Gematria.Today forum dashboard and member conversation overview illustration." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Community Forum | Gematria.Today" />
     <meta name="twitter:description" content="Join the Gematria.Today community forum with a free member area and a premium member area for subscribers." />
-    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
     <meta name="twitter:image:alt" content="Gematria.Today forum dashboard and member conversation overview illustration." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
@@ -81,7 +83,21 @@
         min-height: 44px;
       }
       .forum-thread-card:hover .forum-category-chip,
-      .forum-thread-card:focus-visible .forum-category-chip { transform: translateY(-1px); filter: saturate(1.06); }
+      .forum-thread-card:focus-within .forum-category-chip { transform: translateY(-1px); filter: saturate(1.06); }
+      .forum-thread-open {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+      }
+      .forum-thread-open:hover { text-decoration: underline; text-underline-offset: 2px; }
+      .forum-thread-open:focus-visible {
+        outline: 2px solid var(--brand-amber);
+        outline-offset: 2px;
+        border-radius: 0.25rem;
+      }
       .forum-category-icon { line-height: 1; }
       @media (prefers-reduced-motion: reduce) {
         .forum-category-chip { transition: none; }
@@ -126,8 +142,12 @@
         text-decoration: underline;
         text-underline-offset: 2px;
       }
+      /* The pale blue only reads on the dark cards; on the light theme's white
+         cards it was 1.76:1, so light uses a dark link blue (6.4:1 on white). */
       .forum-author-trigger:hover,
-      .forum-author-trigger:focus-visible { color: #9ec5fe; }
+      .forum-author-trigger:focus-visible { color: #0a58ca; }
+      :root[data-bs-theme="dark"] .forum-author-trigger:hover,
+      :root[data-bs-theme="dark"] .forum-author-trigger:focus-visible { color: #9ec5fe; }
       .forum-profile-popover {
         position: absolute;
         z-index: 20;
@@ -141,6 +161,9 @@
         padding: 0.65rem 0.75rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.35);
       }
+      /* The popover is dark in both themes, but Bootstrap's light-theme
+         .text-muted is dark gray: the @username and membership lines were 1.06:1. */
+      .forum-profile-popover .text-muted { color: rgba(230, 235, 242, 0.78) !important; }
       .forum-profile-popover-close {
         border: 0;
         border-radius: 999px;
@@ -164,7 +187,7 @@
     <a class="skip-link" href="#mainContent">Skip to main content</a>
 {% nav %}
 
-    <main id="mainContent" class="container py-5">
+    <main id="mainContent" class="container py-5" data-module-page="forum">
       <noscript>
         <div class="alert alert-warning" role="alert">
           <strong>JavaScript is disabled.</strong> The forum needs JavaScript to load threads, post replies, and manage moderation. Please enable JavaScript to participate.
@@ -297,7 +320,7 @@
           <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
             <h2 id="threadDetailTitle" class="h4 mb-0 forum-title"></h2>
             <div class="d-flex gap-2 align-items-center forum-thread-actions">
-              <button id="reportThreadButton" class="btn btn-outline-warning btn-sm" type="button" title="Report this thread to the moderation team" aria-label="Report this thread to the moderation team">Report thread</button>
+              <button id="reportThreadButton" class="btn btn-outline-warning btn-sm" type="button" title="Report this thread to the moderation team" aria-label="Report thread to the moderation team">Report thread</button>
               <span id="threadModToolbar" class="forum-mod-toolbar d-none" role="group" aria-label="Moderator actions" hidden>
                 <span class="forum-mod-toolbar__label badge text-bg-secondary" aria-hidden="true">Mod</span>
                 <button id="lockThreadButton" class="btn btn-outline-secondary btn-sm" type="button" title="Lock or unlock this thread (moderator only)" aria-label="Lock this thread (moderator only)">Lock</button>

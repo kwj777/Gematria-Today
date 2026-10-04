@@ -2,7 +2,9 @@
 // theme.css and site-bundle.js, and because static assets were served
 // cache-first with no revalidation, returning visitors ran new HTML against
 // whichever CSS and JS they happened to cache first -- indefinitely.
-const CACHE_VERSION = 'v7';
+// v8: static-v7 holds install-time copies that shadowed every revalidated
+// update (see matchFreshest), so it has to go.
+const CACHE_VERSION = 'v8';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGE_CACHE = `pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;
@@ -48,8 +50,20 @@ function shouldCacheResponse(response) {
   return !/no-store|private/i.test(cacheControl);
 }
 
+// caches.match() searches caches in creation order, and STATIC_CACHE is
+// created at install, before the caches that receive updates. Asking it first
+// therefore returned the install-time precache of theme.css, site-bundle.js,
+// pwa-register.js and the home page for good, while every revalidated copy
+// was written to a cache that was never read first. Look in the cache that
+// receives updates, and fall back to the precache only for what it lacks.
+async function matchFreshest(request, updatedCacheName) {
+  const updatedCache = await caches.open(updatedCacheName);
+  const updated = await updatedCache.match(request);
+  return updated || caches.match(request);
+}
+
 async function navigationFallback(request) {
-  const directMatch = await caches.match(request);
+  const directMatch = await matchFreshest(request, PAGE_CACHE);
   if (directMatch) {
     return directMatch;
   }
@@ -61,7 +75,7 @@ async function navigationFallback(request) {
   // because index.html is always precached.
   const url = new URL(request.url);
   if (url.pathname === '/' || url.pathname === '/index.html') {
-    const appShell = await caches.match('/index.html');
+    const appShell = await matchFreshest('/index.html', PAGE_CACHE);
     if (appShell) {
       return appShell;
     }
@@ -152,7 +166,7 @@ self.addEventListener('fetch', (event) => {
 
   if (isStaticAsset) {
     event.respondWith((async () => {
-      const cached = await caches.match(request);
+      const cached = await matchFreshest(request, ASSET_CACHE);
 
       // Stale-while-revalidate. Cache-first with no revalidation meant a cached
       // stylesheet or script was never replaced within a cache generation, so a

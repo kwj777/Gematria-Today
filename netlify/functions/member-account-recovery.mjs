@@ -1,8 +1,10 @@
 import {
+  assertJsonRequestFromThisSite,
   AUTH_COOKIES,
   clearSessionCookie,
   consumeAccountRecoveryRequest,
   createAccountRecoveryRequest,
+  createAdminSessionCookies,
   createSession,
   createSessionCookie,
   ensureAccountRecoverySchema,
@@ -14,7 +16,7 @@ import {
 } from './_auth.mjs';
 import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
 import { ensureMemberProfile, ensureMemberSchema, formatMemberUser } from './_member.mjs';
-import { ensureOAuthSchema } from './_oauth.mjs';
+import { ensureOAuthSchema, revokeUnprovenOAuthIdentities } from './_oauth.mjs';
 import { sendRecoveryEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -32,6 +34,7 @@ export async function handler(event) {
   }
 
   try {
+    assertJsonRequestFromThisSite(event);
     const sql = getSqlClient();
     await ensureMemberSchema(sql);
     await ensureAdminSchema(sql);
@@ -85,39 +88,24 @@ export async function handler(event) {
       if (rows.length) {
         accountRole = rows[0].role === 'member' ? 'member' : 'admin';
         member = formatMemberUser(rows[0]);
-        const usernameRecovery = await createAccountRecoveryRequest(sql, {
+        // The page promises forgot-both in one email, and the reset email
+        // already names the username, so it is the only one sent. Two used to
+        // go out, and the first -- the username reminder -- looked complete.
+        const recovery = await createAccountRecoveryRequest(sql, {
           userId: member.id,
           role: accountRole,
-          recoveryType: 'forgot-userid',
+          recoveryType: action === 'forgot-both' ? 'forgot-password' : 'forgot-userid',
           lookupKey: email,
         });
         await sendRecoveryEmail({
           sql,
           toEmail: member.email,
           username: member.username,
-          recoveryCode: usernameRecovery.token,
-          expiresAt: usernameRecovery.expiresAt,
+          recoveryCode: recovery.token,
+          expiresAt: recovery.expiresAt,
           role: accountRole,
-          recoveryType: 'forgot-userid',
+          recoveryType: action,
         });
-
-        if (action === 'forgot-both') {
-          const passwordRecovery = await createAccountRecoveryRequest(sql, {
-            userId: member.id,
-            role: accountRole,
-            recoveryType: 'forgot-password',
-            lookupKey: email,
-          });
-          await sendRecoveryEmail({
-            sql,
-            toEmail: member.email,
-            username: member.username,
-            recoveryCode: passwordRecovery.token,
-            expiresAt: passwordRecovery.expiresAt,
-            role: accountRole,
-            recoveryType: 'forgot-password',
-          });
-        }
       }
 
       await logRequestAudit(sql, event, {
@@ -192,7 +180,10 @@ export async function handler(event) {
     }
 
     if (action === 'reset-password') {
-      const recoveryCode = String(body.recoveryCode || '').trim();
+      // Codes are lowercase hex, but a phone keyboard or a reader copying one
+      // by hand can send it in capitals, which hashed to a different value and
+      // was refused as invalid until the per-email limit locked them out.
+      const recoveryCode = String(body.recoveryCode || '').trim().toLowerCase();
       const newPassword = String(body.newPassword || '');
       if (!recoveryCode || !newPassword) {
         return jsonResponse(400, { error: 'Recovery code and new password are required' });
@@ -259,7 +250,7 @@ export async function handler(event) {
           message: 'Password reset complete. You are now signed in.',
           route: 'admin',
         }, {
-          'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+          'set-cookie': createAdminSessionCookies(token, expiresAt),
         });
       }
 
@@ -289,6 +280,14 @@ export async function handler(event) {
       if (accountStatus === 'pending' && !accountRows[0].email_verified) {
         await ensureOAuthSchema(sql);
         await sql`DELETE FROM member_oauth_identities WHERE user_id = ${recovery.user_id}`;
+      } else {
+        // Already active is not proof the identities are the owner's: the
+        // verification link activates a pending row with whatever provider
+        // identity created it still attached. A reset is how the owner takes
+        // the account back, so keep only identities whose provider vouches for
+        // this same address, or the reset revokes every session and leaves the
+        // intruder a provider sign-in straight back in.
+        await revokeUnprovenOAuthIdentities(sql, recovery.user_id);
       }
 
       // The code was emailed to this address and typed back, which proves the

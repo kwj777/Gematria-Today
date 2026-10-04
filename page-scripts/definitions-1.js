@@ -4,6 +4,7 @@
 
         var terms = [];
         var aliasIndex = [];
+        var POPUP_ID = 'defn-popup';
 
         function slugify(s) {
           return s.toLowerCase()
@@ -22,7 +23,8 @@
           clone.querySelectorAll('button.defn-term').forEach(function (b) {
             b.replaceWith(document.createTextNode(b.textContent));
           });
-          clone.querySelectorAll('.defn-example').forEach(function (b) { b.remove(); });
+          // The preview panel is parked inside whichever <dd> last opened it.
+          clone.querySelectorAll('.defn-example, .defn-popup').forEach(function (b) { b.remove(); });
           var txt = clone.textContent.replace(/\s+/g, ' ').trim();
           if (txt.length > 260) txt = txt.slice(0, 257).replace(/\s+\S*$/, '') + '…';
           return txt;
@@ -39,8 +41,9 @@
               while (dd && dd.tagName !== 'DD') dd = dd.nextElementSibling;
               if (dd) pairs.push({ dt: dt, dd: dd, card: null });
             } else if (child.tagName === 'DIV') {
-              var dt2 = child.querySelector(':scope > .defn-card__head > dt, :scope > dt');
-              var dd2 = child.querySelector(':scope > dd');
+              var dt2 = child.querySelector(':scope > dt');
+              // The card's other <dd> holds the badge and copy-link.
+              var dd2 = child.querySelector(':scope > dd:not(.defn-card__meta)');
               if (dt2 && dd2) pairs.push({ dt: dt2, dd: dd2, card: child });
             }
           });
@@ -161,7 +164,11 @@
                 btn.type = 'button';
                 btn.className = 'defn-term';
                 btn.setAttribute('data-defn-slug', lookup.slug);
-                btn.setAttribute('aria-describedby', 'defn-popup');
+                // A disclosure, not a tooltip: the panel holds a link, which
+                // ARIA's tooltip pattern does not allow. Same pattern as the
+                // site-wide glossary-popup.js, which skips this page.
+                btn.setAttribute('aria-expanded', 'false');
+                btn.setAttribute('aria-controls', POPUP_ID);
                 btn.textContent = matched;
                 frag.appendChild(btn);
                 lastIdx = m.index + matched.length;
@@ -175,22 +182,33 @@
         }
 
         // ---------- Hover popup ----------
-        var popup = document.createElement('div');
-        popup.id = 'defn-popup';
-        popup.className = 'defn-popup';
-        popup.setAttribute('role', 'tooltip');
+        // A <span> with span children: it is inserted right after the term,
+        // inside a <dd>'s running text. --anchored makes it position:fixed,
+        // which positionPopup's viewport coordinates need.
+        var popup = document.createElement('span');
+        popup.id = POPUP_ID;
+        popup.className = 'defn-popup defn-popup--anchored';
         popup.hidden = true;
+        // Top layer, so neither the sticky filter bar nor a later card can
+        // paint over it while it lives inside the term's card.
+        var supportsPopover = typeof HTMLElement !== 'undefined' &&
+          Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'popover');
+        if (supportsPopover) popup.setAttribute('popover', 'manual');
         document.body.appendChild(popup);
 
         var activeBtn = null;
         var hideTimer = null;
+        // Guards for the ways hover, focus and click fight each other on one
+        // term (glossary-popup.js has the same pair).
+        var suppressFocusOpen = false;
+        var openedThisInteraction = false;
 
         function buildPopup(term) {
           popup.innerHTML = '';
-          var title = document.createElement('div');
+          var title = document.createElement('span');
           title.className = 'defn-popup__title';
           title.textContent = term.label;
-          var body = document.createElement('p');
+          var body = document.createElement('span');
           body.className = 'defn-popup__body';
           body.textContent = shortDef(term.dd);
           var link = document.createElement('a');
@@ -202,23 +220,64 @@
           popup.appendChild(link);
         }
 
+        function setTopLayer(open) {
+          if (!supportsPopover) return;
+          try {
+            var isOpen = popup.matches(':popover-open');
+            if (open && !isOpen) popup.showPopover();
+            else if (!open && isOpen) popup.hidePopover();
+          } catch (_) {
+            // The panel still shows in flow.
+          }
+        }
+
+        function focusIsInsidePopup() {
+          return !!(document.activeElement && popup.contains(document.activeElement));
+        }
+
+        function hidePopup(restoreFocus) {
+          var btn = activeBtn;
+          setTopLayer(false);
+          popup.hidden = true;
+          activeBtn = null;
+          openedThisInteraction = false;
+          if (!btn) return;
+          btn.setAttribute('aria-expanded', 'false');
+          if (!restoreFocus) return;
+          // Focus opens the panel; without this, handing focus back to the
+          // term reopened what Escape had just closed.
+          suppressFocusOpen = true;
+          try {
+            btn.focus();
+          } finally {
+            suppressFocusOpen = false;
+          }
+        }
+
         function positionPopup(btn) {
           popup.style.left = '0px';
           popup.style.top = '0px';
           var r = btn.getBoundingClientRect();
           var pr = popup.getBoundingClientRect();
           var docW = document.documentElement.clientWidth;
-          var top = window.scrollY + r.bottom + 8;
-          var left = window.scrollX + r.left + (r.width / 2) - (pr.width / 2);
-          var minLeft = window.scrollX + 8;
-          var maxLeft = window.scrollX + docW - pr.width - 8;
-          if (left < minLeft) left = minLeft;
-          if (left > maxLeft) left = maxLeft;
+          var top = r.bottom + 8;
+          var left = r.left + (r.width / 2) - (pr.width / 2);
+          if (left < 8) left = 8;
+          if (left > docW - pr.width - 8) left = docW - pr.width - 8;
           if (r.bottom + pr.height + 16 > document.documentElement.clientHeight && r.top > pr.height + 16) {
-            top = window.scrollY + r.top - pr.height - 8;
+            top = r.top - pr.height - 8;
           }
           popup.style.top = top + 'px';
           popup.style.left = left + 'px';
+          // position:fixed is relative to the viewport only while no ancestor
+          // has a transform, filter or contain. Correct by where it landed.
+          var landed = popup.getBoundingClientRect();
+          var dx = left - landed.left;
+          var dy = top - landed.top;
+          if (dx || dy) {
+            popup.style.top = (top + dy) + 'px';
+            popup.style.left = (left + dx) + 'px';
+          }
         }
 
         function showFor(btn) {
@@ -226,9 +285,19 @@
           var slug = btn.getAttribute('data-defn-slug');
           var term = termsBySlug[slug];
           if (!term) return;
+          if (activeBtn && activeBtn !== btn) activeBtn.setAttribute('aria-expanded', 'false');
+          if (!(!popup.hidden && activeBtn === btn)) openedThisInteraction = true;
           activeBtn = btn;
           buildPopup(term);
+          // The panel used to be the last thing in <body>, so Tab from a term
+          // skipped its "Jump to full definition" link, and the focusin
+          // handler closed the panel on the way (WCAG 2.1.1). Next to the
+          // term, the link is the very next tab stop.
+          if (btn.nextSibling !== popup) btn.insertAdjacentElement('afterend', popup);
+          btn.setAttribute('aria-expanded', 'true');
           popup.hidden = false;
+          // After the move: taking a popover out of the document closes it.
+          setTopLayer(true);
           positionPopup(btn);
         }
 
@@ -236,9 +305,9 @@
           clearTimeout(hideTimer);
           hideTimer = setTimeout(function () {
             if (popup.matches(':hover')) return;
+            if (focusIsInsidePopup()) return;
             if (activeBtn && (activeBtn.matches(':hover') || document.activeElement === activeBtn)) return;
-            popup.hidden = true;
-            activeBtn = null;
+            hidePopup(false);
           }, 150);
         }
 
@@ -259,31 +328,41 @@
         }
         document.addEventListener('focusin', function (e) {
           var btn = e.target.closest('.defn-term');
-          if (btn) showFor(btn);
-          else if (!e.target.closest('#defn-popup')) scheduleHide();
+          if (btn) {
+            if (suppressFocusOpen) return;
+            showFor(btn);
+          } else if (!e.target.closest('#' + POPUP_ID)) {
+            scheduleHide();
+          }
         });
         document.addEventListener('click', function (e) {
           var btn = e.target.closest('.defn-term');
           if (btn) {
             e.preventDefault();
-            if (activeBtn === btn && !popup.hidden) {
-              popup.hidden = true;
-              activeBtn = null;
+            // The hover or focus that led up to this click already opened the
+            // panel; closing it again here made a deliberate click a no-op.
+            if (activeBtn === btn && !popup.hidden && !openedThisInteraction) {
+              hidePopup(false);
             } else {
               showFor(btn);
             }
+            openedThisInteraction = false;
             return;
           }
-          if (!e.target.closest('#defn-popup')) {
-            popup.hidden = true;
-            activeBtn = null;
+          if (e.target.closest('.defn-popup__link')) {
+            // The jump lands on the full definition; the preview is done.
+            hidePopup(false);
+            return;
+          }
+          if (!popup.hidden && !e.target.closest('#' + POPUP_ID)) {
+            hidePopup(false);
           }
         });
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape' && !popup.hidden) {
-            popup.hidden = true;
-            if (activeBtn) activeBtn.focus();
-            activeBtn = null;
+            // Back to the term, including from inside the panel, so the next
+            // Tab carries on from where the reader was.
+            hidePopup(true);
           }
         });
         window.addEventListener('resize', function () {
@@ -400,7 +479,7 @@
           if (!query) return true;
           var q = query.toLowerCase();
           var dt = card.querySelector('dt');
-          var dd = card.querySelector('dd');
+          var dd = card.querySelector('dd:not(.defn-card__meta)');
           var label = dt ? dt.textContent.toLowerCase() : '';
           var def = dd ? dd.textContent.toLowerCase() : '';
           if (label.indexOf(q) !== -1) return true;
@@ -418,6 +497,12 @@
 
         function applyFilter(rawQuery) {
           var query = (rawQuery || '').trim();
+          // Take the preview panel out of the cards first, so its text is
+          // neither matched nor highlighted as part of some other definition.
+          if (popup.parentNode !== document.body) {
+            hidePopup(false);
+            document.body.appendChild(popup);
+          }
           clearHighlights();
           var visibleCount = 0;
           allCards.forEach(function (card) {

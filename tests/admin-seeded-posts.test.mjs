@@ -79,7 +79,7 @@ function createFakeDatabase({ posts = [], settings = {}, postInsertError = null 
       return Promise.resolve([]);
     }
 
-    // The seeded admin user upsert and the super_admin UPDATE.
+    // The super_admin UPDATE (and the owner insert, when it is configured).
     return Promise.resolve([]);
   };
 
@@ -179,7 +179,7 @@ test('a failed post seed is logged, does not fail the admin sync, and is retried
 
   await assert.doesNotReject(coldStart(db.sql));
 
-  assert.ok(db.calls.some(({ query }) => /INSERT INTO users/i.test(query)), 'the seeded admin user is still synced');
+  assert.ok(db.calls.some(({ query }) => /SET role = 'super_admin'/i.test(query)), 'the super admin sync still runs');
   assert.equal(consoleError.mock.callCount(), 1);
   assert.equal(consoleError.mock.calls[0].arguments[1], foreignKeyError);
   assert.equal([...db.settings.keys()].some((key) => key.startsWith('seeded_post:')), false);

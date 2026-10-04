@@ -1,5 +1,6 @@
 import { getAuthenticatedMember, jsonResponse } from './_member.mjs';
 import { applyRateLimit, assertEndpointEnabled, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit } from './_security.mjs';
+import { MAX_GEMATRIA_VALUE, parseGematriaValue } from './_words.mjs';
 
 const ALLOWED_RELATIONSHIP_TYPES = new Set(['antonym', 'synonym', 'equivalent', 'cross-reference', 'hypernym', 'hyponym', 'variant', 'same-context']);
 
@@ -77,7 +78,10 @@ async function runGematriaLookup(sql, event) {
   if (!value) throw Object.assign(new Error('Missing required query parameter: gematria'), { statusCode: 400 });
   if (!/^\d+$/.test(value)) throw Object.assign(new Error('gematria must be a positive integer'), { statusCode: 400 });
 
-  const gematriaValue = Number(value);
+  const gematriaValue = parseGematriaValue(value);
+  if (gematriaValue === null) {
+    throw Object.assign(new Error(`gematria must be no larger than ${MAX_GEMATRIA_VALUE}`), { statusCode: 400 });
+  }
   if (gematriaValue % 6 !== 0) {
     throw Object.assign(new Error('gematria must be a multiple of 6'), { statusCode: 400 });
   }
@@ -103,7 +107,31 @@ async function runGematriaLookup(sql, event) {
   };
 }
 
-async function runStats(sql) {
+// The words table does not guarantee a timestamp column, so the column is
+// probed at runtime. It cannot be interpolated into the query: @neondatabase/
+// serverless 0.9.x has no sql.unsafe, and a tagged-template value is sent as a
+// bind parameter, never as an identifier. Each column gets its own fixed query.
+function selectRecentWords(sql, timestampColumn) {
+  if (timestampColumn === 'created_at') {
+    return sql`
+      SELECT word, gematria_value, digital_root, is_base_root, search_count, created_at AS timestamp
+      FROM words
+      ORDER BY created_at DESC NULLS LAST
+      LIMIT 12
+    `;
+  }
+  if (timestampColumn === 'updated_at') {
+    return sql`
+      SELECT word, gematria_value, digital_root, is_base_root, search_count, updated_at AS timestamp
+      FROM words
+      ORDER BY updated_at DESC NULLS LAST
+      LIMIT 12
+    `;
+  }
+  return Promise.resolve([]);
+}
+
+export async function runStats(sql) {
   const columns = await sql`
     SELECT column_name
     FROM information_schema.columns
@@ -125,14 +153,7 @@ async function runStats(sql) {
         SUM(search_count)::bigint AS total_search_count
       FROM words
     `,
-    recentTimestampColumn
-      ? sql.unsafe(`
-          SELECT word, gematria_value, digital_root, is_base_root, search_count, ${recentTimestampColumn} AS timestamp
-          FROM words
-          ORDER BY ${recentTimestampColumn} DESC
-          LIMIT 12
-        `)
-      : Promise.resolve([]),
+    selectRecentWords(sql, recentTimestampColumn),
     sql`
       SELECT word, gematria_value, digital_root, is_base_root, search_count
       FROM words

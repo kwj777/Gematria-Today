@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildShareHtml,
+  computeShareValues,
   escapeHtml,
   handler as aiAgentShareHandler,
   toImageUrl,
@@ -46,17 +47,31 @@ test('trimValue trims trailing whitespace before the ellipsis', () => {
 
 // ---------- toImageUrl ----------
 
-test('toImageUrl composes the canonical share-image URL with topic/total/root params', () => {
-  const url = toImageUrl('Hello', '156', '3');
-  assert.ok(url.startsWith('https://gematria.today/api/ai-agent-share-image'));
-  assert.ok(url.includes('topic=Hello'));
-  assert.ok(url.includes('total=156'));
-  assert.ok(url.includes('root=3'));
+test('toImageUrl composes the canonical share-image URL from the topic alone', () => {
+  // The image endpoint recomputes total and root, so sending them only
+  // fragmented the CDN cache.
+  const url = toImageUrl('Hello');
+  assert.equal(url, 'https://gematria.today/api/ai-agent-share-image?topic=Hello');
+  assert.equal(toImageUrl(''), 'https://gematria.today/api/ai-agent-share-image');
 });
 
 test('toImageUrl URL-encodes topics with special characters', () => {
-  const url = toImageUrl('hello world & friends', '?', '?');
+  const url = toImageUrl('hello world & friends');
   assert.ok(url.includes('topic=hello+world+%26+friends'));
+});
+
+// ---------- computeShareValues ----------
+
+test('computeShareValues returns the English gematria total and digital root of the topic', () => {
+  // H48 + E30 + L72 + L72 + O90
+  assert.deepEqual(computeShareValues('Hello'), { total: '312', root: '6' });
+  assert.deepEqual(computeShareValues('Obama'), { total: '192', root: '3' });
+});
+
+test('computeShareValues uses "?" when the topic has no letters to count', () => {
+  assert.deepEqual(computeShareValues(''), { total: '?', root: '?' });
+  assert.deepEqual(computeShareValues('2024!'), { total: '?', root: '?' });
+  assert.deepEqual(computeShareValues(null), { total: '?', root: '?' });
 });
 
 // ---------- buildShareHtml ----------
@@ -88,17 +103,40 @@ test('buildShareHtml emits the standard OG and Twitter meta-tag set with escaped
 });
 
 test('buildShareHtml renders the canonical app URL with shared* params', () => {
-  const html = buildShareHtml(makeParams({ topic: 'X', total: '42', root: '6' }));
+  // X = 24 * 6 = 144, digital root 9.
+  const html = buildShareHtml(makeParams({ topic: 'X' }));
   assert.ok(html.includes('sharedTopic=X'));
-  assert.ok(html.includes('sharedTotal=42'));
-  assert.ok(html.includes('sharedRoot=6'));
+  assert.ok(html.includes('sharedTotal=144'));
+  assert.ok(html.includes('sharedRoot=9'));
+  assert.ok(html.includes('Gematria lookup for X: total 144 • digital root 9'));
 });
 
-test('buildShareHtml uses "?" placeholders when total/root are missing', () => {
-  const html = buildShareHtml(makeParams({ topic: 'X' }));
+test('buildShareHtml ignores forged total and root on the query string', () => {
+  // ?topic=Obama&total=666&root=9 used to unfurl as a site-branded result
+  // claiming 666, with og:image passing the same numbers to the card.
+  const html = buildShareHtml(makeParams({ topic: 'Obama', total: '666', root: '9' }));
+  assert.ok(html.includes('content="Gematria lookup for Obama: total 192 • digital root 3"'));
+  assert.ok(html.includes('sharedTotal=192'));
+  assert.ok(html.includes('sharedRoot=3'));
+  assert.ok(html.includes('property="og:image" content="https://gematria.today/api/ai-agent-share-image?topic=Obama"'));
+  assert.ok(!html.includes('666'));
+});
+
+test('buildShareHtml counts the whole topic, not the shortened title', () => {
+  const longTopic = 'a'.repeat(200);
+  const html = buildShareHtml(makeParams({ topic: longTopic, total: '6' }));
+  assert.ok(html.includes('total 1200 • digital root 3'));
+  // The card and the GemaBot banner recompute from the topic they are given,
+  // so both get the whole of it.
+  assert.ok(html.includes(`sharedTopic=${longTopic}&amp;`));
+  assert.ok(html.includes(`ai-agent-share-image?topic=${longTopic}"`));
+});
+
+test('buildShareHtml uses "?" placeholders when the topic has no letters', () => {
+  const html = buildShareHtml(makeParams({ topic: '123', total: '666', root: '9' }));
   // Description includes "total ? • digital root ?"
-  assert.ok(html.includes('total ?'));
-  assert.ok(html.includes('digital root ?'));
+  assert.ok(html.includes('total ? • digital root ?'));
+  assert.ok(!html.includes('666'));
 });
 
 test('buildShareHtml caps the topic length at 90 chars (with ellipsis when exceeded)', () => {
@@ -128,8 +166,12 @@ test('buildShareHtml emits a JSON-stringified inline-script redirect URL', () =>
 });
 
 test('buildShareHtml falls back to "Gematria Agent Result" when topic is missing', () => {
-  const html = buildShareHtml(makeParams());
+  const html = buildShareHtml(makeParams({ total: '666' }));
   assert.ok(html.includes('GemaBot: Gematria Agent Result'));
+  // The placeholder title is not a lookup: nothing is computed for it and the
+  // GemaBot page gets no shared banner.
+  assert.ok(html.includes('total ? • digital root ?'));
+  assert.ok(!html.includes('sharedTopic'));
 });
 
 // ---------- ai-agent-share handler ----------

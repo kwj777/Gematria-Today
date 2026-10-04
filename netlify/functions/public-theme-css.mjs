@@ -5,20 +5,27 @@ import { createHash } from 'node:crypto';
 const BOOTSWATCH_IMPORT_PATTERN = /@import\s+url\((['"]?)https:\/\/cdn\.jsdelivr\.net\/npm\/bootswatch@5\.3\.3\/dist\/[\w-]+\/bootstrap\.min\.css(?:\?[^'"\)]*)?\1\)\s*;?/gi;
 
 
+// Each colour is also a fill behind Bootstrap's fixed .text-bg-* text: white on
+// secondary, success and danger; black on info and warning. Those pairs, and
+// .text-secondary/-success/-danger on light surfaces, clear WCAG AA 4.5:1:
+// secondary 5.70:1, success 7.08:1, danger 6.57:1 (on #fff); black on info
+// 7.21:1, on warning 8.19:1. The old secondary/success/danger fills were
+// 2.98:1, 1.96:1 and 3.99:1. theme.css retints the text utilities for the
+// surfaces these fills cannot serve (dark-mode text, light-mode info/warning).
 const BASE_BOOTSTRAP_THEME_CSS = `/* Base Bootstrap theme tokens */
 :root {
   --bs-primary: #355f8c;
   --bs-primary-rgb: 53,95,140;
-  --bs-secondary: #9a958b;
-  --bs-secondary-rgb: 154,149,139;
-  --bs-success: #97c93c;
-  --bs-success-rgb: 151,201,60;
+  --bs-secondary: #6b665d;
+  --bs-secondary-rgb: 107,102,93;
+  --bs-success: #3f6212;
+  --bs-success-rgb: 63,98,18;
   --bs-info: #33a1d6;
   --bs-info-rgb: 51,161,214;
   --bs-warning: #ff7c35;
   --bs-warning-rgb: 255,124,53;
-  --bs-danger: #dc4f4a;
-  --bs-danger-rgb: 220,79,74;
+  --bs-danger: #b42318;
+  --bs-danger-rgb: 180,35,24;
   --bs-light: #f8f5ef;
   --bs-light-rgb: 248,245,239;
   --bs-dark: #3f403a;
@@ -98,18 +105,15 @@ export function stripBootswatchImports(cssText) {
   );
 }
 
+// Admin pages request /api/public-theme-css?scope=admin so the preset's custom
+// CSS never styles admin controls. The choice must come from the URL: the
+// response is publicly cached by URL (browser and CDN) with no Vary: Referer,
+// so when it was keyed on the Referer, whichever page fetched first decided
+// what every later page got from cache -- public pages lost the custom theme
+// after an admin visit, and admin pages picked up the custom CSS.
 export function shouldIncludeCustomCss(event) {
-  const referer = String(event?.headers?.referer || event?.headers?.Referer || '').trim();
-  if (!referer) {
-    return true;
-  }
-
-  try {
-    const refererUrl = new URL(referer);
-    return !refererUrl.pathname.startsWith('/admin');
-  } catch {
-    return true;
-  }
+  const scope = String(event?.queryStringParameters?.scope || '').trim().toLowerCase();
+  return scope !== 'admin';
 }
 
 export async function handler(event) {

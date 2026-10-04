@@ -15,6 +15,15 @@ try {
   SITE_PUBLIC_DIR = path.resolve(process.cwd());
 }
 const EXCLUDED_REPORT_ROUTES = new Set(['/admin-click-tracking.html', '/unsupported-browser.html', '/offline.html']);
+// The window selector goes up to 365 days and every row is sent to the
+// browser. Read only the newest rows, and stop adding rows to the response
+// well before Netlify's 6 MB synchronous response limit turns it into a 502.
+// That limit applies to the serialized {statusCode, headers, body} object, in
+// which the JSON body is escaped a second time, so the budget is measured in
+// double-encoded bytes. The rest of the payload (never-clicked elements,
+// headers) needs well under the 1 MB left over.
+export const CLICK_TRACKING_ROW_LIMIT = 5000;
+export const CLICK_TRACKING_RESPONSE_BYTE_BUDGET = 5 * 1024 * 1024;
 
 export function normalizePathname(value) {
   const raw = String(value || '').trim();
@@ -194,6 +203,49 @@ export function formatWindowLabel({ days, hours }) {
   return `Last ${days} days`;
 }
 
+export function toClickTrackingDetail(row) {
+  return {
+    route: row.route,
+    action: row.action,
+    source: row.source,
+    destination: row.destination,
+    elementType: row.element_type,
+    elementId: row.element_id,
+    elementSelector: row.element_selector,
+    elementLink: row.element_link,
+    pagePath: row.page_path,
+    pageUrl: row.page_url,
+    referrer: row.referrer,
+    audienceType: row.audience_type === 'member' ? 'member' : 'visitor',
+    visitorSessionId: row.visitor_session_id || null,
+    fingerprint: row.request_fingerprint,
+    createdAt: toIsoDate(row.created_at),
+  };
+}
+
+// Bytes a detail takes up in the serialized function response. Every '"' and
+// '\' in the JSON body is escaped again there, so a row of quote-filled values
+// costs about twice its body size. The two quotes this adds per detail cover
+// the comma between details.
+function clickTrackingDetailResponseBytes(detail) {
+  return Buffer.byteLength(JSON.stringify(JSON.stringify(detail)));
+}
+
+// Rows arrive newest first, so a truncated list keeps the most recent events.
+export function buildClickTrackingDetails(rows, { byteBudget = CLICK_TRACKING_RESPONSE_BYTE_BUDGET } = {}) {
+  const details = [];
+  let bytes = 0;
+  for (const row of rows) {
+    const detail = toClickTrackingDetail(row);
+    bytes += clickTrackingDetailResponseBytes(detail);
+    if (bytes > byteBudget) {
+      return { details, truncated: true };
+    }
+    details.push(detail);
+  }
+  return { details, truncated: false };
+}
+
 export async function handler(event) {
   const methodError = requireHttpMethod(event, 'GET');
   if (methodError) return methodError;
@@ -205,9 +257,9 @@ export async function handler(event) {
     const windowInterval = hours ? `${hours} hours` : `${days} days`;
     const { sql, user } = await getAuthenticatedUser(event);
 
-    const clickTrackingDetailRows = await sql`
+    const clickRows = await sql`
       SELECT
-        route,
+        LEFT(route, 200) AS route,
         action,
         COALESCE(NULLIF(BTRIM(metadata->>'source'), ''), 'unknown') AS source,
         COALESCE(NULLIF(BTRIM(metadata->>'destination'), ''), '') AS destination,
@@ -215,11 +267,14 @@ export async function handler(event) {
         COALESCE(NULLIF(BTRIM(metadata->>'elementId'), ''), '') AS element_id,
         COALESCE(NULLIF(BTRIM(metadata->>'elementSelector'), ''), '') AS element_selector,
         COALESCE(NULLIF(BTRIM(metadata->>'elementLink'), ''), '') AS element_link,
-        COALESCE(NULLIF(BTRIM(metadata->>'pagePath'), ''), route) AS page_path,
+        COALESCE(NULLIF(BTRIM(metadata->>'pagePath'), ''), LEFT(route, 200)) AS page_path,
         COALESCE(NULLIF(BTRIM(metadata->>'pageUrl'), ''), '') AS page_url,
         COALESCE(NULLIF(BTRIM(metadata->>'referrer'), ''), '') AS referrer,
         CASE
           WHEN COALESCE(NULLIF(BTRIM(metadata->>'audienceType'), ''), '') = 'member' THEN 'member'
+          -- public-button-report sets audienceType from the session; when it is
+          -- there, a caller-sent memberId or authenticated flag does not count.
+          WHEN COALESCE(NULLIF(BTRIM(metadata->>'audienceType'), ''), '') <> '' THEN 'visitor'
           WHEN COALESCE(NULLIF(BTRIM(metadata->>'memberId'), ''), '') <> '' THEN 'member'
           WHEN LOWER(COALESCE(NULLIF(BTRIM(metadata->>'authenticated'), ''), 'false')) = 'true' THEN 'member'
           ELSE 'visitor'
@@ -248,9 +303,13 @@ export async function handler(event) {
         )
         AND COALESCE(metadata->>'userAgent', '') !~* ${AUTOMATION_USER_AGENT_PATTERN}
       ORDER BY created_at DESC
+      LIMIT ${CLICK_TRACKING_ROW_LIMIT + 1}
     `;
+    const rowLimitReached = clickRows.length > CLICK_TRACKING_ROW_LIMIT;
+    const clickTrackingDetailRows = rowLimitReached ? clickRows.slice(0, CLICK_TRACKING_ROW_LIMIT) : clickRows;
     const trackableElements = await collectTrackableElements();
     const neverClickedElements = buildNeverClickedElementsReport(clickTrackingDetailRows, trackableElements);
+    const { details: clickTrackingDetails, truncated: responseBudgetReached } = buildClickTrackingDetails(clickTrackingDetailRows);
 
     return jsonResponse(200, {
       generatedAt: new Date().toISOString(),
@@ -258,23 +317,9 @@ export async function handler(event) {
       hours: hours || null,
       windowLabel: formatWindowLabel({ days, hours }),
       user,
-      clickTrackingDetails: clickTrackingDetailRows.map((row) => ({
-        route: row.route,
-        action: row.action,
-        source: row.source,
-        destination: row.destination,
-        elementType: row.element_type,
-        elementId: row.element_id,
-        elementSelector: row.element_selector,
-        elementLink: row.element_link,
-        pagePath: row.page_path,
-        pageUrl: row.page_url,
-        referrer: row.referrer,
-        audienceType: row.audience_type === 'member' ? 'member' : 'visitor',
-        visitorSessionId: row.visitor_session_id || null,
-        fingerprint: row.request_fingerprint,
-        createdAt: toIsoDate(row.created_at),
-      })),
+      clickTrackingDetails,
+      // True when older events in the window were left out.
+      truncated: rowLimitReached || responseBudgetReached,
       neverClickedElements: neverClickedElements.map((item) => ({
         pagePath: item.pagePath,
         elementType: item.elementType,

@@ -29,7 +29,9 @@
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(payload.error || 'Request failed');
+          const error = new Error(payload.error || 'Request failed');
+          error.status = response.status;
+          throw error;
         }
         return payload;
       }
@@ -145,7 +147,15 @@
         } catch (error) {
           const trainBtn = event.target.closest('[data-train-from-feedback]');
           const replyBtn = event.target.closest('[data-submit-feedback-reply]');
-          if (trainBtn) { trainBtn.disabled = false; trainBtn.textContent = 'Train from this'; }
+          if (trainBtn && error.status === 400) {
+            // The server refused to train (for example a "why" or "yes" that
+            // GemaBot can never show a note for) and left the feedback open.
+            // Retrying cannot help, so say why next to the item.
+            const reason = document.createElement('p');
+            reason.className = 'small text-danger mb-0 w-100';
+            reason.textContent = error.message;
+            trainBtn.replaceWith(reason);
+          } else if (trainBtn) { trainBtn.disabled = false; trainBtn.textContent = 'Train from this'; }
           if (replyBtn && replyBtn.textContent !== 'Sent') { replyBtn.disabled = false; replyBtn.textContent = 'Send reply'; }
           setStatusMessage(error.message || 'Unable to update feedback right now.', 'danger');
         }

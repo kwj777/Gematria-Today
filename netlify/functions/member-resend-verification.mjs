@@ -1,8 +1,8 @@
 import {
   AUTH_COOKIES,
+  canRefreshMemberEmailVerification,
   clearSessionCookie,
   createMemberEmailVerificationRequest,
-  deleteExpiredUnverifiedMemberByIdentifier,
   ensureMemberSchema,
   getSqlClient,
   jsonResponse,
@@ -55,8 +55,10 @@ export async function handler(event) {
       message: 'Too many verification resend requests for this account.',
     });
 
-    await deleteExpiredUnverifiedMemberByIdentifier(sql, rawIdentifier);
-
+    // An expired pending account gets a fresh link like any other. This used
+    // to delete a month-old one first and still answer that a link was sent,
+    // even when the account was only that old because our email never
+    // reached it -- the case this endpoint exists to rescue.
     const normalizedEmail = normalizeEmail(rawIdentifier);
     const rows = await sql`
       SELECT id, username, email, status, email_verified, created_at
@@ -71,7 +73,13 @@ export async function handler(event) {
     let deliveryError = null;
     if (rows.length) {
       const candidate = rows[0];
-      if (candidate.status === 'pending' && !candidate.email_verified) {
+      if (candidate.status === 'pending' && !candidate.email_verified
+        && !(await canRefreshMemberEmailVerification(sql, candidate.id))) {
+        // Past the retention window and already reached by email: a fresh
+        // link here is what let a stranger hold someone else's address
+        // forever. The caller gets the same generic reply.
+        outcome = 'refresh_window_closed';
+      } else if (candidate.status === 'pending' && !candidate.email_verified) {
         const verification = await createMemberEmailVerificationRequest(sql, candidate.id);
         const result = await sendMemberVerificationEmail({
           sql,

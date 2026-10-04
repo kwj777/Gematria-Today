@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
+import { applyRateLimit } from './_security.mjs';
 
 function sanitizeSources(rawSources) {
   if (!Array.isArray(rawSources)) return [];
@@ -80,6 +81,17 @@ export async function handler(event) {
     if (method !== 'POST') {
       return jsonResponse(405, { error: 'Method not allowed' });
     }
+
+    // Each submission lands in the admin review queue; same budget per member
+    // as public-chatbot-feedback gives each caller.
+    await applyRateLimit(sql, event, {
+      scope: 'member-chatbot-feedback-member',
+      key: String(member.id),
+      limit: 20,
+      windowMs: 60_000,
+      blockMs: 5 * 60_000,
+      message: 'Too many chatbot feedback submissions. Please try again soon.',
+    });
 
     const payload = parseBody(event);
     const query = String(payload?.query || '').trim().slice(0, 400);

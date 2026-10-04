@@ -57,7 +57,11 @@ export async function handler(event) {
       });
     }
 
-    const { state, nonce, codeChallenge, cookieValue } = createOAuthState({ provider: provider.id, returnTo });
+    const { state, nonce, codeChallenge, cookieValue } = createOAuthState({
+      provider: provider.id,
+      returnTo,
+      signupSource: params.signup_source,
+    });
     const authorizationUrl = buildAuthorizationUrl(provider, {
       clientId,
       redirectUri: resolveOAuthRedirectUri(event),

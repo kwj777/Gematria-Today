@@ -12,8 +12,23 @@ function getDateKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// The word changes at 00:00 UTC (getDateKey) but the URL carries no date, so a
+// flat hour-long public max-age let a response from 23:55 be served from the
+// CDN and browser caches until after 01:00 -- yesterday's word on the home page.
+// Freshness and the stale window both end at the next UTC midnight.
+export function wordOfDayCacheControl(now = new Date()) {
+  const nextMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  const secondsLeft = Math.max(0, Math.floor((nextMidnight - now.getTime()) / 1000));
+  const maxAge = Math.min(3600, secondsLeft);
+  const staleWhileRevalidate = Math.min(600, secondsLeft - maxAge);
+  return staleWhileRevalidate > 0
+    ? `public, max-age=${maxAge}, stale-while-revalidate=${staleWhileRevalidate}`
+    : `public, max-age=${maxAge}`;
+}
+
+// NFKC, then ASCII letters only: the same rule as englishGematria.mjs.
 function englishGematria(input) {
-  return String(input ?? '').toUpperCase().split('').reduce((sum, char) => {
+  return String(input ?? '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase().split('').reduce((sum, char) => {
     const code = char.charCodeAt(0);
     if (code < 65 || code > 90) return sum;
     return sum + ((code - 64) * 6);
@@ -31,7 +46,7 @@ function digitalRoot(value) {
 }
 
 function gematriaLetterBreakdown(input) {
-  return String(input ?? '').toUpperCase().split('').flatMap((char) => {
+  return String(input ?? '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase().split('').flatMap((char) => {
     const code = char.charCodeAt(0);
     if (code < 65 || code > 90) return [];
     return [{ char, value: (code - 64) * 6 }];
@@ -165,7 +180,7 @@ export default async function onRequest(request) {
 
     const cacheResult = await fetchWordOfDay(sql, request);
     return toResponse(200, cacheResult.payload, {
-      'cache-control': 'public, max-age=3600, stale-while-revalidate=600',
+      'cache-control': wordOfDayCacheControl(),
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {
@@ -191,7 +206,7 @@ export async function handler(event) {
 
     const cacheResult = await fetchWordOfDay(sql, event);
     return jsonResponse(200, cacheResult.payload, {
-      'cache-control': 'public, max-age=3600, stale-while-revalidate=600',
+      'cache-control': wordOfDayCacheControl(),
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {

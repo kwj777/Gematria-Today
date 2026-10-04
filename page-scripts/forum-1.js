@@ -170,15 +170,34 @@
         return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
       }
 
-      function textColorForBackground(hexColor = '#6c757d') {
-        const match = /^#?([0-9a-f]{6})$/i.exec(hexColor);
-        if (!match) return '#ffffff';
+      // WCAG 2 relative luminance of a #rrggbb color, or null if it isn't one.
+      function relativeLuminance(hexColor) {
+        const match = /^#?([0-9a-f]{6})$/i.exec(String(hexColor || ''));
+        if (!match) return null;
         const int = Number.parseInt(match[1], 16);
-        const r = (int >> 16) & 255;
-        const g = (int >> 8) & 255;
-        const b = int & 255;
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-        return luminance > 165 ? '#212529' : '#ffffff';
+        const [r, g, b] = [(int >> 16) & 255, (int >> 8) & 255, int & 255].map((channel) => {
+          const value = channel / 255;
+          return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(luminanceA, luminanceB) {
+        const [lighter, darker] = luminanceA > luminanceB ? [luminanceA, luminanceB] : [luminanceB, luminanceA];
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+
+      // Category colors are free admin input, so pick the chip text by WCAG
+      // contrast, not a brightness threshold: that put white on cyan, teal and
+      // orange at about 2:1. On mid-tones where neither white nor the body ink
+      // reaches 4.5:1, black always does (white failing implies black passes).
+      function textColorForBackground(hexColor = '#6c757d') {
+        const background = relativeLuminance(hexColor);
+        if (background === null) return '#ffffff';
+        const [best] = ['#ffffff', '#212529']
+          .map((color) => ({ color, ratio: contrastRatio(background, relativeLuminance(color)) }))
+          .sort((a, b) => b.ratio - a.ratio);
+        return best.ratio >= 4.5 ? best.color : '#000000';
       }
 
       function renderCategoryChip(thread) {
@@ -190,10 +209,18 @@
         return `<span class="forum-category-chip" style="background:${color};color:${colorText};">${iconMarkup}<span>${categoryName}</span></span>`;
       }
 
+      // Archived and locked categories take no new threads, and moderators-only
+      // ones take them from staff alone, so the composer does not offer them.
+      function acceptsNewThreads(category) {
+        if (category.isArchived || category.isLocked) return false;
+        return category.postMode !== 'moderators' || isAdmin;
+      }
+
       function renderCategories(categories) {
         for (const select of [categoryFilterEl, categoryCreateEl]) {
           const keepAll = select === categoryFilterEl ? '<option value="">All categories</option>' : '';
-          select.innerHTML = keepAll + categories.map((category) => {
+          const options = select === categoryCreateEl ? categories.filter(acceptsNewThreads) : categories;
+          select.innerHTML = keepAll + options.map((category) => {
             const icon = iconByName[String(category.iconName || '').trim()] || '';
             return `<option value="${esc(category.slug)}">${icon ? `${icon} ` : ''}${esc(category.name)}</option>`;
           }).join('');
@@ -212,11 +239,18 @@
           return;
         }
 
+        // The card used to be role="button" itself, which hid everything in it
+        // (excerpt, author, counts, Locked) behind its label and nested the
+        // author and badge controls inside a button. The title is now the
+        // real control; the card keeps a mouse-only click as a convenience.
+        // no-glossary: the glossary skipped the card while it was role="button".
+        // Its term buttons would add tab stops to every card in the list, and a
+        // tap on one (the only way to open a definition on touch) opened the thread.
         threadListEl.innerHTML = threads.map((thread) => `
-          <article class="forum-thread-card" data-thread-id="${thread.id}" role="button" tabindex="0" aria-label="Open thread: ${esc(thread.title)}">
-            <div class="d-flex justify-content-between align-items-start gap-3">
+          <article class="forum-thread-card" data-thread-id="${thread.id}">
+            <div class="d-flex justify-content-between align-items-start gap-3 no-glossary">
               <div class="forum-thread-card-main">
-                <h3 class="h6 mb-1 forum-subtitle">${esc(thread.title)} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
+                <h3 class="h6 mb-1 forum-subtitle"><button type="button" class="forum-thread-open">${esc(thread.title)}</button> ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
                 <p class="small text-muted mb-1 forum-meta">
                   <span class="forum-meta-item">${renderCategoryChip(thread)}</span>
                   <span class="forum-meta-item">By ${renderAuthorInline(thread)}</span>
@@ -231,16 +265,12 @@
         `).join('');
 
         threadListEl.querySelectorAll('[data-thread-id]').forEach((card) => {
+          // The title button's own click (mouse, Enter or Space) bubbles here.
+          // Every other control in the card (author profile, badge link, a
+          // glossary term) and the popups they open do their own thing.
           card.addEventListener('click', (event) => {
-            if (event.target.closest('.forum-author-trigger, .forum-profile-popover')) return;
+            if (event.target.closest('a, button:not(.forum-thread-open), .forum-profile-popover, .defn-popup')) return;
             loadThread(card.dataset.threadId).catch((error) => showAlert(error.message));
-          });
-          card.addEventListener('keydown', (event) => {
-            if (event.target !== card) return;
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              loadThread(card.dataset.threadId).catch((error) => showAlert(error.message));
-            }
           });
         });
         bindAuthorPopovers(threadListEl);
@@ -341,11 +371,13 @@
           modToolbar.hidden = true;
         }
 
-        const locked = Boolean(thread.isLocked);
+        // Only moderators can reply to a thread that is still awaiting approval.
+        const awaitingApproval = Boolean(thread.pendingApproval) && !isAdmin;
+        const locked = Boolean(thread.isLocked) || awaitingApproval;
         replySubmitButton.disabled = locked;
         replyBox.disabled = locked;
         if (locked) {
-          replyBox.placeholder = 'Thread is locked by moderators.';
+          replyBox.placeholder = awaitingApproval ? 'Replies open once a moderator approves this thread.' : 'Thread is locked by moderators.';
         } else {
           replyBox.placeholder = '';
         }
@@ -531,6 +563,7 @@
 
         document.getElementById('threadDetailTitle').textContent = thread.title;
         document.getElementById('threadDetailMeta').innerHTML = `
+          ${thread.pendingApproval ? '<span class="forum-meta-item"><span class="badge text-bg-warning">Awaiting approval</span></span>' : ''}
           <span class="forum-meta-item">${renderCategoryChip(thread)}</span>
           <span class="forum-meta-item">${renderAuthorInline(thread)}</span>
           <span class="forum-meta-item">${thread.replyCount} replies</span>
@@ -586,23 +619,50 @@
         showAlert('Moderation action completed.', 'success');
       }
 
+      async function approveThread(threadId) {
+        await apiPost({ action: 'approve_thread', threadId });
+        await loadModerationQueue();
+        if (currentThread?.id === threadId) await loadThread(threadId);
+        await loadThreads();
+        showAlert('Thread approved and published.', 'success');
+      }
+
       async function loadModerationQueue() {
         if (!isAdmin) return;
         moderationSectionEl.classList.remove('d-none');
         const payload = await apiGet('/api/member-forum?action=reports');
         const reports = payload.reports || [];
-        if (!reports.length) {
-          moderationListEl.innerHTML = '<p class="text-muted mb-0">No open reports.</p>';
+        const pendingThreads = payload.pendingThreads || [];
+        if (!reports.length && !pendingThreads.length) {
+          moderationListEl.innerHTML = '<p class="text-muted mb-0">No open reports or threads awaiting approval.</p>';
           return;
         }
 
-        moderationListEl.innerHTML = reports.map((report) => `
+        // Threads posted to a category that requires approval wait here, hidden
+        // from other members until a moderator approves (or deletes) them.
+        moderationListEl.innerHTML = pendingThreads.map((thread) => `
+          <article class="border rounded p-3 mb-3">
+            <p class="mb-1"><strong>Awaiting approval</strong> · ${esc(thread.categoryName)} · by ${esc(thread.authorUsername)} · ${formatDate(thread.createdAt)}</p>
+            <p class="mb-2">${esc(thread.title)}</p>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-open-pending-thread="${esc(thread.id)}" aria-label="Open thread: ${esc(thread.title)}">Open</button>
+              <button class="btn btn-outline-success btn-sm" type="button" data-approve-thread="${esc(thread.id)}" aria-label="Approve thread: ${esc(thread.title)}">Approve</button>
+            </div>
+          </article>
+        `).join('') + reports.map((report) => `
           <article class="border rounded p-3 mb-3">
             <p class="mb-1"><strong>${esc(report.reason)}</strong> · by ${esc(report.reporterUsername)} · ${formatDate(report.createdAt)}</p>
             <p class="small text-muted mb-1">Thread: ${esc(report.threadId || 'n/a')} · Reply: ${esc(report.postId || 'n/a')}</p>
             <p class="mb-0">${esc(report.details || 'No additional details.')}</p>
           </article>
         `).join('');
+
+        moderationListEl.querySelectorAll('[data-open-pending-thread]').forEach((button) => {
+          button.addEventListener('click', () => loadThread(button.dataset.openPendingThread).catch((error) => showAlert(error.message)));
+        });
+        moderationListEl.querySelectorAll('[data-approve-thread]').forEach((button) => {
+          button.addEventListener('click', () => approveThread(button.dataset.approveThread).catch((error) => showAlert(error.message)));
+        });
       }
 
       document.getElementById('forumRefreshButton').addEventListener('click', () => loadThreads().catch((error) => showAlert(error.message)));
@@ -648,7 +708,7 @@
         event.preventDefault();
         try {
           clearAlert();
-          await apiPost({
+          const payload = await apiPost({
             action: 'create_thread',
             categorySlug: categoryCreateEl.value,
             title: document.getElementById('newThreadTitle').value,
@@ -658,7 +718,9 @@
           createThreadFormEl.reset();
           refreshComposerCounts();
           await loadThreads();
-          showAlert('Thread posted.', 'success');
+          showAlert(payload?.thread?.pendingApproval
+            ? 'Thread submitted. A moderator will review it before other members can see it.'
+            : 'Thread posted.', 'success');
         } catch (error) {
           showAlert(error.message);
         }
@@ -723,7 +785,7 @@
       async function init() {
         try {
           const session = await apiGet('/api/member-session');
-          isAdmin = session?.user?.role === 'admin';
+          isAdmin = ['admin', 'super_admin'].includes(session?.user?.role) || Boolean(session?.user?.isAdmin);
           isPremium = ['premium', 'lifetime'].includes(session?.user?.membershipLevel);
           if (!isPremium && !isAdmin) {
             areaEl.value = 'free';

@@ -26,12 +26,14 @@
     <meta property="og:title" content="Accessibility | Gematria.Today" />
     <meta property="og:description" content="Review Gematria.Today accessibility commitments and the steps taken to improve inclusive site navigation." />
     <meta property="og:url" content="https://gematria.today/accessibility.html" />
-    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Gematria.Today platform overview illustration." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Accessibility | Gematria.Today" />
     <meta name="twitter:description" content="Review Gematria.Today accessibility commitments and the steps taken to improve inclusive site navigation." />
-    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
     <meta name="twitter:image:alt" content="Gematria.Today platform overview illustration." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
     <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
@@ -50,7 +52,7 @@
         <section class="content-panel p-4 p-lg-5 mb-4 legal-copy">
           <p class="section-kicker mb-2">Accessibility</p>
           <h1 class="mb-3">Accessibility Statement</h1>
-          <p class="lead text-muted mb-2">Last updated <time datetime="2026-05-24">May 24, 2026</time></p>
+          <p class="lead text-muted mb-2">Last updated <time datetime="2026-10-04">October 4, 2026</time></p>
           <p class="mb-0">Gematria.Today aims to be usable by the broadest possible audience, including people using assistive technology. This statement records what we test, what we know is not yet conformant, and how to report a barrier you hit.</p>
         </section>
 
@@ -90,7 +92,7 @@
             <li><strong>Forum.</strong> Empty states, character counters on compose/reply, and skeleton loaders are in progress; today the thread list paints blank during initial fetch.</li>
             <li><strong>Admin tooling.</strong> The admin dashboard and editorial tools are role-gated and have not been audited to AA. They are not part of the public conformance claim.</li>
             <li><strong>Member dashboard first paint.</strong> Auth state is now set before first paint via a synchronous bootstrap script, but full skeleton loaders for member content are still rolling out.</li>
-            <li><strong>Cookie consent banner.</strong> Equal-weight Accept/Decline is implemented; granular per-category controls are not yet exposed.</li>
+            <li><strong>Cookie consent banner.</strong> Decline all and Accept all are equal-weight buttons; Customize is a secondary disclosure button that reports whether it is expanded; opening it reveals separate Analytics and Advertising checkboxes and moves keyboard focus to the first one, and Save my choices records them. Escape closes the banner without recording a choice, and Cookie settings in the footer reopens it with your saved choices. The banner has not yet had the runtime screen-reader pass described above.</li>
           </ul>
         </section>
 

@@ -24,18 +24,20 @@
     <meta property="og:title" content="Admin Dashboard | Gematria.Today" />
     <meta property="og:description" content="Admin portal for Gematria.Today content operations and site management." />
     <meta property="og:url" content="https://gematria.today/admin.html" />
-    <meta property="og:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta property="og:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Admin Dashboard | Gematria.Today" />
     <meta name="twitter:description" content="Admin portal for Gematria.Today content operations and site management." />
-    <meta name="twitter:image" content="https://gematria.today/assets/gematria-selling-points.svg" />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/gematria-selling-points.png" />
     <link
       id="bootstrapThemeStylesheet"
       rel="stylesheet"
       href="/assets/vendor/bootstrap/css/bootstrap.min.css"
     />
-    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
-    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="preload" as="style" href="/api/public-theme-css?scope=admin" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css?scope=admin" /></noscript>
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
@@ -46,7 +48,6 @@
       }
     </style>
     <script src="/admin-theme.js"></script>
-    <script defer src="/site-modules.js"></script>
     <script src="/pwa-register.js" defer></script>
   </head>
   <body class="admin-render-pending">
@@ -54,8 +55,9 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
       <div class="container">
         <a class="navbar-brand fw-semibold" href="/"><img src="/assets/gematria-logo-navbar.svg?v=2" alt="Gematria.Today" class="site-logo" width="220" height="52" /></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false">
           <span class="navbar-toggler-icon"></span>
+          <span class="navbar-toggler-label"><span class="navbar-toggler-label__closed">Menu</span><span class="navbar-toggler-label__open">Close</span></span>
         </button>
         <div class="collapse navbar-collapse" id="siteNav">
           <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
@@ -68,7 +70,7 @@
             <li class="nav-item"><a id="siteHubNavLink" class="nav-link" href="/index.html">Public Site</a></li>
           </ul>
           <div class="d-flex ms-lg-3">
-            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+            <button id="themeToggleButton" class="btn btn-outline-light btn-sm" type="button" aria-pressed="false">Dark mode</button>
           </div>
         </div>
       </div>
@@ -504,6 +506,7 @@
       </div>
     </footer>
 
+    <script defer src="/page-scripts/safe-return-path.js"></script>
     <script defer src="/page-scripts/admin-1.js"></script>
     <script defer src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   </body>

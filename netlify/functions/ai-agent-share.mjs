@@ -1,3 +1,5 @@
+import { englishGematriaWithDigitalRoot } from './englishGematria.mjs';
+
 const SITE_ORIGIN = 'https://gematria.today';
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
@@ -19,25 +21,47 @@ export function trimValue(value, maxLength) {
 }
 
 
-export function toImageUrl(topic, total, root) {
+// The share links carry total= and root= as well, but every number shown here,
+// on the card and on the GemaBot page is recomputed from the topic. Reading
+// them let anyone mint a gematria.today-branded result claiming any value for
+// any word (?topic=Obama&total=666). GemaBot itself always shares
+// englishGematria(topic), so no real link changes. The whole topic is counted,
+// not the shortened one that is displayed.
+export function computeShareValues(topic) {
+  const { total, digitalRoot } = englishGematriaWithDigitalRoot(String(topic || ''));
+  // No A-Z letters, nothing to count (GemaBot never shares such a lookup).
+  if (total === '0') {
+    return { total: '?', root: '?' };
+  }
+  return { total, root: String(digitalRoot) };
+}
+
+// The image endpoint recomputes the values from the topic too, so it gets the
+// full topic and nothing else.
+export function toImageUrl(topic) {
   const imageUrl = new URL('/api/ai-agent-share-image', SITE_ORIGIN);
-  imageUrl.searchParams.set('topic', topic);
-  imageUrl.searchParams.set('total', total);
-  imageUrl.searchParams.set('root', root);
+  if (topic) {
+    imageUrl.searchParams.set('topic', topic);
+  }
   return imageUrl.toString();
 }
 
 export function buildShareHtml(params) {
-  const topic = trimValue(params.get('topic') || 'Gematria Agent Result', 90);
-  const total = trimValue(params.get('total') || '?', 24);
-  const root = trimValue(params.get('root') || '?', 24);
+  const rawTopic = String(params.get('topic') || '').trim();
+  const topic = trimValue(rawTopic || 'Gematria Agent Result', 90);
+  const { total, root } = computeShareValues(rawTopic);
 
   const appUrl = new URL('/ai-agent.html', SITE_ORIGIN);
-  appUrl.searchParams.set('sharedTopic', topic);
-  appUrl.searchParams.set('sharedTotal', total);
-  appUrl.searchParams.set('sharedRoot', root);
+  if (rawTopic) {
+    // GemaBot recomputes the banner from sharedTopic, so it gets the full
+    // topic; sharedTotal/sharedRoot are the computed values, kept for pages
+    // still running an older script.
+    appUrl.searchParams.set('sharedTopic', rawTopic);
+    appUrl.searchParams.set('sharedTotal', total);
+    appUrl.searchParams.set('sharedRoot', root);
+  }
 
-  const imageUrl = toImageUrl(topic, total, root);
+  const imageUrl = toImageUrl(rawTopic);
   const title = `GemaBot: ${topic}`;
   const description = `Gematria lookup for ${topic}: total ${total} • digital root ${root}`;
 

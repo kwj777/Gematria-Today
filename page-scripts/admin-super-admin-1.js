@@ -347,16 +347,20 @@
           return;
         }
 
-        const nextSites = state.hubSites.filter((site) => String(site?.id || '').trim() !== currentSiteId);
         const originalLabel = removeFromHubButton.textContent;
         removeFromHubButton.disabled = true;
         removeFromHubButton.textContent = 'Removing…';
         try {
+          // remove-site deletes by id on the server. Resubmitting the remaining
+          // list through save-sites failed whenever another site was registered:
+          // this page never has the other sites' shared secrets to send back.
           const payload = await request('/api/admin-hub', {
             method: 'POST',
-            body: JSON.stringify({ action: 'save-sites', sites: nextSites }),
+            body: JSON.stringify({ action: 'remove-site', siteId: currentSiteId }),
           });
-          state.hubSites = Array.isArray(payload?.sites) ? payload.sites : nextSites;
+          state.hubSites = Array.isArray(payload?.sites)
+            ? payload.sites
+            : state.hubSites.filter((site) => String(site?.id || '').trim() !== currentSiteId);
           updateHubSiteControls();
           showMessage(saveMessage, `Removed ${currentSiteId} from the admin hub list.`);
         } catch (error) {

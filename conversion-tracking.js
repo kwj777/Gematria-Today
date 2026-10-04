@@ -3,10 +3,12 @@
     return;
   }
 
+  // The admin session cookie is HttpOnly, so it is invisible here; the server
+  // sets the readable gematria_admin_flag alongside it for this check.
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
-        return c.trim().startsWith('gematria_admin_session=');
+        return c.trim().startsWith('gematria_admin_flag=');
       });
     } catch {
       return false;
@@ -17,9 +19,12 @@
     return;
   }
 
+  // cookie-consent.js (earlier in site-bundle.js) owns the consent rules. This
+  // used to compare the stored value with the legacy 'accepted' string, which
+  // the banner stopped writing when consent became a JSON object.
   function hasTrackingConsent() {
     try {
-      return window.localStorage.getItem('gematria_cookie_consent') === 'accepted';
+      return window.gematriaCookieConsent?.analyticsAllowed?.() === true;
     } catch {
       return false;
     }
@@ -28,12 +33,16 @@
   if (!hasTrackingConsent()) {
     if (!window.__gematriaConversionTrackingPending) {
       window.__gematriaConversionTrackingPending = true;
+      // Not `once`: a Decline must not use up the listener, or allowing
+      // analytics later from Cookie settings would never start tracking.
       window.addEventListener('gematria:cookie-consent', function onConsentEvent(e) {
-        window.__gematriaConversionTrackingPending = false;
-        if (e.detail && e.detail.accepted) {
-          installConversionTracking();
+        if (!e.detail || !e.detail.analytics) {
+          return;
         }
-      }, { once: true });
+        window.removeEventListener('gematria:cookie-consent', onConsentEvent);
+        window.__gematriaConversionTrackingPending = false;
+        installConversionTracking();
+      });
     }
     return;
   }
@@ -86,9 +95,31 @@
     return Boolean(actionName) && (actionName.endsWith('_click') || REPORTABLE_ACTIONS.has(actionName));
   }
 
+  // Page URLs can carry one-time secrets (account-recovery.html?recovery_code=…)
+  // and these reports land in the admin-visible audit log, so only the origin
+  // and path of a URL are ever reported.
+  function withoutQuery(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      return `${parsed.origin}${parsed.pathname}`;
+    } catch {
+      return '';
+    }
+  }
+
+  function currentPageUrl() {
+    return `${window.location.origin}${window.location.pathname}`;
+  }
+
+  function currentReferrer() {
+    return document.referrer ? withoutQuery(document.referrer) : '';
+  }
+
   function reportButtonEvent(action, metadata = {}) {
     const normalizedAction = normalizeActionName(action);
-    if (!shouldReportAction(normalizedAction)) {
+    // Re-checked per event so withdrawing consent from Cookie settings takes
+    // effect without a reload.
+    if (!shouldReportAction(normalizedAction) || !hasTrackingConsent()) {
       return;
     }
 
@@ -153,12 +184,16 @@
   }
 
   function track(eventName, properties = {}) {
+    if (!hasTrackingConsent()) {
+      return null;
+    }
+
     const payload = {
       event: eventName,
       timestamp: new Date().toISOString(),
       pagePath: window.location.pathname,
-      pageUrl: window.location.href,
-      referrer: document.referrer || '',
+      pageUrl: currentPageUrl(),
+      referrer: currentReferrer(),
       trackingSessionId,
       ...properties,
     };
@@ -189,8 +224,8 @@
     const elementId = normalizeText(target.id || '');
     const elementSelector = normalizeText(buildCssSelector(target));
     const elementLink = elementId
-      ? `${window.location.origin}${window.location.pathname}#${encodeURIComponent(elementId)}`
-      : window.location.href;
+      ? `${currentPageUrl()}#${encodeURIComponent(elementId)}`
+      : currentPageUrl();
 
     reportButtonEvent(action, {
       source: source || 'unknown',
@@ -200,8 +235,8 @@
       elementSelector,
       elementLink,
       pagePath: window.location.pathname,
-      pageUrl: window.location.href,
-      referrer: document.referrer || '',
+      pageUrl: currentPageUrl(),
+      referrer: currentReferrer(),
       trackingSessionId,
       timestamp: new Date().toISOString(),
     });

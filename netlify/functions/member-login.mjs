@@ -12,9 +12,17 @@ import {
   jsonResponse,
   parseBody,
 } from './_member.mjs';
-import { generateCsrfToken } from './_auth.mjs';
+import { assertJsonRequestFromThisSite, createAdminSessionCookies, generateCsrfToken } from './_auth.mjs';
 import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
-import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
+import {
+  applyRateLimit,
+  assertHoneypotEmpty,
+  claimLoginAttempt,
+  getClientRateLimitKey,
+  logRequestAudit,
+  releaseLoginAttempt,
+  rememberLoginSource,
+} from './_security.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -22,6 +30,7 @@ export async function handler(event) {
   }
 
   try {
+    assertJsonRequestFromThisSite(event);
     const sql = getSqlClient();
     await syncBootstrapAdminUser(sql);
     const body = parseBody(event);
@@ -31,7 +40,8 @@ export async function handler(event) {
       route: 'member-login',
       auditMetadata: { identifier: normalizedIdentifier },
     });
-    const clientIp = getClientIp(event);
+    // An IPv6 caller is keyed by its /64, which is what one subscriber gets.
+    const clientIp = getClientRateLimitKey(event);
 
     // Holding any session used to skip these limits, and a session is one free
     // signup away, so password guessing against member accounts was unthrottled
@@ -46,15 +56,24 @@ export async function handler(event) {
       auditMetadata: { identifier: normalizedIdentifier },
     });
 
+    // Counted before the password is checked, so keyed by account and caller
+    // address: keyed by the identifier alone, six bad guesses from anywhere
+    // locked the real member (or, through the admin fallback below, the super
+    // admin) out from every address for half an hour.
+    let accountClaim = null;
     if (normalizedIdentifier) {
       await applyRateLimit(sql, event, {
         scope: 'member-login-identifier',
-        key: normalizedIdentifier,
+        key: `${normalizedIdentifier}|${clientIp}`,
         limit: 5,
         windowMs: 10 * 60_000,
         blockMs: 30 * 60_000,
         message: 'Too many login attempts for this account identifier.',
       });
+      // The cap on the account itself, across every address, shared with
+      // admin-login and claimed before the password is checked. It only counts
+      // and refuses addresses that never signed in to it.
+      accountClaim = await claimLoginAttempt(sql, event, { account: normalizedIdentifier });
     }
 
     const member = await authenticateMemberCredentials(sql, identifier, password);
@@ -72,6 +91,11 @@ export async function handler(event) {
         'set-cookie': [...clearSessionCookie(AUTH_COOKIES.member), ...clearMemberTierCookie()],
       });
     }
+
+    await releaseLoginAttempt(sql, accountClaim);
+    await rememberLoginSource(sql, event, member
+      ? [normalizedIdentifier, member.username, member.email]
+      : [normalizedIdentifier, admin.username, admin.email]);
 
     if (admin) {
       const { token, expiresAt } = await createSession(sql, admin.id);
@@ -108,7 +132,7 @@ export async function handler(event) {
         csrfToken: generateCsrfToken(token),
       }, {
         'set-cookie': [
-          createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+          ...createAdminSessionCookies(token, expiresAt),
           createMemberTierCookie('lifetime', expiresAt),
         ],
       });

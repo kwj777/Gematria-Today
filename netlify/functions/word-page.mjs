@@ -10,8 +10,8 @@
 //   /v/:value  -> every word with that gematria value
 import { getSqlClient } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
-import { englishGematria, digitalRoot } from './englishGematria.mjs';
-import { isIndexableWord, isPublishableWord, hasEnoughSearches, hasEnoughSharedWords } from './_words.mjs';
+import { englishGematria, digitalRoot, gematriaLetters, wordHasValue } from './englishGematria.mjs';
+import { isIndexableWord, isPublishableWord, hasEnoughSearches, hasEnoughSharedWords, parseGematriaValue } from './_words.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -57,25 +57,28 @@ const SHARE_IMAGE_ALT = 'Constellation artwork representing linked words and num
 
 // A=6, L=72, A=6 -> 84. Unique to every word, and the one thing a gematria
 // page should obviously show. Its absence was most of why these read as thin.
+// The letters come from the same normalization the total does, so the
+// breakdown always sums to the value above it.
 export function letterBreakdown(word) {
-  return String(word)
-    .toUpperCase()
+  return gematriaLetters(word)
     .split('')
-    .filter((char) => char >= 'A' && char <= 'Z')
     .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
 }
 
+// A definition list, as on how-to-use-gematria and why-english-gematria: each
+// letter is a term and its value the definition. It was role="table" holding
+// role="cell"s with no rows, which screen readers report as a broken table.
 function breakdownHtml(word, total) {
   const letters = letterBreakdown(word);
   if (letters.length === 0) return '';
   const cells = letters
-    .map(({ letter, value }) => `<div class="letter-value-grid__cell" role="cell"><span class="letter-value-grid__letter">${escapeHtml(letter)}</span><span class="letter-value-grid__value">${value}</span></div>`)
+    .map(({ letter, value }) => `<div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">${escapeHtml(letter)}</dt><dd class="letter-value-grid__value mb-0">${value}</dd></div>`)
     .join('\n          ');
   const sum = letters.map(({ letter, value }) => `${escapeHtml(letter)}&nbsp;${value}`).join(' + ');
   return `        <h2 class="h5 mt-4 mb-2">How ${escapeHtml(word)} adds up</h2>
-        <div class="letter-value-grid mb-3" role="table" aria-label="Letter values for ${escapeHtml(word)}">
+        <dl class="letter-value-grid mb-3">
           ${cells}
-        </div>
+        </dl>
         <p class="small text-muted">${sum} = <strong>${total}</strong></p>`;
 }
 
@@ -320,6 +323,17 @@ ${callToAction()}`;
   });
 }
 
+// Only a real page earns the long shared-cache lifetime. A 429 is one
+// visitor's rate limit and a 5xx is a passing outage: cached publicly, either
+// kept the word broken for a day after recovery and could hand one person's
+// rate-limit page to everyone behind the same proxy. A 404 is real but may be
+// fixed by the next search that adds the word, so it is kept briefly.
+export function cacheControlForStatus(status) {
+  if (status === 200) return 'public, max-age=600, stale-while-revalidate=86400';
+  if (status === 404) return 'public, max-age=60';
+  return 'no-store';
+}
+
 // Netlify v2 functions (export default) must return a Response; returning a
 // {statusCode, headers, body} object crashes with NetlifyUserError. Every
 // other export-default function in this directory already does this.
@@ -330,7 +344,7 @@ function htmlResponse(status, body) {
     // these pages carry the site security headers themselves.
     headers: documentSecurityHeaders({
       'content-type': 'text/html; charset=UTF-8',
-      'cache-control': 'public, max-age=600, stale-while-revalidate=86400',
+      'cache-control': cacheControlForStatus(status),
     }),
   });
 }
@@ -380,12 +394,15 @@ export default async function onRequest(request) {
       return notFoundPage();
     }
 
+    // A value past the integer range used to reach Postgres as-is and fail
+    // as a 500. No word can have it, so there is no page.
     const value = route.kind === 'word'
       ? Number(englishGematria(route.key))
-      : Number(route.key);
+      : parseGematriaValue(route.key);
+    if (value === null) return notFoundPage();
 
     const cached = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'word-page', kind: route.kind, key: route.key.toLowerCase() }),
+      cacheKey: buildCacheKey({ route: 'word-page', kind: route.kind, key: route.kind === 'value' ? String(value) : route.key.toLowerCase() }),
       route: 'word-page',
       ttlSeconds: 600,
       compute: async () => {
@@ -405,7 +422,11 @@ export default async function onRequest(request) {
       },
     });
 
-    const words = cached.payload?.words || [];
+    // A row stored under the old letter rule can sit under a value its word
+    // no longer adds up to ("Straße" at 606, now 378). Listing it here would
+    // link to a /w/ page showing a different number, so it is left out of
+    // the list and the counts, the same as the calculator's reverse lookup.
+    const words = (cached.payload?.words || []).filter((row) => wordHasValue(row.word, value));
 
     // /v/999999999999 used to render a live-looking page announcing "0 words
     // share this value". Nothing is there, so say so with a 404.

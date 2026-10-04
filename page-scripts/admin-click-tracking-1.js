@@ -7,6 +7,31 @@
           .replaceAll("'", '&#39;');
       }
 
+      // Click rows come from a public endpoint, so a stored link can be
+      // whatever a caller sent. Only a link on this site is rendered as one;
+      // anything else is shown as text, so a forged row cannot put an off-site
+      // or look-alike sign-in link in front of an admin.
+      function toSameOriginHref(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        try {
+          const parsed = new URL(raw, window.location.origin);
+          return parsed.origin === window.location.origin ? parsed.href : '';
+        } catch {
+          return '';
+        }
+      }
+
+      function renderElementLinkCell(value, label) {
+        const raw = String(value || '').trim();
+        if (!raw) return '<span class="text-muted">—</span>';
+        const href = toSameOriginHref(raw);
+        if (href) {
+          return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>';
+        }
+        return '<span class="text-muted" title="' + escapeHtml(raw) + '">' + escapeHtml(raw.length > 40 ? raw.slice(0, 37) + '…' : raw) + '</span>';
+      }
+
       function formatNumber(value) {
         return new Intl.NumberFormat('en-US').format(Number(value || 0));
       }
@@ -38,6 +63,7 @@
       const mostClickedActionFilter = document.getElementById('mostClickedActionFilter');
       const mostClickedPageFilter = document.getElementById('mostClickedPageFilter');
       let currentRows = [];
+      let currentRowsTruncated = false;
       let currentNeverClickedElements = [];
 
       function normalizeAudienceType(rawAudienceType) {
@@ -141,7 +167,6 @@
           return true;
         }));
         mostClickedBody.innerHTML = mostClickedRows.slice(0, 100).map((row) => {
-          const link = row.elementLink || '';
           return '<tr>'
             + '<td class="fw-semibold">' + formatNumber(row.clicks) + '</td>'
             + '<td><code>' + escapeHtml(row.action || '—') + '</code></td>'
@@ -150,7 +175,7 @@
             + '<td class="small" title="' + escapeHtml(row.elementLabel || 'element') + '">' + escapeHtml(row.elementLabel || 'element') + '</td>'
             + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
             + '<td class="small" title="' + escapeHtml(row.referrer || '—') + '">' + escapeHtml(row.referrer || '—') + '</td>'
-            + '<td class="small">' + (link ? ('<a href="' + escapeHtml(link) + '" target="_blank" rel="noopener noreferrer">Open element</a>') : '<span class="text-muted">—</span>') + '</td>'
+            + '<td class="small">' + renderElementLinkCell(row.elementLink, 'Open element') + '</td>'
             + '</tr>';
         }).join('') || '<tr><td colspan="8" class="small text-muted">No grouped click rows for the selected filters.</td></tr>';
       }
@@ -195,7 +220,7 @@
               + '<td class="small"><code>' + escapeHtml(row.elementType || '—') + '</code></td>'
               + '<td class="small">' + escapeHtml(row.pagePath || '—') + '</td>'
               + '<td class="small" title="' + escapeHtml(ref) + '">' + escapeHtml(ref.length > 40 ? ref.slice(0, 37) + '…' : ref) + '</td>'
-              + '<td class="small">' + (row.elementLink ? ('<a href="' + escapeHtml(row.elementLink) + '" target="_blank" rel="noopener noreferrer">Open</a>') : '<span class="text-muted">—</span>') + '</td>'
+              + '<td class="small">' + renderElementLinkCell(row.elementLink, 'Open') + '</td>'
               + '</tr>';
           }).join('');
 
@@ -219,7 +244,12 @@
         }).join('');
 
         tableBody.innerHTML = groupRows || '<tr><td colspan="8" class="small text-muted">No click tracking data available for this timeframe.</td></tr>';
-        countEl.textContent = `Showing ${formatNumber(filtered.length)} click events in timeframe.`;
+        // The server caps how many events it returns for a window; say so
+        // rather than letting partial totals read as the whole timeframe.
+        countEl.textContent = `Showing ${formatNumber(filtered.length)} click events in timeframe.`
+          + (currentRowsTruncated
+            ? ` Only the newest ${formatNumber(currentRows.length)} events were loaded, so totals and never-clicked elements cover those events. Choose a shorter timeframe for complete figures.`
+            : '');
         renderReportCards(filtered);
         renderNeverClickedTable();
         updateMostClickedFilterOptions(filtered);
@@ -263,6 +293,7 @@
           }
           const payload = await request(`/api/admin-click-tracking?${selected.query}`);
           currentRows = Array.isArray(payload.clickTrackingDetails) ? payload.clickTrackingDetails : [];
+          currentRowsTruncated = payload.truncated === true;
           currentNeverClickedElements = Array.isArray(payload.neverClickedElements) ? payload.neverClickedElements : [];
           document.getElementById('metaLine').textContent = `Signed in as ${payload.user.username}. Window: ${payload.windowLabel}. Last refresh: ${new Date(payload.generatedAt).toLocaleString()}.`;
           renderGroupedRows();
@@ -278,6 +309,7 @@
           mostClickedBody.innerHTML = '<tr><td colspan="8" class="small text-muted">No grouped click rows loaded.</td></tr>';
           neverClickedBody.innerHTML = '<tr><td colspan="4" class="small text-muted">No never-clicked rows loaded.</td></tr>';
           currentNeverClickedElements = [];
+          currentRowsTruncated = false;
           countEl.textContent = '';
           renderReportCards([]);
         }

@@ -3,13 +3,16 @@
         englishGematria,
         gematriaLetterBreakdown,
         digitalRoot,
+        describeSharedLookup,
         isBaseRootTotal,
         describeMatchConfidence,
         normalizeCandidate,
         isReasonableTargetLength,
         LEARNING_STOP_WORDS,
-        tokenizeForLearning,
-        scoreLearningOverlap,
+        findLearnedEntry,
+        buildLearnedNoteHtml,
+        buildLearningPrompt,
+        isLearnablePrompt,
         isAffirmativePrompt,
         isCancellationPrompt,
         isFollowupQuestion,
@@ -291,34 +294,13 @@
       }
 
       function findLearnedResponse(prompt) {
-        const normalizedPrompt = normalizeCandidate(prompt).toLowerCase();
-        if (!normalizedPrompt) return null;
-        const learnings = readCombinedLearnings();
-        if (!learnings.entries.length) return null;
-
-        const substringHit = learnings.entries.find((entry) =>
-          normalizedPrompt.includes(entry.prompt) || entry.prompt.includes(normalizedPrompt)
-        );
-        if (substringHit) return substringHit;
-
-        const promptTokens = tokenizeForLearning(normalizedPrompt);
-        if (promptTokens.length < 2) return null;
-
-        let best = null;
-        let bestScore = 0;
-        for (const entry of learnings.entries) {
-          const entryTokens = tokenizeForLearning(entry.prompt);
-          if (entryTokens.length < 2) continue;
-          const score = scoreLearningOverlap(promptTokens, entryTokens);
-          if (score >= 0.4 && score > bestScore) {
-            best = entry;
-            bestScore = score;
-          }
-        }
-        return best;
+        return findLearnedEntry(prompt, readCombinedLearnings().entries);
       }
 
-      async function submitChatbotFeedback(query, answerText, wasExpected, feedbackText) {
+      // cleanedQuery is the key the reply's note is looked up by. An admin's
+      // "Train from this" saves the learning under it, so a trained note shows
+      // up on the same prompts a member's own saved learning would.
+      async function submitChatbotFeedback(query, answerText, wasExpected, feedbackText, cleanedQuery) {
         try {
           await fetch('/api/public-chatbot-feedback', {
             method: 'POST',
@@ -326,6 +308,7 @@
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
               query: String(query || '').trim().slice(0, 400),
+              cleanedQuery: String(cleanedQuery || '').trim().slice(0, 400) || null,
               answerText: String(answerText || '').trim().slice(0, 2000) || null,
               wasExpected,
               feedbackText: feedbackText ? String(feedbackText).trim().slice(0, 1500) : null,
@@ -695,10 +678,7 @@
         }
       }
 
-      async function buildGeneralChatReply(normalizedPrompt, learnedResponse) {
-        const learnedCue = learnedResponse
-          ? `<span class="d-none" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"></span>`
-          : '';
+      async function buildGeneralChatReply(normalizedPrompt) {
         const topicAnswer = buildGeneralChatTopicAnswer(classifyGeneralChatTopic(normalizedPrompt));
         const relatedLookupWord = /\b(?:synonyms?|antonyms?|equivalents?|cross(?: |-)?references?|hypernyms?|hyponyms?|variants?|same context|related words?)\b/i.test(normalizedPrompt)
           ? extractWordnikLookupWord(normalizedPrompt)
@@ -734,7 +714,6 @@
           `;
 
         return `
-          ${learnedCue}
           ${topicAnswer}
           ${synonymResponseBlock}
           ${buildMemberAccessLinks(normalizedPrompt)}
@@ -906,12 +885,18 @@
         return 'Chat session saved to your membership dashboard.';
       }
 
-      function attachResultFeedbackUi(messageElement, originalPrompt, answerText) {
+      function attachResultFeedbackUi(messageElement, originalPrompt, answerText, learningPrompt = originalPrompt) {
         if (!messageElement || !originalPrompt) return;
 
         const feedbackContainer = document.createElement('div');
         feedbackContainer.className = 'mt-3 border-top pt-3';
         const detailsId = `feedbackDetails-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        // Only promise a community note when GemaBot can show one under this
+        // key. No key means the reply has no subject (see buildLearningPrompt),
+        // and a key with no English letters or digits ("אהבה", "???") is one
+        // findLearnedEntry never matches, so those notes only go to the review
+        // queue, the same keys the admin "Train from this" refuses.
+        const notesShared = isLearnablePrompt(learningPrompt);
         feedbackContainer.innerHTML = `
           <p class="mb-2 small fw-semibold">Were these results what you expected?</p>
           <div class="d-flex flex-wrap gap-2 mb-2">
@@ -919,7 +904,7 @@
             <button type="button" class="btn btn-sm btn-outline-warning" data-feedback="no">No</button>
           </div>
           <div class="feedback-followup" hidden>
-            <label class="form-label small" for="${detailsId}">Please explain what you expected so I can learn for similar prompts.</label>
+            <label class="form-label small" for="${detailsId}">Please explain what you expected. ${notesShared ? 'Your note will be shown as a community note to anyone who asks this question.' : 'Your note goes to the GemaBot team for review.'}</label>
             <textarea id="${detailsId}" class="form-control form-control-sm mb-2" rows="2" placeholder="Example: For prompts about names, start with a short summary before the full breakdown."></textarea>
             <button type="button" class="btn btn-sm btn-primary" data-feedback="save">Save learning</button>
           </div>
@@ -941,7 +926,7 @@
             status.hidden = false;
             status.textContent = 'Great — thanks for confirming.';
           }
-          submitChatbotFeedback(originalPrompt, answerText, true, null);
+          submitChatbotFeedback(originalPrompt, answerText, true, null, learningPrompt);
         });
 
         noButton?.addEventListener('click', () => {
@@ -967,13 +952,20 @@
             return;
           }
           saveButton.disabled = true;
-          submitChatbotFeedback(originalPrompt, answerText, false, explanation);
-          const savedGlobally = await saveLearnedResponse(originalPrompt, explanation);
-          if (status) {
-            status.hidden = false;
-            status.textContent = savedGlobally
-              ? 'Saved globally. I will use this guidance for everyone on similar prompts.'
-              : 'Saved on this device. Global sync failed right now, so this guidance is local only for now.';
+          submitChatbotFeedback(originalPrompt, answerText, false, explanation, learningPrompt);
+          if (!notesShared) {
+            if (status) {
+              status.hidden = false;
+              status.textContent = 'Thanks. Your note was sent to the GemaBot team for review.';
+            }
+          } else {
+            const savedGlobally = await saveLearnedResponse(learningPrompt, explanation);
+            if (status) {
+              status.hidden = false;
+              status.textContent = savedGlobally
+                ? 'Saved. Your note will now appear as a community note when anyone asks this question again.'
+                : 'Saved on this device. Global sync failed right now, so only this device will show your note for now.';
+            }
           }
           if (followup) followup.hidden = true;
           if (yesButton) yesButton.disabled = true;
@@ -1149,7 +1141,8 @@
 
       function reportButtonEvent(action, metadata = {}) {
         const normalizedAction = String(action || '').trim().toLowerCase();
-        if (!normalizedAction) {
+        // Analytics: skipped unless the visitor allows it (cookie-consent.js).
+        if (!normalizedAction || window.gematriaCookieConsent?.analyticsAllowed?.() !== true) {
           return;
         }
         fetch('/api/public-button-report', {
@@ -1317,13 +1310,11 @@ View results: ${shareUrl}`.trim(),
 
       function showSharedResultIfPresent() {
         const params = new URLSearchParams(window.location.search);
-        const topic = String(params.get('sharedTopic') || '').trim();
-        const total = String(params.get('sharedTotal') || '').trim();
-        const root = String(params.get('sharedRoot') || '').trim();
-        if (!topic || !total) return;
+        const shared = describeSharedLookup(params.get('sharedTopic'));
+        if (!shared) return;
 
         sharedResultBanner.hidden = false;
-        sharedResultBanner.innerHTML = `<strong>Shared gematria lookup:</strong> ${escapeHtml(topic)} → total ${escapeHtml(total)}, digital root ${escapeHtml(root || '?')}.`;
+        sharedResultBanner.innerHTML = `<strong>Shared gematria lookup:</strong> ${escapeHtml(shared.topic)} → total ${shared.total}, digital root ${shared.root}.`;
       }
 
       function normalizeDictionaryText(value) {
@@ -1601,6 +1592,27 @@ View results: ${shareUrl}`.trim(),
           : 'Saved to your membership dashboard history.';
       }
 
+      // The prompt a reply is built from: pronouns resolved against the previous
+      // answer, spelled-out numbers turned into digits. Read it before building
+      // the reply, which moves lastCalculationContext on.
+      function resolveAgentPrompt(prompt) {
+        return normalizeNumericInput(resolvePronouns(normalizeCandidate(prompt), lastCalculationContext));
+      }
+
+      // The key the reply's community note is looked up and saved under. A
+      // follow-up ("why", "what does that mean") or a "yes" accepting the
+      // related-words offer is keyed with the subject it follows; with no
+      // subject (a bare "yes" with nothing offered) it gets no key, while
+      // "ok what is the gematria of love" keeps its own (see
+      // buildLearningPrompt). Read it before building the reply, too.
+      function resolveLearningPrompt(prompt) {
+        return buildLearningPrompt(prompt, {
+          resolvedPrompt: resolveAgentPrompt(prompt),
+          context: lastCalculationContext,
+          pendingTopic: pendingRelatedWordsSuggestionTopic,
+        });
+      }
+
       async function buildAgentReply(prompt) {
         const rawNormalized = normalizeCandidate(prompt);
 
@@ -1614,7 +1626,7 @@ View results: ${shareUrl}`.trim(),
           return buildFollowupReply(lastCalculationContext);
         }
 
-        const normalizedPrompt = normalizeNumericInput(resolvePronouns(rawNormalized, lastCalculationContext));
+        const normalizedPrompt = resolveAgentPrompt(rawNormalized);
 
         const recallTarget = extractRecallTarget(normalizedPrompt);
         if (recallTarget) {
@@ -1629,7 +1641,6 @@ View results: ${shareUrl}`.trim(),
           return buildHypothesisReply(hypothesisIntent);
         }
 
-        const learnedResponse = findLearnedResponse(normalizedPrompt);
         const requestedSpellingVariantLookup = /\btry\s+close\s+spelling\s+variants\s+of\b/i.test(normalizedPrompt);
         // Numeric normalization can merge spelled-number range operands across
         // the connecting "and", so retry on the raw prompt where the words survive.
@@ -1801,7 +1812,7 @@ View results: ${shareUrl}`.trim(),
             const strayValue = Number(strayNumberMatch[1]);
             return `<p class="mb-0">Did not see a word or phrase to calculate. To run a reverse gematria lookup for <strong>${strayValue}</strong>, try <code>reverse gematria ${strayValue}</code> or <code>what words equal ${strayValue}</code>.</p>`;
           }
-          return buildGeneralChatReply(normalizedPrompt, learnedResponse);
+          return buildGeneralChatReply(normalizedPrompt);
         }
 
         const calculationTargets = rawCalculationTargets.filter((target) => gematriaLetterBreakdown(target).length > 0);
@@ -1921,7 +1932,6 @@ View results: ${shareUrl}`.trim(),
           : 'No alphabetical letters detected.';
 
         const initialHtml = `
-          ${learnedResponse ? `<span class="d-none" data-applied-learning="${escapeHtml(learnedResponse.prompt)}"></span>` : ''}
           ${comparisonSummary}
           <div class="d-flex flex-column gap-2 mb-2" data-agent-cards>
             ${allWordReports.map((entry) => {
@@ -2084,10 +2094,21 @@ View results: ${shareUrl}`.trim(),
         }
       }
 
-      async function renderAgentReply(prompt) {
-        const reply = await buildAgentReply(prompt);
+      // Every reply goes through here, and every reply offers "Save learning",
+      // so the community note saved for a prompt is shown here, once, whatever
+      // kind of reply the prompt produced. It used to be rendered by only two of
+      // the reply builders, so a note saved on (or trained from) a reverse
+      // lookup, a word count or a follow-up never appeared. The note is looked
+      // up, and a new one saved, under the same key; an empty key (a reply with
+      // no subject, such as "never mind") shows no note and saves none.
+      async function renderAgentReply(prompt, {
+        buildReply = buildAgentReply,
+        learningPrompt = resolveLearningPrompt(prompt),
+      } = {}) {
+        const learnedNoteHtml = buildLearnedNoteHtml(findLearnedResponse(learningPrompt));
+        const reply = await buildReply(prompt);
         const isStreaming = reply && typeof reply === 'object' && 'initialHtml' in reply;
-        const initialHtml = isStreaming ? reply.initialHtml : reply;
+        const initialHtml = `${learnedNoteHtml}${isStreaming ? reply.initialHtml : reply}`;
         const assistantMessage = addMessage('assistant', initialHtml);
         // finalize() fetches definitions and related words, which can take
         // seconds. If the reader scrolled during that time, scrolling them back
@@ -2107,7 +2128,7 @@ View results: ${shareUrl}`.trim(),
         }
         const contentNode = assistantMessage.querySelector('[data-message-content]');
         const finalAnswerHtml = contentNode ? contentNode.innerHTML : initialHtml;
-        attachResultFeedbackUi(assistantMessage, prompt, finalAnswerHtml);
+        attachResultFeedbackUi(assistantMessage, prompt, finalAnswerHtml, learningPrompt);
 
         window.removeEventListener('wheel', noteScroll);
         window.removeEventListener('touchmove', noteScroll);
@@ -2129,18 +2150,20 @@ View results: ${shareUrl}`.trim(),
 
       let isAgentRequestInFlight = false;
 
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        if (isAgentRequestInFlight) return;
-        if (!premiumAccess) return;
-        const prompt = promptInput.value.trim();
-        if (!prompt) return;
+      // One reply at a time. The word and reverse-lookup buttons inside earlier
+      // replies used to start their own request without checking this, so two
+      // replies could interleave and whichever finished first re-enabled the
+      // composer and hid the overlay while the other was still running.
+      async function runAgentRequest(prompt, displayText = prompt, replyOptions = {}) {
+        if (isAgentRequestInFlight) return false;
         isAgentRequestInFlight = true;
-        addMessage('user', `<p class="mb-0">${escapeHtml(prompt)}</p>`, { pinToTop: true });
+        addMessage('user', `<p class="mb-0">${escapeHtml(displayText)}</p>`, { pinToTop: true });
         autoCollapseHeroOnFirstUse();
-        promptInput.value = '';
 
         const originalAskButtonText = askAgentButton?.textContent || 'Ask GemaBot';
+        // A lookup button can run this while the premium gate has the composer
+        // disabled, so put the button back the way it was, not simply enabled.
+        const askButtonWasDisabled = Boolean(askAgentButton?.disabled);
         if (askAgentButton) {
           askAgentButton.textContent = 'Working...';
           askAgentButton.disabled = true;
@@ -2149,15 +2172,29 @@ View results: ${shareUrl}`.trim(),
         setComposerWaitingState(true);
         window.showWorkingOverlay?.();
         try {
-          await renderAgentReply(prompt);
+          await renderAgentReply(prompt, replyOptions);
         } finally {
           window.hideWorkingOverlay?.();
           setComposerWaitingState(false);
           if (askAgentButton) {
             askAgentButton.textContent = originalAskButtonText;
-            askAgentButton.disabled = false;
+            askAgentButton.disabled = askButtonWasDisabled;
           }
           isAgentRequestInFlight = false;
+        }
+        return true;
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (isAgentRequestInFlight) return;
+        if (!premiumAccess) return;
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
+        promptInput.value = '';
+        try {
+          await runAgentRequest(prompt);
+        } finally {
           promptInput.focus();
         }
       });
@@ -2279,13 +2316,10 @@ View results: ${shareUrl}`.trim(),
           const href = jsonPreviewLink.getAttribute('href') || '';
           if (!href) return;
           const previewType = String(jsonPreviewLink.dataset.jsonPreview || '').trim();
-          addMessage('user', `<p class="mb-0">${escapeHtml(jsonPreviewLink.textContent || 'Preview JSON link')}</p>`, { pinToTop: true });
-          autoCollapseHeroOnFirstUse();
-          window.showWorkingOverlay?.();
-          const replyHtml = await buildJsonLinkPreviewReply(href, previewType);
-          window.hideWorkingOverlay?.();
-          const assistantMessage = addMessage('assistant', replyHtml);
-          attachResultFeedbackUi(assistantMessage, href, replyHtml);
+          await runAgentRequest(href, jsonPreviewLink.textContent || 'Preview JSON link', {
+            buildReply: () => buildJsonLinkPreviewReply(href, previewType),
+            learningPrompt: href,
+          });
           return;
         }
 
@@ -2353,17 +2387,7 @@ View results: ${shareUrl}`.trim(),
         if (reverseLookupButton) {
           const gematriaValue = Number(reverseLookupButton.dataset.gematriaValue);
           if (!Number.isFinite(gematriaValue) || gematriaValue <= 0) return;
-          const promptText = `reverse gematria ${gematriaValue}`;
-          addMessage('user', `<p class="mb-0">${escapeHtml(promptText)}</p>`, { pinToTop: true });
-          autoCollapseHeroOnFirstUse();
-          setComposerWaitingState(true);
-          window.showWorkingOverlay?.();
-          try {
-            await renderAgentReply(promptText);
-          } finally {
-            window.hideWorkingOverlay?.();
-            setComposerWaitingState(false);
-          }
+          await runAgentRequest(`reverse gematria ${gematriaValue}`);
           return;
         }
 
@@ -2371,16 +2395,7 @@ View results: ${shareUrl}`.trim(),
         if (wordLookupButton) {
           const selectedWord = String(wordLookupButton.dataset.word || '').trim();
           if (!selectedWord) return;
-          addMessage('user', `<p class="mb-0">${escapeHtml(selectedWord)}</p>`, { pinToTop: true });
-          autoCollapseHeroOnFirstUse();
-          setComposerWaitingState(true);
-          window.showWorkingOverlay?.();
-          try {
-            await renderAgentReply(`"${selectedWord}"`);
-          } finally {
-            window.hideWorkingOverlay?.();
-            setComposerWaitingState(false);
-          }
+          await runAgentRequest(`"${selectedWord}"`, selectedWord);
           return;
         }
 

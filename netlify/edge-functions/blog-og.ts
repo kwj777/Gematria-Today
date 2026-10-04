@@ -21,6 +21,71 @@ interface Post {
   sliderImageUrl?: string;
 }
 
+// blog.html ships one static Article block describing the blog index (its
+// tagline as headline, a fixed date, mainEntityOfPage blog.html). Left alone,
+// every post URL claimed to be that same article. The block carries an id so a
+// post view can swap it for the post's own data.
+const ARTICLE_JSON_LD_PATTERN =
+  /<script type="application\/ld\+json" id="blogArticleJsonLd">[\s\S]*?<\/script>/;
+
+interface ArticleSource {
+  title?: string;
+  summary?: string;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+function toIsoDate(value: string | null | undefined): string {
+  const raw = String(value ?? '').trim();
+  if (!raw) {
+    return '';
+  }
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
+}
+
+export function buildPostArticleJsonLd(
+  post: ArticleSource,
+  { canonicalUrl, imageUrl, siteOrigin }: { canonicalUrl: string; imageUrl: string; siteOrigin: string }
+): Record<string, unknown> {
+  const datePublished = toIsoDate(post.publishedAt) || toIsoDate(post.createdAt);
+  const dateModified = toIsoDate(post.updatedAt) || datePublished;
+  const data: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: String(post.title || DEFAULT_TITLE).trim(),
+    description: String(post.summary || DEFAULT_DESCRIPTION).trim(),
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
+    url: canonicalUrl,
+    author: { '@type': 'Organization', name: 'Gematria.Today Editorial Team' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Gematria.Today',
+      logo: { '@type': 'ImageObject', url: `${siteOrigin}/apple-touch-icon.png`, width: 180, height: 180 },
+    },
+    isPartOf: { '@type': 'Blog', '@id': `${siteOrigin}/blog.html` },
+  };
+  if (imageUrl) {
+    data.image = [imageUrl];
+  }
+  if (datePublished) {
+    data.datePublished = datePublished;
+  }
+  if (dateModified) {
+    data.dateModified = dateModified;
+  }
+  return data;
+}
+
+export function replaceArticleJsonLd(html: string, data: Record<string, unknown>): string {
+  // '<' is the only character that can end a <script> early; JSON.stringify
+  // handles the rest. A replacer function keeps '$' in a title literal.
+  const json = JSON.stringify(data, null, 2).replace(/</g, '\\u003c');
+  const block = `<script type="application/ld+json" id="blogArticleJsonLd">\n${json}\n</script>`;
+  return html.replace(ARTICLE_JSON_LD_PATTERN, () => block);
+}
+
 function toAbsoluteImageUrl(value: string | null | undefined, siteOrigin: string): string {
   const url = String(value ?? '').trim();
   if (!url || /^data:image\//i.test(url)) {
@@ -144,7 +209,10 @@ export default async (req: Request, context: Context) => {
   const description = String(post.summary || DEFAULT_DESCRIPTION).trim();
   const heroImage = getPostHeroImage(post) || defaultOgImage;
   const imageUrl = toShareImageUrl(heroImage, siteOrigin) || toShareImageUrl(defaultOgImage, siteOrigin);
-  const shareUrl = `${siteOrigin}/blog.html?post=${encodeURIComponent(postSlug)}#${encodeURIComponent(postSlug)}`;
+  // Canonical form shared with blog-post-share's /blog/<slug> stub and the
+  // sitemap. No fragment: it is dropped by crawlers and only made the three
+  // declarations differ.
+  const shareUrl = `${siteOrigin}/blog.html?post=${encodeURIComponent(postSlug)}`;
 
   // Replace title tag
   html = html.replace(
@@ -167,6 +235,11 @@ export default async (req: Request, context: Context) => {
   html = replaceMetaContent(html, 'meta[name="twitter:title"]', title);
   html = replaceMetaContent(html, 'meta[name="twitter:description"]', description);
   html = replaceMetaContent(html, 'meta[name="twitter:image"]', imageUrl);
+
+  html = replaceArticleJsonLd(
+    html,
+    buildPostArticleJsonLd(post, { canonicalUrl: shareUrl, imageUrl, siteOrigin })
+  );
 
   return new Response(html, { headers: response.headers });
 };

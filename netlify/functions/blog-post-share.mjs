@@ -79,8 +79,14 @@ export function buildShareHtml(post) {
   const slug = String(post?.slug || '').trim();
   const title = String(post?.title || 'Gematria.Today Blog').trim();
   const description = getShareDescription(post);
-  const canonicalUrl = `${SITE_ORIGIN}/blog/${encodeURIComponent(slug)}`;
-  const appUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
+  // /blog/<slug> is the short share URL, but this page is only a redirect stub:
+  // the post itself renders at blog.html?post=<slug>. A canonical must name the
+  // page that serves the content, so it points there -- the same URL blog-og
+  // declares on that page and sitemap-xml lists. Pointing it back at
+  // /blog/<slug> made redirect and canonical contradict each other.
+  const shareUrl = `${SITE_ORIGIN}/blog/${encodeURIComponent(slug)}`;
+  const canonicalUrl = `${SITE_ORIGIN}/blog.html?post=${encodeURIComponent(slug)}`;
+  const appUrl = `${canonicalUrl}#${encodeURIComponent(slug)}`;
   const imageUrl = toShareImageUrl(getPostHeroImage(post)) || toShareImageUrl(FALLBACK_IMAGE);
   const publishedIso = post?.publishedAt || post?.createdAt || new Date().toISOString();
 
@@ -98,7 +104,7 @@ export function buildShareHtml(post) {
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${escapeHtml(title)}" />
     <meta property="og:description" content="${escapeHtml(description)}" />
-    <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
+    <meta property="og:url" content="${escapeHtml(shareUrl)}" />
     <meta property="og:image" content="${escapeHtml(imageUrl)}" />
     <meta property="og:image:alt" content="${escapeHtml(title)}" />
     <meta property="article:published_time" content="${escapeHtml(new Date(publishedIso).toISOString())}" />

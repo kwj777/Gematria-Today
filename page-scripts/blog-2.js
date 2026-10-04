@@ -320,6 +320,15 @@
           ? `${window.location.origin}/blog/${encodeURIComponent(cleanSlug)}?post=${encodeURIComponent(cleanSlug)}`
           : `${window.location.origin}/blog.html`;
       };
+      // The post renders at blog.html?post=<slug>, and that is the canonical the
+      // /blog/<slug> stub, blog-og and the sitemap all declare. The share URL
+      // (/blog/<slug>?post=...) redirects there, so it cannot be the canonical.
+      const buildCanonicalPostUrl = (slug = '') => {
+        const cleanSlug = String(slug || '').trim();
+        return cleanSlug
+          ? `${window.location.origin}/blog.html?post=${encodeURIComponent(cleanSlug)}`
+          : `${window.location.origin}/blog.html`;
+      };
       const updateShareMetadata = (post) => {
         const slug = String(post?.slug || '').trim();
         const shareUrl = buildSharePostUrl(slug);
@@ -329,7 +338,7 @@
 
         document.title = title;
         const canonicalEl = document.querySelector('link[rel="canonical"]');
-        if (canonicalEl) canonicalEl.setAttribute('href', shareUrl);
+        if (canonicalEl) canonicalEl.setAttribute('href', buildCanonicalPostUrl(slug));
 
         const setMetaContent = (selector, value) => {
           const node = document.querySelector(selector);
@@ -460,14 +469,52 @@
           .replace(/^-+|-+$/g, '');
         return slugFromTitle || `post-${index}`;
       };
+      // A fragment naming an element other than a post card is an in-page
+      // section anchor -- a table-of-contents entry, a heading's "#" link or an
+      // authored jump link -- never a post slug.
+      const getSectionAnchorTarget = (fragment = '') => {
+        let id = String(fragment || '').replace(/^#/, '');
+        try {
+          id = decodeURIComponent(id);
+        } catch (_) {
+          // Keep the raw fragment when it is not valid percent-encoding.
+        }
+        if (!id) {
+          return null;
+        }
+        const target = document.getElementById(id);
+        return target && !target.classList.contains('blog-post-card') ? target : null;
+      };
       const getRequestedPostSlug = () => {
         const params = new URLSearchParams(window.location.search);
-        const queryOrHashSlug = params.get('post') || window.location.hash.slice(1);
-        if (queryOrHashSlug) {
-          return queryOrHashSlug;
+        const querySlug = params.get('post');
+        if (querySlug) {
+          return querySlug;
         }
+        // The path wins over the hash: once a post is open the URL is
+        // /blog/<slug>, and a hash there is a section of that post.
         const pathMatch = window.location.pathname.match(/^\/blog\/([^/?#]+)/i);
-        return pathMatch ? decodeURIComponent(pathMatch[1]) : '';
+        if (pathMatch) {
+          return decodeURIComponent(pathMatch[1]);
+        }
+        const hashSlug = window.location.hash.slice(1);
+        return hashSlug && !getSectionAnchorTarget(hashSlug) ? hashSlug : '';
+      };
+      // The post a clicked link opens, or '' when the link is not a post link.
+      // Section anchors inside the open post resolved to that post's own slug,
+      // so a table-of-contents click scrolled back to the top of the card and
+      // stripped the hash instead of reaching the heading.
+      const getLinkedPostSlug = (postLink) => {
+        const rawHref = postLink.getAttribute('href') || '';
+        if (rawHref.startsWith('#') && getSectionAnchorTarget(rawHref)) {
+          return '';
+        }
+        const url = new URL(postLink.href, window.location.origin);
+        const pathMatch = url.pathname.match(/^\/blog\/([^/?#]+)/i);
+        if (url.pathname !== '/blog.html' && !pathMatch) {
+          return '';
+        }
+        return pathMatch ? decodeURIComponent(pathMatch[1]) : (url.searchParams.get('post') || url.hash.slice(1));
       };
       const getRequestedPostId = () => {
         const params = new URLSearchParams(window.location.search);
@@ -1070,6 +1117,11 @@
           selectedTag = requestedTag;
           renderPosts(latestPosts);
         }
+        // Following a section anchor changes the hash too; the browser has
+        // already scrolled to that heading, so leave the post where it is.
+        if (getSectionAnchorTarget(window.location.hash)) {
+          return;
+        }
         focusLinkedPost(getRequestedPostSlug());
       });
       let searchDebounceHandle = null;
@@ -1158,12 +1210,10 @@
         if (!postLink) {
           return;
         }
-        const url = new URL(postLink.href, window.location.origin);
-        const pathMatch = url.pathname.match(/^\/blog\/([^/?#]+)/i);
-        if (url.pathname !== '/blog.html' && !pathMatch) {
+        const linkedSlug = getLinkedPostSlug(postLink);
+        if (!linkedSlug) {
           return;
         }
-        const linkedSlug = pathMatch ? decodeURIComponent(pathMatch[1]) : (url.searchParams.get('post') || url.hash.slice(1));
         window.setTimeout(() => focusLinkedPost(linkedSlug), 0);
       });
       window.addEventListener('resize', () => window.requestAnimationFrame(updateTagFilterOverflowState));

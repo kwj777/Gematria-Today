@@ -161,8 +161,9 @@ test('buildShareHtml emits the standard OG and Twitter meta-tag set with escaped
   assert.ok(html.includes('property="og:title" content="Hello &amp; &lt;World&gt;"'));
   assert.ok(html.includes('name="twitter:title" content="Hello &amp; &lt;World&gt;"'));
 
-  // Canonical and og:url point at /blog/<slug>
-  assert.ok(html.includes('rel="canonical" href="https://gematria.today/blog/hello-world"'));
+  // The canonical names the page that renders the post, blog.html?post=<slug>,
+  // not this redirect stub; og:url keeps the short /blog/<slug> share URL.
+  assert.ok(html.includes('rel="canonical" href="https://gematria.today/blog.html?post=hello-world"'));
   assert.ok(html.includes('property="og:url" content="https://gematria.today/blog/hello-world"'));
 
   // og:image uses the absolutized hero PNG (non-SVG, no rewrite).
@@ -176,6 +177,17 @@ test('buildShareHtml emits the standard OG and Twitter meta-tag set with escaped
 
   // Meta-refresh redirect to /blog.html?post=<slug>#<slug>
   assert.ok(html.includes('http-equiv="refresh" content="0;url=https://gematria.today/blog.html?post=hello-world#hello-world"'));
+});
+
+test('buildShareHtml canonical is the redirect target, never the stub itself', () => {
+  // The stub meta-refreshes to blog.html?post=<slug>. Declaring /blog/<slug>
+  // canonical while redirecting away from it (and blog-og declaring the
+  // target canonical) sent search engines two contradicting signals.
+  const html = buildShareHtml({ slug: 'hello-world', title: 't' });
+  const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)[1];
+  const refreshTarget = html.match(/http-equiv="refresh" content="0;url=([^"]+)"/)[1];
+  assert.equal(canonical, 'https://gematria.today/blog.html?post=hello-world');
+  assert.equal(refreshTarget.split('#')[0], canonical);
 });
 
 test('buildShareHtml URL-encodes the slug in canonical and app URLs', () => {
@@ -348,7 +360,7 @@ test('handler serves the share page for a /blog/<slug> permalink (real v1 event 
   );
   assert.deepEqual(lookups, [['digital-roots-in-gematria']]);
   assert.equal(response.statusCode, 200);
-  assert.ok(response.body.includes('rel="canonical" href="https://gematria.today/blog/digital-roots-in-gematria"'));
+  assert.ok(response.body.includes('rel="canonical" href="https://gematria.today/blog.html?post=digital-roots-in-gematria"'));
   assert.ok(response.body.includes('<title>Digital Roots in Gematria | Gematria.Today Blog</title>'));
 });
 

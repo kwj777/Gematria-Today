@@ -54,7 +54,7 @@
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
     <link rel="preload" as="image" href="/assets/blog-hero-insights-16x9.svg" type="image/svg+xml" fetchpriority="high" />
       <script src="/pwa-register.js" defer></script>
-      <script type="application/ld+json">
+      <script type="application/ld+json" id="blogArticleJsonLd">
       {
         "@context": "https://schema.org",
         "@type": "Article",
@@ -68,7 +68,9 @@
           "name": "Gematria.Today",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://gematria.today/assets/gematria-logo-navbar.svg"
+            "url": "https://gematria.today/apple-touch-icon.png",
+            "width": 180,
+            "height": 180
           }
         },
         "dateModified": "2026-03-28",
@@ -115,7 +117,6 @@
                     alt="General gematria blog artwork with glowing pathways, symbolic values, and reading cards that invite exploration."
                     width="1600"
                     height="900"
-                    loading="lazy"
                     decoding="async"
                   />
                 </picture>

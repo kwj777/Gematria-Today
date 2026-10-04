@@ -158,9 +158,11 @@ test('the theme toggle names what a click does and has no pressed state to contr
   assert.equal(button.getAttribute('aria-pressed'), null);
   button.fire('click');
   assert.equal(button.getAttribute('aria-label'), 'Switch to dark mode');
+  // Until the deferred bundle runs, the markup's name has to be true in
+  // either mode: early-bootstrap.js may already have made the page dark.
   const markup = read('src/_includes/nav.html').match(/<button[^>]*data-theme-toggle[^>]*>/)?.[0] || '';
-  assert.match(markup, /aria-label="Switch to dark mode"/);
-  assert.match(markup, /title="Switch to dark mode"/);
+  assert.match(markup, /aria-label="Switch theme"/);
+  assert.match(markup, /title="Switch theme"/);
   assert.doesNotMatch(markup, /aria-pressed/);
 });
 
@@ -217,16 +219,18 @@ function loadAdminTheme({ stored = null, observer = null, parsed = true } = {}) 
   const doc = listener();
   let theme = null;
   const page = { parsed };
-  const sandbox = {
-    document: {
-      addEventListener: doc.addEventListener,
-      documentElement: {
-        getAttribute: () => theme,
-        setAttribute: (_, value) => { theme = value; },
-      },
-      getElementById: (id) => (id === 'themeToggleButton' && page.parsed ? button : null),
-      body: null,
+  const document = {
+    readyState: parsed ? 'interactive' : 'loading',
+    addEventListener: doc.addEventListener,
+    documentElement: {
+      getAttribute: () => theme,
+      setAttribute: (_, value) => { theme = value; },
     },
+    getElementById: (id) => (id === 'themeToggleButton' && page.parsed ? button : null),
+    body: null,
+  };
+  const sandbox = {
+    document,
     localStorage: { getItem: () => stored, setItem() {} },
     addEventListener() {},
     setTimeout() {},
@@ -234,7 +238,10 @@ function loadAdminTheme({ stored = null, observer = null, parsed = true } = {}) 
   };
   sandbox.window = sandbox;
   vm.runInNewContext(read('admin-theme.js'), sandbox);
-  const ready = () => doc.fire('DOMContentLoaded');
+  const ready = () => {
+    document.readyState = 'interactive';
+    doc.fire('DOMContentLoaded');
+  };
   if (parsed) ready();
   return {
     button,
@@ -284,8 +291,19 @@ test('the admin theme toggle is labelled as soon as it is parsed and follows the
   const observer = fakeObserverClass();
   const admin = loadAdminTheme({ stored: 'dark', observer, parsed: false });
   assert.equal(admin.theme, 'dark');
-  assert.equal(admin.button.textContent, 'Dark mode', 'the markup text, before the button is parsed');
+
+  // A network chunk can end inside the button: its start tag is in the DOM
+  // but its text is not. Writing the label then let the parser append the
+  // markup text after it ("Light modeDark mode").
   admin.page.parsed = true;
+  admin.button.textContent = 'Dark mo';
+  admin.button.nextSibling = null;
+  observer.notify('childList');
+  assert.equal(admin.button.textContent, 'Dark mo', 'not labelled until the parser is past </button>');
+  assert.equal(observer.observers.filter((o) => o.options?.childList).length, 1, 'still watching');
+
+  admin.button.textContent = 'Dark mode';
+  admin.button.nextSibling = { nodeType: 3 };
   observer.notify('childList');
   assert.equal(admin.button.textContent, 'Light mode', 'labelled when parsed, before DOMContentLoaded');
   assert.equal(admin.button.getAttribute('aria-pressed'), null);

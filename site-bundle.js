@@ -2236,7 +2236,8 @@
   // page is light, a sun while it is dark). A fixed "Dark mode" name left the
   // hover tooltip saying "Dark mode" over the sun. With an action name the
   // button has no pressed state to contradict it (WCAG 4.1.2), so aria-pressed
-  // is dropped.
+  // is dropped. The markup says "Switch theme", which is true in either mode
+  // until this deferred script runs.
   function syncButton(button, theme) {
     var label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
     button.removeAttribute('aria-pressed');

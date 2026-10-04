@@ -52,6 +52,16 @@
     return theme === 'dark' ? 'dark' : 'light';
   }
 
+  // The button, once the parser has moved past its closing tag. Labelling it
+  // as soon as the start tag is in the DOM let the parser append the markup
+  // text after the label ("Light modeDark mode") when a network chunk ended
+  // inside the button.
+  function parsedThemeToggleButton() {
+    var btn = document.getElementById('themeToggleButton');
+    if (!btn) return null;
+    return btn.nextSibling || document.readyState !== 'loading' ? btn : null;
+  }
+
   function currentTheme() {
     return normalizeTheme(document.documentElement.getAttribute('data-bs-theme'));
   }
@@ -63,7 +73,7 @@
   // action button has no pressed state to contradict its name (WCAG 4.1.2).
   // Same as public-theme.js. Returns false until the button is parsed.
   function updateThemeToggleButton(theme) {
-    var btn = document.getElementById('themeToggleButton');
+    var btn = parsedThemeToggleButton();
     if (!btn) return false;
     var label = theme === 'dark' ? 'Light mode' : 'Dark mode';
     // Write only on a change: the parse watcher below sees this write too.

@@ -521,6 +521,16 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_FE
   }
 }
 
+// Rejects once timeoutMs passes, so a caller can fall back instead of waiting
+// on a slow database. The work itself is not cancelled.
+export function withTimeBudget(promise, timeoutMs, label = 'operation') {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} took longer than ${timeoutMs}ms`)), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export async function getCachedJson(sql, cacheKey) {
   await ensureSecuritySchema(sql);
   const rows = await sql`

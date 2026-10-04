@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { ensureAdminSchema, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
-import { buildCacheKey, withCachedJson } from './_security.mjs';
+import { getSqlClient } from './_admin.mjs';
+import { buildCacheKey, withCachedJson, withTimeBudget } from './_security.mjs';
 import {
   buildModulePublicPaths,
   DEFAULT_SITE_MODULES,
@@ -10,6 +10,9 @@ import {
   loadPublicSiteSettings,
   normalizeSiteModules,
 } from './_site-modules.mjs';
+
+// Well under Netlify's synchronous function timeout.
+export const DATABASE_TIME_BUDGET_MS = 3000;
 
 export const STATIC_PATHS = Object.freeze([
   '/',
@@ -150,11 +153,12 @@ export async function handler(event) {
   }
 
   try {
+    // Crawlers fetch this cold, often on a fresh instance. It needs only the
+    // module switches, so it skips the admin schema and bootstrap work other
+    // endpoints do on a cold start, and a database slower than the budget
+    // gets the default output below rather than a gateway timeout.
     const sql = getSqlClient();
-    await ensureAdminSchema(sql);
-    await syncBootstrapAdminUser(sql);
-
-    const cacheResult = await withCachedJson(sql, {
+    const cacheResult = await withTimeBudget(withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'sitemap-xml' }),
       route: 'sitemap-xml',
       ttlSeconds: 300,
@@ -168,7 +172,7 @@ export async function handler(event) {
           xml: buildSitemapXml({ siteOrigin: DEFAULT_SITE_ORIGIN, modules, posts, lastmods: loadTrackedLastmods() }),
         };
       },
-    });
+    }), DATABASE_TIME_BUDGET_MS, 'sitemap-xml settings');
 
     return {
       statusCode: 200,

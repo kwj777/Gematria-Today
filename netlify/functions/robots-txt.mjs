@@ -1,6 +1,9 @@
-import { ensureAdminSchema, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
-import { buildCacheKey, withCachedJson } from './_security.mjs';
+import { getSqlClient } from './_admin.mjs';
+import { buildCacheKey, withCachedJson, withTimeBudget } from './_security.mjs';
 import { DEFAULT_SITE_MODULES, DEFAULT_SITE_ORIGIN, loadPublicSiteSettings } from './_site-modules.mjs';
+
+// Well under Netlify's synchronous function timeout.
+export const DATABASE_TIME_BUDGET_MS = 3000;
 
 // The read-only content endpoints that public pages render from: blog posts and
 // the blog index (public-posts), the FAQ (public-faqs), every page's theme
@@ -61,11 +64,12 @@ export async function handler(event) {
   }
 
   try {
+    // Crawlers fetch this cold, often on a fresh instance. It needs only the
+    // module switches, so it skips the admin schema and bootstrap work other
+    // endpoints do on a cold start, and a database slower than the budget
+    // gets the default output below rather than a gateway timeout.
     const sql = getSqlClient();
-    await ensureAdminSchema(sql);
-    await syncBootstrapAdminUser(sql);
-
-    const cacheResult = await withCachedJson(sql, {
+    const cacheResult = await withTimeBudget(withCachedJson(sql, {
       cacheKey: buildCacheKey({ route: 'robots-txt' }),
       route: 'robots-txt',
       ttlSeconds: 300,
@@ -78,7 +82,7 @@ export async function handler(event) {
         const { modules } = await loadPublicSiteSettings(sql);
         return { text: buildRobotsTxt({ siteOrigin: DEFAULT_SITE_ORIGIN, modules }) };
       },
-    });
+    }), DATABASE_TIME_BUDGET_MS, 'robots-txt settings');
 
     return {
       statusCode: 200,

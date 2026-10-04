@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
@@ -6,6 +6,7 @@ import {
   buildRobotsTxt,
   BASE_ALLOWS,
   BASE_DISALLOWS,
+  DATABASE_TIME_BUDGET_MS,
   handler,
 } from '../netlify/functions/robots-txt.mjs';
 import { DEFAULT_SITE_MODULES, DEFAULT_SITE_ORIGIN } from '../netlify/functions/_site-modules.mjs';
@@ -239,5 +240,28 @@ test('robots.txt is never a 5xx: without a database it serves the defaults', asy
     assert.match(response.headers['content-type'], /^text\/plain/);
   } finally {
     if (prior !== undefined) process.env.DATABASE_URL = prior;
+  }
+});
+
+test('robots.txt falls back to the defaults when the database is slower than the time budget', async () => {
+  // On a fresh instance a slow database must not hold the response until the
+  // platform's own timeout turns it into a 5xx.
+  const priorFetch = globalThis.fetch;
+  const priorUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = 'postgres://user:pass@db.example.test/neondb';
+  globalThis.fetch = () => new Promise(() => {});
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const pending = handler({ httpMethod: 'GET', headers: {} });
+    mock.timers.tick(DATABASE_TIME_BUDGET_MS);
+    const response = await pending;
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['cache-control'], 'public, max-age=60');
+    assert.equal(response.body, buildRobotsTxt({ siteOrigin: DEFAULT_SITE_ORIGIN, modules: DEFAULT_SITE_MODULES }));
+  } finally {
+    mock.timers.reset();
+    globalThis.fetch = priorFetch;
+    if (priorUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = priorUrl;
   }
 });

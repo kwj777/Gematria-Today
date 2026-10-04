@@ -2202,6 +2202,12 @@
  */
 (function installPublicTheme() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  // Admin pages load this bundle too, but admin-theme.js owns their theme
+  // under its own stored preference. It runs synchronously in <head>, before
+  // this deferred bundle, so window.adminTheme is already set there. Following
+  // the OS or a public-site tab here flipped an admin page's theme without
+  // the admin choosing it, and left the admin button's label behind.
+  if (window.adminTheme) return;
   if (window.__publicThemeInstalled) return;
   window.__publicThemeInstalled = true;
 

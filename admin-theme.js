@@ -52,26 +52,61 @@
     return theme === 'dark' ? 'dark' : 'light';
   }
 
+  function currentTheme() {
+    return normalizeTheme(document.documentElement.getAttribute('data-bs-theme'));
+  }
+
   // The button names what a click does: "Light mode" while the page is dark,
   // "Dark mode" while it is light. An earlier fix froze the text at "Dark
   // mode" and left the state to aria-pressed, which only a screen reader
   // announces, so sighted admins saw a label that never changed. A plain
   // action button has no pressed state to contradict its name (WCAG 4.1.2).
-  // Same as public-theme.js.
+  // Same as public-theme.js. Returns false until the button is parsed.
   function updateThemeToggleButton(theme) {
     var btn = document.getElementById('themeToggleButton');
-    if (!btn) return;
-    btn.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+    if (!btn) return false;
+    var label = theme === 'dark' ? 'Light mode' : 'Dark mode';
+    // Write only on a change: the parse watcher below sees this write too.
+    if (btn.textContent !== label) btn.textContent = label;
     // The visible text is the name; aria-pressed or an aria-label could only
     // disagree with it.
     btn.removeAttribute('aria-pressed');
     btn.removeAttribute('aria-label');
+    return true;
   }
 
   function applyTheme(theme) {
     var normalizedTheme = normalizeTheme(theme);
     document.documentElement.setAttribute('data-bs-theme', normalizedTheme);
     updateThemeToggleButton(normalizedTheme);
+  }
+
+  // Keep the label on the theme the page actually has. This script runs in
+  // <head>, before the button exists, and DOMContentLoaded waits for every
+  // body script, so a dark page used to show "Dark mode" while it loaded. The
+  // parse watcher labels the button as soon as it is parsed, before it is
+  // painted. The theme watcher also catches data-bs-theme set by anything
+  // other than this script.
+  var buttonParseWatcher = null;
+
+  function watchThemeToggleButton() {
+    var Observer = window.MutationObserver;
+    if (typeof Observer !== 'function') return;
+    var root = document.documentElement;
+    new Observer(function () {
+      updateThemeToggleButton(currentTheme());
+    }).observe(root, { attributes: true, attributeFilter: ['data-bs-theme'] });
+    if (updateThemeToggleButton(currentTheme())) return;
+    buttonParseWatcher = new Observer(function () {
+      if (updateThemeToggleButton(currentTheme())) stopButtonParseWatcher();
+    });
+    buttonParseWatcher.observe(root, { childList: true, subtree: true });
+  }
+
+  function stopButtonParseWatcher() {
+    if (!buttonParseWatcher) return;
+    buttonParseWatcher.disconnect();
+    buttonParseWatcher = null;
   }
 
   function loadThemePreference() {
@@ -130,6 +165,7 @@
 
   // Apply theme immediately to prevent flash of unstyled content.
   applyTheme(loadThemePreference());
+  watchThemeToggleButton();
   applyBootswatchTheme(loadBootswatchPreference());
 
   // Safety net: admin.html hides #authPanel and #dashboardPanel via the
@@ -147,13 +183,14 @@
 
   // Wire up interactive controls after the DOM is ready.
   document.addEventListener('DOMContentLoaded', function () {
-    updateThemeToggleButton(normalizeTheme(document.documentElement.getAttribute('data-bs-theme')));
+    // Pages without the button would otherwise keep the parse watcher on.
+    stopButtonParseWatcher();
+    updateThemeToggleButton(currentTheme());
 
     var themeToggleButton = document.getElementById('themeToggleButton');
     if (themeToggleButton) {
       themeToggleButton.addEventListener('click', function () {
-        var currentTheme = normalizeTheme(document.documentElement.getAttribute('data-bs-theme'));
-        var nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        var nextTheme = currentTheme() === 'dark' ? 'light' : 'dark';
         applyTheme(nextTheme);
         persistThemePreference(nextTheme);
       });

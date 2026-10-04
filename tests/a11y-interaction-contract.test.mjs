@@ -119,9 +119,10 @@ test('the nav advertises the shortcut that actually works', () => {
 
 // ---------- L45: the theme toggle ----------
 
-function loadPublicTheme() {
+function loadPublicTheme({ adminTheme } = {}) {
   const button = fakeElement();
   let theme = 'light';
+  const listeners = [];
   const sandbox = {
     document: {
       readyState: 'complete',
@@ -133,12 +134,13 @@ function loadPublicTheme() {
       querySelectorAll: () => [button],
     },
     localStorage: { getItem: () => null, setItem() {} },
-    matchMedia: () => ({ matches: false, addEventListener() {} }),
-    addEventListener() {},
+    matchMedia: () => ({ matches: false, addEventListener: (type) => listeners.push(`media:${type}`) }),
+    addEventListener: (type) => listeners.push(`window:${type}`),
+    adminTheme,
   };
   sandbox.window = sandbox;
   vm.runInNewContext(read('public-theme.js'), sandbox);
-  return button;
+  return { button, listeners, theme: () => theme };
 }
 
 test('the theme toggle names what a click does and has no pressed state to contradict it', () => {
@@ -146,7 +148,7 @@ test('the theme toggle names what a click does and has no pressed state to contr
   // ("Switch to light mode, pressed"), so the name and the state contradicted
   // each other (WCAG 4.1.2). Freezing the name at "Dark mode" fixed that but
   // left the tooltip saying "Dark mode" over the sun icon in dark mode.
-  const button = loadPublicTheme();
+  const { button } = loadPublicTheme();
   assert.equal(button.getAttribute('aria-label'), 'Switch to dark mode');
   assert.equal(button.getAttribute('title'), 'Switch to dark mode');
   assert.equal(button.getAttribute('aria-pressed'), null);
@@ -162,13 +164,59 @@ test('the theme toggle names what a click does and has no pressed state to contr
   assert.doesNotMatch(markup, /aria-pressed/);
 });
 
-function loadAdminTheme({ stored = null } = {}) {
+test('the public theme script leaves admin pages to admin-theme.js', () => {
+  // Every admin page loads site-bundle.js, so public-theme.js used to follow
+  // the OS setting and other tabs' public choice there too. That flipped the
+  // admin page's theme against its own stored choice and left the admin
+  // button's label naming the wrong mode.
+  const publicPage = loadPublicTheme();
+  assert.deepEqual(publicPage.listeners.sort(), ['media:change', 'window:storage']);
+  const adminPage = loadPublicTheme({ adminTheme: {} });
+  assert.deepEqual(adminPage.listeners, []);
+  assert.equal(adminPage.button.getAttribute('aria-label'), null);
+  adminPage.button.fire('click');
+  assert.equal(adminPage.theme(), 'light', 'no click handler on admin pages');
+});
+
+test('the public theme toggle shows only the icon for the mode a click switches to', () => {
+  // `.nav-theme-toggle svg { display: block }` out-ranked the bare
+  // `.nav-theme-toggle__sun { display: none }`, so light mode showed the sun
+  // next to the moon under "Switch to dark mode".
+  const css = read('theme.css');
+  assert.match(css, /\.nav-theme-toggle svg \{[^}]*display: block;/);
+  assert.match(css, /\n\.nav-theme-toggle \.nav-theme-toggle__sun \{ display: none; \}/);
+  assert.doesNotMatch(css, /\n\.nav-theme-toggle__sun \{ display: none; \}/);
+  assert.match(css, /:root\[data-bs-theme="dark"\] \.nav-theme-toggle__sun \{ display: block; \}/);
+});
+
+function fakeObserverClass() {
+  const observers = [];
+  class FakeMutationObserver {
+    constructor(callback) {
+      this.callback = callback;
+      this.options = null;
+      observers.push(this);
+    }
+    observe(_, options) { this.options = options; }
+    disconnect() { this.options = null; }
+  }
+  // Delivers a mutation batch to every observer watching that kind of change.
+  const notify = (kind) => {
+    for (const observer of observers) {
+      if (observer.options?.[kind]) observer.callback([]);
+    }
+  };
+  return { FakeMutationObserver, observers, notify };
+}
+
+function loadAdminTheme({ stored = null, observer = null, parsed = true } = {}) {
   const button = fakeElement({ textContent: 'Dark mode' });
   button.setAttribute('aria-pressed', 'false');
   // What the admin pages' markup used to carry.
   button.setAttribute('aria-label', 'Switch to dark mode');
   const doc = listener();
   let theme = null;
+  const page = { parsed };
   const sandbox = {
     document: {
       addEventListener: doc.addEventListener,
@@ -176,17 +224,25 @@ function loadAdminTheme({ stored = null } = {}) {
         getAttribute: () => theme,
         setAttribute: (_, value) => { theme = value; },
       },
-      getElementById: (id) => (id === 'themeToggleButton' ? button : null),
+      getElementById: (id) => (id === 'themeToggleButton' && page.parsed ? button : null),
       body: null,
     },
     localStorage: { getItem: () => stored, setItem() {} },
     addEventListener() {},
     setTimeout() {},
+    MutationObserver: observer?.FakeMutationObserver,
   };
   sandbox.window = sandbox;
   vm.runInNewContext(read('admin-theme.js'), sandbox);
-  doc.fire('DOMContentLoaded');
-  return button;
+  const ready = () => doc.fire('DOMContentLoaded');
+  if (parsed) ready();
+  return {
+    button,
+    page,
+    ready,
+    setTheme: (value) => { theme = value; },
+    get theme() { return theme; },
+  };
 }
 
 test('the admin theme toggle text changes with the mode and names what a click does', () => {
@@ -194,7 +250,7 @@ test('the admin theme toggle text changes with the mode and names what a click d
   // which only a screen reader announces, so sighted admins saw a label that
   // never changed. Before that it flipped its text while also reporting
   // aria-pressed, so the name and the state contradicted each other.
-  const button = loadAdminTheme();
+  const { button } = loadAdminTheme();
   assert.equal(button.textContent, 'Dark mode');
   assert.equal(button.getAttribute('aria-pressed'), null, 'an action button has no pressed state');
   assert.equal(button.getAttribute('aria-label'), null, 'the visible text is the name');
@@ -204,7 +260,7 @@ test('the admin theme toggle text changes with the mode and names what a click d
   assert.equal(button.getAttribute('aria-label'), null);
   button.fire('click');
   assert.equal(button.textContent, 'Dark mode');
-  const stored = loadAdminTheme({ stored: 'dark' });
+  const { button: stored } = loadAdminTheme({ stored: 'dark' });
   assert.equal(stored.textContent, 'Light mode');
   assert.equal(stored.getAttribute('aria-pressed'), null);
 
@@ -219,6 +275,39 @@ test('the admin theme toggle text changes with the mode and names what a click d
     assert.doesNotMatch(markup[0], /aria-label=/, `${page}: no label to contradict the text`);
   }
   assert.equal(toggles, 10);
+});
+
+test('the admin theme toggle is labelled as soon as it is parsed and follows the theme from any source', () => {
+  // The label was first corrected on DOMContentLoaded, which waits for every
+  // body script, so a stored dark theme painted "Dark mode" on a dark page
+  // while the page loaded.
+  const observer = fakeObserverClass();
+  const admin = loadAdminTheme({ stored: 'dark', observer, parsed: false });
+  assert.equal(admin.theme, 'dark');
+  assert.equal(admin.button.textContent, 'Dark mode', 'the markup text, before the button is parsed');
+  admin.page.parsed = true;
+  observer.notify('childList');
+  assert.equal(admin.button.textContent, 'Light mode', 'labelled when parsed, before DOMContentLoaded');
+  assert.equal(admin.button.getAttribute('aria-pressed'), null);
+  assert.equal(
+    observer.observers.filter((o) => o.options?.childList).length,
+    0,
+    'the parse watcher stops once the button is labelled',
+  );
+
+  // Any other script that changes data-bs-theme moves the label with it.
+  admin.setTheme('light');
+  observer.notify('attributes');
+  assert.equal(admin.button.textContent, 'Dark mode');
+  const themeWatch = observer.observers.find((o) => o.options?.attributes);
+  assert.deepEqual([...themeWatch.options.attributeFilter], ['data-bs-theme']);
+
+  // A page without the button stops watching the DOM once it has loaded.
+  const noButton = fakeObserverClass();
+  const bare = loadAdminTheme({ observer: noButton, parsed: false });
+  assert.equal(noButton.observers.filter((o) => o.options?.childList).length, 1);
+  bare.ready();
+  assert.equal(noButton.observers.filter((o) => o.options?.childList).length, 0);
 });
 
 // ---------- M31: visible labels inside accessible names ----------

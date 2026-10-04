@@ -62,6 +62,7 @@ async function installFakeDatabase() {
       is_admin: true,
     },
     rateLimits: new Map(),
+    knownSources: new Set(),
     sessions: 0,
     queries: 0,
   };
@@ -101,6 +102,19 @@ function answer(db, query, params) {
       window_started_at: new Date(now).toISOString(),
       blocked_until: row.blockedUntil ? new Date(row.blockedUntil).toISOString() : null,
     }];
+  }
+  if (/SELECT blocked_until\s+FROM request_rate_limits/.test(query)) {
+    const row = db.rateLimits.get(`${params[0]}\u0000${params[1]}`);
+    return row?.blockedUntil && row.blockedUntil > Date.now()
+      ? [{ blocked_until: new Date(row.blockedUntil).toISOString() }]
+      : [];
+  }
+  if (/INSERT INTO login_known_sources/.test(query)) {
+    db.knownSources.add(`${params[0]}\u0000${params[1]}`);
+    return [];
+  }
+  if (/FROM login_known_sources/.test(query)) {
+    return db.knownSources.has(`${params[0]}\u0000${params[1]}`) ? [{ known: 1 }] : [];
   }
   if (/FROM users\s+WHERE username = /.test(query)) {
     return params[0] === db.owner.username ? [db.owner] : [];
@@ -166,6 +180,50 @@ for (const { name, handler, attemptsUntilBlocked } of [
     assert.equal(db.sessions, 1);
   });
 }
+
+// ---------- ...but guessing at one account from many addresses is capped ----------
+
+// Keyed by account and caller alone, each new address -- every one of a VPS's
+// IPv6 /64 included -- got a fresh allowance, so nothing capped guessing at
+// one account. Failed passwords now also count per account from everywhere,
+// shared by both sign-in forms, and past the cap only addresses that have
+// signed in to the account before are still let through.
+test('failed passwords from many addresses close the account to strangers, not to the owner', async () => {
+  const db = await installFakeDatabase();
+
+  const ownerFirst = await adminLoginHandler(loginEvent('admin-login', { ip: OWNER_IP, password: OWNER_PASSWORD }));
+  assert.equal(ownerFirst.statusCode, 200, ownerFirst.body);
+
+  // Twenty failures are allowed in the hour; the twenty-first closes it.
+  for (let attempt = 1; attempt <= 21; attempt += 1) {
+    const handler = attempt % 2 ? adminLoginHandler : memberLoginHandler;
+    const name = attempt % 2 ? 'admin-login' : 'member-login';
+    const response = await handler(loginEvent(name, { ip: `198.51.100.${attempt}`, password: `guess-${attempt}` }));
+    assert.equal(response.statusCode, 401, `guess ${attempt} from a fresh address is checked and refused`);
+  }
+
+  for (const [name, handler] of [['admin-login', adminLoginHandler], ['member-login', memberLoginHandler]]) {
+    const stranger = await handler(loginEvent(name, { ip: '192.0.2.200', password: OWNER_PASSWORD }));
+    assert.equal(stranger.statusCode, 429, `${name}: a new address is refused once the account is capped`);
+    assert.match(JSON.parse(stranger.body).error, /reset your password/);
+
+    const owner = await handler(loginEvent(name, { ip: OWNER_IP, password: OWNER_PASSWORD }));
+    assert.equal(owner.statusCode, 200, `${name}: the owner's address still signs in: ${owner.body}`);
+  }
+});
+
+test('rotating through one IPv6 /64 does not buy fresh guesses', async () => {
+  await installFakeDatabase();
+
+  let last;
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    last = await adminLoginHandler(loginEvent('admin-login', { ip: `2001:db8:66:1::${attempt.toString(16)}`, password: `guess-${attempt}` }));
+  }
+  assert.equal(last.statusCode, 429, 'every address in the /64 shares one allowance');
+
+  const elsewhere = await adminLoginHandler(loginEvent('admin-login', { ip: '2001:db8:66:2::1', password: OWNER_PASSWORD }));
+  assert.equal(elsewhere.statusCode, 200, 'another /64 is another caller');
+});
 
 // ---------- L1: login CSRF ----------
 

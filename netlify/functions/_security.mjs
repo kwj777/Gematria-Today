@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import net from 'node:net';
 
 const DEFAULT_RATE_LIMIT_MESSAGE = 'Too many requests. Please try again later.';
 const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
@@ -69,6 +70,42 @@ export function getClientIp(source) {
   }
 
   return headers['x-real-ip'] || 'unknown';
+}
+
+function expandIpv6(address) {
+  let value = address;
+  const embeddedIpv4 = /(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(value);
+  if (embeddedIpv4) {
+    const [a, b, c, d] = embeddedIpv4.slice(1).map(Number);
+    value = `${value.slice(0, embeddedIpv4.index)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+  }
+  const [head, tail] = value.split('::');
+  const headParts = head ? head.split(':') : [];
+  const tailParts = tail ? tail.split(':') : [];
+  const missing = value.includes('::') ? 8 - headParts.length - tailParts.length : 0;
+  return [...headParts, ...Array(missing).fill('0'), ...tailParts].map((part) => Number.parseInt(part, 16) || 0);
+}
+
+// Per-address limits key on this rather than the raw address. An IPv6
+// subscriber -- any VPS included -- is handed a whole /64, so keyed by the
+// full address each of its 2^64 addresses got a fresh allowance. IPv4 keeps
+// the full address, and an IPv4 address written as IPv6 (::ffff:a.b.c.d)
+// counts as that IPv4 address.
+export function getRateLimitIpBucket(ip) {
+  const raw = String(ip || '').trim().toLowerCase();
+  const address = raw.split('%')[0];
+  if (net.isIP(address) !== 6) {
+    return raw || 'unknown';
+  }
+  const hextets = expandIpv6(address);
+  if (hextets.slice(0, 5).every((hextet) => hextet === 0) && hextets[5] === 0xffff) {
+    return [hextets[6] >> 8, hextets[6] & 0xff, hextets[7] >> 8, hextets[7] & 0xff].join('.');
+  }
+  return `${hextets.slice(0, 4).map((hextet) => hextet.toString(16)).join(':')}::/64`;
+}
+
+export function getClientRateLimitKey(source) {
+  return getRateLimitIpBucket(getClientIp(source));
 }
 
 export function getRequestPath(source) {
@@ -162,6 +199,15 @@ async function ensureSecuritySchemaUncached(sql) {
 
   await sql`CREATE INDEX IF NOT EXISTS request_audit_log_route_created_at_idx ON request_audit_log (route, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS request_audit_log_created_at_idx ON request_audit_log (created_at ASC)`;
+
+  // The addresses (rate-limit buckets) that have signed in to each account, so
+  // the per-account failure limit stops strangers without stopping the owner.
+  await sql`CREATE TABLE IF NOT EXISTS login_known_sources (
+    account_key TEXT NOT NULL,
+    ip_bucket TEXT NOT NULL,
+    last_success_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (account_key, ip_bucket)
+  )`;
 }
 
 export function createRateLimitError(message = DEFAULT_RATE_LIMIT_MESSAGE, retryAfterSeconds = 60) {
@@ -236,6 +282,91 @@ export async function applyRateLimit(sql, source, {
     limit: rateLimit,
     retryAfterSeconds: Math.ceil(retryAfterSeconds),
   };
+}
+
+// The login limits counted before the password is checked are keyed by
+// account and caller, or guessing at an account locks its owner out. Keyed
+// that way alone, nothing capped guessing at one account from many addresses,
+// so failed passwords are also counted per account from everywhere. Past the
+// limit the account stops taking passwords from any address that has not
+// signed in to it before; addresses that have keep working, so the owner is
+// not the one locked out, and anyone else still has account recovery, which
+// proves the address by email. admin-login and member-login share the count.
+const LOGIN_ACCOUNT_FAILURE_SCOPE = 'login-account-failures';
+const LOGIN_ACCOUNT_FAILURE_LIMIT = 20;
+const LOGIN_ACCOUNT_FAILURE_WINDOW_MS = 60 * 60_000;
+const LOGIN_ACCOUNT_FAILURE_BLOCK_MS = 60 * 60_000;
+const LOGIN_KNOWN_SOURCE_RETENTION_DAYS = 90;
+const LOGIN_ACCOUNT_LOCKED_MESSAGE = 'Too many failed sign-in attempts for this account. Try again later from a device you have signed in from before, or reset your password.';
+
+function normalizeLoginAccountKey(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+export async function assertLoginAccountOpen(sql, source, { account, message = LOGIN_ACCOUNT_LOCKED_MESSAGE } = {}) {
+  const accountKey = normalizeLoginAccountKey(account);
+  if (!accountKey) return;
+  await ensureSecuritySchema(sql);
+
+  const blocked = await sql`
+    SELECT blocked_until
+    FROM request_rate_limits
+    WHERE scope = ${LOGIN_ACCOUNT_FAILURE_SCOPE}
+      AND key = ${accountKey}
+      AND blocked_until > NOW()
+    LIMIT 1
+  `;
+  if (!blocked.length) return;
+
+  const known = await sql`
+    SELECT 1 AS known
+    FROM login_known_sources
+    WHERE account_key = ${accountKey}
+      AND ip_bucket = ${getClientRateLimitKey(source)}
+    LIMIT 1
+  `;
+  if (known.length) return;
+
+  const retryAfterSeconds = Math.max(1, (new Date(blocked[0].blocked_until).getTime() - Date.now()) / 1000);
+  await logRequestAudit(sql, source, {
+    route: LOGIN_ACCOUNT_FAILURE_SCOPE,
+    action: 'rate_limit',
+    outcome: 'blocked',
+    metadata: { key: accountKey, retryAfterSeconds: Math.ceil(retryAfterSeconds) },
+  });
+  throw createRateLimitError(message, retryAfterSeconds);
+}
+
+export async function recordLoginFailure(sql, source, { account } = {}) {
+  const accountKey = normalizeLoginAccountKey(account);
+  if (!accountKey) return;
+  try {
+    await applyRateLimit(sql, source, {
+      scope: LOGIN_ACCOUNT_FAILURE_SCOPE,
+      key: accountKey,
+      limit: LOGIN_ACCOUNT_FAILURE_LIMIT,
+      windowMs: LOGIN_ACCOUNT_FAILURE_WINDOW_MS,
+      blockMs: LOGIN_ACCOUNT_FAILURE_BLOCK_MS,
+    });
+  } catch (error) {
+    // Only the count matters here; the caller still answers 401.
+    if (error?.statusCode !== 429) throw error;
+  }
+}
+
+export async function rememberLoginSource(sql, source, accounts = []) {
+  const ipBucket = getClientRateLimitKey(source);
+  const accountKeys = [...new Set(accounts.map(normalizeLoginAccountKey).filter(Boolean))];
+  if (!accountKeys.length || ipBucket === 'unknown') return;
+  await ensureSecuritySchema(sql);
+  for (const accountKey of accountKeys) {
+    await sql`
+      INSERT INTO login_known_sources (account_key, ip_bucket, last_success_at)
+      VALUES (${accountKey}, ${ipBucket}, NOW())
+      ON CONFLICT (account_key, ip_bucket)
+      DO UPDATE SET last_success_at = NOW()
+    `;
+  }
 }
 
 export const HONEYPOT_FIELD = 'website_url';
@@ -493,10 +624,17 @@ export async function pruneSecurityData(sql, {
     RETURNING scope
   `;
 
+  const knownLoginSourceDeletedRows = await sql`
+    DELETE FROM login_known_sources
+    WHERE last_success_at < NOW() - (${LOGIN_KNOWN_SOURCE_RETENTION_DAYS} * INTERVAL '1 day')
+    RETURNING account_key
+  `;
+
   return {
     auditLogDeletedCount: auditDeletedRows.length,
     cacheDeletedCount: cacheDeletedRows.length,
     rateLimitDeletedCount: rateLimitDeletedRows.length,
+    knownLoginSourceDeletedCount: knownLoginSourceDeletedRows.length,
     retention: {
       auditLogRetentionDays: normalizedAuditDays,
       responseCacheGraceDays: normalizedCacheGraceDays,

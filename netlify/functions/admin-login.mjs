@@ -9,7 +9,14 @@ import {
   parseBody,
 } from './_auth.mjs';
 import { authenticateCredentials, getSqlClient, requireHttpMethod } from './_admin.mjs';
-import { applyRateLimit, getClientIp, logRequestAudit } from './_security.mjs';
+import {
+  applyRateLimit,
+  assertLoginAccountOpen,
+  getClientRateLimitKey,
+  logRequestAudit,
+  recordLoginFailure,
+  rememberLoginSource,
+} from './_security.mjs';
 
 export async function handler(event) {
   const methodError = requireHttpMethod(event, 'POST');
@@ -20,7 +27,8 @@ export async function handler(event) {
     const sql = getSqlClient();
     const { username = '', password = '' } = parseBody(event);
     const normalizedUsername = String(username).trim().toLowerCase();
-    const clientIp = getClientIp(event);
+    // An IPv6 caller is keyed by its /64, which is what one subscriber gets.
+    const clientIp = getClientRateLimitKey(event);
 
     // Throttling used to be skipped whenever the caller already held a session.
     // getOptionalAuthenticatedSession accepts the *member* cookie too, so a free
@@ -50,11 +58,16 @@ export async function handler(event) {
         blockMs: 60 * 60_000,
         message: 'Too many admin login attempts for this account.',
       });
+      // The cap on the account itself, across every address. See
+      // assertLoginAccountOpen: it only refuses addresses that have never
+      // signed in to this account.
+      await assertLoginAccountOpen(sql, event, { account: normalizedUsername });
     }
 
     const user = await authenticateCredentials(sql, username.trim(), password);
 
     if (!user) {
+      await recordLoginFailure(sql, event, { account: normalizedUsername });
       await logRequestAudit(sql, event, {
         route: 'admin-login',
         action: 'authenticate',
@@ -64,6 +77,7 @@ export async function handler(event) {
       return jsonResponse(401, { error: 'Invalid username or password' }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
     }
 
+    await rememberLoginSource(sql, event, [normalizedUsername, user.username, user.email]);
     const { token, expiresAt } = await createSession(sql, user.id);
     await logRequestAudit(sql, event, {
       route: 'admin-login',

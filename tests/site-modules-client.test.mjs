@@ -136,8 +136,8 @@ function createStorage(initial = {}) {
   };
 }
 
-async function runSiteModules({ path = '/forum.html', mainModule = 'forum', modulesResponse = null, fetchFails = false, storage = createStorage() } = {}) {
-  const page = buildPage(mainModule);
+async function runSiteModules({ path = '/forum.html', mainModule = 'forum', modulesResponse = null, fetchFails = false, storage = createStorage(), page: providedPage = null } = {}) {
+  const page = providedPage || buildPage(mainModule);
   const fetches = [];
   const document = {
     readyState: 'complete',
@@ -208,6 +208,49 @@ test('switching the forum off hides the forum and reputation-scale links', async
   const page = await runSiteModules({ path: '/index.html', mainModule: null, modulesResponse: { modules: { forum: false } } });
   assert.ok(isHidden(page.footerForum));
   assert.ok(isHidden(page.footerScale));
+});
+
+// The nav, footer and page links a signed-out visitor or a paying member uses
+// to reach /member, beside the sign-up and upgrade calls to action.
+function buildMembershipLinksPage() {
+  const loginItem = el('li', { class: 'nav-item nav-auth nav-auth--anon nav-cta nav-cta--login' }, el('a', { class: 'nav-link', href: 'https://gematria.today/member?auth=login#authSection' }));
+  const dashboardItem = el('li', { class: 'nav-item nav-auth nav-auth--member' }, el('a', { class: 'nav-link', href: '/member.html' }));
+  const joinItem = el('li', { class: 'nav-item nav-auth nav-auth--anon nav-cta nav-cta--join', 'data-module': 'membership' }, el('a', { href: '/gematria-account-setup.html' }));
+  const footerMembership = el('li', {}, el('a', { href: '/member.html' }));
+  const backToSignIn = el('a', { href: '/member.html?auth=login#authSection' });
+  const registerLink = el('a', { id: 'member-link', href: '/member.html#registerForm' });
+  const registerReturn = el('a', { href: '/member.html?auth=register' });
+  const upgradeLink = el('a', { href: '/member.html#membershipUpgradeSection' });
+  const main = el('main', { id: 'mainContent' }, el('div', { class: 'container' }, backToSignIn, registerLink, registerReturn, upgradeLink));
+  const body = el('body', {}, el('nav', {}, el('ul', {}, loginItem, dashboardItem, joinItem)), main, el('footer', {}, el('ul', {}, footerMembership)));
+  return { body, main, loginItem, dashboardItem, joinItem, footerMembership, backToSignIn, registerLink, registerReturn, upgradeLink };
+}
+
+test('switching membership off hides sign-up and upgrade, never the way back in for members', async () => {
+  // Members keep signing in, their dashboard and the billing portal (where
+  // they cancel) while membership is off; only new sign-ups and charges stop.
+  // Every /member link used to match, so on every page the Log in, Dashboard
+  // and footer Membership links disappeared with it.
+  const page = await runSiteModules({
+    path: '/calculator.html',
+    mainModule: null,
+    page: buildMembershipLinksPage(),
+    modulesResponse: { modules: { membership: false } },
+  });
+  assert.equal(isHidden(page.loginItem), false, 'Log in stays');
+  assert.equal(isHidden(page.dashboardItem), false, 'Dashboard stays');
+  assert.equal(isHidden(page.footerMembership), false, 'the footer Membership link stays');
+  assert.equal(isHidden(page.backToSignIn), false, 'links back to sign in stay');
+  assert.ok(isHidden(page.joinItem), 'Join free goes');
+  assert.ok(isHidden(page.registerLink), 'links to the sign-up form go');
+  assert.ok(isHidden(page.registerReturn), 'links to the sign-up view go');
+  assert.ok(isHidden(page.upgradeLink), 'upgrade links go');
+});
+
+test('the nav Dashboard item does not follow the membership switch', () => {
+  const nav = readFileSync(new URL('src/_includes/nav.html', ROOT), 'utf8');
+  assert.match(nav, /<li class="nav-item nav-auth nav-auth--member"><a class="nav-link" href="\/member\.html">Dashboard<\/a><\/li>/);
+  assert.match(nav, /nav-cta--join" data-module="membership"><a [^>]*href="\/gematria-account-setup\.html"/);
 });
 
 test('a failed settings fetch keeps the switches the server last reported', async () => {

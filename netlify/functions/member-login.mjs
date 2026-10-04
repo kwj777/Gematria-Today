@@ -14,7 +14,15 @@ import {
 } from './_member.mjs';
 import { assertJsonRequestFromThisSite, createAdminSessionCookies, generateCsrfToken } from './_auth.mjs';
 import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
-import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
+import {
+  applyRateLimit,
+  assertHoneypotEmpty,
+  assertLoginAccountOpen,
+  getClientRateLimitKey,
+  logRequestAudit,
+  recordLoginFailure,
+  rememberLoginSource,
+} from './_security.mjs';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -32,7 +40,8 @@ export async function handler(event) {
       route: 'member-login',
       auditMetadata: { identifier: normalizedIdentifier },
     });
-    const clientIp = getClientIp(event);
+    // An IPv6 caller is keyed by its /64, which is what one subscriber gets.
+    const clientIp = getClientRateLimitKey(event);
 
     // Holding any session used to skip these limits, and a session is one free
     // signup away, so password guessing against member accounts was unthrottled
@@ -60,12 +69,16 @@ export async function handler(event) {
         blockMs: 30 * 60_000,
         message: 'Too many login attempts for this account identifier.',
       });
+      // The cap on the account itself, across every address, shared with
+      // admin-login. It only refuses addresses that never signed in to it.
+      await assertLoginAccountOpen(sql, event, { account: normalizedIdentifier });
     }
 
     const member = await authenticateMemberCredentials(sql, identifier, password);
     const admin = member ? null : await authenticateCredentials(sql, identifier, password);
 
     if (!member && !admin) {
+      await recordLoginFailure(sql, event, { account: normalizedIdentifier });
       await logRequestAudit(sql, event, {
         route: 'member-login',
         action: 'authenticate',
@@ -77,6 +90,10 @@ export async function handler(event) {
         'set-cookie': [...clearSessionCookie(AUTH_COOKIES.member), ...clearMemberTierCookie()],
       });
     }
+
+    await rememberLoginSource(sql, event, member
+      ? [normalizedIdentifier, member.username, member.email]
+      : [normalizedIdentifier, admin.username, admin.email]);
 
     if (admin) {
       const { token, expiresAt } = await createSession(sql, admin.id);

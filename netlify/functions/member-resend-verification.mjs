@@ -1,5 +1,6 @@
 import {
   AUTH_COOKIES,
+  canRefreshMemberEmailVerification,
   clearSessionCookie,
   createMemberEmailVerificationRequest,
   ensureMemberSchema,
@@ -72,7 +73,13 @@ export async function handler(event) {
     let deliveryError = null;
     if (rows.length) {
       const candidate = rows[0];
-      if (candidate.status === 'pending' && !candidate.email_verified) {
+      if (candidate.status === 'pending' && !candidate.email_verified
+        && !(await canRefreshMemberEmailVerification(sql, candidate.id))) {
+        // Past the retention window and already reached by email: a fresh
+        // link here is what let a stranger hold someone else's address
+        // forever. The caller gets the same generic reply.
+        outcome = 'refresh_window_closed';
+      } else if (candidate.status === 'pending' && !candidate.email_verified) {
         const verification = await createMemberEmailVerificationRequest(sql, candidate.id);
         const result = await sendMemberVerificationEmail({
           sql,

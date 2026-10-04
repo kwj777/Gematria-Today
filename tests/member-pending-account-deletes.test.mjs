@@ -56,7 +56,7 @@ const STALE_PENDING_MEMBER = {
   created_at: '2026-08-01T00:00:00.000Z',
 };
 
-function installFakeDatabase() {
+function installFakeDatabase({ verificationWindowClosed = false } = {}) {
   const queries = [];
   for (const key of ENV_KEYS) delete process.env[key];
   process.env.DATABASE_URL = 'postgresql://tester:secret@fake-db.invalid/neondb';
@@ -66,6 +66,8 @@ function installFakeDatabase() {
     let rows = [];
     if (/SELECT id, username, email(, status, email_verified, created_at)?\s+FROM users/.test(query)) {
       rows = [STALE_PENDING_MEMBER];
+    } else if (/SELECT 1 AS verification_window_closed/.test(query) && verificationWindowClosed) {
+      rows = [{ verification_window_closed: 1 }];
     }
     return new Response(JSON.stringify(neonResult(rows)), {
       status: 200,
@@ -127,4 +129,25 @@ test('a resend for a month-old pending account issues a fresh link instead of de
   const issued = db.queries.find(({ query }) => /INSERT INTO member_email_verification_requests/.test(query));
   assert.ok(issued, 'the pending account must get a new verification request');
   assert.ok(issued.params.includes(STALE_PENDING_MEMBER.id));
+});
+
+test('a month-old pending account our email already reached gets no new link', async () => {
+  const db = installFakeDatabase({ verificationWindowClosed: true });
+
+  const response = await post(resendHandler, { identifier: 'alice@example.com' });
+
+  // The prune spares an account while its link is live, so a fresh link for
+  // any age let whoever registered someone else's address re-send one weekly
+  // and hold it for good. Past the retention window, once delivered, the
+  // last link runs out and the prune takes the account.
+  assert.equal(response.statusCode, 200);
+  assert.match(JSON.parse(response.body).message, /If a pending account matches/);
+  assert.equal(db.queries.some(({ query }) => /INSERT INTO member_email_verification_requests/.test(query)), false);
+  assert.deepEqual(db.userDeletes(), []);
+  const check = db.queries.find(({ query }) => /SELECT 1 AS verification_window_closed/.test(query));
+  assert.ok(check, 'the resend must check the retention window');
+  assert.match(check.query, /created_at <= NOW\(\) - \$\d+::interval/);
+  assert.match(check.query, /r\.email_delivered = TRUE/);
+  const audit = db.queries.find(({ query, params }) => /INSERT INTO request_audit_log/.test(query) && params.includes('refresh_window_closed'));
+  assert.ok(audit, 'the refusal is recorded for admins');
 });

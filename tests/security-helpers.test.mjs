@@ -7,9 +7,11 @@ import {
   buildCacheKey,
   createRateLimitError,
   getClientIp,
+  getClientRateLimitKey,
   getFingerprint,
   getProtectionConfig,
   getRequestHeaders,
+  getRateLimitIpBucket,
   getRequestPath,
   getRetentionConfig,
   getUserAgent,
@@ -197,6 +199,40 @@ test('getUserAgent returns "unknown" when absent', () => {
   assert.equal(getUserAgent({ headers: {} }), 'unknown');
 });
 
+// ---------- getRateLimitIpBucket ----------
+
+test('an IPv6 caller is rate limited by its /64, however it writes the address', () => {
+  // A VPS is handed a whole /64; keyed by the full address, each of its 2^64
+  // addresses got a fresh per-address allowance.
+  const bucket = getRateLimitIpBucket('2001:db8:1234:5678::1');
+  assert.equal(bucket, '2001:db8:1234:5678::/64');
+  for (const address of [
+    '2001:db8:1234:5678:ffff:ffff:ffff:ffff',
+    '2001:0DB8:1234:5678:0:0:0:abcd',
+    '2001:db8:1234:5678:a:b:1.2.3.4',
+    '2001:db8:1234:5678::9%eth0',
+  ]) {
+    assert.equal(getRateLimitIpBucket(address), bucket, address);
+  }
+  assert.notEqual(getRateLimitIpBucket('2001:db8:1234:5679::1'), bucket, 'the next /64 is another subscriber');
+  assert.equal(getRateLimitIpBucket('::1'), '0:0:0:0::/64');
+});
+
+test('an IPv4 caller keeps its full address, including one written as IPv6', () => {
+  assert.equal(getRateLimitIpBucket('203.0.113.10'), '203.0.113.10');
+  assert.equal(getRateLimitIpBucket('::ffff:203.0.113.10'), '203.0.113.10');
+  assert.equal(getRateLimitIpBucket('::ffff:cb00:710a'), '203.0.113.10');
+  assert.equal(getRateLimitIpBucket(''), 'unknown');
+  assert.equal(getRateLimitIpBucket('not-an-ip'), 'not-an-ip');
+});
+
+test('getClientRateLimitKey buckets the connection address', () => {
+  assert.equal(
+    getClientRateLimitKey({ headers: { 'x-nf-client-connection-ip': '2001:db8:aa:bb:cc:dd:ee:ff' } }),
+    '2001:db8:aa:bb::/64',
+  );
+});
+
 // ---------- getFingerprint ----------
 
 test('getFingerprint is stable for identical sources + extras', () => {
@@ -247,7 +283,7 @@ test('ensureSecuritySchema runs its DDL once per instance, however many helpers 
 
   await applyRateLimit(sql, source, { scope: 'lookup', key: 'k', limit: 10, windowMs: 60_000 });
   const afterFirstHelper = ddlCount();
-  assert.equal(afterFirstHelper, 9, 'the first call creates the three tables and six indexes');
+  assert.equal(afterFirstHelper, 10, 'the first call creates the four tables and six indexes');
 
   await getCachedJson(sql, 'cache-key');
   await setCachedJson(sql, { cacheKey: 'cache-key', route: 'lookup', payload: {} });
@@ -262,7 +298,7 @@ test('a failed ensureSecuritySchema is retried by the next request instead of po
 
   await assert.rejects(ensureSecuritySchema(sql), /lock timeout/);
   await ensureSecuritySchema(sql);
-  assert.equal(ddlCount(), 1 + 9, 'the retry ran the whole schema again');
+  assert.equal(ddlCount(), 1 + 10, 'the retry ran the whole schema again');
 });
 
 // ---------- createRateLimitError ----------

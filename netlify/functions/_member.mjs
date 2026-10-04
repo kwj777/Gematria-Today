@@ -529,6 +529,43 @@ export async function markVerificationEmailDelivered(sql, userId, delivered) {
   `;
 }
 
+// Whether a pending signup may be sent a fresh verification link. The nightly
+// prune spares an account while it holds a live link, so with no bound here
+// anyone who registered someone else's address could re-send a link once a
+// week and hold that address and username for good. An account past
+// UNVERIFIED_RETENTION that our email has already reached gets no new link:
+// whatever link it holds runs out within a week, and the prune removes it. An
+// account our email never reached is never past that point, however old --
+// the prune keeps it too -- so the resend still rescues it once delivery works;
+// nor is one the prune never removes (paid, or reset-proven).
+export async function canRefreshMemberEmailVerification(sql, userId) {
+  await ensureMemberSchema(sql);
+  if (!userId) return false;
+  const rows = await sql`
+    SELECT 1 AS verification_window_closed
+    FROM users
+    WHERE id = ${userId}
+      AND created_at <= NOW() - ${UNVERIFIED_RETENTION}::interval
+      AND EXISTS (
+        SELECT 1 FROM member_email_verification_requests r
+        WHERE r.user_id = users.id
+          AND r.email_delivered = TRUE
+      )
+      AND membership_level = 'free'
+      AND stripe_customer_id IS NULL
+      AND stripe_subscription_id IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM account_recovery_requests ar
+        WHERE ar.user_id = users.id
+          AND ar.role = 'member'
+          AND ar.recovery_type = 'forgot-password'
+          AND ar.consumed_at IS NOT NULL
+      )
+    LIMIT 1
+  `;
+  return rows.length === 0;
+}
+
 export async function countUndeliveredVerifications(sql) {
   await ensureMemberSchema(sql);
   const rows = await sql`

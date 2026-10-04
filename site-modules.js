@@ -100,7 +100,15 @@
   const MODULE_PATH_MATCHERS = Object.freeze({
     blog: [/\/blog(?:\.html)?(?:[?#].*)?$/i],
     forum: [/\/forum(?:\.html)?(?:[?#].*)?$/i, /\/forum-reputation-scale(?:\.html)?(?:[?#].*)?$/i],
-    membership: [/\/member(?:\.html)?(?:[?#].*)?$/i, /\/gematria-account-setup(?:\.html)?(?:[?#].*)?$/i],
+    // Sign-up and upgrade links only. Switching membership off stops new
+    // sign-ups and charges; existing members still sign in at /member and
+    // cancel from its billing portal, so links to /member itself (Log in,
+    // Dashboard, the footer's Membership) stay.
+    membership: [
+      /\/gematria-account-setup(?:\.html)?(?:[?#].*)?$/i,
+      /\/member(?:\.html)?(?:\?[^#]*)?#(?:registerForm|membershipUpgradeSection)$/i,
+      /\/member(?:\.html)?\?(?:[^#]*&)?auth=register(?:[&#].*)?$/i,
+    ],
     gemabot: [/\/ai-agent(?:\.html)?(?:[?#].*)?$/i],
     knowbot: [/\/searchbot(?:\.html)?(?:[?#].*)?$/i],
   });

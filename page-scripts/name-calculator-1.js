@@ -605,7 +605,7 @@ const form = document.querySelector('#name-form');
         nameChartPreview.src = createNameChartPreviewUrl(names, matches);
         nameChartPreview.hidden = false;
         if (nameChartStatus) {
-          nameChartStatus.textContent = 'Preview only — the printable chart is unmarked and print resolution.';
+          nameChartStatus.textContent = 'Preview only — unmarked print-resolution charts are not available to order yet.';
         }
       }
 

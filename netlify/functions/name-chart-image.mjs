@@ -1,7 +1,10 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import crypto from 'node:crypto';
 import { Resvg } from '@resvg/resvg-js';
 import { digitalRoot, englishGematria, gematriaLetters, isBaseRootValue } from './englishGematria.mjs';
+import { buildResvgFontOptions, resolveFontFiles } from './_fonts.mjs';
+import { guardErrorResponse, guardImageRender } from './_render-guard.mjs';
+
+export { resolveFontFiles };
 
 // Print geometry: 8x10in at 300dpi. That is the whole point of this endpoint --
 // the 1200x630 social card in calculator-share-image.mjs is a screen asset and
@@ -17,13 +20,12 @@ export const MAX_MATCHES = 6;
 
 const NAME_ROW_LABELS = ['FIRST', 'SECOND', 'THIRD'];
 
-// Fraunces/Inter are the site faces but ship as woff2 only, which resvg cannot
-// read. resolveFontFiles() picks up TTF/OTF cuts if they are ever added under
-// assets/fonts/; until then these stacks fall through to whatever serif and
-// sans the render host provides.
+// Fraunces/Inter are the site faces. The browser gets them as woff2, which
+// resvg cannot read, so static TTF cuts ship in assets/fonts/ for this
+// renderer (see _fonts.mjs); the rest of each stack only matters if those are
+// ever missing from the bundle.
 const DISPLAY_FONT = 'Fraunces, Georgia, DejaVu Serif, Times New Roman, serif';
 const BODY_FONT = 'Inter, Helvetica Neue, Arial, DejaVu Sans, sans-serif';
-const FONT_DIRECTORY = 'assets/fonts';
 
 // Layout grid. Everything below the ladder sits at a fixed y so a one-name
 // chart and a three-name chart share the same footer and medallion positions.
@@ -93,6 +95,14 @@ export function parseMatches(searchParams) {
     .slice(0, MAX_MATCHES);
 }
 
+// The page looks the matching words up by value before it requests the chart,
+// but the list reaches this endpoint on the query string. Only words whose own
+// value really is the full-name total are printed under "WORDS SHARING THIS
+// VALUE", so a hand-edited ?matches= cannot put arbitrary words there.
+export function filterMatches(matches, total) {
+  return matches.filter((word) => Number(englishGematria(String(word))) === total);
+}
+
 // The chart is a dated snapshot, so the caller may pin the calculation date --
 // a reprint of a purchased chart has to show the day it was bought, not the day
 // it was re-rendered. Anything unparseable falls back to today.
@@ -103,12 +113,28 @@ export function parseCalculatedOn(value, fallbackDate = new Date()) {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
+// A row has room for MAX_NAME_LETTERS tiles. A longer name keeps its first
+// letters and folds the rest into a final "+N" tile carrying their combined
+// value, so the tiles always add up to the subtotal printed beside them.
+export function buildLetterTiles(name) {
+  const letters = getPerLetterValues(name);
+  if (letters.length <= MAX_NAME_LETTERS) {
+    return letters;
+  }
+  const shown = letters.slice(0, MAX_NAME_LETTERS - 1);
+  const folded = letters.slice(MAX_NAME_LETTERS - 1);
+  return [
+    ...shown,
+    { letter: `+${folded.length}`, value: folded.reduce((sum, { value }) => sum + value, 0) },
+  ];
+}
+
 // Totals are recomputed from the names rather than read off the query string.
 // A chart that will eventually be sold must not be forgeable by editing a
 // `total=` parameter in the URL.
 export function computeChart(names) {
   const rows = names.map((name, index) => {
-    const letters = getPerLetterValues(name).slice(0, MAX_NAME_LETTERS);
+    const letters = buildLetterTiles(name);
     return {
       label: NAME_ROW_LABELS[index] || 'NAME',
       name: truncate(String(name).toUpperCase(), MAX_NAME_LETTERS + 4),
@@ -299,35 +325,42 @@ ${buildMatches(matches)}
 </svg>`;
 }
 
-// resvg only reads TTF/OTF. Passing an explicit list keeps a paid print off the
-// host's default face; when no cuts are bundled we fall back to system fonts so
-// the preview still renders rather than failing closed.
-export function resolveFontFiles(directory = FONT_DIRECTORY) {
-  try {
-    const absolute = join(process.cwd(), directory);
-    if (!existsSync(absolute)) {
-      return [];
-    }
-    return readdirSync(absolute)
-      .filter((entry) => /\.(ttf|otf)$/i.test(entry))
-      .map((entry) => join(absolute, entry));
-  } catch (_error) {
-    return [];
-  }
-}
-
+// resvg only reads TTF/OTF. Passing the bundled cuts keeps a paid print off
+// the host's default face -- and on Lambda, which has no fonts at all, is what
+// puts any text on the chart.
 export function renderChartPng(svg, { width = CHART_WIDTH, fontFiles = resolveFontFiles() } = {}) {
   const resvg = new Resvg(svg, {
     fitTo: { mode: 'width', value: width },
-    font: fontFiles.length
-      ? { fontFiles, loadSystemFonts: true, defaultFontFamily: 'Inter' }
-      : { loadSystemFonts: true },
+    font: buildResvgFontOptions(fontFiles),
   });
   return resvg.render().asPng();
 }
 
+// The unmarked print-resolution chart is what a purchase would deliver, and
+// there is no purchase flow yet. A full render therefore needs a URL signed
+// with NAME_CHART_SIGNING_SECRET by signChartRequest() -- which a checkout can
+// issue once one exists. Anything else, including a request that simply drops
+// preview=1, gets the watermarked screen-resolution preview.
+function chartSignaturePayload(names, calculatedOn) {
+  return JSON.stringify({ names, calculatedOn: String(calculatedOn || '') });
+}
+
+export function signChartRequest({ names, calculatedOn = '' }, secret) {
+  return crypto.createHmac('sha256', String(secret)).update(chartSignaturePayload(names, calculatedOn)).digest('hex');
+}
+
+export function isFullChartAuthorized(searchParams, names, secret = process.env.NAME_CHART_SIGNING_SECRET) {
+  const signature = String(searchParams.get('sig') || '').trim().toLowerCase();
+  if (!secret || !/^[0-9a-f]{64}$/.test(signature)) {
+    return false;
+  }
+  const expected = signChartRequest({ names, calculatedOn: searchParams.get('calculatedOn') || '' }, secret);
+  return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
+}
+
 export default async (request) => {
   try {
+    await guardImageRender(request, { route: 'name-chart-image', limit: 30 });
     const url = new URL(request.url);
     const names = parseNames(url.searchParams);
 
@@ -340,11 +373,12 @@ export default async (request) => {
 
     // Preview is the free, on-page asset: watermarked and capped at screen
     // resolution so it can never stand in for the purchased print.
-    const isPreview = String(url.searchParams.get('preview') || '').toLowerCase() === '1';
+    const isPreview = String(url.searchParams.get('preview') || '').toLowerCase() === '1'
+      || !isFullChartAuthorized(url.searchParams, names);
     const chart = computeChart(names);
     const svg = buildChartSvg({
       chart,
-      matches: parseMatches(url.searchParams),
+      matches: filterMatches(parseMatches(url.searchParams), chart.total),
       watermark: isPreview,
       calculatedOn: parseCalculatedOn(url.searchParams.get('calculatedOn')),
     });
@@ -359,6 +393,10 @@ export default async (request) => {
       },
     });
   } catch (error) {
+    const guarded = guardErrorResponse(error);
+    if (guarded) {
+      return guarded;
+    }
     console.error('name-chart-image failed', error);
     return new Response('Failed to render name chart', {
       status: 500,

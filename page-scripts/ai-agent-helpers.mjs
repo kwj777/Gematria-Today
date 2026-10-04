@@ -42,6 +42,17 @@ export function digitalRoot(numberValue) {
   return root;
 }
 
+// A shared GemaBot link (/ai-agent.html?sharedTopic=...) also carries
+// sharedTotal and sharedRoot, but the banner recomputes both from the topic so
+// an edited link cannot show a site-branded result for any value it likes.
+// Returns null when the topic has no A-Z letters to count.
+export function describeSharedLookup(topic) {
+  const text = String(topic || '').trim();
+  const total = englishGematria(text);
+  if (!total) return null;
+  return { topic: text, total, root: digitalRoot(total) };
+}
+
 export function isBaseRootTotal(total) {
   return total >= 6 && (total - 6) % 54 === 0;
 }

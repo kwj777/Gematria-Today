@@ -1,4 +1,5 @@
 import type { Config, Context } from '@netlify/edge-functions';
+import { replaceCanonical, replaceMetaContent, replaceTitle } from './lib/og-meta.mjs';
 
 const FALLBACK_SITE_ORIGIN = 'https://gematria.today';
 const DEFAULT_OG_IMAGE_PATH = '/assets/beast-identity-rev13-hero-16x9.svg';
@@ -156,23 +157,6 @@ async function lookupPost(origin: string, postSlug: string): Promise<PostLookup>
   }
 }
 
-function escapeAttr(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function replaceMetaContent(html: string, selector: string, newValue: string): string {
-  // Match meta tags by property or name attribute
-  const attrMatch = selector.match(/meta\[(property|name)="([^"]+)"\]/);
-  if (!attrMatch) {
-    return html;
-  }
-  const [, attrName, attrValue] = attrMatch;
-  const pattern = new RegExp(
-    `(<meta\\s[^>]*${attrName}="${attrValue}"[^>]*\\scontent=")([^"]*)(")`
-  );
-  return html.replace(pattern, `$1${escapeAttr(newValue)}$3`);
-}
-
 export default async (req: Request, context: Context) => {
   const url = new URL(req.url);
   const postSlug = url.searchParams.get('post');
@@ -215,16 +199,10 @@ export default async (req: Request, context: Context) => {
   const shareUrl = `${siteOrigin}/blog.html?post=${encodeURIComponent(postSlug)}`;
 
   // Replace title tag
-  html = html.replace(
-    /(<title[^>]*>)[^<]*(<\/title>)/,
-    `$1${escapeAttr(title)}$2`
-  );
+  html = replaceTitle(html, title);
 
   // Replace canonical URL
-  html = html.replace(
-    /(<link\s+rel="canonical"\s+href=")[^"]*(")/,
-    `$1${escapeAttr(shareUrl)}$2`
-  );
+  html = replaceCanonical(html, shareUrl);
 
   // Replace meta tags
   html = replaceMetaContent(html, 'meta[name="description"]', description);

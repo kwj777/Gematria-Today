@@ -1,3 +1,5 @@
+import { digitalRoot, englishGematria, gematriaLetters, isBaseRootValue } from './englishGematria.mjs';
+
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 
@@ -51,13 +53,43 @@ export function wrapSvgText(value, maxCharsPerLine = 60, maxLines = 3) {
   return lines;
 }
 
+// Same cipher and label format as getPerLetterValuesLabel() on the calculator
+// page: only A-Z carries a value, read through gematriaLetters() so the label
+// follows the same normalization as the total.
+export function getPerLetterValuesLabel(input) {
+  const letters = Array.from(gematriaLetters(String(input || '')));
+  return letters.length
+    ? letters.map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`).join(', ')
+    : 'n/a';
+}
+
+// Every number on the card is recomputed from the words themselves. The share
+// links still send total, digitalRoot, isBaseRoot, perLetterValues and totals,
+// but reading them let anyone mint a gematria.today-branded card claiming any
+// value for any word (?query=Obama&total=666), so they are ignored.
+export function computeWordValues(query) {
+  const text = String(query || '');
+  if (!gematriaLetters(text)) {
+    return { total: '?', digitalRoot: '?', isBaseRoot: false, perLetterValues: 'n/a' };
+  }
+  const total = Number(englishGematria(text));
+  return {
+    total: String(total),
+    digitalRoot: String(digitalRoot(total)),
+    isBaseRoot: isBaseRootValue(total),
+    perLetterValues: getPerLetterValuesLabel(text),
+  };
+}
+
 export function drawWordImage(searchParams) {
-  const query = escapeXml(searchParams.get('query') || 'Lookup');
-  const total = escapeXml(searchParams.get('total') || '?');
-  const digitalRoot = escapeXml(searchParams.get('digitalRoot') || '?');
-  const isBaseRoot = String(searchParams.get('isBaseRoot') || '').toLowerCase() === 'true' ? 'Yes' : 'No';
+  const rawQuery = String(searchParams.get('query') || '').trim();
+  const query = escapeXml(rawQuery || 'Lookup');
+  const values = computeWordValues(rawQuery);
+  const total = escapeXml(values.total);
+  const root = escapeXml(values.digitalRoot);
+  const isBaseRoot = values.isBaseRoot ? 'Yes' : 'No';
   const definitionPreview = String(searchParams.get('definitionPreview') || 'Definition preview unavailable.').trim();
-  const perLetterValues = String(searchParams.get('perLetterValues') || 'n/a').trim();
+  const perLetterValues = values.perLetterValues;
   const definitionLines = wrapSvgText(definitionPreview, 62, 2);
   const definitionText = definitionLines
     .map((line, index) => `<text x="120" y="${468 + (index * 28)}" fill="#d5e5f7" font-size="24" font-family="Inter, Arial, sans-serif">${escapeXml(line)}</text>`)
@@ -72,7 +104,7 @@ export function drawWordImage(searchParams) {
     </text>
     <rect x="80" y="245" rx="16" ry="16" width="1040" height="340" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
     <text x="120" y="320" fill="#f3f6fb" font-size="46" font-family="Inter, Arial, sans-serif" font-weight="700">Gematria: ${total}</text>
-    <text x="120" y="385" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${digitalRoot}</text>
+    <text x="120" y="385" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, sans-serif">Digital Root: ${root}</text>
     <text x="120" y="425" fill="#c7d9ee" font-size="32" font-family="Inter, Arial, sans-serif">Base Rooted: ${isBaseRoot}</text>
     ${definitionText}
     <text x="120" y="568" fill="#9fc1e8" font-size="22" font-family="Inter, Arial, sans-serif">Per-letter values: ${escapeXml(perLetterValues)}</text>
@@ -84,12 +116,10 @@ export function drawNameImage(searchParams) {
     .map((key) => String(searchParams.get(key) || '').trim())
     .filter(Boolean)
     .slice(0, 3);
-  const totals = String(searchParams.get('totals') || '').trim();
-  const totalsLabel = totals ? totals.split(',').map((part) => part.trim()).filter(Boolean) : [];
 
   const lines = names.map((name, index) => {
     const safeName = escapeXml(name);
-    const total = escapeXml(totalsLabel[index] || '?');
+    const total = escapeXml(computeWordValues(name).total);
     const y = 300 + (index * 78);
     return `<text x="120" y="${y}" fill="#f3f6fb" font-size="44" font-family="Inter, Arial, sans-serif" font-weight="700">${safeName}: ${total}</text>`;
   }).join('');

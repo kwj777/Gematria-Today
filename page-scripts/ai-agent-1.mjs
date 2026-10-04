@@ -3,6 +3,7 @@
         englishGematria,
         gematriaLetterBreakdown,
         digitalRoot,
+        describeSharedLookup,
         isBaseRootTotal,
         describeMatchConfidence,
         normalizeCandidate,
@@ -1317,13 +1318,11 @@ View results: ${shareUrl}`.trim(),
 
       function showSharedResultIfPresent() {
         const params = new URLSearchParams(window.location.search);
-        const topic = String(params.get('sharedTopic') || '').trim();
-        const total = String(params.get('sharedTotal') || '').trim();
-        const root = String(params.get('sharedRoot') || '').trim();
-        if (!topic || !total) return;
+        const shared = describeSharedLookup(params.get('sharedTopic'));
+        if (!shared) return;
 
         sharedResultBanner.hidden = false;
-        sharedResultBanner.innerHTML = `<strong>Shared gematria lookup:</strong> ${escapeHtml(topic)} → total ${escapeHtml(total)}, digital root ${escapeHtml(root || '?')}.`;
+        sharedResultBanner.innerHTML = `<strong>Shared gematria lookup:</strong> ${escapeHtml(shared.topic)} → total ${shared.total}, digital root ${shared.root}.`;
       }
 
       function normalizeDictionaryText(value) {

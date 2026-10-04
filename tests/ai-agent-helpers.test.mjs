@@ -6,6 +6,7 @@ import {
   englishGematria,
   gematriaLetterBreakdown,
   digitalRoot,
+  describeSharedLookup,
   isBaseRootTotal,
   describeMatchConfidence,
   normalizeCandidate,
@@ -95,6 +96,32 @@ test('digitalRoot of 0 is 0', () => {
 
 test('digitalRoot handles negative input via absolute value', () => {
   assert.equal(digitalRoot(-144), 9);
+});
+
+// ---------- describeSharedLookup ----------
+
+test('describeSharedLookup computes the banner values from the shared topic', () => {
+  // O90 + B12 + A6 + M78 + A6
+  assert.deepEqual(describeSharedLookup('  Obama '), { topic: 'Obama', total: 192, root: 3 });
+});
+
+test('describeSharedLookup returns null when there is nothing to count', () => {
+  assert.equal(describeSharedLookup(''), null);
+  assert.equal(describeSharedLookup(null), null);
+  assert.equal(describeSharedLookup('12345'), null);
+});
+
+test('the shared-lookup banner ignores sharedTotal and sharedRoot from the URL', async () => {
+  // /ai-agent.html?sharedTopic=Obama&sharedTotal=666&sharedRoot=9 used to
+  // print "Obama -> total 666, digital root 9" under the site's banner.
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../page-scripts/ai-agent-1.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('function showSharedResultIfPresent()');
+  assert.ok(start > -1);
+  const body = source.slice(start, source.indexOf('\n      }\n', start));
+  assert.ok(body.includes("describeSharedLookup(params.get('sharedTopic'))"));
+  assert.ok(!body.includes('sharedTotal'));
+  assert.ok(!body.includes('sharedRoot'));
 });
 
 // ---------- isBaseRootTotal ----------

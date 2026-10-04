@@ -1,4 +1,7 @@
 import { Resvg } from '@resvg/resvg-js';
+import { buildResvgFontOptions } from './_fonts.mjs';
+import { computeShareValues } from './ai-agent-share.mjs';
+import { guardErrorResponse, guardImageRender } from './_render-guard.mjs';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -56,9 +59,9 @@ export function normalizeSummaryLines(value = '', maxLines = 3, maxLineLength = 
 export function buildSvg({ topic, total, root, summaryLines }) {
   const summaryBlock = summaryLines.length
     ? summaryLines
-      .map((line, index) => `<text x="120" y="${485 + (index * 34)}" fill="#c7d9ee" font-size="30" font-family="Arial, Helvetica, sans-serif">${line}</text>`)
+      .map((line, index) => `<text x="120" y="${485 + (index * 34)}" fill="#c7d9ee" font-size="30" font-family="Inter, Arial, Helvetica, sans-serif">${line}</text>`)
       .join('\n')
-    : '<text x="120" y="485" fill="#c7d9ee" font-size="36" font-family="Arial, Helvetica, sans-serif">Generated from AI Agent lookup</text>';
+    : '<text x="120" y="485" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, Helvetica, sans-serif">Generated from AI Agent lookup</text>';
   const summaryPanelHeight = summaryLines.length ? 280 + (summaryLines.length * 24) : 250;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -81,32 +84,46 @@ export function buildSvg({ topic, total, root, summaryLines }) {
   <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bgBase)" />
   <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bgGlowLeft)" />
   <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#bgGlowRight)" />
-  <text x="80" y="120" fill="#f3f6fb" font-size="42" font-family="Arial, Helvetica, sans-serif" font-weight="700">
+  <text x="80" y="120" fill="#f3f6fb" font-size="42" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="700">
     English Gematria Lookup
   </text>
-  <text x="80" y="220" fill="#ffd66e" font-size="64" font-family="Arial, Helvetica, sans-serif" font-weight="800">
+  <text x="80" y="220" fill="#ffd66e" font-size="64" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="800">
     ${escapeXml(topic)}
   </text>
   <rect x="80" y="280" rx="16" ry="16" width="1040" height="${summaryPanelHeight}" fill="rgba(12, 27, 48, 0.7)" stroke="rgba(145, 176, 214, 0.5)" />
-  <text x="120" y="360" fill="#f3f6fb" font-size="46" font-family="Arial, Helvetica, sans-serif" font-weight="700">Gematria: ${escapeXml(total)}</text>
-  <text x="120" y="425" fill="#c7d9ee" font-size="36" font-family="Arial, Helvetica, sans-serif">Digital Root: ${escapeXml(root)}</text>
+  <text x="120" y="360" fill="#f3f6fb" font-size="46" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="700">Gematria: ${escapeXml(total)}</text>
+  <text x="120" y="425" fill="#c7d9ee" font-size="36" font-family="Inter, Arial, Helvetica, sans-serif">Digital Root: ${escapeXml(root)}</text>
   ${summaryBlock}
-  <text x="80" y="590" fill="#9fc1e8" font-size="28" font-family="Arial, Helvetica, sans-serif">gematria.today</text>
+  <text x="80" y="590" fill="#9fc1e8" font-size="28" font-family="Inter, Arial, Helvetica, sans-serif">gematria.today</text>
 </svg>`;
+}
+
+// total= and root= on the query string are ignored: the card prints the value
+// of the topic itself, counted over the whole topic rather than the shortened
+// one drawn on the card. Trusting them let anyone render a gematria.today card
+// claiming any total for any word, and a 6000-digit total ran off the card.
+export function readShareParams(searchParams) {
+  const rawTopic = String(searchParams.get('topic') || '').trim();
+  const { total, root } = computeShareValues(rawTopic);
+  return {
+    topic: truncate(rawTopic || 'Gematria Agent Result', 48),
+    total,
+    root,
+    summaryLines: normalizeSummaryLines(searchParams.get('summary') || ''),
+  };
 }
 
 export default async function onRequest(request) {
   try {
+    await guardImageRender(request, { route: 'ai-agent-share-image', limit: 60 });
     const url = new URL(request.url);
-    const topic = truncate(url.searchParams.get('topic') || 'Gematria Agent Result', 48);
-    const total = String(url.searchParams.get('total') || '?').trim();
-    const root = String(url.searchParams.get('root') || '?').trim();
-    const summaryLines = normalizeSummaryLines(url.searchParams.get('summary') || '');
+    const svg = buildSvg(readShareParams(url.searchParams));
 
-    const svg = buildSvg({ topic, total, root, summaryLines });
-
+    // Lambda has no system fonts; without the bundled faces resvg drops every
+    // <text> node and the card renders with no words on it.
     const resvg = new Resvg(svg, {
       fitTo: { mode: 'width', value: WIDTH },
+      font: buildResvgFontOptions(),
     });
     const pngData = resvg.render();
     const pngBuffer = pngData.asPng();
@@ -119,6 +136,10 @@ export default async function onRequest(request) {
       },
     });
   } catch (error) {
+    const guarded = guardErrorResponse(error);
+    if (guarded) {
+      return guarded;
+    }
     console.error('ai-agent-share-image failed', error);
     return new Response('Failed to render share image', {
       status: 500,

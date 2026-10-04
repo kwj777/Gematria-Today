@@ -533,11 +533,14 @@
 [functions."super-admin-guide-index"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
 
-# resvg cannot read the woff2 cuts the site serves to browsers, so the chart
-# renderer needs TTF/OTF alongside it to print in the brand faces rather than
-# the host's default serif.
+# resvg cannot read the woff2 cuts the site serves to browsers, and Lambda has
+# no system fonts at all -- without these TTF cuts both PNG renderers drop every
+# <text> node. tests/resvg-fonts.test.mjs fails if a glob here stops matching.
 [functions."name-chart-image"]
-  included_files = ["assets/fonts/*.ttf", "assets/fonts/*.otf"]
+  included_files = ["assets/fonts/*.ttf"]
+
+[functions."ai-agent-share-image"]
+  included_files = ["assets/fonts/*.ttf"]
 
 [functions."member-prune-unverified"]
   schedule = "0 0 * * *"

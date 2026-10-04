@@ -2,11 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  computeWordValues,
   drawNameImage,
   drawWordImage,
   escapeXml,
+  getPerLetterValuesLabel,
   wrapSvgText,
 } from '../netlify/functions/calculator-share-image.mjs';
+import { digitalRoot, englishGematria, isBaseRootValue } from '../netlify/functions/englishGematria.mjs';
 
 // ---------- escapeXml ----------
 
@@ -78,22 +81,36 @@ function makeSearchParams(params = {}) {
   return search;
 }
 
-test('drawWordImage renders the standard text labels and gematria values', () => {
+test('drawWordImage renders the standard text labels and the gematria values of the query', () => {
   const svg = drawWordImage(makeSearchParams({
     query: 'Hello',
-    total: '156',
-    digitalRoot: '3',
-    isBaseRoot: 'true',
-    perLetterValues: 'H=42, E=30, L=72, L=72, O=78',
     definitionPreview: 'A greeting.',
   }));
   assert.ok(svg.includes('English Gematria Lookup'));
   assert.ok(svg.includes('>Hello<') || svg.includes('Hello'));
-  assert.ok(svg.includes('Gematria: 156'));
-  assert.ok(svg.includes('Digital Root: 3'));
-  assert.ok(svg.includes('Base Rooted: Yes'));
+  // H48 + E30 + L72 + L72 + O90
+  assert.ok(svg.includes('Gematria: 312'));
+  assert.ok(svg.includes('Digital Root: 6'));
+  assert.ok(svg.includes('Base Rooted: No'));
   assert.ok(svg.includes('A greeting.'));
-  assert.ok(svg.includes('H=42, E=30, L=72, L=72, O=78'));
+  assert.ok(svg.includes('H=48, E=30, L=72, L=72, O=90'));
+});
+
+test('drawWordImage ignores forged numbers on the query string', () => {
+  // ?query=Obama&total=666 used to render a site-branded card claiming 666.
+  const svg = drawWordImage(makeSearchParams({
+    query: 'Obama',
+    total: '666',
+    digitalRoot: '9',
+    isBaseRoot: 'true',
+    perLetterValues: 'O=1, B=1, A=1, M=1, A=1',
+  }));
+  assert.ok(svg.includes('Gematria: 192'));
+  assert.ok(svg.includes('Digital Root: 3'));
+  assert.ok(svg.includes('Base Rooted: No'));
+  assert.ok(svg.includes('O=90, B=12, A=6, M=78, A=6'));
+  assert.ok(!svg.includes('666'));
+  assert.ok(!svg.includes('O=1'));
 });
 
 test('drawWordImage falls back to placeholder values when params are missing', () => {
@@ -103,13 +120,30 @@ test('drawWordImage falls back to placeholder values when params are missing', (
   assert.ok(svg.includes('Digital Root: ?'));
 });
 
-test('drawWordImage renders "Base Rooted: Yes" only when isBaseRoot=true (case-insensitive)', () => {
-  assert.ok(drawWordImage(makeSearchParams({ isBaseRoot: 'true' })).includes('Base Rooted: Yes'));
-  assert.ok(drawWordImage(makeSearchParams({ isBaseRoot: 'TRUE' })).includes('Base Rooted: Yes'));
-  // Anything else, including "1", "yes", or empty, must render "No".
-  assert.ok(drawWordImage(makeSearchParams({ isBaseRoot: '1' })).includes('Base Rooted: No'));
-  assert.ok(drawWordImage(makeSearchParams({ isBaseRoot: 'yes' })).includes('Base Rooted: No'));
-  assert.ok(drawWordImage(makeSearchParams()).includes('Base Rooted: No'));
+test('drawWordImage derives "Base Rooted" from the query, not from isBaseRoot', () => {
+  // A = 6, and (6 - 6) % 54 === 0.
+  assert.ok(drawWordImage(makeSearchParams({ query: 'A' })).includes('Base Rooted: Yes'));
+  assert.ok(drawWordImage(makeSearchParams({ query: 'A', isBaseRoot: 'false' })).includes('Base Rooted: Yes'));
+  assert.ok(drawWordImage(makeSearchParams({ query: 'Hello', isBaseRoot: 'true' })).includes('Base Rooted: No'));
+  assert.ok(drawWordImage(makeSearchParams({ isBaseRoot: 'TRUE' })).includes('Base Rooted: No'));
+});
+
+test('computeWordValues matches the calculator endpoint for every field', () => {
+  for (const word of ['Hello', 'Jesus Christ', "O'Brien-Smith", 'zz top', 'A']) {
+    const total = Number(englishGematria(word));
+    assert.deepEqual(computeWordValues(word), {
+      total: String(total),
+      digitalRoot: String(digitalRoot(total)),
+      isBaseRoot: isBaseRootValue(total),
+      perLetterValues: getPerLetterValuesLabel(word),
+    });
+  }
+  assert.equal(computeWordValues('123').total, '?');
+  assert.equal(getPerLetterValuesLabel('ab-c'), 'A=6, B=12, C=18');
+  // The label reads letters the way the total does (NFKC, then A-Z only).
+  assert.equal(computeWordValues('Straße').total, englishGematria('Straße'));
+  assert.equal(getPerLetterValuesLabel('ﬁ ß'), 'F=36, I=54');
+  assert.equal(computeWordValues('ＡＢ').total, '18');
 });
 
 test('drawWordImage escapes XML-significant characters in the query (no markup leak)', () => {
@@ -122,12 +156,13 @@ test('drawWordImage escapes XML-significant characters in the query (no markup l
   assert.ok(svg.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
 });
 
-test('drawWordImage escapes ampersands and quotes in per-letter values', () => {
+test('drawWordImage never prints per-letter text taken from the query string', () => {
   const svg = drawWordImage(makeSearchParams({
-    perLetterValues: `A=6 & "B"=12`,
+    query: 'ab',
+    perLetterValues: `A=6 & "B"=12 </text><rect/>`,
   }));
-  assert.ok(!svg.includes('A=6 & "B"=12'));
-  assert.ok(svg.includes('A=6 &amp; &quot;B&quot;=12'));
+  assert.ok(!svg.includes('</text><rect/>'));
+  assert.ok(svg.includes('Per-letter values: A=6, B=12'));
 });
 
 test('drawWordImage escapes the definition preview line by line', () => {
@@ -142,14 +177,15 @@ test('drawWordImage escapes the definition preview line by line', () => {
 
 // ---------- drawNameImage ----------
 
-test('drawNameImage renders names with their totals when both are supplied', () => {
+test('drawNameImage renders each name with its computed total and ignores totals=', () => {
   const svg = drawNameImage(makeSearchParams({
     name1: 'Alice', name2: 'Bob', name3: 'Carol',
     totals: '123, 456, 789',
   }));
-  assert.ok(svg.includes('Alice: 123'));
-  assert.ok(svg.includes('Bob: 456'));
-  assert.ok(svg.includes('Carol: 789'));
+  assert.ok(svg.includes('Alice: 180'));
+  assert.ok(svg.includes('Bob: 114'));
+  assert.ok(svg.includes('Carol: 294'));
+  assert.ok(!svg.includes(': 456'));
 });
 
 test('drawNameImage joins the names with a middle dot for the subtitle', () => {
@@ -176,12 +212,12 @@ test('drawNameImage caps the rendered names at three', () => {
   assert.ok(!svg.includes('D'));
 });
 
-test('drawNameImage uses "?" for totals slots that have no matching value', () => {
+test('drawNameImage uses "?" for a name with no letters to count', () => {
   const svg = drawNameImage(makeSearchParams({
-    name1: 'A', name2: 'B', totals: '111',
+    name1: 'A', name2: '42', totals: '111,222',
   }));
-  assert.ok(svg.includes('A: 111'));
-  assert.ok(svg.includes('B: ?'));
+  assert.ok(svg.includes('A: 6'));
+  assert.ok(svg.includes('42: ?'));
 });
 
 test('drawNameImage escapes XML-significant characters in names', () => {

@@ -15,11 +15,14 @@ import {
 import { applySeededContentCorrectionsOnce } from './_seeded-content-corrections.mjs';
 import { ensureSecuritySchema } from './_security.mjs';
 
+// The owner account. Its password hash comes only from the
+// SUPER_ADMIN_PASSWORD_HASH environment variable (see
+// syncBootstrapAdminUserUncached); it used to be committed here, which
+// published it.
 const SEEDED_ADMIN_USERS = [
   {
     id: 'KevAdmin',
     username: 'KevAdmin',
-    passwordHash: 'scrypt$b1c4f2285150fe8d4b7c4db52a0c8d13$228c63f1b83b3d27bb4a6deec2c8d51dac6f85f9c982c7fd91ed0a7a68a87fd96f004f1163120aaafc3b3be560ce4efded49a00b9f6e47b964f0cc0acd5a1192',
     role: 'super_admin',
   },
 ];
@@ -461,21 +464,26 @@ export async function syncBootstrapAdminUser(sql) {
 async function syncBootstrapAdminUserUncached(sql) {
   const superAdminUsernames = getSuperAdminUsernames();
 
-  // The seeded hash only creates the account on an empty database. This used
-  // to be ON CONFLICT DO UPDATE SET password_hash, so every cold start put the
-  // committed hash back: a password reset or rotation of the owner account
-  // lasted only until the next deploy, and whoever could crack the hash in the
-  // repository kept the account. Once the row exists its password and role
-  // belong to the database; the promotion below still keeps the configured
-  // super admin names at super_admin while they remain staff. No conflict
-  // target, so a row that keeps the seeded id under another username is left
-  // alone too instead of failing every cold start on the primary key.
-  for (const seededUser of SEEDED_ADMIN_USERS) {
-    await sql`
-      INSERT INTO users (id, username, password_hash, role, is_admin)
-      VALUES (${seededUser.id}, ${seededUser.username}, ${seededUser.passwordHash}, ${seededUser.role}, TRUE)
-      ON CONFLICT DO NOTHING
-    `;
+  // This used to insert a password hash committed to the repository, and
+  // with ON CONFLICT DO UPDATE SET password_hash, so every cold start put the
+  // public hash back: a reset or rotation of the owner account lasted only
+  // until the next deploy, and deleting the row only brought it back. The
+  // hash now comes from SUPER_ADMIN_PASSWORD_HASH, and without it no account
+  // is created. It only creates a missing account: once the row exists its
+  // password and role belong to the database; the promotion below still
+  // keeps the configured super admin names at super_admin while they remain
+  // staff. No conflict target, so a row that keeps the seeded id under
+  // another username is left alone too instead of failing every cold start
+  // on the primary key.
+  const seededOwnerPasswordHash = String(process.env.SUPER_ADMIN_PASSWORD_HASH || '').trim();
+  if (seededOwnerPasswordHash) {
+    for (const seededUser of SEEDED_ADMIN_USERS) {
+      await sql`
+        INSERT INTO users (id, username, password_hash, role, is_admin)
+        VALUES (${seededUser.id}, ${seededUser.username}, ${seededOwnerPasswordHash}, ${seededUser.role}, TRUE)
+        ON CONFLICT DO NOTHING
+      `;
+    }
   }
 
   // This used to match LOWER(username), and usernames are only unique

@@ -156,7 +156,7 @@ Apply the SQL files in order when bootstrapping a database:
 
 `words_schema.sql` creates the `words` table (with its `LOWER(word)` and `gematria_value` indexes) that the calculator, value search, `/w/` and `/v/` word pages and the words sitemap read. No function creates it at runtime, so a database bootstrapped without it answers all of those with `relation "words" does not exist`. Every statement is `IF NOT EXISTS`, so it is safe to rerun against an existing database.
 
-`admin_schema.sql` creates the `kevandmel` admin account, and the functions create the `KevAdmin` super admin on their first cold start against an empty database. Both start with a password hash that is committed to this repository, so set new passwords for them as soon as the database is up. Neither the SQL file nor a cold start ever resets the password of an account that already exists.
+`admin_schema.sql` creates the `kevandmel` admin account with a password hash that is committed to this repository, so set a new password for it as soon as the database is up. The functions create the `KevAdmin` super admin on a cold start only when that account is missing and the `SUPER_ADMIN_PASSWORD_HASH` environment variable holds its scrypt hash (generate one with `hashPassword` from `netlify/functions/_auth.mjs`); without the variable no owner account is created. Neither the SQL file nor a cold start ever resets the password of an account that already exists.
 
 `member_schema.sql` is the Phase 2 migration that adds member account fields, profile records, and saved calculation history on top of the shared `users` table.
 

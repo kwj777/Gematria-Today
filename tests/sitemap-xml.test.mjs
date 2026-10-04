@@ -137,12 +137,19 @@ test('buildBlogPostPaths skips blank and duplicate slugs and tolerates a missing
 });
 
 // Stand-in for Neon's HTTP endpoint so the real handler runs end to end: the
-// sitemap's posts query gets `posts`, every other statement an empty result.
-async function withFakeDatabase(posts, run) {
+// sitemap's posts query gets `posts`, the public settings query `settings`
+// ([setting_key, setting_value] pairs), every other statement an empty result.
+async function withFakeDatabase(posts, run, { settings = [] } = {}) {
   const priorFetch = globalThis.fetch;
   const priorUrl = process.env.DATABASE_URL;
   const postQueries = [];
   const answer = (query) => {
+    if (/FROM admin_settings/.test(query.query) && /'public_site_url'/.test(query.query)) {
+      return {
+        fields: [{ name: 'setting_key', dataTypeID: 25 }, { name: 'setting_value', dataTypeID: 25 }],
+        rows: settings,
+      };
+    }
     if (!/FROM posts/.test(query.query) || !/last_modified/.test(query.query)) {
       return { fields: [], rows: [] };
     }
@@ -185,6 +192,25 @@ test('handler adds the published posts from the database to the served sitemap',
   assert.match(postQueries[0], /COALESCE\(NULLIF\(BTRIM\(status\), ''\), 'published'\) = 'published'/);
   assert.match(postQueries[0], /scheduled_publish_at <= NOW\(\)/);
   assert.match(postQueries[0], /COALESCE\(hide_from_blog, FALSE\) = FALSE/);
+});
+
+// public_site_url is the email link base from the admin email panel. With
+// the rewrite forced this function is the live sitemap, and an old domain or
+// another host stored there must not become every <loc>.
+test('handler lists every URL on the canonical origin whatever public_site_url holds', async () => {
+  const { response } = await withFakeDatabase(
+    [{ slug: 'digital-roots-in-gematria', last_modified: '2026-09-14T08:30:00Z' }],
+    () => handler({ httpMethod: 'GET', path: '/sitemap.xml', headers: {} }),
+    { settings: [['public_site_url', 'https://endtimes.today'], ['site_modules', JSON.stringify({ forum: false })]] },
+  );
+  assert.equal(response.statusCode, 200);
+  const locs = [...response.body.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc]) => loc);
+  assert.ok(locs.length > 0);
+  for (const loc of locs) {
+    assert.ok(loc.startsWith(`${DEFAULT_SITE_ORIGIN}/`), `${loc} is on ${DEFAULT_SITE_ORIGIN}`);
+  }
+  assert.ok(!response.body.includes('endtimes.today'));
+  assert.ok(!locs.includes(`${DEFAULT_SITE_ORIGIN}/forum.html`), 'the module switches still apply');
 });
 
 test('buildSitemapXml writes a <lastmod> for each path it has a date for', () => {

@@ -194,6 +194,40 @@ test('netlify.toml forces /robots.txt and /sitemap.xml through their functions',
   }
 });
 
+// public_site_url is the email link base from the admin email panel. With
+// the rewrite forced this function is the live robots.txt, and an old domain
+// or another host stored there must not become the advertised sitemap host.
+test('handler advertises the sitemaps on the canonical origin whatever public_site_url holds', async () => {
+  const priorFetch = globalThis.fetch;
+  const priorUrl = process.env.DATABASE_URL;
+  const answer = ({ query }) => (/FROM admin_settings/.test(query) && /'public_site_url'/.test(query)
+    ? {
+      fields: [{ name: 'setting_key', dataTypeID: 25 }, { name: 'setting_value', dataTypeID: 25 }],
+      rows: [['public_site_url', 'https://endtimes.today'], ['site_modules', JSON.stringify({ forum: false })]],
+    }
+    : { fields: [], rows: [] });
+  process.env.DATABASE_URL = 'postgres://user:pass@db.example.test/neondb';
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body);
+    const payload = Array.isArray(body.queries) ? { results: body.queries.map(answer) } : answer(body);
+    return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  try {
+    const response = await handler({ httpMethod: 'GET', path: '/robots.txt', headers: {} });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['x-cache-status'], 'miss', 'the database settings were read');
+    assert.equal(
+      response.body,
+      buildRobotsTxt({ siteOrigin: DEFAULT_SITE_ORIGIN, modules: { ...DEFAULT_SITE_MODULES, forum: false } }),
+    );
+    assert.ok(!response.body.includes('endtimes.today'));
+  } finally {
+    globalThis.fetch = priorFetch;
+    if (priorUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = priorUrl;
+  }
+});
+
 test('robots.txt is never a 5xx: without a database it serves the defaults', async () => {
   // Google treats a 5xx robots.txt as "disallow everything".
   const prior = process.env.DATABASE_URL;

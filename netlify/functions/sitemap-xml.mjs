@@ -159,9 +159,14 @@ export async function handler(event) {
       route: 'sitemap-xml',
       ttlSeconds: 300,
       compute: async () => {
-        const settings = await loadPublicSiteSettings(sql);
-        const posts = settings.modules?.blog === false ? [] : await loadSitemapPosts(sql);
-        return { xml: buildSitemapXml({ ...settings, posts, lastmods: loadTrackedLastmods() }) };
+        // Only the module switches come from the database; every <loc> is on
+        // DEFAULT_SITE_ORIGIN, where each page's canonical points. The stored
+        // public_site_url is the email link base and may name another host.
+        const { modules } = await loadPublicSiteSettings(sql);
+        const posts = modules?.blog === false ? [] : await loadSitemapPosts(sql);
+        return {
+          xml: buildSitemapXml({ siteOrigin: DEFAULT_SITE_ORIGIN, modules, posts, lastmods: loadTrackedLastmods() }),
+        };
       },
     });
 

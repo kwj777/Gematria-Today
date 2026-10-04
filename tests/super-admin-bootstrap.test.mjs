@@ -96,15 +96,23 @@ test('the cold-start super admin promotion matches exact names and only escalate
 // until the next deploy. A fresh copy of the module stands in for a new lambda
 // instance, since the bootstrap is memoized per instance.
 let bootstrapColdStarts = 0;
-async function coldStartBootstrap(sql) {
+async function coldStartBootstrap(sql, { ownerPasswordHash } = {}) {
   bootstrapColdStarts += 1;
   const module = await import(`../netlify/functions/_admin.mjs?bootstrap-cold-start=${bootstrapColdStarts}`);
-  const previousAdminUsername = process.env.ADMIN_USERNAME;
+  const previous = {
+    ADMIN_USERNAME: process.env.ADMIN_USERNAME,
+    SUPER_ADMIN_PASSWORD_HASH: process.env.SUPER_ADMIN_PASSWORD_HASH,
+  };
   delete process.env.ADMIN_USERNAME;
+  if (ownerPasswordHash === undefined) delete process.env.SUPER_ADMIN_PASSWORD_HASH;
+  else process.env.SUPER_ADMIN_PASSWORD_HASH = ownerPasswordHash;
   try {
     await module.syncBootstrapAdminUser(sql);
   } finally {
-    if (previousAdminUsername !== undefined) process.env.ADMIN_USERNAME = previousAdminUsername;
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 }
 
@@ -130,27 +138,46 @@ function createUsersTable(rows) {
   return { sql, users };
 }
 
+const CONFIGURED_OWNER_HASH = 'scrypt$ffeeddccbbaa99887766554433221100$configured';
+
 test('a cold start keeps the owner account\'s rotated password instead of restoring the seeded hash', async () => {
   const rotatedHash = 'scrypt$00112233445566778899aabbccddeeff$rotated';
   const { sql, users } = createUsersTable([
     { id: 'KevAdmin', username: 'KevAdmin', password_hash: rotatedHash, role: 'super_admin', is_admin: true },
   ]);
 
-  await coldStartBootstrap(sql);
+  await coldStartBootstrap(sql, { ownerPasswordHash: CONFIGURED_OWNER_HASH });
 
   assert.equal(users.get('KevAdmin').password_hash, rotatedHash);
   assert.equal(users.get('KevAdmin').role, 'super_admin');
 });
 
-test('an empty database still gets the seeded owner account', async () => {
+test('an empty database gets the owner account from SUPER_ADMIN_PASSWORD_HASH', async () => {
+  const { sql, users } = createUsersTable([]);
+
+  await coldStartBootstrap(sql, { ownerPasswordHash: CONFIGURED_OWNER_HASH });
+
+  const owner = users.get('KevAdmin');
+  assert.ok(owner, 'the owner account is created');
+  assert.equal(owner.password_hash, CONFIGURED_OWNER_HASH);
+  assert.equal(owner.role, 'super_admin');
+});
+
+// The owner's hash used to be committed to the repository and inserted
+// whenever the row was missing, so deleting KevAdmin -- or pointing the site
+// at a fresh or restored database -- brought back a super admin whose hash
+// anyone could read. Without the environment secret nothing is created.
+test('without SUPER_ADMIN_PASSWORD_HASH a cold start creates no owner account', async () => {
   const { sql, users } = createUsersTable([]);
 
   await coldStartBootstrap(sql);
 
-  const owner = users.get('KevAdmin');
-  assert.ok(owner, 'the owner account is created');
-  assert.match(owner.password_hash, /^scrypt\$/);
-  assert.equal(owner.role, 'super_admin');
+  assert.equal(users.size, 0);
+});
+
+test('no password hash is committed in the admin bootstrap module', async () => {
+  const source = await fs.readFile(new URL('../netlify/functions/_admin.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /scrypt\$[0-9a-f]{16,}\$[0-9a-f]{16,}/);
 });
 
 test('a renamed owner row that keeps the seeded id does not fail the cold start', async () => {
@@ -158,7 +185,7 @@ test('a renamed owner row that keeps the seeded id does not fail the cold start'
     { id: 'KevAdmin', username: 'Kev', password_hash: 'scrypt$aa$bb', role: 'super_admin', is_admin: true },
   ]);
 
-  await coldStartBootstrap(sql);
+  await coldStartBootstrap(sql, { ownerPasswordHash: CONFIGURED_OWNER_HASH });
 
   assert.equal(users.size, 1);
   assert.equal(users.get('Kev').password_hash, 'scrypt$aa$bb');

@@ -47,7 +47,7 @@ const OWNER_PASSWORD = 'owner-correct-password';
 const OWNER_IP = '203.0.113.10';
 const ATTACKER_IP = '198.51.100.66';
 
-async function installFakeDatabase() {
+async function installFakeDatabase({ latencyMs = 0 } = {}) {
   const db = {
     owner: {
       id: 'KevAdmin',
@@ -65,6 +65,7 @@ async function installFakeDatabase() {
     knownSources: new Set(),
     sessions: 0,
     queries: 0,
+    passwordLookups: 0,
   };
 
   process.env.DATABASE_URL = 'postgresql://tester:secret@fake-db.invalid/neondb';
@@ -74,6 +75,9 @@ async function installFakeDatabase() {
   neonConfig.fetchFunction = async (_url, init) => {
     const { query, params } = JSON.parse(init.body);
     db.queries += 1;
+    // Real round trips take time; with it, concurrent requests interleave
+    // between a read and the write that follows it.
+    if (latencyMs) await new Promise((resolve) => setTimeout(resolve, latencyMs * (0.2 + Math.random())));
     return new Response(JSON.stringify(neonResult(answer(db, query, params))), {
       status: 200,
       headers: { 'content-type': 'application/json' },
@@ -103,11 +107,12 @@ function answer(db, query, params) {
       blocked_until: row.blockedUntil ? new Date(row.blockedUntil).toISOString() : null,
     }];
   }
-  if (/SELECT blocked_until\s+FROM request_rate_limits/.test(query)) {
+  if (/UPDATE request_rate_limits\s+SET count = GREATEST\(count - 1, 0\)/.test(query)) {
     const row = db.rateLimits.get(`${params[0]}\u0000${params[1]}`);
-    return row?.blockedUntil && row.blockedUntil > Date.now()
-      ? [{ blocked_until: new Date(row.blockedUntil).toISOString() }]
-      : [];
+    if (row && !(row.blockedUntil && row.blockedUntil > Date.now())) {
+      row.count = Math.max(row.count - 1, 0);
+    }
+    return [];
   }
   if (/INSERT INTO login_known_sources/.test(query)) {
     db.knownSources.add(`${params[0]}\u0000${params[1]}`);
@@ -117,6 +122,7 @@ function answer(db, query, params) {
     return db.knownSources.has(`${params[0]}\u0000${params[1]}`) ? [{ known: 1 }] : [];
   }
   if (/FROM users\s+WHERE username = /.test(query)) {
+    db.passwordLookups += 1;
     return params[0] === db.owner.username ? [db.owner] : [];
   }
   if (/INSERT INTO sessions/.test(query)) {
@@ -185,21 +191,26 @@ for (const { name, handler, attemptsUntilBlocked } of [
 
 // Keyed by account and caller alone, each new address -- every one of a VPS's
 // IPv6 /64 included -- got a fresh allowance, so nothing capped guessing at
-// one account. Failed passwords now also count per account from everywhere,
-// shared by both sign-in forms, and past the cap only addresses that have
-// signed in to the account before are still let through.
+// one account. Password checks from addresses that have never signed in to
+// the account now also count per account from everywhere, shared by both
+// sign-in forms, and past the cap only addresses that have signed in to the
+// account before are still let through.
 test('failed passwords from many addresses close the account to strangers, not to the owner', async () => {
   const db = await installFakeDatabase();
 
   const ownerFirst = await adminLoginHandler(loginEvent('admin-login', { ip: OWNER_IP, password: OWNER_PASSWORD }));
   assert.equal(ownerFirst.statusCode, 200, ownerFirst.body);
 
-  // Twenty failures are allowed in the hour; the twenty-first closes it.
+  // Twenty failures are allowed in the hour; the next guess is not checked.
   for (let attempt = 1; attempt <= 21; attempt += 1) {
     const handler = attempt % 2 ? adminLoginHandler : memberLoginHandler;
     const name = attempt % 2 ? 'admin-login' : 'member-login';
     const response = await handler(loginEvent(name, { ip: `198.51.100.${attempt}`, password: `guess-${attempt}` }));
-    assert.equal(response.statusCode, 401, `guess ${attempt} from a fresh address is checked and refused`);
+    if (attempt <= 20) {
+      assert.equal(response.statusCode, 401, `guess ${attempt} from a fresh address is checked and refused`);
+    } else {
+      assert.equal(response.statusCode, 429, 'guess 21 is refused before the password is checked');
+    }
   }
 
   for (const [name, handler] of [['admin-login', adminLoginHandler], ['member-login', memberLoginHandler]]) {
@@ -210,6 +221,43 @@ test('failed passwords from many addresses close the account to strangers, not t
     const owner = await handler(loginEvent(name, { ip: OWNER_IP, password: OWNER_PASSWORD }));
     assert.equal(owner.statusCode, 200, `${name}: the owner's address still signs in: ${owner.body}`);
   }
+});
+
+// The cap used to be read before the password check and counted after it, so
+// every request that read it before the twenty-first failure was written --
+// a concurrent burst from as many fresh addresses as the attacker has -- got a
+// real password check. The slot is now claimed atomically up front.
+test('a concurrent burst from many addresses gets at most twenty password checks', async () => {
+  const db = await installFakeDatabase({ latencyMs: 15 });
+
+  const burst = 80;
+  const responses = await Promise.all(Array.from({ length: burst }, (_, index) => adminLoginHandler(
+    loginEvent('admin-login', { ip: `2001:db8:${(index + 1).toString(16)}::1`, password: `guess-${index}` }),
+  )));
+
+  const checked = responses.filter((response) => response.statusCode === 401).length;
+  const refused = responses.filter((response) => response.statusCode === 429).length;
+  assert.equal(checked + refused, burst, 'every request is either checked and refused or refused up front');
+  assert.ok(checked <= 20, `at most 20 passwords are checked, got ${checked}`);
+  assert.ok(db.passwordLookups <= 20, `at most 20 password lookups, got ${db.passwordLookups}`);
+});
+
+test('a right password from a new address hands its slot back', async () => {
+  const db = await installFakeDatabase();
+
+  for (let attempt = 1; attempt <= 19; attempt += 1) {
+    const response = await adminLoginHandler(loginEvent('admin-login', { ip: `198.51.100.${attempt}`, password: `guess-${attempt}` }));
+    assert.equal(response.statusCode, 401);
+  }
+  const ownerNewDevice = await adminLoginHandler(loginEvent('admin-login', { ip: '192.0.2.50', password: OWNER_PASSWORD }));
+  assert.equal(ownerNewDevice.statusCode, 200, ownerNewDevice.body);
+
+  // Only the nineteen failures are counted, so one more guess is still checked.
+  const twentieth = await adminLoginHandler(loginEvent('admin-login', { ip: '198.51.100.20', password: 'guess-20' }));
+  assert.equal(twentieth.statusCode, 401);
+  const twentyFirst = await adminLoginHandler(loginEvent('admin-login', { ip: '198.51.100.21', password: OWNER_PASSWORD }));
+  assert.equal(twentyFirst.statusCode, 429);
+  assert.equal(db.sessions, 1);
 });
 
 test('rotating through one IPv6 /64 does not buy fresh guesses', async () => {

@@ -312,7 +312,7 @@ test('a failed correction is logged, does not fail the sync, and is retried on t
 
   await assert.doesNotReject(coldStart(db.sql));
 
-  assert.ok(db.calls.some(({ query }) => /INSERT INTO users/i.test(query)), 'the seeded admin user is still synced');
+  assert.ok(db.calls.some(({ query }) => /SET role = 'super_admin'/i.test(query)), 'the super admin sync still runs');
   assert.equal(consoleError.mock.callCount(), 1);
   assert.equal(consoleError.mock.calls[0].arguments[1], connectionError);
   assert.equal([...db.settings.keys()].some((key) => key.startsWith(CONTENT_CORRECTION_MARKER_PREFIX)), false);

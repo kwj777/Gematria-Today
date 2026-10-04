@@ -287,15 +287,20 @@ export async function applyRateLimit(sql, source, {
 // The login limits counted before the password is checked are keyed by
 // account and caller, or guessing at an account locks its owner out. Keyed
 // that way alone, nothing capped guessing at one account from many addresses,
-// so failed passwords are also counted per account from everywhere. Past the
-// limit the account stops taking passwords from any address that has not
-// signed in to it before; addresses that have keep working, so the owner is
-// not the one locked out, and anyone else still has account recovery, which
-// proves the address by email. admin-login and member-login share the count.
-const LOGIN_ACCOUNT_FAILURE_SCOPE = 'login-account-failures';
-const LOGIN_ACCOUNT_FAILURE_LIMIT = 20;
-const LOGIN_ACCOUNT_FAILURE_WINDOW_MS = 60 * 60_000;
-const LOGIN_ACCOUNT_FAILURE_BLOCK_MS = 60 * 60_000;
+// so password checks from addresses that have never signed in to an account
+// are also capped per account, across every address. The slot is claimed in
+// one atomic upsert before the password is checked: counting failures after
+// the check let a burst of concurrent requests, one per fresh address, all
+// read "not capped yet" and all reach the password check. A right password
+// hands its slot back, so only failures use up the allowance. Addresses that
+// have signed in to the account before are neither counted nor refused, so
+// the owner is not the one locked out, and anyone else still has account
+// recovery, which proves the address by email. admin-login and member-login
+// share the count.
+const LOGIN_ACCOUNT_STRANGER_SCOPE = 'login-account-unknown-source';
+const LOGIN_ACCOUNT_STRANGER_LIMIT = 20;
+const LOGIN_ACCOUNT_STRANGER_WINDOW_MS = 60 * 60_000;
+const LOGIN_ACCOUNT_STRANGER_BLOCK_MS = 60 * 60_000;
 const LOGIN_KNOWN_SOURCE_RETENTION_DAYS = 90;
 const LOGIN_ACCOUNT_LOCKED_MESSAGE = 'Too many failed sign-in attempts for this account. Try again later from a device you have signed in from before, or reset your password.';
 
@@ -303,20 +308,14 @@ function normalizeLoginAccountKey(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
-export async function assertLoginAccountOpen(sql, source, { account, message = LOGIN_ACCOUNT_LOCKED_MESSAGE } = {}) {
+// Call before the password check. Returns the claim to pass to
+// releaseLoginAttempt when the password is right, or null when nothing was
+// counted (no account named, or an address that has signed in to it before).
+// Throws a 429 once the account has had its allowance from strangers.
+export async function claimLoginAttempt(sql, source, { account, message = LOGIN_ACCOUNT_LOCKED_MESSAGE } = {}) {
   const accountKey = normalizeLoginAccountKey(account);
-  if (!accountKey) return;
+  if (!accountKey) return null;
   await ensureSecuritySchema(sql);
-
-  const blocked = await sql`
-    SELECT blocked_until
-    FROM request_rate_limits
-    WHERE scope = ${LOGIN_ACCOUNT_FAILURE_SCOPE}
-      AND key = ${accountKey}
-      AND blocked_until > NOW()
-    LIMIT 1
-  `;
-  if (!blocked.length) return;
 
   const known = await sql`
     SELECT 1 AS known
@@ -325,33 +324,31 @@ export async function assertLoginAccountOpen(sql, source, { account, message = L
       AND ip_bucket = ${getClientRateLimitKey(source)}
     LIMIT 1
   `;
-  if (known.length) return;
+  if (known.length) return null;
 
-  const retryAfterSeconds = Math.max(1, (new Date(blocked[0].blocked_until).getTime() - Date.now()) / 1000);
-  await logRequestAudit(sql, source, {
-    route: LOGIN_ACCOUNT_FAILURE_SCOPE,
-    action: 'rate_limit',
-    outcome: 'blocked',
-    metadata: { key: accountKey, retryAfterSeconds: Math.ceil(retryAfterSeconds) },
+  await applyRateLimit(sql, source, {
+    scope: LOGIN_ACCOUNT_STRANGER_SCOPE,
+    key: accountKey,
+    limit: LOGIN_ACCOUNT_STRANGER_LIMIT,
+    windowMs: LOGIN_ACCOUNT_STRANGER_WINDOW_MS,
+    blockMs: LOGIN_ACCOUNT_STRANGER_BLOCK_MS,
+    message,
   });
-  throw createRateLimitError(message, retryAfterSeconds);
+  return { accountKey };
 }
 
-export async function recordLoginFailure(sql, source, { account } = {}) {
-  const accountKey = normalizeLoginAccountKey(account);
-  if (!accountKey) return;
-  try {
-    await applyRateLimit(sql, source, {
-      scope: LOGIN_ACCOUNT_FAILURE_SCOPE,
-      key: accountKey,
-      limit: LOGIN_ACCOUNT_FAILURE_LIMIT,
-      windowMs: LOGIN_ACCOUNT_FAILURE_WINDOW_MS,
-      blockMs: LOGIN_ACCOUNT_FAILURE_BLOCK_MS,
-    });
-  } catch (error) {
-    // Only the count matters here; the caller still answers 401.
-    if (error?.statusCode !== 429) throw error;
-  }
+// Hands back the slot a successful sign-in claimed. A cap already reached is
+// left alone.
+export async function releaseLoginAttempt(sql, claim) {
+  if (!claim?.accountKey) return;
+  await sql`
+    UPDATE request_rate_limits
+    SET count = GREATEST(count - 1, 0),
+        updated_at = NOW()
+    WHERE scope = ${LOGIN_ACCOUNT_STRANGER_SCOPE}
+      AND key = ${claim.accountKey}
+      AND (blocked_until IS NULL OR blocked_until <= NOW())
+  `;
 }
 
 export async function rememberLoginSource(sql, source, accounts = []) {

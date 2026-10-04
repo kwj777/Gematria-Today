@@ -70,8 +70,13 @@ export async function handler(event) {
       route: 'robots-txt',
       ttlSeconds: 300,
       compute: async () => {
-        const settings = await loadPublicSiteSettings(sql);
-        return { text: buildRobotsTxt(settings) };
+        // Only the module switches come from the database. Its public_site_url
+        // is the base for links in emails, set in the admin email panel, and
+        // whatever it holds (an old domain, a www. or *.netlify.app host)
+        // must not become the Sitemap host: every page's canonical is on
+        // DEFAULT_SITE_ORIGIN.
+        const { modules } = await loadPublicSiteSettings(sql);
+        return { text: buildRobotsTxt({ siteOrigin: DEFAULT_SITE_ORIGIN, modules }) };
       },
     });
 

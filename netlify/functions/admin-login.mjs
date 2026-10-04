@@ -11,10 +11,10 @@ import {
 import { authenticateCredentials, getSqlClient, requireHttpMethod } from './_admin.mjs';
 import {
   applyRateLimit,
-  assertLoginAccountOpen,
+  claimLoginAttempt,
   getClientRateLimitKey,
   logRequestAudit,
-  recordLoginFailure,
+  releaseLoginAttempt,
   rememberLoginSource,
 } from './_security.mjs';
 
@@ -49,6 +49,7 @@ export async function handler(event) {
     // that account for an hour from every address, the real admin's included,
     // and repeating them hourly kept the only super admin out. Keyed by account
     // and caller address, guessing at an account only ever blocks the guesser.
+    let accountClaim = null;
     if (normalizedUsername) {
       await applyRateLimit(sql, event, {
         scope: 'admin-login-username',
@@ -58,16 +59,15 @@ export async function handler(event) {
         blockMs: 60 * 60_000,
         message: 'Too many admin login attempts for this account.',
       });
-      // The cap on the account itself, across every address. See
-      // assertLoginAccountOpen: it only refuses addresses that have never
-      // signed in to this account.
-      await assertLoginAccountOpen(sql, event, { account: normalizedUsername });
+      // The cap on the account itself, across every address, claimed before
+      // the password is checked. See claimLoginAttempt: it only counts and
+      // refuses addresses that have never signed in to this account.
+      accountClaim = await claimLoginAttempt(sql, event, { account: normalizedUsername });
     }
 
     const user = await authenticateCredentials(sql, username.trim(), password);
 
     if (!user) {
-      await recordLoginFailure(sql, event, { account: normalizedUsername });
       await logRequestAudit(sql, event, {
         route: 'admin-login',
         action: 'authenticate',
@@ -77,6 +77,7 @@ export async function handler(event) {
       return jsonResponse(401, { error: 'Invalid username or password' }, { 'set-cookie': clearSessionCookie(AUTH_COOKIES.admin) });
     }
 
+    await releaseLoginAttempt(sql, accountClaim);
     await rememberLoginSource(sql, event, [normalizedUsername, user.username, user.email]);
     const { token, expiresAt } = await createSession(sql, user.id);
     await logRequestAudit(sql, event, {

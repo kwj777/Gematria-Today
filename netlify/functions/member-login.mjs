@@ -17,10 +17,10 @@ import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
 import {
   applyRateLimit,
   assertHoneypotEmpty,
-  assertLoginAccountOpen,
+  claimLoginAttempt,
   getClientRateLimitKey,
   logRequestAudit,
-  recordLoginFailure,
+  releaseLoginAttempt,
   rememberLoginSource,
 } from './_security.mjs';
 
@@ -60,6 +60,7 @@ export async function handler(event) {
     // address: keyed by the identifier alone, six bad guesses from anywhere
     // locked the real member (or, through the admin fallback below, the super
     // admin) out from every address for half an hour.
+    let accountClaim = null;
     if (normalizedIdentifier) {
       await applyRateLimit(sql, event, {
         scope: 'member-login-identifier',
@@ -70,15 +71,15 @@ export async function handler(event) {
         message: 'Too many login attempts for this account identifier.',
       });
       // The cap on the account itself, across every address, shared with
-      // admin-login. It only refuses addresses that never signed in to it.
-      await assertLoginAccountOpen(sql, event, { account: normalizedIdentifier });
+      // admin-login and claimed before the password is checked. It only counts
+      // and refuses addresses that never signed in to it.
+      accountClaim = await claimLoginAttempt(sql, event, { account: normalizedIdentifier });
     }
 
     const member = await authenticateMemberCredentials(sql, identifier, password);
     const admin = member ? null : await authenticateCredentials(sql, identifier, password);
 
     if (!member && !admin) {
-      await recordLoginFailure(sql, event, { account: normalizedIdentifier });
       await logRequestAudit(sql, event, {
         route: 'member-login',
         action: 'authenticate',
@@ -91,6 +92,7 @@ export async function handler(event) {
       });
     }
 
+    await releaseLoginAttempt(sql, accountClaim);
     await rememberLoginSource(sql, event, member
       ? [normalizedIdentifier, member.username, member.email]
       : [normalizedIdentifier, admin.username, admin.email]);

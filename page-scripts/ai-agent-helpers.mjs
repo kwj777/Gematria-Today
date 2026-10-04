@@ -16,7 +16,8 @@ export function escapeHtml(value) {
 
 export function englishGematria(text) {
   let total = 0;
-  for (const char of String(text || '').toUpperCase()) {
+  // NFKC, then ASCII letters only: the same rule as englishGematria.mjs.
+  for (const char of String(text || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase()) {
     const code = char.charCodeAt(0);
     if (code >= 65 && code <= 90) {
       total += (code - 64) * 6;
@@ -26,8 +27,7 @@ export function englishGematria(text) {
 }
 
 export function gematriaLetterBreakdown(text) {
-  return [...String(text || '').toUpperCase()]
-    .filter((char) => char >= 'A' && char <= 'Z')
+  return [...String(text || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase()]
     .map((char) => {
       const value = (char.charCodeAt(0) - 64) * 6;
       return { char, value };

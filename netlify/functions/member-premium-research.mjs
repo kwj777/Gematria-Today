@@ -1,5 +1,6 @@
 import { getAuthenticatedMember, jsonResponse } from './_member.mjs';
 import { applyRateLimit, assertEndpointEnabled, fetchWithTimeout, getClientIp, getProtectionConfig, logRequestAudit } from './_security.mjs';
+import { MAX_GEMATRIA_VALUE, parseGematriaValue } from './_words.mjs';
 
 const ALLOWED_RELATIONSHIP_TYPES = new Set(['antonym', 'synonym', 'equivalent', 'cross-reference', 'hypernym', 'hyponym', 'variant', 'same-context']);
 
@@ -77,7 +78,10 @@ async function runGematriaLookup(sql, event) {
   if (!value) throw Object.assign(new Error('Missing required query parameter: gematria'), { statusCode: 400 });
   if (!/^\d+$/.test(value)) throw Object.assign(new Error('gematria must be a positive integer'), { statusCode: 400 });
 
-  const gematriaValue = Number(value);
+  const gematriaValue = parseGematriaValue(value);
+  if (gematriaValue === null) {
+    throw Object.assign(new Error(`gematria must be no larger than ${MAX_GEMATRIA_VALUE}`), { statusCode: 400 });
+  }
   if (gematriaValue % 6 !== 0) {
     throw Object.assign(new Error('gematria must be a multiple of 6'), { statusCode: 400 });
   }

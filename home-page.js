@@ -156,7 +156,8 @@ function renderHomepageSlider(posts, state = 'data') {
   }).join('');
 }
 
-const englishGematria = (value) => String(value ?? '').toUpperCase().split('').reduce((sum, char) => {
+// NFKC, then ASCII letters only: the same rule as englishGematria.mjs.
+const englishGematria = (value) => String(value ?? '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase().split('').reduce((sum, char) => {
   const code = char.charCodeAt(0);
   if (code < 65 || code > 90) return sum;
   return sum + ((code - 64) * 6);
@@ -173,7 +174,7 @@ const digitalRoot = (value) => {
 };
 
 const buildLetterBreakdown = (word) => {
-  const letters = String(word ?? '').toUpperCase().replace(/[^A-Z]/g, '').split('');
+  const letters = String(word ?? '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase().split('');
   if (letters.length === 0) return 'No alphabetical letters';
   return letters.map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`).join(' · ');
 };
@@ -332,7 +333,7 @@ const applyStaticContentPromise = () => Promise.race([
 
 const computeEnglishGematria = (input) => {
   let total = 0;
-  const upper = String(input || '').toUpperCase();
+  const upper = String(input || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase();
   for (let i = 0; i < upper.length; i++) {
     const code = upper.charCodeAt(i);
     if (code >= 65 && code <= 90) total += (code - 64) * 6;

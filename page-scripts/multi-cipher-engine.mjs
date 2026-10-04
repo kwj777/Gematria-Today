@@ -88,8 +88,13 @@ function lettersOf(input) {
   if (typeof input !== 'string') {
     throw new TypeError('multi-cipher engine expects a string input');
   }
+  // Same normalization as englishGematria() on the server: NFKC folds
+  // ligatures, full-width letters and the Kelvin sign into plain letters and
+  // composes accents onto their base letter, then only ASCII A-Z counts. Raw
+  // upper-casing scored a decomposed "José" differently from a precomposed one
+  // and turned ß into SS.
   const letters = [];
-  for (const char of input.toUpperCase()) {
+  for (const char of input.normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase()) {
     const code = char.charCodeAt(0);
     if (code >= A_CODE && code <= Z_CODE) letters.push({ letter: char, index: code - A_CODE + 1 });
   }

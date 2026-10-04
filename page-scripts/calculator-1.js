@@ -1256,9 +1256,10 @@ View results: ${shareUrl}`.trim(),
         });
       }
 
+      // Same normalization as englishGematria() on the server, so the letters
+      // shown always add up to the total returned for them.
       function getPerLetterValues(input) {
-        return Array.from(String(input || '').toUpperCase())
-          .filter((char) => char >= 'A' && char <= 'Z')
+        return Array.from(String(input || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase())
           .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
       }
 

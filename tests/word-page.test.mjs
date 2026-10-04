@@ -92,7 +92,8 @@ test('the words sitemap is an index over fixed-size chunks', () => {
 
 test('sitemap chunks emit value pages first, then words, correctly encoded', () => {
   assert.deepEqual(pageLocs({ page: 1, values: [6, 336], words: [] }), ['/v/6', '/v/336']);
-  assert.deepEqual(pageLocs({ page: 2, values: [], words: ['light', 'a&b'] }), ['/w/light', '/w/a%26b']);
+  // 'a&b' is not the shape of a word, so it is not published at all.
+  assert.deepEqual(pageLocs({ page: 2, values: [], words: ['light', 'A per se', 'a&b'] }), ['/w/light', '/w/A%20per%20se']);
 
   const xml = buildUrlSet(['/w/light', '/w/a%26b']);
   assert.match(xml, /<urlset/);
@@ -212,12 +213,22 @@ test('the sitemap cache key is versioned so filtering changes take effect at onc
   assert.match(source, /v: CACHE_VERSION/);
 });
 
-test('the storage rule and the indexing rule are the same definition', async () => {
+test('storage is never looser than rendering or publishing', async () => {
   // Storage, rendering and the sitemap must agree, or the table refills with
-  // entries the sitemap then has to filter out again.
-  const { isIndexableWord: shared, isStorableWord } = await import('../netlify/functions/_words.mjs');
-  assert.equal(isStorableWord, shared);
+  // entries the sitemap then has to filter out again. Storage is now the
+  // strictest of the three: anything stored renders, and publishes unless it
+  // is a blocked word; anything published is something storage would accept.
+  const { isIndexableWord: shared, isStorableWord, isPublishableWord } = await import('../netlify/functions/_words.mjs');
   assert.equal(shared, isIndexableWord, 'word-page must re-export the shared rule');
+  const samples = [
+    'light', 'A per se', 'A-one', 'Abyssinian cat', 'ALGOL', "O'Brien", 'café', 'fag',
+    '*', '0', '-ol', '2 5 0 62 4', '<er>annoy</er>', 'a 2 5 0 62 4', 'Catch-22',
+    'Buy cheap pills at rxshop dot com', 'Call 555 0100 for loans', 'rxshop.com', '',
+  ];
+  for (const word of samples) {
+    if (isStorableWord(word)) assert.equal(shared(word), true, `${JSON.stringify(word)} is storable but would not render`);
+    if (isPublishableWord(word)) assert.equal(isStorableWord(word), true, `${JSON.stringify(word)} is published but storage would refuse it`);
+  }
 
   const gematria = await fs.readFile(new URL('../netlify/functions/englishGematria.mjs', import.meta.url), 'utf8');
   assert.match(gematria, /from '\.\/_words\.mjs'/);
@@ -338,7 +349,12 @@ test('mixed-case URLs canonicalise to one form instead of competing', () => {
 });
 
 test('the related-word list is styled and the cap has a way out', () => {
-  const many = Array.from({ length: 260 }, (_, i) => ({ word: `word${i}`, search_count: 1 }));
+  // Letters only: a digit would make each one something the site no longer
+  // publishes.
+  const many = Array.from({ length: 260 }, (_, i) => ({
+    word: `word${String.fromCharCode(97 + Math.floor(i / 26))}${String.fromCharCode(97 + (i % 26))}`,
+    search_count: 1,
+  }));
   const html = renderValuePage(336, many);
   assert.match(html, /<ul class="related-word-list">/);
   // The footer's own link stacks legitimately use site-footer-list, so only the

@@ -10,8 +10,8 @@
 //   /v/:value  -> every word with that gematria value
 import { getSqlClient } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
-import { englishGematria, digitalRoot } from './englishGematria.mjs';
-import { isIndexableWord, isPublishableWord, hasEnoughSearches, hasEnoughSharedWords } from './_words.mjs';
+import { englishGematria, digitalRoot, gematriaLetters, wordHasValue } from './englishGematria.mjs';
+import { isIndexableWord, isPublishableWord, hasEnoughSearches, hasEnoughSharedWords, parseGematriaValue } from './_words.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -57,11 +57,11 @@ const SHARE_IMAGE_ALT = 'Constellation artwork representing linked words and num
 
 // A=6, L=72, A=6 -> 84. Unique to every word, and the one thing a gematria
 // page should obviously show. Its absence was most of why these read as thin.
+// The letters come from the same normalization the total does, so the
+// breakdown always sums to the value above it.
 export function letterBreakdown(word) {
-  return String(word)
-    .toUpperCase()
+  return gematriaLetters(word)
     .split('')
-    .filter((char) => char >= 'A' && char <= 'Z')
     .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
 }
 
@@ -380,12 +380,15 @@ export default async function onRequest(request) {
       return notFoundPage();
     }
 
+    // A value past the integer range used to reach Postgres as-is and fail
+    // as a 500. No word can have it, so there is no page.
     const value = route.kind === 'word'
       ? Number(englishGematria(route.key))
-      : Number(route.key);
+      : parseGematriaValue(route.key);
+    if (value === null) return notFoundPage();
 
     const cached = await withCachedJson(sql, {
-      cacheKey: buildCacheKey({ route: 'word-page', kind: route.kind, key: route.key.toLowerCase() }),
+      cacheKey: buildCacheKey({ route: 'word-page', kind: route.kind, key: route.kind === 'value' ? String(value) : route.key.toLowerCase() }),
       route: 'word-page',
       ttlSeconds: 600,
       compute: async () => {
@@ -405,7 +408,11 @@ export default async function onRequest(request) {
       },
     });
 
-    const words = cached.payload?.words || [];
+    // A row stored under the old letter rule can sit under a value its word
+    // no longer adds up to ("Straße" at 606, now 378). Listing it here would
+    // link to a /w/ page showing a different number, so it is left out of
+    // the list and the counts, the same as the calculator's reverse lookup.
+    const words = (cached.payload?.words || []).filter((row) => wordHasValue(row.word, value));
 
     // /v/999999999999 used to render a live-looking page announcing "0 words
     // share this value". Nothing is there, so say so with a 404.

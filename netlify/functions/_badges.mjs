@@ -124,26 +124,33 @@ async function awardEarnedBadges(sql, userId, statsRow) {
   const eligible = BADGE_DEFINITIONS.filter((badge) => matchesMetric(statsRow, badge.metric, badge.threshold));
   if (!eligible.length) return [];
 
-  const inserted = [];
-  for (const badge of eligible) {
-    const rows = await sql`
-      INSERT INTO member_badges (id, user_id, badge_slug)
-      VALUES (${crypto.randomUUID()}, ${userId}, ${badge.slug})
-      ON CONFLICT (user_id, badge_slug) DO NOTHING
-      RETURNING badge_slug, earned_at
-    `;
-    if (rows.length) {
-      inserted.push({
-        slug: badge.slug,
-        name: badge.name,
-        description: badge.description,
-        category: badge.category,
-        tier: badge.tier,
-        earnedAt: rows[0].earned_at,
-      });
-    }
-  }
-  return inserted;
+  // One statement for every badge the stats qualify for. Thresholds are
+  // cumulative, so a long-time member qualifies for nearly all of them on every
+  // lookup, and inserting them one at a time put a dozen sequential round trips
+  // -- each ending in DO NOTHING -- on the calculator's response path. Every
+  // eligible badge is still offered, not only a threshold this request crossed,
+  // so a member whose stats passed a threshold before its badge existed (or
+  // before a failed insert) still receives it.
+  const ids = eligible.map(() => crypto.randomUUID());
+  const slugs = eligible.map((badge) => badge.slug);
+  const rows = await sql`
+    INSERT INTO member_badges (id, user_id, badge_slug)
+    SELECT earned.id, ${userId}::text, earned.slug
+    FROM unnest(${ids}::text[], ${slugs}::text[]) AS earned(id, slug)
+    ON CONFLICT (user_id, badge_slug) DO NOTHING
+    RETURNING badge_slug, earned_at
+  `;
+  const earnedAtBySlug = new Map(rows.map((row) => [row.badge_slug, row.earned_at]));
+  return eligible
+    .filter((badge) => earnedAtBySlug.has(badge.slug))
+    .map((badge) => ({
+      slug: badge.slug,
+      name: badge.name,
+      description: badge.description,
+      category: badge.category,
+      tier: badge.tier,
+      earnedAt: earnedAtBySlug.get(badge.slug),
+    }));
 }
 
 async function upsertSearchStats(sql, userId, deltas) {

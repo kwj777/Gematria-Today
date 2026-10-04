@@ -1583,8 +1583,7 @@
       }
 
       function getPerLetterValuesLabel(input) {
-        const letters = Array.from(String(input || '').toUpperCase())
-          .filter((char) => char >= 'A' && char <= 'Z')
+        const letters = Array.from(String(input || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase())
           .map((char) => `${char}=${(char.charCodeAt(0) - 64) * 6}`);
         return letters.length ? letters.join(', ') : 'n/a';
       }

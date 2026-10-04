@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
-import { digitalRoot, englishGematria, isBaseRootValue } from './englishGematria.mjs';
+import { digitalRoot, englishGematria, gematriaLetters, isBaseRootValue } from './englishGematria.mjs';
 
 // Print geometry: 8x10in at 300dpi. That is the whole point of this endpoint --
 // the 1200x630 social card in calculator-share-image.mjs is a screen asset and
@@ -74,8 +74,7 @@ export function truncate(value, maxLength) {
 // page and englishGematria() on the server. Hyphens and apostrophes in a name
 // are dropped from the ladder rather than rendered as valueless tiles.
 export function getPerLetterValues(input) {
-  return Array.from(String(input || '').toUpperCase())
-    .filter((char) => char >= 'A' && char <= 'Z')
+  return Array.from(gematriaLetters(String(input || '')))
     .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
 }
 

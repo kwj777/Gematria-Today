@@ -12,8 +12,9 @@ function getDateKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// NFKC, then ASCII letters only: the same rule as englishGematria.mjs.
 function englishGematria(input) {
-  return String(input ?? '').toUpperCase().split('').reduce((sum, char) => {
+  return String(input ?? '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase().split('').reduce((sum, char) => {
     const code = char.charCodeAt(0);
     if (code < 65 || code > 90) return sum;
     return sum + ((code - 64) * 6);
@@ -31,7 +32,7 @@ function digitalRoot(value) {
 }
 
 function gematriaLetterBreakdown(input) {
-  return String(input ?? '').toUpperCase().split('').flatMap((char) => {
+  return String(input ?? '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase().split('').flatMap((char) => {
     const code = char.charCodeAt(0);
     if (code < 65 || code > 90) return [];
     return [{ char, value: (code - 64) * 6 }];

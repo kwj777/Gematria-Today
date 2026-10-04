@@ -189,7 +189,7 @@ VALUES
   (
     'seed-faq-what-search-data-is-stored',
     'What do you store about my searches?',
-    'For signed-in members, we store searches you explicitly save and any notes you attach to them. For all visitors we may log aggregated request metrics (page, timestamp, success/failure) used for site reliability and abuse prevention. Full details of what is collected, why, and your rights are in our Privacy Policy (/privacy.html).',
+    'For signed-in members, we store searches you explicitly save and any notes you attach to them. A single word or short phrase you look up in the main Calculator is also added to the site''s shared word list, with no link to you, where other visitors can see it in reverse lookups and on word and value pages; names you enter in the Name Calculator are never added. For all visitors we keep short-lived request logs (page, timestamp, IP address, success/failure) used for site reliability and abuse prevention, along with the links and buttons you click if you have allowed analytics. Words you look up are recorded in those logs. Names you enter in the Name Calculator are not, although a logged click records the page address and the link clicked, which can contain a name, as a shared Name Calculator link or a name''s definition link does. Full details of what is collected, why, and your rights are in our Privacy Policy (/privacy.html).',
     118,
     TRUE,
     'kevandmel',

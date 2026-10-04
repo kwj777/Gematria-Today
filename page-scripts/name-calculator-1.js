@@ -263,18 +263,21 @@ const form = document.querySelector('#name-form');
         return payload;
       }
 
-      // intent=view returns the value without recording demand for the name.
-      // See the same helper in calculator-1.js: search_count decides what gets
-      // an indexable /w/ page, so a name the page filled in from ?name1= must
-      // not move it.
+      // kind=name: names are people, not words, so the gematria lookup never
+      // adds one to the shared word list -- which every visitor can browse --
+      // counts it as demand for a word page, or writes it to the response
+      // cache or audit log. intent=view, for a name the page filled in from
+      // ?name1=, also withholds the member's lookup credit: nobody typed it.
       function requestGematria(word, { countAsSearch = true } = {}) {
-        const searchParams = new URLSearchParams({ word });
+        const searchParams = new URLSearchParams({ word, kind: 'name' });
         if (!countAsSearch) searchParams.set('intent', 'view');
         return requestJson('/.netlify/functions/englishGematria', searchParams);
       }
 
+      // kind=name here and on the definition requests below too: the name is
+      // not kept in the shared response cache or written to the audit log.
       function requestRelatedWords(word, limit = getFullRelatedWordLimit()) {
-        return requestJson('/.netlify/functions/wordnikRelatedWords', new URLSearchParams({ word, limit: String(limit) }));
+        return requestJson('/.netlify/functions/wordnikRelatedWords', new URLSearchParams({ word, limit: String(limit), kind: 'name' }));
       }
 
       function requestWordsByGematria(total, { globalLoading = true } = {}) {
@@ -360,9 +363,10 @@ const form = document.querySelector('#name-form');
         return link;
       }
 
+      // Same normalization as englishGematria() on the server, so the letters
+      // shown always add up to the total returned for them.
       function getPerLetterValues(input) {
-        return Array.from(String(input || '').toUpperCase())
-          .filter((char) => char >= 'A' && char <= 'Z')
+        return Array.from(String(input || '').normalize('NFKC').replace(/[^A-Za-z]/g, '').toUpperCase())
           .map((char) => ({ letter: char, value: (char.charCodeAt(0) - 64) * 6 }));
       }
 
@@ -381,7 +385,7 @@ const form = document.querySelector('#name-form');
         const link = document.createElement('a');
         link.className = 'definition-link ms-2';
         const returnTo = `${window.location.pathname}${window.location.search}`;
-        const params = new URLSearchParams({ word, returnTo });
+        const params = new URLSearchParams({ word, kind: 'name', returnTo });
         link.href = `/definition?${params.toString()}`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -396,7 +400,7 @@ const form = document.querySelector('#name-form');
         if (!normalizedWord) return false;
         try {
           const response = await fetch(
-            `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
+            `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}&kind=name`,
             { headers: { accept: 'application/json' } }
           );
           if (!response.ok) return false;

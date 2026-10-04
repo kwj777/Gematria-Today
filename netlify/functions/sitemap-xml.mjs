@@ -1,6 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { ensureAdminSchema, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
 import { buildCacheKey, withCachedJson } from './_security.mjs';
-import { buildModulePublicPaths, loadPublicSiteSettings, normalizeSiteModules } from './_site-modules.mjs';
+import {
+  buildModulePublicPaths,
+  DEFAULT_SITE_MODULES,
+  DEFAULT_SITE_ORIGIN,
+  loadPublicSiteSettings,
+  normalizeSiteModules,
+} from './_site-modules.mjs';
 
 export const STATIC_PATHS = Object.freeze([
   '/',
@@ -34,6 +43,36 @@ export function escapeXml(value = '') {
     .replace(/'/g, '&apos;');
 }
 
+// /sitemap.xml is served by this function (the rewrite is forced), but the
+// tracked sitemap.xml is still where each page's <lastmod> is kept:
+// scripts/update-sitemap-lastmod.mjs derives it from commit history and lint
+// fails when it drifts. netlify.toml bundles the file with this function.
+export function parseLastmods(xml = '') {
+  const lastmods = new Map();
+  for (const [, inner] of String(xml).matchAll(/<url>([\s\S]*?)<\/url>/g)) {
+    const loc = inner.match(/<loc>\s*([^<]+?)\s*<\/loc>/)?.[1];
+    const lastmod = inner.match(/<lastmod>\s*([^<]+?)\s*<\/lastmod>/)?.[1];
+    if (!loc || !lastmod) continue;
+    try {
+      lastmods.set(new URL(loc).pathname, lastmod);
+    } catch {
+      // Not an absolute URL; nothing to key it by.
+    }
+  }
+  return lastmods;
+}
+
+export function loadTrackedLastmods() {
+  for (const base of [process.cwd(), join(process.cwd(), '..'), '/var/task']) {
+    try {
+      return parseLastmods(readFileSync(join(base, 'sitemap.xml'), 'utf8'));
+    } catch {
+      // Try the next location.
+    }
+  }
+  return new Map();
+}
+
 function toUrlEntry(origin, pathname, lastmod = '') {
   const normalizedPath = pathname === '/' ? '/' : `/${String(pathname || '').replace(/^\/+/, '')}`;
   const lastmodLine = lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : '';
@@ -65,12 +104,14 @@ export function buildBlogPostPaths(posts = []) {
   return entries;
 }
 
-export function buildSitemapXml({ siteOrigin, modules, posts = [] }) {
-  const modulePaths = buildModulePublicPaths(modules);
+export function buildSitemapXml({ siteOrigin, modules, posts = [], lastmods = new Map() }) {
+  // A sitemap lists pages. The blog RSS feed is a module path too (robots.txt
+  // needs it), but it is not a page to index.
+  const modulePaths = buildModulePublicPaths(modules).filter((path) => !path.endsWith('.xml'));
   const allPaths = Array.from(new Set([...STATIC_PATHS, ...modulePaths]));
   const postEntries = normalizeSiteModules(modules).blog ? buildBlogPostPaths(posts) : [];
   const entries = [
-    ...allPaths.map((path) => toUrlEntry(siteOrigin, path)),
+    ...allPaths.map((path) => toUrlEntry(siteOrigin, path, lastmods.get(path))),
     ...postEntries.map(({ path, lastmod }) => toUrlEntry(siteOrigin, path, lastmod)),
   ];
 
@@ -120,7 +161,7 @@ export async function handler(event) {
       compute: async () => {
         const settings = await loadPublicSiteSettings(sql);
         const posts = settings.modules?.blog === false ? [] : await loadSitemapPosts(sql);
-        return { xml: buildSitemapXml({ ...settings, posts }) };
+        return { xml: buildSitemapXml({ ...settings, posts, lastmods: loadTrackedLastmods() }) };
       },
     });
 
@@ -134,10 +175,21 @@ export async function handler(event) {
       body: cacheResult.payload.xml,
     };
   } catch (error) {
+    // A database blip should not turn the sitemap into an error for whichever
+    // crawler asks. Serve every page with the default modules -- what the
+    // tracked sitemap.xml lists -- and retry the real settings shortly.
+    console.error('sitemap-xml failed; serving the default sitemap', error);
     return {
-      statusCode: error.statusCode || 500,
-      headers: { 'content-type': 'text/plain; charset=UTF-8' },
-      body: error.message || 'Failed to generate sitemap.xml',
+      statusCode: 200,
+      headers: {
+        'content-type': 'application/xml; charset=UTF-8',
+        'cache-control': 'public, max-age=60',
+      },
+      body: buildSitemapXml({
+        siteOrigin: DEFAULT_SITE_ORIGIN,
+        modules: DEFAULT_SITE_MODULES,
+        lastmods: loadTrackedLastmods(),
+      }),
     };
   }
 }

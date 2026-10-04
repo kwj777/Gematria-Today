@@ -1,13 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 
 import {
   buildBlogPostPaths,
   buildSitemapXml,
   escapeXml,
   handler,
+  loadTrackedLastmods,
+  parseLastmods,
   STATIC_PATHS,
 } from '../netlify/functions/sitemap-xml.mjs';
+import { DEFAULT_SITE_MODULES, DEFAULT_SITE_ORIGIN } from '../netlify/functions/_site-modules.mjs';
 
 const ALL_MODULES_ON = {
   blog: true, membership: true, gemabot: true, knowbot: true, forum: true,
@@ -181,4 +185,70 @@ test('handler adds the published posts from the database to the served sitemap',
   assert.match(postQueries[0], /COALESCE\(NULLIF\(BTRIM\(status\), ''\), 'published'\) = 'published'/);
   assert.match(postQueries[0], /scheduled_publish_at <= NOW\(\)/);
   assert.match(postQueries[0], /COALESCE\(hide_from_blog, FALSE\) = FALSE/);
+});
+
+test('buildSitemapXml writes a <lastmod> for each path it has a date for', () => {
+  const xml = buildSitemapXml({
+    siteOrigin: 'https://example.com',
+    modules: ALL_MODULES_OFF,
+    lastmods: new Map([['/', '2026-08-19'], ['/faq.html', '2026-07-01']]),
+  });
+  assert.ok(xml.includes('<loc>https://example.com/</loc>\n    <lastmod>2026-08-19</lastmod>\n  </url>'));
+  assert.ok(xml.includes('<loc>https://example.com/faq.html</loc>\n    <lastmod>2026-07-01</lastmod>\n  </url>'));
+  assert.ok(xml.includes('<loc>https://example.com/terms.html</loc>\n  </url>'), 'no date, no lastmod');
+});
+
+test('buildSitemapXml lists pages, not the blog RSS feed', () => {
+  const xml = buildSitemapXml({ siteOrigin: 'https://example.com', modules: ALL_MODULES_ON });
+  assert.ok(!xml.includes('/blog.xml'));
+});
+
+test('parseLastmods keys the tracked sitemap dates by path', () => {
+  const lastmods = parseLastmods(`<urlset>
+  <url>
+    <loc>https://gematria.today/</loc>
+    <lastmod>2026-08-19</lastmod>
+  </url>
+  <url>
+    <loc>https://gematria.today/faq.html</loc>
+  </url>
+</urlset>`);
+  assert.equal(lastmods.get('/'), '2026-08-19');
+  assert.equal(lastmods.has('/faq.html'), false);
+});
+
+function urlEntries(xml) {
+  return [...xml.matchAll(/<url>[\s\S]*?<\/url>/g)].map(([entry]) => entry.replace(/\s+/g, '')).sort();
+}
+
+test('with default modules the function serves exactly the tracked sitemap.xml entries', async () => {
+  // /sitemap.xml is a forced rewrite to this function, so it is what crawlers
+  // receive. With every module on it must match the tracked file -- every page
+  // and every lastmod the update-sitemap-lastmod script maintains.
+  const tracked = await fs.readFile(new URL('../sitemap.xml', import.meta.url), 'utf8');
+  const served = buildSitemapXml({
+    siteOrigin: DEFAULT_SITE_ORIGIN,
+    modules: DEFAULT_SITE_MODULES,
+    lastmods: loadTrackedLastmods(),
+  });
+  assert.deepEqual(urlEntries(served), urlEntries(tracked));
+});
+
+test('the sitemap function bundles the tracked sitemap.xml for its lastmod dates', async () => {
+  const toml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+  assert.match(toml, /\[functions\."sitemap-xml"\]\n\s*included_files = \["sitemap\.xml"\]/);
+});
+
+test('sitemap.xml is never an error: without a database it serves the defaults', async () => {
+  const prior = process.env.DATABASE_URL;
+  delete process.env.DATABASE_URL;
+  try {
+    const response = await handler({ httpMethod: 'GET' });
+    assert.equal(response.statusCode, 200);
+    assert.match(response.headers['content-type'], /^application\/xml/);
+    const tracked = await fs.readFile(new URL('../sitemap.xml', import.meta.url), 'utf8');
+    assert.deepEqual(urlEntries(response.body), urlEntries(tracked));
+  } finally {
+    if (prior !== undefined) process.env.DATABASE_URL = prior;
+  }
 });

@@ -3,15 +3,22 @@
   functions = "netlify/functions"
   publish = "_site"
 
+# Forced: robots.txt and sitemap.xml also exist as static files in _site, and a
+# non-forced rewrite loses to a file at the same path, so the module-aware
+# functions never ran and switching a module off changed nothing crawlers saw.
+# Both functions fall back to the default output (identical to the tracked
+# files) rather than erroring when the database is unreachable.
 [[redirects]]
   from = "/robots.txt"
   to = "/.netlify/functions/robots-txt"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/sitemap.xml"
   to = "/.netlify/functions/sitemap-xml"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/nameCalculator.html"
@@ -518,6 +525,10 @@
 # partials at runtime.
 [functions."word-page"]
   included_files = ["src/_includes/*.html"]
+
+# The tracked sitemap.xml holds each page's <lastmod>; the function reads it.
+[functions."sitemap-xml"]
+  included_files = ["sitemap.xml"]
 
 [functions."admin-hub"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]

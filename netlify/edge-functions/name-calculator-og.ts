@@ -5,10 +5,17 @@ const SITE_ORIGIN = 'https://gematria.today';
 const OGP_IMAGE_WIDTH = 1200;
 const OGP_IMAGE_FORMAT = 'jpg';
 
-// calculator-share-image returns SVG, which no social platform renders in a
-// share card, so the card points at Netlify's image CDN rasterising it.
+// The share image is rendered by a function, and robots.txt disallows
+// /.netlify/functions/ -- X and LinkedIn honour that for card images and drop
+// the picture. Serve it through the image CDN instead, as calculator-og does:
+// /.netlify/images is crawlable and also rasterizes the SVG to the JPEG the
+// card crawlers expect.
 function toShareImageUrl(value: string): string {
-  const encoded = encodeURIComponent(value);
+  const absoluteUrl = String(value || '').trim();
+  if (!absoluteUrl || /^data:image\//i.test(absoluteUrl)) {
+    return '';
+  }
+  const encoded = encodeURIComponent(absoluteUrl);
   return `${SITE_ORIGIN}/.netlify/images?url=${encoded}&w=${OGP_IMAGE_WIDTH}&fm=${OGP_IMAGE_FORMAT}`;
 }
 
@@ -34,7 +41,7 @@ export default async (req: Request, context: Context) => {
   const imageUrl = new URL('/.netlify/functions/calculator-share-image', SITE_ORIGIN);
   imageUrl.searchParams.set('type', 'name');
   names.forEach((name, index) => imageUrl.searchParams.set(`name${index + 1}`, name));
-  const shareImageUrl = toShareImageUrl(imageUrl.toString());
+  const shareImageUrl = toShareImageUrl(imageUrl.toString()) || imageUrl.toString();
 
   html = replaceTitle(html, title);
   html = replaceMetaContent(html, 'meta[name="description"]', description);

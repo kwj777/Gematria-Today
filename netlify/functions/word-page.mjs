@@ -320,6 +320,17 @@ ${callToAction()}`;
   });
 }
 
+// Only a real page earns the long shared-cache lifetime. A 429 is one
+// visitor's rate limit and a 5xx is a passing outage: cached publicly, either
+// kept the word broken for a day after recovery and could hand one person's
+// rate-limit page to everyone behind the same proxy. A 404 is real but may be
+// fixed by the next search that adds the word, so it is kept briefly.
+export function cacheControlForStatus(status) {
+  if (status === 200) return 'public, max-age=600, stale-while-revalidate=86400';
+  if (status === 404) return 'public, max-age=60';
+  return 'no-store';
+}
+
 // Netlify v2 functions (export default) must return a Response; returning a
 // {statusCode, headers, body} object crashes with NetlifyUserError. Every
 // other export-default function in this directory already does this.
@@ -330,7 +341,7 @@ function htmlResponse(status, body) {
     // these pages carry the site security headers themselves.
     headers: documentSecurityHeaders({
       'content-type': 'text/html; charset=UTF-8',
-      'cache-control': 'public, max-age=600, stale-while-revalidate=86400',
+      'cache-control': cacheControlForStatus(status),
     }),
   });
 }

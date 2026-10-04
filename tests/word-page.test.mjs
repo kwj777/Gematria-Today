@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
-import { parseRoute, renderWordPage, renderValuePage, isBaseRootValue, isIndexableWord, letterBreakdown, escapeHtml } from '../netlify/functions/word-page.mjs';
+import onRequest, { cacheControlForStatus, parseRoute, renderWordPage, renderValuePage, isBaseRootValue, isIndexableWord, letterBreakdown, escapeHtml } from '../netlify/functions/word-page.mjs';
 import { buildSitemapIndex, buildUrlSet, pageLocs, escapeXml } from '../netlify/functions/sitemap-words-xml.mjs';
 
 test('parseRoute reads the original request path', () => {
@@ -417,6 +417,29 @@ test('the call to action prefills the calculator with the word', () => {
   const html = renderWordPage('light', 336, []);
   assert.match(html, /\/calculator\.html\?query=light/);
   assert.ok(!/calculator\.html\?word=/.test(html));
+});
+
+test('only a real page is cached publicly for long', () => {
+  // A 429 is one visitor's rate limit and a 5xx a passing outage; cached
+  // publicly for 10 minutes plus a day of stale, either kept the word broken
+  // long after recovery and could serve one person's 429 to a whole proxy.
+  assert.equal(cacheControlForStatus(200), 'public, max-age=600, stale-while-revalidate=86400');
+  assert.equal(cacheControlForStatus(404), 'public, max-age=60');
+  for (const status of [429, 500, 502, 503]) {
+    assert.equal(cacheControlForStatus(status), 'no-store', `status ${status}`);
+  }
+});
+
+test('a word page that fails to build is not cached', async () => {
+  const prior = process.env.DATABASE_URL;
+  delete process.env.DATABASE_URL;
+  try {
+    const response = await onRequest(new Request('https://gematria.today/w/light'));
+    assert.equal(response.status, 500);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  } finally {
+    if (prior !== undefined) process.env.DATABASE_URL = prior;
+  }
 });
 
 test('the generated footer tagline matches the built tools pages', async () => {

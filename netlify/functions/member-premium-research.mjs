@@ -107,7 +107,31 @@ async function runGematriaLookup(sql, event) {
   };
 }
 
-async function runStats(sql) {
+// The words table does not guarantee a timestamp column, so the column is
+// probed at runtime. It cannot be interpolated into the query: @neondatabase/
+// serverless 0.9.x has no sql.unsafe, and a tagged-template value is sent as a
+// bind parameter, never as an identifier. Each column gets its own fixed query.
+function selectRecentWords(sql, timestampColumn) {
+  if (timestampColumn === 'created_at') {
+    return sql`
+      SELECT word, gematria_value, digital_root, is_base_root, search_count, created_at AS timestamp
+      FROM words
+      ORDER BY created_at DESC NULLS LAST
+      LIMIT 12
+    `;
+  }
+  if (timestampColumn === 'updated_at') {
+    return sql`
+      SELECT word, gematria_value, digital_root, is_base_root, search_count, updated_at AS timestamp
+      FROM words
+      ORDER BY updated_at DESC NULLS LAST
+      LIMIT 12
+    `;
+  }
+  return Promise.resolve([]);
+}
+
+export async function runStats(sql) {
   const columns = await sql`
     SELECT column_name
     FROM information_schema.columns
@@ -129,14 +153,7 @@ async function runStats(sql) {
         SUM(search_count)::bigint AS total_search_count
       FROM words
     `,
-    recentTimestampColumn
-      ? sql.unsafe(`
-          SELECT word, gematria_value, digital_root, is_base_root, search_count, ${recentTimestampColumn} AS timestamp
-          FROM words
-          ORDER BY ${recentTimestampColumn} DESC
-          LIMIT 12
-        `)
-      : Promise.resolve([]),
+    selectRecentWords(sql, recentTimestampColumn),
     sql`
       SELECT word, gematria_value, digital_root, is_base_root, search_count
       FROM words

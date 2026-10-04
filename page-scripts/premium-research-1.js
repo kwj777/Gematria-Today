@@ -270,20 +270,38 @@
         }
       });
 
+      function showStatsError(message) {
+        statsCards.innerHTML = `
+          <div class="col-12">
+            <p class="text-danger small mb-0" role="alert">Stats could not be loaded: ${escapeHtml(String(message).replace(/[.\s]+$/, ''))}. Use Refresh stats to try again. The lookups below still work.</p>
+          </div>`;
+      }
+
       window.addEventListener('DOMContentLoaded', async () => {
         showStartupOverlay();
         try {
-          await ensurePremiumSession();
-          await loadStats();
-        } catch (error) {
-          // This used to flash a warning and hard-redirect to /member.html after
-          // 1.8 seconds, with nothing at the destination saying why. Worse, any
-          // failed request landed here too, so a 500 on the session check
-          // evicted paying members from a page they had access to.
-          if (error?.premiumRequired) {
-            showPremiumLocked({ signedOut: Boolean(error.signedOut) });
-          } else {
-            showPremiumError(error?.message || 'Something went wrong reaching the membership service.');
+          try {
+            await ensurePremiumSession();
+          } catch (error) {
+            // This used to flash a warning and hard-redirect to /member.html after
+            // 1.8 seconds, with nothing at the destination saying why. Worse, any
+            // failed request landed here too, so a 500 on the session check
+            // evicted paying members from a page they had access to.
+            if (error?.premiumRequired) {
+              showPremiumLocked({ signedOut: Boolean(error.signedOut) });
+            } else {
+              showPremiumError(error?.message || 'Something went wrong reaching the membership service.');
+            }
+            return;
+          }
+
+          // Only the session check gates the page. The Wordnik and gematria
+          // lookups do not depend on the stats panel, so a failed stats call
+          // (a 429, a timeout) is reported in that panel and the tools stay up.
+          try {
+            await loadStats();
+          } catch (error) {
+            showStatsError(error?.message || 'Request failed');
           }
         } finally {
           hideStartupOverlay();

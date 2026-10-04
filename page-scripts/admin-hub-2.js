@@ -248,7 +248,18 @@
         openSiteAdaptationGuideButton.disabled = true;
 
         return fetch('/api/admin-hub?action=guide-index', { credentials: 'same-origin' })
-          .then(function (res) { return res.json(); })
+          .then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+              // A 403 (plain admins cannot read the guides) carries an error
+              // body with no guides. Report it rather than "no guides found".
+              if (!res.ok) {
+                var error = new Error((data && data.error) || 'Failed to load guides (' + res.status + ')');
+                error.fromServer = true;
+                throw error;
+              }
+              return data;
+            });
+          })
           .then(function (data) {
             var guides = Array.isArray(data && data.guides) ? data.guides : [];
             var options = guides.map(buildGuideOptionHtml).filter(Boolean);
@@ -264,10 +275,10 @@
             openSiteAdaptationGuideButton.disabled = false;
             setSiteAdaptationStatus('Loaded ' + guides.length + ' secure guide' + (guides.length === 1 ? '' : 's') + '.', false);
           })
-          .catch(function () {
+          .catch(function (err) {
             siteAdaptationSelect.innerHTML = '<option value="">Could not load guides</option>';
             siteAdaptationSelect.disabled = true;
-            setSiteAdaptationStatus('Failed to load secure site adaptation guides.', true);
+            setSiteAdaptationStatus(err && err.fromServer ? err.message : 'Failed to load secure site adaptation guides.', true);
           })
           .finally(function () {
             refreshSiteAdaptationGuidesButton.disabled = false;
@@ -276,44 +287,24 @@
 
       refreshSiteAdaptationGuidesButton.addEventListener('click', loadSiteAdaptationGuides);
 
+      // Guides are opened at their own URL, where super-admin-static-page checks
+      // the session and serves them. They load /theme.css, marked and
+      // /site-adaptation-guide-renderer.js by root-relative URL, which a blob:
+      // URL cannot resolve, so loading the HTML into a blob left a blank page.
+      var GUIDE_FILE_PATTERN = /^[a-z0-9-]+-site-adaptation-guide\.html$/;
+
       openSiteAdaptationGuideButton.addEventListener('click', function () {
         var selectedFile = String(siteAdaptationSelect.value || '').trim();
-        if (!selectedFile) return;
+        if (!GUIDE_FILE_PATTERN.test(selectedFile)) return;
 
-        setSiteAdaptationStatus('Loading guide\u2026', false);
-        openSiteAdaptationGuideButton.disabled = true;
-        var win = window.open('', '_blank');
+        var win = window.open('/' + selectedFile, '_blank');
         if (!win) {
           setSiteAdaptationStatus('Popup blocked \u2014 allow popups for this site and try again.', true);
-          openSiteAdaptationGuideButton.disabled = false;
           return;
         }
 
-        try {
-          win.opener = null;
-          win.document.write('<!doctype html><title>Loading guide\u2026</title><p style="font-family:system-ui,sans-serif;padding:1rem">Loading guide\u2026</p>');
-          win.document.close();
-        } catch (_) {}
-
-        fetch('/api/admin-hub?action=guide-content&file=' + encodeURIComponent(selectedFile), { credentials: 'same-origin' })
-          .then(function (res) {
-            if (!res.ok) throw new Error('Failed to load guide (' + res.status + ')');
-            return res.text();
-          })
-          .then(function (html) {
-            var blob = new Blob([html], { type: 'text/html' });
-            var url = URL.createObjectURL(blob);
-            setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
-            win.location.replace(url);
-            setSiteAdaptationStatus('', false);
-          })
-          .catch(function (err) {
-            try { win.close(); } catch (_) {}
-            setSiteAdaptationStatus((err && err.message) || 'Failed to load guide.', true);
-          })
-          .finally(function () {
-            openSiteAdaptationGuideButton.disabled = false;
-          });
+        try { win.opener = null; } catch (_) {}
+        setSiteAdaptationStatus('', false);
       });
 
       // -----------------------------------------------------------------------

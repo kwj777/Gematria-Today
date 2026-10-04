@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import {
   findSiteByOrigin,
@@ -10,6 +11,7 @@ import {
   guideDisplayName,
   normalizeGuideName,
   normalizeSiteUrl,
+  removeSiteById,
   validateSites,
 } from '../netlify/functions/admin-hub.mjs';
 
@@ -268,4 +270,67 @@ test('validateSites returns a normalized site row with optional netlifySiteId pr
     sharedSecret: 'secret',
     netlifySiteId: 'netlify-xyz',
   });
+});
+
+// ---------- removeSiteById ----------
+
+test('removeSiteById drops only the named site and keeps the others with their secrets', () => {
+  const sites = [
+    { id: 'site-a', name: 'A', url: 'https://a.example.com', sharedSecret: 'secret-a', netlifySiteId: 'na' },
+    { id: 'site-b', name: 'B', url: 'https://b.example.com', sharedSecret: 'secret-b', netlifySiteId: 'nb' },
+  ];
+  assert.deepEqual(removeSiteById(sites, ' site-b '), [sites[0]]);
+  assert.equal(sites.length, 2, 'the input list is not mutated');
+});
+
+test('removeSiteById rejects a missing or unknown siteId', () => {
+  const sites = [{ id: 'site-a', sharedSecret: 'secret-a' }];
+  assert.throws(() => removeSiteById(sites, ''), (err) => err.statusCode === 400 && /siteId is required/.test(err.message));
+  assert.throws(() => removeSiteById(sites, 'site-z'), (err) => err.statusCode === 404 && /Site not found/.test(err.message));
+});
+
+test('the Super Admin page removes its site with remove-site instead of resubmitting the list', () => {
+  // The browser never receives the other sites' shared secrets, so posting the
+  // remaining list through save-sites failed validation whenever another site
+  // was registered.
+  const source = readFileSync(new URL('../page-scripts/admin-super-admin-1.js', import.meta.url), 'utf8');
+  const removeHandler = source.slice(source.indexOf("removeFromHubButton?.addEventListener('click'"));
+  assert.match(removeHandler, /action: 'remove-site', siteId: currentSiteId/);
+  assert.doesNotMatch(removeHandler, /action: 'save-sites'/);
+  const hubSource = readFileSync(new URL('../netlify/functions/admin-hub.mjs', import.meta.url), 'utf8');
+  assert.match(hubSource, /action === 'remove-site'[\s\S]*?removeSiteById\(await getHubSites\(sql\), body\.siteId\)/);
+});
+
+// ---------- handler error handling ----------
+
+test('every admin handler awaits routeByHttpMethod so its catch sees async errors', () => {
+  const dir = new URL('../netlify/functions/', import.meta.url);
+  const offenders = [];
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith('.mjs') || name === '_admin.mjs') continue;
+    const source = readFileSync(new URL(name, dir), 'utf8');
+    for (const match of source.matchAll(/^.*\brouteByHttpMethod\(event\b.*$/gm)) {
+      if (!/return await routeByHttpMethod\(/.test(match[0])) offenders.push(`${name}: ${match[0].trim()}`);
+    }
+  }
+  assert.deepEqual(offenders, []);
+});
+
+// ---------- admin hub page: site adaptation guides ----------
+
+test('the admin hub opens a guide at its own URL rather than from a blob: URL', () => {
+  // The guides load /theme.css, marked and the renderer by root-relative URL,
+  // which cannot resolve against a blob: URL, so the tab stayed blank.
+  const source = readFileSync(new URL('../page-scripts/admin-hub-2.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /createObjectURL|new Blob\(/);
+  assert.doesNotMatch(source, /action=guide-content/);
+  assert.match(source, /window\.open\('\/' \+ selectedFile, '_blank'\)/);
+  assert.match(source, /GUIDE_FILE_PATTERN\.test\(selectedFile\)/);
+});
+
+test('the admin hub reports a failed guide-index request instead of "no guides found"', () => {
+  const source = readFileSync(new URL('../page-scripts/admin-hub-2.js', import.meta.url), 'utf8');
+  const loader = source.slice(source.indexOf('function loadSiteAdaptationGuides'), source.indexOf('refreshSiteAdaptationGuidesButton.addEventListener'));
+  assert.match(loader, /if \(!res\.ok\)/);
+  assert.match(loader, /err\.fromServer \? err\.message/);
 });

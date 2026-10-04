@@ -94,11 +94,16 @@
         totalWords: [['Word', 'word'], ['Gematria', 'gematriaValue'], ['Digital root', 'digitalRoot'], ['Searches', 'searchCount'], ['Updated', 'updatedAt']],
       };
 
+      // Date fields are named createdAt, membershipExpiresAt, dueDate, ...
+      // Match the camelCase suffix: a substring test for "at" also caught
+      // gematriaValue, and new Date(312) rendered the value as a 1969 timestamp.
+      const DATE_FIELD_PATTERN = /(?:At|Date)$/;
+
       function formatCellValue(key, value) {
         if (value === null || value === undefined || value === '') {
           return '—';
         }
-        if (String(key).toLowerCase().includes('date') || String(key).toLowerCase().includes('at') || key === 'created' || key === 'published') {
+        if (DATE_FIELD_PATTERN.test(String(key)) || key === 'created' || key === 'published') {
           const parsed = new Date(value);
           if (!Number.isNaN(parsed.getTime())) {
             return parsed.toLocaleString();
@@ -433,7 +438,13 @@
         renderSecurityEvents(reports.securityEvents);
 
         const generated = new Date(reports.generatedAt).toLocaleString();
-        document.getElementById('metaLine').textContent = `Signed in as ${reports.user.username}. Window: ${reports.windowLabel || state.windowLabel}. Last refresh: ${generated}.`;
+        // Traffic and security rows are pruned after the audit-log retention
+        // period, so a longer window cannot cover them; say which figures are cut.
+        const auditWindow = reports.auditWindow || {};
+        const auditNotice = auditWindow.clamped
+          ? ` Traffic, conversion and security figures cover the ${String(auditWindow.label || '').toLowerCase()} only: request logs are kept for ${formatNumber(auditWindow.retentionDays)} days.`
+          : '';
+        document.getElementById('metaLine').textContent = `Signed in as ${reports.user.username}. Window: ${reports.windowLabel || state.windowLabel}.${auditNotice} Last refresh: ${generated}.`;
       }
 
       function parseWindowSelection(rawValue) {

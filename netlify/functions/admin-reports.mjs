@@ -1,5 +1,6 @@
 import { getAuthenticatedUser, jsonResponse, requireHttpMethod } from './_admin.mjs';
 import { ensureMemberSchema } from './_member.mjs';
+import { getRetentionConfig } from './_security.mjs';
 
 const ALLOWED_WINDOWS = new Set([1, 7, 30, 60, 90, 365]);
 const ALLOWED_HOUR_WINDOWS = new Set([1]);
@@ -69,6 +70,51 @@ function toIsoDate(value) {
   }
 }
 
+// The words table does not guarantee a timestamp column, so the column is
+// probed at runtime. It cannot be interpolated into the query: @neondatabase/
+// serverless 0.9.x has no sql.unsafe, and a tagged-template value is sent as a
+// bind parameter, never as an identifier. Each column gets its own fixed query.
+export function selectRecentWordRows(sql, wordColumnNames) {
+  if (wordColumnNames.has('updated_at')) {
+    return sql`
+      SELECT word, gematria_value, digital_root, search_count, updated_at
+      FROM words
+      ORDER BY updated_at DESC NULLS LAST
+      LIMIT 50
+    `;
+  }
+  if (wordColumnNames.has('created_at')) {
+    return sql`
+      SELECT word, gematria_value, digital_root, search_count, created_at AS updated_at
+      FROM words
+      ORDER BY created_at DESC NULLS LAST
+      LIMIT 50
+    `;
+  }
+  return sql`
+    SELECT word, gematria_value, digital_root, search_count, NULL::timestamptz AS updated_at
+    FROM words
+    ORDER BY search_count DESC, LOWER(word) ASC
+    LIMIT 50
+  `;
+}
+
+// request_audit_log is pruned to the retention period (security-retention runs
+// hourly), so a longer report window holds no traffic or security rows beyond
+// it. Audit-based figures use the clamped window, and the conversion funnel
+// uses it for its signup counts too, so both sides of each rate cover the same
+// days.
+export function resolveAuditWindow({ days, hours }, auditLogRetentionDays) {
+  if (hours) {
+    return { days: null, hours, interval: `${hours} hours`, clamped: false };
+  }
+  const retentionDays = Number.parseInt(String(auditLogRetentionDays ?? ''), 10);
+  if (!Number.isFinite(retentionDays) || retentionDays <= 0 || days <= retentionDays) {
+    return { days, hours: null, interval: `${days} days`, clamped: false };
+  }
+  return { days: retentionDays, hours: null, interval: `${retentionDays} days`, clamped: true };
+}
+
 function formatWindowLabel({ days, hours }) {
   if (hours === 1) return 'Last 1 hour';
   if (days === 1) return 'Daily (last 24 hours)';
@@ -89,6 +135,9 @@ export async function handler(event) {
     const hours = normalizeHours(url.searchParams.get('hours'));
     const days = hours ? null : normalizeDays(url.searchParams.get('days'));
     const windowInterval = hours ? `${hours} hours` : `${days} days`;
+    const { auditLogRetentionDays } = getRetentionConfig();
+    const auditWindow = resolveAuditWindow({ days, hours }, auditLogRetentionDays);
+    const auditWindowInterval = auditWindow.interval;
     const { sql, user } = await getAuthenticatedUser(event);
     await ensureMemberSchema(sql);
     const wordsColumnRows = await sql`
@@ -98,12 +147,6 @@ export async function handler(event) {
         AND table_name = 'words'
     `;
     const wordColumnNames = new Set(wordsColumnRows.map((row) => String(row.column_name)));
-    const wordsRecentOrderColumn = wordColumnNames.has('updated_at')
-      ? 'updated_at'
-      : (wordColumnNames.has('created_at') ? 'created_at' : null);
-    const wordsRecentSelectColumn = wordColumnNames.has('updated_at')
-      ? 'updated_at'
-      : (wordColumnNames.has('created_at') ? 'created_at' : null);
 
     const [overviewRows] = await Promise.all([
       sql`
@@ -117,7 +160,7 @@ export async function handler(event) {
           (SELECT COUNT(*)::int FROM tasks WHERE status = 'open' AND due_date IS NOT NULL AND due_date < CURRENT_DATE) AS overdue_tasks,
           (SELECT COUNT(*)::int
             FROM request_audit_log
-            WHERE created_at >= NOW() - ${windowInterval}::interval
+            WHERE created_at >= NOW() - ${auditWindowInterval}::interval
               AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ) AS failed_actions
       `,
@@ -135,7 +178,7 @@ export async function handler(event) {
           WHERE route = 'member-register'
             AND action = 'register'
             AND outcome = 'success'
-            AND created_at >= NOW() - ${windowInterval}::interval
+            AND created_at >= NOW() - ${auditWindowInterval}::interval
           GROUP BY COALESCE(metadata->>'verificationDelivery', 'unknown')
           ORDER BY total DESC`,
       sql`SELECT COALESCE(membership_level, 'free') AS level, COUNT(*)::int AS total
@@ -165,7 +208,7 @@ export async function handler(event) {
           FROM faqs`,
       sql`SELECT route, action, outcome, created_at
           FROM request_audit_log
-          WHERE created_at >= NOW() - ${windowInterval}::interval
+          WHERE created_at >= NOW() - ${auditWindowInterval}::interval
             AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ORDER BY created_at DESC
           LIMIT 12`,
@@ -206,19 +249,7 @@ export async function handler(event) {
             AND COALESCE(published_at, created_at) >= NOW() - ${windowInterval}::interval
           ORDER BY COALESCE(published_at, created_at) DESC
           LIMIT 50`,
-      wordsRecentOrderColumn
-        ? sql.unsafe(`
-            SELECT word, gematria_value, digital_root, search_count, ${wordsRecentSelectColumn} AS updated_at
-            FROM words
-            ORDER BY ${wordsRecentOrderColumn} DESC
-            LIMIT 50
-          `)
-        : sql`
-            SELECT word, gematria_value, digital_root, search_count, NULL::timestamptz AS updated_at
-            FROM words
-            ORDER BY search_count DESC, LOWER(word) ASC
-            LIMIT 50
-          `,
+      selectRecentWordRows(sql, wordColumnNames),
       sql`SELECT id, title, status, due_date, created_at, updated_at
           FROM tasks
           WHERE status = 'open'
@@ -233,7 +264,7 @@ export async function handler(event) {
           LIMIT 50`,
       sql`SELECT route, action, outcome, created_at
           FROM request_audit_log
-          WHERE created_at >= NOW() - ${windowInterval}::interval
+          WHERE created_at >= NOW() - ${auditWindowInterval}::interval
             AND outcome = ANY(${SECURITY_PROBLEM_OUTCOMES})
           ORDER BY created_at DESC
           LIMIT 50`,
@@ -250,12 +281,17 @@ export async function handler(event) {
           AND created_at >= NOW() - (${TRAFFIC_SPIKE_BASELINE_MINUTES} || ' minutes')::interval
         GROUP BY route
       `,
+      // A visitor is an IP address plus user agent. request_fingerprint also
+      // hashes the request path and route (it is built for rate limiting), so
+      // counting it made one person browsing five pages five "unique visitors"
+      // and understated every conversion rate. The traffic queries below use
+      // the same visitor key.
       sql`
         WITH conversion_window AS (
-          SELECT NOW() - ${windowInterval}::interval AS starts_at
+          SELECT NOW() - ${auditWindowInterval}::interval AS starts_at
         ),
         unique_visitors AS (
-          SELECT COUNT(DISTINCT request_fingerprint)::int AS total
+          SELECT COUNT(DISTINCT COALESCE(ip_address, '') || '|' || COALESCE(metadata->>'userAgent', ''))::int AS total
           FROM request_audit_log, conversion_window
           WHERE created_at >= conversion_window.starts_at
             AND route NOT LIKE 'admin-%'
@@ -303,12 +339,12 @@ export async function handler(event) {
                 ELSE route
               END
             ) AS page_path,
-            request_fingerprint,
+            COALESCE(ip_address, '') || '|' || COALESCE(metadata->>'userAgent', '') AS visitor_key,
             COALESCE(NULLIF(TRIM(metadata->>'country'), ''), 'Unknown') AS country,
             COALESCE(NULLIF(TRIM(metadata->>'region'), ''), 'Unknown') AS region,
             COALESCE(NULLIF(TRIM(metadata->>'city'), ''), 'Unknown') AS city
           FROM request_audit_log
-          WHERE created_at >= NOW() - ${windowInterval}::interval
+          WHERE created_at >= NOW() - ${auditWindowInterval}::interval
             AND route NOT LIKE 'admin-%'
             AND route <> 'security-retention'
             AND (
@@ -325,7 +361,7 @@ export async function handler(event) {
             page_path,
             MIN(route) AS sample_route,
             COUNT(*)::int AS total_requests,
-            COUNT(DISTINCT request_fingerprint)::int AS unique_page_views
+            COUNT(DISTINCT visitor_key)::int AS unique_page_views
           FROM filtered_requests
           GROUP BY page_path
         ),
@@ -334,7 +370,7 @@ export async function handler(event) {
             page_path,
             country,
             COUNT(*)::int AS total_requests,
-            COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
+            COUNT(DISTINCT visitor_key)::int AS unique_visitors
           FROM filtered_requests
           GROUP BY page_path, country
         ),
@@ -349,7 +385,7 @@ export async function handler(event) {
               ELSE 'Unknown'
             END AS location,
             COUNT(*)::int AS total_requests,
-            COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
+            COUNT(DISTINCT visitor_key)::int AS unique_visitors
           FROM filtered_requests
           GROUP BY page_path, country, location
         ),
@@ -422,9 +458,9 @@ export async function handler(event) {
       sql`
         SELECT
           COUNT(*)::int AS total_requests,
-          COUNT(DISTINCT request_fingerprint)::int AS unique_visitors
+          COUNT(DISTINCT COALESCE(ip_address, '') || '|' || COALESCE(metadata->>'userAgent', ''))::int AS unique_visitors
         FROM request_audit_log
-        WHERE created_at >= NOW() - ${windowInterval}::interval
+        WHERE created_at >= NOW() - ${auditWindowInterval}::interval
           AND route NOT LIKE 'admin-%'
           AND route <> 'security-retention'
           AND (
@@ -441,7 +477,7 @@ export async function handler(event) {
           SELECT
             route,
             action,
-            request_fingerprint,
+            COALESCE(ip_address, '') || '|' || COALESCE(metadata->>'userAgent', '') AS visitor_key,
             created_at,
             COALESCE(
               NULLIF(BTRIM(metadata->>'href'), ''),
@@ -452,7 +488,7 @@ export async function handler(event) {
               NULLIF(BTRIM(metadata->>'source'), '')
             ) AS detail
           FROM request_audit_log
-          WHERE created_at >= NOW() - ${windowInterval}::interval
+          WHERE created_at >= NOW() - ${auditWindowInterval}::interval
             AND route NOT LIKE 'admin-%'
             AND route <> 'security-retention'
             AND outcome = 'success'
@@ -477,7 +513,7 @@ export async function handler(event) {
             route,
             action,
             COUNT(*)::int AS clicks,
-            COUNT(DISTINCT request_fingerprint)::int AS unique_visitors,
+            COUNT(DISTINCT visitor_key)::int AS unique_visitors,
             MAX(created_at) AS last_clicked_at
           FROM click_rows
           GROUP BY route, action
@@ -538,7 +574,7 @@ export async function handler(event) {
             ORDER BY created_at ASC
           ) AS events
         FROM request_audit_log
-        WHERE created_at >= NOW() - ${windowInterval}::interval
+        WHERE created_at >= NOW() - ${auditWindowInterval}::interval
           AND metadata->>'visitorSessionId' IS NOT NULL
           AND BTRIM(metadata->>'visitorSessionId') <> ''
           AND route NOT LIKE 'admin-%'
@@ -555,7 +591,7 @@ export async function handler(event) {
                  created_at
           FROM request_audit_log
           WHERE route IN ('member-register', 'member-resend-verification', 'member-oauth-callback')
-            AND created_at >= NOW() - ${windowInterval}::interval
+            AND created_at >= NOW() - ${auditWindowInterval}::interval
             AND BTRIM(COALESCE(metadata->>'verificationDeliveryError', '')) <> ''
           ORDER BY created_at DESC
           LIMIT 1`,
@@ -595,6 +631,13 @@ export async function handler(event) {
       generatedAt: new Date().toISOString(),
       days: days || null,
       hours: hours || null,
+      auditWindow: {
+        days: auditWindow.days,
+        hours: auditWindow.hours,
+        label: formatWindowLabel(auditWindow),
+        clamped: auditWindow.clamped,
+        retentionDays: auditLogRetentionDays,
+      },
       user,
       verificationEmail: {
         attempted: verificationAttempted,
@@ -655,7 +698,7 @@ export async function handler(event) {
         items: trafficAlerts,
       },
       conversionFunnel: {
-        windowLabel: formatWindowLabel({ days, hours }),
+        windowLabel: formatWindowLabel(auditWindow),
         uniqueVisitors,
         freeMemberships,
         premiumConversions,

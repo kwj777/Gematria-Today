@@ -287,13 +287,27 @@ test('extractPostSlug returns "" when there is no slug', () => {
 
 // Stand-in for Neon's HTTP endpoint so the real handler runs end to end. Every
 // statement gets an empty result except the post lookup, which returns `post`
-// when the looked-up slug matches it.
-async function withFakeDatabase(post, run) {
+// when the looked-up slug matches it, and the scheduled-post promotion, which
+// publishes `post` the way Postgres would when it is a draft that is due.
+// `statements` records the order of those two.
+async function withFakeDatabase(initialPost, run) {
   const priorFetch = globalThis.fetch;
   const priorUrl = process.env.DATABASE_URL;
+  const post = initialPost ? { ...initialPost } : null;
   const lookups = [];
+  const statements = [];
   const answer = (query) => {
+    if (/UPDATE posts[\s\S]*scheduled_publish_at <= NOW\(\)/.test(query.query)) {
+      statements.push('promote');
+      const due = post?.status === 'draft' && post.scheduled_publish_at && Date.parse(post.scheduled_publish_at) <= Date.now();
+      if (!due) return { fields: [], rows: [] };
+      post.status = 'published';
+      post.published_at = post.published_at || post.scheduled_publish_at;
+      post.scheduled_publish_at = null;
+      return { fields: [{ name: 'id', dataTypeID: 25 }], rows: [[post.slug]] };
+    }
     if (!/WHERE LOWER\(COALESCE\(slug/.test(query.query)) return { fields: [], rows: [] };
+    statements.push('lookup');
     lookups.push(query.params);
     if (!post || query.params[0] !== post.slug) return { fields: [], rows: [] };
     const names = Object.keys(post);
@@ -309,7 +323,7 @@ async function withFakeDatabase(post, run) {
     return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
   };
   try {
-    return { response: await run(), lookups };
+    return { response: await run(), lookups, statements };
   } finally {
     globalThis.fetch = priorFetch;
     if (priorUrl === undefined) {
@@ -362,4 +376,37 @@ test('handler redirects to the blog index without a database lookup when no slug
   assert.deepEqual(lookups, []);
   assert.equal(response.statusCode, 302);
   assert.equal(response.headers.location, '/blog.html');
+});
+
+// A scheduled post shows on the blog as soon as its time passes, and the blog
+// rewrites the address bar to /blog/<slug>; that permalink used to redirect it
+// to the index as a draft until an admin happened to open admin-posts.
+test('handler promotes a due scheduled post before the lookup and serves its share page', async () => {
+  const { response, statements } = await withFakeDatabase({
+    ...PUBLISHED_POST,
+    status: 'draft',
+    published_at: null,
+    scheduled_publish_at: '2025-02-01T09:00:00Z',
+  }, () => handler(v1Event('/blog/digital-roots-in-gematria')));
+  assert.deepEqual(statements, ['promote', 'lookup']);
+  assert.equal(response.statusCode, 200);
+  assert.ok(response.body.includes('property="article:published_time" content="2025-02-01T09:00:00.000Z"'));
+});
+
+test('handler still redirects a draft scheduled for the future', async () => {
+  const { response } = await withFakeDatabase({
+    ...PUBLISHED_POST,
+    status: 'draft',
+    published_at: null,
+    scheduled_publish_at: '2999-01-01T09:00:00Z',
+  }, () => handler(v1Event('/blog/digital-roots-in-gematria')));
+  assert.equal(response.statusCode, 302);
+  assert.equal(response.headers.location, '/blog.html');
+});
+
+test('handler serves a post with a blank status, which the blog lists as published', async () => {
+  const { response } = await withFakeDatabase({ ...PUBLISHED_POST, status: '  ' }, () =>
+    handler(v1Event('/blog/digital-roots-in-gematria')),
+  );
+  assert.equal(response.statusCode, 200);
 });

@@ -6,6 +6,7 @@ import {
   escapeXml,
   extractDescription,
   formatRfc822Date,
+  handler,
   stripHtml,
   toAbsoluteUrl,
 } from '../netlify/functions/blog-rss.mjs';
@@ -161,4 +162,74 @@ test('buildItem falls back to createdAt when publishedAt is absent', () => {
     createdAt: '2025-01-15T12:34:56Z',
   });
   assert.ok(item.includes(`<pubDate>${new Date('2025-01-15T12:34:56Z').toUTCString()}</pubDate>`));
+});
+
+// ---------- handler ----------
+
+// Stand-in for Neon's HTTP endpoint so the real handler runs end to end. It
+// keeps the posts table, applies the scheduled-post promotion the way Postgres
+// would, and answers the feed query with the published, unhidden posts.
+async function withFakeDatabase(posts, run) {
+  const priorFetch = globalThis.fetch;
+  const priorUrl = process.env.DATABASE_URL;
+  const table = posts.map((post) => ({ ...post }));
+  const statements = [];
+  const result = (rows) => {
+    if (!rows.length) return { fields: [], rows: [] };
+    const names = Object.keys(rows[0]);
+    return {
+      fields: names.map((name) => ({ name, dataTypeID: 25 })),
+      rows: rows.map((row) => names.map((name) => row[name])),
+    };
+  };
+  const answer = ({ query }) => {
+    if (/UPDATE posts[\s\S]*scheduled_publish_at <= NOW\(\)/.test(query)) {
+      statements.push('promote');
+      const due = table.filter((post) => post.status === 'draft'
+        && post.scheduled_publish_at
+        && Date.parse(post.scheduled_publish_at) <= Date.now());
+      due.forEach((post) => {
+        post.status = 'published';
+        post.published_at = post.published_at || post.scheduled_publish_at;
+        post.scheduled_publish_at = null;
+      });
+      return result(due.map(({ id }) => ({ id })));
+    }
+    if (/SELECT \* FROM posts/.test(query)) {
+      statements.push('select-posts');
+      return result(table.filter((post) => (String(post.status || '').trim() || 'published') === 'published' && !post.hide_from_blog));
+    }
+    return { fields: [], rows: [] };
+  };
+  process.env.DATABASE_URL = 'postgres://user:pass@db.example.test/neondb';
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body);
+    const payload = Array.isArray(body.queries) ? { results: body.queries.map(answer) } : answer(body);
+    return new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  try {
+    return { response: await run(), statements };
+  } finally {
+    globalThis.fetch = priorFetch;
+    if (priorUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = priorUrl;
+    }
+  }
+}
+
+// The feed matches only published posts, and scheduled posts used to stay
+// drafts until an admin opened admin-posts, so subscribers never saw them.
+test('handler promotes due scheduled posts before building the feed', async () => {
+  const { response, statements } = await withFakeDatabase([
+    { id: 'p1', slug: 'published-post', title: 'Published post', summary: 's', status: 'published', published_at: '2025-01-10T12:00:00Z' },
+    { id: 'p2', slug: 'scheduled-post', title: 'Scheduled post', summary: 's', status: 'draft', scheduled_publish_at: '2025-02-01T09:00:00Z' },
+    { id: 'p3', slug: 'future-post', title: 'Future post', summary: 's', status: 'draft', scheduled_publish_at: '2999-01-01T09:00:00Z' },
+  ], () => handler({ httpMethod: 'GET', headers: {} }));
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(statements, ['promote', 'select-posts']);
+  assert.ok(response.body.includes('<link>https://gematria.today/blog/scheduled-post</link>'));
+  assert.ok(response.body.includes(`<pubDate>${new Date('2025-02-01T09:00:00Z').toUTCString()}</pubDate>`));
+  assert.ok(!response.body.includes('future-post'));
 });

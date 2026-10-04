@@ -50,6 +50,13 @@ async function searchByGematria(sql, gematriaValue) {
   return cacheResult;
 }
 
+// newlyEarnedBadges belongs to the member who asked. Under a public header a
+// shared cache keyed on the URL would replay their badge toast to every later
+// visitor of the same search, so only the badge-free answer is cached publicly.
+export function searchCacheControl(payload) {
+  return payload?.newlyEarnedBadges ? 'private, no-store' : 'public, max-age=300, stale-while-revalidate=120';
+}
+
 export default async function onRequest(request) {
   try {
     assertEndpointEnabled({ publicRoute: true, expensive: false, route: 'searchByGematria' });
@@ -83,7 +90,7 @@ export default async function onRequest(request) {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+        'cache-control': searchCacheControl(responsePayload),
         'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
       },
     });
@@ -126,7 +133,7 @@ export async function handler(event) {
       ? { ...cacheResult.payload, newlyEarnedBadges: badgeAward.newBadges }
       : cacheResult.payload;
     return jsonResponse(200, responsePayload, {
-      'cache-control': 'public, max-age=300, stale-while-revalidate=120',
+      'cache-control': searchCacheControl(responsePayload),
       'x-cache-status': cacheResult.cached ? 'hit' : 'miss',
     });
   } catch (error) {

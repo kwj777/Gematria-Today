@@ -59,6 +59,38 @@ function getPostHeroImage(post?: Post | null): string {
   );
 }
 
+type PostLookup =
+  | { status: 'found'; post: Post }
+  | { status: 'missing'; post?: undefined }
+  | { status: 'unavailable'; post?: undefined };
+
+// Asks /api/public-posts for this one post (?slug= is its single-row detail
+// mode) rather than the whole list. 'missing' means the API answered and has
+// no such published post; any failure to get an answer is 'unavailable', which
+// must not be mistaken for a missing post.
+async function lookupPost(origin: string, postSlug: string): Promise<PostLookup> {
+  try {
+    const apiUrl = new URL('/api/public-posts', origin);
+    apiUrl.searchParams.set('slug', postSlug);
+    const apiResponse = await fetch(apiUrl.toString(), {
+      headers: { Accept: 'application/json' },
+    });
+    if (!apiResponse.ok) {
+      return { status: 'unavailable' };
+    }
+    const data = await apiResponse.json();
+    const posts: Post[] | undefined = Array.isArray(data?.items) ? data.items : undefined;
+    if (!posts) {
+      return { status: 'unavailable' };
+    }
+    const wantedSlug = postSlug.trim().toLowerCase();
+    const post = posts.find((p) => String(p?.slug || '').trim().toLowerCase() === wantedSlug);
+    return post ? { status: 'found', post } : { status: 'missing' };
+  } catch {
+    return { status: 'unavailable' };
+  }
+}
+
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -88,22 +120,14 @@ export default async (req: Request, context: Context) => {
   const defaultOgImage = `${siteOrigin}${DEFAULT_OG_IMAGE_PATH}`;
 
   const response = await context.next();
-  let html = await response.text();
-
-  let post: Post | undefined;
-  try {
-    const apiUrl = new URL('/api/public-posts', url.origin);
-    const apiResponse = await fetch(apiUrl.toString(), {
-      headers: { Accept: 'application/json' },
-    });
-    if (apiResponse.ok) {
-      const data = await apiResponse.json();
-      const posts: Post[] = data.items || data || [];
-      post = posts.find((p) => p.slug === postSlug);
-    }
-  } catch {
-    // API unavailable — fall through with default meta tags
+  const lookup = await lookupPost(url.origin, postSlug);
+  if (lookup.status === 'unavailable') {
+    // A 429, a 5xx or a network error says nothing about the post, so the
+    // page goes out exactly as built: default meta tags, still indexable.
+    return response;
   }
+  let html = await response.text();
+  const post = lookup.post;
 
   if (!post) {
     const noindexedHtml = replaceMetaContent(

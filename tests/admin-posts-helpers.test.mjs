@@ -5,6 +5,7 @@ import {
   normalizePostStatus,
   normalizePostTags,
   normalizeScheduledPublishAt,
+  postErrorResponse,
 } from '../netlify/functions/admin-posts.mjs';
 
 // ---------- normalizePostTags ----------
@@ -100,4 +101,28 @@ test('normalizeScheduledPublishAt parses common alternate date formats', () => {
 test('normalizeScheduledPublishAt returns null for unparseable input rather than throwing', () => {
   assert.equal(normalizeScheduledPublishAt('not a date'), null);
   assert.equal(normalizeScheduledPublishAt('abc'), null);
+});
+
+// ---------- postErrorResponse ----------
+
+test('postErrorResponse answers a slug another post already uses with 409, not 500', () => {
+  // The shape @neondatabase/serverless gives a unique violation.
+  const error = Object.assign(new Error('duplicate key value violates unique constraint "posts_slug_key"'), {
+    code: '23505',
+    constraint: 'posts_slug_key',
+  });
+  const response = postErrorResponse(error);
+  assert.equal(response.statusCode, 409);
+  assert.deepEqual(JSON.parse(response.body), { error: 'A post with this slug already exists' });
+  // Matched on the message too, in case the driver leaves constraint unset.
+  assert.equal(postErrorResponse(new Error('duplicate key value violates unique constraint "posts_slug_key"')).statusCode, 409);
+});
+
+test('postErrorResponse keeps the status and message of every other error', () => {
+  const unauthorized = postErrorResponse(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
+  assert.equal(unauthorized.statusCode, 401);
+  assert.deepEqual(JSON.parse(unauthorized.body), { error: 'Unauthorized' });
+  const failure = postErrorResponse(new Error(''));
+  assert.equal(failure.statusCode, 500);
+  assert.deepEqual(JSON.parse(failure.body), { error: 'Post request failed' });
 });

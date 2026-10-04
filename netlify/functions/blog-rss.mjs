@@ -1,4 +1,5 @@
 import { ensureAdminSchema, formatPost, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
+import { promoteDueScheduledPosts } from './_posts.mjs';
 import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
@@ -75,6 +76,9 @@ export async function handler(event) {
     await ensureAdminSchema(sql);
     await syncBootstrapAdminUser(sql);
     await assertSiteModuleEnabled(sql, 'blog');
+    // A scheduled post whose time has come is still a draft until promoted;
+    // the feed only lists published posts, so promote first.
+    await promoteDueScheduledPosts(sql);
     const rows = await sql`
       SELECT * FROM posts
       WHERE

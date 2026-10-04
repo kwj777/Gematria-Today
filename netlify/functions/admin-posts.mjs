@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { formatPost, getAuthenticatedUser, jsonResponse, parseBody, routeByHttpMethod, slugify } from './_admin.mjs';
+import { promoteDueScheduledPosts } from './_posts.mjs';
 import { clearCachedJson } from './_security.mjs';
 
 export function normalizePostTags(tagInput, tagsInput) {
@@ -53,18 +54,7 @@ export async function handler(event) {
   try {
     const { sql, user } = await getAuthenticatedUser(event);
 
-    await sql`
-      UPDATE posts
-      SET
-        status = 'published',
-        published_at = COALESCE(published_at, scheduled_publish_at, NOW()),
-        scheduled_publish_at = NULL,
-        updated_at = NOW()
-      WHERE
-        COALESCE(NULLIF(BTRIM(status), ''), 'published') = 'draft'
-        AND scheduled_publish_at IS NOT NULL
-        AND scheduled_publish_at <= NOW()
-    `;
+    await promoteDueScheduledPosts(sql);
 
     return await routeByHttpMethod(event, {
       GET: async () => {
@@ -191,7 +181,15 @@ export async function handler(event) {
       },
     });
   } catch (error) {
-    const message = error.message?.includes('posts_slug_key') ? 'A post with this slug already exists' : (error.message || 'Post request failed');
-    return jsonResponse(error.statusCode || 500, { error: message });
+    return postErrorResponse(error);
   }
+}
+
+// A slug another post already uses is the admin's to fix, so it is a 409
+// conflict, not a 500 that reads as a server fault in monitoring.
+export function postErrorResponse(error) {
+  if (error?.constraint === 'posts_slug_key' || String(error?.message || '').includes('posts_slug_key')) {
+    return jsonResponse(409, { error: 'A post with this slug already exists' });
+  }
+  return jsonResponse(error?.statusCode || 500, { error: error?.message || 'Post request failed' });
 }

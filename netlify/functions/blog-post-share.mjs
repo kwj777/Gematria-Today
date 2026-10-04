@@ -1,4 +1,5 @@
 import { ensureAdminSchema, formatPost, getSqlClient, syncBootstrapAdminUser } from './_admin.mjs';
+import { promoteDueScheduledPosts } from './_posts.mjs';
 import { applyRateLimit, assertEndpointEnabled, getClientIp, logRequestAudit } from './_security.mjs';
 import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
@@ -208,6 +209,10 @@ export async function handler(event) {
       message: 'Too many requests for blog post metadata.',
     });
 
+    // The blog lists a scheduled post as soon as its time passes; promote it
+    // so its permalink serves it too instead of redirecting as a draft.
+    await promoteDueScheduledPosts(sql);
+
     const rows = await sql`
       SELECT * FROM posts
       WHERE LOWER(COALESCE(slug, '')) = ${slug}
@@ -216,7 +221,8 @@ export async function handler(event) {
     `;
 
     const post = rows[0] ? formatPost(rows[0]) : null;
-    const postStatus = String(post?.status || '').trim().toLowerCase();
+    // A blank status counts as published, as it does for /api/public-posts.
+    const postStatus = String(post?.status || '').trim().toLowerCase() || 'published';
     if (post && postStatus === 'archived') {
       await logRequestAudit(sql, event, {
         route: 'blog-post-share',

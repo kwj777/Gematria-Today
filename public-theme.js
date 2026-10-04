@@ -9,10 +9,6 @@
   window.__publicThemeInstalled = true;
 
   var STORAGE_KEY = 'publicThemePreference';
-  // A toggle button names the setting and lets aria-pressed say whether it is
-  // on. Flipping the label to the action as well ("Switch to light mode,
-  // pressed") made the two contradict each other (WCAG 4.1.2).
-  var LABEL = 'Dark mode';
 
   function readStored() {
     try {
@@ -33,10 +29,16 @@
     return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
   }
 
+  // The button names what a click does, matching its icon (a moon while the
+  // page is light, a sun while it is dark). A fixed "Dark mode" name left the
+  // hover tooltip saying "Dark mode" over the sun. With an action name the
+  // button has no pressed state to contradict it (WCAG 4.1.2), so aria-pressed
+  // is dropped.
   function syncButton(button, theme) {
-    button.setAttribute('aria-pressed', String(theme === 'dark'));
-    button.setAttribute('aria-label', LABEL);
-    button.setAttribute('title', LABEL);
+    var label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    button.removeAttribute('aria-pressed');
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
   }
 
   function syncAllButtons(theme) {

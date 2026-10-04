@@ -52,18 +52,19 @@
     return theme === 'dark' ? 'dark' : 'light';
   }
 
-  // A toggle button names the setting and lets aria-pressed say whether it is
-  // on. This one also flipped its text and label to the action, so dark mode
-  // read "Switch to light mode, toggle button, pressed" -- the name and the
-  // state contradicting each other (WCAG 4.1.2). Same fix as public-theme.js.
-  var THEME_TOGGLE_LABEL = 'Dark mode';
-
+  // The button names what a click does: "Light mode" while the page is dark,
+  // "Dark mode" while it is light. An earlier fix froze the text at "Dark
+  // mode" and left the state to aria-pressed, which only a screen reader
+  // announces, so sighted admins saw a label that never changed. A plain
+  // action button has no pressed state to contradict its name (WCAG 4.1.2).
+  // Same as public-theme.js.
   function updateThemeToggleButton(theme) {
     var btn = document.getElementById('themeToggleButton');
     if (!btn) return;
-    btn.textContent = THEME_TOGGLE_LABEL;
-    btn.setAttribute('aria-pressed', String(theme === 'dark'));
-    // The visible text is the name; an aria-label could only disagree with it.
+    btn.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+    // The visible text is the name; aria-pressed or an aria-label could only
+    // disagree with it.
+    btn.removeAttribute('aria-pressed');
     btn.removeAttribute('aria-label');
   }
 

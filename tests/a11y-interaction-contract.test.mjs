@@ -141,19 +141,25 @@ function loadPublicTheme() {
   return button;
 }
 
-test('the theme toggle keeps one name and reports its state with aria-pressed', () => {
-  // It flipped its label to the action as well ("Switch to light mode,
-  // pressed"), so the name and the state contradicted each other (WCAG 4.1.2).
+test('the theme toggle names what a click does and has no pressed state to contradict it', () => {
+  // It flipped its label to the action while also reporting aria-pressed
+  // ("Switch to light mode, pressed"), so the name and the state contradicted
+  // each other (WCAG 4.1.2). Freezing the name at "Dark mode" fixed that but
+  // left the tooltip saying "Dark mode" over the sun icon in dark mode.
   const button = loadPublicTheme();
-  assert.equal(button.getAttribute('aria-label'), 'Dark mode');
-  assert.equal(button.getAttribute('aria-pressed'), 'false');
+  assert.equal(button.getAttribute('aria-label'), 'Switch to dark mode');
+  assert.equal(button.getAttribute('title'), 'Switch to dark mode');
+  assert.equal(button.getAttribute('aria-pressed'), null);
   button.fire('click');
-  assert.equal(button.getAttribute('aria-label'), 'Dark mode');
-  assert.equal(button.getAttribute('title'), 'Dark mode');
-  assert.equal(button.getAttribute('aria-pressed'), 'true');
+  assert.equal(button.getAttribute('aria-label'), 'Switch to light mode');
+  assert.equal(button.getAttribute('title'), 'Switch to light mode');
+  assert.equal(button.getAttribute('aria-pressed'), null);
+  button.fire('click');
+  assert.equal(button.getAttribute('aria-label'), 'Switch to dark mode');
   const markup = read('src/_includes/nav.html').match(/<button[^>]*data-theme-toggle[^>]*>/)?.[0] || '';
-  assert.match(markup, /aria-label="Dark mode"/);
-  assert.doesNotMatch(markup, /Switch to/);
+  assert.match(markup, /aria-label="Switch to dark mode"/);
+  assert.match(markup, /title="Switch to dark mode"/);
+  assert.doesNotMatch(markup, /aria-pressed/);
 });
 
 function loadAdminTheme({ stored = null } = {}) {
@@ -183,20 +189,24 @@ function loadAdminTheme({ stored = null } = {}) {
   return button;
 }
 
-test('the admin theme toggle keeps its "Dark mode" name and reports its state with aria-pressed', () => {
-  // It flipped its text and label too, so dark mode read "Switch to light
-  // mode, toggle button, pressed" on every admin page (WCAG 4.1.2).
+test('the admin theme toggle text changes with the mode and names what a click does', () => {
+  // Its text was frozen at "Dark mode" with the state left to aria-pressed,
+  // which only a screen reader announces, so sighted admins saw a label that
+  // never changed. Before that it flipped its text while also reporting
+  // aria-pressed, so the name and the state contradicted each other.
   const button = loadAdminTheme();
   assert.equal(button.textContent, 'Dark mode');
-  assert.equal(button.getAttribute('aria-pressed'), 'false');
+  assert.equal(button.getAttribute('aria-pressed'), null, 'an action button has no pressed state');
   assert.equal(button.getAttribute('aria-label'), null, 'the visible text is the name');
   button.fire('click');
-  assert.equal(button.textContent, 'Dark mode');
-  assert.equal(button.getAttribute('aria-pressed'), 'true');
+  assert.equal(button.textContent, 'Light mode');
+  assert.equal(button.getAttribute('aria-pressed'), null);
   assert.equal(button.getAttribute('aria-label'), null);
+  button.fire('click');
+  assert.equal(button.textContent, 'Dark mode');
   const stored = loadAdminTheme({ stored: 'dark' });
-  assert.equal(stored.textContent, 'Dark mode');
-  assert.equal(stored.getAttribute('aria-pressed'), 'true');
+  assert.equal(stored.textContent, 'Light mode');
+  assert.equal(stored.getAttribute('aria-pressed'), null);
 
   const pages = readdirSync(new URL('../', import.meta.url)).filter((name) => /^admin.*\.html$/.test(name));
   let toggles = 0;
@@ -205,7 +215,7 @@ test('the admin theme toggle keeps its "Dark mode" name and reports its state wi
     if (!markup) continue;
     toggles += 1;
     assert.equal(markup[1], 'Dark mode', `${page}: visible text`);
-    assert.match(markup[0], /aria-pressed="false"/, `${page}: state`);
+    assert.doesNotMatch(markup[0], /aria-pressed/, `${page}: no pressed state`);
     assert.doesNotMatch(markup[0], /aria-label=/, `${page}: no label to contradict the text`);
   }
   assert.equal(toggles, 10);

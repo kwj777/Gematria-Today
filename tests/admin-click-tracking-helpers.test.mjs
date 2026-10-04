@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildClickTrackingDetails,
   buildNeverClickedElementsReport,
   extractAttribute,
   formatWindowLabel,
@@ -254,4 +255,58 @@ test('buildNeverClickedElementsReport falls back to element_link when destinatio
     { page_path: '/', element_type: 'a', element_link: '/calculator.html' },
   ];
   assert.deepEqual(buildNeverClickedElementsReport(clicks, trackable), []);
+});
+
+// ---------- buildClickTrackingDetails ----------
+
+function clickRow(index, extra = {}) {
+  return {
+    route: '/calculator.html',
+    action: 'sitewide_element_click',
+    source: `Button ${index}`,
+    destination: '',
+    element_type: 'button',
+    element_id: '',
+    element_selector: '',
+    element_link: '',
+    page_path: '/calculator.html',
+    page_url: '',
+    referrer: '',
+    audience_type: 'visitor',
+    visitor_session_id: '',
+    request_fingerprint: 'fp',
+    created_at: '2026-01-01T00:00:00Z',
+    ...extra,
+  };
+}
+
+test('buildClickTrackingDetails maps every row when they fit the byte budget', () => {
+  const { details, truncated } = buildClickTrackingDetails([clickRow(1), clickRow(2, { audience_type: 'member' })]);
+  assert.equal(truncated, false);
+  assert.equal(details.length, 2);
+  assert.equal(details[0].source, 'Button 1');
+  assert.equal(details[0].visitorSessionId, null);
+  assert.equal(details[1].audienceType, 'member');
+  assert.equal(details[1].createdAt, '2026-01-01T00:00:00.000Z');
+});
+
+test('buildClickTrackingDetails stops before the response outgrows its byte budget', () => {
+  // Netlify answers a synchronous function response over 6 MB with a 502, so
+  // the dashboard got nothing at all for long windows on a busy site.
+  const rows = Array.from({ length: 50 }, (_, index) => clickRow(index, { referrer: 'r'.repeat(1000) }));
+  const { details, truncated } = buildClickTrackingDetails(rows, { byteBudget: 10_000 });
+  assert.equal(truncated, true);
+  assert.ok(details.length > 0 && details.length < rows.length);
+  assert.ok(Buffer.byteLength(JSON.stringify(details)) <= 10_000);
+  assert.equal(details[0].source, 'Button 0', 'the newest rows are the ones kept');
+});
+
+test('buildClickTrackingDetails counts the second escaping the function response adds', () => {
+  // Netlify serializes {statusCode, headers, body}, which escapes every quote
+  // and backslash in the body again, so a quote-filled row costs about double.
+  const rows = Array.from({ length: 50 }, (_, index) => clickRow(index, { referrer: '"'.repeat(1000) }));
+  const { details, truncated } = buildClickTrackingDetails(rows, { byteBudget: 20_000 });
+  assert.equal(truncated, true);
+  assert.ok(details.length > 0);
+  assert.ok(Buffer.byteLength(JSON.stringify(JSON.stringify(details))) <= 20_000);
 });

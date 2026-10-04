@@ -10,6 +10,7 @@
  *   - nav-scroll.js
  *   - public-theme.js
  *   - anti-bot.js
+ *   - site-modules.js
  */
 
 /* === analytics-bootstrap.js === */
@@ -73,13 +74,21 @@
     return;
   }
 
+  // gtag.js never defines window.gtag itself, so without this cookie-consent.js
+  // had nothing to call and a visitor's Accept or Decline never reached Consent
+  // Mode.
+  window.gtag = window.gtag || gtag;
   window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
+  // The site serves no ads and privacy.html promises no sharing for
+  // cross-context behavioral advertising, so Google's advertising signals start
+  // denied everywhere; only an explicit choice in the consent banner (Cookie
+  // settings) grants them.
   gtag('consent', 'default', {
     analytics_storage: 'granted',
-    ad_storage: 'granted',
-    ad_user_data: 'granted',
-    ad_personalization: 'granted',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
   });
 
   gtag('consent', 'default', {
@@ -226,6 +235,14 @@
     return JSON.stringify({ a: prefs.analytics ? 1 : 0, m: prefs.advertising ? 1 : 0 });
   }
 
+  // The choice made on this page view, kept in memory so it still counts when
+  // localStorage is unavailable (private mode, blocked site data).
+  var sessionPrefs = null;
+
+  function currentPreferences() {
+    return sessionPrefs || parseConsent(getConsent());
+  }
+
   function isRegionScopedForBanner() {
     try {
       var timeZone = String((Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || '');
@@ -243,10 +260,38 @@
     }
   }
 
+  var bannerRegion = isRegionScopedForBanner();
+
+  // Every tracker on the site (Google Analytics, conversion-tracking.js, the
+  // click reporters in ui-feedback.js and the page scripts) asks this one
+  // function, so declining in the banner stops all of them. With no stored
+  // choice the region decides: opt-in where the banner is shown, opt-out
+  // elsewhere, as privacy.html describes.
+  function isAnalyticsAllowed() {
+    var prefs = currentPreferences();
+    if (prefs) {
+      return prefs.analytics === true;
+    }
+    return !bannerRegion;
+  }
+
+  // Global Privacy Control is an opt-out of "sale" and "sharing" (privacy.html
+  // #dnt). Google's advertising signals are the only thing here that could
+  // amount to sharing, so GPC keeps them denied whatever the stored choice is.
+  function hasGlobalPrivacyControl() {
+    try {
+      return !!window.navigator && window.navigator.globalPrivacyControl === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // The admin session cookie is HttpOnly and never visible to document.cookie;
+  // the server sets this readable flag (no secret in it) alongside it.
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
-        return c.trim().startsWith('gematria_admin_session=');
+        return c.trim().startsWith('gematria_admin_flag=');
       });
     } catch (e) {
       return false;
@@ -259,13 +304,14 @@
     }
 
     var analyticsStatus = prefs.analytics ? 'granted' : 'denied';
-    var advertisingStatus = prefs.advertising ? 'granted' : 'denied';
+    var advertisingStatus = prefs.advertising && !hasGlobalPrivacyControl() ? 'granted' : 'denied';
+    // No `region` here: an explicit choice applies wherever the visitor is,
+    // which is how someone outside the consent-mode regions opts out.
     window.gtag('consent', 'update', {
       analytics_storage: analyticsStatus,
       ad_storage: advertisingStatus,
       ad_user_data: advertisingStatus,
       ad_personalization: advertisingStatus,
-      region: CONSENT_MODE_REGIONS,
     });
   }
 
@@ -288,7 +334,41 @@
     }
   }
 
+  // Where keyboard focus goes when the banner closes: the element that had it
+  // when the banner opened (the footer's Cookie settings button on a reopen).
+  var returnFocusTarget = null;
+
+  function restoreFocus(banner) {
+    var target = returnFocusTarget;
+    returnFocusTarget = null;
+    var active = document.activeElement;
+    // Only hand back focus the banner holds (or that fell to <body> when a
+    // button was clicked); never pull it from somewhere the visitor moved on to.
+    if (active && active !== document.body && !banner.contains(active)) {
+      return;
+    }
+    if (!target || target === document.body || !target.isConnected) {
+      // First load: the banner took focus from nowhere in particular. Removing
+      // it would leave the next Tab at the end of the document, so start the
+      // visitor at the main content instead.
+      target = document.getElementById('mainContent');
+      if (target && !target.hasAttribute('tabindex')) {
+        var main = target;
+        main.setAttribute('tabindex', '-1');
+        main.addEventListener('blur', function () {
+          main.removeAttribute('tabindex');
+        }, { once: true });
+      }
+    }
+    if (!target) {
+      return;
+    }
+    try { target.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+  }
+
   function hideBanner(banner) {
+    // Before aria-hidden, so focus never sits inside a hidden subtree.
+    restoreFocus(banner);
     banner.setAttribute('aria-hidden', 'true');
     banner.classList.remove('cookie-consent-banner--visible');
     setTimeout(function () {
@@ -299,6 +379,7 @@
   }
 
   function persistAndApply(banner, prefs) {
+    sessionPrefs = prefs;
     setConsent(serializeConsent(prefs));
     applyConsentMode(prefs);
     fireConsentEvent(prefs);
@@ -307,7 +388,9 @@
 
   // `existingPrefs` is set when the banner is reopened from Cookie settings, so
   // the checkboxes show what the visitor chose last time instead of resetting.
-  function showBanner(existingPrefs) {
+  // `returnFocusTo` is the control that reopened it.
+  function showBanner(existingPrefs, returnFocusTo) {
+    returnFocusTarget = returnFocusTo || document.activeElement;
     var banner = document.createElement('div');
     banner.id = 'cookieConsentBanner';
     banner.setAttribute('role', 'dialog');
@@ -319,7 +402,7 @@
     banner.innerHTML =
       '<div class="cookie-consent-inner">' +
       '<p class="cookie-consent-text">' +
-      'We use Google Analytics to measure anonymous site usage. Decline all, accept all, or open <em>Customize</em> to pick analytics and advertising independently. ' +
+      'We use Google Analytics and our own click and sign-up measurement to see how the site is used. Decline all, accept all, or open <em>Customize</em> to pick analytics and advertising independently. ' +
       '<a href="/privacy.html" class="cookie-consent-link">Privacy Policy</a>' +
       '</p>' +
       '<div class="cookie-consent-actions">' +
@@ -330,7 +413,7 @@
       '<div id="cookieConsentOptions" class="cookie-consent-options" hidden>' +
       '<label class="cookie-consent-option">' +
       '<input type="checkbox" id="cookieConsentAnalytics" />' +
-      '<span><strong>Analytics</strong> — anonymous page-view counts that help us see which pages are useful.</span>' +
+      '<span><strong>Analytics</strong> — Google Analytics page views and our own click and sign-up measurement, which help us see which pages are useful.</span>' +
       '</label>' +
       '<label class="cookie-consent-option">' +
       '<input type="checkbox" id="cookieConsentAdvertising" />' +
@@ -417,16 +500,17 @@
   // Site". The footer's Cookie settings link calls this.
   window.gematriaCookieConsent = Object.freeze({
     getConsent: getConsent,
-    getConsentPreferences: function () { return parseConsent(getConsent()); },
+    getConsentPreferences: currentPreferences,
+    analyticsAllowed: isAnalyticsAllowed,
     CONSENT_KEY: CONSENT_KEY,
     consentModeRegions: CONSENT_MODE_REGIONS.slice(),
-    reopen: function reopen() {
+    reopen: function reopen(returnFocusTo) {
       var existing = document.getElementById('cookieConsentBanner');
       if (existing) {
         try { existing.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
         return;
       }
-      showBanner(parseConsent(getConsent()));
+      showBanner(currentPreferences(), returnFocusTo);
     },
   });
 
@@ -437,7 +521,7 @@
       : null;
     if (!trigger) return;
     event.preventDefault();
-    window.gematriaCookieConsent.reopen();
+    window.gematriaCookieConsent.reopen(trigger);
   });
 
   var savedConsent = getConsent();
@@ -447,12 +531,13 @@
   }
 
   // Skip for admin sessions, out-of-scope regions, or when the user has already decided.
-  if (isAdminSession() || !isRegionScopedForBanner() || savedConsent !== null) {
+  if (isAdminSession() || !bannerRegion || savedConsent !== null) {
     return;
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', showBanner, { once: true });
+    // Wrapped: passed directly, the DOMContentLoaded event became existingPrefs.
+    document.addEventListener('DOMContentLoaded', function () { showBanner(); }, { once: true });
   } else {
     showBanner();
   }
@@ -471,7 +556,10 @@
   }
 
   function reportSitewideElementClick(event) {
-    if (window.gematriaTracking?.track) {
+    // A first-party tracker is still tracking: it must stop when the visitor
+    // declines analytics (or has not chosen yet where consent is required),
+    // exactly like Google Analytics. cookie-consent.js decides.
+    if (window.gematriaTracking?.track || window.gematriaCookieConsent?.analyticsAllowed?.() !== true) {
       return;
     }
 
@@ -904,6 +992,11 @@
       '.ui-toast{pointer-events:auto;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#212529);border:1px solid rgba(0,0,0,0.1);border-left:4px solid var(--bs-info,#0dcaf0);border-radius:0.375rem;box-shadow:0 0.5rem 1rem rgba(0,0,0,0.15);padding:0.75rem 0.75rem 0.75rem 1rem;display:flex;align-items:flex-start;gap:0.5rem;animation:ui-toast-in 160ms ease-out;}',
       '.ui-toast--success{border-left-color:var(--bs-success,#198754);}',
       '.ui-toast--danger{border-left-color:var(--bs-danger,#dc3545);}',
+      // The site's success/danger tokens are dark (fills behind white badge
+      // text), so on the dark toast (#212529) these stripes would be 2.18:1
+      // and 2.35:1. Use the light shades theme.css gives the dark utilities.
+      ':root[data-bs-theme="dark"] .ui-toast--success{border-left-color:#97c93c;}',
+      ':root[data-bs-theme="dark"] .ui-toast--danger{border-left-color:#ea868f;}',
       '.ui-toast--warning{border-left-color:var(--bs-warning,#ffc107);}',
       '.ui-toast--info{border-left-color:var(--bs-info,#0dcaf0);}',
       '.ui-toast__message{flex:1;font-size:0.9rem;line-height:1.35;}',
@@ -1042,10 +1135,12 @@
     return;
   }
 
+  // The admin session cookie is HttpOnly, so it is invisible here; the server
+  // sets the readable gematria_admin_flag alongside it for this check.
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
-        return c.trim().startsWith('gematria_admin_session=');
+        return c.trim().startsWith('gematria_admin_flag=');
       });
     } catch {
       return false;
@@ -1056,9 +1151,12 @@
     return;
   }
 
+  // cookie-consent.js (earlier in site-bundle.js) owns the consent rules. This
+  // used to compare the stored value with the legacy 'accepted' string, which
+  // the banner stopped writing when consent became a JSON object.
   function hasTrackingConsent() {
     try {
-      return window.localStorage.getItem('gematria_cookie_consent') === 'accepted';
+      return window.gematriaCookieConsent?.analyticsAllowed?.() === true;
     } catch {
       return false;
     }
@@ -1067,12 +1165,16 @@
   if (!hasTrackingConsent()) {
     if (!window.__gematriaConversionTrackingPending) {
       window.__gematriaConversionTrackingPending = true;
+      // Not `once`: a Decline must not use up the listener, or allowing
+      // analytics later from Cookie settings would never start tracking.
       window.addEventListener('gematria:cookie-consent', function onConsentEvent(e) {
-        window.__gematriaConversionTrackingPending = false;
-        if (e.detail && e.detail.accepted) {
-          installConversionTracking();
+        if (!e.detail || !e.detail.analytics) {
+          return;
         }
-      }, { once: true });
+        window.removeEventListener('gematria:cookie-consent', onConsentEvent);
+        window.__gematriaConversionTrackingPending = false;
+        installConversionTracking();
+      });
     }
     return;
   }
@@ -1125,9 +1227,31 @@
     return Boolean(actionName) && (actionName.endsWith('_click') || REPORTABLE_ACTIONS.has(actionName));
   }
 
+  // Page URLs can carry one-time secrets (account-recovery.html?recovery_code=…)
+  // and these reports land in the admin-visible audit log, so only the origin
+  // and path of a URL are ever reported.
+  function withoutQuery(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      return `${parsed.origin}${parsed.pathname}`;
+    } catch {
+      return '';
+    }
+  }
+
+  function currentPageUrl() {
+    return `${window.location.origin}${window.location.pathname}`;
+  }
+
+  function currentReferrer() {
+    return document.referrer ? withoutQuery(document.referrer) : '';
+  }
+
   function reportButtonEvent(action, metadata = {}) {
     const normalizedAction = normalizeActionName(action);
-    if (!shouldReportAction(normalizedAction)) {
+    // Re-checked per event so withdrawing consent from Cookie settings takes
+    // effect without a reload.
+    if (!shouldReportAction(normalizedAction) || !hasTrackingConsent()) {
       return;
     }
 
@@ -1192,12 +1316,16 @@
   }
 
   function track(eventName, properties = {}) {
+    if (!hasTrackingConsent()) {
+      return null;
+    }
+
     const payload = {
       event: eventName,
       timestamp: new Date().toISOString(),
       pagePath: window.location.pathname,
-      pageUrl: window.location.href,
-      referrer: document.referrer || '',
+      pageUrl: currentPageUrl(),
+      referrer: currentReferrer(),
       trackingSessionId,
       ...properties,
     };
@@ -1228,8 +1356,8 @@
     const elementId = normalizeText(target.id || '');
     const elementSelector = normalizeText(buildCssSelector(target));
     const elementLink = elementId
-      ? `${window.location.origin}${window.location.pathname}#${encodeURIComponent(elementId)}`
-      : window.location.href;
+      ? `${currentPageUrl()}#${encodeURIComponent(elementId)}`
+      : currentPageUrl();
 
     reportButtonEvent(action, {
       source: source || 'unknown',
@@ -1239,8 +1367,8 @@
       elementSelector,
       elementLink,
       pagePath: window.location.pathname,
-      pageUrl: window.location.href,
-      referrer: document.referrer || '',
+      pageUrl: currentPageUrl(),
+      referrer: currentReferrer(),
       trackingSessionId,
       timestamp: new Date().toISOString(),
     });
@@ -1270,12 +1398,25 @@
 
   var STYLES =
     '.defn-term{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:help;border-bottom:1px dotted currentColor;text-decoration:none;line-height:inherit;}' +
-    '.defn-term:hover,.defn-term:focus-visible{outline:none;border-bottom-style:solid;color:#0d6efd;}' +
+    // #0d6efd was 3.92:1 on the cream page and 3.97:1 on the dark hero, so
+    // the term turned unreadable exactly when pointed at. Light surfaces get
+    // the darker link blue (5.61:1 on cream), dark ones a light blue (4.77:1
+    // or better): the dark theme, plus the panels that are navy in both
+    // themes -- the hero, Word of the Day, and the home page learning-path
+    // promo, where the darker blue would be 1.96:1. src/definitions.html
+    // carries its own copy of these two rules (this script skips that page).
+    '.defn-term:hover,.defn-term:focus-visible{outline:none;border-bottom-style:solid;color:#0a58ca;}' +
+    ':root[data-bs-theme="dark"] .defn-term:hover,:root[data-bs-theme="dark"] .defn-term:focus-visible,' +
+    '.hero-panel .defn-term:hover,.hero-panel .defn-term:focus-visible,' +
+    '.word-of-day-spotlight .defn-term:hover,.word-of-day-spotlight .defn-term:focus-visible,' +
+    '.learning-path-promo .defn-term:hover,.learning-path-promo .defn-term:focus-visible{color:#93c5fd;}' +
     // Fixed rather than absolute: the popup now lives next to whichever term
     // opened it (so the keyboard can reach the link inside it), and that parent
     // could be anything. Viewport coordinates plus the correction in
     // positionPopup keep placement independent of where it sits in the DOM.
-    '.defn-popup{position:fixed;display:block;z-index:1080;max-width:320px;background:#0f172a;color:#f8fafc;padding:.75rem .9rem;border-radius:.5rem;box-shadow:0 10px 28px rgba(15,23,42,.35);font-size:.875rem;line-height:1.45;text-align:left;font-weight:400;}' +
+    // inset/margin/border/overflow undo the UA's [popover] defaults (centred
+    // in the viewport, bordered, scrolling) -- see ensurePopup.
+    '.defn-popup{position:fixed;display:block;z-index:1080;inset:auto;margin:0;border:0;overflow:visible;max-width:320px;background:#0f172a;color:#f8fafc;padding:.75rem .9rem;border-radius:.5rem;box-shadow:0 10px 28px rgba(15,23,42,.35);font-size:.875rem;line-height:1.45;text-align:left;font-weight:400;}' +
     '.defn-popup[hidden]{display:none;}' +
     '.defn-popup__title{display:block;font-weight:600;margin-bottom:.25rem;}' +
     '.defn-popup__body{display:block;margin:0 0 .5rem;color:#e2e8f0;}' +
@@ -1392,7 +1533,11 @@
           if (dd && dd.tagName === 'DD') recordPair(child, dd);
         } else if (child.tagName === 'DIV') {
           var dt2 = child.querySelector('dt');
-          var dd2 = child.querySelector('dd');
+          // Skip the card's <dd class="defn-card__meta"> (difficulty badge
+          // and copy-link). definitions.html puts the definition first, so
+          // copies of this script that take the first <dd> -- a service
+          // worker can keep one running long after a deploy -- read it too.
+          var dd2 = child.querySelector('dd:not(.defn-card__meta)');
           recordPair(dt2, dd2);
         }
       }
@@ -1566,6 +1711,8 @@
   // element as a "hover preview" and withholds the click event until the
   // second tap. Gate all hover-triggered popup behavior to real pointers.
   var HAS_HOVER = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+  var SUPPORTS_POPOVER = typeof HTMLElement !== 'undefined' &&
+    Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'popover');
 
   function ensurePopup() {
     if (popup) return popup;
@@ -1576,6 +1723,14 @@
     popup.id = POPUP_ID;
     popup.className = 'defn-popup';
     popup.hidden = true;
+    // Living next to its term (for tab order, see showFor) also put the panel
+    // inside the term's stacking context, and z-index cannot climb out of one:
+    // in a hero, where every child is z-index:1, the hero artwork painted over
+    // the definition and its link, and on the guides the sticky "On this page"
+    // panel did (WCAG 1.4.13, 2.4.11). A manual popover is drawn in the top
+    // layer, above every stacking context, without leaving its DOM position.
+    // Browsers without the Popover API keep the old in-flow rendering.
+    if (SUPPORTS_POPOVER) popup.setAttribute('popover', 'manual');
     document.body.appendChild(popup);
     if (HAS_HOVER) {
       popup.addEventListener('mouseenter', function () { clearTimeout(hideTimer); });
@@ -1605,9 +1760,21 @@
     return !!(popup && document.activeElement && popup.contains(document.activeElement));
   }
 
+  function setTopLayer(open) {
+    if (!SUPPORTS_POPOVER || !popup) return;
+    try {
+      var isOpen = popup.matches(':popover-open');
+      if (open && !isOpen) popup.showPopover();
+      else if (!open && isOpen) popup.hidePopover();
+    } catch (_) {
+      // Not connected, or an engine quirk: the panel still shows in flow.
+    }
+  }
+
   function hidePopup(restoreFocus) {
     if (!popup) return;
     var btn = activeBtn;
+    setTopLayer(false);
     popup.hidden = true;
     activeBtn = null;
     openedThisInteraction = false;
@@ -1693,6 +1860,8 @@
     }
     btn.setAttribute('aria-expanded', 'true');
     popup.hidden = false;
+    // After the move above: taking a popover out of the document closes it.
+    setTopLayer(true);
     positionPopup(btn);
   }
 
@@ -1848,10 +2017,10 @@
  *      scroll threshold so theme.css can tighten padding and hide the
  *      brand tagline. Uses requestAnimationFrame to avoid layout work on
  *      every scroll event.
- *   2. "/" keyboard shortcut — jump to SiteSeeker search from any page. If
- *      the user is already on /searchbot.html, focus the question field;
- *      otherwise navigate there with ?focus=knowbot so the field can be
- *      focused on arrival. Ignored when typing in another input.
+ *   2. Ctrl+K (Cmd+K on Apple keyboards) — jump to SiteSeeker search from
+ *      any page. If the user is already on /searchbot.html, focus the
+ *      question field; otherwise navigate there with ?focus=knowbot so the
+ *      field can be focused on arrival. Ignored when typing in an input.
  */
 (function installNavHelpers() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -1864,12 +2033,42 @@
   const SEARCH_FOCUS_PARAM = 'focus';
   const SEARCH_FOCUS_VALUE = 'knowbot';
 
+  // This used to be a bare "/". Pressed -- or misheard by speech input --
+  // while focus sat on a button, radio or link, it navigated away from the
+  // page and dropped an unsent forum draft or a set of calculator results.
+  // A single-character shortcut must be possible to turn off or remap (WCAG
+  // 2.1.4); one that needs a modifier is not single-character.
+  function isSearchShortcut(event) {
+    if (event.altKey || event.shiftKey) return false;
+    if (!event.ctrlKey && !event.metaKey) return false;
+    return String(event.key || '').toLowerCase() === 'k';
+  }
+
+  function isApplePlatform() {
+    const nav = window.navigator || {};
+    const platform = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || '';
+    return /mac|iphone|ipad|ipod/i.test(platform);
+  }
+
+  // The nav pill advertises the shortcut as "Ctrl K"; Apple keyboards use ⌘.
+  function labelShortcutHint() {
+    if (!isApplePlatform()) return;
+    document.querySelectorAll('.nav-search-link').forEach((link) => {
+      const kbd = link.querySelector('.nav-search-link__kbd');
+      if (kbd) kbd.textContent = '⌘K';
+      const label = link.getAttribute('aria-label');
+      if (label) link.setAttribute('aria-label', label.replace('Ctrl+K', 'Command+K'));
+      const title = link.getAttribute('title');
+      if (title) link.setAttribute('title', title.replace('Ctrl+K', '⌘K'));
+    });
+  }
+
   function isTypingTarget(el) {
     if (!el || el.nodeType !== 1) return false;
     if (el.isContentEditable) return true;
     const tag = el.tagName;
     if (tag === 'INPUT') {
-      // Allow "/" to work on inputs that aren't text-y (checkboxes, buttons).
+      // Allow the shortcut on inputs that aren't text-y (checkboxes, buttons).
       const type = (el.getAttribute('type') || 'text').toLowerCase();
       const textyTypes = new Set(['text', 'search', 'email', 'url', 'tel', 'password', 'number']);
       return textyTypes.has(type);
@@ -1917,13 +2116,14 @@
       } catch (_) { /* ignore malformed URL */ }
     }
 
+    labelShortcutHint();
+
     document.addEventListener('keydown', (event) => {
-      if (event.key !== '/') return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (!isSearchShortcut(event)) return;
       if (isTypingTarget(event.target)) return;
-      // A page with its own "/" search box (blog) handles the key first and
-      // calls preventDefault. Without this check both handlers ran: the page
-      // focused its input, then this one navigated away from it.
+      // A page that claims the same keys for its own search box handles them
+      // first and calls preventDefault; without this check both handlers ran:
+      // the page focused its input, then this one navigated away from it.
       if (event.defaultPrevented) return;
       event.preventDefault();
       if (window.location.pathname === SEARCH_PATH) {
@@ -2006,6 +2206,10 @@
   window.__publicThemeInstalled = true;
 
   var STORAGE_KEY = 'publicThemePreference';
+  // A toggle button names the setting and lets aria-pressed say whether it is
+  // on. Flipping the label to the action as well ("Switch to light mode,
+  // pressed") made the two contradict each other (WCAG 4.1.2).
+  var LABEL = 'Dark mode';
 
   function readStored() {
     try {
@@ -2027,11 +2231,9 @@
   }
 
   function syncButton(button, theme) {
-    var isDark = theme === 'dark';
-    button.setAttribute('aria-pressed', String(isDark));
-    var label = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-    button.setAttribute('aria-label', label);
-    button.setAttribute('title', label);
+    button.setAttribute('aria-pressed', String(theme === 'dark'));
+    button.setAttribute('aria-label', LABEL);
+    button.setAttribute('title', LABEL);
   }
 
   function syncAllButtons(theme) {
@@ -2183,5 +2385,469 @@
     honeypotPayload,
     readHoneypotValue,
   };
+})();
+
+/* === site-modules.js === */
+(() => {
+  // Mirrors DEFAULT_SITE_MODULES in netlify/functions/_site-modules.mjs. Every
+  // module is on unless an admin saved it off.
+  const DEFAULT_MODULES = Object.freeze({
+    forum: true,
+    knowbot: true,
+    gemabot: true,
+    blog: true,
+    membership: true,
+    wordnik_wotd_slider: true,
+    blog_home_slider: true,
+    blog_home_featured_grid: true,
+  });
+
+  const STORAGE_KEY = 'gematria.siteModules';
+  // The switches the server last reported. A failed /api/public-site-modules
+  // fetch used to fall back to the defaults -- every module on -- and so
+  // re-showed whatever an admin had switched off.
+  const LAST_KNOWN_STORAGE_KEY = 'gematria.siteModules.lastKnown';
+  const normalizeName = (value) => String(value || '').trim().toLowerCase();
+  let activeModules = { ...DEFAULT_MODULES };
+  let superAdminCanOverrideModules = false;
+
+  const parseModuleOverrides = (rawValue) => {
+    if (!rawValue || typeof rawValue !== 'object') {
+      return {};
+    }
+
+    return Object.entries(rawValue).reduce((result, [rawKey, rawEnabled]) => {
+      const name = normalizeName(rawKey);
+      if (!name || !(name in DEFAULT_MODULES)) {
+        return result;
+      }
+      result[name] = Boolean(rawEnabled);
+      return result;
+    }, {});
+  };
+
+  const parseModulesFromQuery = () => {
+    const url = new URL(window.location.href);
+    const value = url.searchParams.get('modules');
+    if (!value) {
+      return {};
+    }
+
+    const requestedModules = value
+      .split(',')
+      .map((entry) => normalizeName(entry))
+      .filter(Boolean);
+
+    if (requestedModules.length === 0) {
+      return {};
+    }
+
+    return Object.keys(DEFAULT_MODULES).reduce((result, name) => {
+      result[name] = requestedModules.includes(name);
+      return result;
+    }, {});
+  };
+
+  const parseStoredModules = () => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        return {};
+      }
+      return parseModuleOverrides(JSON.parse(raw));
+    } catch {
+      return {};
+    }
+  };
+
+  const storeModules = (modules) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(parseModuleOverrides(modules)));
+    } catch {
+      // Ignore storage write failures (private mode, quota, etc).
+    }
+  };
+
+  const readLastKnownModules = () => {
+    try {
+      const raw = window.localStorage.getItem(LAST_KNOWN_STORAGE_KEY);
+      return raw ? parseModuleOverrides(JSON.parse(raw)) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const storeLastKnownModules = (modules) => {
+    try {
+      window.localStorage.setItem(LAST_KNOWN_STORAGE_KEY, JSON.stringify(parseModuleOverrides(modules)));
+    } catch {
+      // A per-browser convenience only; the server enforces the switches.
+    }
+  };
+
+  const isEnabled = (moduleName) => activeModules[normalizeName(moduleName)] !== false;
+
+  const MODULE_PATH_MATCHERS = Object.freeze({
+    blog: [/\/blog(?:\.html)?(?:[?#].*)?$/i],
+    forum: [/\/forum(?:\.html)?(?:[?#].*)?$/i, /\/forum-reputation-scale(?:\.html)?(?:[?#].*)?$/i],
+    membership: [/\/member(?:\.html)?(?:[?#].*)?$/i, /\/gematria-account-setup(?:\.html)?(?:[?#].*)?$/i],
+    gemabot: [/\/ai-agent(?:\.html)?(?:[?#].*)?$/i],
+    knowbot: [/\/searchbot(?:\.html)?(?:[?#].*)?$/i],
+  });
+
+  const MODULE_PAGE_NAMES = Object.freeze({
+    forum: 'The forum',
+    knowbot: 'SiteSeeker',
+    gemabot: 'GemaBot',
+    blog: 'The blog',
+    membership: 'Membership sign-up',
+  });
+
+  const MODULE_LINK_HIDDEN_FLAG = 'moduleLinkHidden';
+  const MODULE_PRELOAD_HIDDEN_FLAG = 'modulePreloadHidden';
+  const MODULE_PAGE_HIDDEN_FLAG = 'modulePageHidden';
+
+  // A page whose <main> carries data-module-page="<module>" belongs to that
+  // module. Its pages used to load and run as normal with the module off;
+  // now the content is set aside behind a notice. The inline !important
+  // display beats any class a page script toggles later.
+  const buildModuleDisabledNotice = (moduleName) => {
+    const notice = document.createElement('section');
+    notice.className = 'content-panel p-4 p-lg-5 my-4 mx-auto text-center';
+    notice.setAttribute('data-module-disabled-notice', moduleName);
+    notice.setAttribute('role', 'status');
+    const heading = document.createElement('h1');
+    heading.className = 'h3 mb-3';
+    heading.textContent = `${MODULE_PAGE_NAMES[moduleName] || 'This feature'} is currently unavailable`;
+    const body = document.createElement('p');
+    body.className = 'text-muted mb-4';
+    body.textContent = 'This part of Gematria.Today is switched off for now. Please check back later.';
+    const link = document.createElement('a');
+    link.className = 'btn btn-primary';
+    link.href = '/';
+    link.textContent = 'Back to the home page';
+    notice.append(heading, body, link);
+    return notice;
+  };
+
+  const applyModulePageState = () => {
+    document.querySelectorAll('[data-module-page]').forEach((page) => {
+      const moduleName = normalizeName(page.getAttribute('data-module-page'));
+      const disabled = Boolean(moduleName) && !isEnabled(moduleName);
+      const existingNotice = page.querySelector(':scope > [data-module-disabled-notice]');
+
+      if (!disabled) {
+        existingNotice?.remove();
+        Array.from(page.children).forEach((child) => {
+          if (child.dataset[MODULE_PAGE_HIDDEN_FLAG] === '1') {
+            child.style.removeProperty('display');
+            child.removeAttribute('aria-hidden');
+            delete child.dataset[MODULE_PAGE_HIDDEN_FLAG];
+          }
+        });
+        return;
+      }
+
+      Array.from(page.children).forEach((child) => {
+        if (child === existingNotice || child.dataset[MODULE_PAGE_HIDDEN_FLAG] === '1') {
+          return;
+        }
+        child.style.setProperty('display', 'none', 'important');
+        child.setAttribute('aria-hidden', 'true');
+        child.dataset[MODULE_PAGE_HIDDEN_FLAG] = '1';
+      });
+      if (!existingNotice) {
+        page.prepend(buildModuleDisabledNotice(moduleName));
+      }
+    });
+  };
+
+  const applySynchronousModuleOverrides = () => {
+    const lastKnownModules = readLastKnownModules();
+    const preloadOverrides = {
+      ...lastKnownModules,
+      ...parseModuleOverrides(window.SITE_MODULE_OVERRIDES || {}),
+      ...parseStoredModules(),
+      ...parseModulesFromQuery(),
+    };
+
+    // Until the server answers, go by what it said last time, so a returning
+    // visitor does not see a switched-off page flash up first.
+    activeModules = { ...DEFAULT_MODULES, ...lastKnownModules };
+    applyModulePageState();
+
+    document.querySelectorAll('[data-module]').forEach((element) => {
+      const requiredModules = String(element.getAttribute('data-module') || '')
+        .split(',')
+        .map((moduleName) => normalizeName(moduleName))
+        .filter(Boolean);
+
+      if (requiredModules.length === 0) {
+        return;
+      }
+
+      const shouldHide = requiredModules.some((moduleName) => (
+        moduleName in preloadOverrides && preloadOverrides[moduleName] === false
+      ));
+
+      if (!shouldHide) {
+        return;
+      }
+
+      if (element.classList.contains('d-none')) {
+        return;
+      }
+
+      element.classList.add('d-none');
+      element.dataset[MODULE_PRELOAD_HIDDEN_FLAG] = '1';
+      element.setAttribute('aria-hidden', 'true');
+    });
+  };
+
+  const applyModuleLinkVisibility = () => {
+    document.querySelectorAll('[data-module-link-hidden="true"]').forEach((element) => {
+      element.classList.remove('d-none');
+      element.removeAttribute('aria-hidden');
+      element.removeAttribute('data-module-link-hidden');
+    });
+
+    document.querySelectorAll('a[href]').forEach((link) => {
+      const href = String(link.getAttribute('href') || '').trim();
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
+        return;
+      }
+
+      const disabledModule = Object.entries(MODULE_PATH_MATCHERS).find(([moduleName, matchers]) => (
+        isEnabled(moduleName) === false
+        && matchers.some((matcher) => matcher.test(href))
+      ));
+
+      const container = link.closest('[data-module-link-container], .nav-item, li') || link;
+
+      if (superAdminCanOverrideModules) {
+        if (container.dataset[MODULE_LINK_HIDDEN_FLAG] === '1') {
+          container.classList.remove('d-none');
+          container.removeAttribute('aria-hidden');
+          delete container.dataset[MODULE_LINK_HIDDEN_FLAG];
+        }
+        return;
+      }
+
+      if (!disabledModule) {
+        if (container.dataset[MODULE_LINK_HIDDEN_FLAG] === '1') {
+          container.classList.remove('d-none');
+          container.removeAttribute('aria-hidden');
+          delete container.dataset[MODULE_LINK_HIDDEN_FLAG];
+        }
+        return;
+      }
+
+      container.classList.add('d-none');
+      container.setAttribute('aria-hidden', 'true');
+      container.setAttribute('data-module-link-hidden', 'true');
+    });
+  };
+
+  const applyModuleVisibility = () => {
+    document.querySelectorAll('[data-module]').forEach((element) => {
+      const requiredModules = String(element.getAttribute('data-module') || '')
+        .split(',')
+        .map((moduleName) => normalizeName(moduleName))
+        .filter(Boolean);
+
+      if (requiredModules.length === 0) {
+        return;
+      }
+
+      const shouldShow = requiredModules.every((moduleName) => isEnabled(moduleName));
+      const hideMode = element.getAttribute('data-module-hide') || 'class';
+
+      if (shouldShow) {
+        element.classList.remove('d-none');
+        if (element.dataset[MODULE_PRELOAD_HIDDEN_FLAG] === '1') {
+          delete element.dataset[MODULE_PRELOAD_HIDDEN_FLAG];
+        }
+        element.removeAttribute('aria-hidden');
+        if (hideMode === 'disable' && 'disabled' in element) {
+          element.disabled = false;
+        }
+        return;
+      }
+
+      element.classList.add('d-none');
+      element.setAttribute('aria-hidden', 'true');
+      if (element.dataset[MODULE_PRELOAD_HIDDEN_FLAG] === '1') {
+        delete element.dataset[MODULE_PRELOAD_HIDDEN_FLAG];
+      }
+      if (hideMode === 'disable' && 'disabled' in element) {
+        element.disabled = true;
+      }
+    });
+
+    applyModuleLinkVisibility();
+    applyModulePageState();
+  };
+
+  const renderSuperAdminTogglePanel = () => {
+    const host = document.querySelector('[data-super-admin-module-toggles-host]');
+    const existingPanel = document.getElementById('superAdminModuleTogglePanel');
+
+    if (!superAdminCanOverrideModules || !host) {
+      existingPanel?.remove();
+      return;
+    }
+
+    const moduleMeta = [
+      ['forum', 'Forum'],
+      ['knowbot', 'SiteSeeker'],
+      ['gemabot', 'GemaBot'],
+      ['blog', 'Blog'],
+      ['membership', 'Membership'],
+      ['wordnik_wotd_slider', 'Word of the Day'],
+      ['blog_home_slider', 'Home Blog Slider'],
+      ['blog_home_featured_grid', 'Home Featured Grid'],
+    ];
+
+    const panel = existingPanel || document.createElement('div');
+    panel.id = 'superAdminModuleTogglePanel';
+    panel.className = 'row g-3';
+
+    panel.innerHTML = moduleMeta.map(([name, label]) => {
+      const checked = isEnabled(name) ? 'checked' : '';
+      return `
+        <div class="col-md-6 col-xl-4">
+          <label class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" data-super-admin-module-toggle="${name}" ${checked} />
+            <span class="form-check-label">${label}</span>
+          </label>
+        </div>`;
+    }).join('');
+
+    if (!existingPanel) {
+      host.appendChild(panel);
+    }
+
+    panel.querySelectorAll('[data-super-admin-module-toggle]').forEach((field) => {
+      field.addEventListener('change', () => {
+        const moduleName = normalizeName(field.getAttribute('data-super-admin-module-toggle'));
+        if (!moduleName || !(moduleName in DEFAULT_MODULES)) {
+          return;
+        }
+
+        activeModules = {
+          ...activeModules,
+          [moduleName]: Boolean(field.checked),
+        };
+        storeModules(activeModules);
+        applyModuleVisibility();
+      });
+    });
+  };
+
+  const fetchGlobalModules = async () => {
+    try {
+      const response = await fetch('/api/public-site-modules', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { accept: 'application/json' },
+      });
+      if (!response.ok) {
+        return { modules: readLastKnownModules() };
+      }
+      const payload = await response.json();
+      const modules = parseModuleOverrides(payload?.modules);
+      storeLastKnownModules(modules);
+      return { modules };
+    } catch {
+      return { modules: readLastKnownModules() };
+    }
+  };
+
+  const isSuperAdminSession = async () => {
+    try {
+      const response = await fetch('/api/admin-session', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { accept: 'application/json' },
+      });
+      if (!response.ok) {
+        return false;
+      }
+      const payload = await response.json();
+      return Boolean(payload?.authenticated && payload?.user?.role === 'super_admin');
+    } catch {
+      return false;
+    }
+  };
+
+  // The answer to "is this a super admin?" is only ever used for two things:
+  // honouring a module override, and rendering the toggle panel. Asking anyway
+  // meant every anonymous visitor to the home page, the membership page and
+  // account setup triggered /api/admin-session -- which runs the full admin
+  // schema bootstrap before it checks any credential. Skip the round trip when
+  // there is nothing an admin session could change.
+  const superAdminAnswerCouldMatter = () => {
+    if (document.querySelector('[data-super-admin-module-toggles-host]')) {
+      return true;
+    }
+    if (Object.keys(parseModulesFromQuery()).length > 0) {
+      return true;
+    }
+    try {
+      return Boolean(window.localStorage.getItem(STORAGE_KEY));
+    } catch {
+      return false;
+    }
+  };
+
+  const applyModuleSettings = async () => {
+    const [globalSettings, canOverride] = await Promise.all([
+      fetchGlobalModules(),
+      superAdminAnswerCouldMatter() ? isSuperAdminSession() : Promise.resolve(false),
+    ]);
+    superAdminCanOverrideModules = canOverride;
+
+    activeModules = {
+      ...DEFAULT_MODULES,
+      ...(globalSettings.modules || {}),
+      ...parseModuleOverrides(window.SITE_MODULE_OVERRIDES || {}),
+    };
+
+    if (canOverride) {
+      activeModules = {
+        ...activeModules,
+        ...parseStoredModules(),
+        ...parseModulesFromQuery(),
+      };
+    }
+
+    renderSuperAdminTogglePanel();
+    applyModuleVisibility();
+  };
+
+  window.GematriaModules = Object.freeze({
+    defaults: { ...DEFAULT_MODULES },
+    get active() {
+      return { ...activeModules };
+    },
+    storageKey: STORAGE_KEY,
+    isEnabled,
+    applyModuleVisibility,
+    applyModuleSettings,
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      applySynchronousModuleOverrides();
+      applyModuleSettings().catch(() => {
+        applyModuleVisibility();
+      });
+    }, { once: true });
+  } else {
+    applySynchronousModuleOverrides();
+    applyModuleSettings().catch(() => {
+      applyModuleVisibility();
+    });
+  }
 })();
 

@@ -30,6 +30,15 @@ export function isBaseRootValue(gematriaTotal) {
   return Number(gematriaTotal - 6) % 54 === 0;
 }
 
+// Only A-Z count, so an input without one -- a Hebrew or Greek word, an emoji,
+// bare punctuation -- totals 0. That is not a gematria value, but it used to be
+// returned as one, and the calculator showed "0" with share buttons for it.
+export const NO_COUNTABLE_LETTERS_MESSAGE = 'This calculator counts English letters A-Z only. Enter a word or phrase with at least one of them.';
+
+export function hasCountableLetters(input) {
+  return Number(englishGematria(String(input ?? ''))) > 0;
+}
+
 function extractWordFromEvent(event) {
   if (!event || typeof event !== 'object') return null;
   if ('queryStringParameters' in event) return event.queryStringParameters?.word ?? null;
@@ -68,6 +77,7 @@ async function processWord(sql, word, { countAsSearch = true } = {}) {
   const trimmedWord = word.trim();
   const normalizedWord = trimmedWord.toLowerCase();
   if (!trimmedWord) throw Object.assign(new Error('Missing required query parameter: word'), { statusCode: 400 });
+  if (!hasCountableLetters(trimmedWord)) throw Object.assign(new Error(NO_COUNTABLE_LETTERS_MESSAGE), { statusCode: 400 });
 
   const cacheResult = await withCachedJson(sql, {
     // Counting and non-counting lookups cache separately. Sharing one entry

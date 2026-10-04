@@ -1634,12 +1634,17 @@
           names.slice(0, 3).forEach((name, index) => {
             url.searchParams.set(`name${index + 1}`, name);
           });
-          const totals = Array.isArray(item.resultPayload?.results)
-            ? item.resultPayload.results
-                .filter((result) => !result?.error && result?.gematria?.gematria?.total != null)
-                .map((result) => String(result.gematria.gematria.total))
-            : [];
-          if (totals.length) {
+          // One slot per name, in name order: the share card pairs the Nth
+          // total with nameN. Dropping a failed lookup shifted every later
+          // total onto the wrong name, so it keeps its slot as '?'.
+          const results = Array.isArray(item.resultPayload?.results) ? item.resultPayload.results : [];
+          const totals = names.slice(0, 3).map((_, index) => {
+            const result = results[index];
+            return !result?.error && result?.gematria?.gematria?.total != null
+              ? String(result.gematria.gematria.total)
+              : '?';
+          });
+          if (totals.some((total) => total !== '?')) {
             url.searchParams.set('totals', totals.join(','));
           }
           url.hash = 'name-form';

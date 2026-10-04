@@ -20,21 +20,16 @@ const titleNode = document.querySelector('#page-title');
       let isCollapsed = false;
       let visibleCount = 0;
 
+      // A same-origin test alone let '/.//evil.example' through as the
+      // off-site link '//evil.example'. See page-scripts/safe-return-path.js.
       function getSafeInternalReturnPath(path) {
-        if (!path || !path.startsWith('/')) {
+        const safePath = window.gematriaSafePath?.toSafeInternalPath(path) || '';
+        if (!safePath) {
           return '';
         }
-
-        try {
-          const parsed = new URL(path, window.location.origin);
-          if (parsed.origin !== window.location.origin) {
-            return '';
-          }
-          const normalizedPath = parsed.pathname === '/calculator' ? '/calculator.html' : parsed.pathname;
-          return `${normalizedPath}${parsed.search}${parsed.hash}`;
-        } catch {
-          return '';
-        }
+        const parsed = new URL(safePath, window.location.origin);
+        const normalizedPath = parsed.pathname === '/calculator' ? '/calculator.html' : parsed.pathname;
+        return `${normalizedPath}${parsed.search}${parsed.hash}`;
       }
 
       function escapeHtml(value) {

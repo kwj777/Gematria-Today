@@ -171,7 +171,9 @@ export function sanitizeReturnPath(value) {
   } catch {
     return OAUTH_RETURN_PATH;
   }
-  if (resolved.origin !== RETURN_PATH_ORIGIN) {
+  // '/.//evil.example' resolves on this origin but to the path
+  // '//evil.example', which a Location header sends off-site.
+  if (resolved.origin !== RETURN_PATH_ORIGIN || /^[/\\]{2}/.test(resolved.pathname)) {
     return OAUTH_RETURN_PATH;
   }
   return `${resolved.pathname}${resolved.search}${resolved.hash}`;

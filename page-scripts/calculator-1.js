@@ -2,6 +2,8 @@ const lookupForm = document.querySelector('#lookup-form');
       const lookupInput = document.querySelector('#lookup-input');
       const DEFAULT_RELATED_WORD_LIMIT = 100;
       const AUTHENTICATED_RELATED_WORD_LIMIT = 250;
+      // Same words as the 400 from netlify/functions/englishGematria.mjs.
+      const NO_COUNTABLE_LETTERS_MESSAGE = 'This calculator counts English letters A-Z only. Enter a word or phrase with at least one of them.';
       const clearSearchButton = document.querySelector('#clear-search-button');
       const lookupSubmitButton = document.querySelector('#lookup-submit-button');
       const lookupStatus = document.querySelector('#lookup-status');
@@ -112,20 +114,18 @@ const lookupForm = document.querySelector('#lookup-form');
           return;
         }
 
-        try {
-          const returnUrl = new URL(returnTo, window.location.origin);
-          if (returnUrl.origin !== window.location.origin) {
-            return;
-          }
-          learningPathReturnHref = `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`;
-          learningPathReturnLink.href = learningPathReturnHref;
-          const level = window.gematriaLearningPath?.getLevel?.(returnUrl.pathname) ?? null;
-          learningPathReturnLink.textContent = level
-            ? `Nice! Back to Level ${level}`
-            : 'Nice! Back to lesson';
-        } catch {
-          // Ignore invalid return URL values.
+        // A same-origin test alone let '/.//evil.example' through as the
+        // off-site link '//evil.example'. See page-scripts/safe-return-path.js.
+        const safeReturnPath = window.gematriaSafePath?.toSafeInternalPath(returnTo) || '';
+        if (!safeReturnPath) {
+          return;
         }
+        learningPathReturnHref = safeReturnPath;
+        learningPathReturnLink.href = learningPathReturnHref;
+        const level = window.gematriaLearningPath?.getLevel?.(new URL(safeReturnPath, window.location.origin).pathname) ?? null;
+        learningPathReturnLink.textContent = level
+          ? `Nice! Back to Level ${level}`
+          : 'Nice! Back to lesson';
       }
 
       function revealLearningPathReturnButton() {
@@ -378,9 +378,16 @@ View results: ${shareUrl}`.trim(),
         }
 
         if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(sharePayload.url);
-          setShareStatus('Share link copied to your clipboard.');
-          return;
+          try {
+            await navigator.clipboard.writeText(sharePayload.url);
+            setShareStatus('Share link copied to your clipboard.');
+            return;
+          } catch {
+            // Safari refuses the write once the tap's user activation is gone
+            // (a refused share above can use it up). This used to reject out
+            // of the click handler, so the tap did nothing; the prompt below
+            // still lets the visitor copy the link.
+          }
         }
 
         window.prompt('Copy this link to share:', sharePayload.url);
@@ -744,27 +751,44 @@ View results: ${shareUrl}`.trim(),
         return wrapper;
       }
 
-      async function hasDefinition(word) {
+      // One definition request per word per page view. hasDefinition (which
+      // decides whether the Definition pill shows) and the share card's
+      // preview read the same payload, and the preview is fetched as soon as a
+      // result renders (see renderSearchGematriaSummary), so without this every
+      // lookup would spend two requests of the guest definition rate limit.
+      const definitionPayloadRequests = new Map();
+
+      function requestDefinitionPayload(word) {
         const normalizedWord = String(word || '').trim();
-        if (!normalizedWord) return false;
-        try {
-          const response = await fetch(
+        if (!normalizedWord) return Promise.resolve(null);
+        if (!definitionPayloadRequests.has(normalizedWord)) {
+          const request = fetch(
             `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
             { headers: { accept: 'application/json' } }
-          );
-          if (!response.ok) return false;
-          const payload = await response.json();
-          const definitions = Array.isArray(payload?.definitions)
-            ? payload.definitions
-            : Array.isArray(payload)
-              ? payload
-              : [];
-          return definitions.some((definition) =>
-            String(definition?.text || definition?.definition || definition?.display || definition?.gloss || '').trim()
-          );
-        } catch {
-          return false;
+          )
+            .then((response) => (response.ok ? response.json() : null))
+            .catch(() => null)
+            .then((payload) => {
+              // A failure (rate limit, network) is not remembered, so the next
+              // ask for this word tries again.
+              if (!payload) definitionPayloadRequests.delete(normalizedWord);
+              return payload;
+            });
+          definitionPayloadRequests.set(normalizedWord, request);
         }
+        return definitionPayloadRequests.get(normalizedWord);
+      }
+
+      async function hasDefinition(word) {
+        const payload = await requestDefinitionPayload(word);
+        const definitions = Array.isArray(payload?.definitions)
+          ? payload.definitions
+          : Array.isArray(payload)
+            ? payload
+            : [];
+        return definitions.some((definition) =>
+          String(definition?.text || definition?.definition || definition?.display || definition?.gloss || '').trim()
+        );
       }
 
       async function enrichRelationshipWords(relationships, searchTotal) {
@@ -1183,9 +1207,12 @@ View results: ${shareUrl}`.trim(),
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = isBaseRoot ? 'Base rooted' : 'Not base rooted';
+        // Every total in this cipher is a multiple of 6, so that cannot be the
+        // rule. Base rooted means 6 more than a multiple of 54 -- the same test
+        // as isBaseRootValue() in netlify/functions/englishGematria.mjs.
         link.title = isBaseRoot
-          ? 'This word reduces to a base root (multiple of 6). Learn more.'
-          : 'This word does not reduce to a base root. Learn more.';
+          ? 'This total is on the 54-step ladder 6, 60, 114, 168, 222 … (6 plus a multiple of 54). Learn more.'
+          : 'This total is not on the 54-step ladder 6, 60, 114, 168, 222 … (6 plus a multiple of 54). Learn more.';
         if (!isBaseRoot) return link;
         const wrapper = document.createElement('span');
         wrapper.className = 'meta-highlight';
@@ -1298,40 +1325,15 @@ View results: ${shareUrl}`.trim(),
           || ''
         ).trim();
 
-        const endpoints = [
-          `/api/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
-          `/.netlify/functions/wordnikDefinition?word=${encodeURIComponent(normalizedWord)}`,
-        ];
-
-        try {
-          for (const endpoint of endpoints) {
-            const response = await fetch(endpoint, {
-              headers: { accept: 'application/json' },
-            });
-
-            if (!response.ok) {
-              continue;
-            }
-
-            const payload = await response.json();
-            const definitions = getDefinitionList(payload);
-            const firstDefinition = definitions.find((definition) => extractDefinitionText(definition));
-            const preview = stripHtmlTags(extractDefinitionText(firstDefinition));
-            if (preview) {
-              return preview;
-            }
-          }
-        } catch (error) {
-          return '';
-        }
-
-        return '';
+        const payload = await requestDefinitionPayload(normalizedWord);
+        const definitions = getDefinitionList(payload);
+        const firstDefinition = definitions.find((definition) => extractDefinitionText(definition));
+        return stripHtmlTags(extractDefinitionText(firstDefinition));
       }
 
-      async function createWordShareImageUrl(searchGematria) {
+      function buildWordShareImageUrl(searchGematria, definitionPreview = '') {
         const shareImageUrl = new URL('/.netlify/functions/calculator-share-image', getCanonicalShareOrigin());
         const query = String(searchGematria.word || '').trim();
-        const definitionPreview = await fetchDefinitionPreview(query);
 
         shareImageUrl.searchParams.set('type', 'word');
         shareImageUrl.searchParams.set('query', query);
@@ -1344,14 +1346,31 @@ View results: ${shareUrl}`.trim(),
         return shareImageUrl;
       }
 
+      async function createWordShareImageUrl(searchGematria) {
+        const definitionPreview = await fetchDefinitionPreview(String(searchGematria.word || '').trim());
+        return buildWordShareImageUrl(searchGematria, definitionPreview);
+      }
+
       function renderSearchGematriaSummary(searchGematria) {
+        // navigator.share and clipboard writes need the tap's user activation,
+        // and iOS Safari lets it lapse while a network request is in flight.
+        // The share card's definition preview used to be fetched inside the
+        // click handler, so on a slow connection Share did nothing at all. It
+        // is fetched now, while the result renders, and the click only reads
+        // whatever has arrived -- nothing is awaited before navigator.share.
+        let shareImageUrl = buildWordShareImageUrl(searchGematria);
+        const shareImageUrlReady = createWordShareImageUrl(searchGematria)
+          .then((url) => {
+            shareImageUrl = url;
+            return url;
+          })
+          .catch(() => shareImageUrl);
         const shareButton = document.createElement('button');
         shareButton.type = 'button';
         shareButton.className = 'btn btn-outline-primary btn-sm mt-2 fw-semibold share-action-button';
         shareButton.textContent = 'Share this lookup';
         shareButton.addEventListener('click', async () => {
           reportButtonEvent('share_button_click', { source: 'calculator_lookup' });
-          const shareImageUrl = await createWordShareImageUrl(searchGematria);
           const shareUrl = createLookupShareUrl(searchGematria, shareImageUrl);
           await sharePage({
             title: `Gematria lookup for ${searchGematria.word}`,
@@ -1381,9 +1400,9 @@ View results: ${shareUrl}`.trim(),
         downloadImageButton.addEventListener('click', async () => {
           reportButtonEvent('image_download', { source: 'calculator_lookup' });
           try {
-            const shareImageUrl = await createWordShareImageUrl(searchGematria);
+            const readyShareImageUrl = await shareImageUrlReady;
             const sanitizedWord = String(searchGematria.word || 'lookup').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'lookup';
-            await downloadShareImage(toShareImageAssetUrl(shareImageUrl.toString()), `gematria-${sanitizedWord}.jpg`);
+            await downloadShareImage(toShareImageAssetUrl(readyShareImageUrl.toString()), `gematria-${sanitizedWord}.jpg`);
             setShareStatus('Image downloaded.');
           } catch (error) {
             setShareStatus(error?.message || 'Unable to download image right now.');
@@ -1580,6 +1599,19 @@ View results: ${shareUrl}`.trim(),
               lookupInput.focus();
             }
           }
+          return;
+        }
+
+        // Only A-Z count, so a Hebrew or Greek word, an emoji or bare
+        // punctuation used to come back as a result of 0 -- with share and
+        // permalink buttons -- as if 0 were its gematria value.
+        if (!getPerLetterValues(term).length) {
+          lookupStatus.textContent = '';
+          showLookupInputError(NO_COUNTABLE_LETTERS_MESSAGE);
+          gematriaResult.textContent = '';
+          relatedWordsResult.innerHTML = '';
+          currentSearchPayload = null;
+          updateMemberSaveState();
           return;
         }
 

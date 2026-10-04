@@ -12,6 +12,7 @@ import {
   jsonResponse,
   parseBody,
 } from './_auth.mjs';
+import { applySeededContentCorrectionsOnce } from './_seeded-content-corrections.mjs';
 import { ensureSecuritySchema } from './_security.mjs';
 
 const SEEDED_ADMIN_USERS = [
@@ -503,6 +504,15 @@ async function syncBootstrapAdminUserUncached(sql) {
     await seedPostsOnce(sql);
   } catch (error) {
     console.error('[seed] Seeding the default blog posts failed', error);
+  }
+
+  // Same contract for corrections to seeded posts and FAQs: a failure is
+  // logged, and the correction is retried on the next cold start because its
+  // marker was not written.
+  try {
+    await applySeededContentCorrectionsOnce(sql);
+  } catch (error) {
+    console.error('[seed] Applying corrections to seeded content failed', error);
   }
 
   if (!username || (!passwordHash && !password)) {

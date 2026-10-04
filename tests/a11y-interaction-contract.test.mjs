@@ -268,19 +268,28 @@ test('the guest "Save result" button is still named "Save result"', () => {
 });
 
 test('the mobile menu button is named by the "Menu" / "Close" it shows', () => {
-  // aria-label="Toggle navigation" replaced the visible "Menu" label that
-  // theme.css draws, so "tap Menu" found nothing.
-  for (const file of ['src/_includes/nav.html', 'admin.html', 'admin-hub.html']) {
-    const toggler = read(file).match(/<button class="navbar-toggler[^>]*>/)?.[0] || '';
-    assert.ok(toggler, `${file}: toggler not found`);
-    assert.doesNotMatch(toggler, /aria-label=/, `${file}: the toggler must take its name from its visible label`);
+  // aria-label="Toggle navigation" replaced the visible "Menu" label, so "tap
+  // Menu" found nothing. The label is real text in the button, not ::after
+  // content: generated content does not count toward the name in axe (and so
+  // Lighthouse) or in some screen readers, which left the button nameless.
+  const label = '<span class="navbar-toggler-label"><span class="navbar-toggler-label__closed">Menu</span><span class="navbar-toggler-label__open">Close</span></span>';
+  const files = ['src/_includes/nav.html', ...readdirSync(new URL('../', import.meta.url)).filter((name) => /^admin.*\.html$/.test(name))];
+  let togglers = 0;
+  for (const file of files) {
+    const button = read(file).match(/<button class="navbar-toggler[^>]*>[\s\S]*?<\/button>/)?.[0];
+    if (!button) continue;
+    togglers += 1;
+    assert.doesNotMatch(button, /^<button[^>]*aria-label=/, `${file}: the toggler must take its name from its visible label`);
+    assert.ok(button.includes(label), `${file}: the toggler must carry the Menu/Close label as text`);
   }
+  assert.ok(togglers >= 2, 'expected the shared nav and the admin pages to have menu buttons');
   const css = read('theme.css');
-  assert.match(css, /\.navbar-toggler::after \{\s*content: "Menu";/);
-  assert.match(css, /\.navbar-toggler\[aria-expanded="true"\]::after \{\s*content: "Close";/);
+  assert.doesNotMatch(css, /\.navbar-toggler(?:\[aria-expanded="true"\])?::after \{\s*content:/);
+  assert.match(css, /\.navbar-toggler\[aria-expanded="true"\] \.navbar-toggler-label__closed,\s*\.navbar-toggler:not\(\[aria-expanded="true"\]\) \.navbar-toggler-label__open \{\s*display: none;/);
   // The narrowest phones hide the word, but it is the only name the button
-  // has, so it must stay in the accessibility tree.
-  assert.doesNotMatch(css, /\.navbar-toggler::after \{\s*content: none;/);
+  // has, so it must stay in the accessibility tree (clipped, not removed).
+  const narrow = css.slice(css.indexOf('@media (max-width: 380px)'));
+  assert.match(narrow, /\.navbar-toggler-label \{\s*position: absolute;[\s\S]*?clip-path: inset\(50%\);/);
 });
 
 test('the service worker starts a new cache generation for the new CSS and bundle', () => {

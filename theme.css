@@ -4598,13 +4598,22 @@ nav.legal-copy ol > li + li,
   margin-top: 0.5rem;
 }
 
+/* The menu button's name is its visible "Menu" / "Close" text, which is real
+   markup (src/_includes/nav.html and the admin pages) rather than ::after
+   content: generated content is not part of the name for axe/Lighthouse and
+   some screen readers. Only the word for the current state is rendered. */
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-label__closed,
+.navbar-toggler:not([aria-expanded="true"]) .navbar-toggler-label__open {
+  display: none;
+}
+
 /* ----- Mobile navbar polish --------------------------------------------- */
 /* The default Bootstrap toggler has no visible label and a faint focus ring.
-   Below the lg breakpoint we (1) attach a "Menu" label to the toggler via a
-   ::after pseudo-element so the affordance is obvious without editing 29
-   pages of markup -- that text is also the button's accessible name, so the
-   markup carries no aria-label to contradict it (WCAG 2.5.3: a speech-input
-   user says "tap Menu" or "tap Close"), (2) give it a real focus ring, (3)
+   Below the lg breakpoint we (1) show the toggler's "Menu" / "Close" label
+   (.navbar-toggler-label) so the affordance is obvious -- that text is also
+   the button's accessible name, so the markup carries no aria-label to
+   contradict it (WCAG 2.5.3: a speech-input user says "tap Menu" or "tap
+   Close"), (2) give it a real focus ring, (3)
    animate the collapse, and (4) lay the menu out as full-width text links
    followed by a divider and a paired CTA + Search row -- two visual zones
    (browse vs. act) instead of a top-heavy stack of mismatched shapes. */
@@ -4656,16 +4665,11 @@ nav.legal-copy ol > li + li,
     gap: 0.5rem;
   }
 
-  .navbar-toggler::after {
-    content: "Menu";
+  .navbar-toggler-label {
     font-size: var(--font-size-sm);
     font-weight: 600;
     letter-spacing: var(--tracking-wide);
     color: rgba(255, 255, 255, 0.92);
-  }
-
-  .navbar-toggler[aria-expanded="true"]::after {
-    content: "Close";
   }
 
   .navbar-toggler:focus-visible {
@@ -4918,8 +4922,8 @@ nav.legal-copy ol > li + li,
 
   /* On the narrowest phones the "Menu" text label inside the toggle costs
      ~50px that the logo needs more. Show the hamburger alone, but hide the
-     label visually rather than dropping it: it is the button's only name. */
-  .navbar-toggler::after {
+     label only visually: it is the button's only name. */
+  .navbar-toggler-label {
     position: absolute;
     width: 1px;
     height: 1px;

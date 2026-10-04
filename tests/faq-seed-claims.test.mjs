@@ -12,6 +12,13 @@ import { CIPHERS } from '../page-scripts/multi-cipher-engine.mjs';
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 const FAQ_SEED = read('../sql/seed_faqs.sql').replaceAll("''", "'");
 
+function functionBody(source, name) {
+  const start = source.indexOf(`async function ${name}(`);
+  assert.notEqual(start, -1, `no function ${name}`);
+  const end = source.indexOf('\nasync function ', start + 1);
+  return source.slice(start, end === -1 ? undefined : end);
+}
+
 function faqAnswer(id) {
   const start = FAQ_SEED.indexOf(`'${id}',`);
   assert.notEqual(start, -1, `no seeded FAQ ${id}`);
@@ -67,6 +74,26 @@ test('the forum FAQs match a forum that needs sign-in and has no voting', () => 
   assert.ok(reputation.includes('there is no voting'));
   assert.match(forum, /if \(points >= 200\) badges\.push\('Sage'\);\s*else if \(points >= 50\) badges\.push\('Trusted'\);/);
   assert.ok(reputation.includes('Reaching 50 points earns the Trusted badge and 200 the Sage badge'));
+});
+
+test('the forum FAQ and reputation page say a moderator deleting a post takes its points back', () => {
+  const forum = read('../netlify/functions/member-forum.mjs');
+  const deleteThread = functionBody(forum, 'moderateThread').split("mode === 'delete'")[1];
+  assert.match(deleteThread, /revokeReputation\(sql, rows\[0\]\.author_user_id, \{ points: REPUTATION_POINTS\.thread, threadCount: 1 \}\)/);
+  assert.match(deleteThread, /revokeReputation\(sql, replyAuthor\.author_user_id, \{ points: REPUTATION_POINTS\.reply \* total, replyCount: total \}\)/);
+  assert.match(functionBody(forum, 'moderateReply'), /revokeReputation\(sql, rows\[0\]\.author_user_id, \{ points: REPUTATION_POINTS\.reply, replyCount: 1 \}\)/);
+  assert.match(functionBody(forum, 'revokeReputation'), /GREATEST\(points - \$\{points\}, 0\)/, 'a score stops at zero');
+
+  const reputation = faqAnswer('seed-faq-forum-reputation-overview');
+  assert.ok(!/never deducted/i.test(reputation));
+  assert.ok(reputation.includes('When a moderator deletes a thread or reply, the points it earned are taken back'));
+  assert.ok(reputation.includes('deleting a thread also takes back the points for every reply in it'));
+
+  const page = read('../src/forum-reputation-scale.html');
+  assert.ok(!/never deducted|rather than by subtracting/i.test(page));
+  assert.ok(page.includes('when a moderator deletes a thread or reply, the points it earned are taken back'));
+  assert.ok(page.includes('Deleting a thread also takes back the points for every reply in it, whoever posted them'));
+  assert.ok(page.includes('Your score never drops below zero'));
 });
 
 test('the FAQ does not promise an export of saved searches and notes that the member page lacks', () => {

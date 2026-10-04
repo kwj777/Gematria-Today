@@ -154,6 +154,29 @@ test('every correction targets a seeded row, with unique ids and a passage that 
   }
 });
 
+// originalRows() rebuilds the old rows from the corrections themselves, so it
+// cannot notice a seed-file rewrite that has no correction at all. The search
+// data FAQ is the privacy disclosure for the public word list and the request
+// logs (M36), so pin it against the answer production was actually seeded with.
+test('the search-data FAQ disclosure reaches a database seeded with the old answer', async () => {
+  const correction = correctionFor('seed-faq-what-search-data-is-stored');
+  assert.equal(correction.id, 'faq-what-search-data-is-stored-2026-10');
+  const seededAnswer =
+    'For signed-in members, we store searches you explicitly save and any notes you attach to them. For all visitors we may log aggregated request metrics (page, timestamp, success/failure) used for site reliability and abuse prevention. Full details of what is collected, why, and your rights are in our Privacy Policy (/privacy.html).';
+  const rows = originalRows();
+  assert.equal(rows.faqs.get(correction.rowId).answer, seededAnswer);
+  const db = createFakeDatabase({ rows });
+
+  await applySeededContentCorrectionsOnce(db.sql);
+
+  const answer = db.rows.faqs.get(correction.rowId).answer;
+  assert.equal(answer, CORRECTED_ROWS.faqs.get(correction.rowId).answer);
+  assert.ok(answer.includes("added to the site's shared word list"));
+  assert.ok(answer.includes('(page, timestamp, IP address, success/failure)'));
+  assert.ok(!answer.includes('aggregated request metrics'));
+  assert.equal(db.settings.get(`${CONTENT_CORRECTION_MARKER_PREFIX}${correction.id}`), 'corrected');
+});
+
 test('admin_schema.sql seeds the same corrected atlas posts as the standalone seed file', () => {
   const fromAdminSchema = seededPosts(ADMIN_SCHEMA);
   for (const correction of SEEDED_CONTENT_CORRECTIONS.filter((entry) => entry.table === 'posts')) {

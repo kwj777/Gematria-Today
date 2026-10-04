@@ -255,7 +255,7 @@ export const SEEDED_CONTENT_CORRECTIONS = [
       {
         column: 'answer',
         from: 'Reputation is earned by posting, receiving upvotes, and contributing in other ways the community values; tiers unlock progressive privileges as you advance. The full scale, points table, and tier benefits are documented at /forum-reputation-scale.html.',
-        to: 'Reputation comes from posting: each thread you start earns 10 points and each reply 4. Points are never deducted, and there is no voting. Reaching 50 points earns the Trusted badge and 200 the Sage badge; badges are recognition only and do not unlock extra permissions. The full points table and badge list are at /forum-reputation-scale.html.',
+        to: 'Reputation comes from posting: each thread you start earns 10 points and each reply 4, and there is no voting. When a moderator deletes a thread or reply, the points it earned are taken back, and deleting a thread also takes back the points for every reply in it. Reaching 50 points earns the Trusted badge and 200 the Sage badge; badges are recognition only and do not unlock extra permissions. The full points table and badge list are at /forum-reputation-scale.html.',
       },
     ],
   },
@@ -280,6 +280,21 @@ export const SEEDED_CONTENT_CORRECTIONS = [
         column: 'answer',
         from: 'If you fully delete your account, profile data and saved searches are removed;',
         to: 'There is no self-serve account deletion yet; to delete your account, contact us through /contact.html. When an account is deleted, profile data and saved searches are removed;',
+      },
+    ],
+  },
+  {
+    // Discloses the public word list and the request logs (IP address included),
+    // as src/privacy.html does. Only the middle sentence is replaced, so an
+    // admin's edit to the first or last sentence does not keep the disclosure out.
+    id: 'faq-what-search-data-is-stored-2026-10',
+    table: 'faqs',
+    rowId: 'seed-faq-what-search-data-is-stored',
+    edits: [
+      {
+        column: 'answer',
+        from: 'For all visitors we may log aggregated request metrics (page, timestamp, success/failure) used for site reliability and abuse prevention.',
+        to: 'A single word or short phrase you look up in the main Calculator is also added to the site\'s shared word list, with no link to you, where other visitors can see it in reverse lookups and on word and value pages; names you enter in the Name Calculator are never added. For all visitors we keep short-lived request logs (page, timestamp, IP address, success/failure) used for site reliability and abuse prevention, along with the links and buttons you click if you have allowed analytics. Words you look up are recorded in those logs. Names you enter in the Name Calculator are not, although a logged click records the page address and the link clicked, which can contain a name, as a shared Name Calculator link or a name\'s definition link does.',
       },
     ],
   },

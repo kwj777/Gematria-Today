@@ -131,7 +131,7 @@ VALUES
   (
     'seed-faq-forum-reputation-overview',
     'How does the forum reputation score work?',
-    'Reputation comes from posting: each thread you start earns 10 points and each reply 4. Points are never deducted, and there is no voting. Reaching 50 points earns the Trusted badge and 200 the Sage badge; badges are recognition only and do not unlock extra permissions. The full points table and badge list are at /forum-reputation-scale.html.',
+    'Reputation comes from posting: each thread you start earns 10 points and each reply 4, and there is no voting. When a moderator deletes a thread or reply, the points it earned are taken back, and deleting a thread also takes back the points for every reply in it. Reaching 50 points earns the Trusted badge and 200 the Sage badge; badges are recognition only and do not unlock extra permissions. The full points table and badge list are at /forum-reputation-scale.html.',
     111,
     TRUE,
     'kevandmel',

@@ -279,7 +279,7 @@
         categoriesListEl.querySelectorAll('[data-delete-category]').forEach((button) => {
           button.addEventListener('click', async () => {
             const categoryName = button.closest('form')?.querySelector('[name="name"]')?.value?.trim() || 'this category';
-            if (!window.confirm(`Warning: you are about to permanently delete ${categoryName}. This only works when no active threads exist in it.`)) return;
+            if (!window.confirm(`Warning: you are about to permanently delete ${categoryName}. This only works for a category that has never held a thread, deleted threads included; archive it instead if it has.`)) return;
             try { hideAlert(); await request(`/api/admin-forum?id=${encodeURIComponent(button.dataset.deleteCategory)}`, { method: 'DELETE' }); await load(); showAlert('Category deleted.', 'success'); }
             catch (error) { showAlert(error.message); }
           });

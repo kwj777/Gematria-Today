@@ -190,10 +190,18 @@
         return `<span class="forum-category-chip" style="background:${color};color:${colorText};">${iconMarkup}<span>${categoryName}</span></span>`;
       }
 
+      // Archived and locked categories take no new threads, and moderators-only
+      // ones take them from staff alone, so the composer does not offer them.
+      function acceptsNewThreads(category) {
+        if (category.isArchived || category.isLocked) return false;
+        return category.postMode !== 'moderators' || isAdmin;
+      }
+
       function renderCategories(categories) {
         for (const select of [categoryFilterEl, categoryCreateEl]) {
           const keepAll = select === categoryFilterEl ? '<option value="">All categories</option>' : '';
-          select.innerHTML = keepAll + categories.map((category) => {
+          const options = select === categoryCreateEl ? categories.filter(acceptsNewThreads) : categories;
+          select.innerHTML = keepAll + options.map((category) => {
             const icon = iconByName[String(category.iconName || '').trim()] || '';
             return `<option value="${esc(category.slug)}">${icon ? `${icon} ` : ''}${esc(category.name)}</option>`;
           }).join('');
@@ -341,11 +349,13 @@
           modToolbar.hidden = true;
         }
 
-        const locked = Boolean(thread.isLocked);
+        // Only moderators can reply to a thread that is still awaiting approval.
+        const awaitingApproval = Boolean(thread.pendingApproval) && !isAdmin;
+        const locked = Boolean(thread.isLocked) || awaitingApproval;
         replySubmitButton.disabled = locked;
         replyBox.disabled = locked;
         if (locked) {
-          replyBox.placeholder = 'Thread is locked by moderators.';
+          replyBox.placeholder = awaitingApproval ? 'Replies open once a moderator approves this thread.' : 'Thread is locked by moderators.';
         } else {
           replyBox.placeholder = '';
         }
@@ -531,6 +541,7 @@
 
         document.getElementById('threadDetailTitle').textContent = thread.title;
         document.getElementById('threadDetailMeta').innerHTML = `
+          ${thread.pendingApproval ? '<span class="forum-meta-item"><span class="badge text-bg-warning">Awaiting approval</span></span>' : ''}
           <span class="forum-meta-item">${renderCategoryChip(thread)}</span>
           <span class="forum-meta-item">${renderAuthorInline(thread)}</span>
           <span class="forum-meta-item">${thread.replyCount} replies</span>
@@ -586,23 +597,50 @@
         showAlert('Moderation action completed.', 'success');
       }
 
+      async function approveThread(threadId) {
+        await apiPost({ action: 'approve_thread', threadId });
+        await loadModerationQueue();
+        if (currentThread?.id === threadId) await loadThread(threadId);
+        await loadThreads();
+        showAlert('Thread approved and published.', 'success');
+      }
+
       async function loadModerationQueue() {
         if (!isAdmin) return;
         moderationSectionEl.classList.remove('d-none');
         const payload = await apiGet('/api/member-forum?action=reports');
         const reports = payload.reports || [];
-        if (!reports.length) {
-          moderationListEl.innerHTML = '<p class="text-muted mb-0">No open reports.</p>';
+        const pendingThreads = payload.pendingThreads || [];
+        if (!reports.length && !pendingThreads.length) {
+          moderationListEl.innerHTML = '<p class="text-muted mb-0">No open reports or threads awaiting approval.</p>';
           return;
         }
 
-        moderationListEl.innerHTML = reports.map((report) => `
+        // Threads posted to a category that requires approval wait here, hidden
+        // from other members until a moderator approves (or deletes) them.
+        moderationListEl.innerHTML = pendingThreads.map((thread) => `
+          <article class="border rounded p-3 mb-3">
+            <p class="mb-1"><strong>Awaiting approval</strong> · ${esc(thread.categoryName)} · by ${esc(thread.authorUsername)} · ${formatDate(thread.createdAt)}</p>
+            <p class="mb-2">${esc(thread.title)}</p>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-open-pending-thread="${esc(thread.id)}" aria-label="Open thread: ${esc(thread.title)}">Open</button>
+              <button class="btn btn-outline-success btn-sm" type="button" data-approve-thread="${esc(thread.id)}" aria-label="Approve thread: ${esc(thread.title)}">Approve</button>
+            </div>
+          </article>
+        `).join('') + reports.map((report) => `
           <article class="border rounded p-3 mb-3">
             <p class="mb-1"><strong>${esc(report.reason)}</strong> · by ${esc(report.reporterUsername)} · ${formatDate(report.createdAt)}</p>
             <p class="small text-muted mb-1">Thread: ${esc(report.threadId || 'n/a')} · Reply: ${esc(report.postId || 'n/a')}</p>
             <p class="mb-0">${esc(report.details || 'No additional details.')}</p>
           </article>
         `).join('');
+
+        moderationListEl.querySelectorAll('[data-open-pending-thread]').forEach((button) => {
+          button.addEventListener('click', () => loadThread(button.dataset.openPendingThread).catch((error) => showAlert(error.message)));
+        });
+        moderationListEl.querySelectorAll('[data-approve-thread]').forEach((button) => {
+          button.addEventListener('click', () => approveThread(button.dataset.approveThread).catch((error) => showAlert(error.message)));
+        });
       }
 
       document.getElementById('forumRefreshButton').addEventListener('click', () => loadThreads().catch((error) => showAlert(error.message)));
@@ -648,7 +686,7 @@
         event.preventDefault();
         try {
           clearAlert();
-          await apiPost({
+          const payload = await apiPost({
             action: 'create_thread',
             categorySlug: categoryCreateEl.value,
             title: document.getElementById('newThreadTitle').value,
@@ -658,7 +696,9 @@
           createThreadFormEl.reset();
           refreshComposerCounts();
           await loadThreads();
-          showAlert('Thread posted.', 'success');
+          showAlert(payload?.thread?.pendingApproval
+            ? 'Thread submitted. A moderator will review it before other members can see it.'
+            : 'Thread posted.', 'success');
         } catch (error) {
           showAlert(error.message);
         }
@@ -723,7 +763,7 @@
       async function init() {
         try {
           const session = await apiGet('/api/member-session');
-          isAdmin = session?.user?.role === 'admin';
+          isAdmin = ['admin', 'super_admin'].includes(session?.user?.role) || Boolean(session?.user?.isAdmin);
           isPremium = ['premium', 'lifetime'].includes(session?.user?.membershipLevel);
           if (!isPremium && !isAdmin) {
             areaEl.value = 'free';

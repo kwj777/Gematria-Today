@@ -113,6 +113,18 @@ test('calculator-og recomputes the numbers and keeps $-patterns literal', { skip
   const out = await (await calculatorOg(injected, fakeContext(PAGE))).text();
   assert.equal(out.split('<script').length, PAGE.split('<script').length);
   assert.ok(out.includes('content="Lookup result: $` $&amp; data-x=INJECTED has base-6 English gematria'));
+
+  // The letter check follows the same NFKC + A-Z rule as the total.
+  const fullWidth = new Request(`https://gematria.today/calculator.html?query=${encodeURIComponent('\uFF2B\uFF25\uFF36\uFF29\uFF2E')}`);
+  const wide = await (await calculatorOg(fullWidth, fakeContext(PAGE))).text();
+  assert.ok(wide.includes('(366) | Gematria.Today</title>'));
+  assert.ok(wide.includes('has base-6 English gematria 366 (digital root 6).'));
+
+  const accentOnly = new Request(`https://gematria.today/calculator.html?query=${encodeURIComponent('e\u0301')}`);
+  const accent = await (await calculatorOg(accentOnly, fakeContext(PAGE))).text();
+  assert.ok(!accent.includes('(0)'));
+  assert.ok(!accent.includes('gematria 0'));
+  assert.ok(accent.includes('on the Gematria.Today calculator.'));
 });
 
 test('name-calculator-og recomputes totals and points og:image at a raster', { skip: !canLoadTypeScript && 'needs Node with TypeScript type stripping' }, async () => {

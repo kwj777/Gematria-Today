@@ -31,7 +31,9 @@ export default async (req: Request, context: Context) => {
   // They are ignored: the numbers are recomputed from the query, so a
   // hand-edited link cannot unfurl as a site-branded result for any value.
   const total = englishGematria(query);
-  const hasLetters = /[a-z]/i.test(query);
+  // Same letter rule as the total (NFKC, then ASCII A-Z), so full-width
+  // letters count and an accent-only query does not unfurl as "(0)".
+  const hasLetters = total > 0;
   const title = hasLetters
     ? `Gematria lookup for "${query}" (${total}) | Gematria.Today`
     : `Gematria lookup for "${query}" | Gematria.Today`;

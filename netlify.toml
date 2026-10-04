@@ -544,6 +544,13 @@
 [functions."super-admin-guide-index"]
   included_files = ["secure/site-adaptation-guides/*-site-adaptation-guide.html"]
 
+# The "Train from this" action checks a prompt with GemaBot's own matching
+# helpers, imported from the page script by a relative path. Shipped for the
+# same reason as the _*.mjs helpers above: a verbatim-copy packager keeps the
+# import live, so the file has to exist at that path at runtime.
+[functions."admin-chatbot-feedback"]
+  included_files = ["page-scripts/ai-agent-helpers.mjs"]
+
 # resvg cannot read the woff2 cuts the site serves to browsers, and Lambda has
 # no system fonts at all -- without these TTF cuts both PNG renderers drop every
 # <text> node. tests/resvg-fonts.test.mjs fails if a glob here stops matching.

@@ -1,13 +1,18 @@
 import crypto from 'node:crypto';
 import { getAuthenticatedMember, getSqlClient, jsonResponse, parseBody, parseBoundedIntegerParam } from './_member.mjs';
+import { applyRateLimit } from './_security.mjs';
 import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
 const DEFAULT_SESSION_PAGE_SIZE = 20;
 const MAX_SESSIONS = 100;
+// A member can keep this many saved chats. GET never lists more than
+// MAX_SESSIONS, so a row past it could not even be seen or deleted.
+const MAX_STORED_SESSIONS = MAX_SESSIONS;
 const MAX_TITLE_LENGTH = 120;
 const MAX_TOPIC_LENGTH = 120;
 const MAX_MESSAGES = 80;
 const MAX_MESSAGE_LENGTH = 2000;
+const MAX_TRANSCRIPT_LENGTH = 100_000;
 
 function normalizeText(value, maxLength) {
   return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
@@ -28,10 +33,24 @@ function normalizeTranscript(transcript) {
     return [];
   }
 
-  return transcript
-    .map((entry) => normalizeMessage(entry))
-    .filter(Boolean)
-    .slice(0, MAX_MESSAGES);
+  const messages = [];
+  let totalLength = 0;
+  for (const entry of transcript) {
+    const message = normalizeMessage(entry);
+    if (!message) {
+      continue;
+    }
+    if (messages.length >= MAX_MESSAGES || totalLength + message.text.length > MAX_TRANSCRIPT_LENGTH) {
+      break;
+    }
+    messages.push(message);
+    totalLength += message.text.length;
+  }
+  return messages;
+}
+
+function isPremiumMembership(level) {
+  return level === 'premium' || level === 'lifetime';
 }
 
 function normalizeMetadata(metadata) {
@@ -85,6 +104,23 @@ export async function handler(event) {
     }
 
     if (event.httpMethod === 'POST') {
+      // Saving is the only write here, and it used to be open to any account:
+      // free members (who cannot use GemaBot), while the module was switched
+      // off (now refused above), as fast and as often as a script could loop. Listing and deleting
+      // stay open so a member who lapses can still manage what they saved.
+      if (!isPremiumMembership(member.membershipLevel)) {
+        return jsonResponse(403, { error: 'GemaBot is a premium member feature. Upgrade your membership to save chat sessions.' });
+      }
+
+      await applyRateLimit(sql, event, {
+        scope: 'member-chat-sessions-save',
+        key: member.id,
+        limit: 10,
+        windowMs: 10 * 60_000,
+        blockMs: 10 * 60_000,
+        message: 'You have saved a lot of chat sessions recently. Please try again in a few minutes.',
+      });
+
       const body = parseBody(event);
       const transcript = normalizeTranscript(body.transcript);
       if (!transcript.length) {
@@ -95,18 +131,30 @@ export async function handler(event) {
       const title = normalizeText(body.title, MAX_TITLE_LENGTH) || topic || `AI chat session (${new Date().toISOString().slice(0, 10)})`;
       const metadata = normalizeMetadata(body.metadata);
 
+      // The count and the insert are one statement, so the cap holds without
+      // a separate read that a burst of saves could all pass at once.
       const rows = await sql`
         INSERT INTO member_chat_sessions (id, user_id, title, topic, transcript, metadata)
-        VALUES (
-          ${crypto.randomUUID()},
-          ${member.id},
-          ${title},
-          ${topic || null},
+        SELECT
+          ${crypto.randomUUID()}::text,
+          ${member.id}::text,
+          ${title}::text,
+          ${topic || null}::text,
           ${JSON.stringify(transcript)}::jsonb,
           ${JSON.stringify(metadata)}::jsonb
-        )
+        WHERE (
+          SELECT COUNT(*)
+          FROM member_chat_sessions
+          WHERE user_id = ${member.id}
+        ) < ${MAX_STORED_SESSIONS}
         RETURNING *
       `;
+
+      if (!rows.length) {
+        return jsonResponse(409, {
+          error: `You already have ${MAX_STORED_SESSIONS} saved chat sessions, which is the limit. Delete some from your membership dashboard to save new ones.`,
+        });
+      }
 
       return jsonResponse(201, { session: formatSession(rows[0]) });
     }

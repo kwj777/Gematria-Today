@@ -201,13 +201,13 @@ test('member dashboard stat values and the price badge are readable in dark mode
   const lightBadge = declaration(THEME_CSS, '.membership-price-badge', 'color');
   assertContrast(lightBadge, composite('rgba(255, 124, 53, 0.16)', LIGHT_PANEL), AA_TEXT, 'light .membership-price-badge');
 
-  // The struck-through old price was additionally faded with opacity-75
-  // (1.56:1 dark, 3.59:1 light) and only struck through visually.
+  // The badge used to carry a struck-through $29, faded with opacity-75
+  // (1.56:1 dark, 3.59:1 light). Membership is $19 a year with no reference
+  // price, so the badge is the price alone at full strength.
   const badgeMarkup = MEMBER_HTML.match(/<div class="membership-price-badge">([\s\S]*?)<\/div>/);
   assert.ok(badgeMarkup, 'membership price badge not found in src/member.html');
   assert.doesNotMatch(badgeMarkup[1], /opacity-/);
-  assert.match(badgeMarkup[1], /<del\b[^>]*>[\s\S]*\$29[\s\S]*<\/del>/);
-  assert.match(badgeMarkup[1], /visually-hidden">Was /);
+  assert.doesNotMatch(badgeMarkup[1], /\$29/);
 });
 
 test('blog tag chips show a fill-independent focus ring and keep the selected fill on focus', () => {

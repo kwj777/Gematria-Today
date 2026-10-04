@@ -8,6 +8,7 @@ import {
   formatMemberProfile,
   formatMemberUser,
   getEffectiveMembershipLevel,
+  getSubscriptionPremiumExpiry,
   getYearlyMembershipTerm,
   isPremiumSubscriptionStatus,
   normalizeEmail,
@@ -167,12 +168,43 @@ function premiumMember(overrides = {}) {
 }
 
 test('isPremiumSubscriptionStatus accepts only the Stripe states that still carry premium', () => {
-  for (const status of ['trialing', 'active', 'past_due', 'unpaid']) {
+  for (const status of ['trialing', 'active', 'past_due']) {
     assert.equal(isPremiumSubscriptionStatus(status), true, status);
   }
-  for (const status of ['canceled', 'incomplete', 'incomplete_expired', 'paused', '', null, undefined]) {
+  // 'unpaid' is where Stripe leaves a subscription after every renewal retry
+  // failed; it used to keep premium with nothing paid.
+  for (const status of ['unpaid', 'canceled', 'incomplete', 'incomplete_expired', 'paused', '', null, undefined]) {
     assert.equal(isPremiumSubscriptionStatus(status), false, String(status));
   }
+});
+
+test('getSubscriptionPremiumExpiry holds a past-due subscription to the start of its unpaid period', () => {
+  const currentPeriodStart = new Date('2026-09-30T00:00:00Z');
+  const currentPeriodEnd = new Date('2027-09-30T00:00:00Z');
+
+  // Stripe has already moved the period on by the time a renewal fails, so
+  // the period end is a year nobody has paid for.
+  assert.equal(getSubscriptionPremiumExpiry({ status: 'past_due', currentPeriodStart, currentPeriodEnd }).getTime(), currentPeriodStart.getTime());
+
+  for (const status of ['active', 'trialing', 'canceled']) {
+    assert.equal(getSubscriptionPremiumExpiry({ status, currentPeriodStart, currentPeriodEnd }).getTime(), currentPeriodEnd.getTime(), status);
+  }
+  assert.equal(getSubscriptionPremiumExpiry({ status: 'past_due', currentPeriodEnd }).getTime(), currentPeriodEnd.getTime());
+  assert.equal(getSubscriptionPremiumExpiry({ status: 'active' }), null);
+});
+
+test('a past-due member keeps premium through the renewal grace and then drops to free', () => {
+  const renewedAt = new Date(NOW.getTime() - DAY_MS);
+  const pastDue = premiumMember({
+    membershipExpiresAt: getSubscriptionPremiumExpiry({
+      status: 'past_due',
+      currentPeriodStart: renewedAt,
+      currentPeriodEnd: new Date(renewedAt.getTime() + 365 * DAY_MS),
+    }),
+    stripeSubscriptionStatus: 'past_due',
+  });
+  assert.equal(getEffectiveMembershipLevel(pastDue, NOW), 'premium');
+  assert.equal(getEffectiveMembershipLevel(pastDue, new Date(renewedAt.getTime() + MEMBERSHIP_RENEWAL_GRACE_MS + 1000)), 'free');
 });
 
 test('getEffectiveMembershipLevel keeps premium until membership_expires_at', () => {

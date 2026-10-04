@@ -236,16 +236,18 @@ export async function handler(event) {
     await syncBootstrapAdminUser(sql);
     await assertSiteModuleEnabled(sql, 'knowbot');
     const { user } = await getOptionalAuthenticatedSession(event, { sql });
-    if (!user) {
-      await applyRateLimit(sql, event, {
-        scope: 'public-site-chatbot-ip',
-        key: getClientIp(event),
-        limit: 25,
-        windowMs: 60_000,
-        blockMs: 5 * 60_000,
-        message: 'Too many SiteSeeker requests. Please try again soon.',
-      });
-    }
+    // Signed-in callers used to skip this entirely, and an account is one free
+    // signup away, so every search (which reads the whole FAQ and blog corpus)
+    // was unthrottled for anyone who registered. Throttle everyone: per account
+    // when signed in, so a shared address does not limit members, else per IP.
+    await applyRateLimit(sql, event, {
+      scope: user ? 'public-site-chatbot-user' : 'public-site-chatbot-ip',
+      key: user ? String(user.id) : getClientIp(event),
+      limit: 25,
+      windowMs: 60_000,
+      blockMs: 5 * 60_000,
+      message: 'Too many SiteSeeker requests. Please try again soon.',
+    });
 
     const { visitorSessionId, isNew: isNewVisitor, visitorCookie } = getOrCreateVisitorSession(event);
     const body = parseBody(event);

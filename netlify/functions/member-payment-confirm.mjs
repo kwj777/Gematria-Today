@@ -4,6 +4,7 @@ import {
   getAuthenticatedMember,
   getYearlyMembershipTerm,
   isPremiumSubscriptionStatus,
+  isUnsettledSubscriptionStatus,
   jsonResponse,
 } from './_member.mjs';
 import { getCheckoutSession, getMembershipPaymentConfig, getSubscription } from './_stripe.mjs';
@@ -19,6 +20,15 @@ const MEMBER_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 // subscription gone no webhook would ever switch it off again. A session with
 // no subscription (a one-off payment) is held to its one-year term instead.
 export function resolveCheckoutMembershipTerm(checkoutSession, subscription, now = new Date()) {
+  // A new checkout is never past due or unpaid; only a renewal Stripe could
+  // not collect is. Confirming it would grant the whole unpaid year that the
+  // webhook holds to a short grace (see getSubscriptionPremiumExpiry), and a
+  // new checkout is refused while it stays open, so the member settles it in
+  // the billing portal.
+  if (subscription && isUnsettledSubscriptionStatus(subscription.status)) {
+    return { error: 'The renewal payment for this membership is overdue. Update your payment method under Manage subscription to restore premium access.' };
+  }
+
   if (subscription && !isPremiumSubscriptionStatus(subscription.status)) {
     return { error: 'This membership subscription is no longer active. Start a new checkout to renew premium access.' };
   }

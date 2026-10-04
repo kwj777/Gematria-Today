@@ -3,8 +3,11 @@ import { fetchWithTimeout, getProtectionConfig } from './_security.mjs';
 import crypto from 'node:crypto';
 
 const STRIPE_API_BASE = 'https://api.stripe.com/v1';
+// Every request names the API version the code reads, so an upgrade of the
+// account's default version cannot move fields (such as current_period_end,
+// which now lives on subscription items) out from under it.
+export const STRIPE_API_VERSION = '2026-02-25.clover';
 const YEARLY_MEMBERSHIP_PRICE_CENTS = 1900;
-const YEARLY_MEMBERSHIP_REGULAR_PRICE_CENTS = 2900;
 const YEARLY_MEMBERSHIP_LABEL = 'One Year Membership';
 const YEARLY_MEMBERSHIP_INTERVAL_DAYS = 365;
 
@@ -41,6 +44,7 @@ async function stripeRequest(path, { sql = null, method = 'POST', body = null } 
   const stripeConfig = await getStripeConfig(sql);
   const headers = {
     Authorization: `Bearer ${stripeConfig.secretKey}`,
+    'Stripe-Version': STRIPE_API_VERSION,
     ...(body ? { 'content-type': 'application/x-www-form-urlencoded' } : {}),
   };
 
@@ -57,7 +61,11 @@ async function stripeRequest(path, { sql = null, method = 'POST', body = null } 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = payload?.error?.message || 'Stripe request failed';
-    throw Object.assign(new Error(message), { statusCode: response.status || 502 });
+    throw Object.assign(new Error(message), {
+      statusCode: response.status || 502,
+      stripeCode: payload?.error?.code || null,
+      stripeParam: payload?.error?.param || null,
+    });
   }
 
   return payload;
@@ -80,9 +88,6 @@ export function getMembershipPaymentConfig() {
     product: 'yearly',
     amountCents: YEARLY_MEMBERSHIP_PRICE_CENTS,
     amountDisplay: '$19',
-    regularAmountCents: YEARLY_MEMBERSHIP_REGULAR_PRICE_CENTS,
-    regularAmountDisplay: '$29',
-    introductorySpecial: true,
     label: YEARLY_MEMBERSHIP_LABEL,
     durationDays: YEARLY_MEMBERSHIP_INTERVAL_DAYS,
   };
@@ -95,8 +100,7 @@ export function getMembershipStripePriceConfig() {
   };
 }
 
-export async function createMembershipCheckoutSession(event, member, sql = null) {
-  const siteUrl = getSiteUrl(event);
+function buildMembershipCheckoutParams({ siteUrl, member, customerId }) {
   const membership = getMembershipPaymentConfig();
   const priceConfig = getMembershipStripePriceConfig();
   const params = new URLSearchParams({
@@ -105,7 +109,7 @@ export async function createMembershipCheckoutSession(event, member, sql = null)
     cancel_url: `${siteUrl}/member.html?payment=cancelled`,
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][product_data][name]': membership.label,
-    'line_items[0][price_data][product_data][description]': 'Unlock one year of premium Gematria.Today membership access at the limited-time introductory price of $19 (regularly $29/year).',
+    'line_items[0][price_data][product_data][description]': `Premium Gematria.Today membership: ${membership.amountDisplay} per year, renewing at ${membership.amountDisplay} per year until you cancel.`,
     'line_items[0][price_data][recurring][interval]': priceConfig.recurringInterval,
     'line_items[0][price_data][recurring][interval_count]': String(priceConfig.recurringIntervalCount),
     'line_items[0][price_data][unit_amount]': String(membership.amountCents),
@@ -114,7 +118,6 @@ export async function createMembershipCheckoutSession(event, member, sql = null)
     'metadata[membership_product]': membership.product,
     'subscription_data[metadata][user_id]': member.id,
     'subscription_data[metadata][membership_product]': membership.product,
-    'customer_email': member.email,
     'client_reference_id': member.id,
     'allow_promotion_codes': 'false',
     'billing_address_collection': 'required',
@@ -122,7 +125,43 @@ export async function createMembershipCheckoutSession(event, member, sql = null)
     'tax_id_collection[enabled]': 'true',
   });
 
-  return stripeRequest('/checkout/sessions', { sql, method: 'POST', body: params });
+  // A returning member checks out as the Stripe customer already on their
+  // account, so every subscription they hold shows in the one billing portal
+  // Manage subscription opens. Checkout then saves the address and name it
+  // collects onto that customer, which automatic tax and tax IDs require.
+  if (customerId) {
+    params.set('customer', customerId);
+    params.set('customer_update[address]', 'auto');
+    params.set('customer_update[name]', 'auto');
+  } else {
+    params.set('customer_email', member.email);
+  }
+
+  return params;
+}
+
+export async function createMembershipCheckoutSession(event, member, sql = null) {
+  const siteUrl = getSiteUrl(event);
+  const customerId = String(member.stripeCustomerId || '').trim();
+
+  try {
+    return await stripeRequest('/checkout/sessions', {
+      sql,
+      method: 'POST',
+      body: buildMembershipCheckoutParams({ siteUrl, member, customerId }),
+    });
+  } catch (error) {
+    // A customer saved under other Stripe keys (test mode, or an account
+    // since replaced) does not exist on this one; start a fresh customer.
+    if (!customerId || error.stripeCode !== 'resource_missing' || error.stripeParam !== 'customer') {
+      throw error;
+    }
+    return stripeRequest('/checkout/sessions', {
+      sql,
+      method: 'POST',
+      body: buildMembershipCheckoutParams({ siteUrl, member, customerId: '' }),
+    });
+  }
 }
 
 export async function getCheckoutSession(sessionId, sql = null) {

@@ -322,30 +322,35 @@
         updateEditorIndices();
       }
 
+      // Every row repeats the same five fields, so each row gets its own id
+      // prefix; without ids the labels named nothing for screen readers.
+      var editorRowSeq = 0;
+
       function buildEditorRow(site, index) {
         var row = document.createElement('div');
+        var fieldId = 'siteEditor-' + (++editorRowSeq) + '-';
         row.className = 'row g-2 mb-2 align-items-end site-editor-row';
         row.dataset.index = String(index);
         row.innerHTML =
           '<div class="col-md-2">' +
-            '<label class="form-label small mb-1">ID</label>' +
-            '<input class="form-control form-control-sm field-id" value="' + escHtml(site.id || '') + '" placeholder="site-1" />' +
+            '<label class="form-label small mb-1" for="' + fieldId + 'id">ID</label>' +
+            '<input id="' + fieldId + 'id" class="form-control form-control-sm field-id" value="' + escHtml(site.id || '') + '" placeholder="site-1" />' +
           '</div>' +
           '<div class="col-md-2">' +
-            '<label class="form-label small mb-1">Name</label>' +
-            '<input class="form-control form-control-sm field-name" value="' + escHtml(site.name || '') + '" placeholder="My Site" />' +
+            '<label class="form-label small mb-1" for="' + fieldId + 'name">Name</label>' +
+            '<input id="' + fieldId + 'name" class="form-control form-control-sm field-name" value="' + escHtml(site.name || '') + '" placeholder="My Site" />' +
           '</div>' +
           '<div class="col-md-2">' +
-            '<label class="form-label small mb-1">URL</label>' +
-            '<input class="form-control form-control-sm field-url" value="' + escHtml(site.url || '') + '" placeholder="https://example.com" />' +
+            '<label class="form-label small mb-1" for="' + fieldId + 'url">URL</label>' +
+            '<input id="' + fieldId + 'url" class="form-control form-control-sm field-url" value="' + escHtml(site.url || '') + '" placeholder="https://example.com" />' +
           '</div>' +
           '<div class="col-md-2">' +
-            '<label class="form-label small mb-1">Netlify Site ID</label>' +
-            '<input class="form-control form-control-sm field-netlify-site-id" value="' + escHtml(site.netlifySiteId || '') + '" placeholder="1234abcd-..." autocomplete="off" />' +
+            '<label class="form-label small mb-1" for="' + fieldId + 'netlify-site-id">Netlify Site ID</label>' +
+            '<input id="' + fieldId + 'netlify-site-id" class="form-control form-control-sm field-netlify-site-id" value="' + escHtml(site.netlifySiteId || '') + '" placeholder="1234abcd-..." autocomplete="off" />' +
           '</div>' +
           '<div class="col-md-2">' +
-            '<label class="form-label small mb-1">Shared Secret <span class="text-muted">(HUB_SHARED_SECRET)</span></label>' +
-            '<input class="form-control form-control-sm field-secret" type="password" value="' + escHtml(site.sharedSecret || '') + '" placeholder="Leave blank to keep existing" autocomplete="off" />' +
+            '<label class="form-label small mb-1" for="' + fieldId + 'secret">Shared Secret <span class="text-muted">(HUB_SHARED_SECRET)</span></label>' +
+            '<input id="' + fieldId + 'secret" class="form-control form-control-sm field-secret" type="password" value="' + escHtml(site.sharedSecret || '') + '" placeholder="Leave blank to keep existing" autocomplete="off" />' +
           '</div>' +
           '<div class="col-md-2">' +
             '<p class="small text-muted mb-2">Manage secret + removal from this site\'s <a href="/admin-super-admin.html">Super Admin</a> page.</p>' +

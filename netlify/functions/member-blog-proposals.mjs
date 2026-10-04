@@ -1,5 +1,17 @@
 import crypto from 'node:crypto';
 import { getAuthenticatedMember, jsonResponse, parseBody } from './_member.mjs';
+import { applyRateLimit } from './_security.mjs';
+
+// Title and summary match the maxlength on the member.html form. The rest had
+// no bound at all, and every proposal is loaded and rendered on the admin
+// editorial pages.
+const PROPOSAL_FIELD_LIMITS = [
+  { field: 'title', label: 'Title', maxLength: 140 },
+  { field: 'summary', label: 'Summary', maxLength: 500 },
+  { field: 'body', label: 'Draft content', maxLength: 100_000 },
+  { field: 'suggestedTags', label: 'Suggested tags', maxLength: 500 },
+  { field: 'proposedImageUrl', label: 'Suggested image URL', maxLength: 2048 },
+];
 
 function isPremiumMembership(level) {
   return level === 'premium' || level === 'lifetime';
@@ -93,6 +105,23 @@ export async function handler(event) {
     if (!title || !summary || !body || !suggestedTags) {
       return jsonResponse(400, { error: 'title, summary, body, and suggestedTags are required' });
     }
+
+    const fieldValues = { title, summary, body, suggestedTags, proposedImageUrl: proposedImageUrl || '' };
+    const oversized = PROPOSAL_FIELD_LIMITS.find(({ field, maxLength }) => fieldValues[field].length > maxLength);
+    if (oversized) {
+      return jsonResponse(400, {
+        error: `${oversized.label} must be ${oversized.maxLength.toLocaleString('en-US')} characters or fewer.`,
+      });
+    }
+
+    await applyRateLimit(sql, event, {
+      scope: 'member-blog-proposals-member',
+      key: String(member.id),
+      limit: 10,
+      windowMs: 60 * 60_000,
+      blockMs: 60 * 60_000,
+      message: 'You have sent a lot of blog proposals recently. Please try again later.',
+    });
 
     const rows = await sql`
       INSERT INTO blog_post_proposals (

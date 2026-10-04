@@ -981,6 +981,9 @@
       }
 
       function formatMembershipWindow(member) {
+        if (member.membershipLevel !== 'lifetime' && hasUnsettledSubscription(member)) {
+          return 'Your renewal payment is overdue. Use Manage subscription to update your payment method.';
+        }
         if (member.membershipLevel !== 'premium' || !member.membershipExpiresAt) {
           return 'Current membership tier.';
         }
@@ -999,8 +1002,13 @@
 
       function syncPaymentButton(member = session?.member) {
         const isPremium = member?.membershipLevel === 'premium';
-        paymentButton.disabled = !member || isPremium;
-        setPaymentButtonLabel(isPremium ? 'Premium membership active' : 'Continue to secure Stripe checkout');
+        const isOverdue = !isPremium && hasUnsettledSubscription(member);
+        paymentButton.disabled = !member || isPremium || isOverdue;
+        if (isPremium) {
+          setPaymentButtonLabel('Premium membership active');
+        } else {
+          setPaymentButtonLabel(isOverdue ? 'Renewal payment overdue' : 'Continue to secure Stripe checkout');
+        }
       }
 
       function syncPremiumResearchLink(member = session?.member) {
@@ -1044,6 +1052,15 @@
         return level === 'premium' || level === 'lifetime';
       }
 
+      // A renewal Stripe could not collect leaves the subscription open, still
+      // billable, after premium ends (past_due while Stripe retries the card,
+      // unpaid once it stops). The member fixes or cancels it in the billing
+      // portal; the server refuses a second checkout until then.
+      function hasUnsettledSubscription(member) {
+        const status = String(member?.stripeSubscriptionStatus || '').trim();
+        return Boolean(member?.stripeCustomerId) && (status === 'past_due' || status === 'unpaid');
+      }
+
       function syncBlogProposalForm(member = session?.member) {
         const isPremium = isPremiumMembershipLevel(member?.membershipLevel);
         premiumBlogProposalForm.classList.toggle('d-none', !isPremium);
@@ -1065,7 +1082,7 @@
         if (!isPremium) {
           setMessageCenterOpen(false);
         }
-        manageSubscriptionButton?.classList.toggle('d-none', !(isPremium && member?.stripeCustomerId));
+        manageSubscriptionButton?.classList.toggle('d-none', !((isPremium && member?.stripeCustomerId) || hasUnsettledSubscription(member)));
       }
 
       function getMessageCenterSentItems({ archived = false } = {}) {
@@ -3013,6 +3030,11 @@
           return;
         }
 
+        if (hasUnsettledSubscription(session.member)) {
+          showAlert('The renewal payment for your membership is overdue. Use Manage subscription to update your payment method, or to cancel that subscription before starting a new one.', 'warning');
+          return;
+        }
+
         try {
           window.gematriaTracking?.track('checkout_start', {
             source: 'member_upgrade_form',
@@ -3034,7 +3056,7 @@
 
       manageSubscriptionButton?.addEventListener('click', async () => {
         clearAlert();
-        if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
+        if (!isPremiumMembershipLevel(session?.member?.membershipLevel) && !hasUnsettledSubscription(session?.member)) {
           showAlert('Subscription management is available to premium members only.', 'warning');
           return;
         }

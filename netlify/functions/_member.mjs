@@ -212,11 +212,38 @@ export function formatMemberUser(row) {
 
 // Stripe subscription states that still carry premium. The webhook sync and the
 // checkout confirmation both read this, so neither can grant what the other
-// would take away.
-const PREMIUM_SUBSCRIPTION_STATUSES = new Set(['trialing', 'active', 'past_due', 'unpaid']);
+// would take away. 'unpaid' is not one: Stripe sets it once every retry of a
+// renewal has failed and keeps the subscription open with nothing paid; paying
+// the invoice later makes it active again.
+const PREMIUM_SUBSCRIPTION_STATUSES = new Set(['trialing', 'active', 'past_due']);
 
 export function isPremiumSubscriptionStatus(status) {
   return PREMIUM_SUBSCRIPTION_STATUSES.has(String(status || '').trim());
+}
+
+// A renewal Stripe could not collect leaves the subscription open: past_due
+// while Stripe retries the card (about two weeks by default), unpaid once it
+// stops. Premium ends before then, but paying the invoice still makes that
+// subscription active again, so the member settles or cancels it under Manage
+// subscription. A new checkout would start a second one beside it.
+const UNSETTLED_SUBSCRIPTION_STATUSES = new Set(['past_due', 'unpaid']);
+
+export function isUnsettledSubscriptionStatus(status) {
+  return UNSETTLED_SUBSCRIPTION_STATUSES.has(String(status || '').trim());
+}
+
+// The date a subscription pays premium through. Stripe starts the new period
+// before it collects the renewal, so a past_due subscription's period end is a
+// year nobody has paid for: it carries premium only from the start of that
+// unpaid period through the renewal grace below, while Stripe retries the card.
+// A retry that succeeds turns it active again with the full period end.
+export function getSubscriptionPremiumExpiry({ status = null, currentPeriodStart = null, currentPeriodEnd = null } = {}) {
+  const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  if (String(status || '').trim() !== 'past_due' || !currentPeriodStart) {
+    return periodEnd;
+  }
+  const periodStart = new Date(currentPeriodStart);
+  return periodEnd && periodEnd.getTime() < periodStart.getTime() ? periodEnd : periodStart;
 }
 
 // Stripe renews a subscription at the end of its period and only then sends
@@ -641,28 +668,39 @@ export async function syncMembershipFromStripeSubscription(sql, {
 
   const periodStart = currentPeriodStart ? new Date(currentPeriodStart) : null;
   const periodEnd = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  const premiumExpiresAt = getSubscriptionPremiumExpiry({ status: normalizedStatus, currentPeriodStart: periodStart, currentPeriodEnd: periodEnd });
   const isActive = isPremiumSubscriptionStatus(normalizedStatus);
   const nextMembershipLevel = isActive ? 'premium' : 'free';
 
+  // A live subscription grants premium to its member and becomes the one the
+  // account follows. One that has ended only takes premium away from an
+  // account still following that same subscription: an old subscription
+  // cancelled after the member started a new one, or after an admin grant,
+  // must not switch off premium that something else pays for.
   const rows = await sql`
     UPDATE users
     SET membership_level = ${nextMembershipLevel},
         membership_started_at = COALESCE(${periodStart ? periodStart.toISOString() : null}, membership_started_at),
-        membership_expires_at = ${periodEnd ? periodEnd.toISOString() : null},
+        membership_expires_at = ${premiumExpiresAt ? premiumExpiresAt.toISOString() : null},
         stripe_customer_id = COALESCE(${normalizedCustomerId}, stripe_customer_id),
         stripe_subscription_id = COALESCE(${normalizedSubscriptionId}, stripe_subscription_id),
         stripe_subscription_status = COALESCE(${normalizedStatus}, stripe_subscription_status),
         stripe_subscription_current_period_end = ${periodEnd ? periodEnd.toISOString() : null},
         updated_at = NOW()
     WHERE (
-      ${normalizedMemberId}::text IS NOT NULL
-      AND id = ${normalizedMemberId}
-    ) OR (
-      ${normalizedSubscriptionId}::text IS NOT NULL
-      AND stripe_subscription_id = ${normalizedSubscriptionId}
-    ) OR (
-      ${normalizedCustomerId}::text IS NOT NULL
-      AND stripe_customer_id = ${normalizedCustomerId}
+      (
+        ${normalizedMemberId}::text IS NOT NULL
+        AND id = ${normalizedMemberId}
+      ) OR (
+        ${normalizedSubscriptionId}::text IS NOT NULL
+        AND stripe_subscription_id = ${normalizedSubscriptionId}
+      ) OR (
+        ${normalizedCustomerId}::text IS NOT NULL
+        AND stripe_customer_id = ${normalizedCustomerId}
+      )
+    ) AND (
+      ${isActive}::boolean
+      OR stripe_subscription_id = ${normalizedSubscriptionId}
     )
     RETURNING id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_id, stripe_subscription_status, stripe_subscription_current_period_end, status, email_verified, created_at, updated_at
   `;

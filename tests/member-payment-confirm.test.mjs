@@ -37,7 +37,7 @@ test('replaying a paid session after the subscription was cancelled does not res
 });
 
 test('a subscription that never went live cannot be confirmed into premium', () => {
-  for (const status of ['incomplete', 'incomplete_expired', 'paused']) {
+  for (const status of ['incomplete', 'incomplete_expired', 'paused', 'unpaid']) {
     const result = resolveCheckoutMembershipTerm(paidCheckoutSession(), subscription(status, nowSeconds + DAY_SECONDS), NOW);
     assert.ok(result.error, status);
   }
@@ -77,4 +77,26 @@ test('a session with no subscription is held to one year from the purchase', () 
     NOW,
   );
   assert.match(lapsed.error, /has ended/);
+});
+
+test('replaying a paid session while the renewal is past due does not grant the unpaid year', () => {
+  const result = resolveCheckoutMembershipTerm(
+    paidCheckoutSession(),
+    subscription('past_due', nowSeconds + 360 * DAY_SECONDS),
+    NOW,
+  );
+  assert.match(result.error, /overdue/);
+  assert.equal(result.subscriptionCurrentPeriodEnd, undefined);
+});
+
+test('an unpaid renewal is sent to Manage subscription, not to a new checkout that would be refused', () => {
+  for (const status of ['past_due', 'unpaid']) {
+    const result = resolveCheckoutMembershipTerm(
+      paidCheckoutSession(),
+      subscription(status, nowSeconds + 360 * DAY_SECONDS),
+      NOW,
+    );
+    assert.match(result.error, /Manage subscription/, status);
+    assert.doesNotMatch(result.error, /new checkout/, status);
+  }
 });

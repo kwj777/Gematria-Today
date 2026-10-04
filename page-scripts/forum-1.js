@@ -170,15 +170,34 @@
         return String(value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
       }
 
-      function textColorForBackground(hexColor = '#6c757d') {
-        const match = /^#?([0-9a-f]{6})$/i.exec(hexColor);
-        if (!match) return '#ffffff';
+      // WCAG 2 relative luminance of a #rrggbb color, or null if it isn't one.
+      function relativeLuminance(hexColor) {
+        const match = /^#?([0-9a-f]{6})$/i.exec(String(hexColor || ''));
+        if (!match) return null;
         const int = Number.parseInt(match[1], 16);
-        const r = (int >> 16) & 255;
-        const g = (int >> 8) & 255;
-        const b = int & 255;
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-        return luminance > 165 ? '#212529' : '#ffffff';
+        const [r, g, b] = [(int >> 16) & 255, (int >> 8) & 255, int & 255].map((channel) => {
+          const value = channel / 255;
+          return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function contrastRatio(luminanceA, luminanceB) {
+        const [lighter, darker] = luminanceA > luminanceB ? [luminanceA, luminanceB] : [luminanceB, luminanceA];
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+
+      // Category colors are free admin input, so pick the chip text by WCAG
+      // contrast, not a brightness threshold: that put white on cyan, teal and
+      // orange at about 2:1. On mid-tones where neither white nor the body ink
+      // reaches 4.5:1, black always does (white failing implies black passes).
+      function textColorForBackground(hexColor = '#6c757d') {
+        const background = relativeLuminance(hexColor);
+        if (background === null) return '#ffffff';
+        const [best] = ['#ffffff', '#212529']
+          .map((color) => ({ color, ratio: contrastRatio(background, relativeLuminance(color)) }))
+          .sort((a, b) => b.ratio - a.ratio);
+        return best.ratio >= 4.5 ? best.color : '#000000';
       }
 
       function renderCategoryChip(thread) {
@@ -220,11 +239,18 @@
           return;
         }
 
+        // The card used to be role="button" itself, which hid everything in it
+        // (excerpt, author, counts, Locked) behind its label and nested the
+        // author and badge controls inside a button. The title is now the
+        // real control; the card keeps a mouse-only click as a convenience.
+        // no-glossary: the glossary skipped the card while it was role="button".
+        // Its term buttons would add tab stops to every card in the list, and a
+        // tap on one (the only way to open a definition on touch) opened the thread.
         threadListEl.innerHTML = threads.map((thread) => `
-          <article class="forum-thread-card" data-thread-id="${thread.id}" role="button" tabindex="0" aria-label="Open thread: ${esc(thread.title)}">
-            <div class="d-flex justify-content-between align-items-start gap-3">
+          <article class="forum-thread-card" data-thread-id="${thread.id}">
+            <div class="d-flex justify-content-between align-items-start gap-3 no-glossary">
               <div class="forum-thread-card-main">
-                <h3 class="h6 mb-1 forum-subtitle">${esc(thread.title)} ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
+                <h3 class="h6 mb-1 forum-subtitle"><button type="button" class="forum-thread-open">${esc(thread.title)}</button> ${thread.isLocked ? '<span class="badge text-bg-warning ms-1">Locked</span>' : ''}</h3>
                 <p class="small text-muted mb-1 forum-meta">
                   <span class="forum-meta-item">${renderCategoryChip(thread)}</span>
                   <span class="forum-meta-item">By ${renderAuthorInline(thread)}</span>
@@ -239,16 +265,12 @@
         `).join('');
 
         threadListEl.querySelectorAll('[data-thread-id]').forEach((card) => {
+          // The title button's own click (mouse, Enter or Space) bubbles here.
+          // Every other control in the card (author profile, badge link, a
+          // glossary term) and the popups they open do their own thing.
           card.addEventListener('click', (event) => {
-            if (event.target.closest('.forum-author-trigger, .forum-profile-popover')) return;
+            if (event.target.closest('a, button:not(.forum-thread-open), .forum-profile-popover, .defn-popup')) return;
             loadThread(card.dataset.threadId).catch((error) => showAlert(error.message));
-          });
-          card.addEventListener('keydown', (event) => {
-            if (event.target !== card) return;
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              loadThread(card.dataset.threadId).catch((error) => showAlert(error.message));
-            }
           });
         });
         bindAuthorPopovers(threadListEl);

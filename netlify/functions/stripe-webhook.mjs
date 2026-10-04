@@ -1,6 +1,12 @@
-import { getSqlClient, jsonResponse, syncMembershipFromStripeSubscription } from './_member.mjs';
-import { getStripeConfig, verifyStripeWebhookSignature } from './_stripe.mjs';
+import { ensureMemberSchema, getSqlClient, jsonResponse, syncMembershipFromStripeSubscription } from './_member.mjs';
+import { getMembershipPaymentConfig, getStripeConfig, getSubscription, verifyStripeWebhookSignature } from './_stripe.mjs';
 import { logRequestAudit } from './_security.mjs';
+
+const SUBSCRIPTION_EVENT_TYPES = new Set([
+  'customer.subscription.created',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
+]);
 
 function getHeader(event, name) {
   const headers = event.headers || {};
@@ -36,6 +42,52 @@ export function mapSubscriptionPayload(payload = {}) {
     stripeSubscriptionStatus: payload.status || null,
     currentPeriodStart: toDateFromStripeEpoch(item.current_period_start || payload.current_period_start),
     currentPeriodEnd: toDateFromStripeEpoch(item.current_period_end || payload.current_period_end),
+  };
+}
+
+// Other apps bill through the same Stripe account, so subscription events
+// arrive for subscriptions that are not memberships. Ours carry the membership
+// product in their metadata (set at checkout); one an account already follows
+// counts too.
+async function isMembershipSubscription(sql, subscriptionId, payload) {
+  if (payload?.metadata?.membership_product === getMembershipPaymentConfig().product) {
+    return true;
+  }
+  await ensureMemberSchema(sql);
+  const rows = await sql`
+    SELECT id
+    FROM users
+    WHERE stripe_subscription_id = ${subscriptionId}
+    LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
+// Stripe neither orders its events nor stops retrying a failed one for days,
+// so an event's copy of the subscription can be older than what the account
+// already shows: a retried "active" update landing after the cancellation
+// used to switch premium back on. Each event is only a cue to read the
+// subscription as it is now and sync from that.
+export async function syncSubscriptionEvent(sql, payload, { fetchSubscription = getSubscription } = {}) {
+  const subscriptionId = String(payload?.id || '').trim();
+  if (!subscriptionId || !(await isMembershipSubscription(sql, subscriptionId, payload))) {
+    return { outcome: 'ignored', subscriptionId: subscriptionId || null };
+  }
+
+  let subscription;
+  try {
+    subscription = await fetchSubscription(subscriptionId, sql);
+  } catch (error) {
+    // Answering 2xx would tell Stripe the event was handled and it would never
+    // be sent again; a 5xx has it retry once Stripe can be read.
+    throw Object.assign(new Error(`Unable to read subscription ${subscriptionId} from Stripe: ${error.message || 'request failed'}`), { statusCode: 502 });
+  }
+
+  const member = await syncMembershipFromStripeSubscription(sql, mapSubscriptionPayload(subscription));
+  return {
+    outcome: member ? 'synced' : 'no_member',
+    subscriptionId,
+    subscriptionStatus: subscription?.status || null,
   };
 }
 
@@ -77,18 +129,15 @@ export async function handler(event) {
     const eventType = String(stripeEvent.type || '');
     const object = stripeEvent.data?.object || {};
 
-    if (eventType === 'customer.subscription.created'
-      || eventType === 'customer.subscription.updated'
-      || eventType === 'customer.subscription.deleted') {
-      const mapped = mapSubscriptionPayload(object);
-      await syncMembershipFromStripeSubscription(sql, mapped);
-    }
+    const subscriptionSync = SUBSCRIPTION_EVENT_TYPES.has(eventType)
+      ? await syncSubscriptionEvent(sql, object)
+      : null;
 
     await logRequestAudit(sql, event, {
       route: 'stripe-webhook',
       action: 'event_received',
       outcome: 'success',
-      metadata: { eventId: stripeEvent.id || null, eventType: eventType || null },
+      metadata: { eventId: stripeEvent.id || null, eventType: eventType || null, ...(subscriptionSync ? { subscriptionSync } : {}) },
     });
 
     return jsonResponse(200, { received: true });

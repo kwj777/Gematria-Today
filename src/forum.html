@@ -83,7 +83,21 @@
         min-height: 44px;
       }
       .forum-thread-card:hover .forum-category-chip,
-      .forum-thread-card:focus-visible .forum-category-chip { transform: translateY(-1px); filter: saturate(1.06); }
+      .forum-thread-card:focus-within .forum-category-chip { transform: translateY(-1px); filter: saturate(1.06); }
+      .forum-thread-open {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+      }
+      .forum-thread-open:hover { text-decoration: underline; text-underline-offset: 2px; }
+      .forum-thread-open:focus-visible {
+        outline: 2px solid var(--brand-amber);
+        outline-offset: 2px;
+        border-radius: 0.25rem;
+      }
       .forum-category-icon { line-height: 1; }
       @media (prefers-reduced-motion: reduce) {
         .forum-category-chip { transition: none; }
@@ -128,8 +142,12 @@
         text-decoration: underline;
         text-underline-offset: 2px;
       }
+      /* The pale blue only reads on the dark cards; on the light theme's white
+         cards it was 1.76:1, so light uses a dark link blue (6.4:1 on white). */
       .forum-author-trigger:hover,
-      .forum-author-trigger:focus-visible { color: #9ec5fe; }
+      .forum-author-trigger:focus-visible { color: #0a58ca; }
+      :root[data-bs-theme="dark"] .forum-author-trigger:hover,
+      :root[data-bs-theme="dark"] .forum-author-trigger:focus-visible { color: #9ec5fe; }
       .forum-profile-popover {
         position: absolute;
         z-index: 20;
@@ -143,6 +161,9 @@
         padding: 0.65rem 0.75rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.35);
       }
+      /* The popover is dark in both themes, but Bootstrap's light-theme
+         .text-muted is dark gray: the @username and membership lines were 1.06:1. */
+      .forum-profile-popover .text-muted { color: rgba(230, 235, 242, 0.78) !important; }
       .forum-profile-popover-close {
         border: 0;
         border-radius: 999px;

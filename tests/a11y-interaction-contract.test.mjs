@@ -302,8 +302,9 @@ test('the admin theme toggle is labelled as soon as it is parsed and follows the
   assert.equal(admin.button.textContent, 'Dark mo', 'not labelled until the parser is past </button>');
   assert.equal(observer.observers.filter((o) => o.options?.childList).length, 1, 'still watching');
 
+  // Once the whole markup text is in, only </button> can follow, even if the
+  // chunk ended there and the button has no next sibling yet.
   admin.button.textContent = 'Dark mode';
-  admin.button.nextSibling = { nodeType: 3 };
   observer.notify('childList');
   assert.equal(admin.button.textContent, 'Light mode', 'labelled when parsed, before DOMContentLoaded');
   assert.equal(admin.button.getAttribute('aria-pressed'), null);
@@ -314,11 +315,25 @@ test('the admin theme toggle is labelled as soon as it is parsed and follows the
   );
 
   // Any other script that changes data-bs-theme moves the label with it.
+  admin.button.nextSibling = { nodeType: 3 }; // the parser has moved on
   admin.setTheme('light');
   observer.notify('attributes');
   assert.equal(admin.button.textContent, 'Dark mode');
   const themeWatch = observer.observers.find((o) => o.options?.attributes);
   assert.deepEqual([...themeWatch.options.attributeFilter], ['data-bs-theme']);
+
+  // A button whose text differs from the markup's still counts once the
+  // parser has moved past it.
+  const sibling = fakeObserverClass();
+  const moved = loadAdminTheme({ stored: 'dark', observer: sibling, parsed: false });
+  moved.page.parsed = true;
+  moved.button.textContent = '';
+  moved.button.nextSibling = null;
+  sibling.notify('childList');
+  assert.equal(moved.button.textContent, '');
+  moved.button.nextSibling = { nodeType: 3 };
+  sibling.notify('childList');
+  assert.equal(moved.button.textContent, 'Light mode');
 
   // A page without the button stops watching the DOM once it has loaded.
   const noButton = fakeObserverClass();

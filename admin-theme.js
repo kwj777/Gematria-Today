@@ -52,14 +52,23 @@
     return theme === 'dark' ? 'dark' : 'light';
   }
 
-  // The button, once the parser has moved past its closing tag. Labelling it
+  // What every admin page's markup puts inside the button.
+  var THEME_TOGGLE_MARKUP_TEXT = 'Dark mode';
+
+  // The button, once the parser can add nothing more inside it. Labelling it
   // as soon as the start tag is in the DOM let the parser append the markup
   // text after the label ("Light modeDark mode") when a network chunk ended
-  // inside the button.
+  // inside the button. Once the whole markup text is in, only </button> can
+  // follow; a next sibling or a finished document means it already has.
+  // Waiting for the sibling alone painted the wrong label on a dark page
+  // when a chunk ended right after </button>.
   function parsedThemeToggleButton() {
     var btn = document.getElementById('themeToggleButton');
     if (!btn) return null;
-    return btn.nextSibling || document.readyState !== 'loading' ? btn : null;
+    var complete = btn.textContent === THEME_TOGGLE_MARKUP_TEXT
+      || btn.nextSibling
+      || document.readyState !== 'loading';
+    return complete ? btn : null;
   }
 
   function currentTheme() {

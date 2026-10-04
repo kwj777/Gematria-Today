@@ -124,6 +124,7 @@ export function cookieSecureDirective() {
 
 export const AUTH_COOKIES = {
   admin: 'gematria_admin_session',
+  adminFlag: 'gematria_admin_flag',
   member: 'gematria_member_session',
   memberTier: 'gematria_member_tier',
   visitor: 'gematria_visitor_session',
@@ -261,7 +262,24 @@ function buildSessionClearHeader(cookieName, { httpOnly = true } = {}) {
 }
 
 export function clearSessionCookie(cookieName = AUTH_COOKIES.admin) {
-  return [buildSessionClearHeader(cookieName)];
+  const cleared = [buildSessionClearHeader(cookieName)];
+  if (cookieName === AUTH_COOKIES.admin) {
+    cleared.push(buildSessionClearHeader(AUTH_COOKIES.adminFlag, { httpOnly: false }));
+  }
+  return cleared;
+}
+
+// UI-only hint (not HttpOnly) so the consent banner and the click trackers can
+// tell an admin is browsing: the admin session cookie is HttpOnly and invisible
+// to them. It holds no token and grants nothing; it lives and dies with the
+// session cookie it accompanies.
+export function createAdminFlagCookie(expiresAt) {
+  const secureDirective = cookieSecureDirective();
+  return `${AUTH_COOKIES.adminFlag}=1; Path=/${secureDirective}; SameSite=Lax; Expires=${expiresAt.toUTCString()}`;
+}
+
+export function createAdminSessionCookies(token, expiresAt) {
+  return [createSessionCookie(token, expiresAt, AUTH_COOKIES.admin), createAdminFlagCookie(expiresAt)];
 }
 
 const ALLOWED_MEMBER_TIERS = new Set(['free', 'premium', 'lifetime']);

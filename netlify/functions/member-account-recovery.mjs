@@ -4,6 +4,7 @@ import {
   clearSessionCookie,
   consumeAccountRecoveryRequest,
   createAccountRecoveryRequest,
+  createAdminSessionCookies,
   createSession,
   createSessionCookie,
   ensureAccountRecoverySchema,
@@ -249,7 +250,7 @@ export async function handler(event) {
           message: 'Password reset complete. You are now signed in.',
           route: 'admin',
         }, {
-          'set-cookie': createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+          'set-cookie': createAdminSessionCookies(token, expiresAt),
         });
       }
 

@@ -10,7 +10,10 @@
   }
 
   function reportSitewideElementClick(event) {
-    if (window.gematriaTracking?.track) {
+    // A first-party tracker is still tracking: it must stop when the visitor
+    // declines analytics (or has not chosen yet where consent is required),
+    // exactly like Google Analytics. cookie-consent.js decides.
+    if (window.gematriaTracking?.track || window.gematriaCookieConsent?.analyticsAllowed?.() !== true) {
       return;
     }
 

@@ -51,6 +51,14 @@
     return JSON.stringify({ a: prefs.analytics ? 1 : 0, m: prefs.advertising ? 1 : 0 });
   }
 
+  // The choice made on this page view, kept in memory so it still counts when
+  // localStorage is unavailable (private mode, blocked site data).
+  var sessionPrefs = null;
+
+  function currentPreferences() {
+    return sessionPrefs || parseConsent(getConsent());
+  }
+
   function isRegionScopedForBanner() {
     try {
       var timeZone = String((Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || '');
@@ -68,10 +76,38 @@
     }
   }
 
+  var bannerRegion = isRegionScopedForBanner();
+
+  // Every tracker on the site (Google Analytics, conversion-tracking.js, the
+  // click reporters in ui-feedback.js and the page scripts) asks this one
+  // function, so declining in the banner stops all of them. With no stored
+  // choice the region decides: opt-in where the banner is shown, opt-out
+  // elsewhere, as privacy.html describes.
+  function isAnalyticsAllowed() {
+    var prefs = currentPreferences();
+    if (prefs) {
+      return prefs.analytics === true;
+    }
+    return !bannerRegion;
+  }
+
+  // Global Privacy Control is an opt-out of "sale" and "sharing" (privacy.html
+  // #dnt). Google's advertising signals are the only thing here that could
+  // amount to sharing, so GPC keeps them denied whatever the stored choice is.
+  function hasGlobalPrivacyControl() {
+    try {
+      return !!window.navigator && window.navigator.globalPrivacyControl === true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // The admin session cookie is HttpOnly and never visible to document.cookie;
+  // the server sets this readable flag (no secret in it) alongside it.
   function isAdminSession() {
     try {
       return document.cookie.split(';').some(function (c) {
-        return c.trim().startsWith('gematria_admin_session=');
+        return c.trim().startsWith('gematria_admin_flag=');
       });
     } catch (e) {
       return false;
@@ -84,13 +120,14 @@
     }
 
     var analyticsStatus = prefs.analytics ? 'granted' : 'denied';
-    var advertisingStatus = prefs.advertising ? 'granted' : 'denied';
+    var advertisingStatus = prefs.advertising && !hasGlobalPrivacyControl() ? 'granted' : 'denied';
+    // No `region` here: an explicit choice applies wherever the visitor is,
+    // which is how someone outside the consent-mode regions opts out.
     window.gtag('consent', 'update', {
       analytics_storage: analyticsStatus,
       ad_storage: advertisingStatus,
       ad_user_data: advertisingStatus,
       ad_personalization: advertisingStatus,
-      region: CONSENT_MODE_REGIONS,
     });
   }
 
@@ -113,7 +150,41 @@
     }
   }
 
+  // Where keyboard focus goes when the banner closes: the element that had it
+  // when the banner opened (the footer's Cookie settings button on a reopen).
+  var returnFocusTarget = null;
+
+  function restoreFocus(banner) {
+    var target = returnFocusTarget;
+    returnFocusTarget = null;
+    var active = document.activeElement;
+    // Only hand back focus the banner holds (or that fell to <body> when a
+    // button was clicked); never pull it from somewhere the visitor moved on to.
+    if (active && active !== document.body && !banner.contains(active)) {
+      return;
+    }
+    if (!target || target === document.body || !target.isConnected) {
+      // First load: the banner took focus from nowhere in particular. Removing
+      // it would leave the next Tab at the end of the document, so start the
+      // visitor at the main content instead.
+      target = document.getElementById('mainContent');
+      if (target && !target.hasAttribute('tabindex')) {
+        var main = target;
+        main.setAttribute('tabindex', '-1');
+        main.addEventListener('blur', function () {
+          main.removeAttribute('tabindex');
+        }, { once: true });
+      }
+    }
+    if (!target) {
+      return;
+    }
+    try { target.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+  }
+
   function hideBanner(banner) {
+    // Before aria-hidden, so focus never sits inside a hidden subtree.
+    restoreFocus(banner);
     banner.setAttribute('aria-hidden', 'true');
     banner.classList.remove('cookie-consent-banner--visible');
     setTimeout(function () {
@@ -124,6 +195,7 @@
   }
 
   function persistAndApply(banner, prefs) {
+    sessionPrefs = prefs;
     setConsent(serializeConsent(prefs));
     applyConsentMode(prefs);
     fireConsentEvent(prefs);
@@ -132,7 +204,9 @@
 
   // `existingPrefs` is set when the banner is reopened from Cookie settings, so
   // the checkboxes show what the visitor chose last time instead of resetting.
-  function showBanner(existingPrefs) {
+  // `returnFocusTo` is the control that reopened it.
+  function showBanner(existingPrefs, returnFocusTo) {
+    returnFocusTarget = returnFocusTo || document.activeElement;
     var banner = document.createElement('div');
     banner.id = 'cookieConsentBanner';
     banner.setAttribute('role', 'dialog');
@@ -144,7 +218,7 @@
     banner.innerHTML =
       '<div class="cookie-consent-inner">' +
       '<p class="cookie-consent-text">' +
-      'We use Google Analytics to measure anonymous site usage. Decline all, accept all, or open <em>Customize</em> to pick analytics and advertising independently. ' +
+      'We use Google Analytics and our own click and sign-up measurement to see how the site is used. Decline all, accept all, or open <em>Customize</em> to pick analytics and advertising independently. ' +
       '<a href="/privacy.html" class="cookie-consent-link">Privacy Policy</a>' +
       '</p>' +
       '<div class="cookie-consent-actions">' +
@@ -155,7 +229,7 @@
       '<div id="cookieConsentOptions" class="cookie-consent-options" hidden>' +
       '<label class="cookie-consent-option">' +
       '<input type="checkbox" id="cookieConsentAnalytics" />' +
-      '<span><strong>Analytics</strong> — anonymous page-view counts that help us see which pages are useful.</span>' +
+      '<span><strong>Analytics</strong> — Google Analytics page views and our own click and sign-up measurement, which help us see which pages are useful.</span>' +
       '</label>' +
       '<label class="cookie-consent-option">' +
       '<input type="checkbox" id="cookieConsentAdvertising" />' +
@@ -242,16 +316,17 @@
   // Site". The footer's Cookie settings link calls this.
   window.gematriaCookieConsent = Object.freeze({
     getConsent: getConsent,
-    getConsentPreferences: function () { return parseConsent(getConsent()); },
+    getConsentPreferences: currentPreferences,
+    analyticsAllowed: isAnalyticsAllowed,
     CONSENT_KEY: CONSENT_KEY,
     consentModeRegions: CONSENT_MODE_REGIONS.slice(),
-    reopen: function reopen() {
+    reopen: function reopen(returnFocusTo) {
       var existing = document.getElementById('cookieConsentBanner');
       if (existing) {
         try { existing.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
         return;
       }
-      showBanner(parseConsent(getConsent()));
+      showBanner(currentPreferences(), returnFocusTo);
     },
   });
 
@@ -262,7 +337,7 @@
       : null;
     if (!trigger) return;
     event.preventDefault();
-    window.gematriaCookieConsent.reopen();
+    window.gematriaCookieConsent.reopen(trigger);
   });
 
   var savedConsent = getConsent();
@@ -272,12 +347,13 @@
   }
 
   // Skip for admin sessions, out-of-scope regions, or when the user has already decided.
-  if (isAdminSession() || !isRegionScopedForBanner() || savedConsent !== null) {
+  if (isAdminSession() || !bannerRegion || savedConsent !== null) {
     return;
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', showBanner, { once: true });
+    // Wrapped: passed directly, the DOMContentLoaded event became existingPrefs.
+    document.addEventListener('DOMContentLoaded', function () { showBanner(); }, { once: true });
   } else {
     showBanner();
   }

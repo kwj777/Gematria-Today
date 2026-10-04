@@ -2,9 +2,9 @@ import {
   assertJsonRequestFromThisSite,
   AUTH_COOKIES,
   clearSessionCookie,
+  createAdminSessionCookies,
   createMemberTierCookie,
   createSession,
-  createSessionCookie,
   jsonResponse,
   parseBody,
 } from './_auth.mjs';
@@ -76,7 +76,7 @@ export async function handler(event) {
       user: { id: user.id, username: user.username, role: user.role },
     }, {
       'set-cookie': [
-        createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+        ...createAdminSessionCookies(token, expiresAt),
         createMemberTierCookie('lifetime', expiresAt),
       ],
     });

@@ -391,7 +391,8 @@
 
       const reportButtonEvent = (action, metadata = {}) => {
         const normalizedAction = String(action || '').trim().toLowerCase();
-        if (!normalizedAction) {
+        // Analytics: skipped unless the visitor allows it (cookie-consent.js).
+        if (!normalizedAction || window.gematriaCookieConsent?.analyticsAllowed?.() !== true) {
           return;
         }
         fetch('/api/public-button-report', {

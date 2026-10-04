@@ -1,4 +1,13 @@
-import { AUTH_COOKIES, clearSessionCookie, createSession, createSessionCookie, getOptionalAuthenticatedSession, jsonResponse, parseCookies } from './_auth.mjs';
+import {
+  AUTH_COOKIES,
+  clearSessionCookie,
+  createAdminFlagCookie,
+  createAdminSessionCookies,
+  createSession,
+  getOptionalAuthenticatedSession,
+  jsonResponse,
+  parseCookies,
+} from './_auth.mjs';
 import { ensureAdminSchema, getAuthenticatedUser, requireHttpMethod, syncBootstrapAdminUser } from './_admin.mjs';
 
 function signedOutResponse() {
@@ -33,7 +42,11 @@ export async function handler(event) {
 
   try {
     const { user } = await getAuthenticatedUser(event);
-    return jsonResponse(200, { authenticated: true, user });
+    // Re-issued on each check so sessions that began before the flag existed
+    // (or whose flag was cleared) get it too, with the session's own expiry.
+    const sessionExpiry = new Date(user.expiresAt);
+    const flagHeaders = Number.isNaN(sessionExpiry.getTime()) ? {} : { 'set-cookie': createAdminFlagCookie(sessionExpiry) };
+    return jsonResponse(200, { authenticated: true, user }, flagHeaders);
   } catch (error) {
     if (!isAuthError(error)) {
       return sessionCheckFailedResponse(error);
@@ -62,7 +75,7 @@ export async function handler(event) {
                 isAdmin: true,
               },
             },
-            { 'set-cookie': createSessionCookie(session.token, session.expiresAt, AUTH_COOKIES.admin) },
+            { 'set-cookie': createAdminSessionCookies(session.token, session.expiresAt) },
           );
         }
       }

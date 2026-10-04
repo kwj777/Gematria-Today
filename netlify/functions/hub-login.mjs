@@ -12,7 +12,7 @@
  */
 
 import crypto from 'node:crypto';
-import { AUTH_COOKIES, createSession, createSessionCookie, getSqlClient } from './_auth.mjs';
+import { createAdminSessionCookies, createSession, getSqlClient } from './_auth.mjs';
 import { ensureAdminSchema, requireHttpMethod, syncBootstrapAdminUser } from './_admin.mjs';
 
 const HUB_TOKEN_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -179,8 +179,10 @@ export async function handler(event) {
       statusCode: 302,
       headers: {
         Location: '/admin.html',
-        'Set-Cookie': createSessionCookie(sessionToken, expiresAt, AUTH_COOKIES.admin),
         'Cache-Control': 'no-store',
+      },
+      multiValueHeaders: {
+        'Set-Cookie': createAdminSessionCookies(sessionToken, expiresAt),
       },
       body: '',
     };

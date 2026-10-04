@@ -7,6 +7,8 @@ import { handler as adminSessionHandler } from '../netlify/functions/admin-sessi
 import { handler as memberSessionHandler } from '../netlify/functions/member-session.mjs';
 import {
   AUTH_COOKIES,
+  clearSessionCookie,
+  createAdminSessionCookies,
   createVisitorSessionCookie,
   createVisitorSessionToken,
   getOrCreateVisitorSession,
@@ -44,6 +46,7 @@ test('admin logout is idempotent and returns 200 with authenticated false', asyn
   assert.deepEqual(parseBody(response), { authenticated: false });
   const cookies = collectSetCookies(response);
   assert.match(cookies, /gematria_admin_session=/);
+  assert.match(cookies, /gematria_admin_flag=;/);
 });
 
 test('logout endpoints reject non-POST methods with standard error payload', async () => {
@@ -79,6 +82,26 @@ test('session endpoints reject non-GET methods with standard error payload', asy
   assert.equal(adminResponse.statusCode, 405);
   assert.deepEqual(parseBody(memberResponse), { error: 'Method not allowed' });
   assert.deepEqual(parseBody(adminResponse), { error: 'Method not allowed' });
+});
+
+// cookie-consent.js and conversion-tracking.js cannot see the HttpOnly admin
+// session, so they look for this exact cookie name instead.
+test('admin sessions come with a readable flag cookie that holds no token', () => {
+  assert.equal(AUTH_COOKIES.adminFlag, 'gematria_admin_flag');
+  const expiresAt = new Date(Date.now() + 60_000);
+  const [session, flag] = createAdminSessionCookies('secret-token', expiresAt);
+  assert.match(session, /^gematria_admin_session=secret-token;.*HttpOnly/);
+  assert.match(flag, /^gematria_admin_flag=1; Path=\//);
+  assert.doesNotMatch(flag, /HttpOnly/);
+  assert.doesNotMatch(flag, /secret-token/);
+  assert.ok(flag.includes(`Expires=${expiresAt.toUTCString()}`));
+});
+
+test('clearing the admin session clears its flag; other sessions leave it alone', () => {
+  const adminCleared = clearSessionCookie(AUTH_COOKIES.admin).join('\n');
+  assert.match(adminCleared, /gematria_admin_session=;/);
+  assert.match(adminCleared, /gematria_admin_flag=;/);
+  assert.doesNotMatch(clearSessionCookie(AUTH_COOKIES.member).join('\n'), /gematria_admin_flag/);
 });
 
 test('AUTH_COOKIES includes visitor cookie name', () => {

@@ -12,7 +12,7 @@ import {
   jsonResponse,
   parseBody,
 } from './_member.mjs';
-import { assertJsonRequestFromThisSite, generateCsrfToken } from './_auth.mjs';
+import { assertJsonRequestFromThisSite, createAdminSessionCookies, generateCsrfToken } from './_auth.mjs';
 import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -113,7 +113,7 @@ export async function handler(event) {
         csrfToken: generateCsrfToken(token),
       }, {
         'set-cookie': [
-          createSessionCookie(token, expiresAt, AUTH_COOKIES.admin),
+          ...createAdminSessionCookies(token, expiresAt),
           createMemberTierCookie('lifetime', expiresAt),
         ],
       });

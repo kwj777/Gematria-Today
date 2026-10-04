@@ -58,13 +58,21 @@
     return;
   }
 
+  // gtag.js never defines window.gtag itself, so without this cookie-consent.js
+  // had nothing to call and a visitor's Accept or Decline never reached Consent
+  // Mode.
+  window.gtag = window.gtag || gtag;
   window.GEMATRIA_CONSENT_MODE_REGIONS = consentModeRegions;
 
+  // The site serves no ads and privacy.html promises no sharing for
+  // cross-context behavioral advertising, so Google's advertising signals start
+  // denied everywhere; only an explicit choice in the consent banner (Cookie
+  // settings) grants them.
   gtag('consent', 'default', {
     analytics_storage: 'granted',
-    ad_storage: 'granted',
-    ad_user_data: 'granted',
-    ad_personalization: 'granted',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
   });
 
   gtag('consent', 'default', {

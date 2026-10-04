@@ -11,12 +11,16 @@
     Object.freeze({ width: '100%', cls: 'bg-success', label: 'Strong password' }),
   ]);
 
-  const HINT = 'Must be at least 8 characters.';
+  // The server refuses anything shorter (MEMBER_PASSWORD_MIN_LENGTH), so
+  // length is a gate, not one bonus among several: "Ab1!" used to score 3 and
+  // read "Good password" while the form refused it.
+  const MIN_LENGTH = 8;
+  const HINT = `Must be at least ${MIN_LENGTH} characters.`;
+  const TOO_SHORT_STYLE = Object.freeze({ width: '10%', cls: 'bg-danger', label: `Too short. ${HINT}` });
 
   function score(value) {
-    if (!value) return 0;
-    let s = 0;
-    if (value.length >= 8) s += 1;
+    if (!value || value.length < MIN_LENGTH) return 0;
+    let s = 1;
     if (value.length >= 12) s += 1;
     if (/[a-z]/.test(value) && /[A-Z]/.test(value)) s += 1;
     if (/\d/.test(value)) s += 1;
@@ -25,6 +29,7 @@
   }
 
   function styleFor(value) {
+    if (value && value.length < MIN_LENGTH) return TOO_SHORT_STYLE;
     return STRENGTH_STYLES[score(value)];
   }
 

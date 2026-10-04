@@ -58,7 +58,14 @@
           source: 'level_zero_register_form',
           extraFields: { signupSource: 'learning_path_level_0' },
           onSuccess(response, context) {
-            window.localStorage.setItem('learningPathStep1Intent', 'true');
+            // The account already exists by now. Storage that throws (blocked
+            // site data, a full quota) must not stand between the visitor and
+            // the "check your email" panel.
+            try {
+              window.localStorage.setItem('learningPathStep1Intent', 'true');
+            } catch {
+              // The server already recorded this intent with the signup.
+            }
             const emailEl = document.getElementById('signUpSuccessEmail');
             const submittedEmail = context?.payload?.email || response?.member?.email;
             if (emailEl && submittedEmail) {

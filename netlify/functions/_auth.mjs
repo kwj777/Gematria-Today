@@ -90,7 +90,9 @@ export async function consumeAccountRecoveryRequest(sql, {
   token,
 } = {}) {
   await ensureAccountRecoverySchema(sql);
-  const normalizedToken = String(token || '').trim();
+  // Issued as lowercase hex (createAccountRecoveryRequest), and people type
+  // these, so the case they type it in must not matter.
+  const normalizedToken = String(token || '').trim().toLowerCase();
   if (!role || !recoveryType || !normalizedToken) {
     return null;
   }

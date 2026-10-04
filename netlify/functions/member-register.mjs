@@ -7,7 +7,6 @@ import {
   jsonResponse,
   parseBody,
   registerMember,
-  releaseUnverifiedMemberClaim,
   markVerificationEmailDelivered,
 } from './_member.mjs';
 import { assertJsonRequestFromThisSite } from './_auth.mjs';
@@ -53,13 +52,13 @@ export async function handler(event) {
       auditMetadata: { username: normalizedUsername, email: normalizedEmail },
     });
 
-    // Someone whose verification email never arrived is otherwise locked out
-    // for good: their own pending account makes the username and email taken.
-    const releasedStaleClaims = await releaseUnverifiedMemberClaim(sql, {
-      username: body.username,
-      email: body.email,
-    });
-
+    // A pending account whose link has expired is not released here. This
+    // request proves nothing about who is asking -- it used to run before the
+    // input was even validated -- so releasing on a username or email match
+    // let anyone delete someone else's signup and take the name, or re-create
+    // it with their own password for the owner to verify. The owner finishes
+    // with member-resend-verification instead, and only the nightly prune
+    // removes signups that were genuinely abandoned.
     const registration = await registerMember(sql, body);
     const verification = await createMemberEmailVerificationRequest(sql, registration.member.id);
     const delivery = await sendMemberVerificationEmail({
@@ -78,7 +77,6 @@ export async function handler(event) {
         username: normalizedUsername,
         email: normalizedEmail,
         verificationDelivery: delivery.delivery || 'unknown',
-        ...(releasedStaleClaims ? { releasedStaleClaims } : {}),
         // Why it did not send, for the delivery panel in admin reports. It
         // describes our own SendGrid configuration, so it stays out of the
         // response body below.

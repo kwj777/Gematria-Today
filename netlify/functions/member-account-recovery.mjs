@@ -87,39 +87,24 @@ export async function handler(event) {
       if (rows.length) {
         accountRole = rows[0].role === 'member' ? 'member' : 'admin';
         member = formatMemberUser(rows[0]);
-        const usernameRecovery = await createAccountRecoveryRequest(sql, {
+        // The page promises forgot-both in one email, and the reset email
+        // already names the username, so it is the only one sent. Two used to
+        // go out, and the first -- the username reminder -- looked complete.
+        const recovery = await createAccountRecoveryRequest(sql, {
           userId: member.id,
           role: accountRole,
-          recoveryType: 'forgot-userid',
+          recoveryType: action === 'forgot-both' ? 'forgot-password' : 'forgot-userid',
           lookupKey: email,
         });
         await sendRecoveryEmail({
           sql,
           toEmail: member.email,
           username: member.username,
-          recoveryCode: usernameRecovery.token,
-          expiresAt: usernameRecovery.expiresAt,
+          recoveryCode: recovery.token,
+          expiresAt: recovery.expiresAt,
           role: accountRole,
-          recoveryType: 'forgot-userid',
+          recoveryType: action,
         });
-
-        if (action === 'forgot-both') {
-          const passwordRecovery = await createAccountRecoveryRequest(sql, {
-            userId: member.id,
-            role: accountRole,
-            recoveryType: 'forgot-password',
-            lookupKey: email,
-          });
-          await sendRecoveryEmail({
-            sql,
-            toEmail: member.email,
-            username: member.username,
-            recoveryCode: passwordRecovery.token,
-            expiresAt: passwordRecovery.expiresAt,
-            role: accountRole,
-            recoveryType: 'forgot-password',
-          });
-        }
       }
 
       await logRequestAudit(sql, event, {
@@ -194,7 +179,10 @@ export async function handler(event) {
     }
 
     if (action === 'reset-password') {
-      const recoveryCode = String(body.recoveryCode || '').trim();
+      // Codes are lowercase hex, but a phone keyboard or a reader copying one
+      // by hand can send it in capitals, which hashed to a different value and
+      // was refused as invalid until the per-email limit locked them out.
+      const recoveryCode = String(body.recoveryCode || '').trim().toLowerCase();
       const newPassword = String(body.newPassword || '');
       if (!recoveryCode || !newPassword) {
         return jsonResponse(400, { error: 'Recovery code and new password are required' });

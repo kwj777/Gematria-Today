@@ -348,8 +348,14 @@ export async function registerMember(sql, { username, email, password, displayNa
       LIMIT 1
     `;
 
+  // A pending signup keeps its name and address until it is verified or the
+  // nightly prune removes it, so someone signing up again is pointed at the
+  // resend form rather than left to guess why their own details are taken.
   if (existing.length) {
-    throw Object.assign(new Error('A member with that username or email already exists'), { statusCode: 409 });
+    throw Object.assign(
+      new Error('A member with that username or email already exists. If you signed up but never verified your email, request a fresh verification link from the sign-in page.'),
+      { statusCode: 409 },
+    );
   }
 
   const passwordHash = await hashPassword(password);
@@ -506,6 +512,15 @@ export async function deleteExpiredUnverifiedMembers(sql) {
         WHERE r.user_id = users.id
           AND r.email_delivered = TRUE
       )
+      -- Nor while a link is still live. A member who asks for a fresh link on
+      -- day 27 is told it works until day 34; pruning at day 30 deleted the
+      -- account, and the link with it, before they could use it.
+      AND NOT EXISTS (
+        SELECT 1 FROM member_email_verification_requests r
+        WHERE r.user_id = users.id
+          AND r.consumed_at IS NULL
+          AND r.expires_at > NOW()
+      )
       -- Never an abandoned signup, whatever status still says: a member who
       -- paid, or who proved the address by finishing a password reset. The
       -- delete cascades through their history and forum threads (and other
@@ -544,87 +559,6 @@ export async function deleteExpiredUnverifiedMembers(sql) {
 
   return rows.length;
 }
-
-// A signup whose verification email never arrived leaves a pending account that
-// nobody can use and nobody can replace: registering again is refused because
-// the username and email are taken, and the nightly prune cannot reach it
-// either. Once the verification link has expired the account is unrecoverable
-// by the person who created it, so the claim on that name and address is
-// released and they can sign up again. While a link is still live the account
-// is left alone, so a signup in progress cannot be taken out from under the
-// person who started it by anyone who knows their email.
-export async function releaseUnverifiedMemberClaim(sql, { username = '', email = '' } = {}) {
-  await ensureMemberSchema(sql);
-  const normalizedUsername = normalizeUsername(username);
-  const normalizedEmail = normalizeEmail(email);
-  if (!normalizedUsername && !normalizedEmail) {
-    return 0;
-  }
-
-  const rows = await sql`
-    DELETE FROM users
-    WHERE role = 'member'
-      AND status = 'pending'
-      AND email_verified = FALSE
-      AND (
-        username = ${normalizedUsername || null}
-        OR LOWER(email) = ${normalizedEmail || null}
-      )
-      AND NOT EXISTS (
-        SELECT 1 FROM member_email_verification_requests r
-        WHERE r.user_id = users.id
-          AND r.consumed_at IS NULL
-          AND r.expires_at > NOW()
-      )
-      -- Same exemption as deleteExpiredUnverifiedMembers: paid or reset-proven.
-      AND membership_level = 'free'
-      AND stripe_customer_id IS NULL
-      AND stripe_subscription_id IS NULL
-      AND NOT EXISTS (
-        SELECT 1 FROM account_recovery_requests ar
-        WHERE ar.user_id = users.id
-          AND ar.role = 'member'
-          AND ar.recovery_type = 'forgot-password'
-          AND ar.consumed_at IS NOT NULL
-      )
-    RETURNING id
-  `;
-  return rows.length;
-}
-
-export async function deleteExpiredUnverifiedMemberByIdentifier(sql, identifier = '') {
-  await ensureMemberSchema(sql);
-  const normalizedIdentifier = String(identifier || '').trim();
-  if (!normalizedIdentifier) {
-    return 0;
-  }
-  const normalizedEmail = normalizeEmail(normalizedIdentifier);
-  const rows = await sql`
-    DELETE FROM users
-    WHERE role = 'member'
-      AND status = 'pending'
-      AND email_verified = FALSE
-      AND created_at <= NOW() - ${UNVERIFIED_RETENTION}::interval
-      AND (
-        username = ${normalizedIdentifier}
-        OR LOWER(email) = ${normalizedEmail}
-      )
-      -- Same exemption as deleteExpiredUnverifiedMembers: paid or reset-proven.
-      AND membership_level = 'free'
-      AND stripe_customer_id IS NULL
-      AND stripe_subscription_id IS NULL
-      AND NOT EXISTS (
-        SELECT 1 FROM account_recovery_requests ar
-        WHERE ar.user_id = users.id
-          AND ar.role = 'member'
-          AND ar.recovery_type = 'forgot-password'
-          AND ar.consumed_at IS NOT NULL
-      )
-    RETURNING id
-  `;
-  return rows.length;
-}
-
 
 export function getYearlyMembershipTerm({ purchasedAt = new Date(), subscriptionCurrentPeriodEnd = null } = {}) {
   const startedAt = new Date(purchasedAt);
@@ -747,8 +681,11 @@ export async function authenticateMemberCredentials(sql, identifier, password) {
   if (!normalizedIdentifier || !password) {
     return null;
   }
-  await deleteExpiredUnverifiedMemberByIdentifier(sql, normalizedIdentifier);
 
+  // Signing in deletes nothing. It used to remove a month-old pending account
+  // matching the identifier before the password was checked, so a stranger
+  // typing a username with any password could delete it -- including the
+  // accounts the nightly prune keeps because our email never reached them.
   const normalizedEmail = normalizeEmail(normalizedIdentifier);
   const rows = await sql`
     SELECT id, username, email, display_name, membership_level, membership_started_at, membership_expires_at, stripe_customer_id, stripe_last_checkout_session_id, stripe_subscription_status, status, email_verified, password_hash, role, created_at, updated_at

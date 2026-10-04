@@ -245,7 +245,8 @@
         event.preventDefault();
         resetAlert.clear();
 
-        const recoveryCode = recoveryCodeInput.value.trim();
+        // Codes are lowercase hex; one typed in capitals is the same code.
+        const recoveryCode = recoveryCodeInput.value.trim().toLowerCase();
         const newPassword = newPasswordInput.value;
         const confirmNewPassword = confirmPasswordInput.value;
 

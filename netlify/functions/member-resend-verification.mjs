@@ -2,7 +2,6 @@ import {
   AUTH_COOKIES,
   clearSessionCookie,
   createMemberEmailVerificationRequest,
-  deleteExpiredUnverifiedMemberByIdentifier,
   ensureMemberSchema,
   getSqlClient,
   jsonResponse,
@@ -55,8 +54,10 @@ export async function handler(event) {
       message: 'Too many verification resend requests for this account.',
     });
 
-    await deleteExpiredUnverifiedMemberByIdentifier(sql, rawIdentifier);
-
+    // An expired pending account gets a fresh link like any other. This used
+    // to delete a month-old one first and still answer that a link was sent,
+    // even when the account was only that old because our email never
+    // reached it -- the case this endpoint exists to rescue.
     const normalizedEmail = normalizeEmail(rawIdentifier);
     const rows = await sql`
       SELECT id, username, email, status, email_verified, created_at

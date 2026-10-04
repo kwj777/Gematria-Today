@@ -3,9 +3,8 @@ import assert from 'node:assert/strict';
 import { neonConfig } from '@neondatabase/serverless';
 
 import {
-  deleteExpiredUnverifiedMemberByIdentifier,
+  authenticateMemberCredentials,
   deleteExpiredUnverifiedMembers,
-  releaseUnverifiedMemberClaim,
 } from '../netlify/functions/_member.mjs';
 import { handler as accountRecoveryHandler } from '../netlify/functions/member-account-recovery.mjs';
 
@@ -47,20 +46,29 @@ test('the nightly prune spares paid and reset-proven members, and their recovery
   assert.ok(createIndex < stub.calls.indexOf(del), 'the table has to exist before the delete reads it');
 });
 
-test('a login or resend attempt spares paid and reset-proven members', async () => {
+test('the nightly prune spares an account whose fresh verification link is still live', async () => {
   const stub = createSqlStub();
-  await deleteExpiredUnverifiedMemberByIdentifier(stub.sql, 'kev');
+  await deleteExpiredUnverifiedMembers(stub.sql);
 
+  // A member who resends on day 27 is emailed a link that works until day 34.
+  // Measuring only from created_at deleted the account -- and the link with
+  // it on cascade -- at the first midnight after day 30.
   const [del] = stub.userDeletes();
-  assertSparesPaidAndResetMembers(del.text);
+  assert.match(
+    del.text,
+    /AND NOT EXISTS \(\s*SELECT 1 FROM member_email_verification_requests r\s+WHERE r\.user_id = users\.id\s+AND r\.consumed_at IS NULL\s+AND r\.expires_at > NOW\(\)\s*\)/,
+  );
 });
 
-test('registering someone else\'s username cannot release a paid or reset-proven member', async () => {
+test('a sign-in attempt deletes nothing, whatever the password', async () => {
   const stub = createSqlStub();
-  await releaseUnverifiedMemberClaim(stub.sql, { username: 'kev', email: 'kev@example.com' });
+  // No row comes back, as for a wrong password; the attempt simply fails.
+  assert.equal(await authenticateMemberCredentials(stub.sql, 'kev', 'not-the-password'), null);
 
-  const [del] = stub.userDeletes();
-  assertSparesPaidAndResetMembers(del.text);
+  // It used to delete a month-old pending account matching the identifier
+  // before the password was checked -- including the ones the nightly prune
+  // keeps because our verification email never reached them.
+  assert.equal(stub.userDeletes().length, 0);
 });
 
 // ---------- reset-password, driven through the real handler ----------

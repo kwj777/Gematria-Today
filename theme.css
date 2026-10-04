@@ -615,7 +615,9 @@ html:not(.member-page-hydrated).auth-lifetime #dashboardSection.d-none {
   display: block;
 }
 
-.nav-theme-toggle__sun { display: none; }
+/* Scoped like the svg rule above, which would otherwise out-rank it and show
+   the sun next to the moon in light mode. */
+.nav-theme-toggle .nav-theme-toggle__sun { display: none; }
 .nav-theme-toggle__moon { display: block; }
 :root[data-bs-theme="dark"] .nav-theme-toggle__sun { display: block; }
 :root[data-bs-theme="dark"] .nav-theme-toggle__moon { display: none; }

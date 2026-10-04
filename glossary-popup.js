@@ -15,7 +15,18 @@
 
   var STYLES =
     '.defn-term{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:help;border-bottom:1px dotted currentColor;text-decoration:none;line-height:inherit;}' +
-    '.defn-term:hover,.defn-term:focus-visible{outline:none;border-bottom-style:solid;color:#0d6efd;}' +
+    // #0d6efd was 3.92:1 on the cream page and 3.97:1 on the dark hero, so
+    // the term turned unreadable exactly when pointed at. Light surfaces get
+    // the darker link blue (5.61:1 on cream), dark ones a light blue (4.77:1
+    // or better): the dark theme, plus the panels that are navy in both
+    // themes -- the hero, Word of the Day, and the home page learning-path
+    // promo, where the darker blue would be 1.96:1. src/definitions.html
+    // carries its own copy of these two rules (this script skips that page).
+    '.defn-term:hover,.defn-term:focus-visible{outline:none;border-bottom-style:solid;color:#0a58ca;}' +
+    ':root[data-bs-theme="dark"] .defn-term:hover,:root[data-bs-theme="dark"] .defn-term:focus-visible,' +
+    '.hero-panel .defn-term:hover,.hero-panel .defn-term:focus-visible,' +
+    '.word-of-day-spotlight .defn-term:hover,.word-of-day-spotlight .defn-term:focus-visible,' +
+    '.learning-path-promo .defn-term:hover,.learning-path-promo .defn-term:focus-visible{color:#93c5fd;}' +
     // Fixed rather than absolute: the popup now lives next to whichever term
     // opened it (so the keyboard can reach the link inside it), and that parent
     // could be anything. Viewport coordinates plus the correction in

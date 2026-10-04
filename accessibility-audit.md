@@ -77,7 +77,7 @@ standard 2.4-gamma sRGB formula). Page background is the gradient between
 | `.section-kicker` `#fbbf24` | dark surface `#171e28` | 10.04:1 | AAA |
 | `.section-kicker` `#fbbf24` | page `#131820` | 10.67:1 | AAA |
 | Active `.btn-warning` `#fff` | `--brand-amber` `#b45309` | 5.02:1 | AA only (brand CTA — visual saturation is intentional) |
-| `--brand-amber` `#b45309` as text | dark surface `#171e28` | 3.34:1 | decorative only — not used as body text |
+| `--brand-amber` `#b45309` as text | dark surface `#171e28` | 3.34:1 | Fail as text — amber text on dark surfaces uses `#fbbf24` instead (the Tools menu's "Compare tools →" link, the dark-mode terms pricing kicker) |
 
 ### Breadcrumb (dark mode)
 

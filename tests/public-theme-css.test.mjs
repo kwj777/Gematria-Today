@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import {
   buildCss,
@@ -221,33 +222,60 @@ test('shouldIncludeCustomCss returns true for non-admin Referer paths', () => {
   );
 });
 
-test('shouldIncludeCustomCss returns false when Referer points at an /admin* page', () => {
+test('shouldIncludeCustomCss returns false for the admin scope', () => {
   // Security: theme customCss must NOT be applied while the user is on an admin
   // page, otherwise a malicious theme preview could style admin controls into
-  // misleading states.
+  // misleading states. Admin pages ask for that with ?scope=admin.
   assert.equal(
-    shouldIncludeCustomCss({ headers: { referer: 'https://gematria.today/admin.html' } }),
+    shouldIncludeCustomCss({ headers: {}, queryStringParameters: { scope: 'admin' } }),
     false,
   );
   assert.equal(
-    shouldIncludeCustomCss({ headers: { referer: 'https://gematria.today/admin-posts.html' } }),
+    shouldIncludeCustomCss({ headers: {}, queryStringParameters: { scope: ' Admin ' } }),
     false,
   );
 });
 
-test('shouldIncludeCustomCss returns true on malformed Referer (fail-open for non-admin contexts)', () => {
-  // If the URL parse fails, we don't know whether the caller is on /admin, so
-  // the safe default is to include custom CSS — admin pages would set their
-  // own Referer correctly.
-  assert.equal(
-    shouldIncludeCustomCss({ headers: { referer: 'not a url' } }),
-    true,
-  );
+test('shouldIncludeCustomCss ignores the Referer, because the response is cached by URL', () => {
+  // The response is public, max-age=300, keyed on the URL alone (no
+  // Vary: Referer). Branching on the Referer meant the first page to fetch the
+  // URL decided the body every later page got from cache: an admin visit
+  // stripped the custom theme from public pages, and a public visit put the
+  // custom CSS on admin pages. Same URL must mean same body.
+  for (const referer of [
+    'https://gematria.today/admin.html',
+    'https://gematria.today/admin-posts.html',
+    'https://gematria.today/blog.html',
+    'not a url',
+  ]) {
+    assert.equal(shouldIncludeCustomCss({ headers: { referer } }), true, referer);
+    assert.equal(shouldIncludeCustomCss({ headers: { Referer: referer } }), true, referer);
+  }
 });
 
-test('shouldIncludeCustomCss is case-insensitive on the "Referer" header name', () => {
-  assert.equal(
-    shouldIncludeCustomCss({ headers: { Referer: 'https://gematria.today/admin.html' } }),
-    false,
-  );
+test('shouldIncludeCustomCss includes custom CSS for any other scope value', () => {
+  assert.equal(shouldIncludeCustomCss({ headers: {}, queryStringParameters: {} }), true);
+  assert.equal(shouldIncludeCustomCss({ headers: {}, queryStringParameters: { scope: 'public' } }), true);
+  assert.equal(shouldIncludeCustomCss({ headers: {}, queryStringParameters: null }), true);
+});
+
+test('every admin page requests the admin-scoped theme CSS, and no public page does', () => {
+  const repoUrl = (relativePath) => new URL(`../${relativePath}`, import.meta.url);
+  const themeHrefs = (html) => [...html.matchAll(/href="(\/api\/public-theme-css[^"]*)"/g)].map((match) => match[1]);
+
+  const adminPages = readdirSync(repoUrl('.')).filter((name) => /^admin.*\.html$/.test(name));
+  assert.ok(adminPages.length > 0);
+  for (const page of adminPages) {
+    const hrefs = themeHrefs(readFileSync(repoUrl(page), 'utf8'));
+    for (const href of hrefs) {
+      assert.equal(href, '/api/public-theme-css?scope=admin', `${page} must load the admin-scoped theme CSS`);
+    }
+  }
+
+  const publicPages = readdirSync(repoUrl('src')).filter((name) => name.endsWith('.html')).map((name) => `src/${name}`);
+  for (const page of publicPages) {
+    for (const href of themeHrefs(readFileSync(repoUrl(page), 'utf8'))) {
+      assert.equal(href, '/api/public-theme-css', `${page} must load the public theme CSS`);
+    }
+  }
 });

@@ -109,11 +109,17 @@
         text-decoration: none;
         line-height: inherit;
       }
+      /* Same colours as glossary-popup.js, which skips this page. #0d6efd was
+         3.76:1 on the dark-theme card. */
       .defn-term:hover,
       .defn-term:focus-visible {
         outline: none;
         border-bottom-style: solid;
-        color: #0d6efd;
+        color: #0a58ca;
+      }
+      :root[data-bs-theme="dark"] .defn-term:hover,
+      :root[data-bs-theme="dark"] .defn-term:focus-visible {
+        color: #93c5fd;
       }
       .defn-popup {
         position: absolute;

@@ -446,6 +446,11 @@
       '.ui-toast{pointer-events:auto;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#212529);border:1px solid rgba(0,0,0,0.1);border-left:4px solid var(--bs-info,#0dcaf0);border-radius:0.375rem;box-shadow:0 0.5rem 1rem rgba(0,0,0,0.15);padding:0.75rem 0.75rem 0.75rem 1rem;display:flex;align-items:flex-start;gap:0.5rem;animation:ui-toast-in 160ms ease-out;}',
       '.ui-toast--success{border-left-color:var(--bs-success,#198754);}',
       '.ui-toast--danger{border-left-color:var(--bs-danger,#dc3545);}',
+      // The site's success/danger tokens are dark (fills behind white badge
+      // text), so on the dark toast (#212529) these stripes would be 2.18:1
+      // and 2.35:1. Use the light shades theme.css gives the dark utilities.
+      ':root[data-bs-theme="dark"] .ui-toast--success{border-left-color:#97c93c;}',
+      ':root[data-bs-theme="dark"] .ui-toast--danger{border-left-color:#ea868f;}',
       '.ui-toast--warning{border-left-color:var(--bs-warning,#ffc107);}',
       '.ui-toast--info{border-left-color:var(--bs-info,#0dcaf0);}',
       '.ui-toast__message{flex:1;font-size:0.9rem;line-height:1.35;}',

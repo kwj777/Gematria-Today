@@ -15,7 +15,7 @@ import {
 } from './_auth.mjs';
 import { ensureAdminSchema, syncBootstrapAdminUser } from './_admin.mjs';
 import { ensureMemberProfile, ensureMemberSchema, formatMemberUser } from './_member.mjs';
-import { ensureOAuthSchema } from './_oauth.mjs';
+import { ensureOAuthSchema, revokeUnprovenOAuthIdentities } from './_oauth.mjs';
 import { sendRecoveryEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -279,6 +279,14 @@ export async function handler(event) {
       if (accountStatus === 'pending' && !accountRows[0].email_verified) {
         await ensureOAuthSchema(sql);
         await sql`DELETE FROM member_oauth_identities WHERE user_id = ${recovery.user_id}`;
+      } else {
+        // Already active is not proof the identities are the owner's: the
+        // verification link activates a pending row with whatever provider
+        // identity created it still attached. A reset is how the owner takes
+        // the account back, so keep only identities whose provider vouches for
+        // this same address, or the reset revokes every session and leaves the
+        // intruder a provider sign-in straight back in.
+        await revokeUnprovenOAuthIdentities(sql, recovery.user_id);
       }
 
       // The code was emailed to this address and typed back, which proves the

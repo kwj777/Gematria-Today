@@ -53,9 +53,12 @@
     }
     if (params.get('oauth_linked') === '1') {
       if (params.get('oauth_password_retired') === '1') {
+        const renamed = params.get('oauth_username_replaced') === '1'
+          ? ` Its username and display name were chosen before the address was confirmed, so they have been replaced with new ones from ${label}.`
+          : '';
         return {
           tone: 'warning',
-          message: `Signed in with ${label} and linked it to the account already using that email. That account had a password that was never confirmed by email, so it has been removed — use ${label} to sign in, or set a new password from the account recovery page.`,
+          message: `Signed in with ${label} and linked it to the account already using that email. That account had a password that was never confirmed by email, so it has been removed — use ${label} to sign in, or set a new password from the account recovery page.${renamed}`,
         };
       }
       return { tone: 'success', message: `Signed in with ${label} and linked it to your existing membership.` };
@@ -85,7 +88,7 @@
     outcome.provider = params.get('oauth_provider') || '';
     outcome.signedIn = Boolean(status === 'success');
 
-    for (const key of ['oauth', 'oauth_error', 'oauth_provider', 'oauth_new', 'oauth_linked', 'oauth_email_sent', 'oauth_password_retired']) {
+    for (const key of ['oauth', 'oauth_error', 'oauth_provider', 'oauth_new', 'oauth_linked', 'oauth_email_sent', 'oauth_password_retired', 'oauth_username_replaced']) {
       params.delete(key);
     }
     const query = params.toString();
@@ -93,10 +96,15 @@
     return outcome;
   }
 
-  function buildStartUrl(providerId, returnTo) {
+  function buildStartUrl(providerId, returnTo, signupSource) {
     const search = new URLSearchParams({ provider: providerId });
     if (returnTo) {
       search.set('return_to', returnTo);
+    }
+    // Seeds the new account the way the password form's signupSource does
+    // (the server ignores anything it does not recognise).
+    if (signupSource) {
+      search.set('signup_source', signupSource);
     }
     return `${START_ENDPOINT}?${search.toString()}`;
   }
@@ -110,7 +118,11 @@
         button.classList.add('d-none');
         continue;
       }
-      button.href = buildStartUrl(providerId, container.getAttribute('data-oauth-return-to') || '');
+      button.href = buildStartUrl(
+        providerId,
+        container.getAttribute('data-oauth-return-to') || '',
+        container.getAttribute('data-oauth-signup-source') || '',
+      );
       button.classList.remove('d-none');
       button.addEventListener('click', () => {
         window.gematriaTracking?.track?.('sign_up_start', {

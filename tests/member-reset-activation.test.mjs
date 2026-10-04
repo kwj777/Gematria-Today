@@ -119,7 +119,15 @@ function answer(db, query, params) {
     return [{ status: user.status, email_verified: user.email_verified }];
   }
   if (/DELETE FROM member_oauth_identities/.test(query)) {
-    db.identities = [];
+    // The conditional form keeps only identities whose provider vouches for
+    // the account's own address; the bare form drops every identity.
+    if (/identities\.email_verified = FALSE/.test(query)) {
+      db.identities = db.identities.filter((identity) => identity.email_verified
+        && identity.email
+        && identity.email.toLowerCase() === String(user.email).toLowerCase());
+    } else {
+      db.identities = [];
+    }
     return [];
   }
   if (/UPDATE users\s+SET password_hash/.test(query)) {
@@ -154,8 +162,10 @@ test.after(() => {
   else process.env.DATABASE_URL = PRIOR_DATABASE_URL;
 });
 
-async function resetPasswordFor(user) {
-  const db = { user: { ...user }, identities: ['google:attacker-sub'], sessions: [] };
+async function resetPasswordFor(user, {
+  identities = [{ id: 'google:attacker-sub', email: user.email, email_verified: true }],
+} = {}) {
+  const db = { user: { ...user }, identities: identities.map((identity) => ({ ...identity })), sessions: [] };
   process.env.DATABASE_URL = 'postgresql://tester:secret@fake-db.invalid/neondb';
   neonConfig.fetchFunction = async (_url, init) => {
     const { query, params } = JSON.parse(init.body);
@@ -205,7 +215,36 @@ test('a reset on an already verified account leaves its linked identities alone'
 
   assert.equal(response.statusCode, 200);
   assert.equal(db.user.status, 'active');
-  assert.deepEqual(db.identities, ['google:attacker-sub']);
+  assert.deepEqual(db.identities.map((identity) => identity.id), ['google:attacker-sub']);
+});
+
+// The verification link activates a pending row with whatever identity created
+// it still attached, so "already active" proves nothing about the identities.
+// A reset that revoked every session but kept such an identity left whoever
+// attached it a provider sign-in straight back into the recovered account.
+for (const [label, identity] of [
+  ['created from an unverified claim to the address', { email: 'kev@example.com', email_verified: false }],
+  ['since moved to some other verified address', { email: 'attacker@example.net', email_verified: true }],
+  ['that reports no address at all', { email: null, email_verified: true }],
+]) {
+  test(`a reset on an active account revokes an identity ${label}`, async () => {
+    const { response, db } = await resetPasswordFor({
+      id: 'u-1', username: 'kev', email: 'kev@example.com', status: 'active', email_verified: true,
+    }, { identities: [{ id: 'google:attacker-sub', ...identity }] });
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(db.identities, []);
+    assert.equal(db.sessions.length, 1);
+  });
+}
+
+test('a reset keeps an identity that vouches for the address in another letter case', async () => {
+  const { response, db } = await resetPasswordFor({
+    id: 'u-1', username: 'kev', email: 'kev@example.com', status: 'active', email_verified: true,
+  }, { identities: [{ id: 'google:owner-sub', email: 'Kev@Example.COM', email_verified: true }] });
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(db.identities.map((identity) => identity.id), ['google:owner-sub']);
 });
 
 for (const status of ['suspended', 'deleted']) {

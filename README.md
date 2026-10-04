@@ -175,7 +175,8 @@ authorization-code exchange across three endpoints:
   buttons stay hidden until this reports one, so an unconfigured deploy never shows a button that
   dead-ends in an error.
 - `/api/member-oauth-start?provider=google` — signs a `state` value, stores it in a short-lived
-  `HttpOnly` cookie, and redirects to the provider.
+  `HttpOnly` cookie (`Max-Age`, so a browser with a wrong clock keeps it), and redirects to the
+  provider.
 - `/api/member-oauth-callback` — the provider's redirect target. Verifies `state` against the cookie,
   exchanges the code with the PKCE verifier, validates the `id_token` claims (`iss`, `aud`, `exp`,
   `nonce` — all required), then creates or links the membership and issues the normal member session
@@ -203,11 +204,24 @@ address by password; that account sits `pending` and its password is inert only 
 cannot sign in. Linking activates the row, which would quietly arm that password against an account
 the member now believes is theirs — so when the local row was never verified, its password is replaced
 with the OAuth-only sentinel and its sessions are revoked before the row is adopted. The member is
-told this happened and pointed at account recovery to set a new password.
+told this happened and pointed at account recovery to set a new password. A `pending` row's username
+and display name were chosen by the same anonymous registrant, so they are replaced with ones generated
+from the provider profile, exactly as for a new signup. Rows that are active (they predate email
+verification), paid, or proven by a completed password reset keep their names.
 
 A new account whose provider email is unverified is created as `pending` and receives the usual
 verification email; no session is issued until that link is used. Retrying later re-sends the link
-rather than dead-ending.
+rather than dead-ending. A stored identity is found by provider subject, and the provider's email can
+change under the same subject, so its `email_verified` only verifies the account when the address it
+reports is the account's own address.
+
+A password reset is how a member takes an account back, so it keeps only the linked identities whose
+provider asserts the account's own address as verified; any other identity is removed along with the
+old sessions.
+
+The learning-path signup page tags its Google button with `data-oauth-signup-source`. The start
+endpoint carries a recognised `signup_source` inside the signed `state`, and a new account created by
+the callback gets the same initial preferences a password signup from that page would.
 
 Usernames are the public badge slug (`/b/<username>`), so signups get one generated from the provider
 **display name** — never the email address, which would permanently publish a guess at the member's

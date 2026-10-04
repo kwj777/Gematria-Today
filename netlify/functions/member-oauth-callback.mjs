@@ -105,6 +105,7 @@ export async function handler(event) {
     const oauthProfile = await fetchOAuthProfile(provider, tokens, { clientId, nonce: statePayload.n });
     const result = await findOrCreateMemberFromOAuth(sql, oauthProfile, {
       allowSignup: await isSiteModuleEnabled(sql, 'membership'),
+      signupSource: statePayload.s,
     });
 
     // No session until the address is confirmed. Signing them in here would
@@ -167,6 +168,7 @@ export async function handler(event) {
         ...(result.created ? { oauth_new: '1' } : {}),
         ...(result.linked ? { oauth_linked: '1' } : {}),
         ...(result.passwordRetired ? { oauth_password_retired: '1' } : {}),
+        ...(result.usernameReplaced ? { oauth_username_replaced: '1' } : {}),
       }, { remove: ['auth'] }),
       {
         cookies: [

@@ -296,7 +296,7 @@ export async function ensureMemberProfile(sql, userId, profile = {}) {
 
 export const LEARNING_PATH_LEVEL_0_SOURCE = 'learning_path_level_0';
 
-function buildInitialPreferencesForSignupSource(signupSource) {
+export function buildInitialPreferencesForSignupSource(signupSource) {
   return String(signupSource || '').trim() === LEARNING_PATH_LEVEL_0_SOURCE
     ? { learningPathStep1Intent: true }
     : {};

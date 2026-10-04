@@ -5,7 +5,7 @@ import { fetchWithTimeout } from './_security.mjs';
 import {
   LEARNING_PATH_LEVEL_0_SOURCE,
   MEMBER_USERNAME_PATTERN,
-  buildInitialPreferencesForSignupSource,
+  buildInitialMemberPreferences,
   ensureMemberProfile,
   ensureMemberSchema,
   formatMemberUser,
@@ -870,7 +870,7 @@ export async function findOrCreateMemberFromOAuth(
 
   await upsertOAuthIdentity(sql, inserted[0].id, oauthProfile);
   const memberProfile = await ensureMemberProfile(sql, inserted[0].id, {
-    preferences: buildInitialPreferencesForSignupSource(sanitizeSignupSource(signupSource)),
+    preferences: buildInitialMemberPreferences({ signupSource: sanitizeSignupSource(signupSource) }),
   });
   const member = await loadMemberRow(sql, inserted[0].id);
   return {

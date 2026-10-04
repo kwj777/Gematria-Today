@@ -13,6 +13,7 @@
       const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
       const profileSaveButton = document.getElementById('profileSaveButton');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 7;
+      const HISTORY_PAGE_SIZE = 25;
       const FOLLOW_IT_SUBSCRIPTION_URL = 'https://api.follow.it/subscription-form/UGRiajBXSUFKaWpwZ1h3Q0xaQzdXdTV5UUdaamJxaFcvTXpQbWR5RjFpTExacnNMZE9MdkdkelY0ZGdza1R2M1ZkYnR6RDdvak5vYno4YzNEaEQwZC9ORkhma1RMdloyekNPTFphV1BrWVJzbHYvbTR5RzdiM0tBTGlzcXZPUHZ8NXlRaUNjSHhLN05ISUJ1RnhsWXJRakZqQkt4K1pwc1NxVlIyaGVybTdxND0=/8';
       const FOLLOW_IT_PENDING_SUBSCRIBE_KEY = 'memberFollowItPendingSubscribeEmail';
       const messageInboxCard = document.getElementById('messageInboxCard');
@@ -22,6 +23,8 @@
       const historyList = document.getElementById('historyList');
       const historyListToggleWrap = document.getElementById('historyListToggleWrap');
       const historyListToggleButton = document.getElementById('historyListToggleButton');
+      const historyLoadMoreWrap = document.getElementById('historyLoadMoreWrap');
+      const historyLoadMoreButton = document.getElementById('historyLoadMoreButton');
       const historySectionContent = document.getElementById('historySectionContent');
       const historySectionToggleButton = document.getElementById('historySectionToggleButton');
       const historySectionToggleLabel = document.getElementById('historySectionToggleLabel');
@@ -103,6 +106,7 @@
       const blogSubscriptionForm = document.getElementById('blogSubscriptionForm');
       const blogSubscriptionEmail = document.getElementById('blogSubscriptionEmail');
       const blogSubscriptionButton = document.getElementById('blogSubscriptionButton');
+      const blogSubscriptionPendingNotice = document.getElementById('blogSubscriptionPendingNotice');
       const forumNotificationSection = document.getElementById('forumNotificationSection');
       const forumNotificationSummary = document.getElementById('forumNotificationSummary');
       const forumNotificationList = document.getElementById('forumNotificationList');
@@ -131,6 +135,11 @@
       let session = null;
       let csrfToken = null;
       let historyItems = [];
+      // member-history pages its results. historyTotal is every saved
+      // calculation; historyHasMore says older ones are still on the server.
+      let historyTotal = 0;
+      let historyHasMore = false;
+      let historyLoadMoreInFlight = false;
       let favoriteHistoryIds = new Set();
       const pendingHistoryNoteTimers = new Map();
       let showAllHistoryItems = false;
@@ -469,10 +478,12 @@
         }, { once: true });
       }
 
-      function openFollowItSubscription(email = '', preopenedWindow = null) {
+      // Returns whether the follow.it form was sent. With allowBlankFallback
+      // off, a blocked popup sends nothing, so the caller can keep the intent.
+      function openFollowItSubscription(email = '', preopenedWindow = null, { allowBlankFallback = true } = {}) {
         const normalizedEmail = String(email || '').trim();
         if (!normalizedEmail) {
-          return;
+          return false;
         }
 
         const targetName = `followItSubscribe_${Date.now()}`;
@@ -508,6 +519,9 @@
           } catch (_) {
             // Ignore cross-origin opener protection errors.
           }
+        } else if (!allowBlankFallback) {
+          form.remove();
+          return false;
         } else {
           form.target = '_blank';
         }
@@ -515,6 +529,7 @@
         form.submit();
         scheduleFollowItTabAutoClose(openedWindow);
         form.remove();
+        return true;
       }
 
       function rememberFollowItSubscriptionIntent(email = '') {
@@ -525,25 +540,54 @@
         localStorage.setItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY, normalizedEmail);
       }
 
-      function popRememberedFollowItSubscriptionIntent() {
-        const rememberedEmail = String(localStorage.getItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY) || '').trim();
-        if (!rememberedEmail) {
+      function readRememberedFollowItSubscriptionIntent() {
+        try {
+          return String(localStorage.getItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY) || '').trim().toLowerCase();
+        } catch (_) {
           return '';
         }
-        localStorage.removeItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY);
-        return rememberedEmail;
       }
 
+      function clearRememberedFollowItSubscriptionIntent() {
+        try {
+          localStorage.removeItem(FOLLOW_IT_PENDING_SUBSCRIBE_KEY);
+        } catch (_) {
+          // Storage unavailable; the profile flag is cleared separately.
+        }
+      }
+
+      // The signup opt-in, read from the profile (set by member-register, so
+      // it follows the member to any device) or from this browser. It stays
+      // pending until the member is actually subscribed.
+      function getPendingBlogSubscriptionEmail(activeSession = session) {
+        const member = activeSession?.member;
+        const membershipEmail = String(member?.email || '').trim().toLowerCase();
+        if (!member?.emailVerified || !membershipEmail) {
+          return '';
+        }
+        if (getBlogSubscriptionEmailFromPreferences(activeSession?.profile, member)) {
+          return '';
+        }
+        const pendingOnProfile = activeSession?.profile?.preferences?.blogSubscriptionPending === true;
+        return pendingOnProfile || readRememberedFollowItSubscriptionIntent() === membershipEmail ? membershipEmail : '';
+      }
+
+      // The intent used to be removed before this ran, and the popup it opens
+      // after the sign-in round trip is often blocked (always in Safari), so
+      // the opt-in vanished with no message. It is now cleared only once the
+      // follow.it tab really opened; otherwise the dashboard asks the member
+      // to finish with the subscribe button, a click no blocker stops.
       function maybeOpenFollowItAfterVerifiedSignIn(activeSession = session) {
-        if (!activeSession?.member?.emailVerified) {
+        const pendingEmail = getPendingBlogSubscriptionEmail(activeSession);
+        if (!pendingEmail) {
           return;
         }
-        const rememberedEmail = popRememberedFollowItSubscriptionIntent();
-        if (!rememberedEmail) {
+        if (!openFollowItSubscription(pendingEmail, null, { allowBlankFallback: false })) {
+          showAlert('Your browser blocked the blog subscription tab you asked for at signup. Use "Subscribe to blog updates" on your dashboard to finish.', 'warning');
           return;
         }
-        openFollowItSubscription(rememberedEmail);
-        rememberBlogSubscriptionEmail(rememberedEmail);
+        clearRememberedFollowItSubscriptionIntent();
+        rememberBlogSubscriptionEmail(pendingEmail, activeSession);
       }
 
       async function rememberBlogSubscriptionEmail(email = '', activeSession = session) {
@@ -553,12 +597,14 @@
           return;
         }
 
-        const existingPreferences = activeSession?.profile?.preferences && typeof activeSession.profile.preferences === 'object'
+        const storedPreferences = activeSession?.profile?.preferences && typeof activeSession.profile.preferences === 'object'
           ? activeSession.profile.preferences
           : {};
-        if (String(existingPreferences.blogSubscriptionEmail || '').trim().toLowerCase() === membershipEmail) {
+        if (String(storedPreferences.blogSubscriptionEmail || '').trim().toLowerCase() === membershipEmail) {
           return;
         }
+        // Subscribing settles the signup opt-in.
+        const { blogSubscriptionPending: _settledOptIn, ...existingPreferences } = storedPreferences;
 
         try {
           const payload = await request('/api/member-profile', {
@@ -1413,6 +1459,7 @@
 
         blogSubscriptionSection.classList.toggle('d-none', !shouldShowSubscriptionForm);
         blogSubscriptionEmail.value = membershipEmail;
+        blogSubscriptionPendingNotice?.classList.toggle('d-none', !getPendingBlogSubscriptionEmail({ member, profile }));
       }
 
       function scrollToLoginArea() {
@@ -1746,6 +1793,8 @@
         return typeof item?.note === 'string' ? item.note : '';
       }
 
+      // Reports the failure as well as alerting, so a caller that must not
+      // lose the note (the legacy localStorage migration) can keep its copy.
       async function saveHistoryNoteToServer(id, noteText) {
         try {
           const payload = await request('/api/member-history', {
@@ -1759,8 +1808,10 @@
               historyItems[index] = { ...historyItems[index], ...updated };
             }
           }
+          return true;
         } catch (error) {
           showAlert(error.message || 'Unable to save note.');
+          return false;
         }
       }
 
@@ -1820,21 +1871,28 @@
           window.localStorage.removeItem(key);
           return;
         }
+        // saveHistoryNoteToServer catches its own errors, so the old
+        // try/catch here never fired and the notes were deleted whether or not
+        // they reached the server. Keep them until every one is accounted for.
+        let keepLegacyNotes = false;
         for (const [id, noteText] of entries) {
           const text = String(noteText ?? '').trim();
           if (!text) {
             continue;
           }
           const existing = historyItems.find((item) => String(item.id) === String(id));
-          if (existing && !getHistoryNote(existing)) {
-            try {
-              await saveHistoryNoteToServer(String(id), text);
-            } catch {
-              return;
-            }
+          if (!existing) {
+            // Possibly on a page of saved calculations not loaded yet.
+            keepLegacyNotes = keepLegacyNotes || historyHasMore;
+            continue;
+          }
+          if (!getHistoryNote(existing) && !(await saveHistoryNoteToServer(String(id), text))) {
+            return;
           }
         }
-        window.localStorage.removeItem(key);
+        if (!keepLegacyNotes) {
+          window.localStorage.removeItem(key);
+        }
       }
 
       function sortHistoryItems(items) {
@@ -1860,7 +1918,7 @@
       }
 
       function updateDashboardSavedTitles() {
-        const historyCount = Array.isArray(historyItems) ? historyItems.length : 0;
+        const historyCount = Math.max(historyTotal, Array.isArray(historyItems) ? historyItems.length : 0);
         const chatSessionCount = Array.isArray(chatSessions) ? chatSessions.length : 0;
 
         if (historySectionTitle) {
@@ -1916,6 +1974,7 @@
                 id="${noteId}"
                 class="form-control form-control-sm"
                 rows="4"
+                maxlength="10000"
                 placeholder="Add private notes about this saved search..."
                 data-note-id="${item.id}"
               >${escapeHtml(noteValue)}</textarea>
@@ -1933,6 +1992,11 @@
           historyListToggleWrap.classList.add('d-none');
           showAllHistoryItems = false;
         }
+
+        // Older saves stay on the server until asked for. Offered once the
+        // whole loaded list is on screen, so it never skips past hidden rows.
+        const canLoadMoreHistory = historyHasMore && (showAllHistoryItems || !canExpandHistoryList);
+        historyLoadMoreWrap?.classList.toggle('d-none', !canLoadMoreHistory);
 
         historyList.querySelectorAll('[data-favorite-id]').forEach((button) => {
           button.addEventListener('click', () => {
@@ -1958,7 +2022,11 @@
                 pendingHistoryNoteTimers.delete(String(button.dataset.deleteId));
               }
               showAlert('History entry deleted.', 'success');
-              await loadHistory();
+              // Dropped in place rather than reloaded: a reload starts again
+              // from the first page and loses every page the member opened.
+              historyItems = historyItems.filter((item) => String(item.id) !== String(button.dataset.deleteId));
+              historyTotal = Math.max(0, historyTotal - 1);
+              renderHistory();
             } catch (error) {
               showAlert(error.message || 'Unable to delete history item.');
             }
@@ -2167,17 +2235,56 @@
         }
       }
 
-      async function loadHistory() {
-        const payload = await request('/api/member-history');
-        historyItems = Array.isArray(payload.history) ? payload.history : [];
-        favoriteHistoryIds.forEach((id) => {
-          if (!historyItems.some((item) => String(item.id) === id)) {
-            favoriteHistoryIds.delete(id);
-          }
-        });
-        persistFavoriteHistoryIds();
+      function applyHistoryPage(payload, { append = false } = {}) {
+        const pageItems = Array.isArray(payload?.history) ? payload.history : [];
+        if (append) {
+          // Offsets shift when a save lands between pages, so the next page
+          // can repeat a row already on screen.
+          const knownIds = new Set(historyItems.map((item) => String(item.id)));
+          historyItems = [...historyItems, ...pageItems.filter((item) => !knownIds.has(String(item.id)))];
+        } else {
+          historyItems = pageItems;
+        }
+        historyHasMore = payload?.hasMore === true;
+        historyTotal = Number.isFinite(Number(payload?.total)) ? Number(payload.total) : historyItems.length;
+        // A favorite can only be called stale once every saved calculation is
+        // loaded; before that it may belong to a page not fetched yet.
+        if (!historyHasMore) {
+          favoriteHistoryIds.forEach((id) => {
+            if (!historyItems.some((item) => String(item.id) === id)) {
+              favoriteHistoryIds.delete(id);
+            }
+          });
+          persistFavoriteHistoryIds();
+        }
         renderHistory();
         migrateLegacyHistoryNotesToServer().catch(() => {});
+      }
+
+      async function loadHistory() {
+        const payload = await request(`/api/member-history?limit=${HISTORY_PAGE_SIZE}`);
+        applyHistoryPage(payload);
+      }
+
+      async function loadMoreHistory() {
+        if (historyLoadMoreInFlight || !historyHasMore) {
+          return;
+        }
+        historyLoadMoreInFlight = true;
+        if (historyLoadMoreButton) {
+          historyLoadMoreButton.disabled = true;
+        }
+        try {
+          const payload = await request(`/api/member-history?limit=${HISTORY_PAGE_SIZE}&offset=${historyItems.length}`);
+          applyHistoryPage(payload, { append: true });
+        } catch (error) {
+          showAlert(error.message || 'Unable to load more saved calculations.');
+        } finally {
+          historyLoadMoreInFlight = false;
+          if (historyLoadMoreButton) {
+            historyLoadMoreButton.disabled = false;
+          }
+        }
       }
 
       async function loadChatSessions() {
@@ -2238,6 +2345,10 @@
         renderHistory();
       });
 
+      historyLoadMoreButton?.addEventListener('click', () => {
+        loadMoreHistory();
+      });
+
       memberDashboardSyncChannel?.addEventListener('message', (event) => {
         refreshDashboardFromSync(parseDashboardSyncPayload(event.data));
       });
@@ -2295,6 +2406,15 @@
 
         try {
           session = await request('/api/member-session', { method: 'GET' });
+          // member-session answers a signed-out visitor with 200
+          // { authenticated: false }, which request() does not treat as a
+          // failure. That used to fall through to setLoggedIn(true): visitors
+          // got the dashboard, and anyone holding the signup's Level 1 intent
+          // was told "Signed in" and sent to /gematria-basics.html instead of
+          // the sign-in form their verification link pointed at.
+          if (!session?.authenticated || !session.member) {
+            throw new Error('Not signed in');
+          }
           if (session?.csrfToken) {
             csrfToken = session.csrfToken;
           }
@@ -2337,6 +2457,8 @@
           setLoggedIn(false);
           renderAchievementsEmpty();
           historyItems = [];
+          historyTotal = 0;
+          historyHasMore = false;
           renderHistory();
           chatSessions = [];
           renderChatSessions();
@@ -2405,6 +2527,9 @@
           alert: { show: showAlert, clear: clearAlert },
           source: 'member_register_form',
           request,
+          // Kept on the new profile, so the opt-in survives verifying and
+          // signing in on another device.
+          extraFields: () => ({ blogSubscribe: document.getElementById('registerBlogSubscribe').checked }),
           onSuccess: (response, ctx) => {
             const shouldSubscribeToBlog = document.getElementById('registerBlogSubscribe').checked;
             const registerEmail = document.getElementById('registerEmail').value.trim();
@@ -2413,6 +2538,8 @@
             flushPendingHistoryNoteSaves();
             setLoggedIn(false);
             historyItems = [];
+            historyTotal = 0;
+            historyHasMore = false;
             renderHistory();
             ctx.form.reset();
             if (shouldSubscribeToBlog) {
@@ -2684,6 +2811,7 @@
         try {
           const membershipEmail = String(session.member.email).trim().toLowerCase();
           openFollowItSubscription(membershipEmail);
+          clearRememberedFollowItSubscriptionIntent();
           await rememberBlogSubscriptionEmail(membershipEmail);
           showAlert('Blog subscription started. Please finish confirmation in the opened tab.', 'success');
         } catch (error) {
@@ -2720,17 +2848,33 @@
           proposedImageUrl: document.getElementById('blogProposalImageUrl').value.trim() || null,
         };
 
-        await request('/api/member-blog-proposals', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
+        // A rejected POST (validation, a lapsed tier, a server error) used to
+        // escape this listener as an unhandled rejection: no message, and the
+        // form left as if the proposal might have gone through.
+        const proposalSubmitButton = premiumBlogProposalForm.querySelector('button[type="submit"]');
+        if (proposalSubmitButton) {
+          proposalSubmitButton.disabled = true;
+        }
+        try {
+          await request('/api/member-blog-proposals', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+        } catch (error) {
+          showAlert(error.message || 'Unable to send your proposal right now. Please try again.');
+          return;
+        } finally {
+          if (proposalSubmitButton) {
+            proposalSubmitButton.disabled = false;
+          }
+        }
 
         showAlert('Your proposal was sent to the admin review queue.', 'success');
         event.target.reset();
         premiumBlogProposalForm.classList.add('d-none');
         premiumBlogProposalSuccessMessage.classList.remove('d-none');
         blogProposalAttribution.value = session.member.username || '';
-        await loadMemberProposals();
+        await loadMemberProposals().catch(() => {});
       });
 
       memberProposalFeedbackList?.addEventListener('click', async (event) => {

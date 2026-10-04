@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
-import { getAuthenticatedMember, getSqlClient, jsonResponse, parseBody } from './_member.mjs';
+import { getAuthenticatedMember, getSqlClient, jsonResponse, parseBody, parseBoundedIntegerParam } from './_member.mjs';
 import { assertSiteModuleEnabled } from './_site-modules.mjs';
 
+const DEFAULT_SESSION_PAGE_SIZE = 20;
 const MAX_SESSIONS = 100;
 const MAX_TITLE_LENGTH = 120;
 const MAX_TOPIC_LENGTH = 120;
@@ -68,7 +69,11 @@ export async function handler(event) {
 
     if (event.httpMethod === 'GET') {
       const url = new URL(event.rawUrl || `http://localhost${event.path || '/.netlify/functions/member-chat-sessions'}`);
-      const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || 20), 1), MAX_SESSIONS);
+      const limit = parseBoundedIntegerParam(url.searchParams.get('limit'), {
+        fallback: DEFAULT_SESSION_PAGE_SIZE,
+        min: 1,
+        max: MAX_SESSIONS,
+      });
       const rows = await sql`
         SELECT *
         FROM member_chat_sessions
@@ -129,6 +134,12 @@ export async function handler(event) {
 
     return jsonResponse(405, { error: 'Method not allowed' });
   } catch (error) {
-    return jsonResponse(error.statusCode || 500, { error: error.message || 'Chat session request failed' });
+    // A database error's text is Postgres's; only expected 4xx messages are
+    // written for the member.
+    if (error.statusCode && error.statusCode < 500) {
+      return jsonResponse(error.statusCode, { error: error.message || 'Chat session request failed' }, error.headers || {});
+    }
+    console.error('[member-chat-sessions] request failed:', error);
+    return jsonResponse(error.statusCode || 500, { error: 'Chat session request failed' });
   }
 }

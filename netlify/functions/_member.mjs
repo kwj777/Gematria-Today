@@ -257,6 +257,17 @@ export function formatMemberProfile(row) {
   };
 }
 
+// ?limit= and ?offset= arrive as raw strings. Number('abc') is NaN, NaN gets
+// through Math.min and Math.max, and '2.5' was passed on unchanged, so both
+// reached LIMIT and Postgres answered with a 500 carrying its own error text.
+export function parseBoundedIntegerParam(raw, { fallback, min, max }) {
+  const parsed = Number.parseInt(String(raw ?? '').trim(), 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(Math.max(parsed, min), max);
+}
+
 export function formatCalculationHistory(row) {
   return {
     id: row.id,
@@ -296,13 +307,20 @@ export async function ensureMemberProfile(sql, userId, profile = {}) {
 
 export const LEARNING_PATH_LEVEL_0_SOURCE = 'learning_path_level_0';
 
-export function buildInitialPreferencesForSignupSource(signupSource) {
-  return String(signupSource || '').trim() === LEARNING_PATH_LEVEL_0_SOURCE
-    ? { learningPathStep1Intent: true }
-    : {};
+// The signup form's blog opt-in used to live only in that browser's
+// localStorage, so verifying the email and signing in on another device -- or
+// a blocked popup after sign-in -- lost it without a word. It is kept on the
+// profile until the member finishes subscribing from the dashboard.
+export const BLOG_SUBSCRIPTION_PENDING_PREFERENCE = 'blogSubscriptionPending';
+
+export function buildInitialMemberPreferences({ signupSource = '', blogSubscribe = false } = {}) {
+  return {
+    ...(String(signupSource || '').trim() === LEARNING_PATH_LEVEL_0_SOURCE ? { learningPathStep1Intent: true } : {}),
+    ...(blogSubscribe === true ? { [BLOG_SUBSCRIPTION_PENDING_PREFERENCE]: true } : {}),
+  };
 }
 
-export async function registerMember(sql, { username, email, password, displayName = '', signupSource = '' }) {
+export async function registerMember(sql, { username, email, password, displayName = '', signupSource = '', blogSubscribe = false }) {
   await ensureMemberSchema(sql);
 
   const normalizedUsername = normalizeUsername(username);
@@ -394,7 +412,7 @@ export async function registerMember(sql, { username, email, password, displayNa
   `;
 
   const member = rows[0];
-  const initialPreferences = buildInitialPreferencesForSignupSource(signupSource);
+  const initialPreferences = buildInitialMemberPreferences({ signupSource, blogSubscribe });
   const profile = await ensureMemberProfile(sql, member.id, { preferences: initialPreferences });
   return { member: formatMemberUser(member), profile };
 }

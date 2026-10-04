@@ -5,6 +5,7 @@ import {
   MEMBER_PASSWORD_MAX_LENGTH,
   MEMBER_PASSWORD_MIN_LENGTH,
   MEMBER_USERNAME_PATTERN,
+  buildInitialMemberPreferences,
   registerMember,
 } from '../netlify/functions/_member.mjs';
 
@@ -187,4 +188,39 @@ test('registerMember still lets a genuinely new username past the duplicate chec
     },
   );
   assert.equal(sql.wrote(), true, 'a free username should reach the INSERT');
+});
+
+// ---------- blog opt-in ----------
+
+test('buildInitialMemberPreferences records the signup blog opt-in alongside the learning-path intent', () => {
+  assert.deepEqual(buildInitialMemberPreferences({}), {});
+  assert.deepEqual(buildInitialMemberPreferences({ blogSubscribe: true }), { blogSubscriptionPending: true });
+  // Only a real boolean counts; a stray string from a hand-written POST does not.
+  assert.deepEqual(buildInitialMemberPreferences({ blogSubscribe: 'yes' }), {});
+  assert.deepEqual(
+    buildInitialMemberPreferences({ signupSource: 'learning_path_level_0', blogSubscribe: true }),
+    { learningPathStep1Intent: true, blogSubscriptionPending: true },
+  );
+});
+
+test('registerMember keeps the blog opt-in on the new profile, not only in the signup browser', async () => {
+  // The checkbox used to be remembered in that browser's localStorage alone,
+  // so verifying and signing in on another device dropped it silently.
+  const recordOnly = createSqlStub();
+  const sql = (strings, ...values) => {
+    recordOnly(strings, ...values);
+    const text = strings.join('?');
+    if (/INSERT INTO users/i.test(text)) {
+      return Promise.resolve([{ id: values[0], username: values[1], email: values[2], display_name: values[3], membership_level: 'free', status: 'pending', email_verified: false }]);
+    }
+    if (/INSERT INTO member_profiles/i.test(text)) {
+      return Promise.resolve([{ user_id: values[0], preferences: JSON.parse(values[1]) }]);
+    }
+    return Promise.resolve([]);
+  };
+
+  const registration = await registerMember(sql, { ...VALID, blogSubscribe: true });
+  assert.deepEqual(registration.profile.preferences, { blogSubscriptionPending: true });
+  const profileInsert = recordOnly.recorded.find((entry) => /INSERT INTO member_profiles/i.test(entry.text));
+  assert.deepEqual(JSON.parse(profileInsert.values[1]), { blogSubscriptionPending: true });
 });

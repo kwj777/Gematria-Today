@@ -18,7 +18,25 @@ const REPUTATION_POINTS = {
   reply: 4,
 };
 
+// About 45 DDL statements, ALTER TABLEs among them, used to run on every forum
+// and admin-forum request. Memoized per instance like ensureMemberSchema; a
+// failure clears the promise so the next request tries again.
+let forumSchemaReadyPromise = null;
+
 export async function ensureForumSchema(sql) {
+  if (forumSchemaReadyPromise) {
+    return forumSchemaReadyPromise;
+  }
+
+  forumSchemaReadyPromise = ensureForumSchemaUncached(sql).catch((error) => {
+    forumSchemaReadyPromise = null;
+    throw error;
+  });
+
+  return forumSchemaReadyPromise;
+}
+
+async function ensureForumSchemaUncached(sql) {
   await sql`CREATE TABLE IF NOT EXISTS forum_categories (
     id TEXT PRIMARY KEY,
     slug TEXT NOT NULL UNIQUE,

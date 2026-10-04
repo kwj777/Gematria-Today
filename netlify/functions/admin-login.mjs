@@ -1,4 +1,5 @@
 import {
+  assertJsonRequestFromThisSite,
   AUTH_COOKIES,
   clearSessionCookie,
   createMemberTierCookie,
@@ -15,9 +16,11 @@ export async function handler(event) {
   if (methodError) return methodError;
 
   try {
+    assertJsonRequestFromThisSite(event);
     const sql = getSqlClient();
     const { username = '', password = '' } = parseBody(event);
     const normalizedUsername = String(username).trim().toLowerCase();
+    const clientIp = getClientIp(event);
 
     // Throttling used to be skipped whenever the caller already held a session.
     // getOptionalAuthenticatedSession accepts the *member* cookie too, so a free
@@ -25,7 +28,7 @@ export async function handler(event) {
     // into an unthrottled endpoint. Attempts are rate limited unconditionally.
     await applyRateLimit(sql, event, {
       scope: 'admin-login-ip',
-      key: getClientIp(event),
+      key: clientIp,
       limit: 5,
       windowMs: 60_000,
       blockMs: 30 * 60_000,
@@ -33,10 +36,15 @@ export async function handler(event) {
       auditMetadata: { username: normalizedUsername },
     });
 
+    // This limit counts attempts before the password is checked, and it used to
+    // be keyed by the username alone: four bad guesses from anywhere blocked
+    // that account for an hour from every address, the real admin's included,
+    // and repeating them hourly kept the only super admin out. Keyed by account
+    // and caller address, guessing at an account only ever blocks the guesser.
     if (normalizedUsername) {
       await applyRateLimit(sql, event, {
         scope: 'admin-login-username',
-        key: normalizedUsername,
+        key: `${normalizedUsername}|${clientIp}`,
         limit: 4,
         windowMs: 10 * 60_000,
         blockMs: 60 * 60_000,

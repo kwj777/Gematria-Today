@@ -341,7 +341,45 @@ async function resolveReport(sql, event, user) {
 
   if (!rows.length) throw Object.assign(new Error('Report not found'), { statusCode: 404 });
   await Promise.all(rows.map((row) => createAuditEntry(sql, user.id, 'report', row.id, `report_${status || 'resolved'}`, { actionTaken, assignTo: assignTo || null })));
-  return { updated: rows.length };
+
+  const suspendedUserIds = actionTaken === 'suspend_user'
+    ? await suspendReportedAuthors(sql, rows.map((row) => row.id), user.id)
+    : [];
+  return { updated: rows.length, suspendedUserIds };
+}
+
+// 'suspend_user' used to be written to the report and nothing else, so the
+// member kept their sessions and kept posting. It now suspends the author of
+// each reported reply (or of the thread, for a thread report) and deletes their
+// sessions; the session lookups in _auth.mjs refuse a suspended account and
+// password sign-in already does. Staff accounts and the moderator acting are
+// never suspended from here.
+async function suspendReportedAuthors(sql, reportIds, actorUserId) {
+  const suspendedRows = await sql`
+    UPDATE users
+    SET status = 'suspended',
+        updated_at = NOW()
+    WHERE id IN (
+      SELECT COALESCE(p.author_user_id, t.author_user_id)
+      FROM forum_reports r
+      LEFT JOIN forum_posts p ON p.id = r.post_id
+      LEFT JOIN forum_threads t ON t.id = r.thread_id
+      WHERE r.id = ANY(${reportIds})
+    )
+      AND id <> ${actorUserId}
+      AND role = 'member'
+      AND COALESCE(is_admin, FALSE) = FALSE
+      AND status <> 'deleted'
+    RETURNING id
+  `;
+  const suspendedUserIds = suspendedRows.map((row) => row.id);
+  if (!suspendedUserIds.length) {
+    return [];
+  }
+
+  await sql`DELETE FROM sessions WHERE user_id = ANY(${suspendedUserIds})`;
+  await Promise.all(suspendedUserIds.map((suspendedUserId) => createAuditEntry(sql, actorUserId, 'user', suspendedUserId, 'suspend_user', { reportIds })));
+  return suspendedUserIds;
 }
 
 export async function handler(event) {

@@ -122,9 +122,13 @@ async function ensureAdminSchemaUncached(sql) {
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
 
+  // status is ensureMemberSchema's column, with the same definition. The
+  // session lookups in _auth.mjs refuse suspended accounts, and the admin
+  // functions reach them having run only this schema.
   await sql`ALTER TABLE users
     ADD COLUMN IF NOT EXISTS email TEXT,
-    ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE`;
+    ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'`;
 
   await sql`UPDATE users
     SET is_admin = TRUE
@@ -456,12 +460,20 @@ export async function syncBootstrapAdminUser(sql) {
 async function syncBootstrapAdminUserUncached(sql) {
   const superAdminUsernames = getSuperAdminUsernames();
 
+  // The seeded hash only creates the account on an empty database. This used
+  // to be ON CONFLICT DO UPDATE SET password_hash, so every cold start put the
+  // committed hash back: a password reset or rotation of the owner account
+  // lasted only until the next deploy, and whoever could crack the hash in the
+  // repository kept the account. Once the row exists its password and role
+  // belong to the database; the promotion below still keeps the configured
+  // super admin names at super_admin while they remain staff. No conflict
+  // target, so a row that keeps the seeded id under another username is left
+  // alone too instead of failing every cold start on the primary key.
   for (const seededUser of SEEDED_ADMIN_USERS) {
     await sql`
       INSERT INTO users (id, username, password_hash, role, is_admin)
       VALUES (${seededUser.id}, ${seededUser.username}, ${seededUser.passwordHash}, ${seededUser.role}, TRUE)
-      ON CONFLICT (username)
-      DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_admin = EXCLUDED.is_admin, updated_at = NOW()
+      ON CONFLICT DO NOTHING
     `;
   }
 

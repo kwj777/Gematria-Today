@@ -84,6 +84,11 @@ CREATE TABLE IF NOT EXISTS admin_settings (
 );
 
 
+-- The seeded posts below are created_by this account. Its password hash is
+-- public in this repository, so change the password right after bootstrapping.
+-- This used to be ON CONFLICT (username) DO UPDATE SET password_hash, so
+-- re-running this file put the public hash back and undid any rotation; an
+-- existing account is now left exactly as it is.
 INSERT INTO users (id, username, password_hash, role, is_admin)
 VALUES (
   'kevandmel',
@@ -92,13 +97,7 @@ VALUES (
   'admin',
   TRUE
 )
-ON CONFLICT (username)
-DO UPDATE SET
-  id = EXCLUDED.id,
-  password_hash = EXCLUDED.password_hash,
-  role = EXCLUDED.role,
-  is_admin = EXCLUDED.is_admin,
-  updated_at = NOW();
+ON CONFLICT DO NOTHING;
 
 INSERT INTO posts (
   id,

@@ -1,4 +1,5 @@
 import {
+  assertJsonRequestFromThisSite,
   AUTH_COOKIES,
   clearSessionCookie,
   consumeAccountRecoveryRequest,
@@ -32,6 +33,7 @@ export async function handler(event) {
   }
 
   try {
+    assertJsonRequestFromThisSite(event);
     const sql = getSqlClient();
     await ensureMemberSchema(sql);
     await ensureAdminSchema(sql);

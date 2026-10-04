@@ -12,7 +12,7 @@ import {
   jsonResponse,
   parseBody,
 } from './_member.mjs';
-import { generateCsrfToken } from './_auth.mjs';
+import { assertJsonRequestFromThisSite, generateCsrfToken } from './_auth.mjs';
 import { authenticateCredentials, syncBootstrapAdminUser } from './_admin.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 
@@ -22,6 +22,7 @@ export async function handler(event) {
   }
 
   try {
+    assertJsonRequestFromThisSite(event);
     const sql = getSqlClient();
     await syncBootstrapAdminUser(sql);
     const body = parseBody(event);
@@ -46,10 +47,14 @@ export async function handler(event) {
       auditMetadata: { identifier: normalizedIdentifier },
     });
 
+    // Counted before the password is checked, so keyed by account and caller
+    // address: keyed by the identifier alone, six bad guesses from anywhere
+    // locked the real member (or, through the admin fallback below, the super
+    // admin) out from every address for half an hour.
     if (normalizedIdentifier) {
       await applyRateLimit(sql, event, {
         scope: 'member-login-identifier',
-        key: normalizedIdentifier,
+        key: `${normalizedIdentifier}|${clientIp}`,
         limit: 5,
         windowMs: 10 * 60_000,
         blockMs: 30 * 60_000,

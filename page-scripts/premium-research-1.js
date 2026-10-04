@@ -55,7 +55,14 @@
 
 
       async function ensurePremiumSession() {
+        // A failed session check is a non-2xx response, which request() throws
+        // and the caller shows as an error. A signed-out visitor is told to sign
+        // in: the membership upsell is only for a member we know is not premium,
+        // not for a paying member whose session has lapsed.
         const session = await request('/api/member-session');
+        if (session?.authenticated !== true) {
+          throw Object.assign(new Error('Sign in to use premium research.'), { premiumRequired: true, signedOut: true });
+        }
         const level = session?.member?.membershipLevel;
         if (!(level === 'premium' || level === 'lifetime')) {
           // Flagged so the caller can tell "you don't have premium" apart from
@@ -65,6 +72,7 @@
       }
 
       const lockedPanel = document.getElementById('premiumLockedPanel');
+      const signInPrompt = document.getElementById('premiumSignInPrompt');
       const errorPanel = document.getElementById('premiumErrorPanel');
       const errorMessage = document.getElementById('premiumErrorMessage');
 
@@ -74,9 +82,10 @@
         });
       }
 
-      function showPremiumLocked() {
+      function showPremiumLocked({ signedOut = false } = {}) {
         hidePremiumTools();
         clearAlert();
+        signInPrompt?.classList.toggle('d-none', !signedOut);
         lockedPanel?.classList.remove('d-none');
         lockedPanel?.focus();
       }
@@ -272,7 +281,7 @@
           // failed request landed here too, so a 500 on the session check
           // evicted paying members from a page they had access to.
           if (error?.premiumRequired) {
-            showPremiumLocked();
+            showPremiumLocked({ signedOut: Boolean(error.signedOut) });
           } else {
             showPremiumError(error?.message || 'Something went wrong reaching the membership service.');
           }

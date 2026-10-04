@@ -45,11 +45,27 @@ export function getRequestHeaders(source) {
   return Object.fromEntries(Object.entries(source.headers || {}).map(([key, value]) => [key.toLowerCase(), String(value)]));
 }
 
+// Every per-IP rate limit is keyed by this. It used to return the first
+// X-Forwarded-For entry, which is whatever the client wrote there -- proxies
+// append the real address on the right -- so a random header per request got a
+// fresh limit every time, and a victim's address in the header blocked them.
+// Netlify sets x-nf-client-connection-ip itself from the connection, so it
+// comes first. The rest only matter off Netlify (netlify dev, tests), and of
+// X-Forwarded-For only the right-most hop, the one the nearest proxy added,
+// is used.
 export function getClientIp(source) {
   const headers = getRequestHeaders(source);
-  const forwardedFor = headers['x-forwarded-for'] || headers['client-ip'] || headers['x-nf-client-connection-ip'] || '';
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
+  const connectionIp = String(headers['x-nf-client-connection-ip'] || headers['client-ip'] || '').trim();
+  if (connectionIp) {
+    return connectionIp;
+  }
+
+  const forwardedHops = String(headers['x-forwarded-for'] || '')
+    .split(',')
+    .map((hop) => hop.trim())
+    .filter(Boolean);
+  if (forwardedHops.length) {
+    return forwardedHops[forwardedHops.length - 1];
   }
 
   return headers['x-real-ip'] || 'unknown';
@@ -84,7 +100,27 @@ export function getFingerprint(source, extra = {}) {
   });
 }
 
+// Rate limiting, the response cache and the audit log each call this before
+// their own query, so a single public lookup ran these nine DDL statements
+// three or four times -- and CREATE INDEX IF NOT EXISTS still takes its lock
+// before it finds the index. Memoized per instance like ensureAdminSchema; a
+// failure clears the promise so the next request tries again.
+let securitySchemaReadyPromise = null;
+
 export async function ensureSecuritySchema(sql) {
+  if (securitySchemaReadyPromise) {
+    return securitySchemaReadyPromise;
+  }
+
+  securitySchemaReadyPromise = ensureSecuritySchemaUncached(sql).catch((error) => {
+    securitySchemaReadyPromise = null;
+    throw error;
+  });
+
+  return securitySchemaReadyPromise;
+}
+
+async function ensureSecuritySchemaUncached(sql) {
   await sql`CREATE TABLE IF NOT EXISTS request_rate_limits (
     scope TEXT NOT NULL,
     key TEXT NOT NULL,

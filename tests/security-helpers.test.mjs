@@ -112,17 +112,43 @@ test('getRequestHeaders returns an empty object when source is null', () => {
 
 // ---------- getClientIp ----------
 
-test('getClientIp returns the first hop in x-forwarded-for', () => {
-  const source = { headers: { 'x-forwarded-for': '203.0.113.5, 198.51.100.7, 127.0.0.1' } };
+// Every per-IP rate limit is keyed by this. The left of X-Forwarded-For is
+// whatever the client wrote there, so preferring it let a random header buy a
+// fresh limit per request, and a victim's address in the header block them.
+test('getClientIp prefers the address Netlify saw over anything in X-Forwarded-For', () => {
+  const source = {
+    headers: {
+      'x-forwarded-for': '198.51.100.99, 203.0.113.5',
+      'client-ip': '198.51.100.98',
+      'x-nf-client-connection-ip': '203.0.113.5',
+    },
+  };
   assert.equal(getClientIp(source), '203.0.113.5');
 });
 
-test('getClientIp falls back to client-ip then x-nf-client-connection-ip', () => {
+test('getClientIp does not let a spoofed X-Forwarded-For change the rate-limit key on Netlify', () => {
+  const real = { 'x-nf-client-connection-ip': '203.0.113.5' };
+  const keys = new Set(['10.0.0.1', '10.0.0.2', '192.0.2.77'].map((spoofed) => getClientIp({
+    headers: { ...real, 'x-forwarded-for': `${spoofed}, 203.0.113.5` },
+  })));
+  assert.deepEqual([...keys], ['203.0.113.5']);
+});
+
+test('getClientIp also reads x-nf-client-connection-ip from a Fetch API Request', () => {
+  const request = new Request('https://gematria.today/api/x', {
+    headers: { 'x-forwarded-for': '198.51.100.99', 'x-nf-client-connection-ip': '203.0.113.21' },
+  });
+  assert.equal(getClientIp(request), '203.0.113.21');
+});
+
+test('getClientIp falls back to client-ip when Netlify\'s header is absent', () => {
   assert.equal(getClientIp({ headers: { 'client-ip': '203.0.113.10' } }), '203.0.113.10');
-  assert.equal(
-    getClientIp({ headers: { 'x-nf-client-connection-ip': '203.0.113.20' } }),
-    '203.0.113.20',
-  );
+});
+
+test('getClientIp off Netlify uses the right-most X-Forwarded-For hop, the one the proxy added', () => {
+  const source = { headers: { 'x-forwarded-for': '203.0.113.5, 198.51.100.7, 127.0.0.1' } };
+  assert.equal(getClientIp(source), '127.0.0.1');
+  assert.equal(getClientIp({ headers: { 'x-forwarded-for': ' 203.0.113.9 ,' } }), '203.0.113.9');
 });
 
 test('getClientIp falls back to x-real-ip when no forwarded headers exist', () => {
@@ -181,6 +207,62 @@ test('getFingerprint is stable for identical sources + extras', () => {
 test('getFingerprint changes when extra context changes', () => {
   const source = { headers: { 'user-agent': 'ua' }, path: '/x' };
   assert.notEqual(getFingerprint(source, { route: 'a' }), getFingerprint(source, { route: 'b' }));
+});
+
+// ---------- ensureSecuritySchema ----------
+
+// Rate limiting, the response cache and the audit log each run this before
+// their own query, so one public lookup used to issue the nine DDL statements
+// three or four times. Each test loads a fresh copy of the module, standing in
+// for a new lambda instance.
+let securityColdStarts = 0;
+async function freshSecurityModule() {
+  securityColdStarts += 1;
+  return import(`../netlify/functions/_security.mjs?cold-start=${securityColdStarts}`);
+}
+
+function createDdlCountingSql({ failFirstDdl = false } = {}) {
+  const calls = [];
+  let failNext = failFirstDdl;
+  const sql = (strings) => {
+    const text = strings.join('?');
+    calls.push(text);
+    if (failNext && /CREATE TABLE IF NOT EXISTS request_rate_limits/.test(text)) {
+      failNext = false;
+      return Promise.reject(new Error('lock timeout'));
+    }
+    if (/INSERT INTO request_rate_limits/.test(text)) {
+      return Promise.resolve([{ count: 1, window_started_at: new Date().toISOString(), blocked_until: null }]);
+    }
+    return Promise.resolve([]);
+  };
+  const ddlCount = () => calls.filter((text) => /^\s*CREATE (TABLE|INDEX) IF NOT EXISTS/.test(text)).length;
+  return { sql, ddlCount };
+}
+
+test('ensureSecuritySchema runs its DDL once per instance, however many helpers a request uses', async () => {
+  const { applyRateLimit, ensureSecuritySchema, getCachedJson, logRequestAudit, setCachedJson } = await freshSecurityModule();
+  const { sql, ddlCount } = createDdlCountingSql();
+  const source = { headers: {}, path: '/api/englishGematria' };
+
+  await applyRateLimit(sql, source, { scope: 'lookup', key: 'k', limit: 10, windowMs: 60_000 });
+  const afterFirstHelper = ddlCount();
+  assert.equal(afterFirstHelper, 9, 'the first call creates the three tables and six indexes');
+
+  await getCachedJson(sql, 'cache-key');
+  await setCachedJson(sql, { cacheKey: 'cache-key', route: 'lookup', payload: {} });
+  await logRequestAudit(sql, source, { route: 'lookup', action: 'request', outcome: 'ok' });
+  await ensureSecuritySchema(sql);
+  assert.equal(ddlCount(), afterFirstHelper, 'later calls reuse the finished schema');
+});
+
+test('a failed ensureSecuritySchema is retried by the next request instead of poisoning the instance', async () => {
+  const { ensureSecuritySchema } = await freshSecurityModule();
+  const { sql, ddlCount } = createDdlCountingSql({ failFirstDdl: true });
+
+  await assert.rejects(ensureSecuritySchema(sql), /lock timeout/);
+  await ensureSecuritySchema(sql);
+  assert.equal(ddlCount(), 1 + 9, 'the retry ran the whole schema again');
 });
 
 // ---------- createRateLimitError ----------

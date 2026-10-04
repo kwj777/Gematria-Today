@@ -10,6 +10,7 @@ import {
   releaseUnverifiedMemberClaim,
   markVerificationEmailDelivered,
 } from './_member.mjs';
+import { assertJsonRequestFromThisSite } from './_auth.mjs';
 import { sendMemberVerificationEmail } from './_email.mjs';
 import { applyRateLimit, assertHoneypotEmpty, getClientIp, logRequestAudit } from './_security.mjs';
 import { assertSiteModuleEnabled } from './_site-modules.mjs';
@@ -30,6 +31,7 @@ export async function handler(event) {
   }
 
   try {
+    assertJsonRequestFromThisSite(event);
     const sql = getSqlClient();
     await assertSiteModuleEnabled(sql, 'membership');
     const body = parseBody(event);

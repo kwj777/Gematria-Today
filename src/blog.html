@@ -52,7 +52,7 @@
     <link rel="stylesheet" href="/theme.css" />
     <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
     <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
-    <link rel="preload" as="image" href="/assets/blog-hero-insights-16x9.svg" type="image/svg+xml" fetchpriority="high" />
+    <link rel="preload" as="image" href="/assets/blog-hero-insights-16x9.svg" type="image/svg+xml" media="(min-width: 992px)" fetchpriority="high" />
       <script src="/pwa-register.js" defer></script>
       <script type="application/ld+json" id="blogArticleJsonLd">
       {
@@ -98,7 +98,7 @@
     </div>
 {% nav %}
     <main id="mainContent" class="py-5" data-module-page="blog">
-      <div class="container">
+      <div class="container d-flex flex-column">
         <section id="blogLandingHero" class="hero-panel hero-panel--compact p-4 p-lg-5 mb-5">
           <p class="section-kicker mb-3">Blog</p>
           <div class="row g-4 align-items-center">
@@ -107,7 +107,7 @@
               <p id="heroBodyPrimary" class="lead mb-0">Discover how words, numbers, and patterns connect through clear gematria explainers, pattern-layer breakdowns, and research-ready workflows.</p>
               <p id="heroHeadlineSecondary" class="lead text-muted mt-3 mb-0 d-none"></p>
             </div>
-            <div class="col-lg-4">
+            <div class="col-lg-4 d-none d-lg-block">
               <figure class="content-panel hero-media-panel hero-image-frame h-100 mb-0 overflow-hidden news-hero-figure blog-hero-figure">
                 <picture>
                   <source media="(min-width: 992px)" srcset="/assets/blog-hero-insights-16x9.svg" />
@@ -126,7 +126,7 @@
         </section>
 
 
-        <section id="blogEditorialTrustPanel" class="content-panel p-4 mb-5">
+        <section id="blogEditorialTrustPanel" class="content-panel p-4 mt-5 mt-lg-0 mb-0 mb-lg-5 order-last order-lg-0">
           <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
               <p class="section-kicker mb-1">Editorial Trust</p>
@@ -146,63 +146,6 @@
           </div>
         </section>
         <section class="row g-4">
-          <div class="col-lg-4">
-            <aside class="content-panel p-4 sticky-top blog-sidebar">
-              <p class="section-kicker mb-2">Selected Posts</p>
-              <h2 class="h4 mb-3">Start with these reads</h2>
-              <div class="mb-4">
-                <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
-                <div
-                  id="blogTagFilters"
-                  class="blog-tag-filters blog-tag-filters--collapsed d-flex flex-wrap gap-2"
-                  role="group"
-                  aria-label="Filter blog posts by tag"
-                >
-                  <span class="text-muted small">Loading tags…</span>
-                </div>
-                <button
-                  id="blogTagFiltersToggle"
-                  type="button"
-                  class="btn btn-link btn-sm px-0 mt-2"
-                  aria-controls="blogTagFilters"
-                  aria-expanded="false"
-                  hidden
-                >Show all tags</button>
-              </div>
-              <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
-                <div class="followit--follow-form-container followit-card followit-card--sidebar">
-                  <form action="https://api.follow.it/subscription-form/UGRiajBXSUFKaWpwZ1h3Q0xaQzdXdTV5UUdaamJxaFcvTXpQbWR5RjFpTExacnNMZE9MdkdkelY0ZGdza1R2M1ZkYnR6RDdvak5vYno4YzNEaEQwZC9ORkhma1RMdloyekNPTFphV1BrWVJzbHYvbTR5RzdiM0tBTGlzcXZPUHZ8NXlRaUNjSHhLN05ISUJ1RnhsWXJRakZqQkt4K1pwc1NxVlIyaGVybTdxND0=/8" method="post">
-                    <div class="form-preview" data-v-8a8a107f="">
-                      <div class="preview-heading" data-v-8a8a107f="">
-                        <h3 class="h6" data-v-8a8a107f=""><label for="blogSubscribeEmail" data-v-8a8a107f="">Get new posts by email:</label></h3>
-                      </div>
-                      <div class="preview-input-field" data-v-8a8a107f="">
-                        <input id="blogSubscribeEmail" type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" autocomplete="email" data-v-8a8a107f="">
-                      </div>
-                      <div class="preview-submit-button" data-v-8a8a107f="">
-                        <button type="submit" data-v-8a8a107f="">Subscribe</button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-              <aside class="blog-sidebar-series content-panel p-3" aria-label="Featured blog series — English Gematria Cipher Atlas">
-                <p class="section-kicker mb-2">Featured Series</p>
-                <h3 class="h6 mb-2">English Gematria Cipher Atlas — an 8-part guide</h3>
-                <p class="small text-muted mb-3">Walk through the eight ciphers a researcher actually encounters: what each one is, where it came from, and when to reach for it.</p>
-                <ol class="small mb-0 ps-3">
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-simple-ordinal#english-gematria-cipher-atlas-simple-ordinal">Simple Ordinal (A = 1 to Z = 26)</a></li>
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-reverse-ordinal#english-gematria-cipher-atlas-reverse-ordinal">Reverse Ordinal (A = 26 to Z = 1)</a></li>
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-full-reduction#english-gematria-cipher-atlas-full-reduction">Full Reduction / Pythagorean (1 to 9)</a></li>
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-reverse-full-reduction#english-gematria-cipher-atlas-reverse-full-reduction">Reverse Full Reduction</a></li>
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-english-sumerian#english-gematria-cipher-atlas-english-sumerian">English Sumerian / Agrippan ×6 (A = 6 to Z = 156)</a></li>
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-jewish-latin#english-gematria-cipher-atlas-jewish-latin">Jewish / Latin Cipher (1–9, 10–90, 100–800)</a></li>
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-baconian#english-gematria-cipher-atlas-baconian">Baconian Cipher (Simple vs Kaye)</a></li>
-                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-choosing-and-combining#english-gematria-cipher-atlas-choosing-and-combining">Choosing and Combining Ciphers</a></li>
-                </ol>
-              </aside>
-            </aside>
-          </div>
           <div class="col-lg-8">
             <aside id="learningPathCompletionBanner" class="content-panel learning-path-completion-banner p-4 p-lg-5 mb-4 d-none" role="status" aria-live="polite">
               <button id="learningPathCompletionBannerDismiss" type="button" class="btn-close learning-path-completion-banner__dismiss" aria-label="Dismiss completion banner"></button>
@@ -258,6 +201,63 @@
             <div id="blogLoadMoreWrap" class="d-flex justify-content-center mt-4 d-none">
               <button id="blogLoadMoreButton" type="button" class="btn btn-outline-primary fw-semibold">Load more posts</button>
             </div>
+          </div>
+          <div class="col-lg-4 order-lg-first">
+            <aside class="content-panel p-4 sticky-top blog-sidebar">
+              <p class="section-kicker mb-2">Selected Posts</p>
+              <h2 class="h4 mb-3">Start with these reads</h2>
+              <div class="mb-4">
+                <p class="text-uppercase text-muted small fw-semibold mb-2">Filter by tag</p>
+                <div
+                  id="blogTagFilters"
+                  class="blog-tag-filters blog-tag-filters--collapsed d-flex flex-wrap gap-2"
+                  role="group"
+                  aria-label="Filter blog posts by tag"
+                >
+                  <span class="text-muted small">Loading tags…</span>
+                </div>
+                <button
+                  id="blogTagFiltersToggle"
+                  type="button"
+                  class="btn btn-link btn-sm px-0 mt-2"
+                  aria-controls="blogTagFilters"
+                  aria-expanded="false"
+                  hidden
+                >Show all tags</button>
+              </div>
+              <div id="blogSidebarSubscribe" class="blog-follow-form-slot mb-4">
+                <div class="followit--follow-form-container followit-card followit-card--sidebar">
+                  <form action="https://api.follow.it/subscription-form/UGRiajBXSUFKaWpwZ1h3Q0xaQzdXdTV5UUdaamJxaFcvTXpQbWR5RjFpTExacnNMZE9MdkdkelY0ZGdza1R2M1ZkYnR6RDdvak5vYno4YzNEaEQwZC9ORkhma1RMdloyekNPTFphV1BrWVJzbHYvbTR5RzdiM0tBTGlzcXZPUHZ8NXlRaUNjSHhLN05ISUJ1RnhsWXJRakZqQkt4K1pwc1NxVlIyaGVybTdxND0=/8" method="post">
+                    <div class="form-preview" data-v-8a8a107f="">
+                      <div class="preview-heading" data-v-8a8a107f="">
+                        <h3 class="h6" data-v-8a8a107f=""><label for="blogSubscribeEmail" data-v-8a8a107f="">Get new posts by email:</label></h3>
+                      </div>
+                      <div class="preview-input-field" data-v-8a8a107f="">
+                        <input id="blogSubscribeEmail" type="email" name="email" required="" placeholder="Enter your email" spellcheck="false" autocomplete="email" data-v-8a8a107f="">
+                      </div>
+                      <div class="preview-submit-button" data-v-8a8a107f="">
+                        <button type="submit" data-v-8a8a107f="">Subscribe</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <aside class="blog-sidebar-series content-panel p-3" aria-label="Featured blog series — English Gematria Cipher Atlas">
+                <p class="section-kicker mb-2">Featured Series</p>
+                <h3 class="h6 mb-2">English Gematria Cipher Atlas — an 8-part guide</h3>
+                <p class="small text-muted mb-3">Walk through the eight ciphers a researcher actually encounters: what each one is, where it came from, and when to reach for it.</p>
+                <ol class="small mb-0 ps-3">
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-simple-ordinal#english-gematria-cipher-atlas-simple-ordinal">Simple Ordinal (A = 1 to Z = 26)</a></li>
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-reverse-ordinal#english-gematria-cipher-atlas-reverse-ordinal">Reverse Ordinal (A = 26 to Z = 1)</a></li>
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-full-reduction#english-gematria-cipher-atlas-full-reduction">Full Reduction / Pythagorean (1 to 9)</a></li>
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-reverse-full-reduction#english-gematria-cipher-atlas-reverse-full-reduction">Reverse Full Reduction</a></li>
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-english-sumerian#english-gematria-cipher-atlas-english-sumerian">English Sumerian / Agrippan ×6 (A = 6 to Z = 156)</a></li>
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-jewish-latin#english-gematria-cipher-atlas-jewish-latin">Jewish / Latin Cipher (1–9, 10–90, 100–800)</a></li>
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-baconian#english-gematria-cipher-atlas-baconian">Baconian Cipher (Simple vs Kaye)</a></li>
+                  <li><a href="/blog.html?post=english-gematria-cipher-atlas-choosing-and-combining#english-gematria-cipher-atlas-choosing-and-combining">Choosing and Combining Ciphers</a></li>
+                </ol>
+              </aside>
+            </aside>
           </div>
         </section>
       </div>

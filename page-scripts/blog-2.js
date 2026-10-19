@@ -1165,8 +1165,15 @@
         const tagFilter = event.target.closest('[data-tag-filter]');
         if (tagFilter) {
           selectedTag = String(tagFilter.dataset.tagFilter || '').trim().toLowerCase();
+          // Below lg the sidebar comes after the post list, so a tag tapped there
+          // would re-render the list out of view. Check where the tap came from
+          // first: renderPosts() rebuilds the chips and detaches this one.
+          const fromSidebar = Boolean(tagFilter.closest('#blogTagFilters'));
           syncTagLocation(selectedTag);
           renderPosts(latestPosts);
+          if (fromSidebar && window.matchMedia?.('(max-width: 991.98px)')?.matches) {
+            document.getElementById('blogListToolbar')?.scrollIntoView({ block: 'start' });
+          }
           return;
         }
         const copyLinkButton = event.target.closest('[data-copy-link]');

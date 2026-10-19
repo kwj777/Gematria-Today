@@ -439,7 +439,7 @@ const form = document.querySelector('#name-form');
         details.className = 'mb-2';
         details.textContent = `Join with a free or premium membership to view related words for ${name}.`;
         const cta = document.createElement('a');
-        cta.className = 'btn btn-sm btn-primary';
+        cta.className = 'btn btn-sm btn-outline-warning';
         cta.href = '/member.html#authSection';
         cta.textContent = 'Unlock with Free or Premium Membership';
 

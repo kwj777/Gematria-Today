@@ -458,7 +458,7 @@ View results: ${shareUrl}`.trim(),
         callout.appendChild(preview);
 
         const cta = document.createElement('a');
-        cta.className = 'btn btn-sm btn-primary mt-2';
+        cta.className = 'btn btn-sm btn-outline-warning mt-2';
         cta.href = '/member.html#registerForm';
         cta.textContent = 'Join for free';
         callout.appendChild(cta);
@@ -616,7 +616,7 @@ View results: ${shareUrl}`.trim(),
           if (memberLink) {
             memberLink.href = '/member.html#registerForm';
             memberLink.textContent = 'Join free';
-            memberLink.classList.add('btn-primary');
+            memberLink.classList.add('btn-outline-warning');
             memberLink.classList.remove('btn-outline-primary');
           }
           if (memberSaveMeta) {
@@ -636,7 +636,7 @@ View results: ${shareUrl}`.trim(),
         if (memberLink) {
           memberLink.href = '/member.html';
           memberLink.textContent = 'Go to My Dashboard';
-          memberLink.classList.remove('btn-primary');
+          memberLink.classList.remove('btn-outline-warning');
           memberLink.classList.add('btn-outline-primary');
         }
         destroyMembersOnlyPopover();
@@ -1764,6 +1764,8 @@ View results: ${shareUrl}`.trim(),
             errorMessage: error?.message || 'unknown_error',
           });
           memberSaveMeta.textContent = error.message || 'Unable to save search history.';
+          // The member box sits under the results, so keep the failure in view.
+          memberSaveShell?.scrollIntoView({ block: 'nearest' });
         }
       }
 

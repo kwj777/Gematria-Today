@@ -23,10 +23,35 @@
     let shownThisSession = false;
     try { shownThisSession = window.sessionStorage.getItem(SESSION_SHOWN_KEY) === '1'; } catch {}
     if (shownThisSession) return;
-    try { window.sessionStorage.setItem(SESSION_SHOWN_KEY, '1'); } catch {}
     const source = nudge.dataset.nudgeSource || 'unknown';
     nudge.classList.remove('d-none');
-    window.gematriaTracking?.track?.('beginner_path_nudge_view', { source });
+    // On the calculator the nudge sits under the results, often below the
+    // fold. Count it as viewed, and use up the once-per-session slot, only
+    // once at least half of it has stayed on screen for a second -- so a
+    // layout shift just after load cannot count it unseen.
+    const markShown = () => {
+      try { window.sessionStorage.setItem(SESSION_SHOWN_KEY, '1'); } catch {}
+      window.gematriaTracking?.track?.('beginner_path_nudge_view', { source });
+    };
+    if (typeof window.IntersectionObserver === 'function') {
+      let dwellTimer = null;
+      const observer = new window.IntersectionObserver((entries) => {
+        const visible = entries[entries.length - 1].intersectionRatio >= 0.5;
+        if (!visible) {
+          window.clearTimeout(dwellTimer);
+          dwellTimer = null;
+          return;
+        }
+        if (dwellTimer) return;
+        dwellTimer = window.setTimeout(() => {
+          observer.disconnect();
+          markShown();
+        }, 1000);
+      }, { threshold: [0, 0.5] });
+      observer.observe(nudge);
+    } else {
+      markShown();
+    }
     document.getElementById('learningPathNudgeCta')?.addEventListener('click', () => {
       window.gematriaTracking?.track?.('beginner_path_start_click', {
         source: `${source}_nudge`,

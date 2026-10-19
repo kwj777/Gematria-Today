@@ -90,11 +90,11 @@
         const actions = document.createElement('div');
         actions.className = 'd-flex flex-wrap gap-2';
         const signInLink = document.createElement('a');
-        signInLink.className = 'btn btn-warning fw-semibold';
+        signInLink.className = 'btn btn-outline-warning fw-semibold';
         signInLink.href = '/member.html?auth=login#authSection';
         signInLink.textContent = 'Sign in';
         const signUpLink = document.createElement('a');
-        signUpLink.className = 'btn btn-outline-warning fw-semibold';
+        signUpLink.className = 'btn btn-warning fw-semibold';
         signUpLink.href = '/member.html?auth=register#authSection';
         signUpLink.textContent = 'Create free account';
         actions.append(signInLink, signUpLink);

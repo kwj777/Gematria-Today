@@ -289,7 +289,7 @@
 
         replyListEl.innerHTML = replies.map((reply) => `
           <article class="forum-reply-card p-3 mb-3" data-reply-id="${reply.id}">
-            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
               <p class="small text-muted mb-0 forum-meta">${renderAuthorInline(reply)} · ${formatDate(reply.createdAt)}</p>
               <div class="d-flex gap-2 align-items-center">
                 <button class="btn btn-outline-warning btn-sm" type="button" data-report-reply="${reply.id}" title="Report this reply to the moderation team" aria-label="Report this reply to the moderation team">Report</button>

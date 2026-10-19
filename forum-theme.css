@@ -63,6 +63,15 @@
   line-height: var(--forum-body-line-height);
 }
 
+/* Posts are member input: a pasted link, a long number or a username with no
+   spaces is one unbreakable word and pushed cards past the screen on phones. */
+.forum-title,
+.forum-subtitle,
+.forum-meta,
+.forum-body {
+  overflow-wrap: anywhere;
+}
+
 .forum-stack > * + * {
   margin-top: var(--forum-space-3);
 }
@@ -81,6 +90,9 @@
 
 .forum-thread-list {
   display: grid;
+  /* A bare grid track grows to its widest card's content (min-width: auto),
+     and every card in the list then takes that width. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--forum-space-3);
 }
 
@@ -143,6 +155,7 @@
 
 .forum-reply-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--forum-space-2);
 }
 

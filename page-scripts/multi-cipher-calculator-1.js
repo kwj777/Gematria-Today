@@ -219,7 +219,7 @@ function updateMemberSaveState() {
   if (memberLink) {
     memberLink.href = '/member.html';
     memberLink.textContent = 'Go to My Dashboard';
-    memberLink.classList.remove('btn-primary');
+    memberLink.classList.remove('btn-outline-warning');
     memberLink.classList.add('btn-outline-primary');
   }
   destroyMembersOnlyPopover();
@@ -296,6 +296,8 @@ async function performSaveWithNote(noteText) {
     await saveCurrentSearch(noteText);
   } catch (error) {
     memberSaveMeta.textContent = error.message || 'Unable to save search history.';
+    // The member box sits under the results, so keep the failure in view.
+    memberSaveShell?.scrollIntoView({ block: 'nearest' });
   }
 }
 

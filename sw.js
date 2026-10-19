@@ -4,7 +4,9 @@
 // whichever CSS and JS they happened to cache first -- indefinitely.
 // v8: static-v7 holds install-time copies that shadowed every revalidated
 // update (see matchFreshest), so it has to go.
-const CACHE_VERSION = 'v8';
+// v9: design fixes -- new page markup and scripts must not meet the previous
+// theme.css (or the reverse) on a returning visitor's first load.
+const CACHE_VERSION = 'v9';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGE_CACHE = `pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;

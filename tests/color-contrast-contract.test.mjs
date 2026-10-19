@@ -278,6 +278,35 @@ test('light-theme outline-secondary buttons are readable on the cream page', () 
   assertContrast(color, CREAM_PAGE, AA_TEXT, 'light .btn-outline-secondary');
 });
 
+test('amber outline buttons are readable at rest and when filled, in both themes', () => {
+  // Bootstrap's #ffc107 outline was 1.47:1 on .alert-warning (the forum's
+  // sign-up prompt) and 1.63:1 on white (name calculator "Download image").
+  const ALERT_SECONDARY = '#e2e3e5';
+  const ALERT_INFO = '#cff4fc';
+  const rule = '.btn-outline-warning';
+  const light = resolve(THEME_CSS, declaration(THEME_CSS, rule, '--bs-btn-color'), LIGHT_ROOT);
+  for (const surface of [WHITE, LIGHT_PANEL, CREAM_PAGE, ALERT_WARNING, ALERT_SECONDARY, ALERT_INFO]) {
+    assertContrast(light, surface, AA_TEXT, 'light .btn-outline-warning');
+  }
+  for (const state of ['hover', 'active']) {
+    const fg = resolve(THEME_CSS, declaration(THEME_CSS, rule, `--bs-btn-${state}-color`), LIGHT_ROOT);
+    const bg = resolve(THEME_CSS, declaration(THEME_CSS, rule, `--bs-btn-${state}-bg`), LIGHT_ROOT);
+    assertContrast(fg, bg, AA_TEXT, `.btn-outline-warning:${state}`);
+  }
+  // Bootstrap's dark .alert-warning / -secondary / -info backgrounds.
+  const dark = declaration(THEME_CSS, `${DARK_ROOT} ${rule}`, '--bs-btn-color');
+  for (const surface of [DARK_PANEL, DARK_PAGE, '#332701', '#161719', '#032830']) {
+    assertContrast(dark, surface, AA_TEXT, 'dark .btn-outline-warning');
+  }
+});
+
+test('the blog email Subscribe button uses the brand amber pair', () => {
+  const rule = '.followit--follow-form-container .form-preview .preview-submit-button button';
+  const fg = resolve(THEME_CSS, declaration(THEME_CSS, rule, 'color'), LIGHT_ROOT);
+  const bg = resolve(THEME_CSS, declaration(THEME_CSS, rule, 'background'), LIGHT_ROOT);
+  assertContrast(fg, bg, AA_TEXT, 'blog Subscribe button');
+});
+
 test('tools page plan badges are readable on their tinted pills', () => {
   const pill = (selector, tint) => {
     const block = TOOLS_HTML.match(new RegExp(`\\n\\s*${selector.replace(/[.-]/g, '\\$&')} \\{([^}]*)\\}`));

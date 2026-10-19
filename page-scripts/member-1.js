@@ -8,9 +8,7 @@
       const membershipPlanMeta = document.getElementById('membershipPlanMeta');
       const paymentButton = document.getElementById('paymentButton');
       const registerButton = document.querySelector('#registerForm button[type="submit"]');
-      const registerPasswordMismatchAlert = document.getElementById('registerPasswordMismatchAlert');
       const registerPasswordInput = document.getElementById('registerPassword');
-      const registerConfirmPasswordInput = document.getElementById('registerConfirmPassword');
       const profileSaveButton = document.getElementById('profileSaveButton');
       const FREE_MEMBERSHIP_SAVE_LIMIT = 7;
       const HISTORY_PAGE_SIZE = 25;
@@ -2536,11 +2534,8 @@
             displayName: document.getElementById('registerDisplayName'),
             email: document.getElementById('registerEmail'),
             password: registerPasswordInput,
-            confirmPassword: registerConfirmPasswordInput,
           },
           submitButton: registerButton,
-          passwordMismatchAlert: registerPasswordMismatchAlert,
-          confirmMismatchHint: document.getElementById('registerConfirmPasswordMismatch'),
           alert: { show: showAlert, clear: clearAlert },
           source: 'member_register_form',
           request,

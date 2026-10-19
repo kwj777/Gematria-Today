@@ -215,7 +215,7 @@ test('switching the forum off hides the forum and reputation-scale links', async
 function buildMembershipLinksPage() {
   const loginItem = el('li', { class: 'nav-item nav-auth nav-auth--anon nav-cta nav-cta--login' }, el('a', { class: 'nav-link', href: 'https://gematria.today/member?auth=login#authSection' }));
   const dashboardItem = el('li', { class: 'nav-item nav-auth nav-auth--member' }, el('a', { class: 'nav-link', href: '/member.html' }));
-  const joinItem = el('li', { class: 'nav-item nav-auth nav-auth--anon nav-cta nav-cta--join', 'data-module': 'membership' }, el('a', { href: '/gematria-account-setup.html' }));
+  const joinItem = el('li', { class: 'nav-item nav-auth nav-auth--anon nav-cta nav-cta--join', 'data-module': 'membership' }, el('a', { href: '/gematria-account-setup.html?from=nav' }));
   const footerMembership = el('li', {}, el('a', { href: '/member.html' }));
   const backToSignIn = el('a', { href: '/member.html?auth=login#authSection' });
   const registerLink = el('a', { id: 'member-link', href: '/member.html#registerForm' });
@@ -250,7 +250,7 @@ test('switching membership off hides sign-up and upgrade, never the way back in 
 test('the nav Dashboard item does not follow the membership switch', () => {
   const nav = readFileSync(new URL('src/_includes/nav.html', ROOT), 'utf8');
   assert.match(nav, /<li class="nav-item nav-auth nav-auth--member"><a class="nav-link" href="\/member\.html">Dashboard<\/a><\/li>/);
-  assert.match(nav, /nav-cta--join" data-module="membership"><a [^>]*href="\/gematria-account-setup\.html"/);
+  assert.match(nav, /nav-cta--join" data-module="membership"><a [^>]*href="\/gematria-account-setup\.html\?from=nav"/);
 });
 
 test('a failed settings fetch keeps the switches the server last reported', async () => {

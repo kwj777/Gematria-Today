@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <title>Bible Names in Gematria: Values for Jesus, God, Moses and More | Gematria.Today</title>
+    <meta name="description" content="The English gematria values of 46 Bible names and terms, from God, Jesus and Messiah to Babylon and Revelation, with a letter-by-letter page for each and the values they share." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://gematria.today/bible-names-gematria.html" />
+    <meta name="author" content="Gematria.Today Editorial Team" />
+    <meta name="last-updated" content="2026-10-26" />
+    <meta name="editorial-policy" content="https://gematria.today/disclaimer.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Bible Names in Gematria" />
+    <meta property="og:description" content="English gematria values for 46 Bible names and terms, and the values they share." />
+    <meta property="og:url" content="https://gematria.today/bible-names-gematria.html" />
+    <meta property="og:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Bible Names in Gematria" />
+    <meta name="twitter:description" content="English gematria values for 46 Bible names and terms, and the values they share." />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
+    <meta name="twitter:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script src="/pwa-register.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://gematria.today/"},
+          {"@type": "ListItem", "position": 2, "name": "Bible Names in Gematria", "item": "https://gematria.today/bible-names-gematria.html"}
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <nav aria-label="Breadcrumb" class="mb-3">
+          <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="/index.html">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Bible Names in Gematria</li>
+          </ol>
+        </nav>
+
+        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-3">Reference</p>
+          <h1 class="display-5 fw-bold mb-3">Bible names in gematria</h1>
+          <address class="small text-muted mb-3 fst-normal">By the <a href="/disclaimer.html">Gematria.Today Editorial Team</a> &middot; Updated <time datetime="2026-10-26">October 26, 2026</time></address>
+          <p class="lead mb-0">The English gematria value of {{ bibleNames.count }} names and words from the Bible, each worked out letter by letter on its own page. Values use the cipher this site uses everywhere: A&nbsp;=&nbsp;6, B&nbsp;=&nbsp;12, up to Z&nbsp;=&nbsp;156. <a href="/how-to-use-gematria.html">How the values are worked out</a>.</p>
+        </section>
+
+{%- for group in bibleNames.groups %}
+        <section id="{{ group.id }}" class="content-panel p-4 mb-4" aria-labelledby="{{ group.id }}-heading">
+          <h2 id="{{ group.id }}-heading" class="h4 mb-3">{{ group.heading }}</h2>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <caption class="small text-muted">{{ group.heading }} and their English gematria values.</caption>
+              <thead>
+                <tr><th scope="col">Name</th><th scope="col" class="text-end">Value</th><th scope="col">Who or what</th></tr>
+              </thead>
+              <tbody>
+{%- for entry in group.entries %}
+                <tr><th scope="row"><a href="{{ entry.href }}">{{ entry.word }}</a></th><td class="text-end fw-semibold">{{ entry.value }}</td><td class="small">{{ entry.note }}</td></tr>
+{%- endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+{%- endfor %}
+
+        <section id="shared-values" class="content-panel p-4 mb-4" aria-labelledby="shared-values-heading">
+          <h2 id="shared-values-heading" class="h4 mb-3">Names on this list that share a value</h2>
+          <ul class="mb-3">
+{%- for shared in bibleNames.sharedValues %}
+            <li><strong>{{ shared.value }}</strong>: {% for entry in shared.names %}<a href="{{ entry.href }}">{{ entry.word }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</li>
+{%- endfor %}
+          </ul>
+          <p class="small text-muted mb-0">Read these with care. Every letter in this cipher is a multiple of six, so every total is too, and a short name has only a small range of totals open to it. A list of 46 words is expected to contain matches like these by arithmetic alone, and the same total puts Jesus beside Lucifer. <a href="/how-to-use-gematria.html#test-the-match">How to test whether a match means anything</a>.</p>
+        </section>
+
+        <section class="content-panel p-4">
+          <h2 class="h4 mb-3">Look up another name</h2>
+          <p class="mb-3">The calculator works out any word or phrase and lists every word in the database with the same value.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-warning fw-semibold" href="/calculator.html">Open the calculator</a>
+            <a class="btn btn-outline-secondary" href="/name-calculator.html">Compare two names</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+{% footer %}
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

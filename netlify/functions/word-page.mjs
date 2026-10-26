@@ -12,6 +12,7 @@ import { getSqlClient } from './_auth.mjs';
 import { applyRateLimit, assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, getClientIp, logRequestAudit, withCachedJson } from './_security.mjs';
 import { englishGematria, digitalRoot, gematriaLetters, wordHasValue } from './englishGematria.mjs';
 import { isIndexableWord, isPublishableWord, hasEnoughSearches, hasEnoughSharedWords, parseGematriaValue } from './_words.mjs';
+import { FEATURED_WORDS, featuredWordPath, getFeaturedWord } from './_featured-words.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -259,21 +260,43 @@ export function canonicalWordForm(word, words = []) {
   return stored || String(word).toLowerCase();
 }
 
+// A featured word gets a written note and links to the other featured words
+// that share its value, which is what makes its page worth indexing before
+// anyone has searched for it here (see _featured-words.mjs).
+function featuredHtml(featured, value) {
+  const siblings = FEATURED_WORDS
+    .filter((entry) => entry !== featured && Number(englishGematria(entry.word)) === value)
+    .map((entry) => `<a href="${featuredWordPath(entry.word)}">${escapeHtml(entry.word)}</a>`);
+  const siblingLine = siblings.length > 0
+    ? `\n          <p class="mb-2">Other names on our <a href="/bible-names-gematria.html">Bible names list</a> with this value: ${siblings.join(', ')}.</p>`
+    : `\n          <p class="mb-2">See the full <a href="/bible-names-gematria.html">Bible names list</a> for more names and their values.</p>`;
+  return `        <div class="content-panel p-4 mb-4">
+          <h2 class="h5 mb-2">About ${escapeHtml(featured.word)}</h2>
+          <p class="mb-2">${escapeHtml(featured.note)}</p>${siblingLine}
+          <p class="small text-muted mb-0">Every total in this cipher is a multiple of six, so shared values are common. <a href="/how-to-use-gematria.html#test-the-match">How to tell whether a match means anything</a>.</p>
+        </div>`;
+}
+
 export function renderWordPage(word, value, words, { noindex = false } = {}) {
   const root = digitalRoot(value);
   const baseRoot = isBaseRootValue(value);
-  const canonicalWord = canonicalWordForm(word, words);
-  const canonical = `${SITE_ORIGIN}/w/${encodeURIComponent(canonicalWord)}`;
-  const title = `${word} in English Gematria = ${value} | Gematria.Today`;
-  const description = `"${word}" has an English gematria value of ${value} (digital root ${root}). See every word in the Gematria.Today database that shares this value.`;
+  const featured = getFeaturedWord(word);
+  const displayWord = featured ? featured.word : word;
+  const canonical = featured
+    ? `${SITE_ORIGIN}${featuredWordPath(featured.word)}`
+    : `${SITE_ORIGIN}/w/${encodeURIComponent(canonicalWordForm(word, words))}`;
+  const title = `${displayWord} in English Gematria = ${value} | Gematria.Today`;
+  const description = featured
+    ? `"${displayWord}" has an English gematria value of ${value} (digital root ${root}). ${featured.note}`
+    : `"${word}" has an English gematria value of ${value} (digital root ${root}). See every word in the Gematria.Today database that shares this value.`;
   const others = publishableRelated(words, word);
 
-  const bodyHtml = `        <nav aria-label="Breadcrumb" class="small mb-3"><a href="/">Home</a> &middot; <a href="/calculator.html">Calculator</a></nav>
-        <h1 class="display-6 fw-bold mb-3">${escapeHtml(word)}</h1>
+  const bodyHtml = `        <nav aria-label="Breadcrumb" class="small mb-3"><a href="/">Home</a> &middot; ${featured ? '<a href="/bible-names-gematria.html">Bible names</a>' : '<a href="/calculator.html">Calculator</a>'}</nav>
+        <h1 class="display-6 fw-bold mb-3">${escapeHtml(displayWord)}</h1>
         <p class="lead">English gematria value <strong>${value}</strong> &middot; digital root <strong>${root}</strong>${baseRoot ? ' &middot; base root' : ''}.</p>
         <p><a href="/v/${value}">See all words worth ${value}</a> &middot; <a href="/calculator.html">Calculate another word</a></p>
-${breakdownHtml(word, value)}
-        <h2 class="h5 mt-4 mb-2">Words sharing this value</h2>
+${breakdownHtml(displayWord, value)}
+${featured ? `${featuredHtml(featured, value)}\n` : ''}        <h2 class="h5 mt-4 mb-2">Words sharing this value</h2>
         ${relatedList(others, { value, emptyMessage: 'No other words in the database share this value yet.' })}
 ${callToAction(word)}`;
 
@@ -285,8 +308,10 @@ ${callToAction(word)}`;
     noindex,
     breadcrumb: [
       { name: 'Home', item: `${SITE_ORIGIN}/` },
-      { name: 'Calculator', item: `${SITE_ORIGIN}/calculator.html` },
-      { name: word, item: canonical },
+      featured
+        ? { name: 'Bible names', item: `${SITE_ORIGIN}/bible-names-gematria.html` }
+        : { name: 'Calculator', item: `${SITE_ORIGIN}/calculator.html` },
+      { name: displayWord, item: canonical },
     ],
   });
 }
@@ -440,10 +465,13 @@ export default async function onRequest(request) {
     // still renders in full for anyone who follows a link; the page is fine,
     // it just isn't something to put in front of a search engine.
     const sharedWordCount = publishableRelated(words, null).length;
+    // A featured word is indexed on its written note, without waiting for
+    // demand to accumulate in the words table.
     const noindex = route.kind === 'word'
       ? !(isPublishableWord(route.key)
-        && hasEnoughSearches({ search_count: cached.payload?.searchCount || 0 })
-        && hasEnoughSharedWords(sharedWordCount))
+        && (getFeaturedWord(route.key)
+          || (hasEnoughSearches({ search_count: cached.payload?.searchCount || 0 })
+            && hasEnoughSharedWords(sharedWordCount))))
       // A value page is a genuine aggregation -- every word in the database
       // worth 336 -- so it earns indexing on the size of that list alone,
       // without needing any one of those words to have been searched.

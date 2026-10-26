@@ -65,3 +65,35 @@ export function digitalRoot(value) {
 export function isBaseRootValue(total) {
   return Number(total - 6) % 54 === 0;
 }
+
+// A post's body is fetched and drawn in the browser, so the HTML a crawler
+// receives for blog.html?post=<slug> used to hold only the loading placeholder.
+// Google can render JavaScript, but it does so later, on a separate budget, and
+// gives up on pages that fetch their content from an API it has to queue too.
+// Putting the post into the first response makes the words on the page the
+// post's words from the first fetch. blog-2.js replaces this article with its
+// own rendering once it loads, so readers see no difference.
+//
+// innerHTML never runs a <script>, but HTML in a response does, so anything
+// that could execute is removed here rather than trusted to the client's
+// rendering path. Posts are written by editors, so this is a backstop, not a
+// sanitiser for untrusted input.
+export function stripExecutableMarkup(html) {
+  return String(html ?? '')
+    .replace(/<(script|style|iframe|object|embed|template)\b[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<(script|style|iframe|object|embed|template|base|meta|link)\b[^>]*>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/(\s(?:href|src|action|formaction|xlink:href)\s*=\s*["']?)\s*javascript:/gi, '$1#');
+}
+
+const BLOG_PLACEHOLDER_PATTERN =
+  /<article class="blog-post-card p-4 p-lg-5 news-placeholder-panel">[\s\S]*?<\/article>/;
+
+export function injectPostArticle(html, { title, bodyHtml }) {
+  const body = stripExecutableMarkup(bodyHtml);
+  if (!body.trim()) {
+    return html;
+  }
+  const article = `<article class="content-panel p-4 p-lg-5 blog-post-card"><h1 class="blog-post-title h2 mb-3">${escapeAttr(title)}</h1><div class="blog-post-body d-grid gap-3">${body}</div></article>`;
+  return html.replace(BLOG_PLACEHOLDER_PATTERN, () => article);
+}

@@ -82,3 +82,21 @@ for (const [label, api] of [
     assert.equal(html, PAGE_HTML);
   });
 }
+
+test('blog-og puts the post body into the page in place of the loading placeholder', { skip }, async () => {
+  const { default: blogOg } = await import('../netlify/edge-functions/blog-og.ts');
+  const page = PAGE_HTML.replace('<body></body>', '<body><div id="blogPosts"><article class="blog-post-card p-4 p-lg-5 news-placeholder-panel"><p>Loading</p></article></div></body>');
+  const priorFetch = globalThis.fetch;
+  globalThis.fetch = async () => jsonResponse({ items: [{ ...POST, renderedBodyHtml: '<p>Roots reduce <a href="/calculator.html">totals</a>.</p>' }] });
+  try {
+    const response = await blogOg(new Request(`https://gematria.today/blog.html?post=${POST.slug}`), {
+      next: async () => new Response(page, { status: 200, headers: { 'content-type': 'text/html; charset=UTF-8' } }),
+    });
+    const html = await response.text();
+    assert.ok(!html.includes('news-placeholder-panel'));
+    assert.ok(html.includes('<h1 class="blog-post-title h2 mb-3">Digital Roots in Gematria</h1>'));
+    assert.ok(html.includes('<p>Roots reduce <a href="/calculator.html">totals</a>.</p>'));
+  } finally {
+    globalThis.fetch = priorFetch;
+  }
+});

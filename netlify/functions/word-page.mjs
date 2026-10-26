@@ -239,8 +239,10 @@ function relatedList(others, { value, emptyMessage }) {
   if (others.length === 0) {
     return `<p class="mb-0">${escapeHtml(emptyMessage)}</p>`;
   }
+  // A featured word's page canonicalises to featuredWordPath, so link it there
+  // rather than to the casing its row happens to be stored under.
   const items = others.slice(0, MAX_RELATED).map((word) =>
-    `<li><a href="/w/${encodeURIComponent(word)}">${escapeHtml(word)}</a></li>`
+    `<li><a href="${getFeaturedWord(word) ? featuredWordPath(word) : `/w/${encodeURIComponent(word)}`}">${escapeHtml(word)}</a></li>`
   ).join('\n          ');
   // Past the cap the remaining words used to be unreachable: the only thing
   // on the page was a passive "Showing 200 of N." with nowhere to go.

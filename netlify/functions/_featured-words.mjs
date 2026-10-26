@@ -30,7 +30,7 @@ export const FEATURED_WORDS = Object.freeze([
   { word: 'Lord', group: 'god', note: 'The word most English Bibles use in place of the divine name YHWH, set in small capitals as LORD.' },
   { word: 'Jehovah', group: 'god', note: 'An English rendering of the divine name YHWH, used in a handful of verses of the King James Version.' },
   { word: 'Yahweh', group: 'god', note: 'The scholarly reconstruction of how the divine name YHWH was pronounced.' },
-  { word: 'Holy Spirit', group: 'god', note: 'The third person of the Trinity in Christian teaching, called the Holy Ghost in the King James Version.' },
+  { word: 'Holy Spirit', group: 'god', note: 'The third person of the Trinity in Christian teaching, usually called the Holy Ghost in the King James Version.' },
   { word: 'Immanuel', group: 'god', note: 'Hebrew for "God with us", the name given in Isaiah 7:14 and applied to Jesus in Matthew 1:23.' },
   { word: 'Adam', group: 'old-testament', note: 'The first man in the Genesis creation account. The Hebrew adam also means "human" or "mankind".' },
   { word: 'Eve', group: 'old-testament', note: 'The first woman in Genesis, named by Adam "because she was the mother of all living".' },
@@ -67,7 +67,6 @@ export const FEATURED_WORDS = Object.freeze([
   { word: 'Heaven', group: 'scripture', note: 'The sky, and in the Bible the dwelling place of God.' },
   { word: 'Hell', group: 'scripture', note: 'The English word used for Sheol, Hades and Gehenna in older translations.' },
   { word: 'Amen', group: 'scripture', note: 'A Hebrew word meaning "so be it" or "truly", said at the end of a prayer.' },
-  { word: 'Gematria', group: 'scripture', note: 'The practice of reading words as numbers by adding up the values of their letters, traditionally in Hebrew.' },
 ]);
 
 const BY_KEY = new Map(FEATURED_WORDS.map((entry) => [entry.word.toLowerCase(), entry]));

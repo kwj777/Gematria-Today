@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 
 import { FEATURED_GROUPS, FEATURED_WORDS, featuredWordPath, getFeaturedWord } from '../netlify/functions/_featured-words.mjs';
 import { isPublishableWord } from '../netlify/functions/_words.mjs';
-import { renderWordPage } from '../netlify/functions/word-page.mjs';
+import { renderValuePage, renderWordPage } from '../netlify/functions/word-page.mjs';
 import { pageLocs } from '../netlify/functions/sitemap-words-xml.mjs';
 import { STATIC_PATHS } from '../netlify/functions/sitemap-xml.mjs';
 
@@ -34,7 +34,16 @@ test('a featured word page shows its note, links its value siblings, and canonic
   assert.ok(html.includes(getFeaturedWord('jesus').note));
   assert.ok(html.includes('<a href="/w/messiah">Messiah</a>'));
   assert.ok(html.includes('<a href="/w/lucifer">Lucifer</a>'));
+  // The stored row is 'Messiah'; the link goes to the canonical, not the casing.
+  assert.ok(!html.includes('href="/w/Messiah"'));
   assert.ok(html.includes('href="/bible-names-gematria.html"'));
+});
+
+test('value pages link a featured word at its canonical URL, whatever casing its row has', () => {
+  const html = renderValuePage(444, [{ word: 'Jesus' }, { word: 'GOSPEL' }, { word: 'Kale' }]);
+  assert.ok(html.includes('<a href="/w/jesus">Jesus</a>'));
+  assert.ok(html.includes('<a href="/w/gospel">GOSPEL</a>'));
+  assert.ok(html.includes('<a href="/w/Kale">Kale</a>'));
 });
 
 test('an ordinary word page is unchanged by the featured list', () => {
@@ -60,5 +69,7 @@ test('the Bible names page is in the static sitemap and links every featured wor
   assert.ok(sitemap.includes('<loc>https://gematria.today/bible-names-gematria.html</loc>'));
   const source = await fs.readFile(new URL('../src/bible-names-gematria.html', import.meta.url), 'utf8');
   assert.ok(source.includes('{{ entry.href }}'));
-  assert.ok(source.includes(`${FEATURED_WORDS.length} Bible names`), 'the meta description count must match the list');
+  // Counts come from the list at build time, never typed into the copy.
+  assert.ok(!source.includes(String(FEATURED_WORDS.length)), 'hard-coded count of featured words');
+  assert.ok(source.includes('{{ bibleNames.count }} Bible names'));
 });

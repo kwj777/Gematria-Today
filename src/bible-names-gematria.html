@@ -17,8 +17,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
-    <title>Bible Names in Gematria: Values for Jesus, God, Moses and More | Gematria.Today</title>
-    <meta name="description" content="The English gematria values of 46 Bible names and terms, from God, Jesus and Messiah to Babylon and Revelation, with a letter-by-letter page for each and the values they share." />
+    <title>Bible Names in English Gematria | Gematria.Today</title>
+    <meta name="description" content="The English gematria values of {{ bibleNames.count }} Bible names and terms, from God, Jesus and Messiah to Babylon and Revelation, with a letter-by-letter page for each and the values they share." />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href="https://gematria.today/bible-names-gematria.html" />
     <meta name="author" content="Gematria.Today Editorial Team" />
@@ -27,7 +27,7 @@
     <meta property="og:site_name" content="Gematria.Today" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="Bible Names in Gematria" />
-    <meta property="og:description" content="English gematria values for 46 Bible names and terms, and the values they share." />
+    <meta property="og:description" content="English gematria values for {{ bibleNames.count }} Bible names and terms, and the values they share." />
     <meta property="og:url" content="https://gematria.today/bible-names-gematria.html" />
     <meta property="og:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
     <meta property="og:image:width" content="1200" />
@@ -35,7 +35,7 @@
     <meta property="og:image:alt" content="Constellation artwork representing linked words and numbers." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Bible Names in Gematria" />
-    <meta name="twitter:description" content="English gematria values for 46 Bible names and terms, and the values they share." />
+    <meta name="twitter:description" content="English gematria values for {{ bibleNames.count }} Bible names and terms, and the values they share." />
     <meta name="twitter:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
     <meta name="twitter:image:alt" content="Constellation artwork representing linked words and numbers." />
     <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
@@ -102,7 +102,7 @@
             <li><strong>{{ shared.value }}</strong>: {% for entry in shared.names %}<a href="{{ entry.href }}">{{ entry.word }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</li>
 {%- endfor %}
           </ul>
-          <p class="small text-muted mb-0">Read these with care. Every letter in this cipher is a multiple of six, so every total is too, and a short name has only a small range of totals open to it. A list of 46 words is expected to contain matches like these by arithmetic alone, and the same total puts Jesus beside Lucifer. <a href="/how-to-use-gematria.html#test-the-match">How to test whether a match means anything</a>.</p>
+          <p class="small text-muted mb-0">Read these with care. Every letter in this cipher is a multiple of six, so every total is too, and a short name has only a small range of totals open to it. A list of {{ bibleNames.count }} words is expected to contain matches like these by arithmetic alone, and the same total puts Jesus beside Lucifer. <a href="/how-to-use-gematria.html#test-the-match">How to test whether a match means anything</a>.</p>
         </section>
 
         <section class="content-panel p-4">

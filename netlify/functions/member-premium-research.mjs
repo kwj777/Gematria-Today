@@ -222,7 +222,7 @@ export async function handler(event) {
 
     const isPremium = member.membershipLevel === 'premium' || member.membershipLevel === 'lifetime';
     if (!isPremium) {
-      throw Object.assign(new Error('Premium membership is required for this endpoint'), { statusCode: 403 });
+      throw Object.assign(new Error('Premium Research is for supporters only'), { statusCode: 403 });
     }
 
     await applyRateLimit(sql, event, {

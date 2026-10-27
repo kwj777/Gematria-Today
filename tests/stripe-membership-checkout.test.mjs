@@ -145,7 +145,7 @@ test('other checkout failures are not retried', async () => {
 
 test('checkout is refused to members who already have premium', () => {
   assert.match(getCheckoutRefusal({ membershipLevel: 'premium', stripeCustomerId: 'cus_1' }), /Manage subscription/);
-  assert.match(getCheckoutRefusal({ membershipLevel: 'premium', stripeCustomerId: null }), /already active/);
+  assert.match(getCheckoutRefusal({ membershipLevel: 'premium', stripeCustomerId: null }), /already a supporter/);
   assert.match(getCheckoutRefusal({ membershipLevel: 'lifetime' }), /lifetime/);
   assert.equal(getCheckoutRefusal({ membershipLevel: 'free' }), '');
   // getAuthenticatedMember reports a lapsed premium term as free, so a member

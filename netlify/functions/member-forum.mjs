@@ -275,7 +275,7 @@ function isPremiumMember(member, user) {
 
 function assertPremiumAreaAccess(member, user) {
   if (!isPremiumMember(member, user)) {
-    throw Object.assign(new Error('Premium membership is required for this forum area'), { statusCode: 403 });
+    throw Object.assign(new Error('This forum area is for supporters only'), { statusCode: 403 });
   }
 }
 
@@ -419,7 +419,7 @@ function mapReplyRow(row, earnedBadgeMap) {
 function deriveBadges(points, { threadCount, replyCount, isAdmin, isPremium, earnedBadgeNames = [] }) {
   const badges = [];
   if (isAdmin) badges.push('Moderator');
-  if (isPremium) badges.push('Premium');
+  if (isPremium) badges.push('Supporter');
   if (threadCount >= 1 && replyCount >= 1) badges.push('Contributor');
   // Reputation tier: only show the highest one the member has reached.
   if (points >= 200) badges.push('Sage');

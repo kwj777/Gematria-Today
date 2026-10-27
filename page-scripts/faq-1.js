@@ -26,7 +26,7 @@
         { id: 'getting-started', label: 'Getting started', patterns: [/get(ting)? started/i, /\bnew to\b/i, /how do i (start|begin|use the site)/i, /first (time|step)/i, /\bsign up\b/i] },
         { id: 'calculators', label: 'Calculators', patterns: [/calculator/i, /calculate/i, /\bcipher/i, /\bvalues?\b/i, /name.{0,20}value/i, /word.{0,10}phrase/i] },
         { id: 'methodology', label: 'Methodology', patterns: [/method/i, /pattern/i, /\bmatch/i, /compar/i, /evidence/i, /accuracy/i, /pythagorean/i, /\benglish gematria\b/i, /research/i] },
-        { id: 'membership', label: 'Membership & account', patterns: [/\bmember/i, /\baccount/i, /\blogin\b/i, /\bpassword/i, /subscri/i, /billing/i, /premium/i, /upgrade/i, /payment/i, /cancel/i] },
+        { id: 'membership', label: 'Membership & account', patterns: [/\bmember/i, /\baccount/i, /\blogin\b/i, /\bpassword/i, /subscri/i, /billing/i, /premium/i, /supporter/i, /upgrade/i, /payment/i, /cancel/i] },
         { id: 'editorial', label: 'Editorial & trust', patterns: [/editorial/i, /\bpolicy\b/i, /\bsource/i, /disclaim/i, /\btrust/i, /review process/i, /author/i, /correction/i] },
       ];
       const FALLBACK_CATEGORY = { id: 'general', label: 'General' };

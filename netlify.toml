@@ -144,6 +144,11 @@
   status = 301
 
 [[redirects]]
+  from = "/666-gematria"
+  to = "/666-gematria.html"
+  status = 301
+
+[[redirects]]
   from = "/accessibility"
   to = "/accessibility.html"
   status = 301
@@ -279,6 +284,11 @@
   status = 301
 
 [[redirects]]
+  from = "/gematria-cipher-chart"
+  to = "/gematria-cipher-chart.html"
+  status = 301
+
+[[redirects]]
   from = "/gematria-guide"
   to = "/gematria-guide.html"
   status = 301
@@ -296,6 +306,11 @@
 [[redirects]]
   from = "/gematria-results"
   to = "/gematria-results.html"
+  status = 301
+
+[[redirects]]
+  from = "/hebrew-gematria-chart"
+  to = "/hebrew-gematria-chart.html"
   status = 301
 
 [[redirects]]
@@ -356,6 +371,11 @@
 [[redirects]]
   from = "/unsupported-browser"
   to = "/unsupported-browser.html"
+  status = 301
+
+[[redirects]]
+  from = "/what-is-gematria"
+  to = "/what-is-gematria.html"
   status = 301
 
 [[redirects]]

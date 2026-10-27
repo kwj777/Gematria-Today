@@ -3346,6 +3346,12 @@ body.page-render-pending footer {
    below the navbar on wide viewports so step-jump links stay reachable
    while the reader scrolls. */
 @media (min-width: 992px) {
+  /* The sticky panel is taller than the navbar offset html already reserves,
+     so in-page jumps landed their headings underneath it. */
+  html:has(.guide-toc-panel) {
+    scroll-padding-top: 320px;
+  }
+
   .guide-toc-panel {
     position: sticky;
     top: 84px;

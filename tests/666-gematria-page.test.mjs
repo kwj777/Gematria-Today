@@ -339,7 +339,7 @@ test('the cipher description and the facts about 666 follow from the arithmetic'
   assert.equal(digitalRoot(18), 1 + 8);
   says(`Its digital root is ${digitalRoot(666)} (6 + 6 + 6 = ${6 + 6 + 6}, then 1 + 8 = ${1 + 8})`);
   assert.equal(isBaseRootValue(666), false);
-  says(`the base-root ladder goes from ${BASE_ROOT_BELOW} straight to ${BASE_ROOT_ABOVE}.`);
+  says(`that ladder goes from ${BASE_ROOT_BELOW} straight to ${BASE_ROOT_ABOVE}.`);
   assert.equal(BASE_ROOT_ABOVE - BASE_ROOT_BELOW, 54);
 
   // 616 is unreachable.

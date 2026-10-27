@@ -200,10 +200,10 @@ test('the lead and the site-cipher section quote the engine\'s values', () => {
   const sumerian = (letter) => value(letter, 'sumerian');
   const factor = sumerian('A') / ordinal('A');
   for (const letter of LETTERS) assert.equal(sumerian(letter), factor * ordinal(letter), letter);
-  says(`This gematria cipher chart gives the value of every letter from A to Z in the ${WORDS[CIPHERS.length]} English ciphers of the multi-cipher calculator, from English Ordinal (A = ${ordinal('A')} to Z = ${ordinal('Z')}) to the Sumerian table this site's main calculator uses (A = ${sumerian('A')} to Z = ${sumerian('Z')}).`);
+  says(`This gematria cipher chart gives the value of every letter from A to Z in the ${WORDS[CIPHERS.length]} English ciphers of the multi-cipher calculator, from English Ordinal (A = ${ordinal('A')} to Z = ${ordinal('Z')}) to English Gematria (Base-${factor}), the table this site's main calculator uses and the calculator lists as Sumerian (A = ${sumerian('A')} to Z = ${sumerian('Z')}).`);
   says(`Each letter is worth its alphabet position times ${factor}, so A = ${sumerian('A')}, B = ${sumerian('B')} and Z = ${sumerian('Z')}.`);
   // The other names the site's own pages use for it.
-  says(`English Sumerian, which this site also calls English Gematria or English Base-${factor}.`);
+  says(`English Gematria (Base-${factor}), the table the multi-cipher calculator and many other sites call Sumerian or English Sumerian.`);
   assert.match(readFileSync(join(ROOT, 'src/why-english-gematria.html'), 'utf8'), new RegExp(`English Base-${factor} cipher`));
 
   // Every Sumerian total is a multiple of six, so only three digital roots occur.
@@ -295,7 +295,7 @@ test('each cipher section states its own table correctly', () => {
   says('Like the two reductions, its total cannot be worked out from the English Ordinal total, though the two always share a digital root.');
   // Other calculators' names for this table, and the different table some call Jewish.
   assert.match(readFileSync(join(ROOT, 'page-scripts/multi-cipher-engine.mjs'), 'utf8'), /also called English Extended/);
-  says('The name is not settled either: some calculators call this table English Extended, and some use the name Jewish for a different table, which gives J, V and W the three largest values and every other letter from K onwards a smaller one than here. Check the letter values before you compare totals from two calculators.');
+  says('The name is not settled either: some calculators call this table English Extended or Agrippan, and some use the name Jewish for a different table, which gives J, V and W the three largest values and every other letter from K onwards a smaller one than here. Check the letter values before you compare totals from two calculators.');
 });
 
 test('the worked example runs CIPHER through every cipher exactly as the engine does', () => {
@@ -306,8 +306,8 @@ test('the worked example runs CIPHER through every cipher exactly as the engine 
     const result = results.find((entry) => entry.cipherId === id);
     const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(([, cell]) => visibleText(cell));
     assert.equal(visibleText(row.match(/<th scope="row">([\s\S]*?)<\/th>/)[1]), nameOf(id));
-    // On a phone the sum stays on one line and the table scrolls instead.
-    assert.match(row, /<td class="text-nowrap"><code>/, id);
+    // The sum wraps on a phone, so Total and Digital root stay on screen.
+    assert.doesNotMatch(row, /text-nowrap/, id);
     assert.deepEqual(cells, [
       result.perLetter.map((entry) => entry.value).join(' + '),
       String(result.total),

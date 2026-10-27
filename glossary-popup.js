@@ -14,7 +14,7 @@
   if (path === '/definitions.html' || path === '/definitions') return;
 
   var STYLES =
-    '.defn-term{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:help;border-bottom:1px dotted currentColor;text-decoration:none;line-height:inherit;}' +
+    '.defn-term{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:inherit;cursor:help;border-bottom:1px dotted currentColor;text-decoration:none;line-height:inherit;}' +
     // #0d6efd was 3.92:1 on the cream page and 3.97:1 on the dark hero, so
     // the term turned unreadable exactly when pointed at. Light surfaces get
     // the darker link blue (5.61:1 on cream), dark ones a light blue (4.77:1

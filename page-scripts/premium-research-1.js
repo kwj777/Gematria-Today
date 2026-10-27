@@ -67,7 +67,7 @@
         if (!(level === 'premium' || level === 'lifetime')) {
           // Flagged so the caller can tell "you don't have premium" apart from
           // "we couldn't ask". Both used to end in the same 1.8s bounce.
-          throw Object.assign(new Error('This page is for premium members only.'), { premiumRequired: true });
+          throw Object.assign(new Error('This page is for supporters only.'), { premiumRequired: true });
         }
       }
 

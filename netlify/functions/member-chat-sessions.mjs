@@ -109,7 +109,7 @@ export async function handler(event) {
       // off (now refused above), as fast and as often as a script could loop. Listing and deleting
       // stay open so a member who lapses can still manage what they saved.
       if (!isPremiumMembership(member.membershipLevel)) {
-        return jsonResponse(403, { error: 'GemaBot is a premium member feature. Upgrade your membership to save chat sessions.' });
+        return jsonResponse(403, { error: 'GemaBot is a supporter feature. Become a supporter to save chat sessions.' });
       }
 
       await applyRateLimit(sql, event, {

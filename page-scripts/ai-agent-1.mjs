@@ -1291,7 +1291,7 @@ View results: ${shareUrl}`.trim(),
 
         if (!premiumAccess) {
           premiumGate.hidden = false;
-          premiumGate.innerHTML = 'GemaBot is a <strong>premium member feature</strong>. Please <a href="/member.html" class="alert-link">log in or upgrade your membership</a> to use GemaBot analysis and sharing.';
+          premiumGate.innerHTML = 'GemaBot is a <strong>supporter feature</strong>. Please <a href="/member.html" class="alert-link">log in or become a supporter</a> to use GemaBot analysis and sharing.';
           form.querySelectorAll('textarea, select, button[type=\"submit\"]').forEach((field) => {
             field.disabled = true;
           });
@@ -1300,7 +1300,7 @@ View results: ${shareUrl}`.trim(),
           // silently drops when gated -- a click that did nothing at all.
           document.querySelectorAll('.agent-example-prompt').forEach((chip) => {
             chip.disabled = true;
-            chip.title = 'GemaBot is a premium member feature.';
+            chip.title = 'GemaBot is a supporter feature.';
           });
           return;
         }

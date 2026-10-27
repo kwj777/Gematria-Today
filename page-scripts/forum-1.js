@@ -389,7 +389,7 @@
       // bronze/silver/gold/platinum accents.
       const BADGE_THEMES = {
         Moderator:                 { icon: '🛡️', theme: 'mod' },
-        Premium:                   { icon: '⭐',  theme: 'premium' },
+        Supporter:                 { icon: '⭐',  theme: 'premium' },
         Contributor:               { icon: '✍️', theme: 'contributor' },
         Trusted:                   { icon: '✅', theme: 'reputation', tier: 1 },
         Sage:                      { icon: '📚', theme: 'reputation', tier: 2 },
@@ -432,9 +432,9 @@
 
       function membershipLabel(level) {
         const normalized = String(level || 'free').toLowerCase();
-        if (normalized === 'lifetime') return 'Lifetime';
-        if (normalized === 'premium') return 'Premium';
-        return 'Free';
+        if (normalized === 'lifetime') return 'Lifetime supporter';
+        if (normalized === 'premium') return 'Supporter';
+        return 'Free member';
       }
 
       function renderAuthorInline(item) {
@@ -475,7 +475,7 @@
             <button type="button" class="forum-profile-popover-close" aria-label="Close profile details">×</button>
           </div>
           <p class="small text-muted mb-1">@${esc(profile.username)} · ${profile.reputation} rep</p>
-          <p class="small text-muted mb-2">${membershipLabel(profile.membershipLevel)} member${profile.joinedAt ? ` · joined ${formatDate(profile.joinedAt)}` : ''}</p>
+          <p class="small text-muted mb-2">${membershipLabel(profile.membershipLevel)}${profile.joinedAt ? ` · joined ${formatDate(profile.joinedAt)}` : ''}</p>
           <p class="small mb-2">${profile.threadCount} threads · ${profile.replyCount} replies</p>
           <div>${renderBadges(profile.badges, { username: profile.username })}</div>
         `;
@@ -677,9 +677,9 @@
         threadDetailEl.classList.add('d-none');
         currentThread = null;
         loadThreads().catch((error) => {
-          if (error.message.includes('Premium membership is required')) {
+          if (error.message.includes('for supporters only')) {
             areaEl.value = 'free';
-            showAlert('Premium area requires a premium membership. Switched back to free member area.', 'warning');
+            showAlert('The supporter area is for supporters only. Switched back to free member area.', 'warning');
             loadThreads().catch((innerError) => showAlert(innerError.message));
             return;
           }

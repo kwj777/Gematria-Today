@@ -437,11 +437,11 @@ const form = document.querySelector('#name-form');
         title.textContent = 'Related word search is a member feature.';
         const details = document.createElement('p');
         details.className = 'mb-2';
-        details.textContent = `Join with a free or premium membership to view related words for ${name}.`;
+        details.textContent = `Create a free account to view related words for ${name}.`;
         const cta = document.createElement('a');
         cta.className = 'btn btn-sm btn-outline-warning';
         cta.href = '/member.html#authSection';
-        cta.textContent = 'Unlock with Free or Premium Membership';
+        cta.textContent = 'Unlock with a free account';
 
         notice.append(title, document.createElement('br'), details, cta);
         return notice;

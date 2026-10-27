@@ -676,7 +676,7 @@
         membershipUpgradeContent.classList.toggle('show', expand);
         membershipUpgradeToggleButton.setAttribute('aria-expanded', expand ? 'true' : 'false');
         membershipUpgradeToggleArrow.textContent = expand ? '▲' : '▼';
-        membershipUpgradeToggleLabel.textContent = 'Upgrade to Premium';
+        membershipUpgradeToggleLabel.textContent = 'Become a supporter';
       }
 
       function syncComparisonCurrentLevel(member = session?.member) {
@@ -704,7 +704,7 @@
         if (level === 'free') {
           comparisonCurrentLevel.textContent = 'Current level: Member (Free)';
         } else if (level === 'premium' || level === 'lifetime') {
-          comparisonCurrentLevel.textContent = `Current level: ${level === 'lifetime' ? 'Lifetime Premium' : 'Premium Member'}`;
+          comparisonCurrentLevel.textContent = `Current level: ${level === 'lifetime' ? 'Lifetime Supporter' : 'Supporter'}`;
         } else {
           comparisonCurrentLevel.textContent = 'Current level: Visitor';
         }
@@ -744,11 +744,11 @@
             membershipHeroCta.setAttribute('href', '#authSection');
             return;
           }
-          membershipHeroKicker.textContent = 'Premium Member Access';
+          membershipHeroKicker.textContent = 'Member Access';
           membershipHeroTitle.textContent = 'Welcome back! Sign in below.';
           membershipHeroLead.textContent = justVerifiedEmail
-            ? 'Your email is verified. Sign in to access premium tools and your saved research.'
-            : 'Sign in to access your premium tools and saved research.';
+            ? 'Your email is verified. Sign in to access your tools and saved research.'
+            : 'Sign in to access your tools and saved research.';
           membershipHeroCta.textContent = 'Sign in';
           membershipHeroCta.setAttribute('href', '#authSection');
           return;
@@ -756,7 +756,7 @@
 
         membershipHeroKicker.textContent = 'Member Access';
         membershipHeroTitle.textContent = 'Start free. Save searches. Unlock related words.';
-        membershipHeroLead.textContent = 'Create a free account to save searches and look up related words. Upgrade to premium to unlock GemaBot, Premium Research, premium forum access, and the message-center inbox.';
+        membershipHeroLead.textContent = 'Create a free account to save searches and look up related words. Supporters get GemaBot, Premium Research, the supporter forum, and the message-center inbox for $19 a year, and help keep the site running.';
         membershipHeroCta.textContent = 'Create free account';
         membershipHeroCta.setAttribute('href', '#authSection');
       }
@@ -986,7 +986,7 @@
           return 'Current membership tier.';
         }
 
-        return `Premium access active through ${new Date(member.membershipExpiresAt).toLocaleDateString()}.`;
+        return `Supporter access active through ${new Date(member.membershipExpiresAt).toLocaleDateString()}.`;
       }
 
       function setPaymentButtonLabel(label) {
@@ -1003,7 +1003,7 @@
         const isOverdue = !isPremium && hasUnsettledSubscription(member);
         paymentButton.disabled = !member || isPremium || isOverdue;
         if (isPremium) {
-          setPaymentButtonLabel('Premium membership active');
+          setPaymentButtonLabel('You are a supporter');
         } else {
           setPaymentButtonLabel(isOverdue ? 'Renewal payment overdue' : 'Continue to secure Stripe checkout');
         }
@@ -1014,7 +1014,7 @@
         const isPremium = member?.membershipLevel === 'premium' || member?.membershipLevel === 'lifetime';
         premiumResearchLink.dataset.unlocked = isPremium ? 'true' : 'false';
         premiumResearchLink.textContent = isPremium ? 'Premium research' : 'Premium research 🔒';
-        premiumResearchLink.setAttribute('aria-label', isPremium ? 'Open premium research' : 'Premium research (locked — upgrade required)');
+        premiumResearchLink.setAttribute('aria-label', isPremium ? 'Open premium research' : 'Premium research (locked — for supporters)');
       }
 
       premiumResearchLink?.addEventListener('click', () => {
@@ -1024,7 +1024,7 @@
           window.location.assign(targetHref);
           return;
         }
-        showAlert('Premium Research is a premium-member feature. Expand the upgrade panel below to unlock it.', 'info');
+        showAlert('Premium Research is a supporter feature. Open "Become a supporter" below to unlock it.', 'info');
         const upgradeSection = document.getElementById('membershipUpgradeSection');
         if (upgradeSection && !upgradeSection.classList.contains('d-none')) {
           if (!membershipUpgradeContent.classList.contains('show')) {
@@ -1142,7 +1142,7 @@
         }
 
         if (!isPremium) {
-          messageInboxMeta.textContent = 'Upgrade to premium to open your message center inbox.';
+          messageInboxMeta.textContent = 'Become a supporter to open your message center inbox.';
           return;
         }
 
@@ -2837,7 +2837,7 @@
         event.preventDefault();
         clearAlert();
         if (!session?.member || !isPremiumMembershipLevel(session.member.membershipLevel)) {
-          showAlert('Premium membership is required to submit blog proposals.', 'warning');
+          showAlert('Blog proposals are open to supporters only.', 'warning');
           return;
         }
 
@@ -3021,7 +3021,7 @@
         }
 
         if (session.member.membershipLevel === 'premium') {
-          showAlert('Your premium membership is already active.', 'info');
+          showAlert('You are already a supporter.', 'info');
           return;
         }
 
@@ -3052,7 +3052,7 @@
       manageSubscriptionButton?.addEventListener('click', async () => {
         clearAlert();
         if (!isPremiumMembershipLevel(session?.member?.membershipLevel) && !hasUnsettledSubscription(session?.member)) {
-          showAlert('Subscription management is available to premium members only.', 'warning');
+          showAlert('Subscription management is available to supporters only.', 'warning');
           return;
         }
         if (!session?.member?.stripeCustomerId) {
@@ -3074,7 +3074,7 @@
 
       messageCenterOpenButton?.addEventListener('click', async () => {
         if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
-          showAlert('Message Center is available to premium members only.', 'warning');
+          showAlert('Message Center is available to supporters only.', 'warning');
           return;
         }
         isArchiveViewOpen = false;
@@ -3094,7 +3094,7 @@
 
       messageInboxOpenButton?.addEventListener('click', async () => {
         if (!isPremiumMembershipLevel(session?.member?.membershipLevel)) {
-          showAlert('Message Center is available to premium members only.', 'warning');
+          showAlert('Message Center is available to supporters only.', 'warning');
           return;
         }
         isArchiveViewOpen = false;

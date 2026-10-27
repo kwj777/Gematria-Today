@@ -26,18 +26,18 @@ export function resolveCheckoutMembershipTerm(checkoutSession, subscription, now
   // new checkout is refused while it stays open, so the member settles it in
   // the billing portal.
   if (subscription && isUnsettledSubscriptionStatus(subscription.status)) {
-    return { error: 'The renewal payment for this membership is overdue. Update your payment method under Manage subscription to restore premium access.' };
+    return { error: 'The renewal payment for this membership is overdue. Update your payment method under Manage subscription to restore supporter access.' };
   }
 
   if (subscription && !isPremiumSubscriptionStatus(subscription.status)) {
-    return { error: 'This membership subscription is no longer active. Start a new checkout to renew premium access.' };
+    return { error: 'This membership subscription is no longer active. Start a new checkout to renew supporter access.' };
   }
 
   const purchasedAt = checkoutSession.created ? new Date(checkoutSession.created * 1000) : new Date(now);
   const subscriptionCurrentPeriodEnd = subscription ? mapSubscriptionPayload(subscription).currentPeriodEnd : null;
   const { expiresAt } = getYearlyMembershipTerm({ purchasedAt, subscriptionCurrentPeriodEnd });
   if (expiresAt.getTime() <= now.getTime()) {
-    return { error: 'The membership this payment covered has ended. Start a new checkout to renew premium access.' };
+    return { error: 'The membership this payment covered has ended. Start a new checkout to renew supporter access.' };
   }
 
   return { purchasedAt, subscriptionCurrentPeriodEnd };

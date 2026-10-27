@@ -82,7 +82,7 @@ export async function handler(event) {
 
       const membershipLevel = String(auth.member.membershipLevel || '').toLowerCase();
       if (membershipLevel !== 'premium' && membershipLevel !== 'lifetime') {
-        return jsonResponse(403, { error: 'Premium membership required' });
+        return jsonResponse(403, { error: 'This is for supporters only' });
       }
 
       const authorId = auth.user?.id || auth.member?.id;

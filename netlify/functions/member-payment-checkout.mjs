@@ -11,12 +11,12 @@ import { assertSiteModuleEnabled } from './_site-modules.mjs';
 // still charges if Stripe's retry or the invoice is paid later.
 export function getCheckoutRefusal(member) {
   if (member?.membershipLevel === 'lifetime') {
-    return 'This account already has lifetime premium access, so there is nothing to buy.';
+    return 'This account is already a lifetime supporter, so there is nothing to buy.';
   }
   if (member?.membershipLevel === 'premium') {
     return member.stripeCustomerId
-      ? 'Your premium membership is already active. Use Manage subscription to update billing or renewal.'
-      : 'Your premium membership is already active. You can subscribe once it ends.';
+      ? 'You are already a supporter. Use Manage subscription to update billing or renewal.'
+      : 'You are already a supporter. You can renew once your current term ends.';
   }
   if (member?.stripeCustomerId && isUnsettledSubscriptionStatus(member.stripeSubscriptionStatus)) {
     return 'The renewal payment for your membership is overdue. Use Manage subscription to update your payment method, or to cancel that subscription before starting a new one.';

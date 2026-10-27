@@ -92,7 +92,7 @@ export async function handler(event) {
     }
 
     if (!isPremiumMembership(member?.membershipLevel)) {
-      return jsonResponse(403, { error: 'Premium membership is required to submit blog proposals.' });
+      return jsonResponse(403, { error: 'Blog proposals are open to supporters only.' });
     }
 
     const payload = parseBody(event);

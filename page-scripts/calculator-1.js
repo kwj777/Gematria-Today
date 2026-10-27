@@ -1527,11 +1527,11 @@ View results: ${shareUrl}`.trim(),
           upgradeCallout.className = 'alert alert-info mt-3 related-words-upgrade-callout';
           const upgradeMessage = document.createElement('p');
           upgradeMessage.className = 'mb-2';
-          upgradeMessage.textContent = `Showing the first ${payload.limit} related words. More are available — upgrade to premium to see up to ${AUTHENTICATED_RELATED_WORD_LIMIT} per lookup.`;
+          upgradeMessage.textContent = `Showing the first ${payload.limit} related words. More are available — supporters see up to ${AUTHENTICATED_RELATED_WORD_LIMIT} per lookup.`;
           const upgradeLink = document.createElement('a');
           upgradeLink.className = 'btn btn-sm btn-primary';
           upgradeLink.href = '/member.html#membershipUpgradeSection';
-          upgradeLink.textContent = 'Upgrade to premium';
+          upgradeLink.textContent = 'Become a supporter';
           upgradeCallout.append(upgradeMessage, upgradeLink);
           relatedWordsResult.appendChild(upgradeCallout);
         }

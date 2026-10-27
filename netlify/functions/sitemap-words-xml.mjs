@@ -11,6 +11,7 @@
 // Console. Each chunk now touches PAGE_SIZE rows with LIMIT/OFFSET.
 import { getSqlClient } from './_auth.mjs';
 import { assertEndpointEnabled, buildCacheKey, documentSecurityHeaders, withCachedJson } from './_security.mjs';
+import { FEATURED_WORDS, featuredWordPath, getFeaturedWord } from './_featured-words.mjs';
 import { isPublishableWord, MAX_STORED_WORD_LENGTH, MIN_SEARCHES_FOR_INDEX, MIN_SHARED_VALUE_WORDS, STORABLE_WORD_PATTERN } from './_words.mjs';
 
 const SITE_ORIGIN = 'https://gematria.today';
@@ -61,9 +62,21 @@ export function buildUrlSet(locs, origin = SITE_ORIGIN) {
 // Filtering here, not only in the compute step, matters: cached payloads live
 // for six hours, so a filter applied only on cache miss keeps serving junk
 // that was cached before the filter existed.
+// The featured words (_featured-words.mjs) ride on page 1 too. They come from
+// code rather than the table, so they are listed whether or not anyone has
+// searched them yet, and left off the later pages so each appears once, under
+// the same URL its page declares canonical.
 export function pageLocs({ page, values, words }) {
-  if (page === 1) return values.map((value) => `/v/${encodeURIComponent(String(value))}`);
-  return words.filter(isPublishableWord).map((word) => `/w/${encodeURIComponent(String(word))}`);
+  if (page === 1) {
+    return [
+      ...FEATURED_WORDS.map((entry) => featuredWordPath(entry.word)),
+      ...values.map((value) => `/v/${encodeURIComponent(String(value))}`),
+    ];
+  }
+  return words
+    .filter(isPublishableWord)
+    .filter((word) => !getFeaturedWord(word))
+    .map((word) => `/w/${encodeURIComponent(String(word))}`);
 }
 
 // Netlify v2 functions must return a Response, not a {statusCode, body} object.

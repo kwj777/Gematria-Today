@@ -1,5 +1,5 @@
 import type { Config, Context } from '@netlify/edge-functions';
-import { replaceCanonical, replaceMetaContent, replaceTitle } from './lib/og-meta.mjs';
+import { injectPostArticle, replaceCanonical, replaceMetaContent, replaceTitle } from './lib/og-meta.mjs';
 
 const FALLBACK_SITE_ORIGIN = 'https://gematria.today';
 const DEFAULT_OG_IMAGE_PATH = '/assets/beast-identity-rev13-hero-16x9.svg';
@@ -17,6 +17,7 @@ interface Post {
   slug: string;
   title: string;
   summary: string;
+  renderedBodyHtml?: string;
   heroImageUrl?: string;
   imageUrl?: string;
   sliderImageUrl?: string;
@@ -218,6 +219,10 @@ export default async (req: Request, context: Context) => {
     html,
     buildPostArticleJsonLd(post, { canonicalUrl: shareUrl, imageUrl, siteOrigin })
   );
+
+  // The ?slug= detail response carries the rendered body; put it in the page
+  // so crawlers read the post without running blog-2.js first.
+  html = injectPostArticle(html, { title, bodyHtml: String(post.renderedBodyHtml || '') });
 
   return new Response(html, { headers: response.headers });
 };

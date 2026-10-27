@@ -18,6 +18,7 @@ import {
   MIN_SEARCHES_FOR_INDEX,
   MIN_SHARED_VALUE_WORDS,
 } from '../netlify/functions/_words.mjs';
+import { FEATURED_WORDS, getFeaturedWord } from '../netlify/functions/_featured-words.mjs';
 
 if (!process.env.DATABASE_URL) {
   console.error('Missing DATABASE_URL environment variable.');
@@ -39,9 +40,13 @@ for (const row of publishable) {
 }
 
 const searchedAtAll = publishable.filter((row) => Number(row.search_count || 0) > 0);
-const wordPagesNow = publishable.filter((row) =>
-  Number(row.search_count || 0) >= MIN_SEARCHES_FOR_INDEX
-  && (groupSize.get(Number(row.gematria_value)) || 0) >= MIN_SHARED_VALUE_WORDS);
+// Featured words (_featured-words.mjs) are indexed whatever the gate says, and
+// the sitemap lists them even when the table has no row for them, so they are
+// counted from the list rather than the table.
+const passesGate = (row) => Number(row.search_count || 0) >= MIN_SEARCHES_FOR_INDEX
+  && (groupSize.get(Number(row.gematria_value)) || 0) >= MIN_SHARED_VALUE_WORDS;
+const wordPagesNow = publishable.filter((row) => passesGate(row) && !getFeaturedWord(row.word));
+const featuredPages = FEATURED_WORDS.length;
 
 const valuesWithAnySearchedWord = new Set(searchedAtAll.map((row) => Number(row.gematria_value)));
 const valuePagesNow = [...groupSize.entries()].filter(([, size]) => size >= MIN_SHARED_VALUE_WORDS);
@@ -56,17 +61,18 @@ console.log('');
 console.log('/w/ word pages');
 console.log(`  was  (search_count > 0):  ${searchedAtAll.length}`);
 console.log(`  now:                      ${wordPagesNow.length}  (${pct(wordPagesNow.length, searchedAtAll.length)} of the old set)`);
+console.log(`  plus featured words:      ${featuredPages}  (indexed regardless of the gate)`);
 console.log('');
 console.log('/v/ value pages');
 console.log(`  was  (any searched word): ${valuesWithAnySearchedWord.size}`);
 console.log(`  now:                      ${valuePagesNow.length}  (${pct(valuePagesNow.length, valuesWithAnySearchedWord.size)} of the old set)`);
 console.log('');
-console.log(`Total indexable generated URLs: ${wordPagesNow.length + valuePagesNow.length} (was ${searchedAtAll.length + valuesWithAnySearchedWord.size})`);
+console.log(`Total indexable generated URLs: ${wordPagesNow.length + featuredPages + valuePagesNow.length} (was ${searchedAtAll.length + valuesWithAnySearchedWord.size})`);
 
 // The words that lose their page are the interesting part of the report: if
 // real search terms are in here, the thresholds are set too high.
 const dropped = searchedAtAll
-  .filter((row) => !wordPagesNow.includes(row))
+  .filter((row) => !passesGate(row) && !getFeaturedWord(row.word))
   .sort((a, b) => Number(b.search_count) - Number(a.search_count));
 
 if (dropped.length > 0) {

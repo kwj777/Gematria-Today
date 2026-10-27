@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="/early-bootstrap.js"></script>
+
+<!-- Google Analytics bootstrap moved to deferred module -->
+<script defer src="/site-bundle.js"></script>
+
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gematria.Today" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <title>Gematria Cipher Chart: {{ cipherChart.facts.cipherCount }} English Ciphers A&ndash;Z | Gematria.Today</title>
+    <meta name="description" content="Gematria cipher chart for English: every letter A&ndash;Z in Ordinal, Reverse Ordinal, both reductions, Sumerian (A={{ cipherChart.siteCipher.first }} to Z={{ cipherChart.siteCipher.last }}), Reverse Sumerian and Jewish / Latin." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href="https://gematria.today/gematria-cipher-chart.html" />
+    <meta name="author" content="Gematria.Today Editorial Team" />
+    <meta name="last-updated" content="2026-10-27" />
+    <meta name="editorial-policy" content="https://gematria.today/disclaimer.html" />
+    <meta property="og:site_name" content="Gematria.Today" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Gematria Cipher Chart: {{ cipherChart.facts.cipherCount }} English Ciphers, A to Z" />
+    <meta property="og:description" content="What every letter is worth in each English cipher of the multi-cipher calculator, one word worked through all of them, and how the ciphers relate." />
+    <meta property="og:url" content="https://gematria.today/gematria-cipher-chart.html" />
+    <meta property="og:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gematria Cipher Chart: {{ cipherChart.facts.cipherCount }} English Ciphers, A to Z" />
+    <meta name="twitter:description" content="What every letter is worth in each English cipher of the multi-cipher calculator, one word worked through all of them, and how the ciphers relate." />
+    <meta name="twitter:image" content="https://gematria.today/assets/og/calculator-hero-constellation.png" />
+    <meta name="twitter:image:alt" content="Constellation artwork representing linked words and numbers." />
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="preload" as="style" href="/api/public-theme-css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/api/public-theme-css" /></noscript>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="preload" as="style" href="/theme-deferred.css" data-promote-stylesheet />
+    <noscript><link rel="stylesheet" href="/theme-deferred.css" /></noscript>
+    <script src="/pwa-register.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://gematria.today/"},
+          {"@type": "ListItem", "position": 2, "name": "Gematria Cipher Chart", "item": "https://gematria.today/gematria-cipher-chart.html"}
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Gematria cipher chart: {{ cipherChart.facts.cipherCountWord }} English ciphers, A to Z",
+        "description": "The value of every letter from A to Z in the {{ cipherChart.facts.cipherCountWord }} English ciphers of the multi-cipher calculator, one word worked through all of them, and how the ciphers relate.",
+        "author": {"@type": "Organization", "name": "Gematria.Today Editorial Team", "url": "https://gematria.today/disclaimer.html"},
+        "publisher": {"@type": "Organization", "name": "Gematria.Today", "url": "https://gematria.today/"},
+        "datePublished": "2026-10-27",
+        "dateModified": "2026-10-27",
+        "mainEntityOfPage": "https://gematria.today/gematria-cipher-chart.html",
+        "image": "https://gematria.today/assets/og/calculator-hero-constellation.png",
+        "inLanguage": "en",
+        "about": ["gematria ciphers", "English gematria", "English Ordinal", "Reverse Ordinal", "Full Reduction", "Sumerian gematria", "Jewish / Latin cipher"]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is a gematria cipher chart?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A table of what each letter is worth in one or more ciphers. To find a word's value, look up each of its letters in one column and add them."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is the Jewish / Latin cipher?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "An English table modelled on Hebrew numerals: {% for band in cipherChart.facts.jewishLatinBands %}{{ band.from }} to {{ band.to }} count {{ band.low }} to {{ band.high }}{% if loop.index == 1 %}, {% elif not loop.last %} and {% endif %}{% endfor %}. Some calculators give the name Jewish to a different table, so compare the letter values, not the name, before you compare totals."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is English Ordinal gematria?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The simplest English cipher: A = {{ cipherChart.byId['english-ordinal'].first }}, B = {{ cipherChart.byId['english-ordinal'].values[1].value }} … Z = {{ cipherChart.byId['english-ordinal'].last }}, each letter's position in the alphabet. Sumerian is English Ordinal times {{ cipherChart.facts.sumerianFactor }}, so the two always agree on which words match."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does Reverse Ordinal gematria work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It numbers the alphabet backwards, from A = {{ cipherChart.byId['reverse-ordinal'].first }} to Z = {{ cipherChart.byId['reverse-ordinal'].last }}. A letter's Ordinal and Reverse Ordinal values always add to {{ cipherChart.facts.mirrorTotal }}, so a word's Reverse Ordinal total is {{ cipherChart.facts.mirrorTotal }} times its letter count minus its Ordinal total."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why do two gematria calculators give different totals for the same word?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Usually because they are using different ciphers, or different tables under the same cipher name. Match the letter values against this chart rather than trusting the label, name the cipher next to every value you quote, and choose it before you look at results. No cipher turns gematria into a way to predict or prove anything."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+{% nav %}
+{%- set F = cipherChart.facts %}
+{%- set ord = cipherChart.byId['english-ordinal'] %}
+{%- set rev = cipherChart.byId['reverse-ordinal'] %}
+{%- set red = cipherChart.byId['full-reduction'] %}
+{%- set rred = cipherChart.byId['reverse-full-reduction'] %}
+{%- set sum = cipherChart.byId['sumerian'] %}
+{%- set rsum = cipherChart.byId['reverse-sumerian'] %}
+{%- set jl = cipherChart.byId['jewish-latin'] %}
+{%- set ex = cipherChart.example %}
+{%- set pair = cipherChart.pair %}
+{%- set twins = cipherChart.ordinalTwins %}
+{%- macro letterGrid(cipher) %}
+          <dl class="letter-value-grid mb-3" data-cipher="{{ cipher.id }}">
+            {%- for entry in cipher.values %}
+            <div class="letter-value-grid__cell"><dt class="letter-value-grid__letter">{{ entry.letter }}</dt><dd class="letter-value-grid__value mb-0">{{ entry.value }}</dd></div>
+            {%- endfor %}
+          </dl>
+{%- endmacro %}
+{%- macro readMore(cipher) %}
+          <p class="small text-muted mb-0"><a href="{{ cipher.blogUrl }}">{{ cipher.atlasTopic }} in the Cipher Atlas</a>{% if cipher.glossary %} &middot; <a href="{{ cipher.glossary }}">{{ cipher.glossaryTerm }} in the glossary</a>{% endif %} &middot; <a href="#chart">Back to the full chart</a></p>
+{%- endmacro %}
+
+    <main id="mainContent" class="py-5">
+      <div class="container">
+        <nav aria-label="Breadcrumb" class="mb-3">
+          <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="/index.html">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Gematria Cipher Chart</li>
+          </ol>
+        </nav>
+
+        <section class="hero-panel hero-panel--compact p-4 p-lg-5 mb-4">
+          <p class="section-kicker mb-3">Reference</p>
+          <h1 class="display-5 fw-bold mb-3">Gematria cipher chart: {{ F.cipherCountWord }} English ciphers, A to Z</h1>
+          <address class="small text-muted mb-3 fst-normal">By the <a href="/disclaimer.html">Gematria.Today Editorial Team</a> &middot; Updated <time datetime="2026-10-27">October 27, 2026</time></address>
+          <p class="lead mb-0">This gematria cipher chart gives the value of every letter from A to Z in the {{ F.cipherCountWord }} English ciphers of the <a href="/multi-cipher-calculator.html">multi-cipher calculator</a>, from English Ordinal (A&nbsp;=&nbsp;{{ ord.first }} to Z&nbsp;=&nbsp;{{ ord.last }}) to English Gematria (Base-{{ F.sumerianFactor }}), the table this site&rsquo;s main calculator uses and the calculator lists as Sumerian (A&nbsp;=&nbsp;{{ sum.first }} to Z&nbsp;=&nbsp;{{ sum.last }}). Every letter value and total on the page is generated from the calculator&rsquo;s own code when the site is built, so the chart and the calculator cannot disagree.</p>
+        </section>
+
+        <section class="content-panel p-4 mb-5 guide-toc-panel" aria-labelledby="cipherChartTocHeading">
+          <h2 id="cipherChartTocHeading" class="h6 text-uppercase text-muted mb-3" style="letter-spacing:.08em;">On this page</h2>
+          <ol class="row g-2 list-unstyled mb-0 small">
+            <li class="col-md-6 col-lg-4"><a href="#chart">The full A&ndash;Z chart</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#this-site">Which cipher this site uses</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#ciphers">Each cipher, one chart at a time</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#worked-example">One word through every cipher</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#relationships">How the ciphers relate</a></li>
+            <li class="col-md-6 col-lg-4"><a href="#faq">Quick answers</a></li>
+          </ol>
+          <hr class="my-3">
+          <div class="d-flex flex-wrap gap-3 small">
+            {%- for cipher in cipherChart.ciphers %}
+            <a href="#{{ cipher.anchor }}">{{ cipher.column }}</a>
+            {%- endfor %}
+          </div>
+        </section>
+
+        <section id="chart" class="content-panel p-4 mb-5" aria-labelledby="chart-heading">
+          <h2 id="chart-heading" class="h4 mb-3">English gematria chart: every letter in all {{ F.cipherCountWord }} ciphers</h2>
+          <p>Read across a row for what one letter is worth in each cipher, or down a column for one cipher&rsquo;s whole table. The bottom row adds up all {{ F.letterCount }} letters. The Sumerian column, in bold, is English Gematria (Base-{{ F.sumerianFactor }}), the cipher this site&rsquo;s calculator uses.</p>
+          <p class="small text-muted d-md-none">On a phone, swipe the table sideways to see every column, or use the <a href="#ciphers">one-cipher charts</a> further down. The <a href="#sumerian">Sumerian chart</a> is the one this site uses.</p>
+          <div class="table-responsive mb-0">
+            <table id="cipherChartTable" class="table table-sm table-striped align-middle mb-0">
+              <caption class="visually-hidden">Letter values A&ndash;Z in the {{ F.cipherCountWord }} English ciphers of the multi-cipher calculator.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Letter</th>
+                  {%- for cipher in cipherChart.ciphers %}
+                  <th scope="col" class="text-end" data-cipher="{{ cipher.id }}"><a href="#{{ cipher.anchor }}">{{ cipher.column }}</a>{% if cipher.isSiteCipher %}<span class="d-block small fw-normal text-muted"> (this site)</span>{% endif %}</th>
+                  {%- endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {%- for row in cipherChart.rows %}
+                <tr data-letter="{{ row.letter }}">
+                  <th scope="row">{{ row.letter }}</th>
+                  {%- for cell in row.values %}
+                  <td class="text-end{% if cell.isSiteCipher %} fw-semibold{% endif %}" data-cipher="{{ cell.cipherId }}">{{ cell.value }}</td>
+                  {%- endfor %}
+                </tr>
+                {%- endfor %}
+              </tbody>
+              <tfoot>
+                <tr data-letter="total">
+                  <th scope="row">A&ndash;Z total</th>
+                  {%- for cipher in cipherChart.ciphers %}
+                  <td class="text-end{% if cipher.isSiteCipher %} fw-semibold{% endif %}" data-cipher="{{ cipher.id }}">{{ cipher.alphabetTotal }}</td>
+                  {%- endfor %}
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="small text-muted mt-2 mb-0" aria-hidden="true">Letter values A&ndash;Z in the {{ F.cipherCountWord }} English ciphers of the multi-cipher calculator.</p>
+        </section>
+
+        <section id="this-site" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Which cipher this site&rsquo;s calculator uses</h2>
+          <p>The <a href="/calculator.html">main calculator</a>, the <a href="/name-calculator.html">name calculator</a>, the <a href="/bible-names-gematria.html">Bible names list</a> and every <code>/v/</code> and <code>/w/</code> page on Gematria.Today use one cipher: <strong>English Gematria (Base-{{ F.sumerianFactor }})</strong>, the table the multi-cipher calculator and many other sites call Sumerian or English Sumerian. Each letter is worth its alphabet position times {{ F.sumerianFactor }}, so A&nbsp;=&nbsp;{{ sum.first }}, B&nbsp;=&nbsp;{{ sum.values[1].value }} and Z&nbsp;=&nbsp;{{ sum.last }}. In the multi-cipher calculator it is the row labelled Sumerian, and the site&rsquo;s build checks that column against the main calculator&rsquo;s letter values, one letter at a time.</p>
+          <p>Two consequences follow from the &times;{{ F.sumerianFactor }}. Every total is a multiple of {{ F.sumerianFactor }}, so a word&rsquo;s <a href="/definitions.html#defn-digit-sum-root-reduction">digital root</a> can only be {{ F.siteDigitalRoots }}. And every total is exactly {{ F.sumerianFactor }} times the word&rsquo;s English Ordinal total, so the two ciphers always find the same matches, on a larger scale: {{ ex.word }} is {{ ex.siteTotal }} here and {{ ex.total['english-ordinal'] }} in English Ordinal. <a href="/why-english-gematria.html">Why this site uses English gematria</a> explains the choice and what it does and doesn&rsquo;t let you claim.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-warning fw-semibold" href="/calculator.html?query={{ ex.lowercase }}">Try it: calculate {{ ex.word }}</a>
+            <a class="btn btn-outline-secondary" href="/w/{{ ex.lowercase }}">Words that share {{ ex.word }}&rsquo;s value</a>
+          </div>
+        </section>
+
+        <section id="ciphers" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Each cipher, one chart at a time</h2>
+          <p>Calculators do not agree on names. The same table can appear under different labels, and the same label can mean different tables, so identify a cipher by its letter values rather than its name. Each cipher below links to the matching post in the <a href="{{ cipherChart.atlas.firstPostUrl }}">English Gematria Cipher Atlas</a>, a blog series on where these ciphers come from and when they are worth using.</p>
+
+          <h3 id="english-ordinal" class="h5 mt-4 mb-2">English Ordinal gematria (A&nbsp;=&nbsp;{{ ord.first }} to Z&nbsp;=&nbsp;{{ ord.last }})</h3>
+          <p>Each letter is worth its position in the alphabet. Also called Simple Ordinal or just Ordinal, it is the baseline most of the other tables are built from: Reverse Ordinal mirrors it, Full Reduction shrinks it to single digits (and Reverse Full Reduction does the same to Reverse Ordinal), and Sumerian multiplies it. Because of that, it is the most useful total to report beside a match in any other cipher.</p>
+{{ letterGrid(ord) }}
+{{ readMore(ord) }}
+
+          <h3 id="reverse-ordinal" class="h5 mt-5 mb-2">Reverse Ordinal gematria (A&nbsp;=&nbsp;{{ rev.first }} to Z&nbsp;=&nbsp;{{ rev.last }})</h3>
+          <p>The alphabet counted backwards. A letter&rsquo;s Ordinal and Reverse Ordinal values always add to {{ F.mirrorTotal }} (M is {{ ord.values[12].value }} and {{ rev.values[12].value }}), so a word&rsquo;s Reverse Ordinal total is {{ F.mirrorTotal }} times its letter count minus its Ordinal total. Two words of the same length that match in one cipher therefore match in the other. It reverses the alphabet, not the word, and it adds no information that the Ordinal total and the letter count don&rsquo;t already hold.</p>
+{{ letterGrid(rev) }}
+{{ readMore(rev) }}
+
+          <h3 id="full-reduction" class="h5 mt-5 mb-2">Full Reduction, or Pythagorean gematria ({{ red.min }} to {{ red.max }})</h3>
+          <p>Each Ordinal value is reduced to a single digit, so the alphabet runs from {{ red.min }} to {{ red.max }} and starts again: {{ F.reductionOnes }} are all {{ red.min }}, and {{ F.reductionNines }} are both {{ red.max }}. The last run stops one short, at Z&nbsp;=&nbsp;{{ F.reductionZ }}. With only {{ red.distinctValues }} values shared among {{ F.letterCount }} letters, short words collide often. A word&rsquo;s Full Reduction total always has the same digital root as its English Ordinal total, but it depends on which letters the word contains: {{ twins.first }} and {{ twins.second }} are both {{ twins.ordinal }} in English Ordinal, and {{ twins.firstReduction }} and {{ twins.secondReduction }} here. The &ldquo;Pythagorean&rdquo; label borrows an old name; the table itself is a modern English one.</p>
+{{ letterGrid(red) }}
+{{ readMore(red) }}
+
+          <h3 id="reverse-full-reduction" class="h5 mt-5 mb-2">Reverse Full Reduction (A&nbsp;=&nbsp;{{ rred.first }} to Z&nbsp;=&nbsp;{{ rred.last }})</h3>
+          <p>The Reverse Ordinal values reduced to single digits: A is {{ rred.first }} because its Reverse Ordinal value, {{ rev.first }}, reduces to {{ rred.first }}. A letter&rsquo;s two reduced values add to {{ F.reductionPairTotal }}, except {{ F.reductionPairExceptions }}, which are {{ F.reverseReductionTop }} in both ciphers. So each digit from {{ F.reverseReductionLowerFirst }} to {{ F.reverseReductionLowerLast }} stands for {{ F.reverseReductionLowerCountWord }} letters, and {{ F.reverseReductionTop }} for only {{ F.reverseReductionTopCountWord }}. It is easy to miscount by hand, because its values run against the alphabet, so check a total against this chart or the calculator before you rely on it.</p>
+{{ letterGrid(rred) }}
+{{ readMore(rred) }}
+
+          <h3 id="sumerian" class="h5 mt-5 mb-2">Sumerian gematria chart (A&nbsp;=&nbsp;{{ sum.first }} to Z&nbsp;=&nbsp;{{ sum.last }})</h3>
+          <p>English Ordinal multiplied by {{ F.sumerianFactor }}, and the cipher this site&rsquo;s calculator uses. The multiplication changes the size of every total but not which words match: two words that agree here agree in English Ordinal, and the other way round. The name is modern branding rather than history; the Sumerians did not write with an alphabet, let alone the English one. Because every total is exactly {{ F.sumerianFactor }} times the English Ordinal total, a word reaches 666 in this cipher exactly when its English Ordinal total is {{ F.ordinalFor666 }}. The <a href="/666-gematria.html">666 in gematria</a> page looks at that number in more detail.</p>
+{{ letterGrid(sum) }}
+{{ readMore(sum) }}
+
+          <h3 id="reverse-sumerian" class="h5 mt-5 mb-2">Reverse Sumerian (A&nbsp;=&nbsp;{{ rsum.first }} to Z&nbsp;=&nbsp;{{ rsum.last }})</h3>
+          <p>Reverse Ordinal multiplied by {{ F.reverseSumerianFactor }}. It stands to Sumerian as Reverse Ordinal stands to English Ordinal: a letter&rsquo;s Sumerian and Reverse Sumerian values always add to {{ F.sumerianMirrorTotal }}, so it holds nothing that the Sumerian total and the letter count don&rsquo;t. The Cipher Atlas has no post of its own on it; its Sumerian post explains the &times;{{ F.reverseSumerianFactor }} scaling the two share, and why scaling adds no information.</p>
+{{ letterGrid(rsum) }}
+{{ readMore(rsum) }}
+
+          <h3 id="jewish-latin" class="h5 mt-5 mb-2">Jewish / Latin ({% for band in F.jewishLatinBands %}{{ band.low }}&ndash;{{ band.high }}{% if not loop.last %}, {% endif %}{% endfor %})</h3>
+          <p>This table borrows the shape of the Hebrew numerals: {% for band in F.jewishLatinBands %}{{ band.from }} to {{ band.to }} count {{ band.low }} to {{ band.high }}{% if loop.index == 1 %}, {% elif not loop.last %} and {% endif %}{% endfor %}. Because each band is ten times the last, the end of the alphabet dominates: S alone ({{ F.jewishLatinS }}) outweighs A to I together ({{ F.jewishLatinAtoI }}), and Z ({{ F.jewishLatinZ }}) outweighs A to R together ({{ F.jewishLatinAtoR }}). Like the two reductions, its total cannot be worked out from the English Ordinal total, though the two always share a digital root. Despite the name, it is an English table modelled on Hebrew numerals, not a traditional Jewish method; the <a href="/hebrew-gematria-chart.html">Hebrew gematria chart</a> shows the system it imitates. The name is not settled either: some calculators call this table English Extended or Agrippan, and some use the name Jewish for a different table, which gives J, V and W the three largest values and every other letter from K onwards a smaller one than here. Check the letter values before you compare totals from two calculators.</p>
+{{ letterGrid(jl) }}
+{{ readMore(jl) }}
+        </section>
+
+        <section id="worked-example" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">One word through every cipher: {{ ex.word }}</h2>
+          <p class="mb-3">Here is {{ ex.word }}, letter by letter, in each of the {{ F.cipherCountWord }} ciphers. Look each letter up in a column of the chart and add; the digital root is the total&rsquo;s digits added until one is left.</p>
+          <div class="table-responsive mb-3">
+            <table id="workedExampleTable" class="table table-sm align-middle mb-0">
+              <caption class="small text-muted">{{ ex.word }} ({{ ex.letters }}) in the {{ F.cipherCountWord }} ciphers.</caption>
+              <thead>
+                <tr><th scope="col">Cipher</th><th scope="col">Letter by letter</th><th scope="col" class="text-end">Total</th><th scope="col" class="text-end">Digital root</th></tr>
+              </thead>
+              <tbody>
+                {%- for result in ex.results %}
+                <tr data-cipher="{{ result.cipherId }}">
+                  <th scope="row"><a href="#{{ result.anchor }}">{{ result.cipherName }}</a></th>
+                  <td><code>{{ result.breakdown }}</code></td>
+                  <td class="text-end fw-semibold">{{ result.total }}</td>
+                  <td class="text-end">{{ result.digitalRoot }}</td>
+                </tr>
+                {%- endfor %}
+              </tbody>
+            </table>
+          </div>
+          <p class="mb-2">Read down the totals and the relationships described above appear:</p>
+          <ul class="mb-3">
+            <li>English Ordinal {{ ex.total['english-ordinal'] }} + Reverse Ordinal {{ ex.total['reverse-ordinal'] }} = {{ ex.mirrorSum }}, which is {{ F.mirrorTotal }} &times; {{ ex.letterCount }} letters.</li>
+            <li>Sumerian {{ ex.total['sumerian'] }} = {{ F.sumerianFactor }} &times; {{ ex.total['english-ordinal'] }}, and Reverse Sumerian {{ ex.total['reverse-sumerian'] }} = {{ F.reverseSumerianFactor }} &times; {{ ex.total['reverse-ordinal'] }}.</li>
+            <li>Full Reduction {{ ex.total['full-reduction'] }} and Jewish / Latin {{ ex.total['jewish-latin'] }} both have the digital root {{ ex.root['full-reduction'] }}, the same as English Ordinal {{ ex.total['english-ordinal'] }}.</li>
+            <li>Reverse Full Reduction {{ ex.total['reverse-full-reduction'] }} = {{ F.reductionPairTotal }} &times; {{ ex.letterCount }} &minus; {{ ex.total['full-reduction'] }} + {{ F.reductionPairExtra }} &times; {{ ex.reductionExceptionCount }}, the {{ ex.reductionExceptionCount }} being {{ ex.word }}&rsquo;s {{ F.reductionPairExceptions }}.</li>
+          </ul>
+          <p class="mb-0">The main calculator gives {{ ex.word }} {{ ex.siteTotal }}, the Sumerian value. To run your own word through all {{ F.cipherCountWord }} at once, use the <a href="/multi-cipher-calculator.html">multi-cipher calculator</a>.</p>
+        </section>
+
+        <section id="relationships" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">How the ciphers relate, and why it matters for matches</h2>
+          <p class="mb-2">The {{ F.cipherCountWord }} ciphers are not {{ F.cipherCountWord }} independent tests. They fall into three groups:</p>
+          <ul class="mb-3">
+            <li class="mb-2"><strong>The Ordinal family:</strong> English Ordinal, Reverse Ordinal, Sumerian and Reverse Sumerian. Given any one of these totals and the number of letters, the other three follow.</li>
+{%- set frl = F.fullReductionLoss %}
+{%- set rfrl = F.reverseReductionLoss %}
+            <li class="mb-2"><strong>The reductions:</strong> Full Reduction and Reverse Full Reduction. Each depends on exactly which letters a word contains, but keeps the digital root of the cipher it reduces. Full Reduction is the English Ordinal total minus {{ frl.small.loss }} for each letter from {{ frl.small.from }} to {{ frl.small.to }} and {{ frl.large.loss }} for each from {{ frl.large.from }} to {{ frl.large.to }}; Reverse Full Reduction is the Reverse Ordinal total minus {{ rfrl.small.loss }} for each letter from {{ rfrl.small.from }} to {{ rfrl.small.to }} and {{ rfrl.large.loss }} for each from {{ rfrl.large.from }} to {{ rfrl.large.to }}. So two words level in the unreduced cipher also match in its reduction whenever they lose the same amount.</li>
+            <li class="mb-0"><strong>Jewish / Latin</strong>, which also depends on the exact letters, and also keeps English Ordinal&rsquo;s digital root.</li>
+          </ul>
+          <p class="mb-3">So a pair of words that matches in several ciphers may be one fact counted more than once. {{ pair.first.word }} and {{ pair.second.word }} show how:</p>
+          <div class="table-responsive mb-3">
+            <table id="pairTable" class="table table-sm align-middle mb-0">
+              <caption class="small text-muted">{{ pair.first.word }} and {{ pair.second.word }} in the {{ F.cipherCountWord }} ciphers.</caption>
+              <thead>
+                <tr><th scope="col">Cipher</th><th scope="col" class="text-end">{{ pair.first.word }}</th><th scope="col" class="text-end">{{ pair.second.word }}</th><th scope="col">Same total?</th></tr>
+              </thead>
+              <tbody>
+                {%- for row in pair.rows %}
+                <tr data-cipher="{{ row.id }}">
+                  <th scope="row"><a href="#{{ row.anchor }}">{{ row.name }}</a></th>
+                  <td class="text-end">{{ row.first }}</td>
+                  <td class="text-end">{{ row.second }}</td>
+                  <td>{% if row.match %}<strong>Yes</strong>{% else %}No{% endif %}</td>
+                </tr>
+                {%- endfor %}
+              </tbody>
+            </table>
+          </div>
+          <p>They match in {{ pair.matchCountWord }} of the {{ F.cipherCountWord }} ciphers: {{ pair.matchList }}. But the Sumerian match ({{ pair.total['sumerian'].first }}) is the Ordinal match ({{ pair.total['english-ordinal'].first }}) multiplied by {{ F.sumerianFactor }}, and the Full Reduction match was far more likely than it looks: once the Ordinal totals are level, the Full Reduction totals match whenever the two words lose the same amount, and {{ pair.first.word }} and {{ pair.second.word }} both lose {{ pair.reductionLoss }} ({{ pair.total['english-ordinal'].first }} &minus; {{ pair.reductionLoss }} = {{ pair.total['full-reduction'].first }}). So this is {{ pair.independentMatchCountWord }} fact plus weak support, not {{ pair.matchCountWord }} facts. The misses are partly arithmetic too: with equal Ordinal totals and lengths of {{ pair.first.letterCount }} and {{ pair.second.letterCount }} letters, their Reverse Ordinal totals had to differ by {{ F.mirrorTotal }} for each letter of difference, and they do ({{ pair.total['reverse-ordinal'].first }} and {{ pair.total['reverse-ordinal'].second }}).</p>
+          <p class="mb-0">Whether a match like this means anything depends on how often unrelated words match as well. How to use gematria walks through <a href="/how-to-use-gematria.html#test-the-match">that test, with this same pair</a>, and its <a href="/how-to-use-gematria.html#mistakes">common mistakes</a> include switching ciphers until something matches, which is why the cipher comes before the results. <a href="/v/{{ pair.total['sumerian'].first }}">Every word worth {{ pair.total['sumerian'].first }}</a> is a click away, and the <a href="/gematria-guide.html">research guide</a> sets out the full workflow, from the first calculation to publishing an interpretation.</p>
+        </section>
+
+        <section id="faq" class="content-panel p-4 mb-5">
+          <h2 class="h4 mb-3">Quick answers</h2>
+          <dl class="mb-0">
+            <dt class="h6 mt-3">What is a gematria cipher chart?</dt>
+            <dd>A table of what each letter is worth in one or more ciphers. To find a word&rsquo;s value, look up each of its letters in one column and add them.</dd>
+
+            <dt class="h6 mt-3">What is the Jewish / Latin cipher?</dt>
+            <dd>An English table modelled on Hebrew numerals: {% for band in F.jewishLatinBands %}{{ band.from }} to {{ band.to }} count {{ band.low }} to {{ band.high }}{% if loop.index == 1 %}, {% elif not loop.last %} and {% endif %}{% endfor %}. Some calculators give the name Jewish to a different table, so compare the letter values, not the name, before you compare totals. The <a href="#jewish-latin">Jewish / Latin chart</a> above lists every letter.</dd>
+
+            <dt class="h6 mt-3">What is English Ordinal gematria?</dt>
+            <dd>The simplest English cipher: A&nbsp;=&nbsp;{{ ord.first }}, B&nbsp;=&nbsp;{{ ord.values[1].value }} &hellip; Z&nbsp;=&nbsp;{{ ord.last }}, each letter&rsquo;s position in the alphabet. Sumerian is English Ordinal times {{ F.sumerianFactor }}, so the two always agree on which words match.</dd>
+
+            <dt class="h6 mt-3">How does Reverse Ordinal gematria work?</dt>
+            <dd>It numbers the alphabet backwards, from A&nbsp;=&nbsp;{{ rev.first }} to Z&nbsp;=&nbsp;{{ rev.last }}. A letter&rsquo;s Ordinal and Reverse Ordinal values always add to {{ F.mirrorTotal }}, so a word&rsquo;s Reverse Ordinal total is {{ F.mirrorTotal }} times its letter count minus its Ordinal total.</dd>
+
+            <dt class="h6 mt-3">Why do two gematria calculators give different totals for the same word?</dt>
+            <dd>Usually because they are using different ciphers, or different tables under the same cipher name. Match the letter values against this chart rather than trusting the label, name the cipher next to every value you quote, and choose it before you look at results. No cipher turns gematria into a way to predict or prove anything; see the <a href="/disclaimer.html">disclaimer</a>.</dd>
+          </dl>
+        </section>
+
+        <section class="content-panel p-4">
+          <h2 class="h4 mb-3">Where to go next</h2>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/multi-cipher-calculator.html">Multi-cipher calculator</a>
+              <p class="small text-muted mb-0">Run any word or phrase through all {{ F.cipherCountWord }} ciphers on this chart at once.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/calculator.html">Gematria calculator</a>
+              <p class="small text-muted mb-0">The site&rsquo;s English Gematria (Base-{{ F.sumerianFactor }}) calculator, with every word in the database that shares your total.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/hebrew-gematria-chart.html">Hebrew gematria chart</a>
+              <p class="small text-muted mb-0">The Hebrew letters and their values: the numeral system Jewish / Latin takes its shape from.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/what-is-gematria.html">What is gematria?</a>
+              <p class="small text-muted mb-0">What the word means, where the practice comes from, and what a match can and cannot show.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="{{ cipherChart.atlas.firstPostUrl }}">The English Gematria Cipher Atlas</a>
+              <p class="small text-muted mb-0">A blog series on the English ciphers, starting with English Ordinal: where each comes from, what it is good for, and how to combine them.</p>
+            </div>
+            <div class="col-md-6">
+              <a class="news-inline-link d-block fw-semibold" href="/how-to-use-gematria.html">How to use gematria</a>
+              <p class="small text-muted mb-0">The calculator step by step, and how to tell a real pattern from arithmetic that had to happen.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+{% footer %}
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

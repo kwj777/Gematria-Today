@@ -56,13 +56,38 @@ test('word pages carry the SEO tags that make them indexable', () => {
   assert.match(html, /<h1[^>]*>light<\/h1>/);
 });
 
-test('word and value pages cross-link so the set is crawlable', () => {
-  const wordPage = renderWordPage('light', 336, [{ word: 'light' }, { word: 'truth' }]);
+// Five searched words: enough siblings and enough demand for every one of
+// their pages to be indexable, so the set links up.
+const INDEXABLE_336 = ['light', 'truth', 'magic', 'peace', 'faith'].map((word) => ({ word, search_count: 3 }));
+
+test('word and value pages cross-link the pages that can be indexed', () => {
+  const wordPage = renderWordPage('light', 336, INDEXABLE_336);
   assert.match(wordPage, /href="\/v\/336"/, 'word page should link to its value page');
   assert.match(wordPage, /href="\/w\/truth"/, 'word page should link to sibling words');
 
-  const valuePage = renderValuePage(336, [{ word: 'light' }, { word: 'truth' }]);
+  const valuePage = renderValuePage(336, INDEXABLE_336);
   assert.match(valuePage, /href="\/w\/light"/, 'value page should link to each word');
+});
+
+test('a word whose own page would be noindexed is listed but not linked', () => {
+  // Linking every sibling is how Google came to know thirteen thousand /w/
+  // URLs it would never index. The page still shows the word; it just
+  // does not hand the crawler another URL to spend a visit on.
+  const rows = [...INDEXABLE_336, { word: 'thane', search_count: 1 }];
+  for (const html of [renderWordPage('light', 336, rows), renderValuePage(336, rows)]) {
+    assert.match(html, /<li>thane<\/li>/, 'an unsearched word is listed as text');
+    assert.ok(!html.includes('/w/thane'), 'and not linked');
+    assert.match(html, /href="\/w\/truth"/, 'searched siblings stay linked');
+  }
+
+  // Under the shared-word floor no sibling page is indexable, however often it
+  // was searched, and neither is the value page.
+  const few = [{ word: 'light', search_count: 9 }, { word: 'truth', search_count: 9 }];
+  const sparse = renderWordPage('light', 336, few);
+  assert.match(sparse, /<li>truth<\/li>/);
+  assert.ok(!sparse.includes('/w/truth'));
+  assert.ok(!sparse.includes('href="/v/336"'), 'a noindexed value page is not linked');
+  assert.match(sparse, /href="\/calculator\.html"/, 'the way back to the calculator stays');
 });
 
 test('rendered pages escape word content', () => {
@@ -304,7 +329,7 @@ test('slurs are never published, though the calculator still returns them', asyn
 
   const html = renderWordPage('ALA', 84, [{ word: 'fag', search_count: 9 }, { word: 'aid', search_count: 1 }]);
   assert.ok(!/>fag</.test(html), 'a slur must not appear in a published list');
-  assert.match(html, /\/w\/aid/);
+  assert.match(html, /<li>aid<\/li>/, 'the other word is still listed');
 });
 
 test('one lookup is no longer enough to publish a word page', async () => {

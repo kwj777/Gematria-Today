@@ -43,7 +43,8 @@ test('value pages link a featured word at its canonical URL, whatever casing its
   const html = renderValuePage(444, [{ word: 'Jesus' }, { word: 'GOSPEL' }, { word: 'Kale' }]);
   assert.ok(html.includes('<a href="/w/jesus">Jesus</a>'));
   assert.ok(html.includes('<a href="/w/gospel">GOSPEL</a>'));
-  assert.ok(html.includes('<a href="/w/Kale">Kale</a>'));
+  // An ordinary, unsearched word is listed without a link.
+  assert.ok(html.includes('<li>Kale</li>'));
 });
 
 test('an ordinary word page is unchanged by the featured list', () => {

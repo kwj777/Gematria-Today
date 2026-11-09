@@ -168,5 +168,7 @@ test('lists of the words worth a value leave out rows whose word no longer adds 
   const html = await page.text();
   assert.ok(!html.includes('Stra'), 'the value page must not list it');
   assert.match(html, /3 words share this value/);
-  for (const word of worth606) assert.ok(html.includes(`/w/${word}`), word);
+  // Listed, though not linked: three words is under the shared-word floor,
+  // so none of their pages is indexable and none is linked.
+  for (const word of worth606) assert.ok(html.includes(`<li>${word}</li>`), word);
 });

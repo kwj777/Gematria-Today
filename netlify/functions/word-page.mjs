@@ -235,15 +235,41 @@ export function publishableRelated(words, currentWord) {
     .map((row) => String(row.word));
 }
 
-function relatedList(others, { value, emptyMessage }) {
+// The words a list may LINK to: the ones whose own page clears the indexing
+// gate, plus the featured names. Every word in the list still shows; the rest
+// are plain text. Linking all of them is how Google came to know about some
+// thirteen thousand /w/ URLs it will never index -- every crawl of one word
+// page turned up a few hundred more -- and those visits came out of the
+// budget the guides and calculators needed (the name calculator sat
+// "discovered, not indexed", never crawled, for twelve weeks). Siblings share
+// the page's value, so they share its shared-word count: the same two halves
+// of the gate that decide the page's own robots tag decide each link.
+export function linkableRelated(words) {
+  const enoughShared = hasEnoughSharedWords(publishableRelated(words, null).length);
+  const linkable = new Set();
+  for (const row of words) {
+    if (!isPublishableWord(row.word)) continue;
+    if (getFeaturedWord(row.word) || (enoughShared && hasEnoughSearches(row))) {
+      linkable.add(String(row.word).toLowerCase());
+    }
+  }
+  return linkable;
+}
+
+function relatedItem(word, linkable) {
+  if (!linkable.has(String(word).toLowerCase())) {
+    return `<li>${escapeHtml(word)}</li>`;
+  }
+  return `<li><a href="${getFeaturedWord(word) ? featuredWordPath(word) : `/w/${encodeURIComponent(word)}`}">${escapeHtml(word)}</a></li>`;
+}
+
+function relatedList(others, { value, emptyMessage, linkable }) {
   if (others.length === 0) {
     return `<p class="mb-0">${escapeHtml(emptyMessage)}</p>`;
   }
   // A featured word's page canonicalises to featuredWordPath, so link it there
   // rather than to the casing its row happens to be stored under.
-  const items = others.slice(0, MAX_RELATED).map((word) =>
-    `<li><a href="${getFeaturedWord(word) ? featuredWordPath(word) : `/w/${encodeURIComponent(word)}`}">${escapeHtml(word)}</a></li>`
-  ).join('\n          ');
+  const items = others.slice(0, MAX_RELATED).map((word) => relatedItem(word, linkable)).join('\n          ');
   // Past the cap the remaining words used to be unreachable: the only thing
   // on the page was a passive "Showing 200 of N." with nowhere to go.
   const more = others.length > MAX_RELATED
@@ -292,14 +318,20 @@ export function renderWordPage(word, value, words, { noindex = false } = {}) {
     ? `"${displayWord}" has an English gematria value of ${value} (digital root ${root}). ${featured.note}`
     : `"${word}" has an English gematria value of ${value} (digital root ${root}). See every word in the Gematria.Today database that shares this value.`;
   const others = publishableRelated(words, word);
+  const linkable = linkableRelated(words);
+  // The value page is noindexed below the shared-word floor, so it is only
+  // linked once it clears it -- the same rule as the word links.
+  const valueLink = hasEnoughSharedWords(publishableRelated(words, null).length)
+    ? `<a href="/v/${value}">See all words worth ${value}</a> &middot; `
+    : '';
 
   const bodyHtml = `        <nav aria-label="Breadcrumb" class="small mb-3"><a href="/">Home</a> &middot; ${featured ? '<a href="/bible-names-gematria.html">Bible names</a>' : '<a href="/calculator.html">Calculator</a>'}</nav>
         <h1 class="display-6 fw-bold mb-3">${escapeHtml(displayWord)}</h1>
         <p class="lead">English gematria value <strong>${value}</strong> &middot; digital root <strong>${root}</strong>${baseRoot ? ' &middot; base root' : ''}.</p>
-        <p><a href="/v/${value}">See all words worth ${value}</a> &middot; <a href="/calculator.html">Calculate another word</a></p>
+        <p>${valueLink}<a href="/calculator.html">Calculate another word</a></p>
 ${breakdownHtml(displayWord, value)}
 ${featured ? `${featuredHtml(featured, value)}\n` : ''}        <h2 class="h5 mt-4 mb-2">Words sharing this value</h2>
-        ${relatedList(others, { value, emptyMessage: 'No other words in the database share this value yet.' })}
+        ${relatedList(others, { value, linkable, emptyMessage: 'No other words in the database share this value yet.' })}
 ${callToAction(word)}`;
 
   return layout({
@@ -333,7 +365,7 @@ export function renderValuePage(value, words, { noindex = false } = {}) {
         <p class="lead">${count} word${count === 1 ? '' : 's'} share this value &middot; digital root <strong>${root}</strong>${isBaseRootValue(value) ? ' &middot; base root' : ''}.</p>
         <p><a href="/calculator.html">Look up a different word or value</a></p>
         <h2 class="h5 mt-4 mb-2">Words</h2>
-        ${relatedList(listed, { value, emptyMessage: 'No words in the database have this value yet — be the first to add one by calculating a word.' })}
+        ${relatedList(listed, { value, linkable: linkableRelated(words), emptyMessage: 'No words in the database have this value yet — be the first to add one by calculating a word.' })}
 ${callToAction()}`;
 
   return layout({

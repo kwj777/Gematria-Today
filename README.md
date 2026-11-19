@@ -289,7 +289,7 @@ Set these in Netlify to tune protection behavior:
 
 - `admin-reports` now includes a `trafficAlerts` dashboard payload that highlights spike conditions for `/api/member-login`, `/api/member-register`, and expensive public endpoints.
 - A scheduled `security-retention` function runs hourly to enforce DB retention for `request_audit_log`, `function_response_cache`, and stale `request_rate_limits` rows.
-- Runbook + rehearsal checklist: [`docs-high-alert-mode-runbook.md`](./docs-high-alert-mode-runbook.md).
+- Runbook + rehearsal checklist: [`docs/docs-high-alert-mode-runbook.md`](./docs/docs-high-alert-mode-runbook.md).
 
 ### Edge protection still required
 

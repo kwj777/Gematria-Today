@@ -2,6 +2,24 @@
 
 A web-based Gematria calculator application built with HTML, CSS, JavaScript, and Netlify serverless functions backed by a Neon (PostgreSQL) database.
 
+Live at [gematria.today](https://gematria.today).
+
+**Built with:** HTML, CSS and vanilla JavaScript, Eleventy, Netlify Functions and Edge
+Functions (Node.js), Neon serverless Postgres, Stripe, OAuth social sign-in, and Node's
+built-in test runner.
+
+**Highlights**
+
+- **A full-stack product, not just a calculator.** Member accounts with social sign-in and
+  account recovery, paid memberships through Stripe with a billing portal, a community forum
+  with a reputation system, a blog, and an on-site chatbot (GemaBot) that admins can review and train.
+- **A real back office.** Admin and super-admin dashboards for posts, the forum, reports,
+  memberships and click tracking, plus switches that turn whole site modules on or off.
+- **Security work.** CSRF protection, hardened login, anti-bot checks and cookie consent.
+- **Scale and testing.** Around 90 serverless functions, about 69,000 hand-written lines, and
+  roughly 1,700 tests across 116 test files, plus custom checks for accessibility, redirects,
+  the sitemap and static analysis.
+
 ## Project Structure
 
 ```

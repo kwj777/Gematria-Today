@@ -181,3 +181,21 @@ test('favicon.ico resolves instead of falling through to a redirect chain', asyn
   assert.ok(rule, 'expected an explicit /favicon.ico rule');
   assert.match(rule, /pwa-icon/);
 });
+
+test('extensionless page redirects are forced so /page cannot serve a duplicate of /page.html', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+
+  // Netlify serves /page.html at /page by itself, and a non-forced rule loses
+  // to that. The live site then answered 200 at both URLs, and since Netlify
+  // rewrites links to /page, Google never saw a link to the canonical .html URL.
+  const begin = netlifyToml.indexOf('# BEGIN generated page redirects');
+  const end = netlifyToml.indexOf('# END generated page redirects');
+  assert.ok(begin !== -1 && end > begin, 'expected the generated page redirect block');
+
+  const rules = netlifyToml.slice(begin, end).split('[[redirects]]').slice(1);
+  assert.ok(rules.length > 0, 'expected generated page redirect rules');
+  for (const rule of rules) {
+    assert.match(rule, /status = 301/);
+    assert.match(rule, /force = true/, `not forced: ${rule.trim().split('\n')[0]}`);
+  }
+});

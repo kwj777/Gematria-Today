@@ -10,6 +10,14 @@
 //
 // Explicit rules cannot loop, and unmatched paths now fall through to 404.html
 // the way they should.
+//
+// The rules are forced. Netlify serves /page.html at /page on its own, and a
+// non-forced rule loses to that, so /page answered 200 with a canonical
+// pointing at /page.html: two live URLs per page. Netlify also rewrites the
+// site's links to the extensionless form, so Google followed links to /page,
+// never saw a link to the canonical /page.html, and left new pages
+// "Discovered, currently not indexed". Forcing the 301 makes every link lead to
+// the canonical URL.
 import { readFile, writeFile } from 'node:fs/promises';
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -42,6 +50,7 @@ const block = [
     `  from = "/${page}"`,
     `  to = "/${page}.html"`,
     '  status = 301',
+    '  force = true',
   ]),
   '',
   END,

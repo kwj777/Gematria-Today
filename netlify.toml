@@ -142,246 +142,295 @@
   from = "/404"
   to = "/404.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/666-gematria"
   to = "/666-gematria.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/accessibility"
   to = "/accessibility.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/account-recovery"
   to = "/account-recovery.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin"
   to = "/admin.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-chatbot-feedback"
   to = "/admin-chatbot-feedback.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-click-tracking"
   to = "/admin-click-tracking.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-editorial"
   to = "/admin-editorial.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-forum"
   to = "/admin-forum.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-forum-reputation-scale"
   to = "/admin-forum-reputation-scale.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-hub"
   to = "/admin-hub.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-posts"
   to = "/admin-posts.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-reports"
   to = "/admin-reports.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-site-chatbot"
   to = "/admin-site-chatbot.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/admin-super-admin"
   to = "/admin-super-admin.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/ai-agent"
   to = "/ai-agent.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/badge"
   to = "/badge.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/bible-names-gematria"
   to = "/bible-names-gematria.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/blog"
   to = "/blog.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/calculator"
   to = "/calculator.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/contact"
   to = "/contact.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/definitions"
   to = "/definitions.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/disclaimer"
   to = "/disclaimer.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/faq"
   to = "/faq.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/follow.it-verification-code"
   to = "/follow.it-verification-code.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/forum"
   to = "/forum.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/forum-reputation-scale"
   to = "/forum-reputation-scale.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/gematria-account-setup"
   to = "/gematria-account-setup.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/gematria-basics"
   to = "/gematria-basics.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/gematria-cipher-chart"
   to = "/gematria-cipher-chart.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/gematria-guide"
   to = "/gematria-guide.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/gematria-name-analysis"
   to = "/gematria-name-analysis.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/gematria-pattern-grouping"
   to = "/gematria-pattern-grouping.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/gematria-results"
   to = "/gematria-results.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/hebrew-gematria-chart"
   to = "/hebrew-gematria-chart.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/how-to-use-gematria"
   to = "/how-to-use-gematria.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/index"
   to = "/index.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/member"
   to = "/member.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/multi-cipher-calculator"
   to = "/multi-cipher-calculator.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/name-calculator"
   to = "/name-calculator.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/offline"
   to = "/offline.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/premium-research"
   to = "/premium-research.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/privacy"
   to = "/privacy.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/searchbot"
   to = "/searchbot.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/terms"
   to = "/terms.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/tools"
   to = "/tools.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/unsupported-browser"
   to = "/unsupported-browser.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/what-is-gematria"
   to = "/what-is-gematria.html"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/why-english-gematria"
   to = "/why-english-gematria.html"
   status = 301
+  force = true
 
 # END generated page redirects
 

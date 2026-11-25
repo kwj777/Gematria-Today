@@ -187,7 +187,8 @@ test('extensionless page redirects are forced so /page cannot serve a duplicate 
 
   // Netlify serves /page.html at /page by itself, and a non-forced rule loses
   // to that. The live site then answered 200 at both URLs, and since Netlify
-  // rewrites links to /page, Google never saw a link to the canonical .html URL.
+  // was rewriting links to /page, Google never saw a link to the canonical
+  // .html URL.
   const begin = netlifyToml.indexOf('# BEGIN generated page redirects');
   const end = netlifyToml.indexOf('# END generated page redirects');
   assert.ok(begin !== -1 && end > begin, 'expected the generated page redirect block');
@@ -198,4 +199,28 @@ test('extensionless page redirects are forced so /page cannot serve a duplicate 
     assert.match(rule, /status = 301/);
     assert.match(rule, /force = true/, `not forced: ${rule.trim().split('\n')[0]}`);
   }
+});
+
+test('Netlify leaves links as written, so they name the canonical .html URL', async () => {
+  const netlifyToml = await fs.readFile(new URL('../netlify.toml', import.meta.url), 'utf8');
+
+  // Pretty URLs post-processing rewrote every /page.html link to /page on
+  // deploy, and the forced rules above then answered each of those links with
+  // a 301. Turned off here, the setting overrides the one in the Netlify UI.
+  const uncommented = netlifyToml
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('#'))
+    .join('\n');
+  assert.match(uncommented, /\[build\.processing\.html\]\n\s*pretty_urls = false/);
+});
+
+test('the home page carries no link to /definition before a word fills it in', async () => {
+  const home = await fs.readFile(new URL('../src/index.html', import.meta.url), 'utf8');
+
+  // /definition with no word answers 400, and a crawler reads an href on a
+  // hidden element as readily as on a visible one. home-page.js sets the href
+  // when it has a word to look up.
+  const cta = home.match(/<a id="homeWordnikWotdDefinitionCta"[^>]*>/);
+  assert.ok(cta, 'expected the word-of-the-day definition link');
+  assert.doesNotMatch(cta[0], /href=/);
 });

@@ -3,6 +3,17 @@
   functions = "netlify/functions"
   publish = "_site"
 
+# Leave links as they are written. Every page links its neighbours by the .html
+# URL its canonical names, but Netlify's Pretty URLs post-processing rewrote
+# those links on deploy, so the live HTML said /calculator where the source
+# said /calculator.html. With the forced /page -> /page.html rules below, that
+# made every internal link a 301 (checked live on 25 Nov 2026: the home page
+# carried /blog eight times and /calculator six). Switched off here, which
+# overrides the setting in the Netlify UI. The extensionless URLs still lead to
+# the canonical page through those same rules.
+[build.processing.html]
+  pretty_urls = false
+
 # Forced: robots.txt and sitemap.xml also exist as static files in _site, and a
 # non-forced rewrite loses to a file at the same path, so the module-aware
 # functions never ran and switching a module off changed nothing crawlers saw.

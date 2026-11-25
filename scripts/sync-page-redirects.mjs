@@ -13,11 +13,13 @@
 //
 // The rules are forced. Netlify serves /page.html at /page on its own, and a
 // non-forced rule loses to that, so /page answered 200 with a canonical
-// pointing at /page.html: two live URLs per page. Netlify also rewrites the
-// site's links to the extensionless form, so Google followed links to /page,
-// never saw a link to the canonical /page.html, and left new pages
-// "Discovered, currently not indexed". Forcing the 301 makes every link lead to
-// the canonical URL.
+// pointing at /page.html: two live URLs per page. Netlify was also rewriting
+// the site's links to the extensionless form, so Google followed links to
+// /page, never saw a link to the canonical /page.html, and left new pages
+// "Discovered, currently not indexed". Forcing the 301 sent every one of those
+// links to the canonical URL; switching off that rewriting (pretty_urls in
+// netlify.toml) means the links name it in the first place, and the 301 is
+// left for links from elsewhere.
 import { readFile, writeFile } from 'node:fs/promises';
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';

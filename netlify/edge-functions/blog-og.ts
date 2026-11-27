@@ -192,10 +192,26 @@ export default async (req: Request, context: Context) => {
     return;
   }
 
+  // Netlify's query-matching redirects pass the old ?post= through, so
+  // /blog?post=x lands on /blog/x?post=x. Drop it with one more hop, keeping
+  // any other parameter (?preview= above all).
+  if (PATH_SLUG_PATTERN.test(url.pathname) && url.searchParams.has('post')) {
+    const clean = new URL(url);
+    clean.searchParams.delete('post');
+    return Response.redirect(clean.toString(), 301);
+  }
+
   const siteOrigin = (url.origin || FALLBACK_SITE_ORIGIN).replace(/\/+$/, '');
   const defaultOgImage = `${siteOrigin}${DEFAULT_OG_IMAGE_PATH}`;
 
   const response = await context.next();
+  // Edge functions run before netlify.toml's redirects, so for
+  // blog.html?post=x this is the 301 to /blog/x. Rebuilding it below would turn
+  // it into a 200 whose body is Netlify's "Redirecting to" text, so anything
+  // that isn't a page goes out untouched.
+  if (response.status !== 200) {
+    return response;
+  }
   const lookup = await lookupPost(url.origin, postSlug);
   if (lookup.status === 'unavailable') {
     // A 429, a 5xx or a network error says nothing about the post, so the

@@ -356,7 +356,7 @@ const form = document.querySelector('#name-form');
 
       function createBaseRootLink() {
         const link = document.createElement('a');
-        link.href = 'https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words';
+        link.href = 'https://gematria.today/blog/base-rooted-words';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = 'Base Rooted:';
@@ -798,7 +798,7 @@ View results: ${shareUrl}`.trim(),
   <body>
     <main>
       <h1>${escapeHtml(name)}</h1>
-      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | ${isHighlightedDigitalRoot(result.gematria.gematria.digitalRoot) ? `<span class="meta-highlight">Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}</span>` : `Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}`} | <a href="https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words" target="_blank" rel="noopener noreferrer">Base Rooted:</a> ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}<br />Per-letter values: ${escapeHtml(formatPerLetterValuesText(name))}</p>
+      <p class="meta">Original word: ${escapeHtml(result.related?.query || name)} | Gematria: ${escapeHtml(String(result.gematria.gematria.total))} | ${isHighlightedDigitalRoot(result.gematria.gematria.digitalRoot) ? `<span class="meta-highlight">Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}</span>` : `Digital Root: ${escapeHtml(String(result.gematria.gematria.digitalRoot))}`} | <a href="https://gematria.today/blog/base-rooted-words" target="_blank" rel="noopener noreferrer">Base Rooted:</a> ${escapeHtml(result.gematria.isBaseRoot ? 'Yes' : 'No')} | Searches: ${escapeHtml(String(result.gematria.searchCount))}<br />Per-letter values: ${escapeHtml(formatPerLetterValuesText(name))}</p>
       <p class="meta">Click any related word below to open an English Gematria search for that word.</p>
       ${sections || '<p>No related words found.</p>'}
     </main>

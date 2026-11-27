@@ -158,9 +158,35 @@ async function lookupPost(origin: string, postSlug: string): Promise<PostLookup>
   }
 }
 
+// /blog/<slug> is the post's address; netlify.toml serves blog.html there. A
+// ?post= on blog.html itself is 301'd away before it gets here, but is still
+// read, so a deploy without that rule degrades to the old behaviour.
+const PATH_SLUG_PATTERN = /^\/blog\/([^/?#]+)\/?$/i;
+
+export function slugFromUrl(url: URL): string {
+  const match = url.pathname.match(PATH_SLUG_PATTERN);
+  if (match) {
+    try {
+      return decodeURIComponent(match[1]).trim();
+    } catch {
+      return match[1].trim();
+    }
+  }
+  return String(url.searchParams.get('post') || '').trim();
+}
+
+// blog.html carries its own h1 (the blog's headline) in a hero that a post view
+// hides. With the post's title as an h1 too, every post had two. On a post
+// view the hero headline becomes a paragraph, keeping its id and classes.
+const HERO_H1_PATTERN = /<h1(\s+id="heroHeadlinePrimary"[^>]*)>([\s\S]*?)<\/h1>/;
+
+export function demoteHeroHeadline(html: string): string {
+  return html.replace(HERO_H1_PATTERN, (_m, attrs, inner) => `<p${attrs}>${inner}</p>`);
+}
+
 export default async (req: Request, context: Context) => {
   const url = new URL(req.url);
-  const postSlug = url.searchParams.get('post');
+  const postSlug = slugFromUrl(url);
 
   if (!postSlug) {
     return;
@@ -194,10 +220,9 @@ export default async (req: Request, context: Context) => {
   const description = String(post.summary || DEFAULT_DESCRIPTION).trim();
   const heroImage = getPostHeroImage(post) || defaultOgImage;
   const imageUrl = toShareImageUrl(heroImage, siteOrigin) || toShareImageUrl(defaultOgImage, siteOrigin);
-  // Canonical form shared with blog-post-share's /blog/<slug> stub and the
-  // sitemap. No fragment: it is dropped by crawlers and only made the three
-  // declarations differ.
-  const shareUrl = `${siteOrigin}/blog.html?post=${encodeURIComponent(postSlug)}`;
+  // The post's one address, the same URL the sitemap lists and blog-2.js
+  // declares once it has rendered. No fragment: crawlers drop it.
+  const shareUrl = `${siteOrigin}/blog/${encodeURIComponent(postSlug)}`;
 
   // Replace title tag
   html = replaceTitle(html, title);
@@ -223,11 +248,12 @@ export default async (req: Request, context: Context) => {
   // The ?slug= detail response carries the rendered body; put it in the page
   // so crawlers read the post without running blog-2.js first.
   html = injectPostArticle(html, { title, bodyHtml: String(post.renderedBodyHtml || '') });
+  html = demoteHeroHeadline(html);
 
   return new Response(html, { headers: response.headers });
 };
 
 export const config: Config = {
-  path: '/blog.html',
+  path: ['/blog.html', '/blog/*'],
   onError: 'bypass',
 };

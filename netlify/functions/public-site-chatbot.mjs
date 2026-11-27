@@ -217,7 +217,7 @@ async function loadCorpus(sql) {
       type: 'post',
       title: title || 'Blog post',
       text,
-      url: safeSlug ? `/blog.html?post=${encodeURIComponent(safeSlug)}#${encodeURIComponent(safeSlug)}` : '/blog.html',
+      url: safeSlug ? `/blog/${encodeURIComponent(safeSlug)}` : '/blog.html',
     });
   }
 

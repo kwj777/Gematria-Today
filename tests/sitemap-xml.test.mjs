@@ -97,18 +97,18 @@ const POSTS = [
   { slug: 'hello world & friends', lastModified: new Date('2026-01-02T23:59:59Z') },
 ];
 
-test('buildSitemapXml lists each post at its canonical blog.html?post= URL with a lastmod', () => {
+test('buildSitemapXml lists each post at its canonical /blog/<slug> URL with a lastmod', () => {
   // Posts render client-side, so the sitemap is how a crawler finds them. The
   // URL must be the one every post page declares canonical.
   const xml = buildSitemapXml({ siteOrigin: 'https://example.com', modules: ALL_MODULES_ON, posts: POSTS });
   assert.ok(xml.includes(
-    '<url>\n    <loc>https://example.com/blog.html?post=digital-roots-in-gematria</loc>\n    <lastmod>2026-09-14</lastmod>\n  </url>',
+    '<url>\n    <loc>https://example.com/blog/digital-roots-in-gematria</loc>\n    <lastmod>2026-09-14</lastmod>\n  </url>',
   ));
   assert.ok(xml.includes(
-    '<loc>https://example.com/blog.html?post=hello%20world%20%26%20friends</loc>\n    <lastmod>2026-01-02</lastmod>',
+    '<loc>https://example.com/blog/hello%20world%20%26%20friends</loc>\n    <lastmod>2026-01-02</lastmod>',
   ));
-  // The /blog/<slug> share stub only redirects, so it is never listed.
-  assert.ok(!xml.includes('https://example.com/blog/'));
+  // The old query form is a 301 now, so it is never listed.
+  assert.ok(!xml.includes('blog.html?post='));
 });
 
 test('buildSitemapXml omits posts when the blog module is disabled', () => {
@@ -131,8 +131,8 @@ test('buildBlogPostPaths skips blank and duplicate slugs and tolerates a missing
       { slug: 'b', lastModified: 'not a date' },
     ]),
     [
-      { path: '/blog.html?post=a', lastmod: '' },
-      { path: '/blog.html?post=b', lastmod: '' },
+      { path: '/blog/a', lastmod: '' },
+      { path: '/blog/b', lastmod: '' },
     ],
   );
 });
@@ -185,7 +185,7 @@ test('handler adds the published posts from the database to the served sitemap',
   );
   assert.equal(response.statusCode, 200);
   assert.ok(response.body.includes(
-    '<loc>https://gematria.today/blog.html?post=digital-roots-in-gematria</loc>\n    <lastmod>2026-09-14</lastmod>',
+    '<loc>https://gematria.today/blog/digital-roots-in-gematria</loc>\n    <lastmod>2026-09-14</lastmod>',
   ));
   // Only what the public blog serves: published (or blank) and due scheduled
   // posts, never ones the admin hid from the blog.

@@ -99,9 +99,37 @@
   to = "/.netlify/functions/blog-rss"
   status = 200
 
+# A post's one address is /blog/<slug>. It serves blog.html, which blog-og
+# (netlify/edge-functions/blog-og.ts) fills with the post's title, meta,
+# canonical and body before it leaves the CDN, and blog-2.js takes the slug from
+# the path. Before November 2026 posts were canonical at blog.html?post=<slug>,
+# with a /blog?post= copy drawing impressions of its own; both query forms 301
+# here, preview links keeping their ?preview=true. The more specific rule comes
+# first because Netlify takes the first match.
+[[redirects]]
+  from = "/blog.html"
+  to = "/blog/:post?preview=:preview"
+  query = { post = ":post", preview = ":preview" }
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog.html"
+  to = "/blog/:post"
+  query = { post = ":post" }
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog"
+  to = "/blog/:post"
+  query = { post = ":post" }
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/blog/:slug"
-  to = "/.netlify/functions/blog-post-share/:slug"
+  to = "/blog.html"
   status = 200
 
 # Indexable pages for the words table. /w/:word and /v/:value give every word

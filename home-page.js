@@ -71,7 +71,7 @@ function renderHomepageFeaturedGrid(posts, state = 'data') {
     const title = String(post.title || 'Featured post').trim() || 'Featured post';
     const excerpt = buildPostExcerpt(post);
     const heroImageUrl = normalizePostImageUrl(post.sliderImageUrl || post.imageUrl) || '/assets/blog-hero-gematria.svg';
-    const href = `/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}`;
+    const href = `/blog/${encodeURIComponent(slug)}`;
 
     return `
       <div class="col-12 col-md-6 col-xl-4">
@@ -142,7 +142,7 @@ function renderHomepageSlider(posts, state = 'data') {
     return `
       <div class="carousel-item ${index === 0 ? 'active' : ''}">
         <article class="blog-slide-card p-4 p-lg-5">
-          <a href="/blog.html?post=${encodeURIComponent(slug)}#${encodeURIComponent(slug)}" class="d-block text-decoration-none" aria-label="Read ${escapeHtml(post.title || 'featured post')}" title="${escapeHtml(post.title || 'Read this featured post')}" rel="bookmark">
+          <a href="/blog/${encodeURIComponent(slug)}" class="d-block text-decoration-none" aria-label="Read ${escapeHtml(post.title || 'featured post')}" title="${escapeHtml(post.title || 'Read this featured post')}" rel="bookmark">
             <figure class="blog-slide-image-frame mb-0">
                 <img class="blog-slide-image" src="${escapeHtml(heroImageUrl)}" alt="${escapeHtml(post.title || 'Featured post')} hero image" loading="lazy" decoding="async" />
                 <figcaption class="blog-slide-cta">

@@ -1195,7 +1195,7 @@ View results: ${shareUrl}`.trim(),
 
       function createBaseRootLink() {
         const link = document.createElement('a');
-        link.href = 'https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words';
+        link.href = 'https://gematria.today/blog/base-rooted-words';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = 'Base Rooted:';
@@ -1204,7 +1204,7 @@ View results: ${shareUrl}`.trim(),
 
       function createBaseRootStatusNode(isBaseRoot) {
         const link = document.createElement('a');
-        link.href = 'https://gematria.today/blog.html?post=base-rooted-words#base-rooted-words';
+        link.href = 'https://gematria.today/blog/base-rooted-words';
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = isBaseRoot ? 'Base rooted' : 'Not base rooted';

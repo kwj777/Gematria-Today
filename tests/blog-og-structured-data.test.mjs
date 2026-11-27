@@ -34,14 +34,14 @@ const POST = {
   updatedAt: '2026-06-02T12:00:00.000Z',
 };
 
-async function renderPostView(slug, posts = [POST]) {
+async function renderPostView(slug, posts = [POST], url = `https://gematria.today/blog.html?post=${encodeURIComponent(slug)}`) {
   const priorFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify({ items: posts }), {
     status: 200,
     headers: { 'content-type': 'application/json' },
   });
   try {
-    const request = new Request(`https://gematria.today/blog.html?post=${encodeURIComponent(slug)}`);
+    const request = new Request(url);
     const context = { next: async () => new Response(BLOG_PAGE, { headers: { 'content-type': 'text/html' } }) };
     const response = await edge.default(request, context);
     return response.text();
@@ -81,7 +81,7 @@ test('a post view replaces the index Article with the post\'s own BlogPosting', 
   assert.equal(article.dateModified, '2026-06-02T12:00:00.000Z');
   assert.deepEqual(article.mainEntityOfPage, {
     '@type': 'WebPage',
-    '@id': 'https://gematria.today/blog.html?post=digital-roots-in-gematria',
+    '@id': 'https://gematria.today/blog/digital-roots-in-gematria',
   });
   assert.deepEqual(article.image, ['https://gematria.today/assets/digital-roots.png']);
   assert.doesNotMatch(article.publisher.logo.url, /\.svg/i);
@@ -90,10 +90,31 @@ test('a post view replaces the index Article with the post\'s own BlogPosting', 
   assert.ok(!html.includes('"datePublished": "2026-03-28"'));
 });
 
-test('a post view declares the same canonical as the /blog/<slug> stub and the sitemap', { skip: skipWithoutTs }, async () => {
+test('a post view declares /blog/<slug> canonical, as the sitemap lists it', { skip: skipWithoutTs }, async () => {
   const html = await renderPostView(POST.slug);
   const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/)[1];
-  assert.equal(canonical, 'https://gematria.today/blog.html?post=digital-roots-in-gematria');
+  assert.equal(canonical, 'https://gematria.today/blog/digital-roots-in-gematria');
+});
+
+test('a post served at /blog/<slug> is filled in from the path, with one h1', { skip: skipWithoutTs }, async () => {
+  const html = await renderPostView(POST.slug, [{ ...POST, renderedBodyHtml: '<p>Body text.</p>' }], 'https://gematria.today/blog/digital-roots-in-gematria');
+  assert.equal(html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/)[1], 'https://gematria.today/blog/digital-roots-in-gematria');
+  assert.match(html, /<title[^>]*>Digital Roots /);
+  assert.ok(html.includes('<p>Body text.</p>'));
+  assert.equal((html.match(/<h1\b/g) || []).length, 1, 'the hero headline is demoted on a post view');
+  assert.match(html, /<p id="heroHeadlinePrimary"/);
+});
+
+test('slugFromUrl reads the path first and ?post= as a fallback', { skip: skipWithoutTs }, () => {
+  assert.equal(edge.slugFromUrl(new URL('https://gematria.today/blog/a-b')), 'a-b');
+  assert.equal(edge.slugFromUrl(new URL('https://gematria.today/blog/a-b/')), 'a-b');
+  assert.equal(edge.slugFromUrl(new URL('https://gematria.today/blog/a%20b?post=zzz')), 'a b');
+  assert.equal(edge.slugFromUrl(new URL('https://gematria.today/blog.html?post=c')), 'c');
+  assert.equal(edge.slugFromUrl(new URL('https://gematria.today/blog.html')), '');
+});
+
+test('the edge function runs on /blog/<slug> as well as blog.html', () => {
+  assert.match(EDGE_SOURCE, /path: \['\/blog\.html', '\/blog\/\*'\]/);
 });
 
 test('the JSON-LD cannot be closed early by a post title', { skip: skipWithoutTs }, async () => {

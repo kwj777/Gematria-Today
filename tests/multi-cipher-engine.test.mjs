@@ -182,7 +182,7 @@ test('every cipher links to a Cipher Atlas blog post', () => {
   for (const cipher of CIPHERS) {
     const url = blogUrlForCipher(cipher.id);
     assert.ok(url, `cipher ${cipher.id} should have a blog URL`);
-    assert.match(url, /^\/blog\.html\?post=english-gematria-cipher-atlas-[a-z-]+#english-gematria-cipher-atlas-[a-z-]+$/);
+    assert.match(url, /^\/blog\/english-gematria-cipher-atlas-[a-z-]+$/);
   }
 });
 

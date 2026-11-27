@@ -886,7 +886,7 @@
               ? '/gematria-pattern-grouping.html'
               : nextLevel === 3
                 ? '/gematria-name-analysis.html'
-                : '/blog.html?post=a-beginner-s-gematria-research-checklist-before-you-draw-conclusions&from=learning-path#a-beginner-s-gematria-research-checklist-before-you-draw-conclusions';
+                : '/blog/a-beginner-s-gematria-research-checklist-before-you-draw-conclusions?from=learning-path';
           learningPathAspireCta.href = nextPath;
           learningPathAspireCta.textContent = progress >= 1 ? `Continue Level ${nextLevel}` : 'This is the way →';
           if (progress >= 1) {

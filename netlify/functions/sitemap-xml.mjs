@@ -93,10 +93,9 @@ function toLastmodDate(value) {
   return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10);
 }
 
-// Blog posts render client-side at blog.html?post=<slug>, which is the
-// canonical every post page declares (blog-post-share, blog-og). Nothing else
-// links to them in crawlable HTML, so without these entries a post could only
-// be found through RSS. /blog/<slug> is a redirect to this URL and is left out.
+// A post's one address is /blog/<slug>: netlify.toml serves blog.html there,
+// blog-og fills in the post and declares that URL canonical, and the
+// blog.html?post=<slug> and /blog?post=<slug> forms 301 to it.
 export function buildBlogPostPaths(posts = []) {
   const seen = new Set();
   const entries = [];
@@ -105,7 +104,7 @@ export function buildBlogPostPaths(posts = []) {
     if (!slug || seen.has(slug.toLowerCase())) continue;
     seen.add(slug.toLowerCase());
     entries.push({
-      path: `/blog.html?post=${encodeURIComponent(slug)}`,
+      path: `/blog/${encodeURIComponent(slug)}`,
       lastmod: toLastmodDate(post.lastModified),
     });
   }

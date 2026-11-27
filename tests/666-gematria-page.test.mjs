@@ -595,7 +595,7 @@ test('the page has no inline script and links where it says it does', () => {
   assert.ok(!/\son[a-z]+\s*=\s*"/i.test(SOURCE), 'inline event handler');
   assert.ok(!/javascript:/i.test(SOURCE), 'javascript: URL');
 
-  const blogPost = '/blog.html?post=determining-identity-of-the-beast-rev-13#determining-identity-of-the-beast-rev-13';
+  const blogPost = '/blog/determining-identity-of-the-beast-rev-13';
   for (const href of [
     '/v/666',
     '/calculator.html?query=computer',

@@ -73,7 +73,7 @@ export const CIPHERS = [
 export function blogUrlForCipher(cipherId) {
   const cipher = CIPHERS.find((c) => c.id === cipherId);
   if (!cipher || !cipher.blogSlug) return null;
-  return `/blog.html?post=${cipher.blogSlug}#${cipher.blogSlug}`;
+  return `/blog/${cipher.blogSlug}`;
 }
 
 export function digitalRoot(value) {

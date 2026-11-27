@@ -100,3 +100,37 @@ test('blog-og puts the post body into the page in place of the loading placehold
     globalThis.fetch = priorFetch;
   }
 });
+
+// Edge functions run before netlify.toml's redirects, so context.next() for
+// blog.html?post=x is the 301 to /blog/x. It has to leave as a 301.
+test('blog-og passes a redirect from netlify.toml through untouched', { skip }, async () => {
+  const { default: blogOg } = await import('../netlify/edge-functions/blog-og.ts');
+  const priorFetch = globalThis.fetch;
+  let fetched = 0;
+  globalThis.fetch = async () => { fetched += 1; return jsonResponse({ items: [POST] }); };
+  try {
+    const redirect = new Response('Redirecting to /blog/digital-roots-in-gematria', {
+      status: 301,
+      headers: { location: '/blog/digital-roots-in-gematria' },
+    });
+    const response = await blogOg(
+      new Request('https://gematria.today/blog.html?post=digital-roots-in-gematria'),
+      { next: async () => redirect }
+    );
+    assert.equal(response.status, 301);
+    assert.equal(response.headers.get('location'), '/blog/digital-roots-in-gematria');
+    assert.equal(fetched, 0);
+  } finally {
+    globalThis.fetch = priorFetch;
+  }
+});
+
+test('blog-og drops a leftover ?post= from a post address, keeping ?preview=', { skip }, async () => {
+  const { default: blogOg } = await import('../netlify/edge-functions/blog-og.ts');
+  const response = await blogOg(
+    new Request('https://gematria.today/blog/digital-roots-in-gematria?post=digital-roots-in-gematria&preview=1'),
+    { next: async () => { throw new Error('should not render'); } }
+  );
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.get('location'), 'https://gematria.today/blog/digital-roots-in-gematria?preview=1');
+});

@@ -585,7 +585,7 @@ test('dates, references and series lengths are pinned to their sources', () => {
   assert.equal(atlas.length, 8);
   assert.equal(atlas[0].slug, 'english-gematria-cipher-atlas-simple-ordinal');
   assert.match(atlas[0].body, /'Post 1 of 8\./);
-  assertCopyContains(`the eight-part <a href="/blog.html?post=${atlas[0].slug}#${atlas[0].slug}">English Gematria Cipher Atlas</a>, starting with Simple Ordinal`);
+  assertCopyContains(`the eight-part <a href="/blog/${atlas[0].slug}">English Gematria Cipher Atlas</a>, starting with Simple Ordinal`);
 });
 
 // ---------- links ----------
@@ -609,10 +609,9 @@ test('every link goes somewhere real', () => {
     }
     assert.ok(href.startsWith('/'), `relative link ${href}`);
 
-    const blog = href.match(/^\/blog\.html\?post=([a-z0-9-]+)#([a-z0-9-]+)$/);
+    const blog = href.match(/^\/blog\/([a-z0-9-]+)$/);
     if (blog) {
       // Posts are opened by their slug column, never by the post- id.
-      assert.equal(blog[1], blog[2], href);
       assert.ok(!blog[1].startsWith('post-'), `${href} uses the post id, not the slug`);
       assert.ok(published.has(blog[1]), `${blog[1]} is not a published blog post (drafts are not served)`);
       continue;
